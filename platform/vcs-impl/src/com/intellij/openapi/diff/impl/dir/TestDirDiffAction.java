@@ -15,19 +15,16 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.ide.diff.DiffElement;
-import com.intellij.ide.diff.DirDiffSettings;
-import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diff.DirDiffManager;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.table.JBTable;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,21 +32,19 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 public class TestDirDiffAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project != null) {
-      final VirtualFile src = VirtualFileManager.getInstance().findFileByUrl(Registry.stringValue("dir.diff.default.src.folder"));
-      final VirtualFile trg = VirtualFileManager.getInstance().findFileByUrl(Registry.stringValue("dir.diff.default.trg.folder"));
-      final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-      final VirtualFile[] files1 = src != null ? new VirtualFile[]{src} : FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
-      final VirtualFile[] files2 = trg != null ? new VirtualFile[]{trg} : FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
-      if (files1.length == 1 && files2.length == 1) {
-        DiffElement elem1 = new VirtualFileDiffElement(files1[0]);
-        DiffElement elem2 = new VirtualFileDiffElement(files2[0]);
-        final DirDiffManager diffManager = DirDiffManager.getInstance(project);
-        if (diffManager.canShow(elem1, elem2)) {
-          diffManager.showDiff(elem1, elem2, new DirDiffSettings());
-        }
+    new DialogWrapper(e.getData(PlatformDataKeys.PROJECT)) {
+      {
+        init();
       }
-    }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        final JPanel panel = new JPanel(new BorderLayout());
+        final JBTable table = new JBTable();
+        table.setModel(new DefaultTableModel(new Object[][]{{"aaa", "bbb"}, {"ccc", "ddd"}}, new Object[]{"foo", "bar"}));
+        panel.add(ScrollPaneFactory.createScrollPane(table), BorderLayout.CENTER);
+        return panel;
+      }
+    }.show();
   }
 }

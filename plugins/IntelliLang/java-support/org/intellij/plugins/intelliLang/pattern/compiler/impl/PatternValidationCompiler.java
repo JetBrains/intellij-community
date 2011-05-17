@@ -45,7 +45,8 @@ public class PatternValidationCompiler extends AnnotationBasedInstrumentingCompi
   protected String[] getAnnotationNames(Project project) {
     synchronized (myAnnotations) {
       myAnnotations.clear();
-      final Pair<String, ? extends Set<String>> patternAnnotation = Configuration.getInstance().getPatternAnnotationPair();
+      final Pair<String, ? extends Set<String>> patternAnnotation =
+        Configuration.getProjectInstance(project).getAdvancedConfiguration().getPatternAnnotationPair();
 
       final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
       final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(patternAnnotation.first, scope);
@@ -83,14 +84,14 @@ public class PatternValidationCompiler extends AnnotationBasedInstrumentingCompi
   }
 
   protected boolean isEnabled() {
-    final Configuration.InstrumentationType option = Configuration.getInstance().getInstrumentation();
+    final Configuration.InstrumentationType option = Configuration.getInstance().getAdvancedConfiguration().getInstrumentation();
     return option == Configuration.InstrumentationType.ASSERT || option == Configuration.InstrumentationType.EXCEPTION;
   }
 
   @NotNull
   protected Instrumenter createInstrumenter(ClassWriter classwriter) {
     synchronized (myAnnotations) {
-      final Configuration.InstrumentationType instrumentation = Configuration.getInstance().getInstrumentation();
+      final Configuration.InstrumentationType instrumentation = Configuration.getInstance().getAdvancedConfiguration().getInstrumentation();
       return new PatternValidationInstrumenter(new HashMap<String, String>(myAnnotations), classwriter, instrumentation);
     }
   }

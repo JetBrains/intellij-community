@@ -17,7 +17,6 @@ package com.intellij.ui.table;
 
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
@@ -125,8 +124,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public int getRowHeight() {
-    if (myRowHeightIsComputing
-        || !SystemInfo.isMac) { //todo[kirillk]: looks weird on Win/Linux
+    if (myRowHeightIsComputing) {
       return super.getRowHeight();
     }
 
@@ -163,13 +161,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void setRowHeight(int rowHeight) {
-    //todo[kirillk]: looks weird on Win/Linux
-    if (SystemInfo.isMac) {
-      myRowHeight = rowHeight;
-      myRowHeightIsExplicitlySet = true;
-    } else {
-      super.setRowHeight(rowHeight);
-    }
+    myRowHeight = rowHeight;
+    myRowHeightIsExplicitlySet = true;
   }
 
   private void repaintViewport() {
@@ -319,6 +312,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     final TableCellEditor editor = getCellEditor(row, column);
     if (editor != null && editor.isCellEditable(e)) {
       editorComp = prepareEditor(editor, row, column);
+      ((JComponent)editorComp).setBorder(null);
       if (editorComp == null) {
         removeEditor();
         return false;

@@ -129,15 +129,27 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
                                String title,
+                               String groupName, Object... options) {
+    showCustomOption(settingsClass, fieldName, title, groupName, null, null, options);
+  }
+
+
+  @Override
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                               String fieldName,
+                               String title,
                                String groupName,
+                               @Nullable OptionAnchor anchor,
+                               @Nullable String anchorFieldName,
                                Object... options) {
     if (isFirstUpdate) {
       Option option;
       if (options.length == 2) {
-        option = new SelectionOption(settingsClass, fieldName, title, groupName, (String[])options[0], (int[])options[1]);
+        option =
+          new SelectionOption(settingsClass, fieldName, title, groupName, anchor, anchorFieldName, (String[])options[0], (int[])options[1]);
       }
       else {
-        option = new BooleanOption(settingsClass, fieldName, title, groupName);
+        option = new BooleanOption(settingsClass, fieldName, title, groupName, anchor, anchorFieldName);
       }
       myCustomOptions.add(option);
       option.setEnabled(true);
@@ -162,7 +174,8 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     Map<String, DefaultMutableTreeNode> groupsMap = new THashMap<String, DefaultMutableTreeNode>();
 
-    for (Option each : ContainerUtil.concat(myOptions, myCustomOptions)) {
+    List<Option> sorted = sortOptions(ContainerUtil.concat(myOptions, myCustomOptions));
+    for (Option each : sorted) {
       if (!(myCustomOptions.contains(each) || myAllowedOptions.contains(each.field.getName()) || myShowAllStandardOptions)) continue;
 
       String group = each.groupName;
@@ -314,19 +327,19 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   }
 
   protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
-    myOptions.add(new BooleanOption(null, fieldName, title, groupName));
+    myOptions.add(new BooleanOption(null, fieldName, title, groupName, null, null));
   }
 
   protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
                            @NotNull String[] options, @NotNull int[] values) {
-    myOptions.add(new SelectionOption(null, fieldName, title, groupName, options, values));
+    myOptions.add(new SelectionOption(null, fieldName, title, groupName, null, null, options, values));
   }
 
   protected void prepareForReformat(final PsiFile psiFile) {
     //
   }
 
-  private abstract class Option {
+  private abstract class Option extends OrderedOption {
     @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
     @NotNull final Field field;
     @NotNull final String title;
@@ -336,7 +349,10 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     public Option(Class<? extends CustomCodeStyleSettings> clazz,
                   @NotNull String fieldName,
                   @NotNull String title,
-                  @Nullable String groupName) {
+                  @Nullable String groupName,
+                  @Nullable OptionAnchor anchor,
+                  @Nullable String anchorFiledName) {
+      super(fieldName, anchor, anchorFiledName);
       this.clazz = clazz;
       this.title = title;
       this.groupName = groupName;
@@ -372,9 +388,10 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     private BooleanOption(Class<? extends CustomCodeStyleSettings> clazz,
                           @NotNull String fieldName,
                           @NotNull String title,
-                          @Nullable String groupName) {
-      super(clazz, fieldName, title, groupName);
-
+                          @Nullable String groupName,
+                          @Nullable OptionAnchor anchor,
+                          @Nullable String anchorFiledName) {
+      super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
     }
 
     public Object getValue(CodeStyleSettings settings) {
@@ -403,9 +420,11 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
                            @NotNull String fieldName,
                            @NotNull String title,
                            @Nullable String groupName,
+                           @Nullable OptionAnchor anchor,
+                           @Nullable String anchorFiledName,
                            @NotNull String[] options,
                            @NotNull int[] values) {
-      super(clazz, fieldName, title, groupName);
+      super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
       this.options = options;
       this.values = values;
     }

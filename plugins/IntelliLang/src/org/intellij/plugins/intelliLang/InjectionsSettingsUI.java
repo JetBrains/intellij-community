@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
@@ -33,32 +34,35 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.Icons;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
+import org.jdom.Document;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -68,10 +72,7 @@ import java.util.List;
 public class InjectionsSettingsUI implements Configurable {
 
   private final Project myProject;
-  private final Configuration myConfiguration;
-  private final List<BaseInjection> myInjections;
-  private final List<BaseInjection> myOriginalInjections;
-
+  private final CfgInfo[] myInfos;
 
   private final JPanel myRoot;
   private final InjectionsTable myInjectionsTable;
@@ -83,27 +84,15 @@ public class InjectionsSettingsUI implements Configurable {
 
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
     myProject = project;
-    myConfiguration = configuration;
 
-    myOriginalInjections = ContainerUtil
-      .concat(InjectorUtils.getActiveInjectionSupportIds(), new Function<String, Collection<? extends BaseInjection>>() {
-        public Collection<? extends BaseInjection> fun(final String s) {
-          return ContainerUtil.findAll(myConfiguration.getInjections(s), new Condition<BaseInjection>() {
-            public boolean value(final BaseInjection injection) {
-              return InjectedLanguage.findLanguageById(injection.getInjectedLanguageId()) != null;
-            }
-          });
-        }
-      });
-    sortInjections(myOriginalInjections);
-    myInjections = new ArrayList<BaseInjection>();
-    for (BaseInjection injection : myOriginalInjections) {
-      myInjections.add(injection.copy());
-    }
+    final CfgInfo currentInfo = new CfgInfo(configuration, "project");
+    myInfos = configuration instanceof Configuration.Prj ?
+              new CfgInfo[]{new CfgInfo(((Configuration.Prj)configuration).getParentConfiguration(), "global"), currentInfo}
+                                                         : new CfgInfo[]{currentInfo};
 
     myRoot = new JPanel(new BorderLayout());
 
-    myInjectionsTable = new InjectionsTable(myInjections);
+    myInjectionsTable = new InjectionsTable(getInjInfoList(myInfos));
     myInjectionsTable.getEmptyText().setText("No injections configured");
     final JPanel tablePanel = new JPanel(new BorderLayout());
 
@@ -130,7 +119,8 @@ public class InjectionsSettingsUI implements Configurable {
     };
     final Factory<BaseInjection> producer = new NullableFactory<BaseInjection>() {
       public BaseInjection create() {
-        return getSelectedInjection();
+        final InjInfo info = getSelectedInjection();
+        return info == null? null : info.injection;
       }
     };
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
@@ -161,7 +151,14 @@ public class InjectionsSettingsUI implements Configurable {
     final AnAction removeAction = new AnAction("Remove", "Remove", Icons.DELETE_ICON) {
       @Override
       public void update(final AnActionEvent e) {
-        e.getPresentation().setEnabled(!getSelectedInjections().isEmpty());
+        boolean enabled = false;
+        for (InjInfo info : getSelectedInjections()) {
+          if (!info.bundled) {
+            enabled = true;
+            break;
+          }
+        }
+        e.getPresentation().setEnabled(enabled);
       }
 
       @Override
@@ -193,9 +190,9 @@ public class InjectionsSettingsUI implements Configurable {
 
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        final BaseInjection injection = getSelectedInjection();
+        final InjInfo injection = getSelectedInjection();
         if (injection != null) {
-          addInjection(injection.copy());
+          addInjection(injection.injection.copy());
           //performEditAction(e);
         }
       }
@@ -209,13 +206,6 @@ public class InjectionsSettingsUI implements Configurable {
     removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myInjectionsTable);
     editAction.registerCustomShortcutSet(CommonShortcuts.ENTER, myInjectionsTable);
 
-    group.add(new AnAction("Import", "Import", IconLoader.getIcon("/actions/install.png")) {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        doImportAction(e.getDataContext());
-        updateCountLabel();
-      }
-    });
     group.addSeparator();
     group.add(new AnAction("Enable Selected Injections", "Enable Selected Injections", Icons.SELECT_ALL_ICON) {
       @Override
@@ -236,15 +226,97 @@ public class InjectionsSettingsUI implements Configurable {
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myInjectionsTable);
+
+    if (myInfos.length > 1) {
+      group.addSeparator();
+      final AnAction shareAction = new AnAction("Make Global", null, IconLoader.getIcon("/actions/import.png")) {
+        @Override
+        public void actionPerformed(final AnActionEvent e) {
+          final List<InjInfo> injections = getSelectedInjections();
+          final CfgInfo cfg = getTargetCfgInfo(injections);
+          if (cfg == null) return;
+          for (InjInfo info : injections) {
+            if (info.cfgInfo == cfg) continue;
+            if (info.bundled) continue;
+            info.cfgInfo.injectionInfos.remove(info);
+            cfg.addInjection(info.injection);
+          }
+          final int[] selectedRows = myInjectionsTable.getSelectedRows();
+          myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
+          TableUtil.selectRows(myInjectionsTable, selectedRows);
+        }
+
+        @Override
+        public void update(final AnActionEvent e) {
+          final CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
+          e.getPresentation().setEnabled(cfg != null);
+          e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Make Global" : "Move to Project");
+          super.update(e);
+        }
+
+        @Nullable
+        private CfgInfo getTargetCfgInfo(final List<InjInfo> injections) {
+          CfgInfo cfg = null;
+          for (InjInfo info : injections) {
+            if (info.bundled) {
+              continue;
+            }
+            if (cfg == null) cfg = info.cfgInfo;
+            else if (cfg != info.cfgInfo) return info.cfgInfo;
+          }
+          if (cfg == null) return cfg;
+          for (CfgInfo info : myInfos) {
+            if (info != cfg) return info;
+          }
+          throw new AssertionError();
+        }
+      };
+      shareAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK)), myInjectionsTable);
+      group.add(shareAction);
+    }
+    group.addSeparator();
+    group.add(new AnAction("Import", "Import", IconLoader.getIcon("/actions/install.png")) {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        doImportAction(e.getDataContext());
+        updateCountLabel();
+      }
+    });
+    group.add(new AnAction("Export", "Export", IconLoader.getIcon("/actions/export.png")) {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        final List<BaseInjection> injections = getInjectionList(getSelectedInjections());
+        final VirtualFileWrapper wrapper = FileChooserFactory.getInstance().createSaveFileDialog(
+          new FileSaverDescriptor("Export Selected Injections to File...", "", "xml"), myProject).save(null, null);
+        if (wrapper == null) return;
+        final Configuration configuration = new Configuration();
+        configuration.setInjections(injections);
+        final Document document = new Document(configuration.getState());
+        try {
+          JDOMUtil.writeDocument(document, wrapper.getFile(), "\n");
+        }
+        catch (IOException ex) {
+          final String msg = ex.getLocalizedMessage();
+          Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(), "Export failed");
+        }
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        e.getPresentation().setEnabled(!getSelectedInjections().isEmpty());
+      }
+    });
+
     return group;
   }
+
 
   private void performEditAction(AnActionEvent e) {
     final AnAction action = getEditAction();
     if (action != null) {
       final int row = myInjectionsTable.getSelectedRow();
       action.actionPerformed(e);
-      ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
+      myInjectionsTable.getListTableModel().fireTableDataChanged();
       myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
       updateCountLabel();
     }
@@ -253,15 +325,16 @@ public class InjectionsSettingsUI implements Configurable {
   private void updateCountLabel() {
     int placesCount = 0;
     int enablePlacesCount = 0;
-    for (BaseInjection injection : myInjections) {
-      for (InjectionPlace place : injection.getInjectionPlaces()) {
-        placesCount++;
-        if (place.isEnabled()) enablePlacesCount++;
+    final List<InjInfo> items = myInjectionsTable.getListTableModel().getItems();
+    if (!items.isEmpty()) {
+      for (InjInfo injection : items) {
+        for (InjectionPlace place : injection.injection.getInjectionPlaces()) {
+          placesCount++;
+          if (place.isEnabled()) enablePlacesCount++;
+        }
       }
-    }
-    if (!myInjections.isEmpty()) {
       final StringBuilder sb = new StringBuilder();
-      sb.append(myInjections.size()).append(" injection").append(myInjections.size() > 1 ? "s" : "").append(" (").append(enablePlacesCount)
+      sb.append(items.size()).append(" injection").append(items.size() > 1 ? "s" : "").append(" (").append(enablePlacesCount)
         .append(" of ").append(placesCount).append(" place").append(placesCount > 1 ? "s" : "").append(" enabled) ");
       myCountLabel.setText(sb.toString());
     }
@@ -272,18 +345,21 @@ public class InjectionsSettingsUI implements Configurable {
 
   @Nullable
   private AnAction getEditAction() {
-    final BaseInjection injection = getSelectedInjection();
-    final String supportId = injection == null? null : injection.getSupportId();
+    final InjInfo info = getSelectedInjection();
+    final String supportId = info == null? null : info.injection.getSupportId();
     return supportId == null? null : myEditActions.get(supportId);
   }
 
   private void addInjection(final BaseInjection injection) {
-    injection.initializePlaces(true);
-    myInjections.add(injection);
-    myInjectionsTable.getListTableModel().setItems(myInjections);
-    final int index = myInjections.indexOf(injection);
+    final InjInfo info = getDefaultCfgInfo().addInjection(injection);
+    myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
+    final int index = myInjectionsTable.convertRowIndexToView(myInjectionsTable.getListTableModel().getItems().indexOf(info));
     myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
     TableUtil.scrollSelectionToVisible(myInjectionsTable);
+  }
+
+  private CfgInfo getDefaultCfgInfo() {
+    return myInfos[0];
   }
 
   private static void sortInjections(final List<BaseInjection> injections) {
@@ -302,12 +378,11 @@ public class InjectionsSettingsUI implements Configurable {
     return myRoot;
   }
 
-  public void reset() {                                                 
-    myInjections.clear();
-    for (BaseInjection injection : myOriginalInjections) {
-      myInjections.add(injection.copy());
+  public void reset() {
+    for (CfgInfo info : myInfos) {
+      info.reset();
     }
-    myInjectionsTable.getListTableModel().setItems(myInjections);
+    myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
     updateCountLabel();
   }
 
@@ -315,33 +390,33 @@ public class InjectionsSettingsUI implements Configurable {
   }
 
   public void apply() {
-    myConfiguration.replaceInjections(myInjections, myOriginalInjections);
-    myOriginalInjections.clear();
-    myOriginalInjections.addAll(myInjections);
-    sortInjections(myOriginalInjections);    
+    for (CfgInfo info : myInfos) {
+      info.apply();
+    }
     reset();
   }
 
   public boolean isModified() {
-    final List<BaseInjection> copy = new ArrayList<BaseInjection>(myInjections);
-    sortInjections(copy);
-    return !myOriginalInjections.equals(copy);
+    for (CfgInfo info : myInfos) {
+      if (info.isModified()) return true;
+    }
+    return false;
   }
 
   private void performSelectedInjectionsEnabled(final boolean enabled) {
-    for (BaseInjection injection : getSelectedInjections()) {
-      injection.setPlaceEnabled(null, enabled);
+    for (InjInfo info : getSelectedInjections()) {
+      info.injection.setPlaceEnabled(null, enabled);
     }
     myInjectionsTable.updateUI();
     updateCountLabel();
   }
 
   private void performToggleAction() {
-    final List<BaseInjection> selectedInjections = getSelectedInjections();
+    final List<InjInfo> selectedInjections = getSelectedInjections();
     boolean enabledExists = false;
     boolean disabledExists = false;
-    for (BaseInjection injection : selectedInjections) {
-      if (injection.isEnabled()) enabledExists = true;
+    for (InjInfo info : selectedInjections) {
+      if (info.injection.isEnabled()) enabledExists = true;
       else disabledExists = true;
       if (enabledExists && disabledExists) break;
     }
@@ -352,25 +427,20 @@ public class InjectionsSettingsUI implements Configurable {
   private void performRemove() {
     final int selectedRow = myInjectionsTable.getSelectedRow();
     if (selectedRow < 0) return;
-    final List<BaseInjection> selected = getSelectedInjections();
-    main: for (Iterator<BaseInjection> it = myInjections.iterator(); it.hasNext(); ) {
-      final BaseInjection injection = it.next();
-      for (BaseInjection selectedInjection : selected) {
-        if (injection == selectedInjection) {
-          it.remove();
-          continue main;
-        }
-      }
+    final List<InjInfo> selected = getSelectedInjections();
+    for (InjInfo info : selected) {
+      if (info.bundled) continue;
+      info.cfgInfo.injectionInfos.remove(info);
     }
-    ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
-    final int index = Math.min(myInjections.size() - 1, selectedRow);
+    myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
+    final int index = Math.min(myInjectionsTable.getListTableModel().getRowCount() - 1, selectedRow);
     myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
     TableUtil.scrollSelectionToVisible(myInjectionsTable);
     updateCountLabel();
   }
 
-  private List<BaseInjection> getSelectedInjections() {
-    final ArrayList<BaseInjection> toRemove = new ArrayList<BaseInjection>();
+  private List<InjInfo> getSelectedInjections() {
+    final ArrayList<InjInfo> toRemove = new ArrayList<InjInfo>();
     for (int row : myInjectionsTable.getSelectedRows()) {
       toRemove.add(myInjectionsTable.getItems().get(myInjectionsTable.convertRowIndexToModel(row)));
     }
@@ -378,7 +448,7 @@ public class InjectionsSettingsUI implements Configurable {
   }
 
   @Nullable
-  private BaseInjection getSelectedInjection() {
+  private InjInfo getSelectedInjection() {
     final int row = myInjectionsTable.getSelectedRow();
     return row < 0? null : myInjectionsTable.getItems().get(myInjectionsTable.convertRowIndexToModel(row));
   }
@@ -409,9 +479,9 @@ public class InjectionsSettingsUI implements Configurable {
     return "reference.settings.injection.language.injection.settings";
   }
 
-  private class InjectionsTable extends TableView<BaseInjection> {
-    private InjectionsTable(final List<BaseInjection> injections) {
-      super(new ListTableModel<BaseInjection>(createInjectionColumnInfos(), injections, 1));
+  private class InjectionsTable extends TableView<InjInfo> {
+    private InjectionsTable(final List<InjInfo> injections) {
+      super(new ListTableModel<InjInfo>(createInjectionColumnInfos(), injections, 1));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
       getColumnModel().getColumn(2).setCellRenderer(createLanguageCellRenderer());
       getColumnModel().getColumn(1).setCellRenderer(createDisplayNameCellRenderer());
@@ -421,9 +491,9 @@ public class InjectionsSettingsUI implements Configurable {
       setGridColor(getForeground());
       getColumnModel().getColumn(0).setMaxWidth(new JCheckBox().getPreferredSize().width);
       final int[] preffered = new int[] {0} ;
-      ContainerUtil.process(myInjections, new Processor<BaseInjection>() {
-        public boolean process(final BaseInjection injection) {
-          final String languageId = injection.getInjectedLanguageId();
+      ContainerUtil.process(injections, new Processor<InjInfo>() {
+        public boolean process(final InjInfo injection) {
+          final String languageId = injection.injection.getInjectedLanguageId();
           if (preffered[0] < languageId.length()) preffered[0] = languageId.length();
           return true;
         }
@@ -456,7 +526,7 @@ public class InjectionsSettingsUI implements Configurable {
 
         @Override
         protected String getElementText(final Object element) {
-          final BaseInjection injection = (BaseInjection)element;
+          final BaseInjection injection = ((InjInfo)element).injection;
           return injection.getSupportId() + " " + injection.getInjectedLanguageId() + " " + injection.getDisplayName();
         }
       };
@@ -468,74 +538,104 @@ public class InjectionsSettingsUI implements Configurable {
     final TableCellRenderer booleanCellRenderer = createBooleanCellRenderer();
     final TableCellRenderer displayNameCellRenderer = createDisplayNameCellRenderer();
     final TableCellRenderer languageCellRenderer = createLanguageCellRenderer();
-    final Comparator<BaseInjection> languageComparator = new Comparator<BaseInjection>() {
-      public int compare(final BaseInjection o1, final BaseInjection o2) {
-        return Comparing.compare(o1.getInjectedLanguageId(), o2.getInjectedLanguageId());
+    final Comparator<InjInfo> languageComparator = new Comparator<InjInfo>() {
+      public int compare(final InjInfo o1, final InjInfo o2) {
+        return Comparing.compare(o1.injection.getInjectedLanguageId(), o2.injection.getInjectedLanguageId());
       }
     };
-    final Comparator<BaseInjection> displayNameComparator = new Comparator<BaseInjection>() {
-      public int compare(final BaseInjection o1, final BaseInjection o2) {
-        final int support = Comparing.compare(o1.getSupportId(), o2.getSupportId());
+    final Comparator<InjInfo> displayNameComparator = new Comparator<InjInfo>() {
+      public int compare(final InjInfo o1, final InjInfo o2) {
+        final int support = Comparing.compare(o1.injection.getSupportId(), o2.injection.getSupportId());
         if (support != 0) return support;
-        return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
+        return Comparing.compare(o1.injection.getDisplayName(), o2.injection.getDisplayName());
       }
     };
-    return new ColumnInfo[]{new ColumnInfo<BaseInjection, Boolean>(" ") {
+    final ColumnInfo[] columnInfos = {new ColumnInfo<InjInfo, Boolean>(" ") {
       @Override
       public Class getColumnClass() {
         return Boolean.class;
       }
 
       @Override
-      public Boolean valueOf(final BaseInjection o) {
-        return o.isEnabled();
+      public Boolean valueOf(final InjInfo o) {
+        return o.injection.isEnabled();
       }
 
       @Override
-      public boolean isCellEditable(final BaseInjection injection) {
+      public boolean isCellEditable(final InjInfo injection) {
         return true;
       }
 
       @Override
-      public void setValue(final BaseInjection injection, final Boolean value) {
-        injection.setPlaceEnabled(null, value.booleanValue());
+      public void setValue(final InjInfo injection, final Boolean value) {
+        injection.injection.setPlaceEnabled(null, value.booleanValue());
       }
 
       @Override
-      public TableCellRenderer getRenderer(final BaseInjection injection) {
+      public TableCellRenderer getRenderer(final InjInfo injection) {
         return booleanCellRenderer;
       }
-    }, new ColumnInfo<BaseInjection, BaseInjection>("Display Name") {
+    }, new ColumnInfo<InjInfo, InjInfo>("Display Name") {
       @Override
-      public BaseInjection valueOf(final BaseInjection injection) {
-        return injection;
+      public InjInfo valueOf(final InjInfo info) {
+        return info;
       }
 
       @Override
-      public Comparator<BaseInjection> getComparator() {
+      public Comparator<InjInfo> getComparator() {
         return displayNameComparator;
       }
 
       @Override
-      public TableCellRenderer getRenderer(final BaseInjection injection) {
+      public TableCellRenderer getRenderer(final InjInfo injection) {
         return displayNameCellRenderer;
       }
-    }, new ColumnInfo<BaseInjection, BaseInjection>("Language") {
+    }, new ColumnInfo<InjInfo, InjInfo>("Language") {
       @Override
-      public BaseInjection valueOf(final BaseInjection injection) {
-        return injection;
+      public InjInfo valueOf(final InjInfo info) {
+        return info;
       }
 
       @Override
-      public Comparator<BaseInjection> getComparator() {
+      public Comparator<InjInfo> getComparator() {
         return languageComparator;
       }
 
       @Override
-      public TableCellRenderer getRenderer(final BaseInjection injection) {
+      public TableCellRenderer getRenderer(final InjInfo info) {
         return languageCellRenderer;
       }
     }};
+    if (myInfos.length > 1) {
+      final TableCellRenderer typeRenderer = createTypeRenderer();
+      return ArrayUtil.append(columnInfos, new ColumnInfo<InjInfo, String>("Type") {
+        @Override
+        public String valueOf(final InjInfo info) {
+          return info.bundled ? "bundled" : info.cfgInfo.title;
+        }
+
+        @Override
+        public TableCellRenderer getRenderer(final InjInfo injInfo) {
+          return typeRenderer;
+        }
+
+        @Override
+        public int getWidth(final JTable table) {
+          return table.getFontMetrics(table.getFont()).stringWidth(StringUtil.repeatSymbol('m', 6));
+        }
+
+        @Override
+        public Comparator<InjInfo> getComparator() {
+          return new Comparator<InjInfo>() {
+            @Override
+            public int compare(final InjInfo o1, final InjInfo o2) {
+              return Comparing.compare(valueOf(o1), valueOf(o2));
+            }
+          };
+        }
+      });
+    }
+    return columnInfos;
   }
 
   private static BooleanTableCellRenderer createBooleanCellRenderer() {
@@ -559,13 +659,14 @@ public class InjectionsSettingsUI implements Configurable {
       public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus,
                                                      final int row,
                                                      final int column) {
-        final BaseInjection injection = (BaseInjection)value;
+        final InjInfo injection = (InjInfo)value;
         // fix for a marvellous Swing peculiarity: AccessibleJTable likes to pass null here
         if (injection == null) return myLabel;
-        final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
+        final String languageId = injection.injection.getInjectedLanguageId();
+        final Language language = InjectedLanguage.findLanguageById(languageId);
         final FileType fileType = language == null ? null : language.getAssociatedFileType();
         myLabel.setIcon(fileType == null ? null : fileType.getIcon());
-        myLabel.setText(language == null ? injection.getInjectedLanguageId() : language.getDisplayName());
+        myLabel.setText(language == null ? languageId : language.getDisplayName());
         setLabelColors(myLabel, table, isSelected, row);
         return myLabel;
       }
@@ -581,14 +682,33 @@ public class InjectionsSettingsUI implements Configurable {
                                                      final int row,
                                                      final int column) {
         myLabel.clear();
-        final BaseInjection injection = (BaseInjection)value;
+        final InjInfo info = (InjInfo)value;
         // fix for a marvellous Swing peculiarity: AccessibleJTable likes to pass null here
-        if (injection == null) return myLabel;
+        if (info == null) return myLabel;
         final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
-        myText.append(injection.getSupportId() + ": ", grayAttrs);
-        mySupports.get(injection.getSupportId()).setupPresentation(injection, myText, isSelected);
+        final String supportId = info.injection.getSupportId();
+        myText.append(supportId + ": ", grayAttrs);
+        mySupports.get(supportId).setupPresentation(info.injection, myText, isSelected);
         myText.appendToComponent(myLabel);
         myText.clear();
+        setLabelColors(myLabel, table, isSelected, row);
+        return myLabel;
+      }
+    };
+  }
+
+  private static TableCellRenderer createTypeRenderer() {
+    return new TableCellRenderer() {
+      final SimpleColoredComponent myLabel = new SimpleColoredComponent();
+
+      public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus,
+                                                     final int row,
+                                                     final int column) {
+        myLabel.clear();
+        final String info = (String)value;
+        if (info == null) return myLabel;
+        final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
+        myLabel.append(info, grayAttrs);
         setLabelColors(myLabel, table, isSelected, row);
         return myLabel;
       }
@@ -635,10 +755,11 @@ public class InjectionsSettingsUI implements Configurable {
         Messages.showWarningDialog(myProject, "The selected file does not contain any importable configuration.", "Nothing to Import");
         return;
       }
-      final Map<String,Set<BaseInjection>> currentMap =
-        ContainerUtil.classify(myInjections.iterator(), new Convertor<BaseInjection, String>() {
-          public String convert(final BaseInjection o) {
-            return o.getSupportId();
+      final CfgInfo info = getDefaultCfgInfo();
+      final Map<String,Set<InjInfo>> currentMap =
+        ContainerUtil.classify(info.injectionInfos.iterator(), new Convertor<InjInfo, String>() {
+          public String convert(final InjInfo o) {
+            return o.injection.getSupportId();
           }
         });
       final List<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
@@ -655,7 +776,7 @@ public class InjectionsSettingsUI implements Configurable {
       //myInjections.addAll(newInjections);
 
       for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-        final Set<BaseInjection> currentInjections = currentMap.get(supportId);
+        final List<BaseInjection> currentInjections = getInjectionList(new ArrayList<InjInfo>(currentMap.get(supportId)));
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
         if (currentInjections == null) {
           newInjections.addAll(importingInjections);
@@ -664,12 +785,8 @@ public class InjectionsSettingsUI implements Configurable {
           Configuration.importInjections(currentInjections, importingInjections, originalInjections, newInjections);
         }
       }
-      myInjections.removeAll(originalInjections);
-      myInjections.addAll(newInjections);
-      for (BaseInjection injection : newInjections) {
-        injection.initializePlaces(true);
-      }
-      myInjectionsTable.getListTableModel().setItems(myInjections);
+      info.replace(originalInjections, newInjections);
+      myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
       final int n = newInjections.size();
       if (n > 1) {
         Messages.showInfoMessage(myProject, n + " entries have been successfully imported", "Import Successful");
@@ -681,11 +798,128 @@ public class InjectionsSettingsUI implements Configurable {
         Messages.showInfoMessage(myProject, "No new entries have been imported", "Import");
       }
     }
-    catch (Exception e1) {
-      Configuration.LOG.error("Unable to load Settings", e1);
+    catch (Exception ex) {
+      Configuration.LOG.error(ex);
 
-      final String msg = e1.getLocalizedMessage();
-      Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : e1.toString(), "Could not load Settings");
+      final String msg = ex.getLocalizedMessage();
+      Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(), "Import failed");
     }
+  }
+
+  private static class CfgInfo {
+    final Configuration cfg;
+    final List<BaseInjection> originalInjections;
+    final List<InjInfo> injectionInfos = new ArrayList<InjInfo>();
+    final THashSet<BaseInjection> bundledInjections = new THashSet<BaseInjection>(new SameParamsAndPlacesStrategy());
+    final String title;
+
+    public CfgInfo(Configuration cfg, final String title) {
+      this.cfg = cfg;
+      this.title = title;
+      bundledInjections.addAll(cfg.getDefaultInjections());
+      originalInjections = ContainerUtil
+        .concat(InjectorUtils.getActiveInjectionSupportIds(), new Function<String, Collection<? extends BaseInjection>>() {
+          public Collection<? extends BaseInjection> fun(final String s) {
+            return ContainerUtil.findAll(
+              CfgInfo.this.cfg instanceof Configuration.Prj ? ((Configuration.Prj)CfgInfo.this.cfg).getOwnInjections(s) : CfgInfo.this.cfg
+                .getInjections(s),
+              new Condition<BaseInjection>() {
+                public boolean value(final BaseInjection injection) {
+                  return InjectedLanguage.findLanguageById(injection.getInjectedLanguageId()) != null;
+                }
+              });
+          }
+        });
+      sortInjections(originalInjections);
+      reset();
+    }
+
+    public void apply() {
+      final List<BaseInjection> injectionList = getInjectionList(injectionInfos);
+      cfg.replaceInjections(injectionList, originalInjections);
+      originalInjections.clear();
+      originalInjections.addAll(injectionList);
+      sortInjections(originalInjections);
+      FileContentUtil.reparseOpenedFiles();
+    }
+
+    public void reset() {
+      injectionInfos.clear();
+      for (BaseInjection injection : originalInjections) {
+        injectionInfos.add(new InjInfo(injection.copy(), this));
+      }
+    }
+
+    public InjInfo addInjection(final BaseInjection injection) {
+      final InjInfo info = new InjInfo(injection, this);
+      injectionInfos.add(info);
+      return info;
+    }
+
+    public boolean isModified() {
+      final List<BaseInjection> copy = new ArrayList<BaseInjection>(getInjectionList(injectionInfos));
+      sortInjections(copy);
+      return !originalInjections.equals(copy);
+    }
+
+    public void replace(final List<BaseInjection> originalInjections, final List<BaseInjection> newInjections) {
+      for (Iterator<InjInfo> it = injectionInfos.iterator(); it.hasNext(); ) {
+        final InjInfo info = it.next();
+        if (originalInjections.contains(info.injection)) it.remove();
+      }
+      for (BaseInjection newInjection : newInjections) {
+        injectionInfos.add(new InjInfo(newInjection, this));
+      }
+    }
+
+  }
+
+  private static class SameParamsAndPlacesStrategy implements TObjectHashingStrategy<BaseInjection> {
+    @Override
+    public int computeHashCode(final BaseInjection object) {
+      return object.hashCode();
+    }
+
+    @Override
+    public boolean equals(final BaseInjection o1, final BaseInjection o2) {
+      if (!o1.sameLanguageParameters(o2)) return false;
+      if (!o1.getInjectionPlaces().equals(o2.getInjectionPlaces())) return false;
+      return true;
+    }
+  }
+
+  private static class InjInfo {
+    final BaseInjection injection;
+    final CfgInfo cfgInfo;
+    final boolean bundled;
+
+    private InjInfo(final BaseInjection injection, final CfgInfo cfgInfo) {
+      this.injection = injection;
+      this.cfgInfo = cfgInfo;
+      bundled = cfgInfo.bundledInjections.contains(injection);
+    }
+  }
+
+  private static List<InjInfo> getInjInfoList(final CfgInfo[] infos) {
+    return ContainerUtil.concat(infos, new Function<CfgInfo, Collection<? extends InjInfo>>() {
+      @Override
+      public Collection<InjInfo> fun(final CfgInfo cfgInfo) {
+        return cfgInfo.injectionInfos;
+      }
+    });
+  }
+
+  private static List<BaseInjection> getInjectionList(final List<InjInfo> list) {
+    return new AbstractList<BaseInjection>() {
+      @Override
+      public BaseInjection get(final int index) {
+        return list.get(index).injection;
+      }
+
+      @Override
+      public int size() {
+        return list.size();
+      }
+    };
   }
 }

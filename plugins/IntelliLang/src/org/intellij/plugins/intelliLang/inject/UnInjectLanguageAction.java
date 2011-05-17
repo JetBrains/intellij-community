@@ -97,7 +97,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
     }
     // todo there is a problem: host i.e. literal expression is confused with "target" i.e. parameter
     // todo therefore this part doesn't work for java
-    return Configuration.getInstance().setHostInjectionEnabled(host, languages, false);
+    return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, languages, false);
   }
 
   public boolean startInWriteAction() {

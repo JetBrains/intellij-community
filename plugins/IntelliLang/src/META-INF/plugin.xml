@@ -39,20 +39,17 @@
 
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
 
-    <applicationConfigurable instance="org.intellij.plugins.intelliLang.Settings"/>
+    <projectConfigurable instance="org.intellij.plugins.intelliLang.Settings"/>
 
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>
 
     <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"
                     serviceImplementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"/>
-  </extensions>
+    <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
+                    serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
+    <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
+                    serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
 
-  <application-components>
-    <component>
-      <!-- Making it a service may result in FileContentUtil.reparseFiles at a random loading moment which may cause
-           mysterious PSI validity losses -->
-      <implementation-class>org.intellij.plugins.intelliLang.Configuration</implementation-class>
-    </component>
-  </application-components>
+  </extensions>
 </idea-plugin>

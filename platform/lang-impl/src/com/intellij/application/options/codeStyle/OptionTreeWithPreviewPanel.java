@@ -17,7 +17,6 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -29,6 +28,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -39,6 +39,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author max
@@ -51,8 +52,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
   private boolean myShowAllStandardOptions = false;
   private Set<String> myAllowedOptions = new HashSet<String>();
-  private MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>> myCustomOptions
-    = new MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>>();
+  private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<String, CustomBooleanOptionInfo>();
   private boolean isFirstUpdate = true;
   private final Map<String, String> myRenamedFields = new THashMap<String, String>();
 
@@ -102,13 +102,24 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     updateOptions(false, optionNames);
   }
 
+  @Override
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
                                String title,
                                String groupName, Object... options) {
+    showCustomOption(settingsClass, fieldName, title, groupName, null, null, options);
+  }
+
+  @Override
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                               String fieldName,
+                               String title,
+                               @Nullable String groupName,
+                               @Nullable OptionAnchor anchor,
+                               @Nullable String anchorFieldName,
+                               Object... options) {
     if (isFirstUpdate) {
-      myCustomOptions.putValue(groupName,
-                               Trinity.<Class<? extends CustomCodeStyleSettings>, String, String>create(settingsClass, fieldName, title));
+      myCustomOptions.putValue(groupName, new CustomBooleanOptionInfo(settingsClass, fieldName, title, groupName, anchor, anchorFieldName));
     }
     enableOption(fieldName);
   }
@@ -158,7 +169,10 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     String groupName = "";
     DefaultMutableTreeNode groupNode = null;
-    for (BooleanOptionKey key : myKeys) {
+
+    List<BooleanOptionKey> result = sortOptions(myKeys);
+
+    for (BooleanOptionKey key : result) {
       String newGroupName = key.groupName;
       if (!newGroupName.equals(groupName) || groupNode == null) {
         groupName = newGroupName;
@@ -204,6 +218,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     return optionsTree;
   }
+
 
   private void selectCheckbox(TreePath treePath) {
     if (treePath == null) {
@@ -283,7 +298,6 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       return true;
     }
     return false;
-
   }
 
   private static boolean isModified(TreeNode node, final CodeStyleSettings settings) {
@@ -326,7 +340,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
 
-      BooleanOptionKey key = new BooleanOptionKey(groupName, getRenamedTitle(fieldName, title), field);
+      BooleanOptionKey key = new BooleanOptionKey(fieldName, groupName, getRenamedTitle(fieldName, title), field);
       myKeys.add(key);
     }
     catch (NoSuchFieldException e) {
@@ -343,25 +357,21 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
   }
 
   protected void initCustomOptions(String groupName) {
-    for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> option : myCustomOptions.get(groupName)) {
-      doInitCustomBooleanField(option.first, option.second, option.third, groupName);
-    }
-  }
-
-  private <T extends CustomCodeStyleSettings> void doInitCustomBooleanField(@NotNull Class<T> customClass,
-                                                                            String fieldName,
-                                                                            String title,
-                                                                            String groupName) {
-    try {
-      Field field = customClass.getField(fieldName);
-
-      myKeys.add(new CustomBooleanOptionKey<T>(groupName, getRenamedTitle(fieldName, title), customClass, field));
-    }
-    catch (NoSuchFieldException e) {
-      LOG.error(e);
-    }
-    catch (SecurityException e) {
-      LOG.error(e);
+    for (CustomBooleanOptionInfo option : myCustomOptions.get(groupName)) {
+      try {
+        Field field = option.settingClass.getField(option.fieldName);
+        myKeys.add(new CustomBooleanOptionKey(option.fieldName,
+                                              groupName,
+                                              getRenamedTitle(option.fieldName, option.title),
+                                              option.anchor, option.anchorFieldName,
+                                              option.settingClass, field));
+      }
+      catch (NoSuchFieldException e) {
+        LOG.error(e);
+      }
+      catch (SecurityException e) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -415,19 +425,29 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
-  private class BooleanOptionKey {
+  private class BooleanOptionKey extends OrderedOption {
     final String groupName;
     String title;
     final Field field;
     private boolean enabled = true;
 
-    public BooleanOptionKey(String groupName, String title, Field field) {
+    public BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
+      this(fieldName, groupName, title, null, null, field);
+    }
+
+    public BooleanOptionKey(String fieldName,
+                            String groupName,
+                            String title,
+                            @Nullable OptionAnchor anchor,
+                            @Nullable String anchorFiledName,
+                            Field field) {
+      super(fieldName, anchor, anchorFiledName);
       this.groupName = groupName;
       this.title = title;
       this.field = field;
     }
 
-    public void setValue(CodeStyleSettings  settings, Boolean aBoolean) {
+    public void setValue(CodeStyleSettings settings, Boolean aBoolean) {
       try {
         CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
         field.set(commonSettings, aBoolean);
@@ -451,11 +471,40 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
+  private static class CustomBooleanOptionInfo {
+    @NotNull final Class<? extends CustomCodeStyleSettings> settingClass;
+    @NotNull final String fieldName;
+    @NotNull final String title;
+    @Nullable final String groupName;
+    @Nullable final OptionAnchor anchor;
+    @Nullable final String anchorFieldName;
+
+    private CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
+                                    @NotNull String fieldName,
+                                    @NotNull String title,
+                                    String groupName,
+                                    OptionAnchor anchor,
+                                    String anchorFieldName) {
+      this.settingClass = settingClass;
+      this.fieldName = fieldName;
+      this.title = title;
+      this.groupName = groupName;
+      this.anchor = anchor;
+      this.anchorFieldName = anchorFieldName;
+    }
+  }
+
   private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
     private final Class<T> mySettingsClass;
 
-    public CustomBooleanOptionKey(String groupName, String title, Class<T> settingsClass, Field field) {
-      super(groupName, title, field);
+    public CustomBooleanOptionKey(String fieldName,
+                                  String groupName,
+                                  String title,
+                                  OptionAnchor anchor,
+                                  String anchorFieldName,
+                                  Class<T> settingsClass,
+                                  Field field) {
+      super(fieldName, groupName, title, anchor, anchorFieldName, field);
       mySettingsClass = settingsClass;
     }
 
@@ -529,8 +578,8 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     result.addAll(myRenamedFields.values());
     for (String groupName : myCustomOptions.keySet()) {
       result.add(groupName);
-      for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> trinity : myCustomOptions.get(groupName)) {
-        result.add(trinity.third);
+      for (CustomBooleanOptionInfo trinity : myCustomOptions.get(groupName)) {
+        result.add(trinity.title);
       }
     }
     return result;

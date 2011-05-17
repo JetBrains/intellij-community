@@ -27,9 +27,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.facet.ProjectFacetManager;
@@ -445,14 +443,23 @@ public class AndroidUtils {
 
   public static void runExternalToolInSeparateThread(@NotNull final Project project,
                                                      @NotNull final GeneralCommandLine commandLine) {
+    runExternalToolInSeparateThread(project, commandLine, null);
+  }
+
+  public static void runExternalToolInSeparateThread(@NotNull final Project project,
+                                                     @NotNull final GeneralCommandLine commandLine,
+                                                     @Nullable final ProcessHandler processHandler) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        runExternalTool(project, commandLine, false);
+        runExternalTool(project, commandLine, false, processHandler);
       }
     });
   }
 
-  public static void runExternalTool(final Project project, GeneralCommandLine commandLine, boolean printOutputToConsole) {
+  public static void runExternalTool(final Project project,
+                                     GeneralCommandLine commandLine,
+                                     boolean printOutputToAndroidConsole,
+                                     ProcessHandler processHandler) {
     String[] commands = commandLine.getCommands();
     String command = StringUtil.join(commands, " ");
     LOG.info("Execute: " + command);
@@ -468,17 +475,22 @@ public class AndroidUtils {
       result = e.getMessage();
     }
 
-    if (result != null && printOutputToConsole) {
-      final ConsoleViewContentType contentType = success ?
-                                                 ConsoleViewContentType.NORMAL_OUTPUT :
-                                                 ConsoleViewContentType.ERROR_OUTPUT;
-      final String finalResult = result;
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          printMessageToConsole(project, finalResult, contentType);
-        }
-      });
+    if (result != null) {
+      if (printOutputToAndroidConsole) {
+        final ConsoleViewContentType contentType = success ?
+                                                   ConsoleViewContentType.NORMAL_OUTPUT :
+                                                   ConsoleViewContentType.ERROR_OUTPUT;
+        final String finalResult = result;
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            printMessageToConsole(project, finalResult, contentType);
+          }
+        });
+      }
+      else if (processHandler != null) {
+        processHandler.notifyTextAvailable(result + '\n', ProcessOutputTypes.STDOUT);
+      }
     }
   }
 

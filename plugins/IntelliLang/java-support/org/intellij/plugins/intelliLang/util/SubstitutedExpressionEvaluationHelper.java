@@ -45,7 +45,7 @@ public class SubstitutedExpressionEvaluationHelper {
   }
 
   public Object computeExpression(final PsiExpression e, final List<PsiExpression> uncomputables) {
-    return computeExpression(e, myConfiguration.getDfaOption(), myConfiguration.isIncludeUncomputablesAsLiterals(), uncomputables);
+    return computeExpression(e, myConfiguration.getAdvancedConfiguration().getDfaOption(), myConfiguration.getAdvancedConfiguration().isIncludeUncomputablesAsLiterals(), uncomputables);
   }
 
   public Object computeExpression(final PsiExpression e, final Configuration.DfaOption dfaOption, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
@@ -127,7 +127,7 @@ public class SubstitutedExpressionEvaluationHelper {
 
   @Nullable
   private Object calcSubstituted(final PsiModifierListOwner owner) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, myConfiguration.getSubstAnnotationPair().second);
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, myConfiguration.getAdvancedConfiguration().getSubstAnnotationPair().second);
     if (annotation != null) {
       return AnnotationUtilEx.calcAnnotationValue(annotation, "value");
     }

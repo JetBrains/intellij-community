@@ -109,7 +109,11 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   public void updateStep() {
     String path = getContext().getRootDirectory();
     if (path == null) {
-      path = PropertiesComponent.getInstance().isValueSet(_ECLIPSE_PROJECT_DIR) ? PropertiesComponent.getInstance().getValue(_ECLIPSE_PROJECT_DIR) : getWizardContext().getProjectFileDirectory();
+      if (getWizardContext().isProjectFileDirectorySet() || !PropertiesComponent.getInstance().isValueSet(_ECLIPSE_PROJECT_DIR)) {
+        path = getWizardContext().getProjectFileDirectory();
+      } else {
+        path =  PropertiesComponent.getInstance().getValue(_ECLIPSE_PROJECT_DIR);
+      }
     }
     myWorkspaceRootComponent.setText(path.replace('/', File.separatorChar));
     myWorkspaceRootComponent.getTextField().selectAll();
