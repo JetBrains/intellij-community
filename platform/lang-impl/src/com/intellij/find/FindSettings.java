@@ -74,6 +74,10 @@ public abstract class FindSettings{
 
   public abstract void setRegularExpressions(boolean regularExpressions);
 
+  public abstract boolean isLocalRegularExpressions();
+
+  public abstract void setLocalRegularExpressions(boolean regularExpressions);
+
   public abstract void addStringToFind(String s);
 
   public abstract void addStringToReplace(String s);
