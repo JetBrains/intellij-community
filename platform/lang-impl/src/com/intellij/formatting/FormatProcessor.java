@@ -294,7 +294,7 @@ class FormatProcessor {
     for (LeafBlockWrapper block : blocksToModify) {
       WhiteSpace whiteSpace = block.getWhiteSpace();
       CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
-        whiteSpace.generateWhiteSpace(indentOption), whiteSpace.getStartOffset(), whiteSpace.getEndOffset()
+        whiteSpace.generateWhiteSpace(indentOption), whiteSpace.getStartOffset(), whiteSpace.getEndOffset(), false
       );
       changes.add(new TextChangeImpl(newWs, whiteSpace.getStartOffset(), whiteSpace.getEndOffset()));
     }

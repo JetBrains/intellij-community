@@ -25,13 +25,14 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FormattingDocumentModelImpl implements FormattingDocumentModel{
+public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   private final WhiteSpaceFormattingStrategy myWhiteSpaceStrategy;
   //private final CharBuffer myBuffer = CharBuffer.allocate(1);
@@ -119,8 +120,20 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   @NotNull
   @Override
-  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset) {
-    return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, myDocument.getCharsSequence(), startOffset, endOffset);
+  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset,
+                                                  boolean changedViaPsi)
+  {
+    if (!changedViaPsi) {
+        return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, myDocument.getCharsSequence(), startOffset, endOffset); 
+    }
+    
+    final PsiElement element = myFile.findElementAt(startOffset);
+    if (element == null) {
+      return whiteSpaceText;
+    }
+    else {
+      return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, element, startOffset, endOffset);
+    }
   }
 
   //@Override
