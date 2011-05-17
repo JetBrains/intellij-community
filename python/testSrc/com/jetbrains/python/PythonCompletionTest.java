@@ -352,4 +352,11 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testNoneInArgList() {  // PY-3464
     doTest3K();
   }
+
+  public void testPep328Completion() {  // PY-3409
+    myFixture.copyDirectoryToProject("completion/pep328", "pep328");
+    myFixture.configureByFile("pep328/package/subpackage1/moduleX.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/pep328/package/subpackage1/moduleX.after.py");
+  }
 }
