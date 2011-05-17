@@ -15,25 +15,25 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 
 public class SvnMapping {
   private final List<VirtualFile> myLonelyRoots;
-  private final Map<String, RootUrlInfo> myFile2UrlMap;
+  private final TreeMap<String, RootUrlInfo> myFile2UrlMap;
   private final Map<String, RootUrlInfo> myUrl2FileMap;
-  //private final List<VirtualFile> myPhysicalCopies;
   private boolean myRootsDifferFromSettings;
   // no additional info. for caching only (convert roots)
   private List<VirtualFile> myPreCalculatedUnderVcsRoots;
 
   public SvnMapping() {
-    myFile2UrlMap = new HashMap<String, RootUrlInfo>();
+    myFile2UrlMap = new TreeMap<String, RootUrlInfo>(FilePathsComparator.getInstance());
     myUrl2FileMap = new HashMap<String, RootUrlInfo>();
     myLonelyRoots = new ArrayList<VirtualFile>();
-    //myPhysicalCopies = new ArrayList<VirtualFile>();
 
     myPreCalculatedUnderVcsRoots = null;
 
@@ -44,12 +44,10 @@ public class SvnMapping {
     myFile2UrlMap.clear();
     myUrl2FileMap.clear();
     myLonelyRoots.clear();
-    //myPhysicalCopies.clear();
 
     myFile2UrlMap.putAll(other.myFile2UrlMap);
     myUrl2FileMap.putAll(other.myUrl2FileMap);
     myLonelyRoots.addAll(other.myLonelyRoots);
-    //myPhysicalCopies.addAll(other.myPhysicalCopies);
     myRootsDifferFromSettings = other.myRootsDifferFromSettings;
     myPreCalculatedUnderVcsRoots = null;
   }
@@ -76,13 +74,6 @@ public class SvnMapping {
     myUrl2FileMap.put(rootInfo.getAbsoluteUrl(), rootInfo);
   }
 
-  /*
-  // todo check called. dont forget
-  public void setPhysicalCopies(final List<VirtualFile> roots) {
-    myPhysicalCopies.clear();
-    myPhysicalCopies.addAll(roots);
-  }*/
-
   public List<VirtualFile> getUnderVcsRoots() {
     if (myPreCalculatedUnderVcsRoots == null) {
       myPreCalculatedUnderVcsRoots = new ArrayList<VirtualFile>();
@@ -97,8 +88,9 @@ public class SvnMapping {
     return new ArrayList<RootUrlInfo>(myFile2UrlMap.values());
   }
 
-  public Collection<String> getFileRoots() {
-    return myFile2UrlMap.keySet();
+  @Nullable
+  public String getRootForPath(final String path) {
+    return myFile2UrlMap.floorKey(path);
   }
 
   public Collection<String> getUrls() {
@@ -117,10 +109,6 @@ public class SvnMapping {
     return myUrl2FileMap.isEmpty();
   }
 
-  /*public List<VirtualFile> getPhysicalCopies() {
-    return myPhysicalCopies;
-  }*/
-
   public boolean isRootsDifferFromSettings() {
     return myRootsDifferFromSettings;
   }
@@ -131,5 +119,18 @@ public class SvnMapping {
 
   public List<VirtualFile> getLonelyRoots() {
     return myLonelyRoots;
+  }
+
+  private static class FilePathsComparator implements Comparator<String> {
+    private final static FilePathsComparator ourInstance = new FilePathsComparator();
+
+    public static FilePathsComparator getInstance() {
+      return ourInstance;
+    }
+
+    @Override
+    public int compare(String o1, String o2) {
+      return FileUtil.comparePaths(o1, o2);
+    }
   }
 }

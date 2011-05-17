@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
@@ -40,7 +41,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.StringLenComparator;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -477,18 +477,9 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
     String convertedPath = currentPath.getAbsolutePath();
     convertedPath = (currentPath.isDirectory() && (! convertedPath.endsWith(File.separator))) ? convertedPath + File.separator :
         convertedPath;
-    final List<String> paths;
     synchronized (myMonitor) {
-      paths = new ArrayList<String>(myMapping.getFileRoots());
+      return myMapping.getRootForPath(convertedPath);
     }
-    Collections.sort(paths, StringLenComparator.getDescendingInstance());
-
-    for (String path : paths) {
-      if (FileUtil.startsWith(convertedPath, path)) {
-        return path;
-      }
-    }
-    return null;
   }
 
   public VirtualFile[] getNotFilteredRoots() {
@@ -528,26 +519,30 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   }
 
   public void loadState(final SvnMappingSavedPart state) {
-    final SvnMapping mapping = new SvnMapping();
-    final SvnMapping realMapping = new SvnMapping();
-
     ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).addInitializationRequest(
       VcsInitObject.AFTER_COMMON, new DumbAwareRunnable() {
         public void run() {
-          try {
-            fillMapping(mapping, state.getMappingRoots());
-            fillMapping(realMapping, state.getMoreRealMappingRoots());
-          } catch (ProcessCanceledException e) {
-            throw e;
-          } catch (Throwable t) {
-            LOG.info(t);
-            return;
-          }
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              final SvnMapping mapping = new SvnMapping();
+              final SvnMapping realMapping = new SvnMapping();
+              try {
+                fillMapping(mapping, state.getMappingRoots());
+                fillMapping(realMapping, state.getMoreRealMappingRoots());
+              } catch (ProcessCanceledException e) {
+                throw e;
+              } catch (Throwable t) {
+                LOG.info(t);
+                return;
+              }
 
-          synchronized (myMonitor) {
-            myMapping.copyFrom(mapping);
-            myMoreRealMapping.copyFrom(realMapping);
-          }
+              synchronized (myMonitor) {
+                myMapping.copyFrom(mapping);
+                myMoreRealMapping.copyFrom(realMapping);
+              }
+            }
+          });
         }
     });
   }
