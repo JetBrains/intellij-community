@@ -230,7 +230,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
                   final PsiFile containingFile = element.getContainingFile();
                   final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
                   for (RangeMarker occurrenceMarker : myOccurrenceMarkers) {
-                    restoreExpression(containingFile, (PsiVariable)vars[0], elementFactory, occurrenceMarker, myExpressionText);
+                    if (restoreExpression(containingFile, (PsiVariable)vars[0], elementFactory, occurrenceMarker, myExpressionText) == null) return;
                   }
                   element.delete();
                 }
