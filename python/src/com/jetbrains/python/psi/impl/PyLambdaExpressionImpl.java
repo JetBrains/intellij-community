@@ -6,6 +6,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -55,6 +56,12 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     // TODO: move it to PyParamList
     PyParameter[] parameters = getParameterList().getParameters();
     return processParamLayer(parameters, processor, state, lastParent);
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    ControlFlowCache.clear(this);
   }
 
   private boolean processParamLayer(@NotNull final PyParameter[] parameters,

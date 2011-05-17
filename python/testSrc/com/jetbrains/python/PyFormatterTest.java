@@ -1,9 +1,12 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
@@ -108,6 +111,34 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testPsiFormatting() { // IDEA-69724
+    String initial =
+      "def method_name(\n" +
+      "   desired_impulse_response,\n" +
+      " desired_response_parameters,\n" +
+      " inverse_filter_length, \n" +
+      " observed_impulse_response):\n" +
+      " #  Extract from here to ...\n" +
+      "   desired_impulse_response = {'dirac, 'gaussian', logistic_derivative'}\n" +
+      "return desired,                o";
+    
+    final PsiFile file = PyElementGenerator.getInstance(myFixture.getProject()).createDummyFile(LanguageLevel.PYTHON30, initial);
+    final PsiElement reformatted = CodeStyleManager.getInstance(myFixture.getProject()).reformat(file);
+
+    String expected =
+      "def method_name(\n" +
+      "desired_impulse_response,\n" +
+      "desired_response_parameters,\n" +
+      "inverse_filter_length,\n" +
+      "observed_impulse_response):\n" +
+      "#  Extract from here to ...\n" +
+      "    desired_impulse_response = {'dirac, '\n" +
+      "    gaussian\n" +
+      "    ', logistic_derivative'}\n" +
+      "    return desired, o";
+    assertEquals(expected, reformatted.getText());
+  }
+  
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

@@ -159,12 +159,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyNamedParameter(final PyNamedParameter node) {
-    final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
-    myBuilder.addNode(instruction);
     final PyExpression defaultValue = node.getDefaultValue();
     if (defaultValue != null) {
       defaultValue.accept(this);
     }
+    final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
+    myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
   }
 
@@ -610,25 +610,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyLambdaExpression(final PyLambdaExpression node) {
     myBuilder.startNode(node);
-    for (PyParameter parameter : node.getParameterList().getParameters()){
-      final PyExpression value = parameter.getDefaultValue();
-      if (value != null){
-        value.accept(this);
-      }
-      final PyNamedParameter namedParameter = parameter.getAsNamed();
-      if (namedParameter != null){
-        final PsiElement paramName = namedParameter.getFirstChild();
-        final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, paramName,
-                                                                                     parameter.getName(),
-                                                                                     ReadWriteInstruction.ACCESS.WRITE);
-        myBuilder.addNode(instruction);
-        myBuilder.checkPending(instruction);
-      }
-    }
-    final PyExpression body = node.getBody();
-    if (body != null){
-      body.accept(this);
-    }
   }
 
   @Override
