@@ -81,6 +81,10 @@ class NavBarItem extends SimpleColoredComponent {
     return myAttributes;
   }
 
+  public String getText() {
+    return myText;
+  }
+
   void update() {
     clear();
 
