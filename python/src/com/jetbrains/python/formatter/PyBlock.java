@@ -141,7 +141,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = Indent.getContinuationIndent();
+        childIndent = Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.ARGUMENT_LIST) {
@@ -152,7 +152,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION) {
+    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACE) {
         childIndent = Indent.getNoneIndent();
       }
@@ -211,7 +211,9 @@ public class PyBlock implements ASTBlock {
 
   private boolean needListAlignment(ASTNode child) {
     IElementType childType = child.getElementType();
-    if (PyTokenTypes.OPEN_BRACES.contains(childType)) {
+    ASTNode firstGrandchild = child.getFirstChildNode();
+    IElementType firstGrandchildType = firstGrandchild == null ? null : firstGrandchild.getElementType();
+    if (PyTokenTypes.OPEN_BRACES.contains(childType) || PyTokenTypes.OPEN_BRACES.contains(firstGrandchildType)) {
       return false;
     }
     if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {

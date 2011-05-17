@@ -192,6 +192,26 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "    <caret>params=1)");
   }
 
+  public void testEnterInSet() {  // PY-1947
+    doTest("test_set = {<caret>'some_value'}",
+           "test_set = {\n" +
+           "    <caret>'some_value'}");
+
+  }
+
+  public void testEnterInList() {  // PY-1947
+    doTest("test_list = [<caret>'some_value']",
+           "test_list = [\n" +
+           "    <caret>'some_value']");
+  }
+
+  public void testEnterInDictInTuple() {  // PY-1947
+    doTest("td = ({<caret>})",
+           "td = ({\n" +
+           "    <caret>\n" +
+           "})");
+  }
+
   public void testIndentAfterComment() {   // PY-641
     doTest("def foo():\n    #some_call()<caret>\n    another_call()", "def foo():\n    #some_call()\n    <caret>\n    another_call()");
   }
