@@ -92,6 +92,10 @@ public class FileReferenceSet {
     reparse(str);
   }
 
+  protected String getNewAbsolutePath(PsiFileSystemItem root, String relativePath) {
+    return absoluteUrlNeedsStartSlash() ? "/" + relativePath : relativePath;
+  }
+
   public static FileReferenceSet createSet(PsiElement element, final boolean soft, boolean endingSlashNotAllowed, final boolean urlEncoded) {
 
     String text;

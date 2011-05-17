@@ -431,7 +431,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       if (relativePath == null) {
         return getElement();
       }
-      newName = myFileReferenceSet.absoluteUrlNeedsStartSlash() ? "/" + relativePath : relativePath  ;
+      newName = myFileReferenceSet.getNewAbsolutePath(root, relativePath);
 
     } else { // relative path
       PsiFileSystemItem curItem = null;
