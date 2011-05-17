@@ -15,8 +15,12 @@
  */
 package org.jetbrains.android.inspections;
 
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.WrappingConverter;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import org.jetbrains.android.dom.AndroidDomElement;
+import org.jetbrains.android.dom.converters.AndroidPackageConverter;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -46,5 +50,11 @@ public class AndroidDomInspection extends BasicDomElementsInspection<AndroidDomE
   @NotNull
   public String getShortName() {
     return "AndroidDomInspection";
+  }
+
+  @Override
+  protected boolean shouldCheckResolveProblems(GenericDomValue value) {
+    final Converter realConverter = WrappingConverter.getDeepestConverter(value.getConverter(), value);
+    return !(realConverter instanceof AndroidPackageConverter);
   }
 }
