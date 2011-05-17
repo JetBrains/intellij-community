@@ -16,7 +16,11 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.formatting.WhiteSpaceFormattingStrategy;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Abstract common {@link WhiteSpaceFormattingStrategy} implementation that doesn't replace default strategy and doesn't
@@ -41,5 +45,55 @@ public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpace
   {
     // Does nothing
     return whiteSpaceText;
+  }
+
+  @Override
+  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
+                                                  @NotNull PsiElement startElement,
+                                                  final int startOffset,
+                                                  final int endOffset)
+  {
+    assert startElement.getTextRange().contains(startOffset)
+      : String.format("Element: %s, range: %s, offset: %d", startElement, startElement.getTextRange(), startOffset); 
+    
+    // Collect target text from the PSI elements and delegate to the text-based method.
+    StringBuilder buffer = new StringBuilder();
+    for (PsiElement current = startElement; current != null && current.getTextRange().getStartOffset() < endOffset; current = next(current)) {
+      final TextRange range = current.getTextRange();
+      final String text = current.getText();
+      if (StringUtil.isEmpty(text)) {
+        continue;
+      }
+      
+      int start = startOffset > range.getStartOffset() ? startOffset - range.getStartOffset() : 0;
+      if (start >= text.length()) {
+        continue;
+      }
+
+      int end = endOffset < range.getEndOffset() ? text.length() - (range.getEndOffset() - endOffset) : text.length();
+      if (end <= start) {
+        continue;
+      }
+
+      if (start == 0 && end == text.length()) {
+        buffer.append(text);
+      }
+      else {
+        buffer.append(text.substring(start, end));
+      } 
+    }
+    
+    return adjustWhiteSpaceIfNecessary(whiteSpaceText, buffer, 0, endOffset - startOffset);
+  }
+
+  @Nullable
+  private static PsiElement next(final @NotNull PsiElement element) {
+    for (PsiElement anchor = element; anchor != null; anchor = anchor.getParent()) {
+      final PsiElement result = element.getNextSibling();
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
   }
 }

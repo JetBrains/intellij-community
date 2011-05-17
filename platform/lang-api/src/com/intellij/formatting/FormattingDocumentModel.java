@@ -67,7 +67,7 @@ public interface FormattingDocumentModel {
   boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset);
 
   /**
-   * There is a possible case that white space to apply because of formatter processing should be additionally adjusted. That is
+   * There is a possible case that white space to apply should be additionally adjusted because of formatter processing. That is
    * true, for example, for Python where it may be mandatory to use <code>'\'</code> symbol at multi-line expression.
    * <p/>
    * Current method adjusts given white space text if necessary.
@@ -75,10 +75,12 @@ public interface FormattingDocumentModel {
    * @param whiteSpaceText    white space text to use by default
    * @param startOffset       start offset of the document text that is intended to be replaced by the given white space text (inclusive)
    * @param endOffset         end offset of the document text that is intended to be replaced by the given white space text (exclusive)
+   * @param changedViaPsi     flag that identifies whether formatter introduces changes via PSI tree or directly via the document
    * @return                  white space to use for replacing document symbols at <code>[startOffset; endOffset)</code> region
    */
   @NotNull
-  CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset);
+  CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset,
+                                           boolean changedViaPsi);
 
   ///**
   // * Allows to answer if given symbol is treated by the current model as white space symbol during formatting.

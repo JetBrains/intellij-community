@@ -117,7 +117,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     }
 
     CharSequence whiteSpaceToUse = getDocumentModel().adjustWhiteSpaceIfNecessary(
-      whiteSpace, textRange.getStartOffset(), textRange.getEndOffset()
+      whiteSpace, textRange.getStartOffset(), textRange.getEndOffset(), true
     );
 
     myDocument.replaceString(textRange.getStartOffset(),

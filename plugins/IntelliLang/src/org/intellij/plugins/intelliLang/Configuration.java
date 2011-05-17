@@ -440,8 +440,8 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   public boolean setHostInjectionEnabled(final PsiLanguageInjectionHost host, final Collection<String> languages, final boolean enabled) {
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
     final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
-    for (String supportId : getAllInjectorIds()) {
-      for (BaseInjection injection : getInjections(supportId)) {
+    for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
+      for (BaseInjection injection : getInjections(support.getId())) {
         if (!languages.contains(injection.getInjectedLanguageId())) continue;
         boolean replace = false;
         final ArrayList<InjectionPlace> newPlaces = new ArrayList<InjectionPlace>();
@@ -478,10 +478,6 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   @NotNull
   public List<BaseInjection> getInjections(final String injectorId) {
     return Collections.unmodifiableList(myInjections.get(injectorId));
-  }
-
-  public Set<String> getAllInjectorIds() {
-    return Collections.unmodifiableSet(myInjections.keySet());
   }
 
   public void replaceInjectionsWithUndo(final Project project,

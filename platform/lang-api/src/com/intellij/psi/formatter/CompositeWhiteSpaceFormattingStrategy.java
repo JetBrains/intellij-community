@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.formatting.WhiteSpaceFormattingStrategy;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -83,6 +84,19 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
     CharSequence result = whiteSpaceText;
     for (WhiteSpaceFormattingStrategy strategy : myStrategies) {
       result = strategy.adjustWhiteSpaceIfNecessary(result, text, startOffset, endOffset);
+    }
+    return result;
+  }
+
+  @Override
+  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
+                                                  @NotNull PsiElement startElement,
+                                                  int startOffset,
+                                                  int endOffset)
+  {
+    CharSequence result = whiteSpaceText;
+    for (WhiteSpaceFormattingStrategy strategy : myStrategies) {
+      result = strategy.adjustWhiteSpaceIfNecessary(result, startElement, startOffset, endOffset);
     }
     return result;
   }

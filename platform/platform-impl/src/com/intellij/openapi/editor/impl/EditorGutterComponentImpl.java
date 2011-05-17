@@ -50,6 +50,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -122,7 +123,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           }
         }
       })
-      .setImageProvider(new Function<DnDActionInfo, DnDImage>() {
+      .setImageProvider(new NullableFunction<DnDActionInfo, DnDImage>() {
         @Override
         public DnDImage fun(DnDActionInfo info) {
           return new DnDImage(IconUtil.toImage(getGutterRenderer(info.getPoint()).getIcon()));
@@ -695,7 +696,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     final int width = getFoldingAnchorWidth();
 
     doForVisibleFoldRegions(
-      new Function<FoldRegion, Void>() {
+      new NullableFunction<FoldRegion, Void>() {
         @Override
         public Void fun(FoldRegion foldRegion) {
           drawAnchor(foldRegion, width, clip, g, anchorX, false, false);
@@ -712,7 +713,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private void doForVisibleFoldRegions(@NotNull Function<FoldRegion, Void> action, int firstVisibleOffset, int lastVisibleOffset) {
+  private void doForVisibleFoldRegions(@NotNull NullableFunction<FoldRegion, Void> action, int firstVisibleOffset, int lastVisibleOffset) {
     FoldRegion[] visibleFoldRegions = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
     final Document document = myEditor.getDocument();
     for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
@@ -754,7 +755,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     doForVisibleFoldRegions(
-      new Function<FoldRegion, Void>() {
+      new NullableFunction<FoldRegion, Void>() {
         @Override
         public Void fun(FoldRegion foldRegion) {
           drawAnchor(foldRegion, width, clip, g, anchorX, false, true);

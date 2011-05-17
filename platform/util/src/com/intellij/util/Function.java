@@ -25,7 +25,7 @@ import java.util.Collection;
  */
 @SuppressWarnings({"unchecked"})
 public interface Function<Param, Result> {
-  @Nullable Result fun(Param param);
+  Result fun(Param param);
 
   /**
    * @see FunctionUtil#id()
