@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.typeMigration.rules.DisjunctionTypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.RootTypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,6 +43,7 @@ public class TypeMigrationRules {
   public TypeMigrationRules(final PsiType root) {
     myRootType = root;
     myConversionRules.add(new RootTypeConversionRule());
+    myConversionRules.add(new DisjunctionTypeConversionRule());
     ContainerUtil.addAll(myConversionRules, Extensions.getExtensions(TypeConversionRule.EP_NAME));
   }
 
