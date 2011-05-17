@@ -357,14 +357,14 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           chooseAvd();
         }
         if (myAvdName != null) {
-          myFacet.launchEmulator(myAvdName, myCommandLine);
+          myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
         }
         else if (getProcessHandler().isStartNotified()) {
           getProcessHandler().destroyProcess();
         }
       }
       else {
-        myFacet.launchEmulator(myAvdName, myCommandLine);
+        myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
       }
     }
   }

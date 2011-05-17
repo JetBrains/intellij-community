@@ -239,7 +239,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
         @Override
         public void run() {
           final Project project = module.getProject();
-          AndroidUtils.runExternalTool(project, commandLine, true);
+          AndroidUtils.runExternalTool(project, commandLine, true, null);
 
           StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
             public void run() {
