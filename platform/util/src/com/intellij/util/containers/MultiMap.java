@@ -167,7 +167,7 @@ public class MultiMap<K, V> {
 
             @Override
             public void remove() {
-              throw new UnsupportedOperationException();
+              itr.remove();
             }
           };
         }
