@@ -15,6 +15,11 @@ public interface InspectionToolCmdlineOptions extends InspectionToolCmdlineOptio
    */
   int getVerboseLevelProperty();
 
+  /**
+   * @return If true help message wont be outputted
+   */
+  boolean suppressHelp();
+
   void validate() throws CmdlineArgsValidationException;
 
   /**

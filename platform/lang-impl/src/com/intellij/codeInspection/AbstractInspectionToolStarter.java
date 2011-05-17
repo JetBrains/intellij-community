@@ -24,7 +24,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
       return;
     }
 
-    if (verbose(myOptions)) {
+    if (verbose(myOptions) && !myOptions.suppressHelp()) {
       final StringBuilder buff = new StringBuilder("Options:");
       printArgs(args, buff);
       buff.append("\n");
@@ -44,7 +44,9 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
       myOptions.validate();
     } catch (InspectionToolCmdlineOptions.CmdlineArgsValidationException e) {
       System.err.println(e.getMessage());
-      printHelpAndExit(args, myOptions);
+      if (!myOptions.suppressHelp()) {
+        printHelpAndExit(args, myOptions);
+      }
       return;
     }
 
