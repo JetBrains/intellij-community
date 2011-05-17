@@ -62,7 +62,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   public ConcatenationInjector(Configuration configuration, Project project) {
     myConfiguration = configuration;
     myProject = project;
-    mySupport = InjectorUtils.findInjectionSupport(LanguageInjectionSupport.JAVA_SUPPORT_ID);
+    mySupport = InjectorUtils.findNotNullInjectionSupport(LanguageInjectionSupport.JAVA_SUPPORT_ID);
     myXmlIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {
       public Result<Collection<String>> compute() {
         final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();

@@ -258,7 +258,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
 
   public PatternCompiler<PsiElement> getCompiler() {
-    return PatternCompilerFactory.getFactory().getPatternCompiler(InjectorUtils.findInjectionSupport(getSupportId()).getPatternClasses());
+    return PatternCompilerFactory.getFactory().getPatternCompiler(InjectorUtils.getPatternClasses(getSupportId()));
   }
 
   public void generatePlaces() {

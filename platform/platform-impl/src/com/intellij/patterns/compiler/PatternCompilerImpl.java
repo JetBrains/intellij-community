@@ -84,16 +84,11 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   public ElementPattern<T> compileElementPattern(final String text) {
     final Node node = processElementPatternText(text, new Function<Frame, Object>() {
       public Node fun(final Frame frame) {
-        try {
-          final Object[] args = frame.params.toArray();
-          for (int i = 0, argsLength = args.length; i < argsLength; i++) {
-            args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
-          }
-          return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args);
+        final Object[] args = frame.params.toArray();
+        for (int i = 0, argsLength = args.length; i < argsLength; i++) {
+          args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
         }
-        catch (Throwable throwable) {
-          throw new IllegalArgumentException(text, throwable);
-        }
+        return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args);
       }
     });
     return new LazyPresentablePattern(node);

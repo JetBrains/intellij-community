@@ -57,7 +57,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
   public BaseInjectionPanel(BaseInjection injection, Project project) {
     super(injection, project);
     $$$setupUI$$$(); // see IDEA-9987
-    myHelper = PatternCompilerFactory.getFactory().getPatternCompiler(InjectorUtils.findInjectionSupport(injection.getSupportId()).getPatternClasses());
+    myHelper = injection.getCompiler();
     final FileType groovy = FileTypeManager.getInstance().getFileTypeByExtension("groovy");
     final FileType realFileType = groovy == UnknownFileType.INSTANCE ? FileTypes.PLAIN_TEXT : groovy;
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("injection." + realFileType.getDefaultExtension(), realFileType, "", 0, true);
