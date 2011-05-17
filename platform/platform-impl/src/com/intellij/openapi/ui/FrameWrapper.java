@@ -29,6 +29,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -294,7 +295,10 @@ public class FrameWrapper implements Disposable, DataProvider {
     private MyJFrame(IdeFrame parent) throws HeadlessException {
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
-      setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
+
+      if (SystemInfo.isMac) {
+        setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
+      }
 
       MouseGestureManager.getInstance().add(this);
     }
