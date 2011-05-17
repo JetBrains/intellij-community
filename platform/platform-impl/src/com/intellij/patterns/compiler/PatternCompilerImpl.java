@@ -591,7 +591,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       if (myCompiledPattern == null) {
         Object result;
         try {
-          result = execute(myNode);
+          result = myNode.target == ERROR_NODE? ALWAYS_FALSE : execute(myNode);
         }
         catch (Throwable throwable) {
           LOG.error(toString(), throwable);
