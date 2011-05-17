@@ -116,10 +116,11 @@ public class PsiDisjunctionType extends PsiType {
   @Override
   public PsiType[] getSuperTypes() {
     final PsiType lub = getLeastUpperBound();
-    final PsiType[] superTypes = lub.getSuperTypes();
-    final PsiType[] result = new PsiType[superTypes.length + 1];
-    result[0] = lub;
-    System.arraycopy(superTypes, 0, result, 1, superTypes.length);
-    return result;
+    if (lub instanceof PsiIntersectionType) {
+      return ((PsiIntersectionType)lub).getConjuncts();
+    }
+    else {
+      return new PsiType[]{lub};
+    }
   }
 }
