@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -65,5 +66,24 @@ public interface WhiteSpaceFormattingStrategy {
    * @return                  symbols to use for replacing <code>[startOffset; endOffset)</code> sub-sequence of the given text
    */
   @NotNull
-  CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, @NotNull CharSequence text, int startOffset, int endOffset);
+  CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, @NotNull CharSequence text, int startOffset,
+                                           int endOffset);
+
+            
+  /**
+   * PSI-based version of {@link #adjustWhiteSpaceIfNecessary(CharSequence, CharSequence, int, int)}.
+   * <p/>
+   * There is a possible case that particular changes are performed to PSI tree and it's not yet synchronized with the underlying
+   * document. Hence, we can't directly work with document char sequence but need to traverse PSI tree instead. I.e. we start with
+   * particular PSI element that contains given start offset and process its right siblings/relatives until given end offset
+   * is reached.
+   * 
+   * @param whiteSpaceText    white space text to use by default for replacing sub-sequence of the given text
+   * @param startElement      PSI element that contains given start offset
+   * @param startOffset       start offset to use with the given text (inclusive)
+   * @param endOffset         end offset to use with the given text (exclusive)
+   * @return                  symbols to use for replacing <code>[startOffset; endOffset)</code> sub-sequence of the given text
+   */
+  CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, @NotNull PsiElement startElement, int startOffset,
+                                           int endOffset);
 }
