@@ -771,6 +771,18 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null));
   }
 
+  // test type migration from disjunction type with interfaces
+  public void testT130() throws Exception {
+    doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("Test.E", null));
+  }
+
+  // test type migration between disjunction types
+  public void testT131() throws Exception {
+    doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("Test.E2 | Test.E1", null));
+  }
+
   private void doTestCatchParameter(final PsiType rootType, final PsiType migrationType) throws Exception {
     start(new RulesProvider() {
       @Override
@@ -783,10 +795,8 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
       @Override
       public PsiElement victims(final PsiClass aClass) {
-        final PsiMethod[] methods = aClass.getMethods();
-        assert methods.length == 1 : aClass.getText();
-        final PsiCatchSection catchSection = PsiTreeUtil.findChildOfType(methods[0], PsiCatchSection.class);
-        assert catchSection != null : methods[0].getText();
+        final PsiCatchSection catchSection = PsiTreeUtil.findChildOfType(aClass, PsiCatchSection.class);
+        assert catchSection != null : aClass.getText();
         final PsiParameter parameter = catchSection.getParameter();
         assert parameter != null : catchSection.getText();
         return parameter;
