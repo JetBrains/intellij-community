@@ -85,8 +85,10 @@ public class InjectionsSettingsUI implements Configurable {
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
     myProject = project;
 
-    myInfos = configuration instanceof Configuration.Prj? new CfgInfo[] {new CfgInfo(((Configuration.Prj)configuration).getParentConfiguration()), new CfgInfo(configuration)}
-                                                        : new CfgInfo[] {new CfgInfo(configuration)};
+    final CfgInfo currentInfo = new CfgInfo(configuration, "project");
+    myInfos = configuration instanceof Configuration.Prj ?
+              new CfgInfo[]{new CfgInfo(((Configuration.Prj)configuration).getParentConfiguration(), "global"), currentInfo}
+                                                         : new CfgInfo[]{currentInfo};
 
     myRoot = new JPanel(new BorderLayout());
 
@@ -151,7 +153,7 @@ public class InjectionsSettingsUI implements Configurable {
       public void update(final AnActionEvent e) {
         boolean enabled = false;
         for (InjInfo info : getSelectedInjections()) {
-          if (!info.isBundled()) {
+          if (!info.bundled) {
             enabled = true;
             break;
           }
@@ -235,7 +237,7 @@ public class InjectionsSettingsUI implements Configurable {
           if (cfg == null) return;
           for (InjInfo info : injections) {
             if (info.cfgInfo == cfg) continue;
-            if (info.isBundled()) continue;
+            if (info.bundled) continue;
             info.cfgInfo.injectionInfos.remove(info);
             cfg.addInjection(info.injection);
           }
@@ -256,7 +258,7 @@ public class InjectionsSettingsUI implements Configurable {
         private CfgInfo getTargetCfgInfo(final List<InjInfo> injections) {
           CfgInfo cfg = null;
           for (InjInfo info : injections) {
-            if (info.isBundled()) {
+            if (info.bundled) {
               continue;
             }
             if (cfg == null) cfg = info.cfgInfo;
@@ -427,7 +429,7 @@ public class InjectionsSettingsUI implements Configurable {
     if (selectedRow < 0) return;
     final List<InjInfo> selected = getSelectedInjections();
     for (InjInfo info : selected) {
-      if (info.isBundled()) continue;
+      if (info.bundled) continue;
       info.cfgInfo.injectionInfos.remove(info);
     }
     myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
@@ -548,7 +550,7 @@ public class InjectionsSettingsUI implements Configurable {
         return Comparing.compare(o1.injection.getDisplayName(), o2.injection.getDisplayName());
       }
     };
-    return new ColumnInfo[]{new ColumnInfo<InjInfo, Boolean>(" ") {
+    final ColumnInfo[] columnInfos = {new ColumnInfo<InjInfo, Boolean>(" ") {
       @Override
       public Class getColumnClass() {
         return Boolean.class;
@@ -604,6 +606,36 @@ public class InjectionsSettingsUI implements Configurable {
         return languageCellRenderer;
       }
     }};
+    if (myInfos.length > 1) {
+      final TableCellRenderer typeRenderer = createTypeRenderer();
+      return ArrayUtil.append(columnInfos, new ColumnInfo<InjInfo, String>("Type") {
+        @Override
+        public String valueOf(final InjInfo info) {
+          return info.bundled ? "bundled" : info.cfgInfo.title;
+        }
+
+        @Override
+        public TableCellRenderer getRenderer(final InjInfo injInfo) {
+          return typeRenderer;
+        }
+
+        @Override
+        public int getWidth(final JTable table) {
+          return table.getFontMetrics(table.getFont()).stringWidth(StringUtil.repeatSymbol('m', 6));
+        }
+
+        @Override
+        public Comparator<InjInfo> getComparator() {
+          return new Comparator<InjInfo>() {
+            @Override
+            public int compare(final InjInfo o1, final InjInfo o2) {
+              return Comparing.compare(valueOf(o1), valueOf(o2));
+            }
+          };
+        }
+      });
+    }
+    return columnInfos;
   }
 
   private static BooleanTableCellRenderer createBooleanCellRenderer() {
@@ -653,19 +685,30 @@ public class InjectionsSettingsUI implements Configurable {
         final InjInfo info = (InjInfo)value;
         // fix for a marvellous Swing peculiarity: AccessibleJTable likes to pass null here
         if (info == null) return myLabel;
-        final boolean projectLevel = myInfos.length > 1 && info.cfgInfo != myInfos[0];
         final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
         final String supportId = info.injection.getSupportId();
         myText.append(supportId + ": ", grayAttrs);
         mySupports.get(supportId).setupPresentation(info.injection, myText, isSelected);
-        if (projectLevel) {
-          for (ListIterator<SimpleTextAttributes> it = myText.getAttributes().listIterator(); it.hasNext(); ) {
-            final SimpleTextAttributes attributes = it.next();
-            it.set(attributes.derive(SimpleTextAttributes.STYLE_BOLD, null, null, null));
-          }
-        }
         myText.appendToComponent(myLabel);
         myText.clear();
+        setLabelColors(myLabel, table, isSelected, row);
+        return myLabel;
+      }
+    };
+  }
+
+  private static TableCellRenderer createTypeRenderer() {
+    return new TableCellRenderer() {
+      final SimpleColoredComponent myLabel = new SimpleColoredComponent();
+
+      public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus,
+                                                     final int row,
+                                                     final int column) {
+        myLabel.clear();
+        final String info = (String)value;
+        if (info == null) return myLabel;
+        final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
+        myLabel.append(info, grayAttrs);
         setLabelColors(myLabel, table, isSelected, row);
         return myLabel;
       }
@@ -768,9 +811,11 @@ public class InjectionsSettingsUI implements Configurable {
     final List<BaseInjection> originalInjections;
     final List<InjInfo> injectionInfos = new ArrayList<InjInfo>();
     final THashSet<BaseInjection> bundledInjections = new THashSet<BaseInjection>(new SameParamsAndPlacesStrategy());
+    final String title;
 
-    public CfgInfo(Configuration cfg) {
+    public CfgInfo(Configuration cfg, final String title) {
       this.cfg = cfg;
+      this.title = title;
       bundledInjections.addAll(cfg.getDefaultInjections());
       originalInjections = ContainerUtil
         .concat(InjectorUtils.getActiveInjectionSupportIds(), new Function<String, Collection<? extends BaseInjection>>() {
@@ -846,14 +891,12 @@ public class InjectionsSettingsUI implements Configurable {
   private static class InjInfo {
     final BaseInjection injection;
     final CfgInfo cfgInfo;
+    final boolean bundled;
 
     private InjInfo(final BaseInjection injection, final CfgInfo cfgInfo) {
       this.injection = injection;
       this.cfgInfo = cfgInfo;
-    }
-
-    boolean isBundled() {
-      return cfgInfo.bundledInjections.contains(injection);
+      bundled = cfgInfo.bundledInjections.contains(injection);
     }
   }
 

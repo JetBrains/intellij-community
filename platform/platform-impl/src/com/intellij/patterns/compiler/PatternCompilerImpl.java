@@ -51,8 +51,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     myStaticMethods = getStaticMethods(patternClasses);
   }
 
+  private static final Node ERROR_NODE = new Node(null, null, null);
   @Override
-  @Nullable
   public ElementPattern<T> createElementPattern(final String text, final String displayName) {
     try {
       return compileElementPattern(text);
@@ -60,7 +60,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     catch (Exception ex) {
       final Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
       LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
-      return null;
+      return new LazyPresentablePattern<T>(new Node(ERROR_NODE, text, null));
     }
   }
 
@@ -271,7 +271,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
   private static Object makeParam(final String s) {
-    if (s.length() > 2 && s.startsWith("\"") && s.endsWith("\"")) return s.substring(1, s.length()-1);
+    if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) return s.substring(1, s.length()-1);
     try {
       return Integer.valueOf(s);
     }
@@ -608,6 +608,9 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     }
 
     private StringBuilder toString(final Node node, final StringBuilder sb) {
+      if (node.target == ERROR_NODE) {
+        return sb.append(node.method);
+      }
       if (node.target != null) {
         toString(node.target, sb);
         sb.append('.');
@@ -621,7 +624,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           toString((Node)arg, sb);
         }
         else if (arg instanceof String) {
-          sb.append('\"').append(StringUtil.escapeStringCharacters((String)arg)).append('\"');
+          // todo no escaping!
+          sb.append('\"').append(arg).append('\"');
         }
         else if (arg instanceof Number) {
           sb.append(arg);
