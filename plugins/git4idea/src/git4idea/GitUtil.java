@@ -246,14 +246,16 @@ public class GitUtil {
    */
   @Nullable
   public static VirtualFile getGitRootOrNull(final FilePath filePath) {
-    File file = filePath.getIOFile();
-    while (file != null && (!file.exists() || !file.isDirectory() || !new File(file, ".git").exists())) {
-      file = file.getParentFile();
+    return getGitRootOrNull(filePath.getIOFile());
+  }
+
+  @Nullable
+  public static VirtualFile getGitRootOrNull(final File file) {
+    File root = file;
+    while (root != null && (!root.exists() || !root.isDirectory() || !new File(root, ".git").exists())) {
+      root = root.getParentFile();
     }
-    if (file == null) {
-      return null;
-    }
-    return LocalFileSystem.getInstance().findFileByIoFile(file);
+    return LocalFileSystem.getInstance().findFileByIoFile(root);
   }
 
   /**
