@@ -25,6 +25,7 @@ import com.android.sdklib.SdkManager;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
@@ -328,7 +329,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         commandLine.addParameter("-avd");
         commandLine.addParameter(avdName);
       }
-      String[] params = commands.split("\\s+");
+      String[] params = ParametersList.parse(commands);
       for (String s : params) {
         if (s.length() > 0) {
           commandLine.addParameter(s);
