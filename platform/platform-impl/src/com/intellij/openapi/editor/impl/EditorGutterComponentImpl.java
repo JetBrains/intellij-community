@@ -688,9 +688,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return new VisualPosition(myEditor.offsetToVisualPosition(offset).line, 0);
   }
 
-  private void doPaintFoldingTree(Graphics2D g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
-    int anchorX = getFoldingAreaOffset();
-    int width = getFoldingAnchorWidth();
+  private void doPaintFoldingTree(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+    final int anchorX = getFoldingAreaOffset();
+    final int width = getFoldingAnchorWidth();
 
     doForVisibleFoldRegions(
       new NullableFunction<FoldRegion, Void>() {
@@ -739,13 +739,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     doPaintFoldingBoxBackground((Graphics2D)g, clip, firstVisibleOffset, lastVisibleOffset);
   }
 
-  private void doPaintFoldingBoxBackground(Graphics2D g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+  private void doPaintFoldingBoxBackground(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     if (!isFoldingOutlineShown()) return;
 
     UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, null, getOutlineColor(false));
 
-    int anchorX = getFoldingAreaOffset();
-    int width = getFoldingAnchorWidth();
+    final int anchorX = getFoldingAreaOffset();
+    final int width = getFoldingAnchorWidth();
 
     if (myActiveFoldRegion != null) {
       drawFoldingLines(myActiveFoldRegion, clip, width, anchorX, g);
