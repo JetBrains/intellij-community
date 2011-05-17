@@ -98,7 +98,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param preserveCase the value of the Preserve Case flag.
    */
   public void setPreserveCase(boolean preserveCase) {
+    boolean changed = isPreserveCase != preserveCase;
     isPreserveCase = preserveCase;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   private boolean isPreserveCase = false;
