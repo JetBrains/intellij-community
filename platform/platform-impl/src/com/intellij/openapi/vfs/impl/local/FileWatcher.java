@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/*
+/**
  * @author max
  */
 public class FileWatcher {
@@ -198,6 +198,7 @@ public class FileWatcher {
     for (String path : paths) {
       String watched = path;
       final String canonical = getCanonicalPath(path);
+      //noinspection ConstantConditions
       if (!PATH_COMPARATOR.fun(path, canonical)) {
         mapping.add(Pair.create((watched = canonical), path));
       }
@@ -211,7 +212,7 @@ public class FileWatcher {
       return new File(path).getCanonicalPath();
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.error(path, e);
       return path;
     }
   }
