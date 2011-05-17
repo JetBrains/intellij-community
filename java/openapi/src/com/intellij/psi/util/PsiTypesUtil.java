@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,12 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 public class PsiTypesUtil {
   @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<String, String>();
@@ -118,17 +115,5 @@ public class PsiTypesUtil {
 
   public static PsiClassType getClassType(@NotNull PsiClass psiClass) {
     return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
-  }
-
-  @NotNull
-  public static Collection<PsiClass> getPsiClasses(@NotNull final Collection<PsiType> types) {
-    final Set<PsiClass> result = new HashSet<PsiClass>();
-    for (PsiType type : types) {
-      final PsiClass psiClass = getPsiClass(type);
-      if (psiClass != null) {
-        result.add(psiClass);
-      }
-    }
-    return result;
   }
 }
