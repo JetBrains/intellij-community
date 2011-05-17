@@ -348,4 +348,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
       settings.setFormat(DocStringFormat.PLAIN);
     }
   }
+
+  public void testNoneInArgList() {  // PY-3464
+    doTest3K();
+  }
 }
