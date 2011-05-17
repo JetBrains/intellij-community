@@ -64,7 +64,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   @Override
   public void searchResultsUpdated(SearchResults sr) {
-    setReplaceDenied(false);
+    //setReplaceDenied(false);
   }
 
   @Override
@@ -149,7 +149,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
         Runnable denyReplace = new Runnable() {
           @Override
           public void run() {
-            setReplaceDenied(true);
+            //setReplaceDenied(true);
           }
         };
         if (unitTestMode) {
@@ -213,8 +213,10 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     if (myReplaceListener != null) {
       myReplaceListener.replacePerformed(occurrence, replacement, editor);
     }
-    setReplaceDenied(true);
+    //setReplaceDenied(true);
+    myLivePreview.inSmartUpdate();
     mySearchResults.updateThreadSafe(findModel, true, result, mySearchResults.getStamp());
+    //myLivePreview.supressUpdate();
     return result;
   }
 
