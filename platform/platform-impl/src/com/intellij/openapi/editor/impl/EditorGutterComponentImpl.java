@@ -50,6 +50,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -691,14 +692,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int anchorX = getFoldingAreaOffset();
     int width = getFoldingAnchorWidth();
 
-    FoldRegion[] visibleFoldRegions = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
-
-    for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
-      if (!visibleFoldRegion.isValid()) continue;
-      if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
-      if (getEndOffset(visibleFoldRegion) < firstVisibleOffset) continue;
-      drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, false);
-    }
+    doForVisibleFoldRegions(
+      new NullableFunction<FoldRegion, Void>() {
+        @Override
+        public Void fun(FoldRegion foldRegion) {
+          drawAnchor(foldRegion, width, clip, g, anchorX, false, false);
+          return null;
+        }
+      },
+      firstVisibleOffset,
+      lastVisibleOffset
+    );
 
     if (myActiveFoldRegion != null) {
       drawAnchor(myActiveFoldRegion, width, clip, g, anchorX, true, true);
@@ -706,6 +710,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
+  private void doForVisibleFoldRegions(@NotNull NullableFunction<FoldRegion, Void> action, int firstVisibleOffset, int lastVisibleOffset) {
+    FoldRegion[] visibleFoldRegions = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
+    final Document document = myEditor.getDocument();
+    for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
+      if (!visibleFoldRegion.isValid()) continue;
+      final int startOffset = visibleFoldRegion.getStartOffset();
+      if (startOffset > lastVisibleOffset) continue;
+      final int endOffset = getEndOffset(visibleFoldRegion);
+      if (endOffset < firstVisibleOffset) continue;
+      if (document.getLineNumber(startOffset) >= document.getLineNumber(endOffset)) {
+        //TODO den remove this check as soon as editor performance on dimension mapping is improved (IDEA-69317)
+        continue;
+      }
+      action.fun(visibleFoldRegion);
+    }
+  }
+  
   private void paintFoldingBackground(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     int lineX = getWhitespaceSeparatorOffset();
     paintBackground(g, clip, getFoldingAreaOffset(), getFoldingAreaWidth());
@@ -726,18 +747,21 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int anchorX = getFoldingAreaOffset();
     int width = getFoldingAnchorWidth();
 
-    FoldRegion[] visibleFoldRegions = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
-
     if (myActiveFoldRegion != null) {
       drawFoldingLines(myActiveFoldRegion, clip, width, anchorX, g);
     }
 
-    for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
-      if (!visibleFoldRegion.isValid()) continue;
-      if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
-      if (getEndOffset(visibleFoldRegion) < firstVisibleOffset) continue;
-      drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, true);
-    }
+    doForVisibleFoldRegions(
+      new NullableFunction<FoldRegion, Void>() {
+        @Override
+        public Void fun(FoldRegion foldRegion) {
+          drawAnchor(foldRegion, width, clip, g, anchorX, false, true);
+          return null;
+        }
+      },
+      firstVisibleOffset,
+      lastVisibleOffset
+    );
   }
 
   public int getWhitespaceSeparatorOffset() {
