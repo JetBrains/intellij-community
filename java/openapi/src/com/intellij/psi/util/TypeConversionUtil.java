@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -672,7 +672,10 @@ public class TypeConversionUtil {
     }
 
     if (left instanceof PsiDisjunctionType) {
-      return isAssignable(((PsiDisjunctionType)left).getLeastUpperBound(), right, allowUncheckedConversion);
+      for (PsiType type : ((PsiDisjunctionType)left).getDisjunctions()) {
+        if (isAssignable(type, right, allowUncheckedConversion)) return true;
+      }
+      return false;
     }
     if (right instanceof PsiDisjunctionType) {
       return isAssignable(left, ((PsiDisjunctionType)right).getLeastUpperBound(), allowUncheckedConversion);
