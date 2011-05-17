@@ -6,7 +6,7 @@
 
 (default) 1.85 # anything not explicitly marked
 
-(built-in) 1.88 # skeletons of all built-in modules are built together
+(built-in) 1.89 # skeletons of all built-in modules are built together
 # Note: modules like itertools, etc are "(built-in)" and are ignored if given separately
 
 # pygame._numericsndarray 1.81
