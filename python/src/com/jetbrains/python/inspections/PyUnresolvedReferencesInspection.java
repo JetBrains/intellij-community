@@ -98,11 +98,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
-      final PyExpression qualifier = node.getQualifier();
-      if (qualifier != null) {
-        qualifier.accept(this);
-        checkSlots(node);
-      }
+      checkSlots(node);
     }
 
     @Override
