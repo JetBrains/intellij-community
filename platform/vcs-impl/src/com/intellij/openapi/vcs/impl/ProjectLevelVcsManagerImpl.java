@@ -252,7 +252,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Nullable
-  public VirtualFile getVcsRootFor(final VirtualFile file) {
+  public VirtualFile getVcsRootFor(final @Nullable VirtualFile file) {
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(file);
     if (mapping == null) {
       return null;
