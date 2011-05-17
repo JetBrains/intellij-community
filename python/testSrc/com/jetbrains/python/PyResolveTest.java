@@ -409,4 +409,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testNestedListComp() {  // PY-3068
     assertResolvesTo(PyTargetExpression.class, "yy");
   }
+
+  public void testSuperclassResolveScope() {  // PY-3554
+    assertResolvesTo(PyClass.class, "date", "datetime.py");
+  }
 }

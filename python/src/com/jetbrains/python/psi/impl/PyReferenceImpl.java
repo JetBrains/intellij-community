@@ -169,18 +169,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     ResolveProcessor processor = new ResolveProcessor(referencedName);
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
+    PsiElement realContext = PyPsiUtils.getRealContext(myElement);
+    PyClass containingClass = PsiTreeUtil.getParentOfType(realContext, PyClass.class);
+    if (containingClass != null && PsiTreeUtil.isAncestor(containingClass.getSuperClassExpressionList(), myElement, false)) {
+      realContext = containingClass;
+    }
+
     PsiElement roof = findResolveRoof(referencedName, realContext);
     PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, roof);
     if ((uexpr != null)) {
-      if ((uexpr instanceof PyClass)) {
-        // is it a case of the bizarre "class Foo(Foo)" construct?
-        PyClass cls = (PyClass)uexpr;
-        if (isSuperClassExpression(cls)) {
-          ret.clear();
-          return ret; // cannot resolve us, the base class ref, to the class being defined
-        }
-      }
       // sort what we got
       for (NameDefiner hit : processor.getDefiners()) {
         ret.poke(hit, getRate(hit));
