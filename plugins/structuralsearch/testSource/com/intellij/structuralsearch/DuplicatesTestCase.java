@@ -10,10 +10,6 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.structuralsearch.duplicates.GroovyDuplicatesProfile;
-import com.intellij.structuralsearch.duplicates.JSDuplicatesProfile;
-import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfile;
-import com.intellij.structuralsearch.duplicates.XmlDuplicatesProfile;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
 import java.io.File;
