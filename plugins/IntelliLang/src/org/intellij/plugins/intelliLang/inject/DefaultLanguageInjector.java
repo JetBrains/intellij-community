@@ -20,10 +20,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +38,11 @@ import java.util.Set;
 public final class DefaultLanguageInjector implements MultiHostInjector {
 
   private final Configuration myInjectionConfiguration;
+  private final LanguageInjectionSupport[] mySupports;
 
   public DefaultLanguageInjector(Configuration configuration) {
     myInjectionConfiguration = configuration;
+    mySupports = InjectorUtils.getActiveInjectionSupports();
   }
 
   @NotNull
@@ -47,9 +51,7 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
   }
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
-    final Set<String> allIds = myInjectionConfiguration.getAllInjectorIds();
-    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
-      if (!allIds.contains(support.getId())) continue;
+    for (LanguageInjectionSupport support : mySupports) {
       if (!support.useDefaultInjector(host)) continue;
       for (BaseInjection injection : myInjectionConfiguration.getInjections(support.getId())) {
         if (injection.acceptsPsiElement(host)) {
