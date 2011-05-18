@@ -575,7 +575,7 @@ public class AbstractPopup implements JBPopup {
     show(owner, -1, -1, true);
   }
 
-  public void show(final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+  public void show(Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
     if (ApplicationManagerEx.getApplicationEx() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
@@ -594,18 +594,9 @@ public class AbstractPopup implements JBPopup {
     if (myInStack) {
       myFocusTrackback = new FocusTrackback(this, owner, true);
       myFocusTrackback.setMustBeShown(true);
-      getFocusManager().doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          _show(owner, aScreenX, aScreenY, considerForcedXY);
-        }
-      });
-    } else {
-      _show(owner, aScreenX, aScreenY, considerForcedXY);
     }
-  }
 
-  private void _show(Component owner, int aScreenX, int aScreenY, boolean considerForcedXY) {
+
     Dimension sizeToSet = null;
 
     if (myDimensionServiceKey != null) {
