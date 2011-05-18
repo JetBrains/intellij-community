@@ -300,11 +300,12 @@ public class InplaceIntroduceConstantPopup {
     });
   }
 
-  public void performInplaceIntroduce() {
-    startIntroduceTemplate(false, null);
+  public boolean performInplaceIntroduce() {
+    return startIntroduceTemplate(false, null);
   }
 
-  private void startIntroduceTemplate(final boolean replaceAllOccurrences, @Nullable final PsiType fieldDefaultType) {
+  private boolean startIntroduceTemplate(final boolean replaceAllOccurrences, @Nullable final PsiType fieldDefaultType) {
+    final Ref<Boolean> result = new Ref<Boolean>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
@@ -325,6 +326,7 @@ public class InplaceIntroduceConstantPopup {
           IntroduceConstantDialog.createNameSuggestionGenerator(propName, myExpr, JavaCodeStyleManager.getInstance(myProject))
             .getSuggestedNameInfo(defaultType).names;
         final PsiField field = createFieldToStartTemplateOn(names, defaultType);
+        boolean started = false;
         if (field != null) {
           myEditor.getCaretModel().moveToOffset(field.getTextOffset());
           myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -332,10 +334,20 @@ public class InplaceIntroduceConstantPopup {
           nameSuggestions.add(field.getName());
           nameSuggestions.addAll(Arrays.asList(names));
           final VariableInplaceRenamer renamer = new FieldInplaceIntroducer(field);
-          renamer.performInplaceRename(false, nameSuggestions);
+          started = renamer.performInplaceRename(false, nameSuggestions);
+        }
+        result.set(started);
+        if (!started && field != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              field.delete();
+            }
+          });
         }
       }
     }, IntroduceConstantHandler.REFACTORING_NAME, IntroduceConstantHandler.REFACTORING_NAME);
+    return result.get();
   }
 
   private PsiField createFieldToStartTemplateOn(final String[] names, final PsiType psiType) {
@@ -343,22 +355,19 @@ public class InplaceIntroduceConstantPopup {
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
-        final Ref<PsiField> ref = new Ref<PsiField>();
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            PsiField field = elementFactory.createFieldFromText(psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myInitializerText + ";", myParentClass);
-            PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-            PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-            final String visibility = getSelectedVisibility();
-            if (visibility != null) {
-              PsiUtil.setModifierProperty(field, visibility, true);
-            }
-            field = BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, myParentClass, myParentClass, myAnchorElementIfAll, field);
-            ref.set(field);
-          }
-        };
-        PostprocessReformattingAspect.getInstance(myProject).postponeFormattingInside(runnable);
-        return ref.get();
+
+        PsiField field = elementFactory.createFieldFromText(
+          psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myInitializerText + ";",
+          myParentClass);
+        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
+        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+        final String visibility = getSelectedVisibility();
+        if (visibility != null) {
+          PsiUtil.setModifierProperty(field, visibility, true);
+        }
+        return BaseExpressionToFieldHandler.ConvertToFieldRunnable
+          .appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, myParentClass, myParentClass,
+                       myAnchorElementIfAll, field);
       }
     });
   }

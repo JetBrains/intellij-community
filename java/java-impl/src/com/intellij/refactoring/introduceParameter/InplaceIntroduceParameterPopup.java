@@ -194,16 +194,17 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     return myReplaceFieldsCb!= null ? (Integer)myReplaceFieldsCb.getSelectedItem() : IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;
   }
 
-  void inplaceIntroduceParameter() {
-    startIntroduceTemplate(false);
+  boolean inplaceIntroduceParameter() {
+    return startIntroduceTemplate(false);
   }
 
-  private void startIntroduceTemplate(final boolean replaceAllOccurrences) {
-    startIntroduceTemplate(replaceAllOccurrences, hasFinalModifier());
+  private boolean startIntroduceTemplate(final boolean replaceAllOccurrences) {
+    return startIntroduceTemplate(replaceAllOccurrences, hasFinalModifier());
   }
 
-  private void startIntroduceTemplate(final boolean replaceAllOccurrences,
+  private boolean startIntroduceTemplate(final boolean replaceAllOccurrences,
                                       final boolean hasFinalModifier) {
+    final Ref<Boolean> result = new Ref<Boolean>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
@@ -213,6 +214,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         final String[] names = IntroduceParameterHandler.createNameSuggestionGenerator(myExpr, propName, myProject)
           .getSuggestedNameInfo(defaultType).names;
         final PsiParameter parameter = createParameterToStartTemplateOn(names, defaultType, hasFinalModifier);
+        boolean started = false;
         if (parameter != null) {
           myParameterIndex = myMethod.getParameterList().getParameterIndex(parameter);
           myEditor.getCaretModel().moveToOffset(parameter.getTextOffset());
@@ -222,10 +224,19 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           nameSuggestions.addAll(Arrays.asList(names));
           final VariableInplaceRenamer renamer = new ParameterInplaceIntroducer(parameter);
           LOG.assertTrue(parameter.isPhysical());
-          renamer.performInplaceRename(false, nameSuggestions);
+          started = renamer.performInplaceRename(false, nameSuggestions);
+        }
+        result.set(started);
+        if (!started && parameter != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              parameter.delete();
+            }
+          });
         }
       }
     }, IntroduceParameterHandler.REFACTORING_NAME, IntroduceParameterHandler.REFACTORING_NAME);
+    return result.get();
   }
 
   @Override

@@ -52,6 +52,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.ComboBox;
@@ -859,7 +860,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       if (element != null) {
         PsiFile file = element.getContainingFile();
         if (file != null) {
-          title = file.getVirtualFile().getPresentableUrl();
+          title = ProjectUtil.getLocationRelativeToUserHome(file.getVirtualFile().getPresentableUrl());
         }
         else if (element instanceof PsiDirectory) {
           title = PsiDirectoryFactory.getInstance(myProject).getQualifiedName((PsiDirectory) element, true);
@@ -871,7 +872,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       else {
         title = "";
         if (myProject != null) {
-          title = myProject.getPresentableUrl();
+          title = ProjectUtil.getLocationRelativeToUserHome(myProject.getPresentableUrl());
         }
       }
     }

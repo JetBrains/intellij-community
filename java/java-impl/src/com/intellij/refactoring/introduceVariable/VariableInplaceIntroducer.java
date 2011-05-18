@@ -169,7 +169,9 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   @Override
   public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions) {
     final boolean result = super.performInplaceRename(processTextOccurrences, nameSuggestions);
-    showBalloon();
+    if (result) {
+      showBalloon();
+    }
     return result;
   }
 

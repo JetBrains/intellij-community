@@ -16,9 +16,11 @@
 
 package com.intellij.psi.impl.file;
 
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,7 +39,7 @@ public class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
   @NotNull
   public String getQualifiedName(@NotNull final PsiDirectory directory, final boolean presentable) {
     if (presentable) {
-      return directory.getVirtualFile().getPresentableUrl();
+      return ProjectUtil.getLocationRelativeToUserHome(directory.getVirtualFile().getPresentableUrl());
     }
     return "";
   }

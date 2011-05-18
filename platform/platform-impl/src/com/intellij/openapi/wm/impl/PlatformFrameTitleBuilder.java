@@ -43,12 +43,12 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
     if (file instanceof VirtualFilePathWrapper) {
       return ((VirtualFilePathWrapper)file).getPresentablePath();
     }
-    String url = file.getPresentableUrl();
+    String url = ProjectUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
     VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).getBaseDir();
     if (baseDir == null) baseDir = project.getBaseDir();
     if (baseDir != null) {
       //noinspection ConstantConditions
-      final String projectHomeUrl = baseDir.getPresentableUrl();
+      final String projectHomeUrl = ProjectUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl());
       if (url.startsWith(projectHomeUrl)) {
         url = "..." + url.substring(projectHomeUrl.length());
       }
