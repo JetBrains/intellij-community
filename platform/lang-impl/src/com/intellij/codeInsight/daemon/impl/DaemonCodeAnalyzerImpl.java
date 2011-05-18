@@ -146,7 +146,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @TestOnly
   public static List<HighlightInfo> getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
     List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
-    processHighlights(document, project, minSeverity, 0, document.getTextLength(), new CommonProcessors.CollectProcessor<HighlightInfo>(infos));
+    processHighlights(document, project, minSeverity, 0, document.getTextLength(),
+                      new CommonProcessors.CollectProcessor<HighlightInfo>(infos));
     return infos;
   }
 
@@ -222,7 +223,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           if (savedException != null) throw savedException;
         }
         catch (RuntimeException e) {
-          e.printStackTrace();
           throw e;
         }
         catch (Error e) {
@@ -736,5 +736,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @TestOnly
   public void allowToInterrupt(boolean can) {
     allowToInterrupt = can;
+  }
+
+  @TestOnly
+  public DaemonProgressIndicator getUpdateProgress() {
+    return myUpdateProgress;
   }
 }

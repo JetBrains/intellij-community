@@ -18,12 +18,11 @@ package com.intellij.openapi.progress;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbModeAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.util.LocaleServiceProviderPool;
 
 /**
  * Intended to run tasks, both modal and non-modal (backgroundable)
