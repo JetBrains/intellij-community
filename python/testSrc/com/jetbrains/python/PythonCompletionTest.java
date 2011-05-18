@@ -359,4 +359,11 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.completeBasic();
     myFixture.checkResultByFile("completion/pep328/package/subpackage1/moduleX.after.py");
   }
+
+  public void testImportedSubmoduleCompletion() {  // PY-3227
+    myFixture.copyDirectoryToProject("completion/submodules", "submodules");
+    myFixture.configureByFile("submodules/foo.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/submodules/foo.after.py");
+  }
 }
