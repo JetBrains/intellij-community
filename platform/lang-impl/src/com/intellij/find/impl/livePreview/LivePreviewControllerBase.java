@@ -15,7 +15,6 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil.ReplaceDelegate, SearchResults.SearchResultsListener {
 
@@ -143,6 +142,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     copy.copyFrom(findModel);
     
     final ModalityState modalityState = ModalityState.current();
+    final int stamp = mySearchResults.getStamp();
     Runnable request = new Runnable() {
       @Override
       public void run() {
@@ -157,7 +157,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
         } else {
           ApplicationManager.getApplication().invokeAndWait(denyReplace, modalityState);
         }
-        mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null);
+        mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp);
       }
     };
     if (unitTestMode) {
@@ -214,7 +214,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
       myReplaceListener.replacePerformed(occurrence, replacement, editor);
     }
     setReplaceDenied(true);
-    mySearchResults.updateThreadSafe(findModel, true, result);
+    mySearchResults.updateThreadSafe(findModel, true, result, mySearchResults.getStamp());
     return result;
   }
 
