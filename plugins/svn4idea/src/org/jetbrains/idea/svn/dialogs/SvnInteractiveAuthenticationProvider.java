@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
@@ -33,7 +32,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.security.cert.X509Certificate;
 
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
@@ -202,15 +200,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
                                                     MessageType.ERROR);
       return REJECTED;
     }
-    try {
-      GuiUtils.runOrInvokeAndWait(command);
-    }
-    catch (InterruptedException e) {
-      //
-    }
-    catch (InvocationTargetException e) {
-      //
-    }
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
     return result[0];
   }
 
