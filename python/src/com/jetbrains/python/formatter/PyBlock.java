@@ -670,6 +670,15 @@ public class PyBlock implements ASTBlock {
   }
 
   public boolean isIncomplete() {
+    // if there's something following us, we're not incomplete
+    PsiElement element = _node.getPsi().getNextSibling();
+    while (element instanceof PsiWhiteSpace) {
+      element = element.getNextSibling();
+    }
+    if (element != null) {
+      return false;
+    }
+
     ASTNode lastChild = getLastNonSpaceChild(_node, false);
     if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST) {
       // only multiline statement lists are considered incomplete

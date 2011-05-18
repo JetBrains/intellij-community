@@ -249,6 +249,22 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "    <caret>\n");
   }
 
+  public void testIndentAfterModuleLevelStatement() {  // PY-3572
+    doTest("def a(var):\n" +
+           "    if var == 'default':\n" +
+           "        pass\n" +
+           "\n" +
+           "b = 1<caret>\n" +
+           "",
+           "def a(var):\n" +
+           "    if var == 'default':\n" +
+           "        pass\n" +
+           "\n" +
+           "b = 1\n" +
+           "<caret>\n" +
+           "");
+  }
+
   /*
   TODO: formatter core problem?
   public void testAlignListBeforeEquals() throws Exception {
