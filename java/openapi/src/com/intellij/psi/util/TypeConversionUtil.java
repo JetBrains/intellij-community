@@ -23,7 +23,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -33,7 +32,10 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class TypeConversionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.TypeConversionUtil");
@@ -1174,10 +1176,8 @@ public class TypeConversionUtil {
 
       @Override
       public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
-        final List<PsiType> erased = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, PsiType>() {
-          @Override public PsiType fun(PsiType psiType) { return erasure(psiType, beforeSubstitutor); }
-        });
-        return disjunctionType.newDisjunctionType(erased);
+        final PsiClassType lub = PsiTypesUtil.getLowestUpperBoundClassType(disjunctionType);
+        return lub != null ? erasure(lub, beforeSubstitutor) : disjunctionType;
       }
     });
   }

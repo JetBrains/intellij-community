@@ -56,6 +56,13 @@ abstract class C {
     try { f(); } catch (E1 | E2 e) { <error descr="Incompatible types. Found: 'C.E1 | C.E2', required: 'C.E2'">E2 ee = e;</error> }
     try { f(); } catch (E1 | E2 e) { <error descr="Cannot assign a value to final variable 'e'">e = new E1()</error>; }
     try { f(); } catch (E1 | E2 e) { <error descr="Incompatible types. Found: 'C.E', required: 'C.E1 | C.E2'">e = new E()</error>; }
+
+    try { g(); }
+    catch (IE1 | IE2 e) {
+      Class<? extends E> clazz1 = e.getClass();
+      <error descr="Incompatible types. Found: 'java.lang.Class<? extends C.E>', required: 'java.lang.Class<? extends C.IE1>'">Class<? extends IE1> clazz2 = e.getClass();</error>
+      <error descr="Incompatible types. Found: 'java.lang.Class<? extends C.E>', required: 'java.lang.Class<? extends C.I>'">Class<? extends I> clazz3 = e.getClass();</error>
+    }
   }
 }
 
