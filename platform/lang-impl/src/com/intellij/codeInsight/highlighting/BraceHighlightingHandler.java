@@ -51,10 +51,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
@@ -102,7 +99,8 @@ public class BraceHighlightingHandler {
           public PsiFile compute() {
             if (isReallyDisposed(editor, project)) return null;
             PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-            return psiFile != null ? getInjectedFileIfAny(editor, project, offset, psiFile, alarm) : null;
+            return psiFile == null || psiFile instanceof PsiCompiledElement
+                   ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
           }
         });
         ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable(){

@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractclass;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -130,7 +131,11 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     });
     final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, newClassName, myVisibilityPanel.getVisibility(), isGenerateAccessors(),
                                                                       isExtractAsEnum() ? enumConstants : Collections.<MemberInfo>emptyList());
-    if (processor.getCreatedClass() == null) return;
+    if (processor.getCreatedClass() == null) {
+      Messages.showErrorDialog(myVisibilityPanel, "Unable to create class with the given name");
+      classNameField.requestFocusInWindow();
+      return;
+    }
     invokeRefactoring(processor);
   }
 
@@ -153,6 +158,11 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final String packageName = getPackageName();
     if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)){
       throw new ConfigurationException("\'" + packageName + "\' is invalid extracted class package name");
+    }
+    for (PsiClass innerClass : innerClasses) {
+      if (className.equals(innerClass.getName())) {
+        throw new ConfigurationException("Extracted class should have unique name. Name " + "\'" + className + "\' is already in use by one of the inner classes");
+      }
     }
   }
 

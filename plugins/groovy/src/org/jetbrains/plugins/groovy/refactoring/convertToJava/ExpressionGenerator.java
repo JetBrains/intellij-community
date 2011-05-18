@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -82,8 +81,11 @@ public class ExpressionGenerator extends Generator {
     factory = GroovyPsiElementFactory.getInstance(context.project);
   }
 
-  public ExpressionGenerator(Project project) {
-    this(new StringBuilder(), new ExpressionContext(project));
+  public ExpressionGenerator(ExpressionContext context) {
+    this.builder = new StringBuilder();
+    this.context = context;
+
+    factory = GroovyPsiElementFactory.getInstance(context.project);
   }
 
   @Override

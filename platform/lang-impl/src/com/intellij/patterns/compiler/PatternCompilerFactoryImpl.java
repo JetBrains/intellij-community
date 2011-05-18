@@ -44,9 +44,9 @@ public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
       return result.isEmpty()? ArrayUtil.EMPTY_CLASS_ARRAY : result.toArray(new Class[result.size()]);
     }
   };
-  private final Map<Class[], PatternCompiler> myCompilers = new ConcurrentFactoryMap<Class[], PatternCompiler>() {
+  private final Map<List<Class>, PatternCompiler> myCompilers = new ConcurrentFactoryMap<List<Class>, PatternCompiler>() {
     @Override
-    protected PatternCompiler create(Class[] key) {
+    protected PatternCompiler create(List<Class> key) {
       return new PatternCompilerImpl(key);
     }
   };
@@ -60,6 +60,6 @@ public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
   @NotNull
   @Override
   public <T> PatternCompiler<T> getPatternCompiler(@NotNull Class[] patternClasses) {
-    return myCompilers.get(patternClasses);
+    return myCompilers.get(Arrays.asList(patternClasses));
   }
 }

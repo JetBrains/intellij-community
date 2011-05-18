@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,15 +39,15 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   @NonNls private static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
-    PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile,editor);
+    PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     if (concatenation != null) return;
     String message = CodeInsightBundle.message("quickfix.i18n.concatentation.error");
     throw new IncorrectOperationException(message);
   }
 
   public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
-    PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile,editor);
-    PsiLiteralExpression literalExpression = ConcatenationToMessageFormatAction.getContainingLiteral(concatenation);
+    PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    PsiLiteralExpression literalExpression = getContainingLiteral(concatenation);
     if (literalExpression == null) return null;
     return createDialog(project, psiFile, literalExpression);
   }
@@ -60,7 +61,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
                                            @NotNull final Editor editor,
                                            @Nullable PsiLiteralExpression literalExpression,
                                            String i18nizedText) throws IncorrectOperationException {
-    PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile, editor);
+    PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     PsiExpression expression = JavaPsiFacade.getInstance(psiFile.getProject()).getElementFactory().createExpressionFromText(i18nizedText, concatenation);
     return concatenation.replace(expression);
   }
@@ -78,20 +79,17 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   }
 
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
-    PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(literalExpression);
-    StringBuffer formatString = new StringBuffer();
+    PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
+    StringBuilder formatString = new StringBuilder();
     final List<PsiExpression> args = new ArrayList<PsiExpression>();
     try {
-      ArrayList<PsiExpression> argsToCombine = new ArrayList<PsiExpression>();
-      ConcatenationToMessageFormatAction.calculateFormatAndArguments(concatenation, formatString, args, argsToCombine, false);
+      ConcatenationToMessageFormatAction.buildMessageFormatString(concatenation, formatString, args);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
 
-    String value = ConcatenationToMessageFormatAction.prepareString(formatString.toString());
-
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, null, true, true) {
+    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString.toString(), null, true, true) {
       @Nullable
       protected String getTemplateName() {
         return myResourceBundleManager.getConcatenationTemplateName();
@@ -110,5 +108,48 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
         attributes.put(PARAMETERS_OPTION_KEY, composeParametersText(args));
       }
     };
+  }
+
+  @Nullable
+  private static PsiBinaryExpression getEnclosingLiteralConcatenation(@NotNull PsiFile file, @NotNull Editor editor) {
+    final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+    return getEnclosingLiteralConcatenation(elementAt);
+  }
+
+  @Nullable
+  public static PsiBinaryExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
+    PsiBinaryExpression element = PsiTreeUtil.getParentOfType(psiElement, PsiBinaryExpression.class, false, PsiMember.class);
+    if (element == null) return null;
+    PsiBinaryExpression concatenation = null;
+    boolean stringLiteralOccured = false;
+    while (true) {
+      PsiExpression lOperand = element.getLOperand();
+      PsiExpression rOperand = element.getROperand();
+      if (element.getOperationSign().getTokenType() != JavaTokenType.PLUS) return concatenation;
+      stringLiteralOccured |= lOperand instanceof PsiLiteralExpression && ((PsiLiteralExpression)lOperand).getValue() instanceof String ||
+                              rOperand instanceof PsiLiteralExpression && ((PsiLiteralExpression)rOperand).getValue() instanceof String;
+
+      if (stringLiteralOccured) {
+        concatenation = element;
+      }
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiBinaryExpression)) return concatenation;
+      element = (PsiBinaryExpression) parent;
+    }
+  }
+
+  private static PsiLiteralExpression getContainingLiteral(final PsiBinaryExpression concatenation) {
+    PsiExpression operand = concatenation.getLOperand();
+    PsiLiteralExpression literalExpression = null;
+    if (operand instanceof PsiLiteralExpression) {
+      literalExpression = (PsiLiteralExpression)operand;
+    }
+    else {
+      operand = concatenation.getROperand();
+      if (operand instanceof PsiLiteralExpression) {
+        literalExpression = (PsiLiteralExpression)operand;
+      }
+    }
+    return literalExpression;
   }
 }

@@ -76,7 +76,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
     if (support == null) return;
     try {
       if (!support.editInjectionInPlace(host)) {
-        ShowSettingsUtil.getInstance().editConfigurable(project, new InjectionsSettingsUI(project, Configuration.getInstance()));
+        ShowSettingsUtil.getInstance().editConfigurable(project, new InjectionsSettingsUI(project, Configuration.getProjectInstance(project)));
       }
     }
     finally {

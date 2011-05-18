@@ -88,8 +88,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
       @Override
       public Result<List<PsiElement>> compute() {
         return new Result<List<PsiElement>>(Collections.<PsiElement>singletonList(
-          getRootByClasses(InjectorUtils.findInjectionSupport(injection.getSupportId()).getPatternClasses(), file.getProject())),
-                                            ArrayUtil.EMPTY_OBJECT_ARRAY);
+          getRootByClasses(InjectorUtils.getPatternClasses(injection.getSupportId()), file.getProject())), ArrayUtil.EMPTY_OBJECT_ARRAY);
       }
     };
   }

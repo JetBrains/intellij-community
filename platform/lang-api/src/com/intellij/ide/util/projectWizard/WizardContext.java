@@ -80,6 +80,10 @@ public class WizardContext {
            "Projects";
   }
 
+  public boolean isProjectFileDirectorySet() {
+    return myProjectFileDirectory != null;
+  }
+
   public void setProjectFileDirectory(String projectFileDirectory) {
     myProjectFileDirectory = projectFileDirectory;
   }

@@ -60,7 +60,7 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
   }
 
   private NodeRenderer getDefaultRenderer() {
-    return  getClassName().endsWith("]") ? (NodeRenderer)myRendererSettings.getArrayRenderer() : (NodeRenderer)myRendererSettings.getClassRenderer();
+    return getClassName().endsWith("]") ? myRendererSettings.getArrayRenderer() : myRendererSettings.getClassRenderer();
   }
 
   public ValueLabelRenderer getLabelRenderer() {
@@ -70,12 +70,14 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
 
   private ChildrenRenderer getRawChildrenRenderer() {
     NodeRenderer classRenderer = getDefaultRenderer();
-    return myChildrenRenderer == classRenderer ? null : myChildrenRenderer;
+    final ChildrenRenderer originalRenderer = super.getChildrenRenderer();
+    return originalRenderer == classRenderer ? null : originalRenderer;
   }
 
   private ValueLabelRenderer getRawLabelRenderer() {
     NodeRenderer classRenderer = getDefaultRenderer();
-    return myLabelRenderer == classRenderer ? null : myLabelRenderer;
+    final ValueLabelRenderer originalRenderer = super.getLabelRenderer();
+    return originalRenderer == classRenderer ? null : originalRenderer;
   }
 
 
@@ -89,14 +91,16 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
   public void setClassName(@NotNull String name) {
     myProperties.setClassName(name);
     if(getRawLabelRenderer() != null) {
-      if (myLabelRenderer instanceof ReferenceRenderer) {
-        ((ReferenceRenderer)myLabelRenderer).setClassName(name);
+      final ValueLabelRenderer originalLabelRenderer = super.getLabelRenderer();
+      if (originalLabelRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)originalLabelRenderer).setClassName(name);
       }
     }
 
     if(getRawChildrenRenderer() != null) {
-      if (myChildrenRenderer instanceof ReferenceRenderer) {
-        ((ReferenceRenderer)myChildrenRenderer).setClassName(name);
+      final ChildrenRenderer originalChildrenRenderer = super.getChildrenRenderer();
+      if (originalChildrenRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)originalChildrenRenderer).setClassName(name);
       }
     }
   }

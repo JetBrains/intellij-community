@@ -21,6 +21,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.compiler.PatternCompiler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -118,8 +119,12 @@ public class MethodParameterInjection extends BaseInjection {
   }
 
   @Override
-  protected List<String> generatePlaces() {
-    return getPatternString(this);
+  public void generatePlaces() {
+    getInjectionPlaces().clear();
+    final PatternCompiler<PsiElement> compiler = getCompiler();
+    for (String text : getPatternString(this)) {
+      getInjectionPlaces().add(new InjectionPlace(compiler.createElementPattern(text, getDisplayName()), true));
+    }
   }
 
   @SuppressWarnings({"RedundantIfStatement"})

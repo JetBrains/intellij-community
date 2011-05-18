@@ -357,14 +357,14 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           chooseAvd();
         }
         if (myAvdName != null) {
-          myFacet.launchEmulator(myAvdName, myCommandLine);
+          myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
         }
         else if (getProcessHandler().isStartNotified()) {
           getProcessHandler().destroyProcess();
         }
       }
       else {
-        myFacet.launchEmulator(myAvdName, myCommandLine);
+        myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
       }
     }
   }
@@ -506,9 +506,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       if (!myApplicationLauncher.launch(this, device)) return false;
 
-      if (!checkDdms()) {
-        return false;
-      }
+      checkDdms();
+
       synchronized (myDebugLock) {
         Client client = device.getClient(myTargetPackageName);
         if (myDebugLauncher != null) {

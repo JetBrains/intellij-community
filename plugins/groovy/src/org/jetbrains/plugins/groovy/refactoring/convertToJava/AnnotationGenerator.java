@@ -29,9 +29,9 @@ public class AnnotationGenerator extends Generator {
   private final ExpressionContext context;
   private final ExpressionGenerator expressionGenerator;
 
-  public AnnotationGenerator(StringBuilder builder, Project project) {
+  public AnnotationGenerator(StringBuilder builder, ExpressionContext context) {
     this.builder = builder;
-    this.context = new ExpressionContext(project);
+    this.context = context.extend();
     expressionGenerator = new ExpressionGenerator(builder, context);
   }
 

@@ -92,7 +92,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
-  public void testDiamondPos8() throws Exception {
+  public void testDiamondNeg15() throws Exception {
     doTest(false, false);
   }
 

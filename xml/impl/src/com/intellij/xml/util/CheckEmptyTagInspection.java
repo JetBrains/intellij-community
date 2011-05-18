@@ -22,17 +22,13 @@ import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
@@ -119,15 +115,8 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
       if (psiFile == null) return;
       ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(psiFile.getVirtualFile());
 
-      final StringBuilder builder = new StringBuilder(tag.getText());
-      builder.replace(builder.length() - 2, builder.length(), "></" + tag.getLocalName() + ">");
-
       try {
-        final FileType fileType = psiFile.getFileType();
-        PsiFile file = PsiFileFactory.getInstance(tag.getProject()).createFileFromText(
-          "dummy." + (fileType == StdFileTypes.JSP || tag.getContainingFile().getLanguage() == HTMLLanguage.INSTANCE ? "html" : "xml"), builder.toString());
-
-        tag.replace(((XmlFile)file).getDocument().getRootTag());
+        XmlUtil.expandTag(tag);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

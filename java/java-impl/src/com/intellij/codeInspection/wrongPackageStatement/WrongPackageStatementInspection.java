@@ -63,12 +63,9 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
         final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
         PsiPackage classPackage = (PsiPackage)packageReference.resolve();
         List<LocalQuickFix> availableFixes = new ArrayList<LocalQuickFix>();
-        if (classPackage == null) {
+        if (classPackage == null || !Comparing.equal(dirPackage.getQualifiedName(), packageReference.getText(), true)) {
           availableFixes.add(new AdjustPackageNameFix(packageName));
-        }
-        else if (!Comparing.equal(dirPackage.getQualifiedName(), packageReference.getText(), true)) {
-          availableFixes.add(new AdjustPackageNameFix(packageName));
-          MoveToPackageFix moveToPackageFix = new MoveToPackageFix(classPackage.getQualifiedName());
+          MoveToPackageFix moveToPackageFix = new MoveToPackageFix(classPackage != null ? classPackage.getQualifiedName() : packageReference.getText());
           if (moveToPackageFix.isAvailable(file)) {
             availableFixes.add(moveToPackageFix);
           }

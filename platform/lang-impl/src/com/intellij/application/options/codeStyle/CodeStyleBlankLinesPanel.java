@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.OptionGroup;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -185,10 +186,21 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     }
   }
 
+  @Override
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
                                String title,
                                String groupName, Object... options) {
+    showCustomOption(settingsClass, fieldName, title, groupName, null, null, options);
+  }
+
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                               String fieldName,
+                               String title,
+                               String groupName,
+                               @Nullable OptionAnchor anchor,
+                               @Nullable String anchorFieldName,
+                               Object... options) {
     if (myIsFirstUpdate) {
       myCustomOptions.putValue(groupName, (Trinity)Trinity.create(settingsClass, fieldName, title));
     }

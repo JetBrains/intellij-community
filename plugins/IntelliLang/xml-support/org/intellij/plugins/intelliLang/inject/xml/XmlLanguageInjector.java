@@ -61,7 +61,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
 
   public XmlLanguageInjector(Configuration configuration) {
     myConfiguration = configuration;
-    mySupport = InjectorUtils.findInjectionSupport(LanguageInjectionSupport.XML_SUPPORT_ID);
+    mySupport = InjectorUtils.findNotNullInjectionSupport(LanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
   @NotNull

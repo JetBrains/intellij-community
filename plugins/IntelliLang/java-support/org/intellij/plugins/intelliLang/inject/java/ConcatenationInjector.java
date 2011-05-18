@@ -62,7 +62,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   public ConcatenationInjector(Configuration configuration, Project project) {
     myConfiguration = configuration;
     myProject = project;
-    mySupport = InjectorUtils.findInjectionSupport(LanguageInjectionSupport.JAVA_SUPPORT_ID);
+    mySupport = InjectorUtils.findNotNullInjectionSupport(LanguageInjectionSupport.JAVA_SUPPORT_ID);
     myXmlIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {
       public Result<Collection<String>> compute() {
         final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
@@ -80,7 +80,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }, false);
     myAnnoIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {
       public Result<Collection<String>> compute() {
-        final String annotationClass = myConfiguration.getLanguageAnnotationClass();
+        final String annotationClass = myConfiguration.getAdvancedConfiguration().getLanguageAnnotationClass();
         final Collection<String> result = new THashSet<String>();
         final ArrayList<String> annoClasses = new ArrayList<String>(3);
         annoClasses.add(StringUtil.getShortName(annotationClass));
@@ -211,7 +211,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
 
         public boolean visitVariable(PsiVariable variable) {
-          if (myConfiguration.getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
+          if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(new Processor<PsiReference>() {
               @Override
               public boolean process(PsiReference psiReference) {
@@ -247,7 +247,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
 
         public boolean visitReference(PsiReferenceExpression expression) {
-          if (myConfiguration.getDfaOption() == Configuration.DfaOption.OFF) return true;
+          if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
           final PsiElement e = expression.resolve();
           if (e instanceof PsiVariable) {
             if (e instanceof PsiParameter) {
@@ -300,7 +300,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       else checkName = null;
       if (checkName == null || !areThereInjectionsWithName(checkName, true)) return true;
       final PsiAnnotation[] annotations =
-        AnnotationUtilEx.getAnnotationFrom(annoElement, myConfiguration.getLanguageAnnotationPair(), true);
+        AnnotationUtilEx.getAnnotationFrom(annoElement, myConfiguration.getAdvancedConfiguration().getLanguageAnnotationPair(), true);
       if (annotations.length > 0) {
         final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
         final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");

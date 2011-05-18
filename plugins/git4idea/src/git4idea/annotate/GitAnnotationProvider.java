@@ -231,7 +231,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
     final int size = basicAnnotation.getNumLines();
     final Map<VcsRevisionNumber,VcsFileRevision> historyAsMap = session.getHistoryAsMap();
-    final List<String> lines = StringUtil.split(StringUtil.convertLineSeparators(annotatedContent), "\n", true, false);
+    final List<String> lines = StringUtil.split(StringUtil.convertLineSeparators(annotatedContent), "\n", false, false);
     for (int i = 0; i < size; i++) {
       final VcsRevisionNumber revision = basicAnnotation.getRevision(i);
       final VcsFileRevision vcsFileRevision = historyAsMap.get(revision);
@@ -239,7 +239,8 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
         return null;
       }
       try {
-        gitFileAnnotation.appendLineInfo(vcsFileRevision.getRevisionDate(), (GitRevisionNumber) revision, vcsFileRevision.getAuthor(), lines.get(i), i + 1);
+        gitFileAnnotation.appendLineInfo(vcsFileRevision.getRevisionDate(), (GitRevisionNumber) revision, vcsFileRevision.getAuthor(),
+                                         lines.get(i), i + 1);
       }
       catch (VcsException e) {
         return null;

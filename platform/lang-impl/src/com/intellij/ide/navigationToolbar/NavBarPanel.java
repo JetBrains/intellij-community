@@ -39,6 +39,7 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -295,6 +296,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           return true;
         }
 
+        if (!StringUtil.equals(eachLabel.getText(), NavBarPresentation.getPresentableText(eachElement, null))) {
+          return true;
+        }
 
         SimpleTextAttributes modelAttributes1 = myPresentation.getTextAttributes(eachElement, true);
         SimpleTextAttributes modelAttributes2 = myPresentation.getTextAttributes(eachElement, false);

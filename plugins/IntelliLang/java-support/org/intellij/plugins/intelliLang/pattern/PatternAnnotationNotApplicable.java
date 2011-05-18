@@ -51,7 +51,7 @@ public class PatternAnnotationNotApplicable extends LocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      final String annotationName = Configuration.getInstance().getPatternAnnotationClass();
+      final String annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getPatternAnnotationClass();
 
       public void visitReferenceExpression(PsiReferenceExpression expression) {
       }

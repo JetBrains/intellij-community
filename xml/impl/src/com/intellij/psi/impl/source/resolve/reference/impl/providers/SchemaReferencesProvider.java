@@ -686,9 +686,10 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
   }
 
   public static @Nullable XmlNSDescriptorImpl findRedefinedDescriptor(XmlTag tag, String text) {
+    final String localName = XmlUtil.findLocalNameByQualifiedName(text);
     for(XmlTag parentTag = tag.getParentTag(); parentTag != null; parentTag = parentTag.getParentTag()) {
 
-      if (text.equals(parentTag.getAttributeValue("name"))) {
+      if (localName.equals(parentTag.getAttributeValue("name"))) {
         final XmlTag grandParent = parentTag.getParentTag();
 
         if (grandParent != null && "redefine".equals(grandParent.getLocalName())) {

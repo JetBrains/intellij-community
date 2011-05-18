@@ -74,9 +74,12 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   private final List<RangeMarker> myOccurrenceMarkers;
   private final SmartTypePointer myDefaultType;
 
-  protected JCheckBox myCanBeFinalCb;
+  private JCheckBox myCanBeFinalCb;
   private Balloon myBalloon;
+  private boolean myCantChangeFinalModifier;
+  private String myCommandName;
   private String myTitle;
+  private String myExpressionText;
 
   public VariableInplaceIntroducer(final Project project,
                                    final TypeExpression expression,
@@ -93,6 +96,8 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     myEditor = editor;
     myElementToRename = elementToRename;
     myExpression = expression;
+    myCantChangeFinalModifier = cantChangeFinalModifier;
+    myCommandName = commandName;
     myTitle = title;
 
     myExprMarker = exprMarker;
@@ -107,12 +112,10 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
     setAdvertisementText(getAdvertisementText(declarationStatement, defaultType, hasTypeSuggestion));
-    if (!cantChangeFinalModifier) {
-      myCanBeFinalCb = new NonFocusableCheckBox("Declare final");
-      myCanBeFinalCb.setSelected(createFinals());
-      myCanBeFinalCb.setMnemonic('f');
-      myCanBeFinalCb.addActionListener(new FinalListener(project, commandName));
-    }
+  }
+
+  public void initInitialText(String text) {
+    myExpressionText = text;
   }
 
   @Override
@@ -217,6 +220,24 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
           myEditor.getCaretModel().moveToOffset(myExprMarker.getStartOffset());
           myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         }
+        if (myExpressionText != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              final PsiDeclarationStatement element = myPointer.getElement();
+              if (element != null) {
+                final PsiElement[] vars = element.getDeclaredElements();
+                if (vars.length > 0 && vars[0] instanceof PsiVariable) {
+                  final PsiFile containingFile = element.getContainingFile();
+                  final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+                  for (RangeMarker occurrenceMarker : myOccurrenceMarkers) {
+                    if (restoreExpression(containingFile, (PsiVariable)vars[0], elementFactory, occurrenceMarker, myExpressionText) == null) return;
+                  }
+                  element.delete();
+                }
+              }
+            }
+          });
+        }
       }
     }
     finally {
@@ -243,7 +264,14 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   @Nullable
   protected JComponent getComponent() {
-    if (myCanBeFinalCb == null) return null;
+    if (!myCantChangeFinalModifier) {
+      myCanBeFinalCb = new NonFocusableCheckBox("Declare final");
+      myCanBeFinalCb.setSelected(createFinals());
+      myCanBeFinalCb.setMnemonic('f');
+      myCanBeFinalCb.addActionListener(new FinalListener(myProject, myCommandName));
+    } else {
+      return null;
+    }
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(null);
 
@@ -388,6 +416,22 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
       y -= myEditor.getLineHeight();
     }
     myBalloon.show(new RelativePoint(new Point(screenPoint.x, y)), Balloon.Position.above);
+  }
+
+  @Nullable
+  protected static PsiExpression restoreExpression(PsiFile containingFile,
+                                                   PsiVariable psiVariable,
+                                                   PsiElementFactory elementFactory,
+                                                   RangeMarker marker, String exprText) {
+    if (exprText == null) return null;
+    if (psiVariable == null || !psiVariable.isValid()) return null;
+    final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
+    final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
+    if (expression instanceof PsiReferenceExpression && (((PsiReferenceExpression)expression).resolve() == psiVariable ||
+                                                         Comparing.strEqual(psiVariable.getName(), ((PsiReferenceExpression)expression).getReferenceName()))) {
+      return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(exprText, psiVariable));
+    }
+    return expression != null && expression.isValid() && expression.getText().equals(exprText) ? expression : null;
   }
 
   public class FinalListener implements ActionListener {

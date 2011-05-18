@@ -53,6 +53,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new LiteralFixer());
     fixers.add(new MethodCallFixer());
     fixers.add(new IfConditionFixer());
+    fixers.add(new ForStatementFixer());
     fixers.add(new WhileConditionFixer());
     fixers.add(new CatchDeclarationFixer());
     fixers.add(new SwitchExpressionFixer());

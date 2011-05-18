@@ -16,9 +16,7 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.ide.diff.DirDiffSettings;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.ui.IdeBorderFactory;
@@ -31,9 +29,10 @@ import java.util.ArrayList;
 /**
  * @author Konstantin Bulenkov
  */
-public class ChangeCompareModeGroup extends ComboBoxAction {
+public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutProvider{
   private final DefaultActionGroup myGroup;
   private DirDiffSettings mySettings;
+  private JButton myButton;
 
   public ChangeCompareModeGroup(DirDiffTableModel model) {
     mySettings = model.getSettings();
@@ -52,6 +51,11 @@ public class ChangeCompareModeGroup extends ComboBoxAction {
   }
 
   @Override
+  public void actionPerformed(AnActionEvent e) {
+    myButton.doClick();
+  }
+
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     getTemplatePresentation().setText(mySettings.compareMode.getPresentableName());
@@ -62,8 +66,10 @@ public class ChangeCompareModeGroup extends ComboBoxAction {
   public JComponent createCustomComponent(Presentation presentation) {
     JPanel panel = new JPanel(new BorderLayout());
     final JLabel label = new JLabel("Compare by:");
+    label.setDisplayedMnemonicIndex(0);
     panel.add(label, BorderLayout.WEST);
-    panel.add(super.createCustomComponent(presentation).getComponent(0), BorderLayout.CENTER);
+    myButton = (JButton)super.createCustomComponent(presentation).getComponent(0);
+    panel.add(myButton, BorderLayout.CENTER);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(2, 6, 2, 0));
     return panel;
   }
@@ -72,5 +78,10 @@ public class ChangeCompareModeGroup extends ComboBoxAction {
   @Override
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
     return myGroup;
+  }
+
+  @Override
+  public Shortcut getShortcut() {
+    return KeyboardShortcut.fromString("alt C");
   }
 }

@@ -36,8 +36,8 @@ import java.util.List;
 public class CompoundNodeRenderer extends NodeRendererImpl{
   public static final @NonNls String UNIQUE_ID = "CompoundNodeRenderer";
 
-  protected ValueLabelRenderer myLabelRenderer;
-  protected ChildrenRenderer myChildrenRenderer;
+  private ValueLabelRenderer myLabelRenderer;
+  private ChildrenRenderer myChildrenRenderer;
   protected final NodeRendererSettings myRendererSettings;
 
   public CompoundNodeRenderer(NodeRendererSettings rendererSettings, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {

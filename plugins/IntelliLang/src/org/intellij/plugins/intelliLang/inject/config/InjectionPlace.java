@@ -16,25 +16,28 @@
 
 package org.intellij.plugins.intelliLang.inject.config;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.psi.PsiElement;
 
 /**
 * @author Gregory.Shrago
 */
+// todo inline class
 public class InjectionPlace {
-  private final String myText;
   private final ElementPattern<PsiElement> myElementPattern;
   private final boolean myEnabled;
 
-  public InjectionPlace(final String myText, final ElementPattern<PsiElement> myElementPattern, final boolean enabled) {
-    this.myText = myText;
+  public InjectionPlace(final ElementPattern<PsiElement> myElementPattern, final boolean enabled) {
     this.myElementPattern = myElementPattern;
     myEnabled = enabled;
   }
 
+  public InjectionPlace enabled(final boolean enabled) {
+    return new InjectionPlace(myElementPattern, enabled);
+  }
+
   public String getText() {
-    return myText;
+    return myElementPattern.toString();
   }
 
   public ElementPattern<PsiElement> getElementPattern() {
@@ -52,16 +55,13 @@ public class InjectionPlace {
 
     final InjectionPlace place = (InjectionPlace)o;
 
-    if (myEnabled != place.myEnabled) return false;
-    if (myText != null ? !myText.equals(place.myText) : place.myText != null) return false;
+    if (!myElementPattern.equals(place.myElementPattern)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myText != null ? myText.hashCode() : 0;
-    result = 31 * result + (myEnabled ? 1 : 0);
-    return result;
+    return myElementPattern.hashCode();
   }
 }

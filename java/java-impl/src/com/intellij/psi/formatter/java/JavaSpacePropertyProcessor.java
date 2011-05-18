@@ -1175,9 +1175,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
       }
       else {
-        ASTNode prev = FormattingAstUtil.getPrevNonWhiteSpaceNode(myChild2);
+        ASTNode prev = FormattingAstUtil.getPrevLeaf(myChild2, TokenType.WHITE_SPACE, TokenType.ERROR_ELEMENT);
         if (prev != null && prev.getElementType() == JavaTokenType.SEMICOLON) {
-          // Handle empty 'condition' section.
+          // Handle empty 'initialization' or 'condition' section.
           createSpaceInCode(mySettings.SPACE_AFTER_SEMICOLON);
         }
         else {

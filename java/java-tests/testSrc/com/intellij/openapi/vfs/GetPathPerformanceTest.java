@@ -1,12 +1,13 @@
 package com.intellij.openapi.vfs;
 
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
 import java.io.IOException;
 
-public class GetPathPerformanceTest extends PlatformTestCase {
+public class GetPathPerformanceTest extends IdeaTestCase {
+
   public void testGetPath() throws IOException {
     File dir = createTempDirectory();
     File subdir1 = new File(dir, "1");
@@ -34,6 +35,6 @@ public class GetPathPerformanceTest extends PlatformTestCase {
         }
       }
     };
-    PlatformTestUtil.assertTiming("Performance failed", 3000, runnable);
+    PlatformTestUtil.assertTiming("Performance failed", 2000, runnable);
   }
 }

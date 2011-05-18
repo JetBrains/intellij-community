@@ -225,7 +225,7 @@ public abstract class IntroduceFieldCentralPanel {
   }
 
   protected boolean allowFinal() {
-    return !myHasWriteAccess;
+    return !myHasWriteAccess && isReplaceAllOccurrences();
   }
 
   public void addOccurrenceListener(ItemListener itemListener) {

@@ -24,7 +24,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.util.TreeClassChooser;
@@ -426,7 +425,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         final String description = CodeInsightBundle.message("inspection.i18n.message.general.with.value", "#ref");
 
         List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
-        if (ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(expression) != null) {
+        if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(expression) != null) {
           fixes.add(I18N_CONCATENATION_QUICK_FIX);
         }
         fixes.add(I18N_QUICK_FIX);

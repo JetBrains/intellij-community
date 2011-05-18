@@ -51,8 +51,9 @@ public class XmlTagInjection extends AbstractTagInjection {
   }
 
   @Override
-  protected List<String> generatePlaces() {
-    return Collections.singletonList(getPatternString(this));
+  public void generatePlaces() {
+    getInjectionPlaces().clear();
+    getInjectionPlaces().add(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
   }
 
   public static String getPatternString(final AbstractTagInjection injection) {

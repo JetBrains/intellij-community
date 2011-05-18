@@ -17,6 +17,7 @@ package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.compiler.PatternCompiler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -76,8 +77,9 @@ public class XmlAttributeInjection extends AbstractTagInjection {
   }
 
   @Override
-  protected List<String> generatePlaces() {
-    return Collections.singletonList(getPatternString(this));
+  public void generatePlaces() {
+    getInjectionPlaces().clear();
+    getInjectionPlaces().add(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
   }
 
   private boolean matches(@NotNull XmlAttribute attr) {

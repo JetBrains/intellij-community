@@ -76,7 +76,7 @@ public class LanguageMismatch extends LocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      final Pair<String, ? extends Set<String>> annotationName = Configuration.getInstance().getLanguageAnnotationPair();
+      final Pair<String, ? extends Set<String>> annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getLanguageAnnotationPair();
 
       public void visitExpression(PsiExpression expression) {
         checkExpression(expression, holder, annotationName);

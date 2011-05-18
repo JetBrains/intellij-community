@@ -43,7 +43,7 @@ import java.util.Arrays;
  * @author Gregory.Shrago
  */
 public class AdvancedSettingsUI implements Configurable {
-  private final Configuration myConfiguration;
+  private final Configuration.AdvancedConfiguration myConfiguration;
 
   @SuppressWarnings({"UnusedDeclaration", "FieldCanBeLocal"})
   private JPanel myRoot;
@@ -65,7 +65,7 @@ public class AdvancedSettingsUI implements Configurable {
   private final ReferenceEditorWithBrowseButton mySubstField;
 
   public AdvancedSettingsUI(@NotNull final Project project, Configuration configuration) {
-    myConfiguration = configuration;
+    myConfiguration = configuration.getAdvancedConfiguration();
 
     myAnnotationField = new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
       public Document fun(String s) {

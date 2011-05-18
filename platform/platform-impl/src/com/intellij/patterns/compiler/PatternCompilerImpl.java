@@ -19,12 +19,17 @@ package com.intellij.patterns.compiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.ElementPatternCondition;
+import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.util.Function;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -39,17 +44,15 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   private static final Logger LOG = Logger.getInstance(PatternCompilerImpl.class.getName());
 
-  private Set<Method> myStaticMethods;
+  private final Set<Method> myStaticMethods;
+  private final StringInterner myStringInterner = new StringInterner();
 
-  public PatternCompilerImpl(final Class[] patternClasses) {
+  public PatternCompilerImpl(final List<Class> patternClasses) {
     myStaticMethods = getStaticMethods(patternClasses);
   }
 
-  protected void preInvoke(Object target, String methodName, Object[] arguments) {
-  }
-
+  private static final Node ERROR_NODE = new Node(null, null, null);
   @Override
-  @Nullable
   public ElementPattern<T> createElementPattern(final String text, final String displayName) {
     try {
       return compileElementPattern(text);
@@ -57,27 +60,41 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     catch (Exception ex) {
       final Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
       LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
-      return null;
+      return new LazyPresentablePattern<T>(new Node(ERROR_NODE, text, null));
     }
   }
 
+  //@Override
+  //public ElementPattern<T> compileElementPattern(final String text) {
+  //  return processElementPatternText(text, new Function<Frame, Object>() {
+  //    public Object fun(final Frame frame) {
+  //      try {
+  //        final Object[] args = frame.params.toArray();
+  //        preInvoke(frame.target, frame.methodName, args);
+  //        return invokeMethod(frame.target, frame.methodName, args, myStaticMethods);
+  //      }
+  //      catch (Throwable throwable) {
+  //        throw new IllegalArgumentException(text, throwable);
+  //      }
+  //    }
+  //  });
+  //}
+
   @Override
   public ElementPattern<T> compileElementPattern(final String text) {
-    return processElementPatternText(text, new Function<Frame, Object>() {
-      public Object fun(final Frame frame) {
-        try {
-          final Object[] args = frame.params.toArray();
-          preInvoke(frame.target, frame.methodName, args);
-          return invokeMethod(frame.target, frame.methodName, args, myStaticMethods);
+    final Node node = processElementPatternText(text, new Function<Frame, Object>() {
+      public Node fun(final Frame frame) {
+        final Object[] args = frame.params.toArray();
+        for (int i = 0, argsLength = args.length; i < argsLength; i++) {
+          args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
         }
-        catch (Throwable throwable) {
-          throw new IllegalArgumentException(text, throwable);
-        }
+        return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args);
       }
     });
+    return new LazyPresentablePattern(node);
   }
 
-  private static Set<Method> getStaticMethods(Class[] patternClasses) {
+  private static Set<Method> getStaticMethods(List<Class> patternClasses) {
     return new THashSet<Method>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
       public Collection<Method> fun(final Class aClass) {
         return ContainerUtil.findAll(ReflectionCache.getMethods(aClass), new Condition<Method>() {
@@ -249,7 +266,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
   private static Object makeParam(final String s) {
-    if (s.length() > 2 && s.startsWith("\"") && s.endsWith("\"")) return s.substring(1, s.length()-1);
+    if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) return s.substring(1, s.length()-1);
     try {
       return Integer.valueOf(s);
     }
@@ -500,4 +517,144 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   //  }
   //  return null;
   //}
+
+  private static final ElementPattern<?> ALWAYS_FALSE = new FalsePattern();
+
+  private static class Node {
+    final Node target;
+    final String method;
+    final Object[] args;
+
+    private Node(final Node target, final String method, final Object[] args) {
+      this.target = target;
+      this.method = method;
+      this.args = args;
+    }
+  }
+
+  private static class FalsePattern extends InitialPatternCondition<Object> implements ElementPattern<Object> {
+    private final ElementPatternCondition<Object> myCondition = new ElementPatternCondition<Object>(this);
+
+    protected FalsePattern() {
+      super(Object.class);
+    }
+
+    @Override
+    public boolean accepts(@Nullable final Object o) {
+      return false;
+    }
+
+    @Override
+    public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      return false;
+    }
+
+    @Override
+    public ElementPatternCondition<Object> getCondition() {
+      return myCondition;
+    }
+  }
+
+
+  public class LazyPresentablePattern<T> implements ElementPattern<T> {
+
+    private ElementPattern<T> myCompiledPattern;
+    private final Node myNode;
+    private final long myHashCode;
+
+    public LazyPresentablePattern(final Node node) {
+      myNode = node;
+      myHashCode = StringHash.calc(toString());
+    }
+
+    @Override
+    public boolean accepts(@Nullable final Object o) {
+      return getCompiledPattern().accepts(o, new ProcessingContext());
+    }
+
+    @Override
+    public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      return getCompiledPattern().accepts(o, context);
+    }
+
+    @Override
+    public ElementPatternCondition<T> getCondition() {
+      return getCompiledPattern().getCondition();
+    }
+
+    public ElementPattern<T> getCompiledPattern() {
+      if (myCompiledPattern == null) {
+        Object result;
+        try {
+          result = myNode.target == ERROR_NODE? ALWAYS_FALSE : execute(myNode);
+        }
+        catch (Throwable throwable) {
+          LOG.error(toString(), throwable);
+          result = ALWAYS_FALSE;
+        }
+        myCompiledPattern = (ElementPattern<T>)result;
+      }
+      return myCompiledPattern;
+    }
+
+    @Override
+    public String toString() {
+      return toString(myNode, new StringBuilder()).toString();
+    }
+
+    private StringBuilder toString(final Node node, final StringBuilder sb) {
+      if (node.target == ERROR_NODE) {
+        return sb.append(node.method);
+      }
+      if (node.target != null) {
+        toString(node.target, sb);
+        sb.append('.');
+      }
+      sb.append(node.method).append('(');
+      boolean first = true;
+      for (Object arg : node.args) {
+        if (first) first = false;
+        else sb.append(',').append(' ');
+        if (arg instanceof Node) {
+          toString((Node)arg, sb);
+        }
+        else if (arg instanceof String) {
+          // todo no escaping!
+          sb.append('\"').append(arg).append('\"');
+        }
+        else if (arg instanceof Number) {
+          sb.append(arg);
+        }
+      }
+      sb.append(')');
+      return sb;
+    }
+
+    private Object execute(final Node node) throws Throwable {
+      final Object target = node.target != null? execute(node.target) : null;
+      final String methodName = node.method;
+      final Object[] args;
+      if (node.args.length == 0) {
+        args = node.args;
+      }
+      else {
+        args = new Object[node.args.length];
+        for (int i = 0, len = node.args.length; i < len; i++) {
+          args[i] = node.args[i] instanceof Node? execute((Node)node.args[i]) : node.args[i];
+        }
+      }
+      return invokeMethod(target, methodName, args, myStaticMethods);
+    }
+
+    @Override
+    public int hashCode() {
+      return (int)myHashCode;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+      return obj instanceof LazyPresentablePattern &&
+             ((LazyPresentablePattern)obj).myHashCode == myHashCode;
+    }
+  }
 }

@@ -37,6 +37,6 @@ public class SwitchToFind extends EditorHeaderAction {
     }
     
     final FindModel findModel = getEditorSearchComponent().getFindModel();
-    FindUtil.configureFindModel(false, null, findModel);
+    FindUtil.configureFindModel(false, null, findModel, false);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public abstract class JavaCodeStyleManager {
    *
    * @param name         the name of the variable.
    * @param variableKind the kind of the variable.
-   * @return the stipped-down name.
+   * @return the stripped-down name.
    */
   public abstract String variableNameToPropertyName(@NonNls String name, VariableKind variableKind);
 
@@ -146,7 +146,7 @@ public abstract class JavaCodeStyleManager {
    * @param baseNameInfo    the base name info for the variable.
    * @param place       the location where the variable will be used.
    * @param lookForward if true, the existing variables are searched in both directions; if false - only backward
-   * @return the generated unique name,
+   * @return the generated unique name
    */
   @NotNull
   public SuggestedNameInfo suggestUniqueVariableName(@NotNull SuggestedNameInfo baseNameInfo,
@@ -163,6 +163,7 @@ public abstract class JavaCodeStyleManager {
    * @param place           the location where the variable will be used.
    * @param ignorePlaceName  if true and place is PsiNamedElement, place.getName() would be still treated as unique name
    * @param lookForward     if true, the existing variables are searched in both directions; if false - only backward  @return the generated unique name,
+   * @return the generated unique name
    */
   @NotNull public abstract SuggestedNameInfo suggestUniqueVariableName(@NotNull SuggestedNameInfo baseNameInfo,
                                                                        PsiElement place,

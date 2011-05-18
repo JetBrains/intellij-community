@@ -55,7 +55,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
   public static void printDetectedPerformanceTimings() {
-    System.out.println("Etalon timing: " + ETALON_TIMING);
+    System.out.println("Etalon timing: " + Timings.ETALON_TIMING);
     System.out.println("This machine timing: " + Timings.MACHINE_TIMING);
   }
 

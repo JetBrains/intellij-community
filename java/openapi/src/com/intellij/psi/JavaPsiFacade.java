@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,8 @@ public abstract class JavaPsiFacade {
    */
   public abstract boolean isPartOfPackagePrefix(String packageName);
 
-  /* Checks if the specified PSI element belongs to the specified package.
+  /**
+   * Checks if the specified PSI element belongs to the specified package.
    *
    * @param element  the element to check the package for.
    * @param aPackage the package to check.

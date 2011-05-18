@@ -297,7 +297,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     if (!(0 <= startOffset && startOffset <= endOffset && endOffset <= getTextLength())) {
-      LOG.error("Incorrect offsets startOffset=" + startOffset + ", endOffset=" + endOffset + ", text length=" + getTextLength());
+      LOG.error("Incorrect offsets: startOffset=" + startOffset + ", endOffset=" + endOffset + ", text length=" + getTextLength());
     }
     return surviveOnExternalChange
            ? new PersistentRangeMarker(this, startOffset, endOffset,true)

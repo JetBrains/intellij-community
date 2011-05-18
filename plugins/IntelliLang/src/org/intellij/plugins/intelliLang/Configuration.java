@@ -19,22 +19,16 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,6 +40,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -72,11 +67,87 @@ import java.util.*;
  * Making it a service may result in FileContentUtil.reparseFiles at a random loading moment which may cause
  * mysterious PSI validity losses
  */
-@State(
-  name = Configuration.COMPONENT_NAME,
-  storages = {@Storage(id = "dir", file = "$APP_CONFIG$/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
-public final class Configuration implements PersistentStateComponent<Element>, ModificationTracker {
+public class Configuration implements PersistentStateComponent<Element>, ModificationTracker {
+
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
+
+  @State(
+    name = Configuration.COMPONENT_NAME,
+    storages = {@Storage(id = "dir", file = "$APP_CONFIG$/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
+  public static class App extends Configuration {
+
+    private final List<BaseInjection> myDefaultInjections;
+    private final AdvancedConfiguration myAdvancedConfiguration;
+
+    App() {
+      myDefaultInjections = loadDefaultInjections();
+      myAdvancedConfiguration = new AdvancedConfiguration();
+    }
+
+    @Override
+    public List<BaseInjection> getDefaultInjections() {
+      return myDefaultInjections;
+    }
+
+    @Override
+    public AdvancedConfiguration getAdvancedConfiguration() {
+      return myAdvancedConfiguration;
+    }
+
+    @Override
+    public void loadState(final Element element) {
+      myAdvancedConfiguration.loadState(element);
+      super.loadState(element);
+    }
+
+    @Override
+    public Element getState() {
+      final Element element = new Element(COMPONENT_NAME);
+      myAdvancedConfiguration.writeState(element);
+      return getState(element);
+    }
+  }
+  @State(
+    name = Configuration.COMPONENT_NAME,
+    storages = {@Storage(id = "default", file = "$PROJECT_FILE$"),
+      @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
+  public static class Prj extends Configuration {
+
+    private final Configuration myParentConfiguration;
+
+    Prj(final Configuration configuration) {
+      myParentConfiguration = configuration;
+    }
+
+    @Override
+    public AdvancedConfiguration getAdvancedConfiguration() {
+      return myParentConfiguration.getAdvancedConfiguration();
+    }
+
+    @Override
+    public List<BaseInjection> getDefaultInjections() {
+      return myParentConfiguration.getDefaultInjections();
+    }
+
+    @NotNull
+    @Override
+    public List<BaseInjection> getInjections(final String injectorId) {
+      return ContainerUtil.concat(myParentConfiguration.getInjections(injectorId), getOwnInjections(injectorId));
+    }
+
+    public Configuration getParentConfiguration() {
+      return myParentConfiguration;
+    }
+
+    public List<BaseInjection> getOwnInjections(final String injectorId) {
+      return super.getInjections(injectorId);
+    }
+
+    @Override
+    public long getModificationCount() {
+      return super.getModificationCount() + myParentConfiguration.getModificationCount();
+    }
+  }
 
   public enum InstrumentationType {
     NONE, ASSERT, EXCEPTION
@@ -108,37 +179,17 @@ public final class Configuration implements PersistentStateComponent<Element>, M
       return ContainerUtil.createEmptyCOWList();
     }
   };
-  private ArrayList<BaseInjection> myDefaultInjections;
 
-  // runtime pattern validation instrumentation
-  @NotNull private InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;
-
-  // annotation class names
-  @NotNull private String myLanguageAnnotation;
-  @NotNull private String myPatternAnnotation;
-  @NotNull private String mySubstAnnotation;
-
-  private boolean myIncludeUncomputablesAsLiterals;
-  private DfaOption myDfaOption = DfaOption.RESOLVE;
-
-  // cached annotation name pairs
-  private Pair<String, ? extends Set<String>> myLanguageAnnotationPair;
-  private Pair<String, ? extends Set<String>> myPatternAnnotationPair;
-
-  private Pair<String, ? extends Set<String>> mySubstAnnotationPair;
   private volatile long myModificationCount;
 
   public Configuration() {
-    setLanguageAnnotation("org.intellij.lang.annotations.Language");
-    setPatternAnnotation("org.intellij.lang.annotations.Pattern");
-    setSubstAnnotation("org.intellij.lang.annotations.Subst");
+  }
+
+  public AdvancedConfiguration getAdvancedConfiguration() {
+    throw new UnsupportedOperationException("getAdvancedConfiguration should not be called");
   }
 
   public void loadState(final Element element) {
-    loadState(element, true);
-  }
-
-  public void loadState(final Element element, final boolean mergeWithOriginalAndCompile) {
     final THashMap<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
     for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
       supports.put(support.getId(), support);
@@ -151,30 +202,7 @@ public final class Configuration implements PersistentStateComponent<Element>, M
       injection.loadState(child);
       myInjections.get(key).add(injection);
     }
-    setInstrumentationType(JDOMExternalizerUtil.readField(element, INSTRUMENTATION_TYPE_NAME));
-    setLanguageAnnotation(JDOMExternalizerUtil.readField(element, LANGUAGE_ANNOTATION_NAME));
-    setPatternAnnotation(JDOMExternalizerUtil.readField(element, PATTERN_ANNOTATION_NAME));
-    setSubstAnnotation(JDOMExternalizerUtil.readField(element, SUBST_ANNOTATION_NAME));
-    if (readBoolean(element, RESOLVE_REFERENCES, true)) {
-      setDfaOption(DfaOption.RESOLVE);
-    }
-    if (readBoolean(element, LOOK_FOR_VAR_ASSIGNMENTS, false)) {
-      setDfaOption(DfaOption.ASSIGNMENTS);
-    }
-    if (readBoolean(element, USE_DFA_IF_AVAILABLE, false)) {
-      setDfaOption(DfaOption.DFA);
-    }
-    setIncludeUncomputablesAsLiterals(readBoolean(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, false));
-
-    if (mergeWithOriginalAndCompile) {
-      mergeWithDefaultConfiguration();
-
-      for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-        for (BaseInjection injection : getInjections(supportId)) {
-          injection.initializePlaces(true);
-        }
-      }
-    }
+    importPlaces(getDefaultInjections());
   }
 
   private void loadStateOld(Element element, final LanguageInjectionSupport xmlSupport, final LanguageInjectionSupport javaSupport) {
@@ -208,7 +236,7 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     return Boolean.parseBoolean(value);
   }
 
-  private void mergeWithDefaultConfiguration() {
+  private static List<BaseInjection> loadDefaultInjections() {
     final ArrayList<Configuration> cfgList = new ArrayList<Configuration>();
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       final String config = support.getDefaultConfigUrl();
@@ -247,47 +275,26 @@ public final class Configuration implements PersistentStateComponent<Element>, M
       }
     }
 
-    final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
-    final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
-    myDefaultInjections = new ArrayList<BaseInjection>();
+    final ArrayList<BaseInjection> defaultInjections = new ArrayList<BaseInjection>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
       for (Configuration cfg : cfgList) {
         final List<BaseInjection> imported = cfg.getInjections(supportId);
-        myDefaultInjections.addAll(imported);
-        importInjections(getInjections(supportId), imported, originalInjections, newInjections);
+        defaultInjections.addAll(imported);
       }
     }
-    replaceInjections(newInjections, originalInjections);
+    return defaultInjections;
   }
 
   public Element getState() {
-    final Element element = new Element(COMPONENT_NAME);
+    return getState(new Element(COMPONENT_NAME));
+  }
 
-    JDOMExternalizerUtil.writeField(element, INSTRUMENTATION_TYPE_NAME, myInstrumentationType.toString());
-    JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation);
-    JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation);
-    JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
-    switch (myDfaOption) {
-      case OFF:
-        break;
-      case RESOLVE:
-        JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, Boolean.TRUE.toString());
-        break;
-      case ASSIGNMENTS:
-        JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
-        break;
-      case DFA:
-        JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
-        break;
-    }
-
+  protected Element getState(final Element element) {
     final List<String> injectorIds = new ArrayList<String>(myInjections.keySet());
     Collections.sort(injectorIds);
     for (String key : injectorIds) {
       final List<BaseInjection> injections = new ArrayList<BaseInjection>(myInjections.get(key));
-      if (myDefaultInjections != null) {
-        injections.removeAll(myDefaultInjections);
-      }
+      injections.removeAll(getDefaultInjections());
       Collections.sort(injections, new Comparator<BaseInjection>() {
         public int compare(final BaseInjection o1, final BaseInjection o2) {
           return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
@@ -315,59 +322,15 @@ public final class Configuration implements PersistentStateComponent<Element>, M
   }
 
   public static Configuration getInstance() {
-    return ApplicationManager.getApplication().getComponent(Configuration.class);
+    return ServiceManager.getService(Configuration.class);
   }
 
-  public String getLanguageAnnotationClass() {
-    return myLanguageAnnotation;
+  public static Configuration getProjectInstance(Project project) {
+    return ServiceManager.getService(project, Configuration.class);
   }
 
-  public String getPatternAnnotationClass() {
-    return myPatternAnnotation;
-  }
-
-  public String getSubstAnnotationClass() {
-    return mySubstAnnotation;
-  }
-
-  public void setInstrumentationType(@Nullable String type) {
-    if (type != null) {
-      setInstrumentationType(InstrumentationType.valueOf(type));
-    }
-  }
-
-  public void setInstrumentationType(@NotNull InstrumentationType type) {
-    myInstrumentationType = type;
-  }
-
-  public void setLanguageAnnotation(@Nullable String languageAnnotation) {
-    if (languageAnnotation == null) return;
-    myLanguageAnnotation = languageAnnotation;
-    myLanguageAnnotationPair = Pair.create(languageAnnotation, Collections.singleton(languageAnnotation));
-  }
-
-  public Pair<String, ? extends Set<String>> getLanguageAnnotationPair() {
-    return myLanguageAnnotationPair;
-  }
-
-  public void setPatternAnnotation(@Nullable String patternAnnotation) {
-    if (patternAnnotation == null) return;
-    myPatternAnnotation = patternAnnotation;
-    myPatternAnnotationPair = Pair.create(patternAnnotation, Collections.singleton(patternAnnotation));
-  }
-
-  public Pair<String, ? extends Set<String>> getPatternAnnotationPair() {
-    return myPatternAnnotationPair;
-  }
-
-  public void setSubstAnnotation(@Nullable String substAnnotation) {
-    if (substAnnotation == null) return;
-    mySubstAnnotation = substAnnotation;
-    mySubstAnnotationPair = Pair.create(substAnnotation, Collections.singleton(substAnnotation));
-  }
-
-  public Pair<String, ? extends Set<String>> getSubstAnnotationPair() {
-    return mySubstAnnotationPair;
+  public List<BaseInjection> getDefaultInjections() {
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -375,16 +338,23 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     try {
       final Document document = JDOMUtil.loadDocument(is);
       final ArrayList<Element> elements = new ArrayList<Element>();
-      elements.add(document.getRootElement());
-      elements.addAll(document.getRootElement().getChildren("component"));
-      final Element element = ContainerUtil.find(elements, new Condition<Element>() {
-        public boolean value(final Element element) {
-          return "component".equals(element.getName()) && COMPONENT_NAME.equals(element.getAttributeValue("name"));
-        }
-      });
-      if (element != null) {
+      final Element rootElement = document.getRootElement();
+      final Element state;
+      if (rootElement.getName().equals(COMPONENT_NAME)) {
+        state = rootElement;
+      }
+      else {
+        elements.add(rootElement);
+        elements.addAll(rootElement.getChildren("component"));
+        state = ContainerUtil.find(elements, new Condition<Element>() {
+          public boolean value(final Element element) {
+            return "component".equals(element.getName()) && COMPONENT_NAME.equals(element.getAttributeValue("name"));
+          }
+        });
+      }
+      if (state != null) {
         final Configuration cfg = new Configuration();
-        cfg.loadState(element, false);
+        cfg.loadState(state);
         return cfg;
       }
       return null;
@@ -394,16 +364,19 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     }
   }
 
-  /**
-   * Import from another configuration (e.g. imported file). Returns the number of imported items.
-   * @param cfg configuration to import from
-   * @return added injections count
-   */
-  public int importFrom(final Configuration cfg) {
+  private int importPlaces(final List<BaseInjection> injections) {
+    final Map<String, Set<BaseInjection>> map = ContainerUtil.classify(injections.iterator(), new Convertor<BaseInjection, String>() {
+      @Override
+      public String convert(final BaseInjection o) {
+        return o.getSupportId();
+      }
+    });
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
     final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-      importInjections(getInjections(supportId), cfg.getInjections(supportId), originalInjections, newInjections);
+      final Set<BaseInjection> importingInjections = map.get(supportId);
+      if (importingInjections == null) continue;
+      importInjections(getInjections(supportId), importingInjections, originalInjections, newInjections);
     }
     if (!newInjections.isEmpty()) configurationModified();
     replaceInjections(newInjections, originalInjections);
@@ -412,11 +385,16 @@ public final class Configuration implements PersistentStateComponent<Element>, M
 
   static void importInjections(final Collection<BaseInjection> existingInjections, final Collection<BaseInjection> importingInjections,
                                final Collection<BaseInjection> originalInjections, final Collection<BaseInjection> newInjections) {
-    final MultiValuesMap<String, BaseInjection> existingMap = createInjectionMap(existingInjections);
+    final MultiValuesMap<InjectionPlace, BaseInjection> placeMap = new MultiValuesMap<InjectionPlace, BaseInjection>();
+    for (BaseInjection exising : existingInjections) {
+      for (InjectionPlace place : exising.getInjectionPlaces()) {
+        placeMap.put(place, exising);
+      }
+    }
     main: for (BaseInjection other : importingInjections) {
       final List<BaseInjection> matchingInjections = ContainerUtil.concat(other.getInjectionPlaces(), new Function<InjectionPlace, Collection<? extends BaseInjection>>() {
         public Collection<? extends BaseInjection> fun(final InjectionPlace o) {
-          final Collection<BaseInjection> collection = existingMap.get(o.getText());
+          final Collection<BaseInjection> collection = placeMap.get(o);
           return collection == null? Collections.<BaseInjection>emptyList() : collection;
         }
       });
@@ -442,39 +420,12 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     }
   }
 
-  private static MultiValuesMap<String, BaseInjection> createInjectionMap(final Collection<BaseInjection> injections) {
-    final MultiValuesMap<String, BaseInjection> existingMap = new MultiValuesMap<String, BaseInjection>();
-    for (BaseInjection injection : injections) {
-      for (InjectionPlace place : injection.getInjectionPlaces()) {
-        existingMap.put(place.getText(), injection);
-      }
-    }
-    return existingMap;
-  }
-
   public void configurationModified() {
     myModificationCount ++;
   }
 
   public long getModificationCount() {
     return myModificationCount;
-  }
-
-  public boolean isIncludeUncomputablesAsLiterals() {
-    return myIncludeUncomputablesAsLiterals;
-  }
-
-  public void setIncludeUncomputablesAsLiterals(boolean flag) {
-    myIncludeUncomputablesAsLiterals = flag;
-  }
-
-  @NotNull
-  public DfaOption getDfaOption() {
-    return myDfaOption;
-  }
-
-  public void setDfaOption(@NotNull final DfaOption dfaOption) {
-    myDfaOption = dfaOption;
   }
 
   @Nullable
@@ -489,15 +440,15 @@ public final class Configuration implements PersistentStateComponent<Element>, M
   public boolean setHostInjectionEnabled(final PsiLanguageInjectionHost host, final Collection<String> languages, final boolean enabled) {
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
     final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
-    for (String supportId : getAllInjectorIds()) {
-      for (BaseInjection injection : getInjections(supportId)) {
+    for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
+      for (BaseInjection injection : getInjections(support.getId())) {
         if (!languages.contains(injection.getInjectedLanguageId())) continue;
         boolean replace = false;
         final ArrayList<InjectionPlace> newPlaces = new ArrayList<InjectionPlace>();
         for (InjectionPlace place : injection.getInjectionPlaces()) {
           if (place.isEnabled() != enabled && place.getElementPattern() != null &&
               (place.getElementPattern().accepts(host) || place.getElementPattern().accepts(host.getParent()))) {
-            newPlaces.add(new InjectionPlace(place.getText(), place.getElementPattern(), enabled));
+            newPlaces.add(place.enabled(enabled));
             replace = true;
           }
           else newPlaces.add(place);
@@ -518,8 +469,10 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     return false;
   }
 
-  public InstrumentationType getInstrumentation() {
-    return myInstrumentationType;
+  protected void setInjections(Collection<BaseInjection> injections) {
+    for (BaseInjection injection : injections) {
+      myInjections.get(injection.getSupportId()).add(injection);
+    }
   }
 
   @NotNull
@@ -527,21 +480,23 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     return Collections.unmodifiableList(myInjections.get(injectorId));
   }
 
-  public Set<String> getAllInjectorIds() {
-    return Collections.unmodifiableSet(myInjections.keySet());
-  }
-
   public void replaceInjectionsWithUndo(final Project project,
                                 final List<? extends BaseInjection> newInjections,
                                 final List<? extends BaseInjection> originalInjections,
                                 final List<? extends PsiElement> psiElementsToRemove) {
     replaceInjectionsWithUndo(project, newInjections, originalInjections, psiElementsToRemove,
-                      new PairProcessor<List<? extends BaseInjection>, List<? extends BaseInjection>>() {
-      public boolean process(final List<? extends BaseInjection> add, final List<? extends BaseInjection> remove) {
-        replaceInjections(add, remove);
-        return true;
-      }
-    });
+                              new PairProcessor<List<? extends BaseInjection>, List<? extends BaseInjection>>() {
+                                public boolean process(final List<? extends BaseInjection> add,
+                                                       final List<? extends BaseInjection> remove) {
+                                  replaceInjectionsWithUndoInner(add, remove);
+                                  FileContentUtil.reparseOpenedFiles();
+                                  return true;
+                                }
+                              });
+  }
+
+  protected void replaceInjectionsWithUndoInner(final List<? extends BaseInjection> add, final List<? extends BaseInjection> remove) {
+    replaceInjections(add, remove);
   }
 
   public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
@@ -582,14 +537,144 @@ public final class Configuration implements PersistentStateComponent<Element>, M
       myInjections.get(injection.getSupportId()).remove(injection);
     }
     for (BaseInjection injection : newInjections) {
-      injection.initializePlaces(true);
       myInjections.get(injection.getSupportId()).add(injection);
     }
     configurationModified();
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
-    }
   }
 
+  public static class AdvancedConfiguration {
+    // runtime pattern validation instrumentation
+    @NotNull private InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;
 
+    // annotation class names
+    @NotNull private String myLanguageAnnotation;
+    @NotNull private String myPatternAnnotation;
+    @NotNull private String mySubstAnnotation;
+
+    private boolean myIncludeUncomputablesAsLiterals;
+    private DfaOption myDfaOption = DfaOption.RESOLVE;
+
+    // cached annotation name pairs
+    private Pair<String, ? extends Set<String>> myLanguageAnnotationPair;
+    private Pair<String, ? extends Set<String>> myPatternAnnotationPair;
+
+    private Pair<String, ? extends Set<String>> mySubstAnnotationPair;
+
+    public AdvancedConfiguration() {
+      setLanguageAnnotation("org.intellij.lang.annotations.Language");
+      setPatternAnnotation("org.intellij.lang.annotations.Pattern");
+      setSubstAnnotation("org.intellij.lang.annotations.Subst");
+    }
+
+    public String getLanguageAnnotationClass() {
+      return myLanguageAnnotation;
+    }
+
+    public String getPatternAnnotationClass() {
+      return myPatternAnnotation;
+    }
+
+    public String getSubstAnnotationClass() {
+      return mySubstAnnotation;
+    }
+
+    public void setInstrumentationType(@Nullable String type) {
+      if (type != null) {
+        setInstrumentationType(InstrumentationType.valueOf(type));
+      }
+    }
+
+    public void setInstrumentationType(@NotNull InstrumentationType type) {
+      myInstrumentationType = type;
+    }
+
+    public void setLanguageAnnotation(@Nullable String languageAnnotation) {
+      if (languageAnnotation == null) return;
+      myLanguageAnnotation = languageAnnotation;
+      myLanguageAnnotationPair = Pair.create(languageAnnotation, Collections.singleton(languageAnnotation));
+    }
+
+    public Pair<String, ? extends Set<String>> getLanguageAnnotationPair() {
+      return myLanguageAnnotationPair;
+    }
+
+    public void setPatternAnnotation(@Nullable String patternAnnotation) {
+      if (patternAnnotation == null) return;
+      myPatternAnnotation = patternAnnotation;
+      myPatternAnnotationPair = Pair.create(patternAnnotation, Collections.singleton(patternAnnotation));
+    }
+
+    public Pair<String, ? extends Set<String>> getPatternAnnotationPair() {
+      return myPatternAnnotationPair;
+    }
+
+    public void setSubstAnnotation(@Nullable String substAnnotation) {
+      if (substAnnotation == null) return;
+      mySubstAnnotation = substAnnotation;
+      mySubstAnnotationPair = Pair.create(substAnnotation, Collections.singleton(substAnnotation));
+    }
+
+    public Pair<String, ? extends Set<String>> getSubstAnnotationPair() {
+      return mySubstAnnotationPair;
+    }
+
+    public boolean isIncludeUncomputablesAsLiterals() {
+      return myIncludeUncomputablesAsLiterals;
+    }
+
+    public void setIncludeUncomputablesAsLiterals(boolean flag) {
+      myIncludeUncomputablesAsLiterals = flag;
+    }
+
+    @NotNull
+    public DfaOption getDfaOption() {
+      return myDfaOption;
+    }
+
+    public void setDfaOption(@NotNull final DfaOption dfaOption) {
+      myDfaOption = dfaOption;
+    }
+
+
+    public InstrumentationType getInstrumentation() {
+      return myInstrumentationType;
+    }
+
+    private void writeState(final Element element) {
+      JDOMExternalizerUtil.writeField(element, INSTRUMENTATION_TYPE_NAME, myInstrumentationType.toString());
+      JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation);
+      JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation);
+      JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
+      switch (myDfaOption) {
+        case OFF:
+          break;
+        case RESOLVE:
+          JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, Boolean.TRUE.toString());
+          break;
+        case ASSIGNMENTS:
+          JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
+          break;
+        case DFA:
+          JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
+          break;
+      }
+    }
+
+    private void loadState(final Element element) {
+      setInstrumentationType(JDOMExternalizerUtil.readField(element, INSTRUMENTATION_TYPE_NAME));
+      setLanguageAnnotation(JDOMExternalizerUtil.readField(element, LANGUAGE_ANNOTATION_NAME));
+      setPatternAnnotation(JDOMExternalizerUtil.readField(element, PATTERN_ANNOTATION_NAME));
+      setSubstAnnotation(JDOMExternalizerUtil.readField(element, SUBST_ANNOTATION_NAME));
+      if (readBoolean(element, RESOLVE_REFERENCES, true)) {
+        setDfaOption(DfaOption.RESOLVE);
+      }
+      if (readBoolean(element, LOOK_FOR_VAR_ASSIGNMENTS, false)) {
+        setDfaOption(DfaOption.ASSIGNMENTS);
+      }
+      if (readBoolean(element, USE_DFA_IF_AVAILABLE, false)) {
+        setDfaOption(DfaOption.DFA);
+      }
+      setIncludeUncomputablesAsLiterals(readBoolean(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, false));
+    }
+  }
 }
