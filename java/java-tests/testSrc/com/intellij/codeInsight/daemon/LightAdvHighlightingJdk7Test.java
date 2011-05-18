@@ -21,6 +21,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.defUse.DefUseInspection;
+import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -51,7 +52,8 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{
       new UnusedSymbolLocalInspection(),
       new UncheckedWarningLocalInspection(),
-      new JavacQuirksInspection()
+      new JavacQuirksInspection(),
+      new RedundantCastInspection()
     };
   }
 
@@ -262,7 +264,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testPolymorphicTypeCast() throws Exception {
-    Object o = null;
-    doTest(false, false);
+    doTest(true, false);
   }
 }
