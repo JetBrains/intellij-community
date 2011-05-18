@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
+@SuppressWarnings({"UnusedDeclaration"})
 class C {
   // from http://download.java.net/jdk7/docs/api/java/lang/invoke/MethodHandle.html, "Usage examples"
   void m() throws Throwable {
@@ -64,6 +66,10 @@ class C {
     mh = lookup.findVirtual(java.io.PrintStream.class, "println", mt);
     mh.invokeExact(System.out, "Hello, world.");
 // invokeExact(Ljava/io/PrintStream;Ljava/lang/String;)V
+
+    MethodHandle mh0 = lookup.findVirtual(String.class, "length", MethodType.methodType(int.class));
+    MethodHandle mh1 = MethodHandles.convertArguments(mh0, MethodType.methodType(Integer.class, String.class));
+    System.out.println((Integer) mh1.invokeExact("daddy"));
   }
 
   void unsupported() {
