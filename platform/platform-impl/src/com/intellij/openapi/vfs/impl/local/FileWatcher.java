@@ -212,7 +212,7 @@ public class FileWatcher {
       return new File(path).getCanonicalPath();
     }
     catch (IOException e) {
-      LOG.error(path, e);
+      LOG.warn(e.getMessage() + ": " + path);
       return path;
     }
   }
