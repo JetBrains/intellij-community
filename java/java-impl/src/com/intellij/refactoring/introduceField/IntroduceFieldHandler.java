@@ -109,8 +109,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       myInplaceIntroduceFieldPopup =
         new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
                                        allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, expr != null ? createOccurenceManager(expr, parentClass) : null);
-      myInplaceIntroduceFieldPopup.startTemplate();
-      return null;
+      if (myInplaceIntroduceFieldPopup.startTemplate()) {
+        return null;
+      }
     }
 
     IntroduceFieldDialog dialog = new IntroduceFieldDialog(
