@@ -116,4 +116,23 @@ public class PsiTypesUtil {
   public static PsiClassType getClassType(@NotNull PsiClass psiClass) {
     return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
   }
+
+  @Nullable
+  public static PsiClassType getLowestUpperBoundClassType(@NotNull final PsiDisjunctionType type) {
+    final PsiType lub = type.getLeastUpperBound();
+    if (lub instanceof PsiClassType) {
+      return (PsiClassType)lub;
+    }
+    else if (lub instanceof PsiIntersectionType) {
+      for (PsiType subType : ((PsiIntersectionType)lub).getConjuncts()) {
+        if (subType instanceof PsiClassType) {
+          final PsiClass aClass = ((PsiClassType)subType).resolve();
+          if (aClass != null && !aClass.isInterface()) {
+            return (PsiClassType)subType;
+          }
+        }
+      }
+    }
+    return null;
+  }
 }
