@@ -45,7 +45,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         if (tagRange == null) {
           break;
         }
-        pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, tagRange.getEndOffset());
+        pos = getTagArgumentStart(docString, tagRange);
         int endPos = new CharMatcher() {
                             @Override public boolean matches(char c) {
                               return Character.isLetterOrDigit(c) || c == '_';
@@ -60,6 +60,20 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       return result.toArray(new PsiReference[result.size()]);
     }
     return PsiReference.EMPTY_ARRAY;
+  }
+
+  private int getTagArgumentStart(String docString, TextRange tagRange) {
+    int pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, tagRange.getEndOffset());
+    if (docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).startsWith(":")) {
+      int ws = CharMatcher.anyOf(" \t*").indexIn(docString, pos+1);
+      if (ws != -1) {
+        int next = CharMatcher.anyOf(" \t*").negate().indexIn(docString, ws);
+        if (next != -1 && !docString.substring(pos, next).contains(":")) {
+          pos = next;
+        }
+      }
+    }
+    return pos;
   }
 
   @Nullable
