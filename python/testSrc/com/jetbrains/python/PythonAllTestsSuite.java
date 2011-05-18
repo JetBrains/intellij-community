@@ -71,7 +71,8 @@ public class PythonAllTestsSuite {
     EpydocStringTest.class,
     PyEmacsTabTest.class,
     PyTypeParserTest.class,
-    PyOverrideTest.class
+    PyOverrideTest.class,
+    PyBinaryModuleCompletionTest.class
   };
 
   public static TestSuite suite() {

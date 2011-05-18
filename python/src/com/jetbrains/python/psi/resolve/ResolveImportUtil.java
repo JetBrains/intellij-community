@@ -133,9 +133,15 @@ public class ResolveImportUtil {
 
       if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
         final List<PsiElement> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
+        List<PsiElement> resultList = new ArrayList<PsiElement>();
         for (PsiElement candidate : candidates) {
           PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), first_component, file, null, false, true);
-          if (result != null) return Collections.singletonList(result);
+          if (result != null) {
+            resultList.add(result);
+          }
+        }
+        if (!resultList.isEmpty()) {
+          return resultList;
         }
       }
     }
