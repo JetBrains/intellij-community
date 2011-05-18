@@ -1160,6 +1160,12 @@ public class PsiUtil {
         parent instanceof GrVariable) {
       return false;
     }
+    if (parent instanceof GrIfStatement && expr == ((GrIfStatement)parent).getCondition()) {
+      return false;
+    }
+    if (parent instanceof GrWhileStatement && expr == ((GrWhileStatement)parent).getCondition()) {
+      return false;
+    }
     return true;
   }
 
