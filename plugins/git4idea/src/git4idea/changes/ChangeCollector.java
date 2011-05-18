@@ -156,8 +156,9 @@ class ChangeCollector {
   }
 
   private void addToPaths(FilePath pathToAdd, List<String> paths) {
-    if (myVcsRoot.equals(GitUtil.getGitRootOrNull(pathToAdd))) {
-      paths.add(pathToAdd.getPath());
+    File file = pathToAdd.getIOFile();
+    if (myVcsRoot.equals(GitUtil.getGitRootOrNull(file))) {
+      paths.add(file.getPath());
     }
   }
 
