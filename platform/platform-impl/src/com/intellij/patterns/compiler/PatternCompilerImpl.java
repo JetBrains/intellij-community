@@ -81,7 +81,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   //}
 
   @Override
-  public ElementPattern<T> compileElementPattern(final String text) {
+  public synchronized ElementPattern<T> compileElementPattern(final String text) {
     final Node node = processElementPatternText(text, new Function<Frame, Object>() {
       public Node fun(final Frame frame) {
         final Object[] args = frame.params.toArray();
