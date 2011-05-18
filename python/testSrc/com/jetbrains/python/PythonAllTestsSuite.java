@@ -70,7 +70,8 @@ public class PythonAllTestsSuite {
     PyFoldingTest.class,
     EpydocStringTest.class,
     PyEmacsTabTest.class,
-    PyTypeParserTest.class
+    PyTypeParserTest.class,
+    PyOverrideTest.class
   };
 
   public static TestSuite suite() {

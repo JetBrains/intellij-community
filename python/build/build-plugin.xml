@@ -33,9 +33,6 @@
     <fileset dir="${idea.lib}">
       <include name="?*.jar"/>
     </fileset>
-    <fileset dir="${plugin.home}/lib">
-      <include name="**/*.jar"/>
-    </fileset>
     <fileset dir="${idea.plugins}/yaml/lib">
       <include name="yaml.jar"/>
     </fileset>
@@ -154,11 +151,6 @@
     <mkdir dir="${plugindir}/lib"/>
     <move todir="${plugindir}/lib" file="${output}/python.jar"/>
 
-    <!--copy common libraries jars-->
-    <copy todir="${plugindir}/lib">
-      <fileset dir="${plugin.home}/lib" includes="*.jar"/>
-    </copy>
-
     <mkdir dir="${plugindir}/helpers"/>
     <copy todir="${plugindir}/helpers">
       <fileset dir="${plugin.home}/helpers">
@@ -169,24 +161,6 @@
 
     <zip basedir="${zipdir}" destfile="${output}/${zipname}"/>
   </target>
-
-  <!--
-
-  <target name="jflex" description="Builds lexers from ruby.flex, output.flex, rhtml.flex">
-      <ant antfile="${rubylexer.build.file}">
-          <property name="jflex.dir" location="${plugin.home}/lib"/>
-          <property name="lexer.dir" location="${rubylexer.dir}"/>
-      </ant>
-      <ant antfile="${outputlexer.build.file}">
-          <property name="jflex.dir" location="${plugin.home}/lib"/>
-          <property name="lexer.dir" location="${outputlexer.dir}"/>
-      </ant>
-      <ant antfile="${rhtmllexer.build.file}">
-          <property name="jflex.dir" location="${plugin.home}/lib"/>
-          <property name="lexer.dir" location="${rhtmllexer.dir}"/>
-      </ant>
-  </target>
-  -->
 
   <target name="build" depends="clean, compile"/>
 
