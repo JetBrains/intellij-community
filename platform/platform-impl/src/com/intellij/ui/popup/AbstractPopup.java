@@ -584,12 +584,9 @@ public class AbstractPopup implements JBPopup {
 
     assert ApplicationManager.getApplication().isDispatchThread();
 
-    if (myContent.isShowing()) return;
-
 
     final boolean shouldShow = beforeShow();
     if (!shouldShow) {
-      myShown.setRejected();
       return;
     }
 
@@ -598,6 +595,10 @@ public class AbstractPopup implements JBPopup {
     if (myInStack) {
       myFocusTrackback = new FocusTrackback(this, owner, true);
       myFocusTrackback.setMustBeShown(true);
+
+      _show(owner, aScreenX, aScreenY, considerForcedXY);
+      //todo kirillk fixing now
+      if (true) return;
 
       getFocusManager().doWhenFocusSettlesDown(new Runnable() {
         @Override
@@ -1029,7 +1030,6 @@ public class AbstractPopup implements JBPopup {
       myContent.removeAll();
       myContent.removeKeyListener(mySearchKeyListener);
     }
-    myContent.removeAll();
     myContent = null;
     myPreferredFocusedComponent = null;
     myComponent = null;
