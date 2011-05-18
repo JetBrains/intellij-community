@@ -608,7 +608,12 @@ public class ContainerUtil {
     return false;
   }
 
-  public static <T> T getFirstItem(final Collection<T> items, final T def) {
+  @Nullable
+  public static <T> T getFirstItem(final Collection<T> items) {
+    return getFirstItem(items, null);
+  }
+
+  public static <T> T getFirstItem(final Collection<T> items, @Nullable final T def) {
     return items == null || items.isEmpty() ? def : items.iterator().next();
   }
 
