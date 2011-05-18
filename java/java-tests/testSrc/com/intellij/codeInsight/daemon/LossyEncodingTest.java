@@ -24,9 +24,13 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LossyEncodingInspection;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ui.UIUtil;
@@ -34,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
+import java.util.List;
 
 public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lossyEncoding";
@@ -97,6 +102,10 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
     doTestConfiguredFile(true, false);
   }
 
+  private void doTest(@NonNls String filePath) throws Exception {
+    doTest(BASE_PATH + "/" + filePath, true, false);
+  }
+
   public void testNativeEncoding() throws Exception {
     EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, true);
     configureByFile(BASE_PATH + "/" + "NativeEncoding.properties");
@@ -104,7 +113,21 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
     doTestConfiguredFile(true, false);
   }
 
-  private void doTest(@NonNls String filePath) throws Exception {
-    doTest(BASE_PATH + "/" + filePath, true, false);
+  public static final String THREE_NOTORIOUS_RUSSIAN_LETTERS = "\u0416\u041e\u041f";
+  public void testDetectWrongEncoding() throws Exception {
+    configureFromFileText("Win1251.txt", THREE_NOTORIOUS_RUSSIAN_LETTERS);
+    VirtualFile virtualFile = getFile().getVirtualFile();
+    assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
+    Charset WINDOWS_1251 = Charset.forName("windows-1251");
+    virtualFile.setCharset(WINDOWS_1251);
+    FileDocumentManager.getInstance().saveAllDocuments();
+    assertEquals(WINDOWS_1251, virtualFile.getCharset());
+    assertEquals(THREE_NOTORIOUS_RUSSIAN_LETTERS, new String(virtualFile.contentsToByteArray(), WINDOWS_1251));
+    virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+
+    doHighlighting();
+    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getFileLevelHighlights(getProject(), getFile());
+    HighlightInfo info = assertOneElement(infos);
+    assertEquals("File was loaded in a wrong encoding: 'UTF-8'", info.description);
   }
 }
