@@ -169,12 +169,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
         myComponent.validate();
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, false);
-        myCurrentIdeTooltip.getShown().notify(myHintHint.getShown());
       } else {
         final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
         myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
         layeredPane.add(myComponent, JLayeredPane.POPUP_LAYER);
-        hintHint.getShown().setDone();
 
         myComponent.validate();
         myComponent.repaint();
@@ -208,8 +206,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
         .setForceHeavyweight(!myForceLightweightPopup && myForceShowAsPopup)
         .createPopup();
-
-      myPopup.getShown().notify(hintHint.getShown());
 
       beforeShow();
       myPopup.show(new RelativePoint(myParentComponent, new Point(actualPoint.x, actualPoint.y)));

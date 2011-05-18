@@ -291,7 +291,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myQueuedTooltip = null;
 
     myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
-    tooltip.getShown().setDone();
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {

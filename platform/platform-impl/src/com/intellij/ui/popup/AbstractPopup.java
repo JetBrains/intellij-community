@@ -149,7 +149,6 @@ public class AbstractPopup implements JBPopup {
   private boolean myMayBeParent;
   private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
   private JLabel myAdComponent;
-  private ActionCallback myShown = new ActionCallback();
 
 
   AbstractPopup() {
@@ -595,11 +594,6 @@ public class AbstractPopup implements JBPopup {
     if (myInStack) {
       myFocusTrackback = new FocusTrackback(this, owner, true);
       myFocusTrackback.setMustBeShown(true);
-
-      _show(owner, aScreenX, aScreenY, considerForcedXY);
-      //todo kirillk fixing now
-      if (true) return;
-
       getFocusManager().doWhenFocusSettlesDown(new Runnable() {
         @Override
         public void run() {
@@ -734,7 +728,6 @@ public class AbstractPopup implements JBPopup {
 
     myPopup.setRequestFocus(myRequestFocus);
     myPopup.show();
-    myShown.setDone();
 
     final Window window = SwingUtilities.getWindowAncestor(myContent);
 
@@ -1435,10 +1428,5 @@ public class AbstractPopup implements JBPopup {
     public void keyReleased(final KeyEvent e) {
       mySpeedSearch.process(e);
     }
-  }
-
-  @Override
-  public ActionCallback getShown() {
-    return myShown;
   }
 }

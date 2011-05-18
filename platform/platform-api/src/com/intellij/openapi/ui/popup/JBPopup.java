@@ -21,7 +21,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -187,6 +186,4 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void pack(boolean with, boolean height);
 
   void setAdText(String s, int alignment);
-
-  ActionCallback getShown();
 }

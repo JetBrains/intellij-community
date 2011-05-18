@@ -51,7 +51,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScreenUtil;
@@ -801,23 +800,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     updateScrollbarVisibility();
 
     Point p = calculatePosition(getComponent());
-    HintHint hintInfo = HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false);
-    hintInfo.getShown().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        LOG.assertTrue(isVisible(), "!visible, disposed=" + myDisposed);
-        LOG.assertTrue(myList.isShowing(), "!showing, disposed=" + myDisposed);
-
-        final JLayeredPane layeredPane = getComponent().getRootPane().getLayeredPane();
-        layeredPane.add(myIconPanel, 42, 0);
-        layeredPane.add(mySortingLabel, 10, 0);
-
-        layoutStatusIcons();
-      }
-    });
-
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false,
-                                                     hintInfo);
+                                                     HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false));
+    LOG.assertTrue(isVisible(), "!visible, disposed=" + myDisposed);
+    LOG.assertTrue(myList.isShowing(), "!showing, disposed=" + myDisposed);
+
+    final JLayeredPane layeredPane = getComponent().getRootPane().getLayeredPane();
+    layeredPane.add(myIconPanel, 42, 0);
+    layeredPane.add(mySortingLabel, 10, 0);
+
+    layoutStatusIcons();
   }
 
   public boolean mayBeNoticed() {
@@ -1190,7 +1182,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myHidden = true;
 
       try {
-       super.hide();
+        super.hide();
 
         Disposer.dispose(this);
 

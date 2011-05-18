@@ -16,7 +16,6 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.update.ComparableObject;
@@ -49,8 +48,6 @@ public class IdeTooltip extends ComparableObject.Impl {
   private int myPositionChangeY;
 
   private Ui myUi;
-
-  private ActionCallback myShown = new ActionCallback();
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
@@ -232,10 +229,6 @@ public class IdeTooltip extends ComparableObject.Impl {
     boolean isInside(RelativePoint target);
 
     RelativePoint getShowingPoint();
-  }
-
-  public ActionCallback getShown() {
-    return myShown;
   }
 }
 
