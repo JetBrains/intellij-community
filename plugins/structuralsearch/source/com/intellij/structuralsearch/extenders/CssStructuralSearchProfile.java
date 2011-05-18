@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.extenders;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.css.CssSupportLoader;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
@@ -24,9 +25,9 @@ public class CssStructuralSearchProfile extends StructuralSearchProfileBase {
 
   @Nullable
   @Override
-  public String getContext(@NotNull String pattern) {
+  public String getContext(@NotNull String pattern, @Nullable Language language) {
     return pattern.indexOf('{') < 0
            ? ".c { $$PATTERN_PLACEHOLDER$$ }"
-           : super.getContext(pattern);
+           : super.getContext(pattern, language);
   }
 }

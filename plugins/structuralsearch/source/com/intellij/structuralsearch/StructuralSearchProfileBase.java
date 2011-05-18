@@ -245,7 +245,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
                                         @NotNull Project project,
                                         boolean physical) {
     if (context == PatternTreeContext.Block) {
-      final String strContext = getContext(text);
+      final String strContext = getContext(text, language);
       return strContext != null ?
              parsePattern(project, strContext, text, fileType, language, extension, physical) :
              PsiElement.EMPTY_ARRAY;
@@ -339,7 +339,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   }
 
   @Nullable
-  protected String getContext(@NotNull String pattern) {
+  protected String getContext(@NotNull String pattern, @Nullable Language language) {
     return PATTERN_PLACEHOLDER;
   }
 

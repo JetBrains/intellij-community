@@ -2,10 +2,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.javascript.JSLanguageDialect;
-import com.intellij.lang.javascript.JSTokenTypes;
-import com.intellij.lang.javascript.JavaScriptSupportLoader;
-import com.intellij.lang.javascript.JavascriptLanguage;
+import com.intellij.lang.javascript.*;
 import com.intellij.lang.javascript.psi.*;
 import com.intellij.lang.javascript.psi.ecmal4.JSAttribute;
 import com.intellij.lang.javascript.psi.ecmal4.JSAttributeList;
@@ -80,10 +77,14 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
-    elements[0].getParent().accept(new MyJsCompilingVisitor(globalVisitor));
+    elements[0].getParent().accept(new MyJsCompilingVisitor(globalVisitor, elements[0].getParent()));
   }
 
   private static PsiElement extractOnlyStatement(JSBlockStatement e) {
+    if (e.getParent() instanceof JSFunction) {
+      return e;
+    }
+
     JSStatement[] statements = e.getStatements();
     if (statements.length == 1) {
       return statements[0];
@@ -168,6 +169,64 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
       return true;
     }
     return super.isMyFile(file, lang, patternLanguages);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement[] createPatternTree(@NotNull String text,
+                                        @NotNull PatternTreeContext context,
+                                        @NotNull FileType fileType,
+                                        @Nullable Language language,
+                                        @Nullable String extension,
+                                        @NotNull Project project,
+                                        boolean physical) {
+    final PsiElement[] originalElements = super.createPatternTree(text, context, fileType, language, extension, project, physical);
+
+    if (context == PatternTreeContext.Block &&
+        language == JavaScriptSupportLoader.ECMA_SCRIPT_L4 &&
+        shouldBeParsedInBlockContext(originalElements)) {
+
+      text = "class A { function f() {" + text + "}}";
+      final PsiElement[] elements = super.createPatternTree(text, context, fileType, language, extension, project, physical);
+
+      if (elements.length == 0) {
+        return elements;
+      }
+
+      for (PsiElement element : elements) {
+        if (element instanceof JSClass) {
+          final JSFunction[] functions = ((JSClass)element).getFunctions();
+          assert functions.length == 1;
+          final JSSourceElement[] body = functions[0].getBody();
+
+          if (body.length == 1 && body[0] instanceof JSBlockStatement) {
+            return body[0].getChildren();
+          }
+          return body;
+        }
+      }
+    }
+
+    return originalElements;
+  }
+
+  public static boolean shouldBeParsedInBlockContext(PsiElement[] elements) {
+    final boolean[] result = {true};
+
+    for (PsiElement element : elements) {
+      element.accept(new PsiRecursiveElementWalkingVisitor() {
+
+        @Override
+        public void visitElement(PsiElement element) {
+          super.visitElement(element);
+
+          if (element instanceof JSFunction || element instanceof JSClass || element instanceof JSAttribute) {
+            result[0] = false;
+          }
+        }
+      });
+    }
+    return result[0];
   }
 
   @Override
@@ -373,9 +432,11 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
 
   private class MyJsCompilingVisitor extends PsiRecursiveElementVisitor {
     private final GlobalCompilingVisitor myGlobalVisitor;
+    private final PsiElement myTopElement;
 
-    private MyJsCompilingVisitor(GlobalCompilingVisitor globalVisitor) {
+    private MyJsCompilingVisitor(GlobalCompilingVisitor globalVisitor, PsiElement topElement) {
       myGlobalVisitor = globalVisitor;
+      myTopElement = topElement;
     }
 
     @Override
@@ -571,7 +632,7 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
 
     private boolean isOnlyTopElement(PsiElement element) {
       PsiElement parent = element.getParent();
-      if (!(parent instanceof JSFile)) {
+      if (!(parent instanceof JSFile) && parent != myTopElement) {
         return false;
       }
       if (parent.getChildren().length != 1) {

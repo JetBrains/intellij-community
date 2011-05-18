@@ -38,26 +38,6 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "location.host.$method$($arg$) ;", 1);
     doTest(s, "host.indexOf(\"name\");", 1);
     doTest(s, "location.$var$.indexOf( $arg$ )", 1);
-
-    if (s == null) {
-      System.out.println("hello");
-      System.out.println("hello");
-      System.out.println("hello");
-      System.out.println("hello");
-      System.out.println("hello");
-      System.out.println("hello");
-      System.out.println("hello");
-    }
-
-    if (s == null) {
-      System.out.println("aba");
-      System.out.println("hello");
-      System.out.println("hello");
-      System.out.println("hello");
-      System.out.println("hello");
-      System.out.println("hello");
-      System.out.println("hello");
-    }
   }
 
   public void test2() {
@@ -239,15 +219,15 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
   public void testFunc1() {
     String s = "function f1() {}\n" +
                "function f2() {}\n";
-    doTest(s, "function $name$() {}", 2);
-    doTest(s, "function f1() {}", 1);
+    doTest(s, "function $name$() {}", 2, false);
+    doTest(s, "function f1() {}", 1, false);
   }
 
   public void testFunc2() {
     String s = "function f1() {}\n" +
                "function f2() {}\n";
-    doTest(s, "function f1()", 1);
-    doTest(s, "function $name$()", 2);
+    doTest(s, "function f1()", 1, false);
+    doTest(s, "function $name$()", 2, false);
   }
 
   public void testFunc3() {
@@ -255,7 +235,7 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
                "function f2() {\n" +
                "  object.someMethod();\n" +
                "}\n";
-    doTest(s, "function $name$()", 2);
+    doTest(s, "function $name$()", 2, false);
   }
 
   public void testFunc4() {
@@ -263,7 +243,7 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
                "function f2() {\n" +
                "  object.someMethod();\n" +
                "}\n";
-    doTest(s, "function $name$() {}", 1);
+    doTest(s, "function $name$() {}", 1, false);
   }
 
   public void testParams() {
@@ -271,11 +251,11 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
                "function f(a, c) {}\n" +
                "function g(b, c) {}\n" +
                "function func(a) {}";
-    doTest(s, "function sum($param1$, $param2$) {}", 1);
-    doTest(s, "function $name$($param1$, $param2$) {}", 3);
-    doTest(s, "function $name$(a, $param2$) {}", 2);
-    doTest(s, "function $name$($param1$, c) {}", 2);
-    doTest(s, "function '_T('_T1*) {}", 4);
+    doTest(s, "function sum($param1$, $param2$) {}", 1, false);
+    doTest(s, "function $name$($param1$, $param2$) {}", 3, false);
+    doTest(s, "function $name$(a, $param2$) {}", 2, false);
+    doTest(s, "function $name$($param1$, c) {}", 2, false);
+    doTest(s, "function '_T('_T1*) {}", 4, false);
   }
 
   public void testInHtml() throws IOException {
@@ -379,12 +359,17 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testTypedVariable() {
-    doTest("var n: int = 2;", "var $n$ = 2", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
-    doTest("var n: int = 2;", "var $n$:$type$ = 2", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
-    doTest("var n: int = 2;", "var $n$", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
-    doTest("var n: int = 2;", "var $n$:$type$", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
-    doTest("var n: int = 2;", "var $n$:float", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
-    doTest("var n: int = 2;", "var $n$ = 3", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    final String s = "class A {" +
+                     "  function f() {" +
+                     "    var n: int = 2;" +
+                     "  }" +
+                     "}";
+    doTest(s, "var $n$ = 2", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(s, "var $n$:$type$ = 2", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(s, "var $n$", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(s, "var $n$:$type$", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(s, "var $n$:float", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(s, "var $n$ = 3", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
   }
 
   private void doTestByFile(String fileName, String pattern, int expectedOccurences) throws IOException {
@@ -402,7 +387,15 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
   }
 
   private void doTest(String source, String pattern, int expectedOccurences) {
+    doTest(source, pattern, expectedOccurences, true);
+  }
+
+  private void doTest(String source, String pattern, int expectedOccurences, boolean wrapAsSourceWithFunction) {
     doTest(source, pattern, expectedOccurences, JavaScriptSupportLoader.JAVASCRIPT, "js");
+
+    if (wrapAsSourceWithFunction) {
+      source = "class A { function f() { " + source + "} }";
+    }
     doTest(source, pattern, expectedOccurences, JavaScriptSupportLoader.JAVASCRIPT, "as");
   }
 
