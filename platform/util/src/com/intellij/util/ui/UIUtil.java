@@ -64,6 +64,8 @@ import java.util.regex.Pattern;
  * @author max
  */
 public class UIUtil {
+  public enum FontSize { NORMAL, SMALL };
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
   @NonNls public static final String HTML_MIME = "text/html";
   public static final char MNEMONIC = 0x1B;
@@ -202,6 +204,24 @@ public class UIUtil {
 
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
+  }
+
+  @NotNull
+  public static Font getFont(@NotNull FontSize size, @Nullable Font base) {
+    Font defFont = getLabelFont();
+
+    if (size == FontSize.SMALL) {
+      if (base == null) base = defFont;
+      return base.deriveFont(defFont.getSize() * 0.8f);
+    }
+    else {
+      if (base != null) {
+        return base.deriveFont(defFont.getSize());
+      }
+      else {
+        return defFont;
+      }
+    }
   }
 
   public static Font getLabelFont() {
@@ -877,21 +897,21 @@ public class UIUtil {
     // restore color
     g.setColor(oldColor);
   }
-  
+
   public static void drawGradientHToolbarBackground(final Graphics g, final int width, final int height) {
     final Graphics2D g2d = (Graphics2D)g;
     final GradientPaint gradientPaint = new GradientPaint(0, 0, new Color(220, 220, 220), 0, height, new Color(200, 200, 200));
     g2d.setPaint(gradientPaint);
     g2d.fillRect(0, 0, width, height);
   }
-  
+
   public static void drawDoubleSpaceDottedLine(final Graphics2D g,
                                           final int start,
                                           final int end,
                                           final int xOrY,
                                           final Color fgColor,
                                           boolean horizontal) {
-    
+
     g.setColor(fgColor);
     for (int dot = start; dot < end; dot+=3) {
       if (horizontal) {
@@ -900,7 +920,7 @@ public class UIUtil {
         g.drawLine(xOrY, dot, xOrY, dot);
       }
     }
-    
+
   }
 
   private static void drawAppleDottedLine(final Graphics2D g,
@@ -2000,7 +2020,7 @@ public class UIUtil {
         info.underlined = true;
         info.underlineColor = color;
       }
-      
+
       return this;
     }
 
@@ -2010,7 +2030,7 @@ public class UIUtil {
         info.withBullet = true;
         info.bulletChar = c;
       }
-      
+
       return this;
     }
 
@@ -2021,12 +2041,12 @@ public class UIUtil {
     public TextPainter underlined() {
       return underlined(null);
     }
-    
+
     public TextPainter smaller() {
       if (myLines.size() > 0) {
         myLines.get(myLines.size() - 1).getSecond().smaller = true;
       }
-      
+
       return this;
     }
 
@@ -2034,10 +2054,10 @@ public class UIUtil {
       if (myLines.size() > 0) {
         myLines.get(myLines.size() - 1).getSecond().center = true;
       }
-      
+
       return this;
     }
-    
+
     /**
      * _position(block width, block height) => (x, y) of the block
      */
@@ -2054,26 +2074,26 @@ public class UIUtil {
             old = g.getFont();
             g.setFont(old.deriveFont(old.getSize() * 0.70f));
           }
-          
+
           final FontMetrics fm = g.getFontMetrics();
-          
+
           final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
           maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
-          
+
           maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst() + bulletWidth), maxWidth[0]);
           height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-          
+
           if (old != null) {
             g.setFont(old);
           }
-          
+
           return true;
         }
       });
 
       final Pair<Integer, Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
       assert position != null;
-      
+
       final int[] yOffset = new int[] {position.getSecond()};
       ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
         @Override
@@ -2084,7 +2104,7 @@ public class UIUtil {
             old = g.getFont();
             g.setFont(old.deriveFont(old.getSize() * 0.70f));
           }
-          
+
           final int x = position.getFirst() + maxBulletWidth[0] + 10;
 
           final FontMetrics fm = g.getFontMetrics();
@@ -2092,7 +2112,7 @@ public class UIUtil {
           if (info.center) {
             xOffset = x + (maxWidth[0] - fm.stringWidth(pair.getFirst())) / 2;
           }
-          
+
           if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
             final Color oldColor = g.getColor();
             g.setColor(myMacShadowColor);
@@ -2104,26 +2124,26 @@ public class UIUtil {
             g.drawString(pair.getFirst(), xOffset, yOffset[0] + 1);
             g.setColor(oldColor);
           }
-          
+
           if (info.withBullet) {
             g.drawString(String.valueOf(info.bulletChar) + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
           }
 
           g.drawString(pair.getFirst(), xOffset, yOffset[0]);
-          
+
           Color c = null;
           if (info.underlined) {
             if (info.underlineColor != null) {
               c = g.getColor();
               g.setColor(info.underlineColor);
             }
-            
+
             g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
             if (c != null) {
               g.setColor(c);
               c = null;
             }
-                          
+
             if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
               c = g.getColor();
               g.setColor(myMacShadowColor);
@@ -2132,18 +2152,18 @@ public class UIUtil {
               c = null;
             }
           }
-          
-          yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing; 
+
+          yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
 
           if (old != null) {
             g.setFont(old);
           }
-          
+
           return true;
         }
       });
     }
-    
+
     private static class LineInfo {
       boolean underlined;
       boolean withBullet;
