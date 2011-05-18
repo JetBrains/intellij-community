@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.89" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.90" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -810,6 +810,11 @@ class ModuleRedeclarator(object):
     if version == (2, 5):
         PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there
 
+    if sys.platform.startswith("darwin"): # OS X
+        bin_collections_name = 'collections'
+    else:
+        bin_collections_name = '_collections' # Win / Lin
+
     # NOTE: per-module signature data may be lazily imported
     # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
     # value is ("signature", "return_literal")
@@ -821,8 +826,8 @@ class ModuleRedeclarator(object):
 
         ("time", None, "ctime"): ("(seconds=None)", DEFAULT_STR_LIT),
 
-        ("_collections", "deque", "__init__"): ("(self, iterable=(), maxlen=None)", None), # doc string blatantly lies
-        ("_collections", "defaultdict", "__init__"): ("(self, default_factory=None, **kwargs)", None), # doc string incomplete
+        (bin_collections_name, "deque", "__init__"): ("(self, iterable=(), maxlen=None)", None), # doc string blatantly lies
+        (bin_collections_name, "defaultdict", "__init__"): ("(self, default_factory=None, **kwargs)", None), # doc string incomplete
 
         ("datetime", "date", "__new__"): ("(cls, year=None, month=None, day=None)", None),
         ("datetime", "date", "fromordinal"): ("(cls, ordinal)", "date(1,1,1)"),
@@ -1033,7 +1038,7 @@ class ModuleRedeclarator(object):
         "numpy.core.multiarray",
         "numpy.core._dotblas",
         "numpy.core.umath",
-        "_collections",
+        bin_collections_name,
         "_functools",
         "_socket", # .error, etc
     )
