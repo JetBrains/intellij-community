@@ -120,6 +120,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myVisibleAreaListener = new VisibleAreaListener() {
       public void visibleAreaChanged(VisibleAreaEvent e) {
         updateScrollableHints(e);
+
+        if (true) return;
         hideHints(HIDE_BY_SCROLLING, false, false);
       }
     };

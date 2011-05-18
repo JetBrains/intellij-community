@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.AwtVisitor;
 
@@ -47,6 +48,8 @@ public class HintHint {
 
   private int myPositionChangeX;
   private int myPositionChangeY;
+
+  private ActionCallback myShown = new ActionCallback();
 
   public HintHint() {
   }
@@ -239,5 +242,9 @@ public class HintHint {
 
   public int getPositionChangeY() {
     return myPositionChangeY;
+  }
+
+  public ActionCallback getShown() {
+    return myShown;
   }
 }
