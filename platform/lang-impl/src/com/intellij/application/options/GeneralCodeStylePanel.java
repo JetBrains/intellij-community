@@ -41,8 +41,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.GeneralCodeStylePanel");
@@ -127,10 +129,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   private JPanel createTabOptionsPanel() {
-    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("group.tabs.and.indents"));
-
-    myCbUseSameIndents = new JCheckBox(ApplicationBundle.message("checkbox.indent.use.same.settings.for.all.file.types"));
-    optionGroup.add(myCbUseSameIndents);
+    OptionGroup optionGroup = new OptionGroup(null);
 
     myIndentOptionsTabs = new TabbedPaneWrapper(this);
 
@@ -162,12 +161,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     
     optionGroup.add(myIndentOptionsTabs.getComponent());
 
-    /*
-    UiNotifyConnector.doWhenFirstShown(myPanel, new Runnable() {
-      public void run() {
-        updatePreviewEditor();
-      }
-    });*/
+    myCbUseSameIndents = new JCheckBox(ApplicationBundle.message("checkbox.indent.use.same.settings.for.all.file.types"));
+    optionGroup.add(myCbUseSameIndents, true);
 
     return optionGroup.createPanel();
   }

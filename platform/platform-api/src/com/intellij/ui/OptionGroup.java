@@ -69,7 +69,6 @@ public class OptionGroup {
     panel.setLayout(new GridBagLayout());
 
     for (int i = 0; i < myOptions.size(); i++) {
-      int weighty = 0;
       int leftInset = Boolean.TRUE.equals(myIsShifted.get(i)) ? 15 : 5;
       if (myTitle == null) {
         leftInset -= 4;
@@ -79,27 +78,28 @@ public class OptionGroup {
         JComponent component = (JComponent)option;
         int verticalInset = component instanceof JLabel || component instanceof JTextField ? 2 : 0;
         panel.add(component,
-                  new GridBagConstraints(0, i, 2, 1, 1, weighty, GridBagConstraints.NORTHWEST, getFill(component),
+                  new GridBagConstraints(0, i, GridBagConstraints.REMAINDER , 1, 1, 0, GridBagConstraints.NORTHWEST, getFill(component),
                                          new Insets(verticalInset, leftInset, verticalInset, 5), 0, 0));
       }
       else {
         Pair pair = (Pair)option;
         JComponent firstComponent = (JComponent)pair.first;
-        int verticalInset = firstComponent instanceof JLabel || firstComponent instanceof JTextField ? 2 : 0;
+        int verticalInset = firstComponent instanceof JLabel || firstComponent instanceof JTextField ? 1 : 0;
         panel.add(firstComponent,
-                  new GridBagConstraints(0, i, 1, 1, 1, weighty, GridBagConstraints.WEST, getFill(firstComponent),
+                  new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, getFill(firstComponent),
                                          new Insets(verticalInset, leftInset, verticalInset, 5), 0, 0));
         JComponent secondComponent = (JComponent)pair.second;
         verticalInset = secondComponent instanceof JLabel || secondComponent instanceof JTextField ? 2 : 0;
         panel.add(secondComponent,
-                  new GridBagConstraints(1, i, 1, 1, 0, weighty, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
+                  new GridBagConstraints(1, i, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
                                          new Insets(verticalInset, 5, verticalInset, 5), 0, 0));
       }
     }
     JPanel p = new JPanel();
     p.setPreferredSize(new Dimension(0, 0));
     panel.add(p,
-              new GridBagConstraints(0, myOptions.size(), 2, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+              new GridBagConstraints(0, myOptions.size(), GridBagConstraints.REMAINDER, 1, 0, 1,
+                                     GridBagConstraints.NORTH, GridBagConstraints.NONE,
                                      new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;

@@ -121,6 +121,21 @@ public abstract class DebuggerUtils {
     }
   }
 
+  public static final int MAX_DISPLAY_LABEL_LENGTH = 1024/*kb*/ *1024 /*bytes*/ / 2; // 1 Mb string
+
+  public static String convertToPresentationString(String str) {
+    if (str.length() > MAX_DISPLAY_LABEL_LENGTH) {
+      str = translateStringValue(str.substring(0, MAX_DISPLAY_LABEL_LENGTH));
+      StringBuilder buf = new StringBuilder();
+      buf.append(str);
+      if (!str.endsWith("...")) {
+        buf.append("...");
+      }
+      return buf.toString();
+    }
+    return translateStringValue(str);
+  }
+
   @Nullable
   public static Method findMethod(ReferenceType refType, @NonNls String methodName, @NonNls String methodSignature) {
     if (refType instanceof ArrayType) {

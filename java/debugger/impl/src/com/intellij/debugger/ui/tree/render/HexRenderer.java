@@ -16,14 +16,10 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.ui.tree.render.NodeRendererImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
@@ -61,7 +57,7 @@ public class HexRenderer extends NodeRendererImpl{
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
-    StringBuffer buf = new StringBuffer(16);
+    StringBuilder buf = new StringBuilder(16);
 
     if(value == null) {
       buf.append("null");

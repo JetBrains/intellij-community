@@ -28,7 +28,7 @@ public interface ValueDescriptor extends NodeDescriptor{
 
   Value getValue();
 
-  String setValueLabel(String customLabel);
+  String setValueLabel(String label);
 
   String setValueLabelFailed(EvaluateException e);
 

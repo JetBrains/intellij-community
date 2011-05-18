@@ -34,7 +34,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -193,7 +192,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   protected static JPanel createPreviewPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
     panel.setPreferredSize(new Dimension(200, 0));
     return panel;
   }

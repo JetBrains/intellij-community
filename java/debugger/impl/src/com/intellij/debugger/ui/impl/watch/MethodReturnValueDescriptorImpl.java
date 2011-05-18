@@ -18,7 +18,6 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.ClassNotLoadedException;
@@ -67,10 +66,6 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     throw new EvaluateException("Evaluation not supported for method return value");
-  }
-
-  protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
-    return super.calcRepresentation(context, labelListener);
   }
 
   public boolean canSetValue() {
