@@ -981,7 +981,8 @@ public class HighlightUtil {
 
 
   @Nullable
-  static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(final PsiParameter parameter, Collection<PsiClassType> thrownTypes) {
+  static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(final PsiParameter parameter,
+                                                                  final Collection<PsiClassType> thrownInTryStatement) {
     final PsiElement scope = parameter.getDeclarationScope();
     if (!(scope instanceof PsiCatchSection)) return null;
 
@@ -990,7 +991,7 @@ public class HighlightUtil {
     final int idx = ArrayUtil.find(allCatchSections, catchSection);
     if (idx <= 0) return null;
 
-    thrownTypes = Sets.newHashSet(thrownTypes);
+    final Collection<PsiClassType> thrownTypes = Sets.newHashSet(thrownInTryStatement);
     thrownTypes.add(PsiType.getJavaLangError(parameter.getManager(), parameter.getResolveScope()));
     thrownTypes.add(PsiType.getJavaLangRuntimeException(parameter.getManager(), parameter.getResolveScope()));
     final Collection<HighlightInfo> result = Lists.newArrayList();
@@ -998,8 +999,10 @@ public class HighlightUtil {
     final List<PsiTypeElement> parameterTypeElements = PsiUtil.getParameterTypeElements(parameter);
     final boolean isMultiCatch = parameterTypeElements.size() > 1;
     for (PsiTypeElement catchTypeElement : parameterTypeElements) {
-      // collect exceptions which are caught by this type
       final PsiType catchType = catchTypeElement.getType();
+      if (ExceptionUtil.isGeneralExceptionType(catchType)) continue;
+
+      // collect exceptions which are caught by this type
       Collection<PsiClassType> caught = ContainerUtil.findAll(thrownTypes, new Condition<PsiClassType>() {
         @Override public boolean value(PsiClassType type) { return catchType.isAssignableFrom(type); }
       });
