@@ -79,6 +79,7 @@ public abstract class ProjectManager {
   /**
    * Returns the project which is used as a template for new projects. The template project
    * is always available, even when no other project is open.
+   * NB: default project can be lazy loaded
    *
    * @return the template project instance.
    */
