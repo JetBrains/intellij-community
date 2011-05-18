@@ -238,7 +238,7 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
                                "    ModuleNode module = nodes[0]\n" +
                                "    for (clazz in module.classes) {\n" +
                                "      if (clazz.name.contains('Bar')) " +
-                               "        module.addStaticImportClass('Foo', ClassHelper.makeWithoutCaching(Foo.class));\n" +
+                               "        module.addStaticStarImport('Foo', ClassHelper.makeWithoutCaching(Foo.class));\n" +
                                "    }\n" +
                                "  }\n" +
                                "}");
