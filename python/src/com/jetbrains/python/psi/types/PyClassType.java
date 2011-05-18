@@ -324,6 +324,6 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   }
 
   public static PyClassType fromClassName(String typeName, Project project) {
-    return new PyClassType(project, typeName, true);
+    return new PyClassType(project, typeName, false);
   }
 }

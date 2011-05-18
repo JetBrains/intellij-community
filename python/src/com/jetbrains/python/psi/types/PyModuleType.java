@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.PyNames;
@@ -131,12 +132,38 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         result.addAll(processor.getResultList());
       }
     }
-    if (point == ResolveImportUtil.PointInImport.AS_MODULE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when imported from somehow, add submodules
-      if (PyNames.INIT_DOT_PY.equals(myModule.getName())) { // our module is a dir, not a single file
+    if (PyNames.INIT_DOT_PY.equals(myModule.getName())) { // our module is a dir, not a single file
+      if (point == ResolveImportUtil.PointInImport.AS_MODULE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when imported from somehow, add submodules
         result.addAll(getSubmoduleVariants(myModule.getContainingDirectory(), location, names_already));
+      }
+      else {
+        addImportedSubmodules(location, names_already, result);
       }
     }
     return result.toArray();
+  }
+
+  private void addImportedSubmodules(PyExpression location, Set<String> names_already, List<Object> result) {
+    PsiFile file = location.getContainingFile();
+    if (file instanceof PyFile) {
+      PyFile pyFile = (PyFile)file;
+      PsiElement moduleBase = myModule.getName().equals(PyNames.INIT_DOT_PY) ? myModule.getContainingDirectory() : myModule;
+      for (PyImportElement importElement : pyFile.getImportTargets()) {
+        PsiElement target = ResolveImportUtil.resolveImportElement(importElement);
+        if (target != null && PsiTreeUtil.isAncestor(moduleBase, target, true)) {
+          LookupElement element = null;
+          if (target instanceof PsiFileSystemItem) {
+            element = buildFileLookupElement(location, names_already, (PsiFileSystemItem) target);
+          }
+          if (element == null && target instanceof PsiNamedElement) {
+            element = LookupElementBuilder.create((PsiNamedElement)target).setIcon(target.getIcon(0));
+          }
+          if (element != null) {
+            result.add(element);
+          }
+        }
+      }
+    }
   }
 
   public static List<LookupElement> getSubmoduleVariants(final PsiDirectory directory,
@@ -144,21 +171,30 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                          Set<String> names_already) {
     List<LookupElement> result = new ArrayList<LookupElement>();
     for (PsiFileSystemItem pfsi : getSubmodulesList(directory)) {
-      if (pfsi == location.getContainingFile().getOriginalFile()) continue;
-      String s = pfsi.getName();
-      int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
-      if (pos > 0) s = s.substring(0, pos);
-      if (!PyNames.isIdentifier(s)) continue;
-      if (names_already != null) {
-        if (names_already.contains(s)) continue;
-        else names_already.add(s);
+      LookupElement lookupElement = buildFileLookupElement(location, names_already, pfsi);
+      if (lookupElement != null) {
+        result.add(lookupElement);
       }
-      result.add(LookupElementBuilder.create(pfsi, s)
-                   .setTypeText(getPresentablePath(directory))
-                   .setPresentableText(s)
-                   .setIcon(pfsi.getIcon(0)));
     }
     return result;
+  }
+
+  private static LookupElement buildFileLookupElement(PsiElement location,
+                                                      Set<String> names_already,
+                                                      PsiFileSystemItem pfsi) {
+    if (pfsi == location.getContainingFile().getOriginalFile()) return null;
+    String s = pfsi.getName();
+    int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
+    if (pos > 0) s = s.substring(0, pos);
+    if (!PyNames.isIdentifier(s)) return null;
+    if (names_already != null) {
+      if (names_already.contains(s)) return null;
+      else names_already.add(s);
+    }
+    return LookupElementBuilder.create(pfsi, s)
+      .setTypeText(getPresentablePath((PsiDirectory)pfsi.getParent()))
+      .setPresentableText(s)
+      .setIcon(pfsi.getIcon(0));
   }
 
   private static String getPresentablePath(PsiDirectory directory) {
