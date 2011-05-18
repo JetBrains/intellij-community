@@ -18,6 +18,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -73,7 +74,8 @@ public class ToStringRenderer extends NodeRendererImpl {
     final Value value = valueDescriptor.getValue();
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       public void evaluationResult(String message) {
-        valueDescriptor.setValueLabel(message != null ? "\"" + DebuggerUtilsEx.truncateString(message) + "\"" : "");
+        final String truncated = DebuggerUtilsEx.truncateString(message);
+        valueDescriptor.setValueLabel(message != null ? "\"" + DebuggerUtils.convertToPresentationString(truncated) + "\"" : "");
         labelListener.labelChanged();
       }
 

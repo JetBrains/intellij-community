@@ -98,7 +98,7 @@ public class ClassRenderer extends NodeRendererImpl{
       try {
         if (value instanceof StringReference) {
           buf.append('\"');
-          buf.append(((StringReference)value).value());
+          buf.append(DebuggerUtils.convertToPresentationString(((StringReference)value).value()));
           buf.append('\"');
         }
         else if (value instanceof ClassObjectReference) {

@@ -25,6 +25,5 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
  * Time: 10:12:39 PM
  */
 public interface ValueLabelRenderer extends Renderer {
-  String calcLabel (ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
-    throws EvaluateException;
+  String calcLabel (ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException;
 }
