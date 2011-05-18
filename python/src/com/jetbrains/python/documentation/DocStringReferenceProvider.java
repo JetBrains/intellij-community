@@ -46,7 +46,10 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
           break;
         }
         pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, tagRange.getEndOffset());
-        int endPos = CharMatcher.JAVA_LETTER_OR_DIGIT.negate().indexIn(docString, pos);
+        int endPos = new CharMatcher() {
+                            @Override public boolean matches(char c) {
+                              return Character.isLetterOrDigit(c) || c == '_';
+                            }}.negate().indexIn(docString, pos);
         if (endPos < 0) {
           endPos = docString.length();
         }
