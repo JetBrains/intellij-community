@@ -663,6 +663,12 @@ public class ResolveImportUtil {
                                                final PsiDirectory dir, @Nullable VirtualFile root, boolean isFileOnly,
                                                boolean checkForPackage) {
     if (referencedName == null) return null;
+
+    final PsiDirectory subdir = dir.findSubdirectory(referencedName);
+    if (subdir != null && (!checkForPackage || subdir.findFile(PyNames.INIT_DOT_PY) != null)) {
+      return subdir;
+    }
+
     final PsiElement module = findPyFileInDir(dir, referencedName);
     if (module != null) return module;
 
@@ -676,11 +682,7 @@ public class ResolveImportUtil {
       }
     }
 
-    final PsiDirectory subdir = dir.findSubdirectory(referencedName);
-    if (subdir != null && (!checkForPackage || subdir.findFile(PyNames.INIT_DOT_PY) != null)) {
-      return subdir;
-    }
-    else if (!isFileOnly) {
+    if (!isFileOnly) {
       // not a subdir, not a file; could be a name in parent/__init__.py
       final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in

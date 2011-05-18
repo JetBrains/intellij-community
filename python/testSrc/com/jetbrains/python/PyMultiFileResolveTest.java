@@ -144,6 +144,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertEquals("boo", ((PyClass)element).getName());
   }
 
+  public void testModulePackageCollision() {  // PY-3194
+    assertResolvesTo(PyFile.class, "module1.py");
+  }
+
   public void testDirectoryVsClass() {
     assertResolvesTo(PyClass.class, "Context");
   }
