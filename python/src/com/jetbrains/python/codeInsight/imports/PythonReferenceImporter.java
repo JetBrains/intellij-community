@@ -112,7 +112,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
         if (isTopLevel(symbol)) { // we only want top-level symbols
           PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
           if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile()) {
-            PyQualifiedName import_path = ResolveImportUtil.findCanonicalImportPath(symbol, node);
+            PyQualifiedName import_path = ResolveImportUtil.findCanonicalImportPath(srcfile, node);
             if (import_path != null && !seen_file_names.contains(import_path.toString())) {
               // a new, valid hit
               fix.addImport(symbol, srcfile, import_path, proposeAsName(node.getContainingFile(), ref_text, import_path));

@@ -1,0 +1,1 @@
+<warning descr="Unresolved reference 'baz'">baz</warning>.quux()
