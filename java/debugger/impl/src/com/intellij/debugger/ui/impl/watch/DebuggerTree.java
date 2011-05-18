@@ -44,7 +44,6 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
-import com.intellij.debugger.ui.tree.render.NodeRendererSettingsListener;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,7 +74,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   private final Project myProject;
   protected final NodeManagerImpl myNodeManager;
 
-  private NodeRendererSettingsListener mySettingsListener;
   private DebuggerContextImpl myDebuggerContext = DebuggerContextImpl.EMPTY_CONTEXT;
 
   private DebuggerTreeNodeImpl myEditedNode;
@@ -132,53 +130,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     myNodeManager.dispose();
     myDebuggerContext = DebuggerContextImpl.EMPTY_CONTEXT;
     super.dispose();
-  }
-
-  private void installSettingsListener() {
-    if (mySettingsListener != null) {
-      return;
-    }
-    mySettingsListener = new NodeRendererSettingsListener() {
-      private void rendererSettingsChanged(DebuggerTreeNodeImpl node) {
-        final NodeDescriptorImpl nodeDescriptor = node.getDescriptor();
-        if (nodeDescriptor instanceof ValueDescriptorImpl || nodeDescriptor instanceof StackFrameDescriptorImpl) {
-          node.calcRepresentation();
-        }
-
-        final Enumeration e = node.rawChildren();
-        while (e.hasMoreElements()) {
-          DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
-          rendererSettingsChanged(child);
-        }
-      }
-
-      public void renderersChanged() {
-        DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl)getModel().getRoot();
-        if (root != null) {
-          rendererSettingsChanged(root);
-        }
-
-      }
-    };
-    NodeRendererSettings.getInstance().addListener(mySettingsListener);
-  }
-
-  private void uninstallSettingsListener() {
-    if (mySettingsListener == null) {
-      return;
-    }
-    NodeRendererSettings.getInstance().removeListener(mySettingsListener);
-    mySettingsListener = null;
-  }
-
-  public void removeNotify() {
-    uninstallSettingsListener();
-    super.removeNotify();
-  }
-
-  public void addNotify() {
-    super.addNotify();
-    installSettingsListener();
   }
 
   protected boolean isExpandable(DebuggerTreeNodeImpl node) {
