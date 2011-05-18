@@ -236,7 +236,7 @@ public class CodeInsightUtil {
           }
           return 0;
         }
-      }, false);
+      }, null, false);
   }
 
   public static Editor positionCursor(final Project project, PsiFile targetFile, PsiElement element) {
