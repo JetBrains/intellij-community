@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.90" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.91" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1030,18 +1030,21 @@ class ModuleRedeclarator(object):
         },
     }
 
-    # modules that seem to re-export names but surely don't
-    # ("qualified_module_name",..)
-    KNOWN_FAKE_REEXPORTERS = (
-        "gtk._gtk",
-        "gobject._gobject",
-        "numpy.core.multiarray",
-        "numpy.core._dotblas",
-        "numpy.core.umath",
-        bin_collections_name,
-        "_functools",
-        "_socket", # .error, etc
-    )
+    # Sometimes module X defines item foo but foo.__module__ == 'Y' instead of 'X';
+    # module Y just re-exports foo, and foo fakes being defined in Y.
+    # We list all such Ys keyed by X, all fully-qualified names:
+    # {"real_definer_module": ("fake_reexporter_module",..)}
+    KNOWN_FAKE_REEXPORTERS = {
+        "gtk._gtk": ('gtk',),
+        "gobject._gobject": ('gobject',),
+        "numpy.core.multiarray": ('numpy', 'numpy.core'),
+        "numpy.core._dotblas": ('numpy', 'numpy.core'),
+        "numpy.core.umath": ('numpy', 'numpy.core'),
+        bin_collections_name: ('collections',),
+        "_functools": ('functools',),
+        "_socket": ('socket',), # .error, etc
+        "gnomecanvas": ("gnome.canvas",)
+    }
 
     # names that look genuinely exported but aren't.
     # e.g. 'xml.parsers.expat.ExpatError' is actually defined in pyexpat, and xml.parsers.expat imports it from there.
@@ -1593,11 +1596,11 @@ class ModuleRedeclarator(object):
         # if deco == "staticmethod":
         return None
 
-    def fullName(self, cls, p_modname):
+    def qualifierOf(self, cls, qualifiers_to_skip):
         m = cls.__module__
-        if m == p_modname or m == BUILTIN_MOD_NAME or m == 'exceptions':
-            return cls.__name__
-        return m + "." + cls.__name__
+        if m in qualifiers_to_skip:
+            return ""
+        return m
 
     def redoClass(self, out, p_class, p_name, indent, p_modname=None, seen=None):
         """
@@ -1620,7 +1623,19 @@ class ModuleRedeclarator(object):
         bases = getBases(p_class)
         base_def = ""
         if bases:
-            base_def = "(" + ", ".join([self.fullName(x, p_modname) for x in bases]) + ")"
+            skip_qualifiers = [p_modname, BUILTIN_MOD_NAME, 'exceptions']
+            skip_qualifiers.extend(self.KNOWN_FAKE_REEXPORTERS.get(p_modname, ()))
+            qual_bases = [(self.qualifierOf(b, skip_qualifiers), b.__name__) for b in bases]
+            bases_list = []
+            for q_module, base in qual_bases: # mark used base classes as imported
+                if q_module:
+                    bases_list.append(q_module + "." + base)
+                    import_list = self.used_imports[q_module]
+                    if base not in import_list:
+                        import_list.append(base)
+                else:
+                    bases_list.append(base)
+            base_def = "(" + ", ".join(bases_list) + ")"
         out(indent, "class ", p_name, base_def, ":")
         self.outDocAttr(out, p_class, indent + 1)
         # inner parts
@@ -1798,8 +1813,9 @@ class ModuleRedeclarator(object):
             mod_name = None # module from which p_name might have been imported
             # IronPython has non-trivial reexports in System module, but not in others:
             skip_modname = sys.platform == "cli" and p_name != "System"
-            # can't figure weirdness in some modules, assume no reexports:
-            skip_modname =  skip_modname or p_name in self.KNOWN_FAKE_REEXPORTERS
+            surely_not_imported_mods = self.KNOWN_FAKE_REEXPORTERS.get(p_name, ())
+            ## can't figure weirdness in some modules, assume no reexports:
+            #skip_modname =  skip_modname or p_name in self.KNOWN_FAKE_REEXPORTERS
             if not skip_modname:
                 try:
                     mod_name = getattr(item, '__module__', None)
@@ -1807,10 +1823,11 @@ class ModuleRedeclarator(object):
                     pass
             import_from_top = our_package.startswith(packageOf(mod_name, True)) # e.g. p_name="pygame.rect" and mod_name="pygame"
             want_to_import = False
-            if (mod_name \
-                and mod_name not in BUILTIN_MOD_NAME \
-                and mod_name != p_name \
-                and not import_from_top\
+            if (mod_name
+                and mod_name != BUILTIN_MOD_NAME
+                and mod_name != p_name
+                and mod_name not in surely_not_imported_mods
+                and not import_from_top
             ):
                 # import looks valid, but maybe it's a .py file? we're cenrtain not to import from .py
                 # e.g. this rules out _collections import collections and builtins import site.
@@ -1823,8 +1840,8 @@ class ModuleRedeclarator(object):
                             if not imported:
                                 break
                         imported_path = (getattr(imported, '__file__', False) or "").lower()
-                        note("path of %r is %r", mod_name, imported_path)
-                        want_to_import = not hasRegularPythonExt(imported_path)
+                        want_to_import = not (imported_path.endswith('.py') or imported_path.endswith('.pyc'))
+                        note("path of %r is %r, want? %s", mod_name, imported_path, want_to_import)
                 except ImportError:
                     want_to_import = False
                 # NOTE: if we fail to import, we define 'imported' names here lest we lose them at all
@@ -1852,7 +1869,6 @@ class ModuleRedeclarator(object):
         #
         # sort and output every bucket
         action("outputting innards of module %r %r", p_name, str(self.module))
-        self.outputImportFroms()
         #
         omitted_names = self.OMIT_NAME_IN_MODULE.get(p_name, [])
         if vars_simple:
@@ -1972,6 +1988,8 @@ class ModuleRedeclarator(object):
             self.footer_buf.out(0, "# intermittent names")
             for v in values_to_add:
                 self.footer_buf.out(0, v)
+        # imports: last, because previous parts could alter used_imports
+        self.outputImportFroms()
         if self.imports_buf.isEmpty():
             self.imports_buf.out(0, "# no imports")
         self.imports_buf.out(0, "") # empty line after imports
@@ -2217,7 +2235,7 @@ def processOne(name, mod_file_name, doing_builtins):
         # restore all of them
         if imported_module_names:
             for m in sys.modules.keys():
-                action("restoring submodule %r", m)
+                action("looking at possible submodule %r", m)
                 # if module has __file__ defined, it has Python source code and doesn't need a skeleton
                 if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
                     if not quiet:
