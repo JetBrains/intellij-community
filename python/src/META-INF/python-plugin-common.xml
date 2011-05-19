@@ -327,6 +327,8 @@
     <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
 
     <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
 
     <languageInjector implementation="com.jetbrains.django.codeInsight.DjangoRegexpInjector"/>
 
