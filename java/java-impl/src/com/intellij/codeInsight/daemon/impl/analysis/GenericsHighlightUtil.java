@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import java.util.*;
 /**
  * @author cdr
  */
-
 public class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil");
   private static final String GENERICS_ARE_NOT_SUPPORTED = JavaErrorMessages.message("generics.are.not.supported");
@@ -448,14 +447,15 @@ public class GenericsHighlightUtil {
       new THashMap<MethodSignature, MethodSignatureBackedByPsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
                                                                        
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
-      HighlightInfo info = checkSameErasureNotSubsignatureInner(signature, manager, aClass, sameErasureMethods);
+      HighlightInfo info = checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
       if (info != null) return info;
     }
 
     return null;
   }
 
-  private static HighlightInfo checkSameErasureNotSubsignatureInner(final HierarchicalMethodSignature signature,
+  @Nullable
+  private static HighlightInfo checkSameErasureNotSubSignatureInner(final HierarchicalMethodSignature signature,
                                                                     final PsiManager manager,
                                                                     final PsiClass aClass,
                                                                     final Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
@@ -466,19 +466,22 @@ public class GenericsHighlightUtil {
     MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
     HighlightInfo info;
     if (sameErasure != null) {
-      info = checkSameErasureNotSubsignatureOrSameClass(sameErasure, signature, aClass, method);
+      info = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method);
       if (info != null) return info;
     }
-    sameErasureMethods.put(signatureToErase, signature);
+    else {
+      sameErasureMethods.put(signatureToErase, signature);
+    }
     List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
     for (HierarchicalMethodSignature superSignature : supers) {
-      info = checkSameErasureNotSubsignatureInner(superSignature, manager, aClass, sameErasureMethods);
+      info = checkSameErasureNotSubSignatureInner(superSignature, manager, aClass, sameErasureMethods);
       if (info != null) return info;
     }
     return null;
   }
 
-  private static HighlightInfo checkSameErasureNotSubsignatureOrSameClass(final MethodSignatureBackedByPsiMethod signatureToCheck,
+  @Nullable
+  private static HighlightInfo checkSameErasureNotSubSignatureOrSameClass(final MethodSignatureBackedByPsiMethod signatureToCheck,
                                                                           final HierarchicalMethodSignature superSignature,
                                                                           final PsiClass aClass,
                                                                           final PsiMethod superMethod) {

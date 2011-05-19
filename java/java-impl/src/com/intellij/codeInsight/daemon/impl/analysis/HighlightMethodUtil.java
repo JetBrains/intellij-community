@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,12 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * Highlight method problems
- * User: cdr
- * Date: Aug 14, 2002
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
@@ -49,12 +43,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Highlight method problems
+ *
+ * @author cdr
+ * Date: Aug 14, 2002
+ */
 public class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
+  private HighlightMethodUtil() { }
+
   public static String createClashMethodMessage(PsiMethod method1, PsiMethod method2, boolean showContainingClasses) {
     @NonNls String pattern = showContainingClasses ? "clash.methods.message.show.classes" : "clash.methods.message";
-
     return JavaErrorMessages.message(pattern,
                                      HighlightUtil.formatMethod(method1),
                                      HighlightUtil.formatMethod(method2),
