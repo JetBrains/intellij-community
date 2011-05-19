@@ -376,7 +376,7 @@ public class GenerationUtil {
     //Set<String> types = getVarTypes(variableDeclaration);
 
     //if (types.size() > 1) {
-      if (variableDeclaration.getParent() instanceof GrControlStatement) {
+    if (variables.length > 1 && variableDeclaration.getParent() instanceof GrControlStatement) {
         expressionContext.setInsertCurlyBrackets();
       }
       for (GrVariable variable : variables) {
