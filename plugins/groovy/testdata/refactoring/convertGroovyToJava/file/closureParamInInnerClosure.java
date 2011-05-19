@@ -2,7 +2,7 @@ public class X extends groovy.lang.GroovyObjectSupport implements groovy.lang.Gr
 public groovy.lang.Closure<java.lang.Integer> getFoo() {
  return foo;
 }
-public void setFoo(java.lang.Object foo) {
+public void setFoo(groovy.lang.Closure<java.lang.Integer> foo) {
 this.foo = foo;
 }
 private groovy.lang.Closure<java.lang.Integer> foo = new groovy.lang.Closure<java.lang.Integer>(this, this) {
