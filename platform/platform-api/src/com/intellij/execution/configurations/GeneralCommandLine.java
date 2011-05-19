@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -85,7 +86,7 @@ public class GeneralCommandLine {
   }
 
   public String getCommandLineString() {
-    final StringBuffer buffer = new StringBuffer(quoteParameter(myExePath));
+    final StringBuffer buffer = new StringBuffer(quoteParameter(FileUtil.toSystemDependentName(myExePath)));
     appendParams( buffer );
     return buffer.toString();
   }

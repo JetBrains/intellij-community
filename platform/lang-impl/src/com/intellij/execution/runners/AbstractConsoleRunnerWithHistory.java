@@ -102,7 +102,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     myConsoleView = createConsoleView();
     myConsoleView.setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
 
-      myProcessHandler = createProcessHandler(process, myProvider.getCommandLineString());
+    myProcessHandler = createProcessHandler(process, myProvider.getCommandLineString());
 
     myConsoleExecuteActionHandler = createConsoleExecuteActionHandler();
 
