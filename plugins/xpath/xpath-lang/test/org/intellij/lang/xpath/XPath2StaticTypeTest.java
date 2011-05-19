@@ -45,11 +45,14 @@ public class XPath2StaticTypeTest extends TestCase {
 
   public void testNumericAssignability() {
     assertTrue(XPathType.isAssignable(XPath2Type.FLOAT, XPath2Type.INTEGER));
+    assertTrue(XPathType.isAssignable(XPath2Type.FLOAT, XPath2Type.DECIMAL));
 
     assertTrue(XPathType.isAssignable(XPath2Type.DOUBLE, XPath2Type.FLOAT));
     assertTrue(XPathType.isAssignable(XPath2Type.DOUBLE, XPath2Type.INTEGER));
+    assertTrue(XPathType.isAssignable(XPath2Type.DOUBLE, XPath2Type.DECIMAL));
 
-    assertTrue(XPathType.isAssignable(XPath2Type.FLOAT, XPath2Type.DOUBLE));
+    assertFalse(XPathType.isAssignable(XPath2Type.FLOAT, XPath2Type.DOUBLE));
+    assertFalse(XPathType.isAssignable(XPath2Type.DECIMAL, XPath2Type.DOUBLE));
 
     assertFalse(XPathType.isAssignable(XPath2Type.NUMERIC, XPath2Type.BOOLEAN));
   }

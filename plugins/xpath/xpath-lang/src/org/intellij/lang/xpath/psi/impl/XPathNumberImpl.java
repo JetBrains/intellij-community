@@ -17,37 +17,38 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import org.intellij.lang.xpath.context.XPathVersion;
-import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathNumber;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 
 public class XPathNumberImpl extends XPathElementImpl implements XPathNumber {
-    public XPathNumberImpl(ASTNode node) {
-        super(node);
-    }
+  public XPathNumberImpl(ASTNode node) {
+    super(node);
+  }
 
-    @NotNull
-    public XPathType getType() {
-      if (getXPathVersion() == XPathVersion.V1) {
-        return XPathType.NUMBER;
-      } else {
-        if (textContains('.')) {
-          return isScientificNotation() ? XPath2Type.DOUBLE : XPath2Type.DECIMAL;
-        } else {
-          return XPath2Type.INTEGER;
-        }
+  @NotNull
+  public XPathType getType() {
+    if (getXPathVersion() == XPathVersion.V1) {
+      return XPathType.NUMBER;
+    } else {
+      if (isScientificNotation()) {
+        return XPath2Type.DOUBLE;
+      } else if (textContains('.')) {
+        return XPath2Type.DECIMAL;
       }
+      return XPath2Type.INTEGER;
     }
+  }
 
   public boolean isScientificNotation() {
     return textContains('e') || textContains('E');
   }
 
   public double getValue() {
-        return Double.parseDouble(getText());
-    }
+    return Double.parseDouble(getText());
+  }
 
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathNumber(this);

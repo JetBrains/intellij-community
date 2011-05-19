@@ -79,7 +79,7 @@ public class XPath2SequenceType extends XPath2Type {
   }
 
   @Override
-  protected boolean canBePromotedTo(XPathType type) {
+  public boolean canBePromotedTo(XPathType type) {
     return super.canBePromotedTo(type) || getType().canBePromotedTo(unwrap(type));
   }
 
