@@ -21,6 +21,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
@@ -243,7 +244,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     
     if (myElement instanceof PyTargetExpression) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
-      if (scopeOwner != null && !ControlFlowCache.getScope(scopeOwner).isGlobal(myElement.getName())) {
+      final Scope scope = ControlFlowCache.getScope(scopeOwner);
+      final String name = myElement.getName();
+      if (scope.isNonlocal(name)) {
+        final ScopeOwner nonlocalOwner = ScopeUtil.getDeclarationScopeOwner(myElement, referencedName);
+        if (nonlocalOwner != null && !(nonlocalOwner instanceof PyFile)) {
+          return nonlocalOwner;
+        }
+      }
+      if (scopeOwner != null && !scope.isGlobal(name)) {
         return scopeOwner;
       }
     }
@@ -372,7 +381,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
         if (!haveQualifiers(element)) {
           // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
-          // TODO: support nonlocal statement
           final boolean ourIsGlobal = ControlFlowCache.getScope(ourScopeOwner).isGlobal(elementName);
           final boolean theirIsGlobal = ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName);
           final PsiFile ourFile = getElement().getContainingFile();
