@@ -187,6 +187,10 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   protected void destroyProcessImpl() {
+    closeStreamsAndDestroyProcess();
+  }
+
+  protected void closeStreamsAndDestroyProcess() {
     try {
       closeStreams();
     }
