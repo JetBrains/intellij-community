@@ -16,10 +16,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
@@ -132,14 +132,14 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
 
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       Set<LookupElement> set = new LinkedHashSet<LookupElement>();
-      set.add(LookupItemUtil.objectToLookupItem(myField));
+      set.add(JavaLookupElementBuilder.forField(myField).setTypeText(myField.getType().getPresentableText()));
       PsiField[] fields = myClass.getFields();
       for (PsiField otherField : fields) {
         if (!myDefaultFieldName.equals(otherField.getName())) {
           PsiType otherType = otherField.getType();
           for (PsiType type : myExpectedTypes) {
             if (type.equals(otherType)) {
-              set.add(LookupItemUtil.objectToLookupItem(otherField));
+              set.add(JavaLookupElementBuilder.forField(otherField).setTypeText(otherType.getPresentableText()));
             }
           }
         }
