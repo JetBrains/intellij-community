@@ -109,7 +109,7 @@ public class PsiDiamondType extends PsiType {
 
   public static DiamondInferenceResult resolveInferredTypes(PsiNewExpression newExpression,
                                                             PsiElement context) {
-    final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.findChildOfType(newExpression, PsiReferenceParameterList.class);
+    final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.getChildOfType(newExpression, PsiReferenceParameterList.class);
     if (referenceParameterList != null && referenceParameterList.getTypeParameterElements().length > 0) {
       return DiamondInferenceResult.EXPLICIT_CONSTRUCTOR_TYPE_ARGS;
     }
