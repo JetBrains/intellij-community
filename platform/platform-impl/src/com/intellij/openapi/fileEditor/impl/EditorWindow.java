@@ -21,7 +21,11 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
@@ -474,7 +478,8 @@ public class EditorWindow {
         final EditorWindow[] siblings = findSiblings();
         final EditorWindow target = siblings[0];
         if (virtualFile != null) {
-          fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null, true);
+          final FileEditor[] editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null, true).first;
+          syncCaretIfPossible(editors);
         }
         return target;
       }
@@ -503,7 +508,8 @@ public class EditorWindow {
           // open only selected file in the new splitter instead of opening all tabs
           final VirtualFile file = selectedEditor.getFile();
           final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
-          fileEditorManager.openFileImpl3(res, nextFile, false, null, true);
+          final FileEditor[] editors = fileEditorManager.openFileImpl3(res, nextFile, false, null, true).first;
+          syncCaretIfPossible(editors);
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
             res.setSelectedEditor(selectedEditor, true);
@@ -519,8 +525,10 @@ public class EditorWindow {
           panel.revalidate();
           final VirtualFile firstFile = firstEC.getFile();
           final VirtualFile nextFile = virtualFile == null ? firstFile : virtualFile;
-          fileEditorManager.openFileImpl3(this, firstFile, !focusNew, null, true);
-          fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true);
+          final FileEditor[] firstEditors = fileEditorManager.openFileImpl3(this, firstFile, !focusNew, null, true).first;
+          syncCaretIfPossible(firstEditors);
+          final FileEditor[] secondEditors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true).first;
+          syncCaretIfPossible(secondEditors);
         }
         return res;
       }
@@ -528,6 +536,40 @@ public class EditorWindow {
     return null;
   }
 
+  /**
+   * Tries to setup caret and viewport for the given editor from the selected one.
+   * 
+   * @param toSync    editor to setup caret and viewport for
+   */
+  private void syncCaretIfPossible(@Nullable FileEditor[] toSync) {
+    if (toSync == null) {
+      return;
+    }
+
+    final EditorWithProviderComposite from = getSelectedEditor();
+    if (from == null) {
+      return;
+    }
+
+    final FileEditor caretSource = from.getSelectedEditor();
+    if (!(caretSource instanceof TextEditor)) {
+      return;
+    }
+    
+    final int offset = ((TextEditor)caretSource).getEditor().getCaretModel().getOffset();
+    if (offset <= 0) {
+      return;
+    }
+    
+    for (FileEditor fileEditor : toSync) {
+      if (!(fileEditor instanceof TextEditor)) {
+        continue;
+      }
+      final Editor editor = ((TextEditor)fileEditor).getEditor();
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    }
+  }
 
   public EditorWindow[] findSiblings() {
     checkConsistency();
