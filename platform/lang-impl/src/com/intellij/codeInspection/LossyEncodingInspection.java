@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -77,8 +78,9 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) return null;
     if (ArrayUtil.find(file.getPsiRoots(), file) != 0) return null;
+    if (!file.isPhysical()) return null;
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return null;
+    if (virtualFile == null || virtualFile.getFileSystem() != LocalFileSystem.getInstance()) return null;
     String text = file.getText();
     Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
 
@@ -87,17 +89,16 @@ public class LossyEncodingInspection extends LocalInspectionTool {
 
     List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
     checkIfCharactersWillBeLostAfterSave(file, manager, isOnTheFly, text, charset, descriptors);
-
-    checkForFileLoadedInWrongEncoding(file, manager, isOnTheFly, virtualFile, charset, descriptors);
+    checkFileLoadedInWrongEncoding(file, manager, isOnTheFly, virtualFile, charset, descriptors);
 
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
-  private static void checkForFileLoadedInWrongEncoding(PsiFile file,
-                                                        InspectionManager manager,
-                                                        boolean isOnTheFly,
-                                                        VirtualFile virtualFile,
-                                                        Charset charset, List<ProblemDescriptor> descriptors) {
+  private static void checkFileLoadedInWrongEncoding(PsiFile file,
+                                                     InspectionManager manager,
+                                                     boolean isOnTheFly,
+                                                     VirtualFile virtualFile,
+                                                     Charset charset, List<ProblemDescriptor> descriptors) {
     if (!FileDocumentManager.getInstance().isFileModified(virtualFile) // when file is modified, it's too late to reload it
         && ChooseFileEncodingAction.isEnabled(virtualFile) // can't reload in another encoding, no point trying
       ) {
