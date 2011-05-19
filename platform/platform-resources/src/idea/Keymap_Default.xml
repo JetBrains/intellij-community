@@ -418,6 +418,9 @@
   <action id="EditorStartNewLine">
     <keyboard-shortcut first-keystroke="shift ENTER"/>
   </action>
+  <action id="EditorStartNewLineBefore">
+    <keyboard-shortcut first-keystroke="control alt ENTER"/>
+  </action>
   <action id="EditorLeft">
     <keyboard-shortcut first-keystroke="LEFT"/>
   </action>
