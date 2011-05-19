@@ -35,7 +35,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
         extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
-    public boolean ignoreReferencesToForeignInnerClasses = false;
+    public boolean ignoreReferencesNeedingImport = false;
 
     @Nls
     @NotNull
@@ -59,7 +59,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
                         "unnecessarily.qualified.inner.class.access.option"),
-                this, "ignoreReferencesToForeignInnerClasses");
+                this, "ignoreReferencesNeedingImport");
     }
 
     @Override
@@ -80,10 +80,6 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-            final PsiFile containingFile = element.getContainingFile();
-            if (!(containingFile instanceof PsiJavaFile)) {
-                return;
-            }
             final PsiElement parent = element.getParent();
             if (!(parent instanceof PsiJavaCodeReferenceElement)) {
                 return;
@@ -95,7 +91,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
                 return;
             }
             final PsiClass aClass = (PsiClass) target;
-            ImportUtils.addImportIfNeeded((PsiJavaFile) containingFile, aClass);
+            ImportUtils.addImportIfNeeded(aClass, element);
             element.delete();
         }
     }
@@ -136,10 +132,12 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
             if (referenceClass == null) {
                 return;
             }
-            if (!referenceClass.equals(qualifierTarget)) {
-                if (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget,
-                        true) ||
-                        (ignoreReferencesToForeignInnerClasses &&
+            if (!referenceClass.equals(qualifierTarget) ||
+                    PsiTreeUtil.isAncestor(referenceClass.getModifierList(),
+                            reference, true)) {
+                if (ignoreReferencesNeedingImport &&
+                        (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget,
+                                true) ||
                                 !PsiTreeUtil.isAncestor(qualifierTarget,
                                         referenceClass, true))) {
                     return;
