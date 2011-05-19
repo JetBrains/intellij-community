@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
+  
+  <problem>
+    <file>Test.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified inner class access</problem_class>
+    <description>'X' is unnecessarily qualified with &lt;code&gt;Test&lt;/code&gt; #loc</description>
+  </problem>
+
   <problem>
     <file>Test.java</file>
     <line>7</line>
