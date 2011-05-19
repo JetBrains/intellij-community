@@ -38,15 +38,7 @@ public class UsageDescriptor implements Comparable<UsageDescriptor> {
         myValue = i;
     }
 
-    public int getMyValue() {
-        return myValue;
-    }
-
-    public void setMyValue(int myValue) {
-        this.myValue = myValue;
-    }
-
-    public int compareTo(UsageDescriptor ud) {
+  public int compareTo(UsageDescriptor ud) {
         return this.getKey().compareTo(ud.myKey);
     }
 }
