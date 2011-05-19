@@ -36,7 +36,7 @@ import java.util.*;
  * @author Mike
  */
 public class ComplexTypeDescriptor extends TypeDescriptor {
-  private final XmlNSDescriptorImpl myDocumentDescriptor;
+  protected final XmlNSDescriptorImpl myDocumentDescriptor;
   private final XmlTag myTag;
 
   private static final FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement> myElementDescriptorsCache =
@@ -110,19 +110,27 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   // Read-only calculation
   private XmlElementDescriptor[] doCollectElements(@Nullable XmlElement context) {
     final Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
-    new XmlSchemaTagsProcessor(myDocumentDescriptor) {
-      @Override
-      protected void tagStarted(XmlTag tag, String tagName, XmlTag context, XmlTag ref) {
-        if ("element".equals(tagName) && tag.getAttribute("name") != null) {
-          addElementDescriptor(map, myDocumentDescriptor.createElementDescriptor(tag));
-        }
-      }
-    }.startProcessing(myTag);
+    createProcessor(map).startProcessing(myTag);
     addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<XmlNSDescriptorImpl>());
     filterAbstractElements(map);
     return map.values().toArray(
       new XmlElementDescriptor[map.values().size()]
     );
+  }
+
+  protected XmlSchemaTagsProcessor createProcessor(final Map<String, XmlElementDescriptor> map) {
+    return new XmlSchemaTagsProcessor(myDocumentDescriptor) {
+      @Override
+      protected void tagStarted(XmlTag tag, String tagName, XmlTag context, XmlTag ref) {
+        addElementDescriptor(tag, tagName, map);
+      }
+    };
+  }
+
+  protected void addElementDescriptor(XmlTag tag, String tagName, Map<String, XmlElementDescriptor> map) {
+    if ("element".equals(tagName) && tag.getAttribute("name") != null) {
+      addElementDescriptor(map, myDocumentDescriptor.createElementDescriptor(tag));
+    }
   }
 
   private static void addSubstitutionGroups(Map<String, XmlElementDescriptor> result,
@@ -214,7 +222,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     return myDocumentDescriptor;
   }
 
-  private static void addElementDescriptor(Map<String,XmlElementDescriptor> result, XmlElementDescriptor element) {
+  protected static void addElementDescriptor(Map<String,XmlElementDescriptor> result, XmlElementDescriptor element) {
     result.remove(element.getName());
     result.put(element.getName(),element);
   }
