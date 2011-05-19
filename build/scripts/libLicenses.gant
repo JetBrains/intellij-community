@@ -147,6 +147,7 @@ libraryLicense(name: "Apache Commons Net", libraryName: "commons-net", version: 
 libraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.4", license: "Apache 2.0", url: "http://commons.apache.org/lang/", licenseUrl: "http://commons.apache.org/lang/license.html")
 libraryLicense(name: "Apache Commons Logging", libraryName: "commons-logging", version: "1.1.1", license: "Apache 2.0", url: "http://commons.apache.org/logging/")
 libraryLicense(name: "Apache Lucene", libraryName: "lucene-core-2.4.1.jar", version: "2.4.1", license: "Apache 2.0", url: "http://lucene.apache.org/java")
+libraryLicense(name: "Apache Sanselan", libraryName: "sanselan-0.98-snapshot.jar", version: "0.98", license: "Apache 2.0", url: "http://commons.apache.org/sanselan/")
 libraryLicense(name: "Automaton", libraryName: "automaton.jar", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")
 libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1")
 libraryLicense(name: "Ganymed", version: "bundled with SVNKit", libraryName: "svnkit.jar", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
