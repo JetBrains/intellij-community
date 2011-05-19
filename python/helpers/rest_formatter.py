@@ -10,12 +10,8 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
         atts['class'] = 'docinfo-name'
     else:
         atts['class'] = 'field-name'
-    if ( self.settings.field_name_limit
-         and len(node.astext()) > self.settings.field_name_limit):
-        atts['colspan'] = 2
-        self.context.append('</tr>\n<tr><td>&nbsp;</td>')
-    else:
-        self.context.append('')
+
+    self.context.append('')
     atts['align'] = "right"
     self.body.append(self.starttag(node, 'th', '', **atts))
 
