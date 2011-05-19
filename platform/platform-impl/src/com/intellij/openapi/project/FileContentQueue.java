@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,20 +99,18 @@ public class FileContentQueue {
 
     boolean counterUpdated = false;
     try {
-      if (contentLength < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
-        synchronized (this) {
-          while (myTotalSize > SIZE_THRESHOLD) {
-            if (indicator != null) {
-              indicator.checkCanceled();
-            }
-            wait(300);
+      synchronized (this) {
+        while (myTotalSize > SIZE_THRESHOLD) {
+          if (indicator != null) {
+            indicator.checkCanceled();
           }
-          myTotalSize += contentLength;
-          counterUpdated = true;
+          wait(300);
         }
-
-        content.getBytes(); // Reads the content bytes and caches them.
+        myTotalSize += contentLength;
+        counterUpdated = true;
       }
+
+      content.getBytes(); // Reads the content bytes and caches them.
 
       return true;
     }
@@ -191,14 +188,12 @@ public class FileContentQueue {
       }
       return null;
     }
-    if (result.getLength() < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
-      synchronized (this) {
-        try {
-          myTotalSize -= result.getLength();
-        }
-        finally {
-          notifyAll();
-        }
+    synchronized (this) {
+      try {
+        myTotalSize -= result.getLength();
+      }
+      finally {
+        notifyAll();
       }
     }
 
