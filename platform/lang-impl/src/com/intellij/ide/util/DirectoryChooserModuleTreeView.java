@@ -193,7 +193,10 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
       }
     });
     final int insertionPoint = -(index+1);
-    LOG.assertTrue(0 <= insertionPoint && insertionPoint <= rootNode.getChildCount(), "insertionPoint = "+insertionPoint+"; children="+children+"; node="+nodeToInsert);
+    if (insertionPoint < 0 || insertionPoint > rootNode.getChildCount()) {
+      LOG.error("insertionPoint = " + insertionPoint + "; children=" + children + "; node=" + nodeToInsert);
+      return;
+    }
     rootNode.insert(nodeToInsert, insertionPoint);
     ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(rootNode);
   }
