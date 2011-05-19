@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -80,7 +81,10 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     if (ArrayUtil.find(file.getPsiRoots(), file) != 0) return null;
     if (!file.isPhysical()) return null;
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null || virtualFile.getFileSystem() != LocalFileSystem.getInstance()) return null;
+    if (virtualFile == null) return null;
+    if (virtualFile.getFileSystem() != LocalFileSystem.getInstance()
+        // tests
+        && virtualFile.getFileSystem() != TempFileSystem.getInstance()) return null;
     String text = file.getText();
     Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
 
