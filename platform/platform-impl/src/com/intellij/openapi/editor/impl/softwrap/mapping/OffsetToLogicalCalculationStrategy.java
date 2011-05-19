@@ -63,7 +63,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
         if (lastEntry.endOffset >= targetOffset - 1) {
           EditorPosition position = lastEntry.buildEndLinePosition();
           if (document.getCharsSequence().charAt(document.getTextLength() - 1) == '\n') {
-            position.onNewLine();
+            position.onNewLine(true);
           }
           setEagerMatch(position.buildLogicalPosition());
           return;
@@ -71,7 +71,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
       }
     } else if (cache.size() > 0 && cache.get(cache.size() - 1).endOffset < targetOffset) {
       EditorPosition position = cache.get(cache.size() - 1).buildEndLinePosition();
-      position.onNewLine();
+      position.onNewLine(true);
       setInitialPosition(position);
       return;
     }

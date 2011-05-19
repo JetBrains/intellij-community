@@ -266,4 +266,9 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testPolymorphicTypeCast() throws Exception {
     doTest(true, false);
   }
+
+  public void testErasureClashConfusion() throws Exception {
+    enableInspectionTool(new UnusedDeclarationInspection());
+    doTest(true, false);
+  }
 }

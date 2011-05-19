@@ -611,6 +611,7 @@
   <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
 
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
+  <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.ModuleTypeUsagesCollector"/>
 
   <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
   <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>

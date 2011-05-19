@@ -229,7 +229,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
         final XmlNSDescriptorImpl nsDescriptor = getRedefinedElementDescriptor(tag);
         if (nsDescriptor != null) {
           final XmlElementDescriptor xmlElementDescriptor = nsDescriptor.getElementDescriptor(localName, namespace, visited, reference);
-          if (xmlElementDescriptor != null) return xmlElementDescriptor;
+          if (xmlElementDescriptor instanceof XmlElementDescriptorImpl) {
+            return new RedefinedElementDescriptor((XmlElementDescriptorImpl)xmlElementDescriptor, this);
+          }
         }
       }
     }
