@@ -15,11 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
+import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -35,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private final SmartPsiElementPointer<PsiField> myField;
@@ -95,8 +99,29 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         }
       }
     });
-    for (PsiMethod constructor : constructors) {
-      if (!addParameterToConstructor(project, file, editor, constructor)) break;
+    if (constructors.length > 1) {
+
+      final PsiMethodMember[] members = new PsiMethodMember[constructors.length];
+      for (int i = 0, constructorsLength = constructors.length; i < constructorsLength; i++) {
+        members[i] = new PsiMethodMember(constructors[i]);
+      }
+      final List<PsiMethodMember> elements;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        elements = Arrays.asList(members);
+      } else {
+        final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(members, false, true, project);
+        chooser.setTitle("Choose constructors to add parameter to");
+        chooser.show();
+        elements = chooser.getSelectedElements();
+        if (elements == null) return;
+      }
+
+      for (PsiMethodMember member : elements) {
+        if (!addParameterToConstructor(project, file, editor, member.getElement())) break;
+      }
+
+    } else {
+      addParameterToConstructor(project, file, editor, constructors[0]);
     }
   }
 
