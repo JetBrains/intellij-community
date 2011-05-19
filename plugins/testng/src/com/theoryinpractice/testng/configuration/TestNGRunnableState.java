@@ -54,10 +54,13 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
@@ -67,11 +70,13 @@ import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.CommandLineArgs;
 import org.testng.IDEATestNGListener;
 import org.testng.RemoteTestNGStarter;
 import org.testng.annotations.AfterClass;
 import org.testng.remote.RemoteArgs;
+import org.testng.remote.RemoteTestNG;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.SerializedMessageSender;
 
@@ -387,9 +392,17 @@ public class TestNGRunnableState extends JavaCommandLineState {
       scopeToDetermineTestngIn = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(config.getConfigurationModule().getModule());
     }
 
-    final TestData data = config.getPersistantData();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final PsiClass aClass = facade.findClass(SerializedMessageSender.class.getName(), scopeToDetermineTestngIn);
+    if (aClass == null) return false;
 
-    return JavaPsiFacade.getInstance(project)
-      .findClass(SerializedMessageSender.class.getName(), scopeToDetermineTestngIn) != null;
+    final PsiClass[] starters = facade.findClasses(RemoteTestNG.class.getName(), scopeToDetermineTestngIn);
+    for (PsiClass starter : starters) {
+      if (starter.findFieldByName("m_serPort", false) == null) {
+        LOG.info("Multiple TestNG versions found");
+        return false;
+      }
+    }
+    return true;
   }
 }
