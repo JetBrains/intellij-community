@@ -42,7 +42,7 @@ public class VariableSearchUtils {
     public static boolean containsConflictingDeclarations(
             PsiCodeBlock block, PsiCodeBlock parentBlock) {
         final List<PsiCodeBlock> followingBlocks = new ArrayList();
-        findFollowingBlocks(block.getParent().getNextSibling(),
+        collectFollowingBlocks(block.getParent().getNextSibling(),
                 followingBlocks);
         final PsiStatement[] statements = block.getStatements();
         final Project project = block.getProject();
@@ -83,17 +83,15 @@ public class VariableSearchUtils {
     }
 
     /**
-     * Depth first traversal to find all PsiCodeBlock children. Does not find
-     * children of found blocks.
+     * Depth first traversal to find all PsiCodeBlock children.
      */
-    private static void findFollowingBlocks(PsiElement element,
-                                            List<PsiCodeBlock> out) {
+    private static void collectFollowingBlocks(PsiElement element,
+                                               List<PsiCodeBlock> out) {
         while (element != null) {
             if (element instanceof PsiCodeBlock) {
                 out.add((PsiCodeBlock) element);
-            } else {
-                findFollowingBlocks(element.getFirstChild(), out);
             }
+            collectFollowingBlocks(element.getFirstChild(), out);
             element = element.getNextSibling();
         }
     }

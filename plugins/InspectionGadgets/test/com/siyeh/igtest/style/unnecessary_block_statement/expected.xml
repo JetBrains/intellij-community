@@ -17,20 +17,6 @@
 
   <problem>
     <file>UnnecessaryBlockStatementInspection.java</file>
-    <line>8</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary code block</problem_class>
-    <description>Braces around this statement are unnecessary #loc</description>
-  </problem>
-
-  <problem>
-    <file>UnnecessaryBlockStatementInspection.java</file>
-    <line>10</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary code block</problem_class>
-    <description>Braces around this statement are unnecessary #loc</description>
-  </problem>
-
-  <problem>
-    <file>UnnecessaryBlockStatementInspection.java</file>
     <line>11</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary code block</problem_class>
     <description>Braces around this statement are unnecessary #loc</description>
