@@ -74,8 +74,9 @@ public class ToStringRenderer extends NodeRendererImpl {
     final Value value = valueDescriptor.getValue();
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       public void evaluationResult(String message) {
-        final String truncated = DebuggerUtilsEx.truncateString(message);
-        valueDescriptor.setValueLabel(message != null ? "\"" + DebuggerUtils.convertToPresentationString(truncated) + "\"" : "");
+        valueDescriptor.setValueLabel(
+          message == null? "" : "\"" + DebuggerUtils.convertToPresentationString(DebuggerUtilsEx.truncateString(message)) + "\""
+        );
         labelListener.labelChanged();
       }
 
