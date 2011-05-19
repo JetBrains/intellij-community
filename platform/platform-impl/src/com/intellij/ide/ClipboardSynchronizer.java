@@ -16,9 +16,14 @@
 package com.intellij.ide;
 
 import com.intellij.Patches;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
+import com.sun.jna.IntegerType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +32,7 @@ import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.Field;
@@ -44,7 +50,9 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ClipboardSynchronizer");
   @NonNls private static final String DATA_TRANSFER_TIMEOUT_PROPERTY = "sun.awt.datatransfer.timeout";
   private AtomicBoolean mySynchronizationInProgress = new AtomicBoolean(false);
+
   private Transferable myCurrentContent;
+
   private final Object myLock = new Object();
 
   public static ClipboardSynchronizer getInstance() {
@@ -169,7 +177,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     final boolean inProgress = mySynchronizationInProgress.getAndSet(true);
     if (inProgress) return;
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    final Application app = ApplicationManager.getApplication();
+    app.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         try {
@@ -193,6 +202,14 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   private Transferable doGetContents() throws IllegalStateException {
+    if (SystemInfo.isMac) {
+      Transferable safe = getContentsSafe();
+      if (safe != null) {
+        return safe;
+      }
+    }
+
+
     IllegalStateException last = null;
     for (int i = 0; i < 3; i++) {
       try {
@@ -236,5 +253,44 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       }
       break;
     }
+  }
+
+  public Transferable getContentsSafe() {
+    final ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
+
+    try {
+      String plainText = "public.utf8-plain-text";
+      String jvmObject = "application/x-java-jvm";
+
+      ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
+      ID types = Foundation.invoke(pasteboard, "types");
+      IntegerType count = Foundation.invoke(types, "count");
+
+      ID plainTextType = null;
+      ID vmObjectType = null;
+
+      for (int i = 0; i < count.intValue(); i++) {
+        ID each = Foundation.invoke(types, "objectAtIndex:", i);
+        String eachType = Foundation.toStringViaUTF8(each);
+        if (plainText.equals(eachType)) {
+          plainTextType = each;
+        }
+
+        if (eachType.contains(jvmObject)) {
+          vmObjectType = each;
+        }
+
+      }
+
+      if (vmObjectType != null && plainTextType != null) {
+        ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
+        return new StringSelection(Foundation.toStringViaUTF8(text));
+      }
+    }
+    finally {
+      Foundation.invoke(autoReleasePool, Foundation.createSelector("release"));
+    }
+
+    return null;
   }
 }

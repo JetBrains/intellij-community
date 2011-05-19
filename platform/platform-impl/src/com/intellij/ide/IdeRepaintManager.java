@@ -82,26 +82,6 @@ public class IdeRepaintManager extends RepaintManager {
 
   @Override
   public void validateInvalidComponents() {
-    if (Registry.is("ide.debugMode")) {
-      try {
-        Field invalids = getClass().getSuperclass().getDeclaredField("invalidComponents");
-        invalids.setAccessible(true);
-        ArrayList invalidComponents = (ArrayList)invalids.get(this);
-        if (invalidComponents != null) {
-          for (Object each : invalidComponents) {
-            if (each instanceof Component) {
-              if (SwingUtilities.getWindowAncestor((Component)each) == null) {
-                System.out.println("Invalid component without peer: " + each);
-              }
-            }
-          }
-        }
-      }
-      catch (Exception e) {
-        Thread.dumpStack();
-      }
-    }
-
     super.validateInvalidComponents();
   }
 
