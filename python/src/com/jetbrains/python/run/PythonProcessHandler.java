@@ -2,11 +2,10 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ColoredProcessHandler;
-import com.intellij.execution.process.RunnerMediator;
-import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +15,7 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public class PythonProcessHandler extends ColoredProcessHandler {
-  private PythonProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
+  protected PythonProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
     super(process, commandLine.getCommandLineString());
   }
 
@@ -62,11 +61,21 @@ public class PythonProcessHandler extends ColoredProcessHandler {
     }
   }
 
+  public void killProcess() {
+    if (!killProcessTree(getProcess())) {
+      closeStreamsAndDestroyProcess();
+    }
+  }
+
   public static PythonProcessHandler createProcessHandler(GeneralCommandLine commandLine)
     throws ExecutionException {
 
     Process p = commandLine.createProcess();
 
     return new PythonProcessHandler(p, commandLine);
+  }
+
+  private static boolean killProcessTree(final Process process) {
+    return OSProcessManager.getInstance().killProcessTree(process);
   }
 }
