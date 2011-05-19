@@ -4,7 +4,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -21,6 +23,13 @@ public class EpydocString extends StructuredDocString {
     "@param", "@type", "@return", "@rtype", "@keyword", "@raise", "@ivar", "@cvar", "@var", "@group", "@sort", "@note", "@attention",
     "@bug", "@warning", "@version", "@todo", "@deprecated", "@since", "@status", "@change", "@permission", "@requires",
     "@precondition", "@postcondition", "@invariant", "@author", "@organization", "@copyright", "@license", "@contact", "@summary", "@see"
+  };
+
+
+  public static String[] ADDITIONAL = new String[] {
+    "group", "sort", "note", "attention",
+    "bug", "warning", "version", "todo", "deprecated", "since", "status", "change", "permission", "requires",
+    "precondition", "postcondition", "invariant", "author", "organization", "copyright", "license", "contact", "summary", "see"
   };
 
   public EpydocString(String docstringText) {
@@ -239,4 +248,16 @@ public class EpydocString extends StructuredDocString {
   public static String inlineMarkupToHTML(String s) {
     return convertInlineMarkup(s, true);
   }
+
+  public List<String> getAdditionalTags() {
+    List<String> list = new ArrayList<String>();
+    for (String tagName : ADDITIONAL) {
+      final Map<String, String> map = myArgTagValues.get(tagName);
+      if (map != null) {
+        list.add(tagName);
+      }
+    }
+    return list;
+  }
+
 }

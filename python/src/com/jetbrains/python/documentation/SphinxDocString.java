@@ -2,6 +2,7 @@ package com.jetbrains.python.documentation;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -65,5 +66,10 @@ public class SphinxDocString extends StructuredDocString {
   @Override
   public String getAttributeDescription() {
     return getTagValue(EpydocString.VARIABLE_TAGS);
+  }
+
+  @Override
+  public List<String> getAdditionalTags() {
+    return Collections.emptyList();
   }
 }
