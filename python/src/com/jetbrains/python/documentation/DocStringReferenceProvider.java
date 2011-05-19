@@ -45,35 +45,40 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         if (tagRange == null) {
           break;
         }
-        pos = getTagArgumentStart(docString, tagRange);
-        int endPos = new CharMatcher() {
-                            @Override public boolean matches(char c) {
-                              return Character.isLetterOrDigit(c) || c == '_';
-                            }}.negate().indexIn(docString, pos);
+        pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, tagRange.getEndOffset());
+        CharMatcher identifierMatcher = new CharMatcher() {
+                                        @Override public boolean matches(char c) {
+                                          return Character.isLetterOrDigit(c) || c == '_';
+                                        }}.negate();
+        if (docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).startsWith(":")) {
+          int ws = CharMatcher.anyOf(" \t*").indexIn(docString, pos+1);
+          if (ws != -1) {
+            int next = CharMatcher.anyOf(" \t*").negate().indexIn(docString, ws);
+            if (next != -1 && !docString.substring(pos, next).contains(":")) {
+              int endPos = identifierMatcher.indexIn(docString, pos);
+              result.add(new DocStringTypeReference(element, new TextRange(pos, endPos)));
+              pos = next;
+            }
+          }
+        }
+        int endPos = identifierMatcher.indexIn(docString, pos);
         if (endPos < 0) {
           endPos = docString.length();
         }
         result.add(new DocStringParameterReference(element, new TextRange(pos, endPos)));
+
+        if (docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).equals(":type") ||
+            docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).equals(":rtype")) {
+          pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, endPos+1);
+          endPos = CharMatcher.JAVA_LETTER_OR_DIGIT.negate().indexIn(docString, pos+1);
+          result.add(new DocStringTypeReference(element, new TextRange(pos, endPos)));
+        }
         pos = endPos;
       }
 
       return result.toArray(new PsiReference[result.size()]);
     }
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  private int getTagArgumentStart(String docString, TextRange tagRange) {
-    int pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, tagRange.getEndOffset());
-    if (docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).startsWith(":")) {
-      int ws = CharMatcher.anyOf(" \t*").indexIn(docString, pos+1);
-      if (ws != -1) {
-        int next = CharMatcher.anyOf(" \t*").negate().indexIn(docString, ws);
-        if (next != -1 && !docString.substring(pos, next).contains(":")) {
-          pos = next;
-        }
-      }
-    }
-    return pos;
   }
 
   @Nullable
