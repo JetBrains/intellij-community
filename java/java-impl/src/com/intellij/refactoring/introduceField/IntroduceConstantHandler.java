@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,10 +148,11 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && Registry.is("inplace.introduce.enabled")) {
-      new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
+      if (new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
                                         anchorElement, anchorElementIfAll,
-                                        expr != null ? createOccurenceManager(expr, parentClass) : null).performInplaceIntroduce();
-      return null;
+                                        expr != null ? createOccurenceManager(expr, parentClass) : null).performInplaceIntroduce()){
+        return null;
+      }
     }
 
 

@@ -421,21 +421,20 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         boolean isInplaceAvailableOnDataContext = myEditor != null && myEditor.getSettings().isVariableInplaceRenameEnabled() &&
                                                   Registry.is("inplace.introduce.enabled");
 
-        if (!isInplaceAvailableOnDataContext) {
-          if (myEditor != null) {
-            RefactoringUtil.highlightAllOccurences(myProject, occurences, myEditor);
-          }
-          new IntroduceParameterDialog(myProject, classMemberRefs, occurences, myLocalVar, myExpr, nameSuggestionsGenerator,
-                                       typeSelectorManager, methodToSearchFor, method, parametersToRemove, mustBeFinal).show();
-          if (myEditor != null) {
-            myEditor.getSelectionModel().removeSelection();
-          }
+        if (isInplaceAvailableOnDataContext && new InplaceIntroduceParameterPopup(myProject, myEditor, classMemberRefs,
+                                                                                  typeSelectorManager,
+                                                                                  myExpr, myLocalVar, method, methodToSearchFor, occurences,
+                                                                                  parametersToRemove,
+                                                                                  mustBeFinal).inplaceIntroduceParameter()) {
+          return;
         }
-        else {
-          new InplaceIntroduceParameterPopup(myProject, myEditor, classMemberRefs,
-                                             typeSelectorManager,
-                                             myExpr, myLocalVar, method, methodToSearchFor, occurences, parametersToRemove,
-                                             mustBeFinal).inplaceIntroduceParameter();
+        if (myEditor != null) {
+          RefactoringUtil.highlightAllOccurences(myProject, occurences, myEditor);
+        }
+        new IntroduceParameterDialog(myProject, classMemberRefs, occurences, myLocalVar, myExpr, nameSuggestionsGenerator,
+                                     typeSelectorManager, methodToSearchFor, method, parametersToRemove, mustBeFinal).show();
+        if (myEditor != null) {
+          myEditor.getSelectionModel().removeSelection();
         }
       }
     }
