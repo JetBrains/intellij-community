@@ -67,7 +67,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
                 else {
                   PyType type = rightExpression.getType(myTypeEvalContext);
                   if (type != null) {
-                    if (type.getName().equals("int") || type.getName().equals("str"))
+                    if (type.isBuiltin(myTypeEvalContext) && "int".equals(type.getName()) || "str".equals(type.getName()))
                       registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
                   }
                 }
