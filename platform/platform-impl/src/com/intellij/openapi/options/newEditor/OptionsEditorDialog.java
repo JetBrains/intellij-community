@@ -37,6 +37,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
@@ -109,10 +111,27 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     if (errors.size() == 0) {
       setErrorText(null);
     } else {
-      setErrorText("Changes were not applied because of an error");
+      String text = "Changes were not applied because of an error";
+
+      final String errorMessage = getErrorMessage(errors);
+      if (errorMessage != null) {
+        text += "<br>" + errorMessage;
+      }
+
+      setErrorText(text);
     }
 
     return errors.size() == 0;
+  }
+
+  @Nullable
+  private static String getErrorMessage(final Map<Configurable, ConfigurationException> errors) {
+    final Collection<ConfigurationException> values = errors.values();
+    final ConfigurationException[] exceptions = values.toArray(new ConfigurationException[values.size()]);
+    if (exceptions.length > 0) {
+      return exceptions[0].getMessage();
+    }
+    return null;
   }
 
   @Override
