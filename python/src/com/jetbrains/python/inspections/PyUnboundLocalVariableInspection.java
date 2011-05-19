@@ -57,7 +57,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (PyImportStatementNavigator.getImportStatementByElement(node) != null){
           return;
         }
-        final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node);
+        final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, node.getName());
         if (owner == null) {
           return;
         }

@@ -150,7 +150,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           // Check if the element is declared out of scope, mark all out of scope write accesses as used
           if (element instanceof PyReferenceExpression) {
             final PyReferenceExpression ref = (PyReferenceExpression)element;
-            final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(ref);
+            final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(ref, ref.getName());
             if (declOwner != null && declOwner != owner) {
               Collection<PsiElement> writeElements = getWriteElements(name, declOwner);
               for (PsiElement e : writeElements) {

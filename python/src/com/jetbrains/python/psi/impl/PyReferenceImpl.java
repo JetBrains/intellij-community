@@ -311,6 +311,14 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return element;
   }
 
+  private static boolean isGlobal(PsiElement anchor, String name) {
+    final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(anchor, name);
+    if (owner != null) {
+      return ControlFlowCache.getScope(owner).isGlobal(name);
+    }
+    return false;
+  }
+
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       // may be import via alias, so don't check if names match, do simple resolve check instead
@@ -321,13 +329,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
       return resolveResult == element;
     }
-
-    // Elements may in fact be resolved to their outer declarations, this is true for globals, for example
-    element = transitiveResolve(element);
-
     if (element instanceof PsiNamedElement) {
       final String elementName = ((PsiNamedElement)element).getName();
       if ((Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) && !haveQualifiers(element)) {
+        // Global elements may in fact be resolved to their outer declarations
+        if (isGlobal(element, elementName)) {
+          element = transitiveResolve(element);
+        }
         final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
         final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
         if (element instanceof PyParameter || element instanceof PyTargetExpression) {
@@ -357,7 +365,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           }
         }
 
-        final PsiElement resolveResult = transitiveResolve(this.getElement());
+        final PsiElement resolveResult = (isGlobal(getElement(), elementName)) ? transitiveResolve(getElement()) : resolve();
         if (resolveResult == element) {
           return true;
         }

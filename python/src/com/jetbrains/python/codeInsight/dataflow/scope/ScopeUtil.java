@@ -49,13 +49,12 @@ public class ScopeUtil {
   }
 
   @Nullable
-  public static ScopeOwner getDeclarationScopeOwner(PyReferenceExpression node) {
-    final String name = node.getName();
-    PsiElement element = node;
+  public static ScopeOwner getDeclarationScopeOwner(PsiElement anchor, String name) {
+    PsiElement element = anchor;
     if (name != null) {
       // References in default values of parameters are defined somewhere in outer scopes
-      if (PsiTreeUtil.getParentOfType(node, PyParameter.class) != null) {
-        element = getScopeOwner(node);
+      if (PsiTreeUtil.getParentOfType(anchor, PyParameter.class) != null) {
+        element = getScopeOwner(anchor);
       }
 
       ScopeOwner owner = getScopeOwner(element);
