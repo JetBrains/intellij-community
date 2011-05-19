@@ -21,6 +21,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -295,6 +296,21 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return null;
   }
 
+  private static PsiElement transitiveResolve(PsiElement element) {
+    PsiElement prev = null;
+    while (element != prev) {
+      prev = element;
+      PsiReference ref = element.getReference();
+      if (ref != null) {
+        PsiElement e = ref.resolve();
+        if (e != null) {
+          element = e;
+        }
+      }
+    }
+    return element;
+  }
+
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       // may be import via alias, so don't check if names match, do simple resolve check instead
@@ -305,10 +321,17 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
       return resolveResult == element;
     }
+
+    // Elements may in fact be resolved to their outer declarations, this is true for globals, for example
+    element = transitiveResolve(element);
+
     if (element instanceof PsiNamedElement) {
       final String elementName = ((PsiNamedElement)element).getName();
       if ((Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) && !haveQualifiers(element)) {
+        final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
+        final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
         if (element instanceof PyParameter || element instanceof PyTargetExpression) {
+          // Check if the reference is in the same or inner scope of the element scope, not shadowed by an intermediate declaration
           PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class, PyLambdaExpression.class, PyComprehensionElement.class);
           PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, PyLambdaExpression.class, PyComprehensionElement.class);
           if (ourContainer != null) {
@@ -316,16 +339,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
               return true;
             }
             if (PsiTreeUtil.isAncestor(theirContainer, ourContainer, true)) {
-              ScopeOwner ourScopeOwner = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class);
-              ScopeOwner theirScopeOwner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
               if (ourScopeOwner != theirScopeOwner) {
                 boolean shadowsName = false;
-                while(ourScopeOwner != theirScopeOwner && ourScopeOwner != null) {
-                  if (ControlFlowCache.getScope(ourScopeOwner).containsDeclaration(elementName)) {
+                ScopeOwner owner = ourScopeOwner;
+                while(owner != theirScopeOwner && owner != null) {
+                  if (ControlFlowCache.getScope(owner).containsDeclaration(elementName)) {
                     shadowsName = true;
                     break;
                   }
-                  ourScopeOwner = PsiTreeUtil.getParentOfType(ourScopeOwner, ScopeOwner.class);
+                  owner = ScopeUtil.getScopeOwner(owner);
                 }
                 if (!shadowsName) {
                   return true;
@@ -334,18 +356,24 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             }
           }
         }
-        final PsiElement resolveResult = resolve();
+
+        final PsiElement resolveResult = transitiveResolve(this.getElement());
         if (resolveResult == element) {
           return true;
         }
+
         if (!haveQualifiers(element)) {
-          // TODO support nonlocal statement
-          final ScopeOwner ourScope = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class);
-          final ScopeOwner theirScope = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
-          if (ourScope != null && ControlFlowCache.getScope(ourScope).isGlobal(elementName) && PsiTreeUtil.isAncestor(theirScope, ourScope, false)) {
+          // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
+          // TODO: support nonlocal statement
+          final boolean ourIsGlobal = ControlFlowCache.getScope(ourScopeOwner).isGlobal(elementName);
+          final boolean theirIsGlobal = ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName);
+          final PsiFile ourFile = getElement().getContainingFile();
+          final PsiFile theirFile = element.getContainingFile();
+
+          if (ourIsGlobal && theirIsGlobal && ourFile == theirFile) {
             return true;
           }
-          if (theirScope != null && ControlFlowCache.getScope(theirScope).isGlobal(elementName) && PsiTreeUtil.isAncestor(ourScope, theirScope, false)) {
+          if (theirIsGlobal && ScopeUtil.getScopeOwner(resolveResult) == ourFile) {
             return true;
           }
         }
