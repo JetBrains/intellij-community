@@ -40,7 +40,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class FileContentQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContentQueue");
   private static final long SIZE_THRESHOLD = 1024*1024;
+  private static final long TAKEN_FILES_THRESHOLD = 1024*1024*4;
+
   private long myTotalSize;
+  private long myTakenSize;
 
   private final ArrayBlockingQueue<FileContent> myQueue = new ArrayBlockingQueue<FileContent>(256);
   private final Queue<FileContent> myPushbackBuffer = new ArrayDeque<FileContent>();
@@ -138,6 +141,31 @@ public class FileContentQueue {
 
   @Nullable
   public FileContent take() {
+
+    FileContent content = doTake();
+    if (content != null) {
+      synchronized (this) {
+        while (myTakenSize > TAKEN_FILES_THRESHOLD) {
+          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          if (indicator != null) {
+            indicator.checkCanceled();
+          }
+          try {
+            wait(300);
+          }
+          catch (InterruptedException ignore) {
+
+          }
+        }
+        myTakenSize += content.getLength();
+        notifyAll();
+      }
+    }
+    return content;
+  }
+
+  @Nullable
+  private FileContent doTake() {
     FileContent result;
     synchronized (this) {
       result = myPushbackBuffer.poll();
@@ -175,6 +203,11 @@ public class FileContentQueue {
     }
 
     return result;
+  }
+
+  public synchronized void release(@NotNull FileContent content) {
+    myTakenSize -= content.getLength();
+    notifyAll();
   }
 
   public synchronized void pushback(@NotNull FileContent content) {
