@@ -74,7 +74,7 @@ public class BraceHighlightingHandler {
 
   private final DocumentEx myDocument;
   private final PsiFile myPsiFile;
-  private final FileType myFileType;
+  // private final FileType myFileType;
   private final CodeInsightSettings myCodeInsightSettings;
 
   private BraceHighlightingHandler(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm, PsiFile psiFile) {
@@ -86,7 +86,7 @@ public class BraceHighlightingHandler {
 
     myPsiFile = psiFile;
     myCodeInsightSettings = CodeInsightSettings.getInstance();
-    myFileType = myPsiFile == null ? null : myPsiFile.getFileType();
+    // myFileType = myPsiFile == null ? null : myPsiFile.getFileType();
   }
 
   static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor, @NotNull final Alarm alarm, @NotNull final Processor<BraceHighlightingHandler> processor) {
@@ -171,19 +171,20 @@ public class BraceHighlightingHandler {
     final int originalOffset = offset;
 
     HighlighterIterator iterator = getEditorHighlighter().createIterator(offset);
+    FileType fileType = PsiUtilBase.getPsiFileAtOffset(myPsiFile, offset).getFileType();
 
     if (iterator.atEnd()) {
       offset--;
     }
-    else if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
+    else if (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType)) {
       offset--;
     }
-    else if (!BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType)) {
+    else if (!BraceMatchingUtil.isLBraceToken(iterator, chars, fileType)) {
       offset--;
 
       if (offset >= 0) {
         final HighlighterIterator i = getEditorHighlighter().createIterator(offset);
-        if (!BraceMatchingUtil.isRBraceToken(i, chars, myFileType)) offset++;
+        if (!BraceMatchingUtil.isRBraceToken(i, chars, getFileTypeByIterator(i))) offset++;
       }
     }
 
@@ -193,12 +194,13 @@ public class BraceHighlightingHandler {
     }
 
     iterator = getEditorHighlighter().createIterator(offset);
+    fileType = getFileTypeByIterator(iterator);
 
     myAlarm.cancelAllRequests();
 
-    if (BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType) ||
-        BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
-      doHighlight(offset, originalOffset);
+    if (BraceMatchingUtil.isLBraceToken(iterator, chars, fileType) ||
+        BraceMatchingUtil.isRBraceToken(iterator, chars, fileType)) {
+      doHighlight(offset, originalOffset, fileType);
     }
     else if (offset > 0 && offset < chars.length()) {
       // There is a possible case that there is paired braces nearby the caret position and the document contains only white
@@ -214,10 +216,12 @@ public class BraceHighlightingHandler {
         int backwardNonWsOffset = CharArrayUtil.shiftBackward(chars, offset - 1, "\t ");
         if (backwardNonWsOffset >= 0 && (backwardNonWsOffset < offset - 1 || c == ' ' || c == '\t' || c == '\n')) {
           iterator = getEditorHighlighter().createIterator(backwardNonWsOffset);
-          if (BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType) || BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
+          FileType newFileType = getFileTypeByIterator(iterator);
+          if (BraceMatchingUtil.isLBraceToken(iterator, chars, newFileType) ||
+              BraceMatchingUtil.isRBraceToken(iterator, chars, newFileType)) {
             offset = backwardNonWsOffset;
             searchForward = false;
-            doHighlight(backwardNonWsOffset, originalOffset);
+            doHighlight(backwardNonWsOffset, originalOffset, newFileType);
           }
         }
       }
@@ -227,9 +231,11 @@ public class BraceHighlightingHandler {
         int forwardOffset = CharArrayUtil.shiftForward(chars, c == '\n' ? offset + 1 : offset, "\t ");
         if (forwardOffset > offset || c == ' ' || c == '\t' || c == '\n') {
           iterator = getEditorHighlighter().createIterator(forwardOffset);
-          if (BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType) || BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
+          FileType newFileType = getFileTypeByIterator(iterator);
+          if (BraceMatchingUtil.isLBraceToken(iterator, chars, newFileType) ||
+              BraceMatchingUtil.isRBraceToken(iterator, chars, newFileType)) {
             offset = forwardOffset;
-            doHighlight(forwardOffset, originalOffset);
+            doHighlight(forwardOffset, originalOffset, newFileType);
           }
         }
       }
@@ -242,91 +248,102 @@ public class BraceHighlightingHandler {
     }
 
     final int _offset = offset;
+    final FileType _fileType = fileType;
     myAlarm.addRequest(new Runnable() {
       public void run() {
         if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-          highlightScope(_offset);
+          highlightScope(_offset, _fileType);
         }
       }
     }, 300);
+  }
+
+  private FileType getFileTypeByIterator(HighlighterIterator iterator) {
+    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, iterator.getStart()).getFileType();
+  }
+
+  private FileType getFileTypeByOffset(int offset) {
+    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, offset).getFileType();
   }
 
   private EditorHighlighter getEditorHighlighter() {
     return ((EditorEx)myEditor).getHighlighter();
   }
 
-  private void highlightScope(int offset) {
+  private void highlightScope(int offset, FileType fileType) {
     if (myEditor.getFoldingModel().isOffsetCollapsed(offset)) return;
     if (myEditor.getDocument().getTextLength() <= offset) return;
 
     HighlighterIterator iterator = getEditorHighlighter().createIterator(offset);
     final CharSequence chars = myDocument.getCharsSequence();
 
-    if (!BraceMatchingUtil.isStructuralBraceToken(myFileType, iterator, chars)) {
+    if (!BraceMatchingUtil.isStructuralBraceToken(fileType, iterator, chars)) {
 //      if (BraceMatchingUtil.isRBraceTokenToHighlight(myFileType, iterator) || BraceMatchingUtil.isLBraceTokenToHighlight(myFileType, iterator)) return;
     }
     else {
-      if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType) || BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType)) return;
+      if (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType) ||
+          BraceMatchingUtil.isLBraceToken(iterator, chars, fileType)) return;
     }
 
-    if (!BraceMatchingUtil.findStructuralLeftBrace(myFileType, iterator, chars)) {
+    if (!BraceMatchingUtil.findStructuralLeftBrace(fileType, iterator, chars)) {
       removeLineMarkers();
       return;
     }
 
-    highlightLeftBrace(iterator, true);
+    highlightLeftBrace(iterator, true, fileType);
   }
 
-  private void doHighlight(int offset, int originalOffset) {
+  private void doHighlight(int offset, int originalOffset, FileType fileType) {
     if (myEditor.getFoldingModel().isOffsetCollapsed(offset)) return;
 
     HighlighterIterator iterator = getEditorHighlighter().createIterator(offset);
     final CharSequence chars = myDocument.getCharsSequence();
 
-    if (BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType)) {
+    if (BraceMatchingUtil.isLBraceToken(iterator, chars, fileType)) {
       IElementType tokenType = iterator.getTokenType();
 
       iterator.advance();
-      if (!iterator.atEnd() && BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
-        if (BraceMatchingUtil.isPairBraces(tokenType, iterator.getTokenType(), myFileType) && originalOffset == iterator.getStart()) return;
+      if (!iterator.atEnd() && BraceMatchingUtil.isRBraceToken(iterator, chars, fileType)) {
+        if (BraceMatchingUtil.isPairBraces(tokenType, iterator.getTokenType(), fileType) &&
+            originalOffset == iterator.getStart()) return;
       }
 
       iterator.retreat();
-      highlightLeftBrace(iterator, false);
+      highlightLeftBrace(iterator, false, fileType);
 
       if (offset > 0) {
         iterator = getEditorHighlighter().createIterator(offset - 1);
-        if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
-          highlightRightBrace(iterator);
+        if (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType)) {
+          highlightRightBrace(iterator, fileType);
         }
       }
     }
-    else if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
-      highlightRightBrace(iterator);
+    else if (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType)) {
+      highlightRightBrace(iterator, fileType);
     }
   }
 
-  private void highlightRightBrace(HighlighterIterator iterator) {
+  private void highlightRightBrace(HighlighterIterator iterator, FileType fileType) {
     int brace1End = iterator.getEnd();
 
-    boolean matched = BraceMatchingUtil.matchBrace(myDocument.getCharsSequence(), myFileType, iterator, false);
+    boolean matched = BraceMatchingUtil.matchBrace(myDocument.getCharsSequence(), fileType, iterator, false);
 
     int brace2Start = iterator.atEnd() ? -1 : iterator.getStart();
 
-    highlightBraces(brace2Start, brace1End - 1, matched, false);
+    highlightBraces(brace2Start, brace1End - 1, matched, false, fileType);
   }
 
-  private void highlightLeftBrace(HighlighterIterator iterator, boolean scopeHighlighting) {
+  private void highlightLeftBrace(HighlighterIterator iterator, boolean scopeHighlighting, FileType fileType) {
     int brace1Start = iterator.getStart();
-    boolean matched = BraceMatchingUtil.matchBrace(myDocument.getCharsSequence(), myFileType, iterator, true);
+    boolean matched = BraceMatchingUtil.matchBrace(myDocument.getCharsSequence(), fileType, iterator, true);
 
     int brace2End = iterator.atEnd() ? -1 : iterator.getEnd() - 1;
 
-    highlightBraces(brace1Start, brace2End, matched, scopeHighlighting);
+    highlightBraces(brace1Start, brace2End, matched, scopeHighlighting, fileType);
   }
 
-  private void highlightBraces(final int lBraceOffset, int rBraceOffset, boolean matched, boolean scopeHighlighting) {
-    if (!matched && myFileType == FileTypes.PLAIN_TEXT) {
+  private void highlightBraces(final int lBraceOffset, int rBraceOffset, boolean matched, boolean scopeHighlighting, FileType fileType) {
+    if (!matched && fileType == FileTypes.PLAIN_TEXT) {
       return;
     }
 
@@ -429,7 +446,7 @@ public class BraceHighlightingHandler {
               int start = lbraceStart;
               if (!(myPsiFile instanceof PsiPlainTextFile)) {
                 PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                start = BraceMatchingUtil.getBraceMatcher(myFileType, PsiUtilBase.getLanguageAtOffset(myPsiFile, lbraceStart)).getCodeConstructStart(myPsiFile, lbraceStart);
+                start = BraceMatchingUtil.getBraceMatcher(getFileTypeByOffset(lbraceStart), PsiUtilBase.getLanguageAtOffset(myPsiFile, lbraceStart)).getCodeConstructStart(myPsiFile, lbraceStart);
               }
               TextRange range = new TextRange(start, lbraceEnd);
               int line1 = myDocument.getLineNumber(range.getStartOffset());
