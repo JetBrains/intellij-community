@@ -119,10 +119,12 @@ public class DumbServiceImpl extends DumbService {
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       // no dumb mode for tests
       EmptyProgressIndicator i = new EmptyProgressIndicator();
-      runner.queryNeededFiles(i);
+      final int size = runner.queryNeededFiles(i);
       try {
         HeavyProcessLatch.INSTANCE.processStarted();
-        runner.processFiles(i, false);
+        if (size > 0) {
+          runner.processFiles(i, false);
+        }
         runner.updatingDone();
       }
       finally {
@@ -146,7 +148,7 @@ public class DumbServiceImpl extends DumbService {
         final int size = runner.queryNeededFiles(indicator);
         if (application.isHeadlessEnvironment() || (size + runner.getNumberOfPendingUpdateJobs(indicator)) < 50) {
           // If not that many files found, process them on the spot, avoiding entering dumb mode
-          // Consider number of pending tasks as well, becase they may take noticeable time to process even if the number of files is small
+          // Consider number of pending tasks as well, because they may take noticeable time to process even if the number of files is small
           try {
             HeavyProcessLatch.INSTANCE.processStarted();
             if (size > 0) {
@@ -356,8 +358,10 @@ public class DumbServiceImpl extends DumbService {
               myTotalItems += count;
 
               indicator.setIndeterminate(false);
-              indicator.setText(IdeBundle.message("progress.indexing.updaing"));
-              updateRunner.processFiles(indicator, true);
+              indicator.setText(IdeBundle.message("progress.indexing.updating"));
+              if (count > 0) {
+                updateRunner.processFiles(indicator, true);
+              }
               updateRunner.updatingDone();
             }
             finally {
