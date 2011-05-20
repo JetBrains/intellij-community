@@ -22,4 +22,5 @@ public class RedundantArrayForVarargsCallInspectionTest extends InspectionTestCa
   public void testIDEADEV25923() throws Exception { doTest(); }
   public void testNestedArray() throws Exception { doTest(); }
   public void testCheckEnumConstant() throws Exception { doTest(); }
+  public void testGeneric() throws Exception { doTest(); }
 }

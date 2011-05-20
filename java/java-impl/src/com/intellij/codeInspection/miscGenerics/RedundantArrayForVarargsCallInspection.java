@@ -16,6 +16,8 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -125,17 +127,29 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
           if (arrayElements.length > 0) {
             copyArgumentList.addRange(arrayElements[0], arrayElements[arrayElements.length - 1]);
           }
+          final Project project = callExpression.getProject();
           final JavaResolveResult resolveResult;
           if (callExpression instanceof PsiEnumConstant) {
             final PsiEnumConstant enumConstant = (PsiEnumConstant)callExpression;
             final PsiClass containingClass = enumConstant.getContainingClass();
-            final JavaPsiFacade facade = JavaPsiFacade.getInstance(enumConstant.getProject());
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
             final PsiClassType classType = facade.getElementFactory().createType(containingClass);
             resolveResult = facade.getResolveHelper().resolveConstructor(classType, copyArgumentList, enumConstant);
+            return resolveResult.isValidResult() && resolveResult.getElement() == oldRefMethod;
           } else {
             resolveResult = copy.resolveMethodGenerics();
+            if (!resolveResult.isValidResult() || resolveResult.getElement() != oldRefMethod) {
+              return false;
+            }
+            final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiCallExpression) callExpression, false);
+            final PsiType expressionType = ((PsiCallExpression)copy).getType();
+            for (ExpectedTypeInfo expectedType : expectedTypes) {
+              if (!expectedType.getType().isAssignableFrom(expressionType)) {
+                return false;
+              }
+            }
+            return true;
           }
-          return resolveResult.isValidResult() && resolveResult.getElement() == oldRefMethod;
         }
         catch (IncorrectOperationException e) {
           return false;
