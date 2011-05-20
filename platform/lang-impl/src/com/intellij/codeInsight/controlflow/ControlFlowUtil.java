@@ -34,7 +34,6 @@ public class ControlFlowUtil {
   }
 
   public static class Stack {
-
     private final int myCapacity;
     private final int[] myValues;
     private int myIndex;
@@ -67,6 +66,7 @@ public class ControlFlowUtil {
     }
 
   }
+
   public static int[] postOrder(Instruction[] flow) {
     final int length = flow.length;
     int[] result = new int[length];
@@ -121,13 +121,8 @@ public class ControlFlowUtil {
     stack.push(start);
 
     while (!stack.isEmpty()) {
-      // Check if canceled
       ProgressManager.checkCanceled();
-
       final int num = stack.pop();
-      if (num == length - 1){
-        continue;
-      }
       final Instruction instruction = flow[num];
       if (!processor.process(instruction)){
         return false;
@@ -143,7 +138,6 @@ public class ControlFlowUtil {
     return true;
   }
 
-
   public static void iteratePrev(final int startInstruction,
                                  @NotNull final Instruction[] instructions,
                                  @NotNull final Function<Instruction, Operation> closure) {
@@ -152,14 +146,8 @@ public class ControlFlowUtil {
 
     stack.push(startInstruction);
     while (!stack.isEmpty()) {
-      // Check if canceled
       ProgressManager.checkCanceled();
-
       final int num = stack.pop();
-      if (visited[num]){
-        continue;
-      }
-      visited[num] = true;
       final Instruction instr = instructions[num];
       final Operation nextOperation = closure.fun(instr);
       if (nextOperation == Operation.CONTINUE) {
@@ -168,12 +156,16 @@ public class ControlFlowUtil {
         break;
       }
       for (Instruction pred : instr.allPred()) {
-        stack.push(pred.num());
+        final int predNum = pred.num();
+        if (!visited[predNum]) {
+          visited[predNum] = true;
+          stack.push(predNum);
+        }
       }
     }
   }
 
   public static enum Operation {
-    CONTINUE, BREAK, NEXT;
+    CONTINUE, BREAK, NEXT
   }
 }
