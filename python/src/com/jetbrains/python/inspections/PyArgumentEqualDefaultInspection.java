@@ -76,8 +76,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
             registerProblem(arguments[i], "Argument equals to default parameter value");
 
         }
-        else
-          canDelete = false;
+        else if (!(arguments[i] instanceof PyKeywordArgument)) canDelete = false;
       }
     }
 

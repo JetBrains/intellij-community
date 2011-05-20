@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -42,8 +43,7 @@ public class RemoveArgumentEqualDefaultQuickFix implements LocalQuickFix {
         if (canDelete)
           arguments[i].delete();
       }
-      else
-        canDelete = false;
+      else if (!(arguments[i] instanceof PyKeywordArgument)) canDelete = false;
     }
   }
 }
