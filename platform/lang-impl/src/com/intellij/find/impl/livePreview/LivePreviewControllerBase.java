@@ -64,7 +64,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   @Override
   public void searchResultsUpdated(SearchResults sr) {
-    //setReplaceDenied(false);
   }
 
   @Override
@@ -89,24 +88,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     return myReplaceDenied;
   }
 
-  public void setReplaceDenied(final boolean replaceDenied) {
-    boolean changed = replaceDenied != myReplaceDenied;
-    myReplaceDenied = replaceDenied;
-    if (changed && myReplaceListener != null) {
-      if (replaceDenied) {
-        myReplaceListener.replaceDenied();
-      }
-      else {
-        myReplaceListener.replaceAllowed();
-      }
-    }
-  }
-
   public interface ReplaceListener {
     void replacePerformed(LiveOccurrence occurrence, final String replacement, final Editor editor);
     void replaceAllPerformed(Editor e);
-    void replaceDenied();
-    void replaceAllowed();
   }
 
   private ReplaceListener myReplaceListener;
@@ -146,17 +130,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     Runnable request = new Runnable() {
       @Override
       public void run() {
-        Runnable denyReplace = new Runnable() {
-          @Override
-          public void run() {
-            //setReplaceDenied(true);
-          }
-        };
-        if (unitTestMode) {
-          denyReplace.run();
-        } else {
-          ApplicationManager.getApplication().invokeAndWait(denyReplace, modalityState);
-        }
         mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp);
       }
     };
@@ -213,10 +186,8 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     if (myReplaceListener != null) {
       myReplaceListener.replacePerformed(occurrence, replacement, editor);
     }
-    //setReplaceDenied(true);
     myLivePreview.inSmartUpdate();
     mySearchResults.updateThreadSafe(findModel, true, result, mySearchResults.getStamp());
-    //myLivePreview.supressUpdate();
     return result;
   }
 
@@ -251,9 +222,8 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   @Override
   public boolean shouldReplace(TextRange range, String replace) {
-    for (LiveOccurrence o : mySearchResults.getExcluded()) {
-      TextRange primaryRange = o.getPrimaryRange();
-      if (primaryRange.equals(range)) {
+    for (RangeMarker r : mySearchResults.getExcluded()) {
+      if (r.getStartOffset() == range.getStartOffset() && r.getEndOffset() == range.getEndOffset()) {
         return false;
       }
     }

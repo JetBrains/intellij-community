@@ -113,16 +113,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   @Override
   public void replaceAllPerformed(Editor e) {  }
 
-  @Override
-  public void replaceDenied() {
-    updateReplaceButton();
-  }
-
-  @Override
-  public void replaceAllowed() {
-    updateReplaceButton();
-  }
-
   private void updateReplaceButton() {
     if (myReplaceButton != null) {
       myReplaceButton.setEnabled(mySearchResults != null && mySearchResults.getCursor() != null &&
