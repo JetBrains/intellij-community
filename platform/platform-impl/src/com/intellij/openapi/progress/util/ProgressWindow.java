@@ -19,7 +19,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -62,7 +61,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   private MyDialog myDialog;
   private final Alarm myUpdateAlarm     = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Alarm myInstallFunAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Alarm myShowWindowAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final Project myProject;
@@ -232,20 +230,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       return;
     }
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      Runnable installer = new Runnable() {
-        public void run() {
-          if (isRunning() && !isCanceled() && getFraction() < 0.15 && myDialog != null) {
-            final JComponent cmp = ProgressManager.getInstance().getProvidedFunComponent(myProject, getProcessId());
-            if (cmp != null) {
-              setFunComponent(cmp);
-            }
-          }
-        }
-      };
-      myInstallFunAlarm.addRequest(installer, 3000, getModalityState());
-    }
-
     myWasShown = true;
     myDialog.show();
     if (myDialog != null) {
@@ -260,7 +244,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   public synchronized void stop() {
     LOG.assertTrue(!myStoppedAlready);
-    myInstallFunAlarm.cancelAllRequests();
 
     super.stop();
 
@@ -712,24 +695,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
     else {
       myCancelText = text;
-    }
-  }
-
-  private void setFunComponent(JComponent c) {
-    myDialog.myFunPanel.removeAll();
-    if (c != null) {
-      myDialog.myFunPanel.add(new JSeparator(), BorderLayout.NORTH);
-      myDialog.myFunPanel.add(c, BorderLayout.CENTER);
-    }
-
-    if (myDialog.myPopup != null && !(myDialog.myPopup.getPeer() instanceof GlassPaneDialogWrapperPeer)) { // TODO[spL]: remove
-      final Window wnd = SwingUtilities.windowForComponent(myDialog.myPanel);
-      if (wnd != null) { // Can be null if just hidden
-        wnd.pack();
-      }
-    }
-    else if (myDialog.myPopup != null) {
-      myDialog.myPopup.validate();
     }
   }
 

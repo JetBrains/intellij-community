@@ -203,7 +203,6 @@
   <ComponentRoamingType component="RestoreUpdateTree" type="DISABLED"/>
   <ComponentRoamingType component="PropertiesComponent" type="DISABLED"/>
 
-  <progressFunComponentProvider implementation="com.intellij.featureStatistics.ProgressFunProvider"/>
   <projectConfigurable instance="com.intellij.javaee.ExternalResourceConfigurable"/>
 
   <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
