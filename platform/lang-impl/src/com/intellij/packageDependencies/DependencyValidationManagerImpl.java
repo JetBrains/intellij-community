@@ -243,11 +243,13 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   public Element getState() {
     Element element = super.getState();
-    try {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-    }
-    catch (WriteExternalException e) {
-      LOG.info(e);
+    if (SKIP_IMPORT_STATEMENTS) {
+      try {
+        DefaultJDOMExternalizer.writeExternal(this, element);
+      }
+      catch (WriteExternalException e) {
+        LOG.info(e);
+      }
     }
     final List<String> unnamedScopes = new ArrayList<String>(myUnnamedScopes.keySet());
     Collections.sort(unnamedScopes);
@@ -325,8 +327,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
           result.add(new Pair<Element, String>(element, name));
         }
       }
-      result.add(new Pair<Element, String>(e, generator.generateUniqueName("scope_settings") + ".xml"));
-      return result;
+       if (e.getChildren().size() > 0) {
+         result.add(new Pair<Element, String>(e, generator.generateUniqueName("scope_settings") + ".xml"));
+       }
+       return result;
     }
 
     public void mergeStatesInto(Element target, Element[] elements) {
