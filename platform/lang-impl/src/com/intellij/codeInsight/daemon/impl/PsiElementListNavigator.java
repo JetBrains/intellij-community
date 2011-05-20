@@ -21,10 +21,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,13 +48,19 @@ public class PsiElementListNavigator {
   }
 
   @Nullable
-  private static JBPopup navigateOrCreatePopup(NavigatablePsiElement[] targets, String title, ListCellRenderer listRenderer) {
+  private static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets, String title, ListCellRenderer listRenderer) {
     if (targets.length == 0) return null;
     if (targets.length == 1) {
       targets[0].navigate(true);
       return null;
     }
-    final JList list = new JBList(targets);
+    final JBListWithHintProvider list = new JBListWithHintProvider(targets) {
+      @Override
+      protected PsiElement getPsiElementForHint(final Object selectedValue) {
+        return (PsiElement) selectedValue;
+      }
+    };
+    
     list.setCellRenderer(listRenderer);
 
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
@@ -75,6 +82,15 @@ public class PsiElementListNavigator {
             ((NavigatablePsiElement)selected).navigate(true);
           }
         }
-      }).createPopup();
+      }).
+      setCancelCallback(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          list.hideHint();
+          
+          return true;
+        }
+      })
+      .createPopup();
   }
 }

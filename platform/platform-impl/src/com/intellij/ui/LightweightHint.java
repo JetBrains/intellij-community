@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
@@ -203,6 +204,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setShowShadow(isRealPopup())
         .setCancelKeyEnabled(false)
         .setCancelOnClickOutside(myCancelOnClickOutside)
+        .setCancelCallback(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            onPopupCancel();
+            return true;
+          }
+        })
         .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
         .setForceHeavyweight(!myForceLightweightPopup && myForceShowAsPopup)
         .createPopup();
@@ -211,6 +219,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       myPopup.show(new RelativePoint(myParentComponent, new Point(actualPoint.x, actualPoint.y)));
     }
   }
+  
+  protected void onPopupCancel() {}
 
   private void fixActualPoint(Point actualPoint) {
     if (!myHintHint.isAwtTooltip()) return;

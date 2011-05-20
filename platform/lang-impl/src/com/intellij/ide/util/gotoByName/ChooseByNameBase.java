@@ -1071,7 +1071,7 @@ public abstract class ChooseByNameBase {
   protected void choosenElementMightChange() {
   }
 
-  protected final class MyTextField extends JTextField implements PopupOwner {
+  protected final class MyTextField extends JTextField implements PopupOwner, TypeSafeDataProvider {
     private final KeyStroke myCompletionKeyStroke;
     private final KeyStroke forwardStroke;
     private final KeyStroke backStroke;
@@ -1095,6 +1095,19 @@ public abstract class ChooseByNameBase {
         }
       }
       return null;
+    }
+
+    @Override
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (LangDataKeys.CHOOSE_BY_NAME_DROPDOWN.equals(key)) {
+        if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
+          sink.put(key, myDropdownPopup);
+        }
+      } else if (LangDataKeys.CHOOSE_BY_NAME_POPUP.equals(key)) {
+        if (myTextPopup != null && myTextPopup.isVisible()) {
+          sink.put(key, myTextPopup);
+        }
+      }
     }
 
     protected void processKeyEvent(KeyEvent e) {

@@ -22,7 +22,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -30,7 +29,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
@@ -64,6 +62,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.content.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -302,6 +301,7 @@ public class DocumentationManager {
           .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
           .setResizable(true)
           .setMovable(true)
+          .setRequestFocus(requestFocus)
           .setTitle(getTitle(element, false))
           .setCouldPin(pinCallback)
           .setCancelCallback(new Computable<Boolean>() {
@@ -764,18 +764,6 @@ public class DocumentationManager {
               return;
             }
             jbPopup.setCaption(getTitle(element, false));
-            final String dimensionServiceKey = jbPopup.getDimensionServiceKey();
-            Dimension dimension = component.getPreferredSize();
-            final Dimension storedSize = dimensionServiceKey != null ? DimensionService.getInstance().getSize(dimensionServiceKey, getProject(element)) : null;
-            if (storedSize != null) {
-              dimension = storedSize;
-            }
-            final Window window = SwingUtilities.getWindowAncestor(component);
-            if (window != null) {
-              window.setBounds(window.getX(), window.getY(), dimension.width, dimension.height);
-              window.validate();
-              window.repaint();
-            }
             callback.setDone();
           }
         });
@@ -917,28 +905,7 @@ public class DocumentationManager {
   }
 
   void showHint(final JBPopup hint) {
-    final LookupEx lookup = LookupManager.getActiveLookup(myEditor);
-    if (lookup != null && lookup.getCurrentItem() != null) {
-      lookup.showItemPopup(hint);
-      return;
-    }
-
-    if (myEditor != null) {
-      hint.showInBestPositionFor(myEditor);
-      return;
-    }
-
-    final ChooseByNamePopup chooseByNamePopup = ChooseByNamePopup.getActivePopup(myProject);
-    if (chooseByNamePopup != null) {
-      chooseByNamePopup.showItemPopup(hint);
-      return;
-    }
-
-    if (myPreviouslyFocused != null) {
-      hint.showInBestPositionFor(DataManager.getInstance().getDataContext(myPreviouslyFocused));
-    } else {
-      hint.showInBestPositionFor(DataManager.getInstance().getDataContext());
-    }
+    PopupPositionManager.positionPopupInBestPosition(hint, myEditor);
   }
 
   public void requestFocus() {

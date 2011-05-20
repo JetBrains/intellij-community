@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
@@ -76,6 +77,17 @@ public class NavBarPopup extends LightweightHint {
     });
   }
 
+  @Override
+  protected void onPopupCancel() {
+    final JComponent component = getComponent();
+    if (component != null) {
+      final Object o = component.getClientProperty(JBLIST_KEY);
+      if (o instanceof JBListWithHintProvider) {
+        ((JBListWithHintProvider)o).hideHint();
+      }
+    }
+  }
+
   public void show(final NavBarItem item) {
     show(item, true);
   }
@@ -100,7 +112,12 @@ public class NavBarPopup extends LightweightHint {
   }
 
   private static JComponent createPopupContent(final NavBarPanel panel, Object[] siblings) {
-    final JBList list = new JBList(siblings);
+    final JBListWithHintProvider list = new JBListWithHintProvider(siblings) {
+      @Override
+      protected PsiElement getPsiElementForHint(Object selectedValue) {
+        return selectedValue instanceof PsiElement ? (PsiElement) selectedValue : null;
+      }
+    };
     list.setDataProvider(new DataProvider() {
       @Override
       public Object getData(@NonNls String dataId) {

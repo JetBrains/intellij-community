@@ -19,11 +19,9 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
-import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -39,6 +37,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import org.jetbrains.annotations.NonNls;
 
@@ -177,18 +176,13 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setDimensionServiceKey(project, "ShowImplementationPopup", false)
         .setResizable(true)
         .setMovable(true)
+        .setRequestFocus(invokedFromEditor && LookupManager.getActiveLookup(editor) == null)
         .setTitle(title)
         .createPopup();
-      final LookupEx lookup = LookupManager.getActiveLookup(editor);
-      if (lookup != null) {
-        lookup.showItemPopup(popup);
-      } else {
-        popup.showInBestPositionFor(DataManager.getInstance().getDataContext());
-      }
 
+      PopupPositionManager.positionPopupInBestPosition(popup, editor);
       component.setHint(popup, title);
     }
-
   }
 
   private static PsiElement[] getSelfAndImplementations(Editor editor, PsiElement element) {
