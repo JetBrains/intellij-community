@@ -119,7 +119,9 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
 
   @Override
   public boolean areTreesEqual(@NotNull PsiElement root1, @NotNull PsiElement root2, int discardCost) {
-    // todo: support discard cost
+    if (root1 == root2) {
+      return true;
+    }
     return new DuplicatesMatchingVisitor(this, mySkippedRoles, myNodeFilter, discardCost).match(root1, root2);
   }
 
