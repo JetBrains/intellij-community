@@ -23,5 +23,7 @@ public interface Scope {
 
   boolean isGlobal(String name);
 
+  boolean isNonlocal(String name);
+
   boolean containsDeclaration(String name);
 }

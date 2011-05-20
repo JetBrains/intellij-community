@@ -21,6 +21,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
@@ -342,8 +343,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @Override
   public SearchScope getUseScope() {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
-    if (ControlFlowCache.getScope(owner).isGlobal(getName())) {
+    final Scope scope = ControlFlowCache.getScope(owner);
+    if (scope.isGlobal(getName())) {
       return GlobalSearchScope.projectScope(getProject());
+    }
+    if (scope.isNonlocal(getName())) {
+      return new LocalSearchScope(getContainingFile());
     }
 
     // find highest level function containing our var

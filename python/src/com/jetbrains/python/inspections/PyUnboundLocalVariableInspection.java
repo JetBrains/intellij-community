@@ -61,6 +61,13 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (owner == null) {
           return;
         }
+        // Check if there is a non-toplevel declaration for nonlocal
+        final ScopeOwner immediateOwner = ScopeUtil.getScopeOwner(node);
+        final Scope immediateScope = ControlFlowCache.getScope(immediateOwner);
+        if (immediateScope.isNonlocal(node.getName()) && owner instanceof PyFile) {
+          registerUnboundLocal(node);
+          return;
+        }
         // Ignore references declared in outer scopes
         if (owner != PsiTreeUtil.getParentOfType(node, ScopeOwner.class)) {
           return;
@@ -143,19 +150,21 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
               registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", node.getName()));
             }
             else {
-              registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
-                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                              null,
-                              new AddGlobalQuickFix());
+              registerUnboundLocal(node);
             }
           } else
           if (owner instanceof PyFunction && PsiTreeUtil.getParentOfType(owner, PyClass.class, PyFile.class) instanceof PyFile){
-            registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                            null,
-                            new AddGlobalQuickFix());
+            registerUnboundLocal(node);
           }
         }
+      }
+
+      private void registerUnboundLocal(PyReferenceExpression node) {
+        registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                        null,
+                        new AddGlobalQuickFix());
+
       }
     };
   }

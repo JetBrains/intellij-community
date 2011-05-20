@@ -96,8 +96,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       }
       else if (instruction instanceof ReadWriteInstruction) {
         final String name = ((ReadWriteInstruction)instruction).getName();
-        // Ignore empty, wildcards or global names
-        if (name == null || "_".equals(name) || scope.isGlobal(name)) {
+        // Ignore empty, wildcards, global and nonlocal names
+        if (name == null || "_".equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
           continue;
         }
         // Ignore elements out of scope
