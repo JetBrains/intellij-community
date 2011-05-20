@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyExpression;
@@ -29,7 +30,8 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     PsiElement binaryExpression = ((PyParenthesizedExpression)element).getContainedExpression();
-    if (binaryExpression instanceof PyBinaryExpression) {
+    PyBinaryExpression parent = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
+    if (binaryExpression instanceof PyBinaryExpression && parent != null) {
       if (!replaceBinaryExpression((PyBinaryExpression)binaryExpression)) {
         element.replace(binaryExpression);
       }
