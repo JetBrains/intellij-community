@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -104,9 +105,18 @@ public class ImplementationViewComponent extends JPanel {
 
     public String getPresentableName(VirtualFile vFile) {
       final String presentableName = vFile.getPresentableName();
-      if (myElementPresentation == null || Comparing.strEqual(presentableName, myElementPresentation + "." + vFile.getExtension())) {
+      if (myElementPresentation == null) {
         return presentableName;
       }
+
+      if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS) {
+        if (Comparing.strEqual(presentableName, myElementPresentation)) {
+          return presentableName;
+        }
+      } else if (Comparing.strEqual(presentableName, myElementPresentation + "." + vFile.getExtension())){
+        return presentableName;
+      }
+
       return presentableName + " (" + myElementPresentation + ")";
     }
   }

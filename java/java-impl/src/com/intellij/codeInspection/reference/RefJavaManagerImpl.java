@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 20-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -38,6 +33,10 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author anna
+ * Date: 20-Dec-2007
+ */
 public class RefJavaManagerImpl extends RefJavaManager {
   private static final Logger LOG = Logger.getInstance("#" + RefJavaManagerImpl.class.getName());
   private PsiMethod myAppMainPattern;
@@ -176,10 +175,18 @@ public class RefJavaManagerImpl extends RefJavaManager {
       return new RefClassImpl((PsiClass)elem, myRefManager);
     }
     else if (elem instanceof PsiMethod) {
-      return new RefMethodImpl((PsiMethod)elem, myRefManager);
+      final PsiMethod method = (PsiMethod)elem;
+      final RefElement ref = myRefManager.getReference(method.getContainingClass(), true);
+      if (ref instanceof RefClass) {
+        return new RefMethodImpl((RefClass)ref, method, myRefManager);
+      }
     }
     else if (elem instanceof PsiField) {
-      return new RefFieldImpl((PsiField)elem, myRefManager);
+      final PsiField field = (PsiField)elem;
+      final RefElement ref = myRefManager.getReference(field.getContainingClass(), true);
+      if (ref instanceof RefClass) {
+        return new RefFieldImpl((RefClass)ref, field, myRefManager);
+      }
     }
     else if (elem instanceof PsiJavaFile) {
       return new RefJavaFileImpl((PsiJavaFile)elem, myRefManager);
@@ -344,11 +351,11 @@ public class RefJavaManagerImpl extends RefJavaManager {
             if (listOwner != null) {
               final RefElementImpl element = (RefElementImpl)myRefManager.getReference(listOwner);
               if (element != null) {
-                String suppressions = "";
+                String suppression = "";
                 for (PsiElement dataElement : dataElements) {
-                  suppressions += "," + dataElement.getText();
+                  suppression += "," + dataElement.getText();
                 }
-                element.addSuppression(suppressions);
+                element.addSuppression(suppression);
               }
             }
           }
@@ -364,7 +371,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
         if (listOwner != null) {
           final RefElementImpl element = (RefElementImpl)myRefManager.getReference(listOwner);
           if (element != null) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             final PsiNameValuePair[] nameValuePairs = annotation.getParameterList().getAttributes();
             for (PsiNameValuePair nameValuePair : nameValuePairs) {
               buf.append(",").append(nameValuePair.getText().replaceAll("[{}\"\"]", ""));

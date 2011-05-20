@@ -508,7 +508,6 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       final PsiElement referenceElement = reference.getElement();
       if (referenceElement instanceof PsiJavaCodeReferenceElement) {
         if (!isInMovedElement(referenceElement)) {
-
           usages.add(new ReplaceClassReference((PsiJavaCodeReferenceElement)referenceElement, newInnerClassName));
           hasExternalReference = true;
         }
