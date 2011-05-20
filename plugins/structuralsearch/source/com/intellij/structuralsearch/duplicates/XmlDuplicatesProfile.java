@@ -23,7 +23,7 @@ public class XmlDuplicatesProfile extends SSRDuplicatesProfileBase {
   @Override
   public int getNodeCost(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
-      return 2;
+      return 3;
     }
     else if (element instanceof XmlAttribute) {
       return 1;
