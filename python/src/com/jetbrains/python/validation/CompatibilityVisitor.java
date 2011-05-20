@@ -455,4 +455,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     message.append(languageLevel.toString());
     return ++len;
   }
+
+  @Override
+  public void visitPyNonlocalStatement(PyNonlocalStatement node) {
+    registerProblem(node, "nonlocal keyword available only since py3", null, false);
+  }
 }
