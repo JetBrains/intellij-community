@@ -379,7 +379,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           return true;
         }
 
-        if (!haveQualifiers(element)) {
+        if (!haveQualifiers(element) && ourScopeOwner != null && theirScopeOwner != null) {
           // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
           final boolean ourIsGlobal = ControlFlowCache.getScope(ourScopeOwner).isGlobal(elementName);
           final boolean theirIsGlobal = ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName);
