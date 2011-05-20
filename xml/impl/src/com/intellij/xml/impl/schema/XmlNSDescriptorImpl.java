@@ -379,13 +379,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return XSD_PREFIX.equals(XmlUtil.findPrefixByQualifiedName(name));
   }
 
-  private static boolean checkSchemaNamespace(String namespace) {
+  public static boolean checkSchemaNamespace(String namespace) {
     return XmlUtil.XML_SCHEMA_URI.equals(namespace) ||
            XmlUtil.XML_SCHEMA_URI2.equals(namespace) ||
            XmlUtil.XML_SCHEMA_URI3.equals(namespace);
   }
 
-  static boolean checkSchemaNamespace(XmlTag context){
+  public static boolean checkSchemaNamespace(XmlTag context){
     final String namespace = context.getNamespace();
     if(namespace.length() > 0){
       return checkSchemaNamespace(namespace);

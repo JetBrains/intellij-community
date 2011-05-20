@@ -76,7 +76,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
   }
 
   private boolean hasSimpleSchemaType(@NonNls String type) {
-    final String attributeValue = myTag.getAttributeValue("type");
+    final String attributeValue = getType();
 
     if (attributeValue != null) {
       if (attributeValue.endsWith(type)) {
@@ -91,6 +91,11 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     }
 
     return false;
+  }
+
+  @Nullable
+  public String getType() {
+    return myTag.getAttributeValue("type");
   }
 
   public boolean hasIdType() {

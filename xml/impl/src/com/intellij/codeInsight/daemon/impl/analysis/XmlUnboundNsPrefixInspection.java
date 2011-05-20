@@ -24,6 +24,7 @@ import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlBundle;
@@ -95,6 +96,19 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
         final String name = attribute.getName();
 
         checkUnboundNamespacePrefix(attribute, tag, XmlUtil.findPrefixByQualifiedName(name), null, holder, isOnTheFly);
+      }
+
+      @Override
+      public void visitXmlAttributeValue(XmlAttributeValue value) {
+        PsiReference[] references = value.getReferences();
+        for (PsiReference reference : references) {
+          if (reference instanceof SchemaPrefixReference) {
+            if (!XML.equals(((SchemaPrefixReference)reference).getNamespacePrefix()) && reference.resolve() == null) {
+              holder.registerProblem(reference, XmlErrorMessages.message("unbound.namespace",
+                                                                         ((SchemaPrefixReference)reference).getNamespacePrefix()), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+            }
+          }
+        }
       }
     };
   }
