@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffToolbar;
 import com.intellij.openapi.diff.ex.DiffStatusBar;
 import com.intellij.openapi.diff.impl.DiffToolbarComponent;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 
 import javax.swing.*;
@@ -104,8 +105,11 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
           return null;
         }
       }
-      FocusDiffSide side = (FocusDiffSide)myDataProvider.getData(FocusDiffSide.DATA_KEY.getName());
-      if (side != null) return side.getEditor();
+      final FocusDiffSide side = (FocusDiffSide)myDataProvider.getData(FocusDiffSide.DATA_KEY.getName());
+      if (side != null) {
+        final Editor editor = side.getEditor();
+        return editor != null && editor.getComponent().hasFocus() ? editor : null;
+      }
     }
     return myDataProvider.getData(dataId);
   }
