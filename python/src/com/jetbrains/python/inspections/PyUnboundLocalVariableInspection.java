@@ -94,7 +94,8 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             if (PyAssignmentStatementNavigator.getStatementByTarget(element) != null || 
                 PyForStatementNavigator.getPyForStatementByIterable(element) != null ||
                 PyExceptPartNavigator.getPyExceptPartByTarget(element) != null ||
-                PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element) != null) {
+                PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element) != null ||
+                PyImportStatementNavigator.getImportStatementByElement(element) != null) {
               resolves2LocalVariable = true;
               resolve2Scope = PsiTreeUtil.isAncestor(owner, element, false);
               break;
