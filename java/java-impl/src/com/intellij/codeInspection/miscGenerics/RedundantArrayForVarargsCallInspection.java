@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,16 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
           if (arrayElements.length > 0) {
             copyArgumentList.addRange(arrayElements[0], arrayElements[arrayElements.length - 1]);
           }
-          final JavaResolveResult resolveResult = copy.resolveMethodGenerics();
+          final JavaResolveResult resolveResult;
+          if (callExpression instanceof PsiEnumConstant) {
+            final PsiEnumConstant enumConstant = (PsiEnumConstant)callExpression;
+            final PsiClass containingClass = enumConstant.getContainingClass();
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(enumConstant.getProject());
+            final PsiClassType classType = facade.getElementFactory().createType(containingClass);
+            resolveResult = facade.getResolveHelper().resolveConstructor(classType, copyArgumentList, enumConstant);
+          } else {
+            resolveResult = copy.resolveMethodGenerics();
+          }
           return resolveResult.isValidResult() && resolveResult.getElement() == oldRefMethod;
         }
         catch (IncorrectOperationException e) {
@@ -170,4 +179,3 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     return "RedundantArrayCreation";
   }
 }
-
