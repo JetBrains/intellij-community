@@ -292,6 +292,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     } else {
       getUiFor(configurable).doWhenDone(new EdtRunnable() {
         public void runEdt() {
+          if (myDisposed) return;
+
           final Configurable current = getContext().getCurrentConfigurable();
           if (current != configurable) {
             result.setRejected();
