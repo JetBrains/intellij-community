@@ -2,19 +2,13 @@ package com.intellij.structuralsearch;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.javascript.JSLanguageDialect;
-import com.intellij.lang.javascript.JSTokenTypes;
-import com.intellij.lang.javascript.JavaScriptSupportLoader;
-import com.intellij.lang.javascript.JavascriptLanguage;
+import com.intellij.lang.javascript.*;
 import com.intellij.lang.javascript.psi.*;
 import com.intellij.lang.javascript.psi.ecmal4.JSAttribute;
 import com.intellij.lang.javascript.psi.ecmal4.JSAttributeList;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -34,15 +28,10 @@ import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandl
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementInfoImpl;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -88,10 +77,14 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
-    elements[0].getParent().accept(new MyJsCompilingVisitor(globalVisitor));
+    elements[0].getParent().accept(new MyJsCompilingVisitor(globalVisitor, elements[0].getParent()));
   }
 
   private static PsiElement extractOnlyStatement(JSBlockStatement e) {
+    if (e.getParent() instanceof JSFunction) {
+      return e;
+    }
+
     JSStatement[] statements = e.getStatements();
     if (statements.length == 1) {
       return statements[0];
@@ -178,6 +171,64 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
     return super.isMyFile(file, lang, patternLanguages);
   }
 
+  @NotNull
+  @Override
+  public PsiElement[] createPatternTree(@NotNull String text,
+                                        @NotNull PatternTreeContext context,
+                                        @NotNull FileType fileType,
+                                        @Nullable Language language,
+                                        @Nullable String extension,
+                                        @NotNull Project project,
+                                        boolean physical) {
+    final PsiElement[] originalElements = super.createPatternTree(text, context, fileType, language, extension, project, physical);
+
+    if (context == PatternTreeContext.Block &&
+        language == JavaScriptSupportLoader.ECMA_SCRIPT_L4 &&
+        shouldBeParsedInBlockContext(originalElements)) {
+
+      text = "class A { function f() {" + text + "}}";
+      final PsiElement[] elements = super.createPatternTree(text, context, fileType, language, extension, project, physical);
+
+      if (elements.length == 0) {
+        return elements;
+      }
+
+      for (PsiElement element : elements) {
+        if (element instanceof JSClass) {
+          final JSFunction[] functions = ((JSClass)element).getFunctions();
+          assert functions.length == 1;
+          final JSSourceElement[] body = functions[0].getBody();
+
+          if (body.length == 1 && body[0] instanceof JSBlockStatement) {
+            return body[0].getChildren();
+          }
+          return body;
+        }
+      }
+    }
+
+    return originalElements;
+  }
+
+  public static boolean shouldBeParsedInBlockContext(PsiElement[] elements) {
+    final boolean[] result = {true};
+
+    for (PsiElement element : elements) {
+      element.accept(new PsiRecursiveElementWalkingVisitor() {
+
+        @Override
+        public void visitElement(PsiElement element) {
+          super.visitElement(element);
+
+          if (element instanceof JSFunction || element instanceof JSClass || element instanceof JSAttribute) {
+            result[0] = false;
+          }
+        }
+      });
+    }
+    return result[0];
+  }
+
   @Override
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
     MatchOptions matchOptions = options.getMatchOptions();
@@ -216,7 +267,7 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
-    return new MyReplaceHandler(context.getProject());
+    return new DocumentBasedReplaceHandler(context.getProject());
   }
 
   private static class MyJsMatchingVisitor extends JSElementVisitor {
@@ -381,9 +432,11 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
 
   private class MyJsCompilingVisitor extends PsiRecursiveElementVisitor {
     private final GlobalCompilingVisitor myGlobalVisitor;
+    private final PsiElement myTopElement;
 
-    private MyJsCompilingVisitor(GlobalCompilingVisitor globalVisitor) {
+    private MyJsCompilingVisitor(GlobalCompilingVisitor globalVisitor, PsiElement topElement) {
       myGlobalVisitor = globalVisitor;
+      myTopElement = topElement;
     }
 
     @Override
@@ -579,50 +632,13 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
 
     private boolean isOnlyTopElement(PsiElement element) {
       PsiElement parent = element.getParent();
-      if (!(parent instanceof JSFile)) {
+      if (!(parent instanceof JSFile) && parent != myTopElement) {
         return false;
       }
       if (parent.getChildren().length != 1) {
         return false;
       }
       return true;
-    }
-  }
-
-  private static class MyReplaceHandler extends StructuralReplaceHandler {
-    private final Project myProject;
-    private final Map<ReplacementInfo, RangeMarker> myRangeMarkers = new HashMap<ReplacementInfo, RangeMarker>();
-
-    private MyReplaceHandler(Project project) {
-      myProject = project;
-    }
-
-    public void replace(ReplacementInfo info) {
-      if (info.getMatchesCount() == 0) return;
-      assert info instanceof ReplacementInfoImpl;
-      PsiElement element = info.getMatch(0);
-      if (element == null) return;
-      PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
-      assert file != null;
-      RangeMarker rangeMarker = myRangeMarkers.get(info);
-      Document document = rangeMarker.getDocument();
-      document.replaceString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), info.getReplacement());
-      PsiDocumentManager.getInstance(element.getProject()).commitDocument(document);
-    }
-
-    @Override
-    public void prepare(ReplacementInfo info) {
-      assert info instanceof ReplacementInfoImpl;
-      MatchResult result = ((ReplacementInfoImpl)info).getMatchResult();
-      PsiElement element = result.getMatch();
-      PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-      TextRange textRange = result.getMatchRef().getElement().getTextRange();
-      assert textRange != null;
-      RangeMarker rangeMarker = document.createRangeMarker(textRange);
-      rangeMarker.setGreedyToLeft(true);
-      rangeMarker.setGreedyToRight(true);
-      myRangeMarkers.put(info, rangeMarker);
     }
   }
 }

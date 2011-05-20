@@ -16,7 +16,4 @@ public interface EquivalenceDescriptor {
   List<MultiChildDescriptor> getMultiChildDescriptors();
 
   List<Object> getConstants();
-
-  @Nullable
-  ChildRole getRole(@Nullable PsiElement element);
 }

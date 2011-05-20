@@ -59,7 +59,7 @@ class SSRTreeHasher extends AbstractTreeHasher {
       return hashCodeBlock(hasher.getNodeChildren(root), upper, hasher, true);
     }
 
-    final PsiElement element = SkippingHandler.getOnlyChild(root, SSRNodeSpecificHasher.getNodeFilter());
+    final PsiElement element = SkippingHandler.getOnlyChild(root, ((SSRNodeSpecificHasher)hasher).getNodeFilter());
     if (element != root) {
       final TreeHashResult result = hash(element, upper, hasher);
       final int cost = hasher.getNodeCost(root);
@@ -72,28 +72,28 @@ class SSRTreeHasher extends AbstractTreeHasher {
   private TreeHashResult computeHash(PsiElement element,
                                      PsiFragment parent,
                                      EquivalenceDescriptor descriptor,
-                                     NodeSpecificHasher nodeSpecificHasher) {
+                                     NodeSpecificHasher hasher) {
 
-    final PsiElement element2 = SkippingHandler.skipNodeIfNeccessary(element, descriptor, SSRNodeSpecificHasher.getNodeFilter());
+    final PsiElement element2 = SkippingHandler.skipNodeIfNeccessary(element, descriptor, ((SSRNodeSpecificHasher)hasher).getNodeFilter());
     final boolean canSkip = element2 != element;
 
-    final PsiFragment fragment = new TreePsiFragment(nodeSpecificHasher, element, 0);
+    final PsiFragment fragment = new TreePsiFragment(hasher, element, 0);
 
     if (parent != null) {
       fragment.setParent(parent);
     }
 
-    int hash = canSkip ? 0 : nodeSpecificHasher.getNodeHash(element);
-    int cost = nodeSpecificHasher.getNodeCost(element);
+    int hash = canSkip ? 0 : hasher.getNodeHash(element);
+    int cost = hasher.getNodeCost(element);
 
     for (SingleChildDescriptor childDescriptor : descriptor.getSingleChildDescriptors()) {
-      final Pair<Integer, Integer> childHashResult = computeHash(childDescriptor, fragment, nodeSpecificHasher);
+      final Pair<Integer, Integer> childHashResult = computeHash(childDescriptor, fragment, hasher);
       hash = hash * 31 + childHashResult.first;
       cost += childHashResult.second;
     }
 
     for (MultiChildDescriptor childDescriptor : descriptor.getMultiChildDescriptors()) {
-      final Pair<Integer, Integer> childHashResult = computeHash(childDescriptor, fragment, nodeSpecificHasher);
+      final Pair<Integer, Integer> childHashResult = computeHash(childDescriptor, fragment, hasher);
       hash = hash * 31 + childHashResult.first;
       cost += childHashResult.second;
     }
@@ -104,7 +104,7 @@ class SSRTreeHasher extends AbstractTreeHasher {
     }
 
     for (PsiElement[] codeBlock : descriptor.getCodeBlocks()) {
-      final TreeHashResult childHashResult = hashCodeBlock(Arrays.asList(codeBlock), fragment, nodeSpecificHasher);
+      final TreeHashResult childHashResult = hashCodeBlock(Arrays.asList(codeBlock), fragment, hasher);
       hash = hash * 31 + childHashResult.getHash();
       cost += childHashResult.getCost();
     }
@@ -127,7 +127,7 @@ class SSRTreeHasher extends AbstractTreeHasher {
     final Pair<Integer, Integer> result = doComputeHash(childDescriptor, parentFragment, nodeSpecificHasher);
 
     if (result != null) {
-      final ChildRole role = childDescriptor.getRole();
+      final PsiElementRole role = ((SSRNodeSpecificHasher)nodeSpecificHasher).getDuplicatesProfile().getRole(element);
       if (role != null) {
         switch (role) {
           case VARIABLE_NAME:

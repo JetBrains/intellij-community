@@ -1,11 +1,13 @@
 package com.intellij.structuralsearch.extenders;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.jetbrains.php.lang.PhpFileType;
 import com.jetbrains.php.lang.lexer.PhpTokenTypes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
@@ -26,7 +28,7 @@ public class PhpStructuralSearchProfile extends StructuralSearchProfileBase {
   }
 
   @Override
-  public String getContext(@NotNull String pattern) {
+  public String getContext(@NotNull String pattern, @Nullable Language language) {
     return "<?php $$PATTERN_PLACEHOLDER$$";
   }
 

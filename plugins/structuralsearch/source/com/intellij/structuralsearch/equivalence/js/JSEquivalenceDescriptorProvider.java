@@ -1,13 +1,10 @@
 package com.intellij.structuralsearch.equivalence.js;
 
-import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.lang.javascript.psi.*;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
 import com.intellij.lang.javascript.psi.ecmal4.JSReferenceList;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorBuilder;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
@@ -46,8 +43,7 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
       return builder
         .element(v.getNameIdentifier())
         .optionally(v.getTypeElement())
-        .optionallyInPattern(v.getInitializer())
-        .role(v.getNameIdentifier(), ChildRole.VARIABLE_NAME);
+        .optionallyInPattern(v.getInitializer());
     }
     else if (element instanceof JSFunction) {
       final JSFunction f = (JSFunction)element;
@@ -57,8 +53,7 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
         .childrenOptionally(f.getAttributeList())
         .children(f.getParameterList())
         .optionally(f.getReturnTypeElement())
-        .optionallyInPattern(f.getBody())
-        .role(f.getNameIdentifier(), ChildRole.FUNCTION_NAME);
+        .optionallyInPattern(f.getBody());
     }
     else if (element instanceof JSBlockStatement) {
       return builder.codeBlock(((JSBlockStatement)element).getStatements());
@@ -68,21 +63,5 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
     }
 
     return null;
-  }
-
-  @Override
-  public TokenSet getLiterals() {
-    return JSTokenTypes.LITERALS;
-  }
-
-  @Override
-  public int getNodeCost(@NotNull PsiElement element) {
-    if (element instanceof JSStatement || element instanceof JSFunction || element instanceof JSClass) {
-      return 2;
-    }
-    else if (element instanceof JSExpression) {
-      return 1;
-    }
-    return 0;
   }
 }

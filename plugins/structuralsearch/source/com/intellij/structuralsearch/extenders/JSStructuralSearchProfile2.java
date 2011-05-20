@@ -9,6 +9,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.JSStructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
@@ -38,5 +39,12 @@ public class JSStructuralSearchProfile2 extends StructuralSearchProfileBase {
   @Override
   public Language getLanguage(PsiElement element) {
     return JSStructuralSearchProfile.getLanguageForElement(element);
+  }
+
+  @Override
+  protected String getContext(@NotNull String pattern, @Nullable Language language) {
+    return language == JavaScriptSupportLoader.ECMA_SCRIPT_L4 ?
+           "class A { function f() { $$PATTERN_PLACEHOLDER$$ } }" :
+           super.getContext(pattern, language);
   }
 }

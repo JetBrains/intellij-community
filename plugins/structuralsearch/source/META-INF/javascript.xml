@@ -8,5 +8,6 @@
     <structuralsearch.profile implementation="com.intellij.structuralsearch.extenders.JSStructuralSearchProfile2" order="last"/>
 
     <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.equivalence.js.JSEquivalenceDescriptorProvider"/>
+    <duplicates.profile implementation="com.intellij.structuralsearch.duplicates.JSDuplicatesProfile"/>
   </extensions>
 </idea-plugin>

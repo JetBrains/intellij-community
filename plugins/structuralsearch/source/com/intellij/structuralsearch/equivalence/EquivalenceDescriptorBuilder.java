@@ -17,7 +17,6 @@ public class EquivalenceDescriptorBuilder implements EquivalenceDescriptor {
   private final List<MultiChildDescriptor> myMultiChildDescriptors = new ArrayList<MultiChildDescriptor>();
   private final List<Object> myConstants = new ArrayList<Object>();
   private final List<PsiElement[]> myCodeBlocks = new ArrayList<PsiElement[]>();
-  private final Map<PsiElement, ChildRole> myRoles = new HashMap<PsiElement, ChildRole>();
 
   public EquivalenceDescriptorBuilder() {
   }
@@ -32,11 +31,6 @@ public class EquivalenceDescriptorBuilder implements EquivalenceDescriptor {
 
   public List<Object> getConstants() {
     return myConstants;
-  }
-
-  @Override
-  public ChildRole getRole(@Nullable PsiElement element) {
-    return element != null ? myRoles.get(element) : null;
   }
 
   @NotNull
@@ -112,15 +106,6 @@ public class EquivalenceDescriptorBuilder implements EquivalenceDescriptor {
     return this;
   }
 
-  @NotNull
-  public EquivalenceDescriptorBuilder role(@Nullable PsiElement element, @NotNull ChildRole role) {
-    //element = SkippingHandler.skipNodeIfNeccessary(element);
-    if (element != null) {
-      myRoles.put(element, role);
-    }
-    return this;
-  }
-
   private EquivalenceDescriptorBuilder add(MultiChildDescriptor.MyType type, PsiElement[] elements) {
     /*PsiElement[] elements1 = new PsiElement[elements.length];
     for (int i = 0; i < elements.length; i++) {
@@ -132,7 +117,7 @@ public class EquivalenceDescriptorBuilder implements EquivalenceDescriptor {
 
   private EquivalenceDescriptorBuilder add(SingleChildDescriptor.MyType type, PsiElement element) {
     //element = SkippingHandler.skipNodeIfNeccessary(element);
-    mySingleChildDescriptors.add(new SingleChildDescriptor(type, element, this));
+    mySingleChildDescriptors.add(new SingleChildDescriptor(type, element));
     return this;
   }
 }

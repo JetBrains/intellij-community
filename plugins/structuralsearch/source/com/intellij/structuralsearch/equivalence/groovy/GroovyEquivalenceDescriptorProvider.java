@@ -2,14 +2,12 @@ package com.intellij.structuralsearch.equivalence.groovy;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorBuilder;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -44,16 +42,14 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
       return builder
         .element(p.getNameIdentifierGroovy())
         .optionally(p.getTypeElementGroovy())
-        .optionallyInPattern(p.getDefaultInitializer())
-        .role(p.getNameIdentifierGroovy(), ChildRole.VARIABLE_NAME);
+        .optionallyInPattern(p.getDefaultInitializer());
     }
     else if (e instanceof GrVariable) {
       final GrVariable v = (GrVariable)e;
       return builder
         .element(v.getNameIdentifierGroovy())
         .optionally(v.getTypeElementGroovy())
-        .optionallyInPattern(v.getInitializerGroovy())
-        .role(v.getNameIdentifierGroovy(), ChildRole.VARIABLE_NAME);
+        .optionallyInPattern(v.getInitializerGroovy());
     }
     else if (e instanceof GrMethod) {
       final GrMethod m = (GrMethod)e;
@@ -61,8 +57,7 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
         .element(m.getNameIdentifierGroovy())
         .elements(m.getParameters())
         .optionally(m.getReturnTypeElementGroovy())
-        .optionallyInPattern(m.getBlock())
-        .role(m.getNameIdentifierGroovy(), ChildRole.FUNCTION_NAME);
+        .optionallyInPattern(m.getBlock());
     }
     else if (e instanceof GrTypeDefinitionBody) {
       final GrTypeDefinitionBody b = (GrTypeDefinitionBody)e;
@@ -95,19 +90,6 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
     // todo: support 'object method()' <-> 'object.method()'
 
     return null;
-  }
-
-  @Override
-  public TokenSet getLiterals() {
-    return TokenSets.CONSTANTS;
-  }
-
-  @Override
-  public int getNodeCost(@NotNull PsiElement element) {
-    if (element instanceof GrStatement) {
-      return 2;
-    }
-    return 0;
   }
 
   @Override

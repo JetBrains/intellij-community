@@ -67,7 +67,7 @@ public class JSStructuralReplaceTest extends StructuralReplaceTestCase {
                       "    document.appendChild();\n" +
                       "}";
 
-    doTest(s, what, by, expected);
+    doTest(s, what, by, expected, false);
   }
 
   public void test4() {
@@ -246,8 +246,33 @@ public class JSStructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   private void doTest(String s, String what, String by, String expected) {
+    doTest(s, what, by, expected, true);
+  }
+
+  private void doTest(String s, String what, String by, String expected, boolean wrapAsSourceWithFunction) {
     doTest(s, what, by, expected, JAVASCRIPT, null, JAVASCRIPT, null);
+
+    if (wrapAsSourceWithFunction) {
+      s = "class A { function f() {" + s + "} }";
+      expected = "class A { function f() {" + expected + "} }";
+    }
     doTest(s, what, by, expected, JAVASCRIPT, JavaScriptSupportLoader.ECMA_SCRIPT_L4, JAVASCRIPT, JavaScriptSupportLoader.ECMA_SCRIPT_L4);
+  }
+
+  private static String removeAllSpaces(String s) {
+    final StringBuilder builder = new StringBuilder();
+
+    for (int i = 0, n = s.length(); i < n; i++) {
+      final char c = s.charAt(i);
+      if (c != '\n' &&
+          (c != ' ' ||
+           (i > 0 && i < n - 1 &&
+            Character.isLetterOrDigit(s.charAt(i - 1)) &&
+            Character.isLetterOrDigit(s.charAt(i + 1))))) {
+        builder.append(c);
+      }
+    }
+    return builder.toString();
   }
 
   private void doTest(String s,
@@ -261,6 +286,7 @@ public class JSStructuralReplaceTest extends StructuralReplaceTestCase {
     options.getMatchOptions().setFileType(patternFileType);
     options.getMatchOptions().setDialect(patternDialect);
     actualResult = replacer.testReplace(s, what, by, options, true, true, sourceFileType, sourceDialect);
-    assertEquals(expected, actualResult);
+
+    assertEquals(removeAllSpaces(expected), removeAllSpaces(actualResult));
   }
 }
