@@ -114,7 +114,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
                     }
                 } else {
                     if (useIsEmpty) {
-                        replaceExpression(call, qualifier + ".isEmpty()");
+                        replaceExpression(call, qualifierText + ".isEmpty()");
                     } else {
                         replaceExpression(call, qualifierText + ".length()==0");
                     }
