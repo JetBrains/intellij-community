@@ -89,7 +89,8 @@ public class UIUtil {
   // accessed only from EDT
   private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
-  @NonNls public static final String CENTER_TOOLTIP = "ToCenterTooltip";
+  @NonNls public static final String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
+  @NonNls public static final String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 
   private static final String ROOT_PANE = "JRootPane.future";
 

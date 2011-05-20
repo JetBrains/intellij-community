@@ -605,7 +605,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       super(presentation.getMaxValue());
       myPresentation = presentation;
 
-      putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
+      putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
       setToolTipText(presentation.getTooltipText());
 
       addMouseListener(new MouseAdapter() {
@@ -663,7 +663,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
       setTextAlignment(presentation.getAlignment());
 
-      putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
+      putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
       setToolTipText(presentation.getTooltipText());
 
       addMouseListener(new MouseAdapter() {
@@ -709,7 +709,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       myClickConsumer = myPresentation.getClickConsumer();
       myIcon = myPresentation.getIcon();
 
-      putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
+      putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
       setToolTipText(presentation.getTooltipText());
 
       addMouseListener(new MouseAdapter() {
