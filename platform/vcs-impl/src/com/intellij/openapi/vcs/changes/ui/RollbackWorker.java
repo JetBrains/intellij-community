@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -40,16 +41,16 @@ public class RollbackWorker {
   private final Project myProject;
   private final List<VcsException> myExceptions;
 
-  private ProgressIndicator myIndicator;
-
-  public RollbackWorker(final Project project, final boolean synchronous) {
+  public RollbackWorker(final Project project, final boolean synchronous/*todo[irengrig] and what?*/) {
     myProject = project;
     myExceptions = new ArrayList<VcsException>(0);
   }
 
-  public void doRollback(final Collection<Change> changes, final boolean deleteLocallyAddedFiles, final Runnable afterVcsRefreshInAwt,
-                         final String localHistoryActionName) {
-    final ChangeListManager changeListManager = ChangeListManagerImpl.getInstance(myProject);
+  public void doRollback(final Collection<Change> changes,
+                         final boolean deleteLocallyAddedFiles,
+                         @Nullable final Runnable afterVcsRefreshInAwt,
+                         @Nullable final String localHistoryActionName) {
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     final Runnable notifier = changeListManager.prepareForChangeDeletion(changes);
     final Runnable afterRefresh = new Runnable() {
       public void run() {
@@ -93,6 +94,7 @@ public class RollbackWorker {
     private final boolean myDeleteLocallyAddedFiles;
     private final Runnable myAfterRefresh;
     private final String myLocalHistoryActionName;
+    private ProgressIndicator myIndicator;
 
     private MyRollbackRunnable(final Collection<Change> changes,
                                final boolean deleteLocallyAddedFiles,
@@ -170,17 +172,20 @@ public class RollbackWorker {
                                                                                              actionName : myLocalHistoryActionName, -1);
           final VcsDirtyScopeManager manager = PeriodicalTasksCloser.getInstance().safeGetComponent(project, VcsDirtyScopeManager.class);
           for (Change change : changesToRefresh) {
-            if ((! change.isIsReplaced()) && Comparing.equal(change.getBeforeRevision(), change.getAfterRevision())) {
-              manager.fileDirty(change.getBeforeRevision().getFile());
-            } else {
-              if (change.getBeforeRevision() != null) {
-                final FilePath parent = change.getBeforeRevision().getFile().getParentPath();
+            final ContentRevision beforeRevision = change.getBeforeRevision();
+            final ContentRevision afterRevision = change.getAfterRevision();
+            if ((!change.isIsReplaced()) && beforeRevision != null && Comparing.equal(beforeRevision, afterRevision)) {
+              manager.fileDirty(beforeRevision.getFile());
+            }
+            else {
+              if (beforeRevision != null) {
+                final FilePath parent = beforeRevision.getFile().getParentPath();
                 if (parent != null) {
                   manager.dirDirtyRecursively(parent);
                 }
               }
-              if (change.getAfterRevision() != null) {
-                final FilePath parent = change.getAfterRevision().getFile().getParentPath();
+              if (afterRevision != null) {
+                final FilePath parent = afterRevision.getFile().getParentPath();
                 if (parent != null) {
                   manager.dirDirtyRecursively(parent);
                 }
@@ -221,5 +226,4 @@ public class RollbackWorker {
       }
     }
   }
-
 }
