@@ -257,6 +257,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.remove.argument.equal.default"), true, true);
   }
 
+  public void testAddCallSuper() {                      //PY-3315
+    doInspectionTest("AddCallSuper.py", PyMissingConstructorInspection.class,
+                     PyBundle.message("QFIX.add.super"), true, true);
+  }
+
   public void testRemoveDecorator() {                      //PY-3348
     doInspectionTest("RemoveDecorator.py", PyDecoratorInspection.class,
                      PyBundle.message("QFIX.remove.decorator"), true, true);
