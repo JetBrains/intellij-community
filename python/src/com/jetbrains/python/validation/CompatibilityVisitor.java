@@ -458,6 +458,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @Override
   public void visitPyNonlocalStatement(PyNonlocalStatement node) {
-    registerProblem(node, "nonlocal keyword available only since py3", null, false);
+    if (myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25) ||
+        myVersionsToProcess.contains(LanguageLevel.PYTHON26) || myVersionsToProcess.contains(LanguageLevel.PYTHON27)) {
+      registerProblem(node, "nonlocal keyword available only since py3", null, false);
+    }
   }
 }
