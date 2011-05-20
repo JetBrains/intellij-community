@@ -20,6 +20,10 @@ public class PythonDemorganLawIntentionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void test4() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.configureByFile("before" + getTestName(false) + ".py");
     final IntentionAction action = myFixture.findSingleIntention("DeMorgan Law");
