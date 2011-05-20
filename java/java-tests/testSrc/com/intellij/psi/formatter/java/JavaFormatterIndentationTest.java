@@ -422,6 +422,18 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       ");"
     );
 
+    doMethodTest(
+      "foo(new Runnable() {\n" +
+      "@Override\n" +
+      "public void run() {\n" +
+      "}" +
+      "}, 1, 2);",
+      "foo(new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "    }\n" +
+      "}, 1, 2);"
+    );
   }
   
   public void testPackagePrivateAnnotation() {
