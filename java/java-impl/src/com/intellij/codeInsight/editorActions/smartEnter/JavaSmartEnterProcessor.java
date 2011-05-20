@@ -80,7 +80,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     List<EnterProcessor> processors = new ArrayList<EnterProcessor>();
     processors.add(new CommentBreakerEnterProcessor());
     processors.add(new AfterSemicolonEnterProcessor());
-    processors.add(new BreakingControlFlowEnterProcessor());
+    processors.add(new LeaveCodeBlockEnterProcessor());
     processors.add(new PlainEnterProcessor());
     ourEnterProcessors = processors.toArray(new EnterProcessor[processors.size()]);
   }
