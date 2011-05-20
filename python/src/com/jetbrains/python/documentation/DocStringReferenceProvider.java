@@ -9,11 +9,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -56,7 +59,8 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
             int next = CharMatcher.anyOf(" \t*").negate().indexIn(docString, ws);
             if (next != -1 && !docString.substring(pos, next).contains(":")) {
               int endPos = identifierMatcher.indexIn(docString, pos);
-              result.add(new DocStringTypeReference(element, new TextRange(pos, endPos)));
+              PyType type = PyTypeParser.getTypeByName(element, docString.substring(pos, endPos));
+              result.add(new DocStringTypeReference(element, new TextRange(pos, endPos), type));
               pos = next;
             }
           }
@@ -70,8 +74,10 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         if (docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).equals(":type") ||
             docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).equals(":rtype")) {
           pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, endPos+1);
-          endPos = CharMatcher.JAVA_LETTER_OR_DIGIT.negate().indexIn(docString, pos+1);
-          result.add(new DocStringTypeReference(element, new TextRange(pos, endPos)));
+          endPos = CharMatcher.anyOf("\n\r").indexIn(docString, pos+1);
+          Map<TextRange, PyType> map =  PyTypeParser.parseDocstring(element, docString.substring(pos, endPos), pos);
+          for (Map.Entry<TextRange, PyType> pair : map.entrySet())
+            result.add(new DocStringTypeReference(element, pair.getKey(), pair.getValue()));
         }
         pos = endPos;
       }
