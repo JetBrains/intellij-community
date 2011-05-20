@@ -1136,6 +1136,9 @@ public class AbstractTreeUi {
             }
             else {
               notRequiredToUpdateChildren = alwaysPlus;
+              if (notRequiredToUpdateChildren && !wasExpanded && !myUnbuiltNodes.contains(node)) {
+                removeChildren(node);
+              }
             }
           }
 
@@ -4622,14 +4625,15 @@ public class AbstractTreeUi {
       }
     }
 
-    private void removeChildren(DefaultMutableTreeNode node) {
-      EnumerationCopy copy = new EnumerationCopy(node.children());
-      while (copy.hasMoreElements()) {
-        disposeNode((DefaultMutableTreeNode)copy.nextElement());
-      }
-      node.removeAllChildren();
-      myTreeModel.nodeStructureChanged(node);
+  }
+
+  private void removeChildren(DefaultMutableTreeNode node) {
+    EnumerationCopy copy = new EnumerationCopy(node.children());
+    while (copy.hasMoreElements()) {
+      disposeNode((DefaultMutableTreeNode)copy.nextElement());
     }
+    node.removeAllChildren();
+    myTreeModel.nodeStructureChanged(node);
   }
 
   private void maybeUpdateSubtreeToUpdate(final DefaultMutableTreeNode subtreeRoot) {

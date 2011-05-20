@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
+import com.intellij.ui.LoadingNode;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
@@ -2258,6 +2259,56 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTree("-/\n" + " +com\n" + " -[jetbrains]\n" + "  -fabrique\n" + "   ide\n" + " +org\n" + " +xunit\n");
   }
 
+
+  public void testUpdateCollapsedBuiltNode() throws Exception {
+    buildStructure(myRoot, false);
+
+    myCom.removeAll();
+    myAlwaysShowPlus.add(new NodeElement("com"));
+
+    activate();
+
+    buildNode("/", false);
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    final DefaultMutableTreeNode com = findNode("com", false);
+    assertEquals(1, com.getChildCount());
+    assertEquals(LoadingNode.getText(), com.getChildAt(0).toString());
+
+    expand(getPath("com"));
+    assertTree("-/\n" +
+               " com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+
+    myCom.addChild(myIntellij);
+    updateFrom(new NodeElement("com"));
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+    assertEquals(1, com.getChildCount());
+    assertEquals("intellij", com.getChildAt(0).toString());
+
+
+    myCom.removeAll();
+    updateFrom(new NodeElement("com"));
+
+    expand(getPath("com"));
+    assertTree("-/\n" +
+               " com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+  }
+
   public void testReleaseBuilderDuringGetChildren() throws Exception {
     assertReleaseDuringBuilding("getChildren", "fabrique", new Runnable() {
       @Override
@@ -2369,10 +2420,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(true, false);
     }
 
-    @Override
-    public void testBatchUpdate() throws Exception {
-      super.testBatchUpdate();
-    }
   }
 
   public static class BgLoadingSyncUpdate extends TreeUiTest {
