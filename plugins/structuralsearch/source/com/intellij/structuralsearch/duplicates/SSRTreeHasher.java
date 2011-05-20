@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -73,8 +72,8 @@ class SSRTreeHasher extends AbstractTreeHasher {
                                      PsiFragment parent,
                                      EquivalenceDescriptor descriptor,
                                      NodeSpecificHasher hasher) {
-
-    final PsiElement element2 = SkippingHandler.skipNodeIfNeccessary(element, descriptor, ((SSRNodeSpecificHasher)hasher).getNodeFilter());
+    final SSRNodeSpecificHasher ssrHasher = (SSRNodeSpecificHasher)hasher;
+    final PsiElement element2 = SkippingHandler.skipNodeIfNeccessary(element, descriptor, ssrHasher.getNodeFilter());
     final boolean canSkip = element2 != element;
 
     final PsiFragment fragment = new TreePsiFragment(hasher, element, 0);
@@ -104,7 +103,8 @@ class SSRTreeHasher extends AbstractTreeHasher {
     }
 
     for (PsiElement[] codeBlock : descriptor.getCodeBlocks()) {
-      final TreeHashResult childHashResult = hashCodeBlock(Arrays.asList(codeBlock), fragment, hasher);
+      final List<PsiElement> filteredBlock = filter(codeBlock, ssrHasher);
+      final TreeHashResult childHashResult = hashCodeBlock(filteredBlock, fragment, hasher);
       hash = hash * 31 + childHashResult.getHash();
       cost += childHashResult.getCost();
     }
@@ -113,6 +113,16 @@ class SSRTreeHasher extends AbstractTreeHasher {
       myCallback.add(hash, cost, fragment);
     }
     return new TreeHashResult(hash, cost, fragment);
+  }
+
+  public static List<PsiElement> filter(PsiElement[] elements, SSRNodeSpecificHasher hasher) {
+    List<PsiElement> filteredElements = new ArrayList<PsiElement>();
+    for (PsiElement element : elements) {
+      if (!hasher.getNodeFilter().accepts(element)) {
+        filteredElements.add(element);
+      }
+    }
+    return filteredElements;
   }
 
   @NotNull
