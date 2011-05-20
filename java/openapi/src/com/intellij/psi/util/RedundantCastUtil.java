@@ -25,10 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -42,7 +39,11 @@ public class RedundantCastUtil {
   @NotNull
   public static List<PsiTypeCastExpression> getRedundantCastsInside(PsiElement where) {
     MyCollectingVisitor visitor = new MyCollectingVisitor();
-    where.acceptChildren(visitor);
+    if (where instanceof PsiEnumConstant) {
+      where.accept(visitor);
+    } else {
+      where.acceptChildren(visitor);
+    }
     return new ArrayList<PsiTypeCastExpression>(visitor.myFoundCasts);
   }
 
@@ -247,11 +248,17 @@ public class RedundantCastUtil {
       super.visitNewExpression(expression);
     }
 
+    @Override
+    public void visitEnumConstant(PsiEnumConstant enumConstant) {
+      processCall(enumConstant);
+      super.visitEnumConstant(enumConstant);
+    }
+
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       //expression.acceptChildren(this);
     }
 
-    private void processCall(PsiCallExpression expression){
+    private void processCall(PsiCall expression){
       PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) return;
       PsiExpression[] args = argumentList.getExpressions();
@@ -268,7 +275,7 @@ public class RedundantCastUtil {
               //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
               continue;
             }
-            PsiCallExpression newCall = (PsiCallExpression) expression.copy();
+            PsiCall newCall = (PsiCall) expression.copy();
             final PsiExpressionList argList = newCall.getArgumentList();
             LOG.assertTrue(argList != null);
             PsiExpression[] newArgs = argList.getExpressions();
@@ -276,10 +283,22 @@ public class RedundantCastUtil {
             PsiExpression castOperand = castExpression.getOperand();
             if (castOperand == null) return;
             castExpression.replace(castOperand);
-            final JavaResolveResult newResult = newCall.resolveMethodGenerics();
-            if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() &&
-                Comparing.equal(newCall.getType(), expression.getType())) {
-              addToResults(cast);
+            if (newCall instanceof PsiEnumConstant) {
+              // do this manually, because PsiEnumConstantImpl.resolveMethodGenerics() will assert (no containing class for the copy)
+              final PsiEnumConstant enumConstant = (PsiEnumConstant)expression;
+              PsiClass containingClass = enumConstant.getContainingClass();
+              final JavaPsiFacade facade = JavaPsiFacade.getInstance(enumConstant.getProject());
+              final PsiClassType type = facade.getElementFactory().createType(containingClass);
+              final JavaResolveResult newResult = facade.getResolveHelper().resolveConstructor(type, newCall.getArgumentList(), enumConstant);
+              if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult()) {
+                addToResults(cast);
+              }
+            } else {
+              final JavaResolveResult newResult = newCall.resolveMethodGenerics();
+              if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() &&
+                Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) {
+                addToResults(cast);
+              }
             }
           }
         }
