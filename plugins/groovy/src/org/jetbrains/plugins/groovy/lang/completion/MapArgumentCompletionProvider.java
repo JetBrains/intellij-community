@@ -36,12 +36,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyElementPattern;
-import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Map;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.namedArgument;
 
 /**
  * @author peter
@@ -77,7 +77,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     ));
 
     ElementPattern<PsiElement> inLabel = psiElement(GroovyTokenTypes.mIDENT).withParent(psiElement(GrArgumentLabel.class).withParent(
-      GroovyPatterns.methodNamedParameter(null)));
+      namedArgument().isParameterOfMethodCall(null)));
 
     contributor.extend(CompletionType.BASIC, inArgumentListOfCall, instance);
     contributor.extend(CompletionType.BASIC, inLabel, instance);

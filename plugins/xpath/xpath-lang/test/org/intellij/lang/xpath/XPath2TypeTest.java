@@ -103,6 +103,10 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testDurationPlusDurationPlusDateIDEA69517() throws Throwable {
+    doXPathHighlighting();
+  }
+
   public void testNumberPlusString() throws Throwable {
     doXPathHighlighting();
   }

@@ -1,1 +1,1 @@
-'P0DT0H' cast as xs:dayTimeDuration - (current-date() - 'P0DT0H' cast as xs:dayTimeDuration)
+(current-date() - 'P0DT0H' cast as xs:dayTimeDuration) - 'P0DT0H' cast as xs:dayTimeDuration

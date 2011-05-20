@@ -74,41 +74,47 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
           if (is(lop, XPathType.UNKNOWN) || is(rop, XPathType.UNKNOWN)) {
             return XPathType.UNKNOWN;
           }
-          if (operator == XPathTokenTypes.DIV) {
-            if (is(lop, XPath2Type.INTEGER) || is(rop, XPath2Type.INTEGER)) {
-              return XPath2Type.DECIMAL;
-            }
-            return mostSpecificType(lop, rop, XPath2Type.NUMERIC);
-          }
 
           if (XPathTokenTypes.MUL_OPS.contains(operator)) {
-            if (is(lop, XPath2Type.DURATION) || is(rop, XPath2Type.DURATION)) {
+            if (operator == XPathTokenTypes.DIV) {
+              if (is(lop, XPath2Type.INTEGER) && is(rop, XPath2Type.INTEGER)) {
+                return XPath2Type.DECIMAL;
+              }
+              return mostSpecificType(lop, rop, XPath2Type.NUMERIC);
+            }
+
+            if (is(lop, XPath2Type.DURATION)) {
               return lop != null ? lop.getType() : XPath2Type.DURATION;
+            } else if (is(rop, XPath2Type.DURATION)) {
+              return lop != null ? rop.getType() : XPath2Type.DURATION;
             }
 
-            if (sameType(lop, rop)) {
-              assert lop != null : unexpectedPsiAssertion();
-              return lop.getType();
-            }
+            return mostSpecificType(lop, rop, XPathType.NUMBER);
           } else {
-            if (is(lop, XPath2Type.DATE) || is(lop, XPath2Type.DATETIME)) {
-              return XPath2Type.DURATION;
+            if (operator == XPathTokenTypes.PLUS) {
+              if (is(lop, XPath2Type.DATE) || is(lop, XPath2Type.DATETIME) || is(lop, XPath2Type.TIME)) {
+                if (is(rop, XPath2Type.DURATION)) {
+                  return lop.getType();
+                }
+              } else if (is(rop, XPath2Type.DATE) || is(rop, XPath2Type.DATETIME) || is(rop, XPath2Type.TIME)) {
+                if (is(lop, XPath2Type.DURATION)) {
+                  return rop.getType();
+                }
+              }
+            } else if (operator == XPathTokenTypes.MINUS) {
+              if (is(lop, XPath2Type.DATE) || is(lop, XPath2Type.DATETIME) || is(lop, XPath2Type.TIME)) {
+                if (is(rop, lop.getType())) {
+                  return XPath2Type.DAYTIMEDURATION;
+                }
+                if (is(rop, XPath2Type.DURATION)) {
+                  return lop.getType();
+                }
+              }
             }
-            if (is(lop, XPath2Type.TIME)) {
-              return XPath2Type.DAYTIMEDURATION;
-            }
-            if (is(lop, XPath2Type.YEARMONTHDURATION)) {
-              return XPathType.ChoiceType.create(XPath2Type.DATE, XPath2Type.DATETIME);
-            }
-          }
 
-          if (sameType(lop, rop)) {
-            assert lop != null : unexpectedPsiAssertion();
-            return lop.getType();
-          }
-
-          if (is(lop, XPath2Type.NUMERIC) || is(rop, XPath2Type.NUMERIC) ) {
-            return XPath2Type.NUMERIC;
+            if (is(lop, XPath2Type.DURATION)) {
+              return rop != null ? rop.getType() : XPathType.UNKNOWN;
+            }
           }
 
           return mostSpecificType(lop, rop, XPathType.NUMBER);
@@ -130,14 +136,12 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
       if (rType.isAbstract()) {
         return lType;
       } else {
-        if (lType.isAssignableFrom(rType)) return rType;
+        if (lType.canBePromotedTo(rType)) return rType;
+        if (rType.canBePromotedTo(lType)) return lType;
+        if (XPathType.isAssignable(lType, rType)) return rType;
         return lType;
       }
     }
-  }
-
-  private static boolean sameType(XPathExpression lop, XPathExpression rop) {
-    return lop != null && rop != null && is(lop, rop.getType());
   }
 
   private static boolean is(XPathExpression op, XPathType type) {

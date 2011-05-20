@@ -44,7 +44,9 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -172,13 +174,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
 
+  private static final boolean IS_UNDER_TEAMCITY = System.getProperty("bootstrap.testcases") != null;
   private static final boolean IS_UNIT_TESTS = ApplicationManager.getApplication().isUnitTestMode();
   private static final Collection<String> additionalRoots = new THashSet<String>();
   @TestOnly
   public static void allowToAccess(@NotNull String root) { additionalRoots.add(FileUtil.toSystemIndependentName(root)); }
   @TestOnly
   private static void assertAccessInTests(VirtualFileSystemEntry child) {
-    if (IS_UNIT_TESTS && ApplicationManager.getApplication() instanceof ApplicationImpl && ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()) {
+    if (IS_UNIT_TESTS && IS_UNDER_TEAMCITY && ApplicationManager.getApplication() instanceof ApplicationImpl && ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()) {
       NewVirtualFileSystem fileSystem = child.getFileSystem();
       if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
         return;
@@ -252,6 +255,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       allowed.add(FileUtil.toSystemIndependentName(location));
     }
 
+    //for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+    //  allowed.add(FileUtil.toSystemIndependentName(sdk.getHomePath()));
+    //}
     for (String root : additionalRoots) {
       allowed.add(root);
     }

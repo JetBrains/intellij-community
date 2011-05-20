@@ -92,7 +92,11 @@ public class GroovyPatterns extends PsiJavaPatterns {
   }
 
   public static GroovyElementPattern.Capture<GrLiteralImpl> namedArgumentStringLiteral() {
-    return stringLiteral().withParent(psiElement(GrNamedArgument.class));
+    return stringLiteral().withParent(namedArgument());
+  }
+
+  public static GroovyNamedArgumentPattern namedArgument() {
+    return new GroovyNamedArgumentPattern();
   }
 
   public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(@Nullable final ElementPattern<? extends String> namePattern) {
@@ -110,18 +114,6 @@ public class GroovyPatterns extends PsiJavaPatterns {
         }
 
         return false;
-      }
-    });
-  }
-
-  public static GroovyElementPattern.Capture<GrNamedArgument> methodNamedParameter(@Nullable final ElementPattern<? extends GrCall> methodCall) {
-    return new GroovyElementPattern.Capture<GrNamedArgument>(new InitialPatternCondition<GrNamedArgument>(GrNamedArgument.class) {
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        if (!(o instanceof GrNamedArgument)) return false;
-
-        GrCall call = PsiUtil.getMethodByNamedParameter((GrNamedArgument)o);
-
-        return call != null && (methodCall == null || methodCall.accepts(call, context));
       }
     });
   }

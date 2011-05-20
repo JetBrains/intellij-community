@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package com.siyeh.ig.psiutils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class VariableSearchUtils {
 
@@ -38,6 +41,9 @@ public class VariableSearchUtils {
 
     public static boolean containsConflictingDeclarations(
             PsiCodeBlock block, PsiCodeBlock parentBlock) {
+        final List<PsiCodeBlock> followingBlocks = new ArrayList();
+        collectFollowingBlocks(block.getParent().getNextSibling(),
+                followingBlocks);
         final PsiStatement[] statements = block.getStatements();
         final Project project = block.getProject();
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -56,14 +62,37 @@ public class VariableSearchUtils {
                 }
                 final PsiLocalVariable localVariable =
                         (PsiLocalVariable) variable;
+                final String variableName = localVariable.getName();
                 final PsiVariable target =
                         resolveHelper.resolveAccessibleReferencedVariable(
-                                localVariable.getName(), parentBlock);
+                                variableName, parentBlock);
                 if (target != null) {
                     return true;
+                }
+                for (PsiCodeBlock codeBlock : followingBlocks) {
+                    final PsiVariable target1 =
+                            resolveHelper.resolveAccessibleReferencedVariable(
+                                    variableName, codeBlock);
+                    if (target1 != null) {
+                        return true;
+                    }
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * Depth first traversal to find all PsiCodeBlock children.
+     */
+    private static void collectFollowingBlocks(PsiElement element,
+                                               List<PsiCodeBlock> out) {
+        while (element != null) {
+            if (element instanceof PsiCodeBlock) {
+                out.add((PsiCodeBlock) element);
+            }
+            collectFollowingBlocks(element.getFirstChild(), out);
+            element = element.getNextSibling();
+        }
     }
 }
