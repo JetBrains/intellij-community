@@ -16,7 +16,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +28,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractFilterChildren;
+import com.intellij.openapi.vcs.CheckSamePattern;
+import com.intellij.openapi.vcs.ComparableComparator;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
@@ -369,29 +371,19 @@ public class GitLogUI implements Disposable {
       if (branches != null) {
         myDetails.putBranches(root, gitCommit, branches);
       }
-      final Application application = ApplicationManager.getApplication();
-      application.executeOnPooledThread(new Runnable() {
+
+      final CommitI commitI = myTableModel.getCommitAt(rows[0]);
+      if (! commit.equals(commitI)) return;
+      myDetailsCache.loadAndPutBranches(root, gitCommit.getHash(), commit.getHash(), new Consumer<List<String>>() {
         @Override
-        public void run() {
-          final CommitI commitI = myTableModel.getCommitAt(rows[0]);
-          if (!commit.equals(commitI)) return;
-          try {
-            final List<String> branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(gitCommit.getHash());
-            myDetailsCache.putBranches(root, commit.getHash(), branches);
-            application.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                final int[] afterRows = myJBTable.getSelectedRows();
-                if (myDetails.isMissingBranchesInfo() && afterRows.length == 1 && afterRows[0] == rows[0]) {
-                  final CommitI afterCommit = myTableModel.getCommitAt(rows[0]);
-                  if (afterCommit.holdsDecoration() || (! afterCommit.equals(commit))) return;
-                  myDetails.putBranches(root, gitCommit, branches);
-                }
-              }
-            }, ModalityState.NON_MODAL, myProject.getDisposed());
-          }
-          catch (VcsException e) {
-            LOG.info(e);
+        public void consume(List<String> strings) {
+          if (myProject.isDisposed()) return;
+
+          final int[] afterRows = myJBTable.getSelectedRows();
+          if (myDetails.isMissingBranchesInfo() && afterRows.length == 1 && afterRows[0] == rows[0]) {
+            final CommitI afterCommit = myTableModel.getCommitAt(rows[0]);
+            if (afterCommit.holdsDecoration() || (! afterCommit.equals(commit))) return;
+            myDetails.putBranches(root, gitCommit, strings);
           }
         }
       });

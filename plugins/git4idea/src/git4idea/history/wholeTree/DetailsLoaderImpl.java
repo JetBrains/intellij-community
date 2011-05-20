@@ -49,8 +49,8 @@ public class DetailsLoaderImpl implements DetailsLoader {
 
   private final Object myLock;
 
-  public DetailsLoaderImpl(Project project) {
-    myQueue = new BackgroundTaskQueue(project, "Git log details");
+  public DetailsLoaderImpl(Project project, BackgroundTaskQueue queue) {
+    myQueue = queue;
     myProject = project;
     myLoadIdsGatherer = new HashMap<VirtualFile, CommitIdsHolder<AbstractHash>>();
     myAccesses = new HashMap<VirtualFile, LowLevelAccess>();

@@ -13,6 +13,7 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,8 +42,9 @@ public class GitLogAssembler implements GitLog {
     myGitLogUI = new GitLogUI(myProject, myMediator);
     myTableModel = myGitLogUI.getTableModel();
 
-    myDetailsLoader = new DetailsLoaderImpl(myProject);
-    myDetailsCache = new DetailsCache(myProject, myGitLogUI.getUIRefresh(), myDetailsLoader, current);
+    final BackgroundTaskQueue queue = new BackgroundTaskQueue(project, "Git log details");
+    myDetailsLoader = new DetailsLoaderImpl(myProject, queue);
+    myDetailsCache = new DetailsCache(myProject, myGitLogUI.getUIRefresh(), myDetailsLoader, current, queue);
     myDetailsLoader.setDetailsCache(myDetailsCache);
     myGitLogUI.setDetailsCache(myDetailsCache);
     myGitLogUI.createMe();
