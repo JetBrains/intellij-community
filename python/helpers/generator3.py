@@ -692,12 +692,14 @@ class ModuleRedeclarator(object):
         self.indent_size = indent_size
         self._indent_step = " " * indent_size
         #
-        self.imported_modules = {"": the_builtins}
+        self.imported_modules = {"": the_builtins} # explicit module imports: {"name": module}
+        self.hidden_imports = {} # {'real_mod_name': 'alias'}; we alias names with "__" since we don't want them exported
+        # ^ used for things that we don't re-export but need to import, e.g. certain base classes in gnome.
         self._defined = {} # stores True for every name defined so far, to break circular refs in values
         self.doing_builtins = doing_builtins
         self.ret_type_cache = {}
-        self.used_imports = emptylistdict()
-        # ^ maps qual_module_name -> [imported_names,..]
+        self.used_imports = emptylistdict() # qual_mod_name -> [imported_names,..]: actullay used imported names
+
 
     def indent(self, level):
         "Return indentation whitespace for given level."
@@ -1625,16 +1627,23 @@ class ModuleRedeclarator(object):
         if bases:
             skip_qualifiers = [p_modname, BUILTIN_MOD_NAME, 'exceptions']
             skip_qualifiers.extend(self.KNOWN_FAKE_REEXPORTERS.get(p_modname, ()))
-            qual_bases = [(self.qualifierOf(b, skip_qualifiers), b.__name__) for b in bases]
-            bases_list = []
-            for q_module, base in qual_bases: # mark used base classes as imported
-                if q_module:
-                    bases_list.append(q_module + "." + base)
-                    import_list = self.used_imports[q_module]
-                    if base not in import_list:
-                        import_list.append(base)
+            bases_list = [] # what we'll render in the class decl
+            for base in bases: # somehow import every base class
+                base_name = base.__name__
+                qual_module_name = self.qualifierOf(base, skip_qualifiers)
+                got_existing_import = False
+                if qual_module_name:
+                    if qual_module_name in self.used_imports:
+                        import_list = self.used_imports[qual_module_name]
+                        if base in import_list:
+                            bases_list.append(base_name) # unqualified: already set to import
+                            got_existing_import = True
+                    if not got_existing_import:
+                        mangled_qualifier = "__" + qual_module_name.replace('.', '_') # foo.bar -> __foo_bar
+                        bases_list.append(mangled_qualifier + "." + base_name)
+                        self.hidden_imports[qual_module_name] = mangled_qualifier
                 else:
-                    bases_list.append(base)
+                    bases_list.append(base_name)
             base_def = "(" + ", ".join(bases_list) + ")"
         out(indent, "class ", p_name, base_def, ":")
         self.outDocAttr(out, p_class, indent + 1)
@@ -1829,7 +1838,7 @@ class ModuleRedeclarator(object):
                 and mod_name not in surely_not_imported_mods
                 and not import_from_top
             ):
-                # import looks valid, but maybe it's a .py file? we're cenrtain not to import from .py
+                # import looks valid, but maybe it's a .py file? we're certain not to import from .py
                 # e.g. this rules out _collections import collections and builtins import site.
                 try:
                     imported = __import__(mod_name) # ok to repeat, Python caches for us
@@ -1988,7 +1997,7 @@ class ModuleRedeclarator(object):
             self.footer_buf.out(0, "# intermittent names")
             for v in values_to_add:
                 self.footer_buf.out(0, v)
-        # imports: last, because previous parts could alter used_imports
+        # imports: last, because previous parts could alter used_imports or hidden_imports
         self.outputImportFroms()
         if self.imports_buf.isEmpty():
             self.imports_buf.out(0, "# no imports")
@@ -1996,6 +2005,7 @@ class ModuleRedeclarator(object):
 
     def outputImportFroms(self):
         "Mention all imported names known within the module, wrapping as per PEP."
+        out = self.imports_buf.out
         if self.used_imports:
             self.addImportHeaderIfNeeded()
             for mod_name in sortedNoCase(self.used_imports.keys()):
@@ -2011,7 +2021,7 @@ class ModuleRedeclarator(object):
                         self._defined[n] = True
                         len_n = len(n)
                         if right_pos + len_n >= 78:
-                            self.imports_buf.out(indent_level, *names_pack)
+                            out(indent_level, *names_pack)
                             names_pack = [n, ", "]
                             if indent_level == 0:
                                 indent_level = 1 # all but first line is indented
@@ -2026,9 +2036,15 @@ class ModuleRedeclarator(object):
                         names_pack[-1] = "" # cut last comma
                     else: # last line of multiline
                         names_pack[-1] = ")" # last comma -> rpar
-                    self.imports_buf.out(indent_level, *names_pack)
+                    out(indent_level, *names_pack)
 
-                    self.imports_buf.out(0, "") # empty line after group
+                    out(0, "") # empty line after group
+
+        if self.hidden_imports:
+            self.addImportHeaderIfNeeded()
+            for mod_name in sortedNoCase(self.hidden_imports.keys()):
+                out(0, 'import ', mod_name, ' as ', self.hidden_imports[mod_name])
+            out(0, "") # empty line after group
 
 
 def hasRegularPythonExt(name):
