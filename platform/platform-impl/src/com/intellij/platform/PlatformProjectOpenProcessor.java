@@ -72,7 +72,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Nullable
-  public Project doOpenProject(@NotNull final VirtualFile virtualFile, final Project projectToClose, final boolean forceOpenInNewFrame) {
+  public Project doOpenProject(@NotNull final VirtualFile virtualFile, @Nullable final Project projectToClose, final boolean forceOpenInNewFrame) {
     return doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame, -1);
   }
 
