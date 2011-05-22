@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dave Griffith
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.global;
+package com.siyeh.ig.classlayout;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +24,6 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -36,11 +34,6 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
             Logger.getInstance("MethodReturnAlwaysIgnoredInspection");
 
     private static final Key<Boolean> ALWAYS_IGNORED = Key.create("ALWAYS_IGNORED_METHOD");
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.CLASS_LAYOUT_GROUP_NAME;
-    }
 
     @Nullable
     public RefGraphAnnotator getAnnotator(RefManager refManager) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,15 @@
 package com.siyeh.ig.packaging;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,12 +34,6 @@ public class PackageWithTooManyClassesInspection extends BaseGlobalInspection {
 
     @SuppressWarnings({"PublicField"})
     public int limit = 10;
-
-    @Override
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.PACKAGING_GROUP_NAME;
-    }
 
     @Override
     @Nullable

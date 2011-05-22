@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dave Griffith
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.global;
+package com.siyeh.ig.classlayout;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefMethod;
@@ -26,7 +25,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,11 +34,6 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
     private static final Key<Boolean> ALWAYS_CONSTANT =
             Key.create("ALWAYS_CONSTANT");
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.CLASS_LAYOUT_GROUP_NAME;
-    }
 
     public CommonProblemDescriptor[] checkElement(
             RefEntity refEntity, AnalysisScope scope, InspectionManager manager,

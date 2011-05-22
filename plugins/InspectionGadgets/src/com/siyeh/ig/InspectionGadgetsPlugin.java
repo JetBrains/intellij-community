@@ -45,7 +45,6 @@ import com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection;
 import com.siyeh.ig.finalization.FinalizeInspection;
 import com.siyeh.ig.finalization.FinalizeNotProtectedInspection;
 import com.siyeh.ig.finalization.NoExplicitFinalizeCallsInspection;
-import com.siyeh.ig.global.MethodReturnAlwaysConstantInspection;
 import com.siyeh.ig.imports.*;
 import com.siyeh.ig.inheritance.*;
 import com.siyeh.ig.initialization.*;
@@ -59,7 +58,6 @@ import com.siyeh.ig.javadoc.PackageDotHtmlMayBePackageInfoInspection;
 import com.siyeh.ig.javadoc.UnnecessaryInheritDocInspection;
 import com.siyeh.ig.javadoc.UnnecessaryJavaDocLinkInspection;
 import com.siyeh.ig.jdk.*;
-import com.siyeh.ig.migration.*;
 import com.siyeh.ig.junit.*;
 import com.siyeh.ig.logging.*;
 import com.siyeh.ig.maturity.*;
@@ -68,6 +66,7 @@ import com.siyeh.ig.memory.StringBufferFieldInspection;
 import com.siyeh.ig.memory.SystemGCInspection;
 import com.siyeh.ig.memory.ZeroLengthArrayInitializationInspection;
 import com.siyeh.ig.methodmetrics.*;
+import com.siyeh.ig.migration.*;
 import com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection;
 import com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection;
 import com.siyeh.ig.naming.*;
@@ -106,7 +105,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private volatile InspectionGadgetsTelemetry telemetry = null;
     private volatile boolean telemetryEnabled = false;
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String... args) throws FileNotFoundException {
         final PrintStream out;
         if (args.length == 0) {
             out = System.out;
@@ -271,11 +270,13 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         return numQuickFixes;
     }
 
+    @Override
     @NotNull
     public String getComponentName() {
         return "InspectionGadgets";
     }
 
+    @Override
     public Class<? extends InspectionProfileEntry>[] getInspectionClasses() {
         if (m_inspectionClasses.isEmpty()) {
             registerAbstractionInspections();
@@ -327,9 +328,10 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerPackagingInspections() {
-        m_inspectionClasses.add(PackageInMultipleModulesInspection.class);
-        m_inspectionClasses.add(DisjointPackageInspection.class);
         m_inspectionClasses.add(ClassUnconnectedToPackageInspection.class);
+        m_inspectionClasses.add(DisjointPackageInspection.class);
+        m_inspectionClasses.add(PackageInMultipleModulesInspection.class);
+        //m_inspectionClasses.add(PackageNamingConventionInspection.class);
         m_inspectionClasses.add(PackageWithTooManyClassesInspection.class);
         m_inspectionClasses.add(PackageWithTooFewClassesInspection.class);
     }
@@ -348,6 +350,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CyclicPackageDependencyInspection.class);
     }
 
+    @Override
     public void initComponent() {
         final RegistryValue registryValue =
                 Registry.get("inspectionGadgets.telemetry.enabled");
@@ -1133,6 +1136,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnconstructableTestCaseInspection.class);
     }
 
+    @Override
     public void disposeComponent() {}
 
     public boolean isTelemetryEnabled() {

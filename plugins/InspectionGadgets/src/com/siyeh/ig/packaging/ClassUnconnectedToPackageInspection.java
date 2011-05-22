@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.packaging;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
@@ -29,17 +28,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.PACKAGING_GROUP_NAME;
-    }
 
     @Nullable
     public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
