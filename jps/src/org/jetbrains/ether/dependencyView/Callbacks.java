@@ -14,10 +14,10 @@ import java.util.Set;
  */
 public class Callbacks {
     public interface SourceFileNameLookup {
-        public String get (String sourceAttribute);
+        public String get(String sourceAttribute);
     }
 
-    public static SourceFileNameLookup getDefaultLookup (final String name) {
+    public static SourceFileNameLookup getDefaultLookup(final String name) {
         return new SourceFileNameLookup() {
             public String get(final String sourceAttribute) {
                 return name;
@@ -26,8 +26,12 @@ public class Callbacks {
     }
 
     public interface Backend {
-        public Collection<StringCache.S> getClassFiles ();
-        public void associate (String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
-        public void associate (Set<ClassRepr> classes, Set<UsageRepr.Usage> usages, String sourceFileName);
+        public Collection<StringCache.S> getClassFiles();
+
+        public void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
+
+        public void associate(Set<ClassRepr> classes, Set<UsageRepr.Usage> usages, String sourceFileName);
+
+        public void associateForm(StringCache.S formName, StringCache.S className);
     }
 }

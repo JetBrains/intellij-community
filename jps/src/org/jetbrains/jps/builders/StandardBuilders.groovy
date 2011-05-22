@@ -2,6 +2,7 @@ package org.jetbrains.jps.builders
 
 import com.intellij.ant.InstrumentationUtil
 import com.intellij.ant.InstrumentationUtil.FormInstrumenter
+import com.intellij.ant.PrefixedPath
 import org.apache.tools.ant.BuildListener
 import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.ether.dependencyView.AntListener
@@ -248,6 +249,17 @@ class GroovyStubGenerator implements ModuleBuilder {
 class JetBrainsInstrumentations implements ModuleBuilder {
   class CustomFormInstrumenter extends FormInstrumenter {
     final List<String> formFiles;
+    final ModuleBuildState state;
+
+    @Override
+    void associate(final String formFile, final String classFile) {
+      if (state.callback != null) {
+        final String formRelPath = state.projectWrapper.getRelativePath(formFile);
+        final String classRelPath = state.projectWrapper.getRelativePath(classFile);
+
+        state.callback.associateForm(StringCache.get(formRelPath), StringCache.get(classRelPath));
+      }
+    }
 
     @Override
     void log(String msg, int option) {
@@ -259,9 +271,10 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       System.err.println(msg);
     }
 
-    CustomFormInstrumenter(final File destDir, final List<String> nestedFormPathList, final List<String> ff) {
+    CustomFormInstrumenter(final File destDir, final List<String> nestedFormPathList, final List<String> ff, final ModuleBuildState s) {
       super(destDir, nestedFormPathList);
-      formFiles = ff
+      formFiles = ff;
+      state = s;
     }
   }
 
@@ -283,22 +296,28 @@ class JetBrainsInstrumentations implements ModuleBuilder {
     final ClassLoader loader = InstrumentationUtil.createClassLoader(cp.toString())
 
     if (!state.incremental) {
-      final List<String> formFiles = new ArrayList<String>();
+      final List<File> formFiles = new ArrayList<File>();
       final ProjectWrapper pw = state.projectWrapper;
 
       for (Module m: moduleChunk.elements) {
         final Set<S> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
         for (S name: names) {
           if (name.value.endsWith(".form")) {
-            formFiles.add(name.value);
+            formFiles.add(new File(pw.getAbsolutePath(name.value)));
           }
         }
       }
 
-      final CustomFormInstrumenter fi = new CustomFormInstrumenter(new File(state.targetFolder), state.moduleDependenciesSourceRoots, formFiles);
+      final List<PrefixedPath> nestedFormDirs = new ArrayList<PrefixedPath>();
 
-      for (String formFile: formFiles) {
-        fi.instrumentForm(new File(formFile), loader);
+      state.moduleDependenciesSourceRoots.each {
+        nestedFormDirs << new PrefixedPath(project.binding.ant.project, it)
+      }
+
+      final CustomFormInstrumenter fi = new CustomFormInstrumenter(new File(state.targetFolder), nestedFormDirs, formFiles, state);
+
+      for (File formFile: formFiles) {
+        fi.instrumentForm(formFile, loader);
       }
     }
 

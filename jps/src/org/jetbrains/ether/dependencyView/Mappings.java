@@ -5,7 +5,9 @@ import org.jetbrains.ether.ProjectWrapper;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -40,6 +42,7 @@ public class Mappings {
     private Map<StringCache.S, StringCache.S> classToSourceFile = new HashMap<StringCache.S, StringCache.S>();
     private FoxyMap<StringCache.S, StringCache.S> fileToFileDependency = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
     private FoxyMap<StringCache.S, StringCache.S> waitingForResolve = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
+    private Map<StringCache.S, StringCache.S> formToClass = new HashMap<StringCache.S, StringCache.S>();
 
     private void affectAll(final StringCache.S fileName, final Set<StringCache.S> affectedFiles) {
         final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
@@ -145,6 +148,10 @@ public class Mappings {
         fileToFileDependency.putAll(delta.fileToFileDependency);
     }
 
+    private void updateFormToClass(final StringCache.S formName, final StringCache.S className) {
+        formToClass.put(formName, className);
+    }
+
     private void updateSourceToUsages(final StringCache.S source, final Set<UsageRepr.Usage> usages) {
         sourceFileToUsages.put(source, usages);
     }
@@ -190,7 +197,7 @@ public class Mappings {
                 final Set<UsageRepr.Usage> localUsages = result.snd;
 
                 final StringCache.S sourceFileNameS =
-                        StringCache.get(project.getRelativePath(sourceFileName.get(repr == null ? null : repr.getSourceFileName ().value)));
+                        StringCache.get(project.getRelativePath(sourceFileName.get(repr == null ? null : repr.getSourceFileName().value)));
 
                 for (UsageRepr.Usage u : localUsages) {
                     updateDependency(sourceFileNameS, u.getOwner());
@@ -220,6 +227,10 @@ public class Mappings {
                     updateDependency(sourceFileNameS, u.getOwner());
                 }
             }
+
+            public void associateForm(StringCache.S formName, StringCache.S className) {
+                updateFormToClass(formName, className);
+            }
         };
     }
 
@@ -231,14 +242,6 @@ public class Mappings {
 
     public Set<ClassRepr> getClasses(final StringCache.S sourceFileName) {
         return (Set<ClassRepr>) sourceFileToClasses.foxyGet(sourceFileName);
-    }
-
-    public Set<ClassRepr> getClasses(final String sourceFileName) {
-        return (Set<ClassRepr>) sourceFileToClasses.foxyGet(StringCache.get(sourceFileName));
-    }
-
-    public Set<UsageRepr.Usage> getUsages(final String sourceFileName) {
-        return (Set<UsageRepr.Usage>) sourceFileToUsages.foxyGet(StringCache.get(sourceFileName));
     }
 
     public Set<UsageRepr.Usage> getUsages(final StringCache.S sourceFileName) {

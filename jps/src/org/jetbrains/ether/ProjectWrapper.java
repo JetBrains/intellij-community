@@ -722,13 +722,23 @@ public class ProjectWrapper {
 
     final ProjectWrapper myHistory;
 
+    private static String getCanonicalPath(final String path) {
+        try {
+            return new File(path).getCanonicalPath();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private ProjectWrapper(final String prjDir, final String setupScript) {
         dependencyMapping = new Mappings(this);
         backendCallback = dependencyMapping.getCallback();
         affectedFiles = new HashSet<StringCache.S>();
 
         myProject = new Project(new GantBinding());
-        myRoot = new File(prjDir).getAbsolutePath();
+        myRoot = getCanonicalPath(prjDir);
+
         myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
         IdeaProjectLoader.loadFromPath(myProject, getAbsolutePath(myIDEADir), setupScript);
