@@ -1,11 +1,11 @@
 <component name="libraryTable">
   <library name="Javac2">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../test/idea/out/dist.all.ce/lib/javac2.jar!/" />
       <root url="jar://$PROJECT_DIR$/../test/idea/out/dist.all.ce/lib/jgoodies-forms.jar!/" />
       <root url="jar://$PROJECT_DIR$/../test/idea/out/dist.all.ce/lib/jdom.jar!/" />
       <root url="jar://$PROJECT_DIR$/../test/idea/out/dist.all.ce/lib/asm-commons.jar!/" />
       <root url="jar://$PROJECT_DIR$/../test/idea/out/dist.all.ce/lib/asm.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../test/idea/out/dist.all.ce/lib/javac2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

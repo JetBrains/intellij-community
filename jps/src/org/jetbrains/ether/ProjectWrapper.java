@@ -948,7 +948,7 @@ public class ProjectWrapper {
                     builder.clearChunk(chunk, outputFiles, ProjectWrapper.this);
                 }
 
-                final Mappings delta = new Mappings (ProjectWrapper.this);
+                final Mappings delta = new Mappings(ProjectWrapper.this);
                 final Callbacks.Backend deltaBackend = delta.getCallback();
 
                 builder.buildChunk(chunk, tests, filesToCompile, deltaBackend, ProjectWrapper.this);
@@ -1006,11 +1006,11 @@ public class ProjectWrapper {
                         }
 
                         if (!toClean.isEmpty()) {
-                            builder.clearChunk(new ModuleChunk(toClean), null, null);
+                            builder.clearChunk(new ModuleChunk(toClean), null, ProjectWrapper.this);
                             cleared.addAll(toClean);
                         }
 
-                        builder.buildChunk(c, tests, null, backendCallback, null);
+                        builder.buildChunk(c, tests, null, backendCallback, ProjectWrapper.this);
 
                         for (Module m : c.getElements()) {
                             final ModuleWrapper module = getModule(m.getName());

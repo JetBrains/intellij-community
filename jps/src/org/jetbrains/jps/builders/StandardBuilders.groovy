@@ -1,15 +1,14 @@
 package org.jetbrains.jps.builders
 
-import org.jetbrains.jps.*
-import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
-import org.jetbrains.ether.dependencyView.Callbacks
+import com.intellij.ant.InstrumentationUtil
+import com.intellij.ant.InstrumentationUtil.FormInstrumenter
 import org.apache.tools.ant.BuildListener
-import org.apache.tools.ant.BuildEvent
-import java.util.regex.Pattern
-import java.util.regex.Matcher
+import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.ether.dependencyView.AntListener
-import com.intellij.ant.Instrumenter
 import org.jetbrains.ether.dependencyView.StringCache
+import org.jetbrains.ether.dependencyView.StringCache.S
+import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
+import org.jetbrains.jps.*
 
 /**
  * @author max
@@ -247,15 +246,30 @@ class GroovyStubGenerator implements ModuleBuilder {
 }
 
 class JetBrainsInstrumentations implements ModuleBuilder {
+  class CustomFormInstrumenter extends FormInstrumenter {
+    final List<String> formFiles;
+
+    @Override
+    void log(String msg, int option) {
+      System.out.println(msg);
+    }
+
+    @Override
+    void fireError(String msg) {
+      System.err.println(msg);
+    }
+
+    CustomFormInstrumenter(final File destDir, final List<String> nestedFormPathList, final List<String> ff) {
+      super(destDir, nestedFormPathList);
+      formFiles = ff
+    }
+  }
 
   def JetBrainsInstrumentations(Project project) {
     project.taskdef(name: "jb_instrumentations", classname: "com.intellij.ant.InstrumentIdeaExtensions")
   }
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
-    //if (project.getBuilder().useInProcessJavac)
-    //  return;
-
     final StringBuffer cp = new StringBuffer()
 
     cp.append(state.targetFolder)
@@ -266,7 +280,30 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       cp.append(File.pathSeparator)
     }
 
-    final ClassLoader loader = Instrumenter.createClassLoader(cp.toString())
+    final ClassLoader loader = InstrumentationUtil.createClassLoader(cp.toString())
+
+    if (!state.incremental) {
+      final List<String> formFiles = new ArrayList<String>();
+      final ProjectWrapper pw = state.projectWrapper;
+
+      for (Module m: moduleChunk.elements) {
+        final Set<S> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
+        for (S name: names) {
+          if (name.value.endsWith(".form")) {
+            formFiles.add(name.value);
+          }
+        }
+      }
+
+      final CustomFormInstrumenter fi = new CustomFormInstrumenter(new File(state.targetFolder), state.moduleDependenciesSourceRoots, formFiles);
+
+      for (String formFile: formFiles) {
+        fi.instrumentForm(new File(formFile), loader);
+      }
+    }
+
+    //if (project.getBuilder().useInProcessJavac)
+    //  return;
 
     if (!state.incremental) {
       new Object() {
@@ -277,7 +314,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
             final String name = f.getName();
 
             if (name.endsWith(".class")) {
-              Instrumenter.instrumentNotNull(f, loader)
+              InstrumentationUtil.instrumentNotNull(f, loader)
             }
             else if (f.isDirectory()) {
               traverse(f)
@@ -290,7 +327,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       final Collection<StringCache.S> classes = state.callback.getClassFiles()
 
       classes.each {
-        Instrumenter.instrumentNotNull(new File(state.targetFolder + File.separator + it.value + ".class"), loader)
+        InstrumentationUtil.instrumentNotNull(new File(state.targetFolder + File.separator + it.value + ".class"), loader)
       }
     }
   }

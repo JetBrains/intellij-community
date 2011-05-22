@@ -1,6 +1,5 @@
 package org.jetbrains.jps.builders.javacApi;
 
-import com.intellij.ant.Instrumenter;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefaultFileManager;
 import com.sun.tools.javac.util.List;
@@ -9,7 +8,9 @@ import org.jetbrains.ether.dependencyView.Callbacks;
 import org.objectweb.asm.ClassReader;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileObject;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,7 +31,7 @@ public class OptimizedFileManager extends DefaultFileManager {
     private Callbacks.Backend callback;
     private ClassLoader loader;
 
-    public void setProperties (final Callbacks.Backend c, final ClassLoader l) {
+    public void setProperties(final Callbacks.Backend c, final ClassLoader l) {
         callback = c;
         loader = l;
     }
