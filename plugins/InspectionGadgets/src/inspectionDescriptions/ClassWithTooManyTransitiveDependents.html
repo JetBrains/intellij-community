@@ -4,6 +4,7 @@ This global inspection reports any classes on which too many other classes in yo
 project are directly or indirectly dependent. Such classes may be expensive to modify,
 as changes to the class may require changing many other classes. Only top-level classes
 are reported by this inspection.
+Since this inspection requires global code analysis, it is only available in batch inspection mode.
 <p>
 Use the field below to specify the maximum number of direct or indirect dependents
 a class may have before triggering this inspection
