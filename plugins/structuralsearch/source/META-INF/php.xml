@@ -2,5 +2,6 @@
 <idea-plugin url="http://www.jetbrains.com/idea">
   <extensions xmlns="com.intellij">
     <structuralsearch.profile implementation="com.intellij.structuralsearch.extenders.PhpStructuralSearchProfile"/>
+    <duplicates.profile implementation="com.intellij.structuralsearch.duplicates.PhpDuplicatesProfile"/>
   </extensions>
 </idea-plugin>
