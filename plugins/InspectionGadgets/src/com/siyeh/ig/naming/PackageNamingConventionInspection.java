@@ -75,8 +75,8 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
         if (!(refEntity instanceof RefPackage)) {
             return null;
         }
-        final String name = refEntity.getName();
-        if (name == null) {
+        @NonNls final String name = refEntity.getName();
+        if (name == null || "default package".equals(name)) {
             return null;
         }
 

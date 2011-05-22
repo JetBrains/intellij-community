@@ -456,7 +456,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(NonExceptionNameEndsWithExceptionInspection.class);
         m_inspectionClasses.add(OverloadedMethodsWithSameNumberOfParametersInspection.class);
         m_inspectionClasses.add(OverloadedVarargsMethodInspection.class);
-//        m_inspectionClasses.add(PackageNamingConventionInspection.class);
+        m_inspectionClasses.add(PackageNamingConventionInspection.class);
         m_inspectionClasses.add(ParameterNameDiffersFromOverriddenParameterInspection.class);
         m_inspectionClasses.add(ParameterNamingConventionInspection.class);
         m_inspectionClasses.add(QuestionableNameInspection.class);
