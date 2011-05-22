@@ -15,7 +15,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.duplicates.PsiElementRole;
 import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfileBase;
-import com.intellij.structuralsearch.equivalence.*;
+import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
+import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.structuralsearch.equivalence.MultiChildDescriptor;
+import com.intellij.structuralsearch.equivalence.SingleChildDescriptor;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
@@ -27,6 +30,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -245,16 +249,17 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
                                         @Nullable Language language,
+                                        @Nullable String contextName,
                                         @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
     if (context == PatternTreeContext.Block) {
-      final String strContext = getContext(text, language);
+      final String strContext = getContext(text, language, contextName);
       return strContext != null ?
              parsePattern(project, strContext, text, fileType, language, extension, physical) :
              PsiElement.EMPTY_ARRAY;
     }
-    return super.createPatternTree(text, context, fileType, language, extension, project, physical);
+    return super.createPatternTree(text, context, fileType, language, contextName, extension, project, physical);
   }
 
   @Override
@@ -342,8 +347,13 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return new DocumentBasedReplaceHandler(context.getProject());
   }
 
+  @NotNull
+  public String[] getContextNames() {
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
   @Nullable
-  protected String getContext(@NotNull String pattern, @Nullable Language language) {
+  protected String getContext(@NotNull String pattern, @Nullable Language language, @Nullable String contextName) {
     return PATTERN_PLACEHOLDER;
   }
 

@@ -69,7 +69,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
                                         @Nullable Language language,
-                                        @Nullable String extension,
+                                        String contextName, @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
     if (physical) {

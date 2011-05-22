@@ -58,6 +58,7 @@ public abstract class StructuralSearchProfile {
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
                                         @Nullable Language language,
+                                        @Nullable String contextName,
                                         @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
@@ -78,7 +79,7 @@ public abstract class StructuralSearchProfile {
                                         @NotNull FileType fileType,
                                         @NotNull Project project,
                                         boolean physical) {
-    return createPatternTree(text, context, fileType, null, null, project, physical);
+    return createPatternTree(text, context, fileType, null, null, null, project, physical);
   }
 
   @Nullable

@@ -25,9 +25,9 @@ public class CssStructuralSearchProfile extends StructuralSearchProfileBase {
 
   @Nullable
   @Override
-  public String getContext(@NotNull String pattern, @Nullable Language language) {
+  public String getContext(@NotNull String pattern, @Nullable Language language, String contextName) {
     return pattern.indexOf('{') < 0
            ? ".c { $$PATTERN_PLACEHOLDER$$ }"
-           : super.getContext(pattern, language);
+           : super.getContext(pattern, language, contextName);
   }
 }

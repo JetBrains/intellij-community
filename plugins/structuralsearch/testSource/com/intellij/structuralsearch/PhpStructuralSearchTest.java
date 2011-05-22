@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.structuralsearch.extenders.PhpStructuralSearchProfile;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.jetbrains.php.lang.PhpFileType;
@@ -8,6 +9,12 @@ import com.jetbrains.php.lang.PhpFileType;
  * @author Eugene.Kudelevsky
  */
 public class PhpStructuralSearchTest extends StructuralSearchTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    options.setPatternContext(PhpStructuralSearchProfile.FILE_CONTEXT);
+  }
+
   public void test1() throws Exception {
     String s = "<?php\n" +
                "if ($exp) {\n" +
@@ -148,6 +155,19 @@ public class PhpStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "if ($cond$) {\n" +
               " $st$;" +
               "}", 1);*/
+  }
+
+  public void testMethod() throws Exception {
+    String s = "<?php\n" +
+               "class C {\n" +
+               "  public function f($param1, $param2) {\n" +
+               "    print 'Hello';\n" +
+               "  }\n" +
+               "  public function g() {}" +
+               "}";
+    options.setPatternContext(PhpStructuralSearchProfile.CLASS_CONTEXT);
+    doTest(s, "public function '_T('_T1*) {'_T2*}", 2);
+    doTest(s, "public function g() {}", 1);
   }
 
   private void doTest(String source,

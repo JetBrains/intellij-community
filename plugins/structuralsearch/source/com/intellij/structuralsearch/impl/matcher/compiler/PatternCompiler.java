@@ -142,7 +142,7 @@ public class PatternCompiler {
 
     final PsiElement last = elements.get(elements.size() - 1);
 
-    if (elements.size() == 0 || !containsErrorElementBeforeOffset(file, last.getTextRange().getEndOffset() - 1)) {
+    if (elements.size() == 0 || !containsErrorElementBeforeOffset(file, last.getTextRange().getEndOffset())) {
       return elements;
     }
 
@@ -243,7 +243,7 @@ public class PatternCompiler {
       public void visitElement(PsiElement element) {
         super.visitElement(element);
 
-        if (element instanceof PsiErrorElement && element.getTextRange().getStartOffset() <= offset) {
+        if (element instanceof PsiErrorElement && element.getTextRange().getStartOffset() < offset) {
           result[0] = true;
         }
       }
@@ -288,6 +288,7 @@ public class PatternCompiler {
                                             PrefixProvider prefixProvider,
                                             CompileContext context) {
     result.clearHandlers();
+    context.init(result, options, project, options.getScope() instanceof GlobalSearchScope);
 
     final StringBuilder buf = new StringBuilder();
 
@@ -452,8 +453,8 @@ public class PatternCompiler {
     PsiElement[] matchStatements;
 
     try {
-      matchStatements = MatcherImplUtil
-        .createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(), options.getDialect(), project, false);
+      matchStatements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
+                                                           options.getDialect(), options.getPatternContext(), project, false);
       if (matchStatements.length==0) throw new MalformedPatternException();
     } catch (IncorrectOperationException e) {
       throw new MalformedPatternException(e.getMessage());

@@ -15,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
 public class PhpStructuralSearchProfile extends StructuralSearchProfileBase {
   private static final TokenSet VAR_DELIMITERS = TokenSet.create(PhpTokenTypes.opCOMMA, PhpTokenTypes.opSEMICOLON);
 
+  public static final String FILE_CONTEXT = "File";
+  public static final String CLASS_CONTEXT = "Class";
+
   @NotNull
   @Override
   protected String[] getVarPrefixes() {
@@ -27,9 +30,17 @@ public class PhpStructuralSearchProfile extends StructuralSearchProfileBase {
     return PhpFileType.INSTANCE;
   }
 
+  @NotNull
   @Override
-  public String getContext(@NotNull String pattern, @Nullable Language language) {
-    return "<?php $$PATTERN_PLACEHOLDER$$";
+  public String[] getContextNames() {
+    return new String[] {FILE_CONTEXT, CLASS_CONTEXT};
+  }
+
+  @Override
+  public String getContext(@NotNull String pattern, @Nullable Language language, String contextName) {
+    return CLASS_CONTEXT.equals(contextName) ?
+           "<?php class AAAAA { $$PATTERN_PLACEHOLDER$$ }" :
+           "<?php $$PATTERN_PLACEHOLDER$$";
   }
 
   @NotNull

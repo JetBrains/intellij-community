@@ -115,7 +115,10 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
         _replacement,
         PatternTreeContext.Block,
         fileType,
-        project
+        options.getMatchOptions().getDialect(),
+        options.getMatchOptions().getPatternContext(),
+        project,
+        false
       );
       if (elements.length > 0) {
         final PsiElement patternNode = elements[0].getParent();

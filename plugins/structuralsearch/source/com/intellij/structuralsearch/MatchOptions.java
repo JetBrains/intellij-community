@@ -36,6 +36,8 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private String searchCriteria = "";
   private Map<String,MatchVariableConstraint> variableConstraints;
 
+  private String myPatternContext;
+
   @NonNls private static final String DISTINCT_ATTRIBUTE_NAME = "distinct";
   @NonNls private static final String RECURSIVE_ATTRIBUTE_NAME = "recursive";
   @NonNls private static final String CASESENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
@@ -286,11 +288,16 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     if (myFileType != matchOptions.myFileType) {
       return false;
     }
-    if (myDialect == null) {
-      return matchOptions.getDialect() == null;
+
+    if (myDialect != null ? !myDialect.equals(matchOptions.myDialect) : matchOptions.myDialect != null) {
+      return false;
     }
 
-    return myDialect.equals(matchOptions.getDialect());
+    if (myPatternContext != null ? !myPatternContext.equals(matchOptions.myPatternContext) : matchOptions.myPatternContext != null) {
+      return false;
+    }
+
+    return true;
   }
 
   public int hashCode() {
@@ -323,6 +330,14 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
   public void setDialect(Language dialect) {
     myDialect = dialect;
+  }
+
+  public String getPatternContext() {
+    return myPatternContext;
+  }
+
+  public void setPatternContext(String patternContext) {
+    myPatternContext = patternContext;
   }
 
   public MatchOptions clone() {

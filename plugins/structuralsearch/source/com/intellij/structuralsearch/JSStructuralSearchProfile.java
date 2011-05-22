@@ -177,17 +177,17 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
                                         @Nullable Language language,
-                                        @Nullable String extension,
+                                        String contextName, @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
-    final PsiElement[] originalElements = super.createPatternTree(text, context, fileType, language, extension, project, physical);
+    final PsiElement[] originalElements = super.createPatternTree(text, context, fileType, language, contextName, extension, project, physical);
 
     if (context == PatternTreeContext.Block &&
         language == JavaScriptSupportLoader.ECMA_SCRIPT_L4 &&
         shouldBeParsedInBlockContext(originalElements)) {
 
       text = "class A { function f() {" + text + "}}";
-      final PsiElement[] elements = super.createPatternTree(text, context, fileType, language, extension, project, physical);
+      final PsiElement[] elements = super.createPatternTree(text, context, fileType, language, contextName, extension, project, physical);
 
       if (elements.length == 0) {
         return elements;

@@ -42,9 +42,9 @@ public class JSStructuralSearchProfile2 extends StructuralSearchProfileBase {
   }
 
   @Override
-  protected String getContext(@NotNull String pattern, @Nullable Language language) {
+  protected String getContext(@NotNull String pattern, @Nullable Language language, String contextName) {
     return language == JavaScriptSupportLoader.ECMA_SCRIPT_L4 ?
            "class A { function f() { $$PATTERN_PLACEHOLDER$$ } }" :
-           super.getContext(pattern, language);
+           super.getContext(pattern, language, contextName);
   }
 }

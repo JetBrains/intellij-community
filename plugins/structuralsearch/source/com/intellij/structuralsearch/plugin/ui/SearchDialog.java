@@ -76,6 +76,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private JCheckBox maxMatchesSwitch;
   private JTextField maxMatches;
   private JComboBox fileTypes;
+  private JComboBox contexts;
   private JComboBox dialects;
   private JLabel status;
   private JLabel statusText;
@@ -96,6 +97,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   @NonNls private static String ourFtSearchVariant = DEFAULT_FILE_TYPE_SEARCH_VARIANT;
   private static Language ourDialect = null;
+  private static String ourContext = null;
 
   private final boolean myShowScopePanel;
   private final boolean myRunFindActionOnClose;
@@ -274,7 +276,15 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     fileTypes.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        updateDialectsCombo();
+        updateDialectsAndContexts();
+      }
+    });
+
+    contexts = new JComboBox(new DefaultComboBoxModel());
+    contexts.setRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
     });
 
@@ -293,7 +303,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     });
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
-    final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.file.dialect.label"));
+    final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
+    final JLabel jLabel3 = new JLabel(SSRBundle.message("search.dialog.file.dialect.label"));
     searchOptions.add(
       UIUtil.createOptionLine(
         new JComponent[]{
@@ -302,6 +313,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           fileTypes,
           (JComponent)Box.createHorizontalStrut(8),
           jLabel2,
+          contexts,
+          (JComponent)Box.createHorizontalStrut(8),
+          jLabel3,
           dialects,
           new Box.Filler(new Dimension(0, 0), new Dimension(Short.MAX_VALUE, 0), new Dimension(Short.MAX_VALUE, 0))
         }
@@ -320,11 +334,12 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     });
 
     dialects.setSelectedItem(ourDialect);
+    contexts.setSelectedItem(ourContext);
 
-    updateDialectsCombo();
+    updateDialectsAndContexts();
   }
 
-  private void updateDialectsCombo() {
+  private void updateDialectsAndContexts() {
     final Object item = fileTypes.getSelectedItem();
     final FileType fileType = getFileTypeByName((String)item);
     if (fileType instanceof LanguageFileType) {
@@ -335,6 +350,20 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       System.arraycopy(languageDialects, 0, variants, 1, languageDialects.length);
       dialects.setModel(new DefaultComboBoxModel(variants));
     }
+
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+
+    if (profile instanceof StructuralSearchProfileBase) {
+      final String[] contextNames = ((StructuralSearchProfileBase)profile).getContextNames();
+      if (contextNames.length > 0) {
+        contexts.setModel(new DefaultComboBoxModel(contextNames));
+        contexts.setSelectedItem(contextNames[0]);
+        contexts.setEnabled(true);
+        return;
+      }
+    }
+    contexts.setSelectedItem(null);
+    contexts.setEnabled(false);
   }
 
   private void detectFileTypeAndDialect() {
@@ -446,6 +475,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     assert profile != null;
     fileTypes.setSelectedItem(StructuralSearchProfile.getTypeName(options.getFileType()));
     dialects.setSelectedItem(options.getDialect());
+    if (options.getPatternContext() != null) {
+      contexts.setSelectedItem(options.getPatternContext());
+    }
   }
 
   private void setDialogTitle(final Configuration configuration) {
@@ -964,9 +996,11 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     ourFtSearchVariant = (String)fileTypes.getSelectedItem();
     ourDialect = (Language)dialects.getSelectedItem();
+    ourContext = (String)contexts.getSelectedItem();
     FileType fileType = getFileTypeByName(ourFtSearchVariant);
     options.setFileType(fileType);
     options.setDialect(ourDialect);
+    options.setPatternContext(ourContext);
 
     options.setSearchPattern(searchCriteriaEdit.getDocument().getText());
     options.setCaseSensitiveMatch(caseSensitiveMatch.isSelected());

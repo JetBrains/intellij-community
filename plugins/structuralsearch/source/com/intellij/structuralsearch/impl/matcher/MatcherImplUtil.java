@@ -32,7 +32,7 @@ public class MatcherImplUtil {
 
   public static PsiElement[] createTreeFromText(String text, PatternTreeContext context, FileType fileType, Project project)
     throws IncorrectOperationException {
-    return createTreeFromText(text, context, fileType, null, project, false);
+    return createTreeFromText(text, context, fileType, null, null, project, false);
   }
 
   public static PsiElement[] createSourceTreeFromText(String text,
@@ -45,7 +45,7 @@ public class MatcherImplUtil {
       Language language = ((LanguageFileType)fileType).getLanguage();
       StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
       if (profile != null) {
-        return profile.createPatternTree(text, context, fileType, null, extension, project, physical);
+        return profile.createPatternTree(text, context, fileType, null, null, extension, project, physical);
       }
     }
     return PsiElement.EMPTY_ARRAY;
@@ -55,6 +55,7 @@ public class MatcherImplUtil {
                                                 PatternTreeContext context,
                                                 FileType fileType,
                                                 Language language,
+                                                String contextName,
                                                 Project project,
                                                 boolean physical) throws IncorrectOperationException {
     if (language == null && fileType instanceof LanguageFileType) {
@@ -63,7 +64,7 @@ public class MatcherImplUtil {
     if (language != null) {
       StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
       if (profile != null) {
-        return profile.createPatternTree(text, context, fileType, language, null, project, physical);
+        return profile.createPatternTree(text, context, fileType, language, contextName, null, project, physical);
       }
     }
     return PsiElement.EMPTY_ARRAY;

@@ -70,7 +70,7 @@ public class ReplacerImpl {
         PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           in,
           filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
-          sourceFileType, sourceDialect,
+          sourceFileType, sourceDialect, null,
           project,
           createPhysicalFile
         );
