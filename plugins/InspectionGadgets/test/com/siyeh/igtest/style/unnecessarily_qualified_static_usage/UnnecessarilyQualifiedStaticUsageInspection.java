@@ -58,3 +58,11 @@ class TestUnnecessaryQualifiedNested
         double pi = Math.PI;
     }
 }
+class X {
+    private static final List<String> l = new ArrayList();
+    static {
+        X.l.add("a");
+        l.add("b");
+        l.add("c");
+    }
+}
