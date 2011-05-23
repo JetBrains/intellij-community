@@ -929,24 +929,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
+    int textLength = myDocument.getTextLength();
     LogicalPosition logicalPosition = visualToLogicalPosition(new VisualPosition(line, 0));
     int offset = logicalPositionToOffset(logicalPosition);
-    int textLength = myDocument.getTextLength();
 
     if (offset >= textLength) return new VisualPosition(line, EditorUtil.columnsNumber(p.x, EditorUtil.getSpaceWidth(Font.PLAIN, this)));
 
     // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
     // We mark that we're under such circumstances then.
-    boolean activeSoftWrapProcessed = true;
-    if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
-      activeSoftWrapProcessed = false;
-    }
+    boolean activeSoftWrapProcessed = logicalPosition.softWrapLinesOnCurrentLogicalLine <= 0;
 
     int column = 0;
     int prevX = 0;
     CharSequence text = myDocument.getCharsNoThreadCheck();
     char c = ' ';
-    IterationState state = new IterationState(this, offset, false);
+
+    LogicalPosition endLogicalPosition = visualToLogicalPosition(new VisualPosition(line+1, 0));
+    int endOffset = logicalPositionToOffset(endLogicalPosition);
+
+    IterationState state = new IterationState(this, offset, endOffset, false);
 
     int fontType = state.getMergedAttributes().getFontType();
     int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
@@ -1245,7 +1246,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int offset = startOffset;
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int textLength = myDocument.getTextLength();
-    IterationState state = new IterationState(this, offset, false);
+    IterationState state = new IterationState(this, startOffset, startOffset + length, false);
     int fontType = state.getMergedAttributes().getFontType();
     int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
 
@@ -1809,7 +1810,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int visibleLineNumber = clip.y / lineHeight;
 
     VisualPosition visualPosition = xyToVisualPosition(new Point(0, clip.y));
+    VisualPosition endVisualPosition = xyToVisualPosition(new Point(0, clip.y+clip.height));
     LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
+    LogicalPosition endLogicalPosition = visualToLogicalPosition(endVisualPosition);
 
     Point position = new Point(0, visibleLineNumber * lineHeight);
     if (visualPosition.line == 0 && myPrefixText != null) {
@@ -1827,9 +1830,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     
     boolean locateBeforeSoftWrap = !SoftWrapHelper.isCaretAfterSoftWrap(this);
     int start = logicalPositionToOffset(logicalPosition);
+    int end = logicalPositionToOffset(endLogicalPosition);
     getSoftWrapModel().registerSoftWrapsIfNecessary();
 
-    IterationState iterationState = new IterationState(this, start, paintSelection());
+    IterationState iterationState = new IterationState(this, start, end, paintSelection());
 
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
@@ -2258,8 +2262,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // position is expected to be set to null as an indication that no soft wrap-introduced visual lines should be skipped on
     // current painting iteration.
     Ref<LogicalPosition> logicalPosition = new Ref<LogicalPosition>(xyToLogicalPosition(new Point(0, clip.y)));
+    LogicalPosition endLogicalPosition = xyToLogicalPosition(new Point(0, clip.y + clip.height));
     int startLineNumber = logicalPosition.get().line;
     int start = logicalPositionToOffset(logicalPosition.get());
+    int end = logicalPositionToOffset(endLogicalPosition);
 
     Point position = new Point(0, visibleLineNumber * lineHeight);
     if (startLineNumber == 0 && myPrefixText != null) {
@@ -2272,7 +2278,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    IterationState iterationState = new IterationState(this, start, paintSelection());
+    IterationState iterationState = new IterationState(this, start, end, paintSelection());
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
     if (lIterator.atEnd()) {
@@ -2330,14 +2336,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         }
         else {
-          if (hEnd > lEnd - lIterator.getSeparatorLength()) {
-            position.x = drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip,
-                                                 effectColor, effectType, fontType, currentColor, logicalPosition);
-          }
-          else {
-            position.x = drawStringWithSoftWraps(g, chars, start, hEnd, position, clip, effectColor, effectType, fontType,
-                                                 currentColor, logicalPosition);
-          }
+          position.x = drawStringWithSoftWraps(g, chars, start, Math.min(hEnd, lEnd - lIterator.getSeparatorLength()) , position, clip,
+                                               effectColor, effectType, fontType, currentColor, logicalPosition);
         }
 
         iterationState.advance();
@@ -3054,11 +3054,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     int start = myDocument.getLineStartOffset(pos.line);
+    if (pos.column == 0) return start;
     int end = myDocument.getLineEndOffset(pos.line);
 
     CharSequence text = myDocument.getCharsNoThreadCheck();
 
-    if (pos.column == 0) return start;
     return EditorUtil.calcOffset(this, text, start, end, pos.column, EditorUtil.getTabSize(this));
   }
 
@@ -5518,7 +5518,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
 
         final CharSequence text = myDocument.getCharsNoThreadCheck();
-        int end = myDocument.getTextLength();
+        int documentLength = myDocument.getTextLength();
         int x = 0;
         boolean lastLineLengthCalculated = false;
         final int fontSize = myScheme.getEditorFontSize();
@@ -5548,12 +5548,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           }
 
-          IterationState state = new IterationState(EditorImpl.this, offset, false);
+          int endLine;
+          for (endLine=line+1; endLine<lineCount;endLine++) {
+            if (myLineWidths.getQuick(endLine) != -1) {
+              break;
+            }
+          }
+          int endOffset = endLine==lineCount ? documentLength : myDocument.getLineEndOffset(endLine);
+          IterationState state = new IterationState(EditorImpl.this, offset, endOffset, false);
           int fontType = state.getMergedAttributes().getFontType();
 
           int maxPreviousSoftWrappedWidth = -1;
 
-          while (offset < end && line < lineCount) {
+          while (offset < documentLength && line < lineCount) {
             char c = text.charAt(offset);
             if (offset >= state.getEndOffset()) {
               state.advance();
@@ -5655,7 +5662,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int calcColumnNumber(CharSequence text, int start, int offset, int tabSize) {
-    IterationState state = new IterationState(this, start, false);
+    IterationState state = new IterationState(this, start, start+offset, false);
     int fontType = state.getMergedAttributes().getFontType();
     int column = 0;
     int x = 0;

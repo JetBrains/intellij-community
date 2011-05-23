@@ -306,7 +306,7 @@ public class EditorUtil {
     // hence, we need to perform special calculations to get know that.
     EditorEx editorImpl = (EditorEx)editor;
     int offset = start;
-    IterationState state = new IterationState(editorImpl, offset, false);
+    IterationState state = new IterationState(editorImpl, start, end, false);
     int fontType = state.getMergedAttributes().getFontType();
     int column = currentColumn[0];
     int spaceSize = getSpaceWidth(fontType, editorImpl);
