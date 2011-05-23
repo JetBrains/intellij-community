@@ -40,9 +40,11 @@ public class FileContentQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContentQueue");
   private static final long SIZE_THRESHOLD = 1024*1024;
   private static final long TAKEN_FILES_THRESHOLD = 1024*1024*4;
+  private static final long LARGE_SIZE_REQUEST_THRESHOLD = TAKEN_FILES_THRESHOLD - SIZE_THRESHOLD;
 
   private long myTotalSize;
   private long myTakenSize;
+  private boolean myLargeSizeRequested;
 
   private final ArrayBlockingQueue<FileContent> myQueue = new ArrayBlockingQueue<FileContent>(256);
   private final Queue<FileContent> myPushbackBuffer = new ArrayDeque<FileContent>();
@@ -141,21 +143,33 @@ public class FileContentQueue {
 
     FileContent content = doTake();
     if (content != null) {
-      synchronized (this) {
-        while (myTakenSize > TAKEN_FILES_THRESHOLD) {
-          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          if (indicator != null) {
-            indicator.checkCanceled();
+      final long length = content.getLength();
+      while (true) {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
+        synchronized (this) {
+          boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
+          if (requestingLargeSize) {
+            myLargeSizeRequested = true;
           }
           try {
-            wait(300);
+            if (myLargeSizeRequested && !requestingLargeSize ||
+                myTakenSize + length > Math.max(TAKEN_FILES_THRESHOLD, length))
+              wait(300);
+            else {
+              myTakenSize += length;
+              if (requestingLargeSize) {
+                myLargeSizeRequested = false;
+              }
+              return content;
+            }
           }
           catch (InterruptedException ignore) {
 
           }
         }
-        myTakenSize += content.getLength();
-        notifyAll();
       }
     }
     return content;
