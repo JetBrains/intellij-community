@@ -105,10 +105,15 @@ public class PyDocstringInspection extends PyInspection {
         return false;
 
       if (pyDocStringOwner instanceof PyFunction) {
+        PyDecoratorList decoratorList = ((PyFunction)pyDocStringOwner).getDecoratorList();
+        boolean isClassMethod = false;
+        if (decoratorList != null)
+          isClassMethod = decoratorList.findDecorator(PyNames.CLASSMETHOD) != null;
         PyParameter[] tmp = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
         List<String> realParams = new ArrayList<String>();
         for (PyParameter p : tmp) {
-          if (!p.getText().equals(PyNames.CANONICAL_SELF))
+          if ((!isClassMethod && !p.getText().equals(PyNames.CANONICAL_SELF)) ||
+              (isClassMethod && !p.getText().equals("cls")))
             realParams.add(p.getText());
         }
 
