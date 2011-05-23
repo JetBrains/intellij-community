@@ -148,16 +148,12 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
   }
 
   private static void collectVariants(@NotNull PairConsumer<String, Boolean> consumer, @NotNull GrReferenceExpression ref, @NotNull GroovyFile originalFile) {
-    List<String> prefix = null;
+    List<String> prefix = getPrefix(ref);
+    if (prefix == null) return;
 
     for (ConfigSlurperSupport configSlurperSupport : ConfigSlurperSupport.EP_NAME.getExtensions()) {
       ConfigSlurperSupport.PropertiesProvider provider = configSlurperSupport.getProvider(originalFile);
       if (provider == null) continue;
-
-      if (prefix == null) {
-        prefix = getPrefix(ref);
-        if (prefix == null) return;
-      }
 
       provider.collectVariants(prefix, consumer);
     }
