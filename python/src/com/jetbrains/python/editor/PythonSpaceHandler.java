@@ -28,6 +28,9 @@ public class PythonSpaceHandler extends SpaceHandler {
 
   public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     super.execute(editor, charTyped, dataContext);
+    if (charTyped != ' ') {
+      return;
+    }
 
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     VirtualFile vfile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
