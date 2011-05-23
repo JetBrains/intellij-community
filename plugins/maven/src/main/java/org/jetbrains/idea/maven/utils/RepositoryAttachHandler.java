@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,7 +48,6 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
 
 import javax.swing.*;
@@ -100,27 +98,33 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
           });
           final boolean nothingRetrieved = artifacts.isEmpty();
           final StringBuilder sb = new StringBuilder();
+          final String title;
           if (nothingRetrieved) {
-            sb.append("No files were downloaded for ").append(coord);
+            title = "No files were downloaded";
+            sb.append("for ").append(coord);
           }
           else {
-            sb.append("The following files were downloaded:<br>");
+            title = "The following files were downloaded:";
             sb.append("<ol>");
             for (MavenArtifact each : artifacts) {
               sb.append("<li>");
               sb.append(each.getFile().getName());
+              final String scope = each.getScope();
+              if (scope != null) {
+                sb.append(" (");
+                sb.append(scope);
+                sb.append(")");
+              }
               sb.append("</li>");
             }
             sb.append("</ol>");
           }
-          final String title = "Attach Jars From Repository";
           if (nothingRetrieved && ModalityState.current().dominates(ModalityState.NON_MODAL)) {
             Messages.showErrorDialog(project, sb.toString(), title);
           }
           else {
-            Notifications.Bus.notify(new Notification("Repository", sb.toString(), title,
-                                                      nothingRetrieved ? NotificationType.WARNING : NotificationType.INFORMATION),
-                                     NotificationDisplayType.STICKY_BALLOON, project);
+            Notifications.Bus.notify(new Notification("Repository", title, sb.toString(),
+                                                      nothingRetrieved ? NotificationType.WARNING : NotificationType.INFORMATION), project);
           }
           return true;
         }
@@ -128,10 +132,6 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       return callback;
     }
     return new ActionCallback.Rejected();
-  }
-
-  private static String getMavenCoordinate(String libraryName) {
-    return libraryName.substring("Managed: ".length());
   }
 
   private static void replaceLibraryData(Project project,
@@ -148,6 +148,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     }
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (MavenArtifact each : artifacts) {
+      if (MavenConstants.SCOPE_TEST.equals(each.getScope())) continue;
       try {
         File repoFile = each.getFile();
         File toFile = repoFile;
@@ -200,7 +201,6 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
           = Ref.create(Collections.<Pair<MavenArtifactInfo, MavenRepositoryInfo>>emptyList());
         final Ref<Boolean> tooManyRef = Ref.create(Boolean.FALSE);
         try {
-          MavenServerManager facade = MavenServerManager.getInstance();
           final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList =
             new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
           for (String serviceUrl : MavenRepositoryServicesManager.getServiceUrls()) {
@@ -225,7 +225,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
           result.set(resultList);
         }
         catch (Exception e) {
-          handleError(null, e);
+          MavenLog.LOG.error(e);
         }
         finally {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -246,7 +246,6 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<MavenRepositoryInfo>> result = Ref.create(Collections.<MavenRepositoryInfo>emptyList());
         try {
-          final MavenServerManager manager = MavenServerManager.getInstance();
           final ArrayList<MavenRepositoryInfo> repoList = new ArrayList<MavenRepositoryInfo>();
           for (String nexusUrl : nexusUrls) {
             final List<MavenRepositoryInfo> repositories;
@@ -262,7 +261,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
           result.set(repoList);
         }
         catch (Exception e) {
-          handleError(null, e);
+          MavenLog.LOG.error(e);
         }
         finally {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -280,10 +279,6 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     return new MavenId(parts.length > 0 ? parts[0] : null,
                        parts.length > 1 ? parts[1] : null,
                        parts.length > 2 ? parts[2] : null);
-  }
-
-  private static void handleError(String message, Exception e) {
-    MavenLog.LOG.error(message, e);
   }
 
   public static void resolveLibrary(final Project project,
