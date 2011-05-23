@@ -109,11 +109,7 @@ public class ImplementationViewComponent extends JPanel {
         return presentableName;
       }
 
-      if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS) {
-        if (Comparing.strEqual(presentableName, myElementPresentation)) {
-          return presentableName;
-        }
-      } else if (Comparing.strEqual(presentableName, myElementPresentation + "." + vFile.getExtension())){
+      if (Comparing.strEqual(vFile.getName(), myElementPresentation + "." + vFile.getExtension())){
         return presentableName;
       }
 
