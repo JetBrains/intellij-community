@@ -293,11 +293,32 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private void updateTextElement(final PsiElement elt) {
+    final String newText = getNewText(elt);
+    if (newText == null) return;
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            Document fragmentDoc = myEditor.getDocument();
+            fragmentDoc.setReadOnly(false);
+
+            fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
+            fragmentDoc.setReadOnly(true);
+            myEditor.getCaretModel().moveToOffset(0);
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          }
+        });
+      }
+    });
+  }
+
+
+  public static String getNewText(PsiElement elt) {
     Project project = elt.getProject();
     PsiFile psiFile = getContainingFile(elt);
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    if (doc == null) return;
+    if (doc == null) return null;
 
     final ImplementationTextSelectioner implementationTextSelectioner =
       LanguageImplementationTextSelectioner.INSTANCE.forLanguage(elt.getLanguage());
@@ -306,21 +327,7 @@ public class ImplementationViewComponent extends JPanel {
 
     final int lineStart = doc.getLineStartOffset(doc.getLineNumber(start));
     final int lineEnd = end < doc.getTextLength() ? doc.getLineEndOffset(doc.getLineNumber(end)) : end;
-
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            Document fragmentDoc = myEditor.getDocument();
-            fragmentDoc.setReadOnly(false);
-            fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), doc.getCharsSequence().subSequence(lineStart, lineEnd).toString());
-            fragmentDoc.setReadOnly(true);
-            myEditor.getCaretModel().moveToOffset(0);
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
-        });
-      }
-    });
+    return doc.getCharsSequence().subSequence(lineStart, lineEnd).toString();
   }
 
   private static PsiFile getContainingFile(final PsiElement elt) {
