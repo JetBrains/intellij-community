@@ -51,7 +51,12 @@ public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
     if (!(parent instanceof PsiCodeBlock)) {
       return false;
     }
-    
+
+    final ASTNode node = psiElement.getNode();
+    if (node != null && CONTROL_FLOW_ELEMENT_TYPES.contains(node.getElementType())) {
+      return false;
+    } 
+
     boolean leaveCodeBlock = isControlFlowBreak(psiElement) || isValidStatementInsideControlFlowOperator(psiElement, isModified);
     if (!leaveCodeBlock) {
       return false;
@@ -106,15 +111,25 @@ public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
     return element instanceof PsiReturnStatement || element instanceof PsiThrowStatement;
   }
   
-  private static boolean isValidStatementInsideControlFlowOperator(@Nullable PsiElement element, boolean modified) {
+  private static boolean isValidStatementInsideControlFlowOperator(final @Nullable PsiElement element, boolean modified) {
     if (modified || element == null || PsiTreeUtil.hasErrorElements(element)) {
       return false;
     }
-    final ASTNode node = element.getNode();
-    if (node == null) {
-      return false;
-    }
+    
+    for (PsiElement e = element; e != null; e = e.getParent()) {
+      final ASTNode node = e.getNode();
+      if (node == null) {
+        return false;
+      }
 
-    return !CONTROL_FLOW_ELEMENT_TYPES.contains(node.getElementType());
+      if (node.getElementType() == JavaElementType.METHOD) {
+        return false;
+      }
+      
+      if (CONTROL_FLOW_ELEMENT_TYPES.contains(node.getElementType())) {
+        return true;
+      } 
+    }
+    return false;
   }
 }
