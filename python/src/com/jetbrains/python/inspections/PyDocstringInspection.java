@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.DocstringQuickFix;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.EpydocString;
@@ -106,8 +107,10 @@ public class PyDocstringInspection extends PyInspection {
       if (pyDocStringOwner instanceof PyFunction) {
         PyParameter[] tmp = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
         List<String> realParams = new ArrayList<String>();
-        for (PyParameter p : tmp)
-          realParams.add(p.getText());
+        for (PyParameter p : tmp) {
+          if (!p.getText().equals(PyNames.CANONICAL_SELF))
+            realParams.add(p.getText());
+        }
 
         List<String> missingParams = getMissingParams(realParams, docstringParams);
         String missingString = getMissingText("Missing", missingParams);
