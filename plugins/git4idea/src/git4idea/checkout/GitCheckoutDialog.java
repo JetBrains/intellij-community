@@ -20,6 +20,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.ComboBoxWithHistory;
 import git4idea.GitBranch;
 import git4idea.GitTag;
 import git4idea.GitVcs;
@@ -68,6 +70,11 @@ public class GitCheckoutDialog extends DialogWrapper {
     assert roots.size() > 0;
     myProject = project;
     mySettings = GitVcsSettings.getInstance(myProject);
+
+    final ComboBoxWithHistory cb = (ComboBoxWithHistory)myBranchToCkeckout;
+    cb.setProject(myProject);
+    cb.load();
+
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranch);
     setupIncludeTags();
     setupBranches();
@@ -208,10 +215,7 @@ public class GitCheckoutDialog extends DialogWrapper {
             GitTag.listAsStrings(myProject, gitRoot(), branchesAndTags, null);
             Collections.sort(branchesAndTags.subList(mark, branchesAndTags.size()));
           }
-          myBranchToCkeckout.removeAllItems();
-          for (String item : branchesAndTags) {
-            myBranchToCkeckout.addItem(item);
-          }
+          ((ComboBoxWithHistory)myBranchToCkeckout).setModelFrom(branchesAndTags.toArray());
           myBranchToCkeckout.setSelectedItem("");
         }
         catch (VcsException ex) {
@@ -312,5 +316,11 @@ public class GitCheckoutDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.CheckoutBranch";
+  }
+
+  private void createUIComponents() {
+    myBranchToCkeckout = new ComboBoxWithHistory(myProject, "git.branches", ArrayUtil.EMPTY_OBJECT_ARRAY);
+    myBranchToCkeckout.setEditable(true);
+    myBranchToCkeckout.setToolTipText(GitBundle.message("checkout.ref.tooltip"));
   }
 }
