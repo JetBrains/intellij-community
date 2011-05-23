@@ -378,18 +378,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     void process(RangeHighlighter highlighter);
   }
 
-  private void processRangeHighlighters(RangeHighlighterProcessor processor, int startOffset, int endOffset) {
-    final MarkupModelEx docMarkup = (MarkupModelEx)myEditor.getDocument().getMarkupModel(myEditor.getProject());
-    Iterator<RangeHighlighterEx> docHighlighters = docMarkup.iterator();
+  private void processRangeHighlighters(int startOffset, int endOffset, RangeHighlighterProcessor processor) {
+    Document document = myEditor.getDocument();
+    final MarkupModelEx docMarkup = (MarkupModelEx)document.getMarkupModel(myEditor.getProject());
+    // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
+    int docLength = document.getTextLength();
+    int patchedStartOffset = startOffset < docLength ? document.getLineStartOffset(document.getLineNumber(startOffset)) : docLength;
+    int patchedEndOffset = endOffset <= docLength ? document.getLineEndOffset(document.getLineNumber(endOffset)) + 1 : docLength;
+    Iterator<RangeHighlighterEx> docHighlighters = docMarkup.overlappingIterator(patchedStartOffset, patchedEndOffset);
 
     final MarkupModelEx editorMarkup = (MarkupModelEx)myEditor.getMarkupModel();
-    Iterator<RangeHighlighterEx> editorHighlighters = editorMarkup.iterator();
+    Iterator<RangeHighlighterEx> editorHighlighters = editorMarkup.overlappingIterator(startOffset, endOffset);
 
     RangeHighlighterEx lastDocHighlighter = null;
     RangeHighlighterEx lastEditorHighlighter = null;
 
     while (true) {
-      if (lastDocHighlighter == null && docHighlighters != null && docHighlighters.hasNext()) {
+      if (lastDocHighlighter == null && docHighlighters.hasNext()) {
         lastDocHighlighter = docHighlighters.next();
         if (!lastDocHighlighter.isValid() || lastDocHighlighter.getAffectedAreaStartOffset() > endOffset) {
           lastDocHighlighter = null;
@@ -397,12 +402,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
         if (lastDocHighlighter.getAffectedAreaEndOffset() < startOffset) {
           lastDocHighlighter = null;
-          //docHighlighters = null;
           continue;
         }
       }
 
-      if (lastEditorHighlighter == null && editorHighlighters != null && editorHighlighters.hasNext()) {
+      if (lastEditorHighlighter == null && editorHighlighters.hasNext()) {
         lastEditorHighlighter = editorHighlighters.next();
         if (!lastEditorHighlighter.isValid() || lastEditorHighlighter.getAffectedAreaStartOffset() > endOffset) {
           lastEditorHighlighter = null;
@@ -410,7 +414,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
         if (lastEditorHighlighter.getAffectedAreaEndOffset() < startOffset) {
           lastEditorHighlighter = null;
-          //editorHighlighters = null;
           continue;
         }
       }
@@ -432,10 +435,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (!lowerHighlighter.isValid()) continue;
 
       int startLineIndex = lowerHighlighter.getDocument().getLineNumber(startOffset);
-      if (startLineIndex < 0 || startLineIndex >= myEditor.getDocument().getLineCount()) continue;
+      if (startLineIndex < 0 || startLineIndex >= document.getLineCount()) continue;
 
       int endLineIndex = lowerHighlighter.getDocument().getLineNumber(endOffset);
-      if (endLineIndex < 0 || endLineIndex >= myEditor.getDocument().getLineCount()) continue;
+      if (endLineIndex < 0 || endLineIndex >= document.getLineCount()) continue;
 
       if (lowerHighlighter.getEditorFilter().avaliableIn(myEditor)) {
         processor.process(lowerHighlighter);
@@ -488,7 +491,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void calcIconAreaWidth() {
     myLineToGutterRenderers = new TIntObjectHashMap<ArrayList<GutterIconRenderer>>();
 
-    processRangeHighlighters(new RangeHighlighterProcessor() {
+    processRangeHighlighters(0, myEditor.getDocument().getTextLength(), new RangeHighlighterProcessor() {
       public void process(RangeHighlighter highlighter) {
         GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
         if (renderer == null) return;
@@ -506,7 +509,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           renderers.add(renderer);
         }
       }
-    }, 0, myEditor.getDocument().getTextLength());
+    });
 
     myIconsAreaWidth = START_ICON_AREA_WIDTH;
 
@@ -535,11 +538,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Object hint = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     try {
-      processRangeHighlighters(new RangeHighlighterProcessor() {
+      processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, new RangeHighlighterProcessor() {
         public void process(RangeHighlighter highlighter) {
           paintLineMarkerRenderer(highlighter, g);
         }
-      }, firstVisibleOffset, lastVisibleOffset);
+      });
     }
     finally {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
@@ -1223,7 +1226,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int lastVisibleOffset = myEditor.logicalPositionToOffset(
       myEditor.xyToLogicalPosition(new Point(0, clip.y + clip.height + myEditor.getLineHeight())));
 
-    processRangeHighlighters(new RangeHighlighterProcessor() {
+    processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, new RangeHighlighterProcessor() {
       public void process(RangeHighlighter highlighter) {
         if (gutterRenderer[0] != null) return;
         Rectangle rectangle = getLineRendererRectangle(highlighter);
@@ -1242,7 +1245,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           }
         }
       }
-    }, firstVisibleOffset, lastVisibleOffset);
+    });
     return gutterRenderer[0];
   }
 

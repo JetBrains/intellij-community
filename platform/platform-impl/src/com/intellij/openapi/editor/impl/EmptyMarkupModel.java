@@ -106,14 +106,12 @@ public class EmptyMarkupModel implements MarkupModelEx {
     return false;
   }
 
-  public Iterator<RangeHighlighterEx> iterator() {
+  @NotNull
+  @Override
+  public Iterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     return ContainerUtil.emptyIterator();
   }
 
-  @NotNull
-  public Iterator<RangeHighlighterEx> iteratorFrom(@NotNull Interval interval) {
-    return iterator();
-  }
   public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
     return false;
   }
