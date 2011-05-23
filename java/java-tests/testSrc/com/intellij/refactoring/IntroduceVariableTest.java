@@ -194,6 +194,34 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("str", false, false, false, "boolean"));
   }
 
+  public void testArrayFromVarargs() throws Exception {
+    doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String[]"));
+  }
+
+  public void testNoArrayFromVarargs() throws Exception {
+    try {
+      doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String[]"));
+    }
+    catch (Exception e) {
+      assertEquals(e.getMessage(), "Error message:Cannot perform refactoring.\n" +
+                                   "Selected block should represent an expression.");
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
+   public void testNoArrayFromVarargs1() throws Exception {
+    try {
+      doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String[]"));
+    }
+    catch (Exception e) {
+      assertEquals(e.getMessage(), "Error message:Cannot perform refactoring.\n" +
+                                   "Selected block should represent an expression.");
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
   public void testNonExpression() throws Exception {
     doTest(new MockIntroduceVariableHandler("sum", true, true, false, "int"));
   }

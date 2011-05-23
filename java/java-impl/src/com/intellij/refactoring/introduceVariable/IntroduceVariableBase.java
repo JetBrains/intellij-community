@@ -242,8 +242,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final PsiLiteralExpression endLiteralExpression = PsiTreeUtil.getParentOfType(file.findElementAt(endOffset), PsiLiteralExpression.class);
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    String text = null;
     try {
-      String text = file.getText().subSequence(startOffset, endOffset).toString();
+      text = file.getText().subSequence(startOffset, endOffset).toString();
       String prefix = null;
       String suffix = null;
       String stripped = text;
@@ -350,10 +351,60 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       }
     }
     catch (IncorrectOperationException e) {
-      return null;
+      return createArrayCreationExpression(text, startOffset, endOffset, PsiTreeUtil.getParentOfType(elementAt, PsiMethodCallExpression.class));
     }
 
     return tempExpr;
+  }
+
+  private static PsiExpression createArrayCreationExpression(String text, int startOffset, int endOffset, PsiMethodCallExpression parent) {
+    if (text == null || parent == null) return null;
+    final String[] varargsExpressions = text.split("s*,s*");
+    if (varargsExpressions.length > 1) {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parent.getProject());
+      final PsiMethod psiMethod = parent.resolveMethod();
+      if (psiMethod == null || !psiMethod.isVarArgs()) return null;
+      final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+      final PsiParameter varargParameter = parameters[parameters.length - 1];
+      final PsiType type = varargParameter.getType();
+      LOG.assertTrue(type instanceof PsiEllipsisType);
+      final PsiArrayType psiType = (PsiArrayType)((PsiEllipsisType)type).toArrayType();
+      final PsiExpression[] args = parent.getArgumentList().getExpressions();
+      final PsiSubstitutor psiSubstitutor =
+        JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper().inferTypeArguments(psiMethod.getTypeParameters(), parameters,
+                                                                                             args, PsiSubstitutor.EMPTY, parent, false);
+
+      if (startOffset < args[parameters.length - 1].getTextOffset()) return null;
+
+      final PsiFile containingFile = parent.getContainingFile();
+
+      PsiElement startElement = containingFile.findElementAt(startOffset);
+      while (startElement != null && startElement.getParent() != parent.getArgumentList()) {
+        startElement = startElement.getParent();
+      }
+      if (startElement == null || startOffset > startElement.getTextOffset()) return null;
+
+      PsiElement endElement = containingFile.findElementAt(endOffset - 1);
+      while (endElement != null && endElement.getParent() != parent.getArgumentList()) {
+        endElement = endElement.getParent();
+      }
+      if (endElement == null || endOffset < endElement.getTextRange().getEndOffset()) return null;
+
+      final PsiType componentType = psiSubstitutor.substitute(psiType.getComponentType());
+      try {
+        final PsiExpression expressionFromText =
+          elementFactory.createExpressionFromText("new " + componentType.getCanonicalText() + "[]{" + text + "}", parent);
+        final RangeMarker rangeMarker =
+        FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()).createRangeMarker(startOffset, endOffset);
+        expressionFromText.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
+        expressionFromText.putUserData(ElementToWorkOn.PARENT, parent);
+        return expressionFromText;
+      }
+      catch (IncorrectOperationException e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   protected boolean invokeImpl(final Project project, final PsiExpression expr,
