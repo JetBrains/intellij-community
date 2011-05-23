@@ -136,6 +136,10 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 class ResourceCopier implements ModuleBuilder {
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    if (state.iterated) return;
+
+    state.iterated = true
+
     if (state.sourceRoots.isEmpty()) return;
 
     def ant = project.binding.ant
@@ -283,19 +287,19 @@ class JetBrainsInstrumentations implements ModuleBuilder {
   }
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
-    final StringBuffer cp = new StringBuffer()
+    if (state.loader == null) {
+      final StringBuffer cp = new StringBuffer()
 
-    cp.append(state.targetFolder)
-    cp.append(File.pathSeparator)
-
-    state.classpath.each {
-      cp.append(it)
+      cp.append(state.targetFolder)
       cp.append(File.pathSeparator)
-    }
 
-    final ClassLoader loader = InstrumentationUtil.createClassLoader(cp.toString())
+      state.classpath.each {
+        cp.append(it)
+        cp.append(File.pathSeparator)
+      }
 
-    if (!state.incremental) {
+      state.loader = InstrumentationUtil.createClassLoader(cp.toString())
+
       final List<File> formFiles = new ArrayList<File>();
       final ProjectWrapper pw = state.projectWrapper;
 
@@ -314,10 +318,20 @@ class JetBrainsInstrumentations implements ModuleBuilder {
         nestedFormDirs << new PrefixedPath(project.binding.ant.project, it)
       }
 
-      final CustomFormInstrumenter fi = new CustomFormInstrumenter(new File(state.targetFolder), nestedFormDirs, formFiles, state);
+      state.formInstrumenter = new CustomFormInstrumenter(new File(state.targetFolder), nestedFormDirs, formFiles, state);
 
-      for (File formFile: formFiles) {
-        fi.instrumentForm(formFile, loader);
+      if (!state.incremental) {
+        for (File formFile: formFiles) {
+          state.formInstrumenter.instrumentForm(formFile, state.loader);
+        }
+      }
+    }
+
+    if (state.incremental) {
+      for (String f: state.sourceFiles) {
+        if (f.endsWith(".form")) {
+          state.formInstrumenter.instrumentForm(new File(f), state.loader);
+        }
       }
     }
 
@@ -333,7 +347,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
             final String name = f.getName();
 
             if (name.endsWith(".class")) {
-              InstrumentationUtil.instrumentNotNull(f, loader)
+              InstrumentationUtil.instrumentNotNull(f, state.loader)
             }
             else if (f.isDirectory()) {
               traverse(f)
@@ -346,7 +360,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       final Collection<StringCache.S> classes = state.callback.getClassFiles()
 
       classes.each {
-        InstrumentationUtil.instrumentNotNull(new File(state.targetFolder + File.separator + it.value + ".class"), loader)
+        InstrumentationUtil.instrumentNotNull(new File(state.targetFolder + File.separator + it.value + ".class"), state.loader)
       }
     }
   }

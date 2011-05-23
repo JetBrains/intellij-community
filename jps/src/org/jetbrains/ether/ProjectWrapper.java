@@ -242,8 +242,13 @@ public class ProjectWrapper {
 
             final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.reader, new HashSet<ClassRepr>());
             final Set<UsageRepr.Usage> usages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
+            final Set<StringCache.S> formClasses = (Set<StringCache.S>) RW.readMany(r, StringCache.S.reader, new HashSet<StringCache.S>());
 
             backendCallback.associate(classes, usages, myName.value);
+
+            for (StringCache.S classFileName : formClasses) {
+                backendCallback.associateForm(myName, classFileName);
+            }
         }
 
         public StringCache.S getName() {
@@ -262,6 +267,7 @@ public class ProjectWrapper {
 
             RW.writeln(w, dependencyMapping.getClasses(name));
             RW.writeln(w, dependencyMapping.getUsages(name));
+            RW.writeln(w, dependencyMapping.getFormClass(name));
         }
 
         @Override
@@ -930,9 +936,27 @@ public class ProjectWrapper {
 
         boolean iterativeCompile(final ModuleChunk chunk, final boolean tests, final Set<StringCache.S> sources, final Set<StringCache.S> outdated, final Set<StringCache.S> removed) {
             final Collection<StringCache.S> filesToCompile = DefaultGroovyMethods.intersect(affectedFiles, sources);
+            final Set<StringCache.S> safeFiles = new HashSet<StringCache.S>();
 
             if (outdated != null) {
                 filesToCompile.addAll(outdated);
+
+                for (StringCache.S f : outdated) {
+                    if (f.value.endsWith(".form")) {
+                        final StringCache.S sourceFileName = dependencyMapping.getJavaByForm(f);
+
+                        if (!filesToCompile.contains(sourceFileName)) {
+                            safeFiles.add(sourceFileName);
+                            filesToCompile.add(sourceFileName);
+                        }
+                    } else if (f.value.endsWith(".java")) {
+                        final StringCache.S formFileName = dependencyMapping.getFormByJava(f);
+
+                        if (formFileName != null) {
+                            filesToCompile.add(formFileName);
+                        }
+                    }
+                }
             }
 
             filesToCompile.removeAll(compiledFiles);
@@ -966,7 +990,7 @@ public class ProjectWrapper {
                 compiledFiles.addAll(filesToCompile);
                 affectedFiles.removeAll(filesToCompile);
 
-                final boolean incremental = dependencyMapping.differentiate(delta, removed, compiledFiles, affectedFiles);
+                final boolean incremental = dependencyMapping.differentiate(delta, removed, compiledFiles, affectedFiles, safeFiles);
 
                 dependencyMapping.integrate(delta, removed);
 

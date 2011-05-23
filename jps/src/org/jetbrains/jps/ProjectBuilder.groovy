@@ -254,6 +254,9 @@ class ProjectBuilder {
       List chunkDependenciesSourceRoots = transitiveModuleDependenciesSourcePaths(chunk, tests)
       Map<ModuleBuildState, ModuleChunk> states = new HashMap<ModuleBuildState, ModuleChunk>()
       def chunkState = new ModuleBuildState(
+              iterated: false,
+              loader: null,
+              formInstrumenter: null,
               tests: tests,
               projectWrapper: pw,
               incremental: files != null,
@@ -269,6 +272,9 @@ class ProjectBuilder {
           List<String> sourceRoots = filterNonExistingFiles(tests ? it.testRoots : it.sourceRoots, false)
           if (!sourceRoots.isEmpty()) {
             def state = new ModuleBuildState(
+                    iterated: false,
+                    loader: null,
+                    formInstrumenter: null,
                     tests: tests,
                     projectWrapper: pw,
                     incremental: chunkState.incremental,

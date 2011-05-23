@@ -43,6 +43,7 @@ public class Mappings {
     private FoxyMap<StringCache.S, StringCache.S> fileToFileDependency = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
     private FoxyMap<StringCache.S, StringCache.S> waitingForResolve = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
     private Map<StringCache.S, StringCache.S> formToClass = new HashMap<StringCache.S, StringCache.S>();
+    private Map<StringCache.S, StringCache.S> classToForm = new HashMap<StringCache.S, StringCache.S>();
 
     private void affectAll(final StringCache.S fileName, final Set<StringCache.S> affectedFiles) {
         final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
@@ -52,7 +53,7 @@ public class Mappings {
         }
     }
 
-    public boolean differentiate(final Mappings delta, final Set<StringCache.S> removed, final Set<StringCache.S> compiledFiles, final Set<StringCache.S> affectedFiles) {
+    public boolean differentiate(final Mappings delta, final Set<StringCache.S> removed, final Set<StringCache.S> compiledFiles, final Set<StringCache.S> affectedFiles, final Set<StringCache.S> safeFiles) {
         if (removed != null) {
             for (StringCache.S file : removed) {
                 affectAll(file, affectedFiles);
@@ -60,6 +61,10 @@ public class Mappings {
         }
 
         for (StringCache.S fileName : delta.sourceFileToClasses.keySet()) {
+            if (safeFiles.contains(fileName)) {
+                continue;
+            }
+
             final Set<ClassRepr> classes = (Set<ClassRepr>) delta.sourceFileToClasses.foxyGet(fileName);
             final Set<ClassRepr> pastClasses = (Set<ClassRepr>) sourceFileToClasses.foxyGet(fileName);
             final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
@@ -142,6 +147,8 @@ public class Mappings {
             }
         }
 
+        formToClass.putAll(delta.formToClass);
+        classToForm.putAll(delta.classToForm);
         sourceFileToClasses.putAll(delta.sourceFileToClasses);
         sourceFileToUsages.putAll(delta.sourceFileToUsages);
         classToSourceFile.putAll(delta.classToSourceFile);
@@ -150,6 +157,7 @@ public class Mappings {
 
     private void updateFormToClass(final StringCache.S formName, final StringCache.S className) {
         formToClass.put(formName, className);
+        classToForm.put(className, formName);
     }
 
     private void updateSourceToUsages(final StringCache.S source, final Set<UsageRepr.Usage> usages) {
@@ -246,6 +254,36 @@ public class Mappings {
 
     public Set<UsageRepr.Usage> getUsages(final StringCache.S sourceFileName) {
         return (Set<UsageRepr.Usage>) sourceFileToUsages.foxyGet(sourceFileName);
+    }
+
+    public Set<StringCache.S> getFormClass(final StringCache.S formFileName) {
+        final Set<StringCache.S> result = new HashSet<StringCache.S>();
+        final StringCache.S name = formToClass.get(formFileName);
+
+        if (name != null) {
+            result.add(name);
+        }
+
+        return result;
+    }
+
+    public StringCache.S getJavaByForm(final StringCache.S formFileName) {
+        final StringCache.S classFileName = formToClass.get(formFileName);
+        return classToSourceFile.get(classFileName);
+    }
+
+    public StringCache.S getFormByJava(final StringCache.S javaFileName) {
+        final Set<ClassRepr> classes = getClasses(javaFileName);
+
+        for (ClassRepr c : classes) {
+            final StringCache.S formName = classToForm.get(c.name);
+
+            if (formName != null) {
+                return formName;
+            }
+        }
+
+        return null;
     }
 
     public void print() {

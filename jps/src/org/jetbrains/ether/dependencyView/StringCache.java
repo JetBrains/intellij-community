@@ -17,11 +17,11 @@ import java.util.Map;
  */
 public class StringCache {
 
-    public static class S implements Comparable<S> {
+    public static class S implements Comparable<S>, RW.Writable {
         public final int index;
         public final String value;
 
-        private S (final int i, final String v) {
+        private S(final int i, final String v) {
             index = i;
             value = v;
         }
@@ -46,39 +46,50 @@ public class StringCache {
         public int compareTo(S o) {
             return index - o.index;
         }
+
+        public void write(BufferedWriter w) {
+            RW.writeln(w, value);
+        }
+
+        public static final RW.Reader<S> reader = new RW.Reader<S>() {
+            public S read(final BufferedReader r) {
+                final String s = RW.readString(r);
+                return StringCache.get(s);
+            }
+        };
     }
 
-    private static final Map<String, S> map = new HashMap<String, S> ();
+    private static final Map<String, S> map = new HashMap<String, S>();
     private static int index = 0;
 
-    public static S get (final String s) {
+    public static S get(final String s) {
 //        if (s == null)
 //            return null;
 //
         S r = map.get(s);
 
         if (r == null) {
-            r = new S (index++, s);
+            r = new S(index++, s);
             map.put(s, r);
         }
 
         return r;
     }
 
-    public static S[] get (final String[] s) {
+    public static S[] get(final String[] s) {
         if (s == null) {
             return null;
         }
 
         final S[] r = new S[s.length];
 
-        for (int i = 0; i<r.length; i++)
-            r[i] = get (s[i]);
+        for (int i = 0; i < r.length; i++)
+            r[i] = get(s[i]);
 
         return r;
     }
 
-    public static RW.ToWritable<S> fromS = new RW.ToWritable<S> () {
+    public static RW.ToWritable<S> fromS = new RW.ToWritable<S>() {
         public RW.Writable convert(S x) {
             return RW.fromString.convert(x.value);
         }
@@ -87,7 +98,7 @@ public class StringCache {
     public static RW.Reader<S> reader = new RW.Reader<S>() {
         public S read(final BufferedReader r) {
             try {
-                return get (r.readLine());
+                return get(r.readLine());
             } catch (IOException e) {
                 e.printStackTrace();
                 return null;
