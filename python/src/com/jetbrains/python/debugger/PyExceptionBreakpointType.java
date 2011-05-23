@@ -5,7 +5,6 @@ import com.intellij.ide.util.AbstractTreeClassChooserDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -60,8 +59,10 @@ public class PyExceptionBreakpointType
       assert qualifiedName != null : "Qualified name of the class shouldn't be null";
       return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<PyExceptionBreakpointProperties>>() {
         public XBreakpoint<PyExceptionBreakpointProperties> compute() {
-          return XDebuggerManager.getInstance(project).getBreakpointManager()
-            .addBreakpoint(PyExceptionBreakpointType.this, new PyExceptionBreakpointProperties(qualifiedName));
+          XBreakpoint<PyExceptionBreakpointProperties> breakpoint =
+            XDebuggerManager.getInstance(project).getBreakpointManager()
+              .addBreakpoint(PyExceptionBreakpointType.this, new PyExceptionBreakpointProperties(qualifiedName));
+          return breakpoint;
         }
       });
     }
