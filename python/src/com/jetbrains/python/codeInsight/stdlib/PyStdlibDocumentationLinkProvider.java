@@ -584,7 +584,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     boolean foundModule = false;
     for (String module : modules) {
       if (qnameString.startsWith(module)) {
-        urlBuilder.append(module);
+        urlBuilder.append(module.toLowerCase());
         urlBuilder.append(".html");
         foundModule = true;
         break;
