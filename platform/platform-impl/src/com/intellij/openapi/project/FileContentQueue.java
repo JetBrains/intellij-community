@@ -147,7 +147,13 @@ public class FileContentQueue {
       while (true) {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator != null) {
-          indicator.checkCanceled();
+          try {
+            indicator.checkCanceled();
+          }
+          catch (ProcessCanceledException e) {
+            pushback(content);
+            throw e;
+          }
         }
         synchronized (this) {
           boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
