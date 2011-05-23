@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.PyElementType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -57,7 +58,7 @@ public class Parsing {
     LOG.assertTrue(myBuilder.getTokenType() == tokenType);
   }
 
-  protected boolean atToken(final IElementType tokenType) {
+  protected boolean atToken(@Nullable final IElementType tokenType) {
     return myBuilder.getTokenType() == tokenType;
   }
 

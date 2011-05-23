@@ -113,14 +113,15 @@ public class FunctionParsing extends Parsing {
         if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
           myBuilder.advanceLexer();
         }
-        else if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
-          parseParameterSubList();
-          continue;
-        }
         else {
           myBuilder.error(message("PARSE.expected.comma.lpar.rpar"));
           break;
         }
+      }
+
+      if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
+        parseParameterSubList();
+        continue;
       }
 
       final PsiBuilder.Marker parameter = myBuilder.mark();
@@ -155,8 +156,13 @@ public class FunctionParsing extends Parsing {
         parameter.done(PyElementTypes.NAMED_PARAMETER);
       }
       else {
-        myBuilder.error(message("PARSE.expected.formal.param.name"));
         parameter.rollbackTo();
+        PsiBuilder.Marker invalidElements = myBuilder.mark();
+        while (!atToken(endToken) && !atToken(PyTokenTypes.LINE_BREAK) && !atToken(PyTokenTypes.COMMA) && !atToken(null)) {
+          nextToken();
+        }
+        invalidElements.error(message("PARSE.expected.formal.param.name"));
+        break;
       }
     }
 
