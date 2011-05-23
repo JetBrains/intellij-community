@@ -816,7 +816,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerDataFlowInspections() {
-        m_inspectionClasses.add(ConstantValueVariableUseInspection .class);
+        m_inspectionClasses.add(BooleanVariableAlwaysNegatedInspection.class);
+        m_inspectionClasses.add(ConstantValueVariableUseInspection.class);
         m_inspectionClasses.add(LawOfDemeterInspection.class);
         m_inspectionClasses.add(OrredNotEqualExpressionInspection.class);
         m_inspectionClasses.add(ReuseOfLocalVariableInspection.class);
