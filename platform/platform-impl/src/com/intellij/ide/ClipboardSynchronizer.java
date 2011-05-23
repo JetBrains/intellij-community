@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.IntegerType;
@@ -202,7 +203,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   private Transferable doGetContents() throws IllegalStateException {
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac && Registry.is("ide.mac.useNativeClipboard")) {
       Transferable safe = getContentsSafe();
       if (safe != null) {
         return safe;
