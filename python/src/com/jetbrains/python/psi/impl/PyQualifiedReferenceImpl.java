@@ -6,9 +6,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
@@ -70,10 +72,16 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
     }
     else if (myContext.allowImplicits()) {
-      final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
-      for (PyFunction function : functions) {
-        if (function.getContainingClass() != null) {
-          ret.add(new ImplicitResolveResult(function));
+      final Collection functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
+      for (Object function : functions) {
+        if (!(function instanceof PyFunction)) {
+          FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
+                                                       new Throwable("found non-function object " + function + " in function list"));
+          break;
+        }
+        PyFunction pyFunction = (PyFunction) function;
+        if (pyFunction.getContainingClass() != null) {
+          ret.add(new ImplicitResolveResult(pyFunction));
         }
       }
     }
