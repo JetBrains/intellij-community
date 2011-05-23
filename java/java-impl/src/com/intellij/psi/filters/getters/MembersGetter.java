@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.filters.getters;
 
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
@@ -38,7 +38,7 @@ public abstract class MembersGetter {
 
     PsiClass current = PsiTreeUtil.getContextOfType(context, PsiClass.class);
     while (current != null) {
-      current = JavaCompletionUtil.getOriginalElement(current);
+      current = CompletionUtil.getOriginalOrSelf(current);
       if (InheritanceUtil.isInheritorOrSelf(current, where, true)) {
         return;
       }
