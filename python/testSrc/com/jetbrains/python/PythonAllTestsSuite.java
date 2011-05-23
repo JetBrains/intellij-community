@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.jetbrains.python.codeInsight.PyCompletionPatternsTest;
 import com.jetbrains.python.inspections.PyArgumentListInspectionTest;
 import com.jetbrains.python.refactoring.*;
 import com.jetbrains.python.refactoring.classes.PyExtractSuperclassTest;
@@ -72,7 +73,8 @@ public class PythonAllTestsSuite {
     PyEmacsTabTest.class,
     PyTypeParserTest.class,
     PyOverrideTest.class,
-    PyBinaryModuleCompletionTest.class
+    PyBinaryModuleCompletionTest.class,
+    PyCompletionPatternsTest.class
   };
 
   public static TestSuite suite() {
