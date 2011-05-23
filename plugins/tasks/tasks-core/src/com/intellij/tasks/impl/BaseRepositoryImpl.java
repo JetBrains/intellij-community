@@ -101,7 +101,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   public abstract class HttpTestConnection<T extends HttpMethod> extends CancellableConnection {
 
-    private T myMethod;
+    protected T myMethod;
 
     public HttpTestConnection(T method) {
       myMethod = method;
