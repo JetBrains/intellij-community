@@ -167,7 +167,6 @@ class TeamcityTestRunner:
 
     def run(self, test):
         result = self._makeResult()
-        result.messages.testCount(test.countTestCases())
         test(result)
         result.endLastSuite()
         return result
