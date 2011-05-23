@@ -142,16 +142,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return ret.toArray(new ResolveResult[ret.size()]);
   }
 
-  protected static class ResultList extends ArrayList<RatedResolveResult> {
-    // Allows to add non-null elements and discard nulls in a hassle-free way.
-
-    public boolean poke(final PsiElement what, final int rate) {
-      if (what == null) return false;
-      super.add(new RatedResolveResult(rate, what));
-      return true;
-    }
-  }
-
 
   /**
    * Does actual resolution of resolve().
@@ -161,7 +151,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    */
   @NotNull
   protected List<RatedResolveResult> resolveInner() {
-    ResultList ret = new ResultList();
+    ResolveResultList ret = new ResolveResultList();
 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
@@ -194,14 +184,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       // ...as a part of current module
       PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
       if (otype != null) {
-        final List<? extends PsiElement> members = otype.resolveMember(myElement.getName(), null, AccessDirection.READ, myContext);
-        if (members != null) {
-          int rate = RatedResolveResult.RATE_NORMAL;
-          for (PsiElement member : members) {
-            ret.poke(member, rate);
-            rate = RatedResolveResult.RATE_LOW;
-          }
-        }
+        ret.addAll(otype.resolveMember(myElement.getName(), null, AccessDirection.READ, myContext));
       }
     }
     if (uexpr == null) {

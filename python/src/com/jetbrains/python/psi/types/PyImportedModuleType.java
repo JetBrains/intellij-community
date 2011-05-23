@@ -4,18 +4,18 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,17 +29,12 @@ public class PyImportedModuleType implements PyType {
   }
 
   @NotNull
-  public List<? extends PsiElement> resolveMember(String name,
-                                                  PyExpression location,
-                                                  AccessDirection direction,
-                                                  PyResolveContext resolveContext) {
+  public List<? extends RatedResolveResult> resolveMember(String name,
+                                                          PyExpression location,
+                                                          AccessDirection direction,
+                                                          PyResolveContext resolveContext) {
     final PsiElement element = myImportedModule.getElementNamed(name);
-    if (element != null) {
-      return new SmartList<PsiElement>(element);
-    }
-    else {
-      return Collections.emptyList();
-    }
+    return ResolveResultList.to(element);
   }
 
   public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {

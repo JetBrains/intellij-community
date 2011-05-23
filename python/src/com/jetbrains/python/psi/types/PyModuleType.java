@@ -10,11 +10,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -43,20 +44,20 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(final String name,
-                                                  PyExpression location,
-                                                  AccessDirection direction,
-                                                  PyResolveContext resolveContext) {
+  public List<? extends RatedResolveResult> resolveMember(final String name,
+                                                          PyExpression location,
+                                                          AccessDirection direction,
+                                                          PyResolveContext resolveContext) {
     for(PyModuleMembersProvider provider: Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
       final PsiElement element = provider.resolveMember(myModule, name);
       if (element != null) {
-        return new SmartList<PsiElement>(element);
+        return ResolveResultList.to(element);
       }
     }
 
     //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
     final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, myModule, null, false, true);
-    if (result != null) return new SmartList<PsiElement>(result);
+    if (result != null) return ResolveResultList.to(result);
     return Collections.emptyList();
   }
 
