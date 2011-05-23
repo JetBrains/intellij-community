@@ -2,17 +2,13 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
-import com.intellij.idea.Bombed;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-
-import java.util.Calendar;
 
 /**
  * User: anna
  */
 public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
-  @Bombed(day = 25, month = Calendar.MAY, user = "peter")
   public void testFromCompletion() {
     myFixture.configureByText("a.java", "public class Foo {\n" +
                                         "    private final String text;\n" +
@@ -43,9 +39,10 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     assert element != null;
     final String newText = ImplementationViewComponent.getNewText(element);
 
-    assertEquals("    public String toString() {\n" +
+    assertEquals("    @Override\n" +
+                 "    public String toString() {\n" +
                  "        return \"text\";\n" +
-                 "    }\n", newText);
+                 "    }", newText);
   }
 
   public void testFromEditor() {

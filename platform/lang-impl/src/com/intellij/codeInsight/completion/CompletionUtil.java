@@ -21,6 +21,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -226,6 +227,11 @@ public class CompletionUtil {
     final Object object = lookupElement.getObject();
     if (object instanceof PsiElement) {
       return getOriginalElement((PsiElement)object);
+    }
+
+    if (object instanceof LookupValueWithPsiElement) {
+      final PsiElement element = ((LookupValueWithPsiElement)object).getElement();
+      if (element != null) return getOriginalElement(element);
     }
 
     return null;
