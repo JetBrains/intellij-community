@@ -71,6 +71,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   protected void init() {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+      resetDefaultNames();
       provider.customizeSettings(this, getSettingsType());
     }
   }
@@ -80,6 +81,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     boolean languageProviderFound = false;
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
       if (provider.getLanguage().is(language)) {
+        resetDefaultNames();
         provider.customizeSettings(this, getSettingsType());
         languageProviderFound = true;
         break;
@@ -107,6 +109,9 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   protected abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();
 
   protected void onLanguageChange(Language language) {
+  }
+
+  protected void resetDefaultNames() {
   }
 
   @Override
