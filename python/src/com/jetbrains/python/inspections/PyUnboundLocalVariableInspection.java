@@ -57,23 +57,16 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (PyImportStatementNavigator.getImportStatementByElement(node) != null){
           return;
         }
-        final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, node.getName());
-        if (owner == null) {
+        final String name = node.getReferencedName();
+        if (name == null) {
           return;
         }
-        // Check if there is a non-toplevel declaration for nonlocal
-        final ScopeOwner immediateOwner = ScopeUtil.getScopeOwner(node);
-        final Scope immediateScope = ControlFlowCache.getScope(immediateOwner);
-        if (immediateScope.isNonlocal(node.getName()) && owner instanceof PyFile) {
-          registerUnboundLocal(node);
+        final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, name);
+        if (owner == null) {
           return;
         }
         // Ignore references declared in outer scopes
         if (owner != PsiTreeUtil.getParentOfType(node, ScopeOwner.class)) {
-          return;
-        }
-        final String name = node.getReferencedName();
-        if (name == null) {
           return;
         }
         final Scope scope = ControlFlowCache.getScope(owner);
@@ -101,7 +94,8 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             if (PyAssignmentStatementNavigator.getStatementByTarget(element) != null || 
                 PyForStatementNavigator.getPyForStatementByIterable(element) != null ||
                 PyExceptPartNavigator.getPyExceptPartByTarget(element) != null ||
-                PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element) != null) {
+                PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element) != null ||
+                PyImportStatementNavigator.getImportStatementByElement(element) != null) {
               resolves2LocalVariable = true;
               resolve2Scope = PsiTreeUtil.isAncestor(owner, element, false);
               break;
@@ -125,7 +119,8 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                 if (inst instanceof ReadWriteInstruction) {
                   final ReadWriteInstruction rwInst = (ReadWriteInstruction)inst;
                   if (name.equals(rwInst.getName())) {
-                    if (scope.getDeclaredVariable(inst.getElement(), name) != null) {
+                    final PsiElement e = inst.getElement();
+                    if (e != null && scope.getDeclaredVariable(e, name) != null) {
                       return ControlFlowUtil.Operation.BREAK;
                     }
                     if (rwInst.getAccess().isWriteAccess()) {
@@ -147,7 +142,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           }
           if (resolve2Scope){
             if (owner instanceof PyFile){
-              registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", node.getName()));
+              registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
             }
             else {
               registerUnboundLocal(node);
@@ -155,6 +150,18 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           } else
           if (owner instanceof PyFunction && PsiTreeUtil.getParentOfType(owner, PyClass.class, PyFile.class) instanceof PyFile){
             registerUnboundLocal(node);
+          }
+        }
+      }
+
+      @Override
+      public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
+        for (PyTargetExpression var : node.getVariables()) {
+          final String name = var.getName();
+          final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(var, name);
+          if (owner == null || owner instanceof PyFile) {
+            registerProblem(var, PyBundle.message("INSP.unbound.nonlocal.variable", name),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null);
           }
         }
       }

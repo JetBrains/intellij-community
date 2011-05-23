@@ -343,12 +343,14 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @Override
   public SearchScope getUseScope() {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
-    final Scope scope = ControlFlowCache.getScope(owner);
-    if (scope.isGlobal(getName())) {
-      return GlobalSearchScope.projectScope(getProject());
-    }
-    if (scope.isNonlocal(getName())) {
-      return new LocalSearchScope(getContainingFile());
+    if (owner != null) {
+      final Scope scope = ControlFlowCache.getScope(owner);
+      if (scope.isGlobal(getName())) {
+        return GlobalSearchScope.projectScope(getProject());
+      }
+      if (scope.isNonlocal(getName())) {
+        return new LocalSearchScope(getContainingFile());
+      }
     }
 
     // find highest level function containing our var
