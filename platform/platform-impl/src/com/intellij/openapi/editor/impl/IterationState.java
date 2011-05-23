@@ -73,14 +73,11 @@ public final class IterationState {
   private final EditorEx myEditor;
   private final Color myReadOnlyColor;
 
-  public IterationState(@NotNull EditorEx editor, int start, boolean useCaretAndSelection) {
-    this(editor, start, editor.getDocument().getTextLength(), useCaretAndSelection);
-  }
-  public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection) {
+  public IterationState(EditorEx editor, int start, boolean useCaretAndSelection) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = (DocumentEx)editor.getDocument();
     myStartOffset = start;
-    myEnd = end;
+    myEnd = editor.getDocument().getTextLength();
     myEditor = editor;
 
     LOG.assertTrue(myStartOffset <= myEnd);
@@ -108,10 +105,10 @@ public final class IterationState {
     myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
 
     MarkupModelEx editorMarkup = (MarkupModelEx)editor.getMarkupModel();
-    myView.init(editorMarkup, start, myEnd);
+    myView.init(editorMarkup, start);
 
     final MarkupModelEx docMarkup = (MarkupModelEx)editor.getDocument().getMarkupModel(editor.getProject());
-    myDoc.init(docMarkup, start, myEnd);
+    myDoc.init(docMarkup, start);
 
     myEndOffset = myStartOffset;
 
@@ -122,8 +119,8 @@ public final class IterationState {
     private RangeHighlighterEx myNextHighlighter = null;
     private Iterator<RangeHighlighterEx> myIterator;
 
-    private void init(@NotNull MarkupModelEx markupModel, int start, int end) {
-      myIterator = markupModel.overlappingIterator(start, end);
+    private void init(MarkupModelEx markupModel, int start) {
+      myIterator = markupModel.overlappingIterator(start, myDocument.getTextLength());
       int skipped = 0;
       while (myIterator.hasNext()) {
         RangeHighlighterEx highlighter = myIterator.next();
@@ -133,10 +130,7 @@ public final class IterationState {
         }
         skipped++;
       }
-      if (skipped > Math.min(1000, markupModel.getDocument().getTextLength())) {
-        int i = 0;
-        //LOG.error("Inefficient iteration, use 'new IterationState(start, end)' constructor to limit the number of highlighters to iterate");
-      }
+      int i = skipped;
     }
 
     private void advance() {
