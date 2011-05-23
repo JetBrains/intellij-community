@@ -190,8 +190,8 @@ class DocumentationBuilder {
 
   private boolean isAttribute() {
     return myElement instanceof PyTargetExpression &&
-             (PyUtil.isInstanceAttribute((PyTargetExpression)myElement)) ||
-              PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class) instanceof PyClass;
+             (PyUtil.isInstanceAttribute((PyTargetExpression)myElement) ||
+              PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class) instanceof PyClass);
   }
 
   @Nullable
