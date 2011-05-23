@@ -558,7 +558,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   protected PsiFile createFileCopy(PsiFile file) {
-    ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
     final VirtualFile virtualFile = file.getVirtualFile();
     if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
         // must not cache injected file copy, since it does not reflect changes in host document
@@ -568,12 +567,12 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         final Pair<PsiFile, Document> pair = reference.get();
         if (pair != null && pair.first.isValid() && pair.first.getClass().equals(file.getClass())) {
           final PsiFile copy = pair.first;
+          if (copy.getModificationStamp() > file.getModificationStamp()) {
+            ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
+          }
           final Document document = pair.second;
           assert document != null;
-          final String oldDocumentText = document.getText();
-          final String oldCopyText = copy.getText();
-          final String newText = file.getText();
-          document.setText(newText);
+          document.setText(file.getText());
           return copy;
         }
       }
