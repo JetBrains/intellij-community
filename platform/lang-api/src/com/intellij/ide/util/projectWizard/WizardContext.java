@@ -44,6 +44,8 @@ public class WizardContext {
   private final List<Listener> myListeners = new ArrayList<Listener>();
   private StorageScheme myProjectStorageFormat = StorageScheme.DEFAULT;
 
+  private ModuleWizardStep myProjectSdkStep;
+
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
   }
@@ -63,6 +65,14 @@ public class WizardContext {
   @Nullable
   public Project getProject() {
     return myProject;
+  }
+
+  public ModuleWizardStep getProjectSdkStep() {
+    return myProjectSdkStep;
+  }
+
+  public void setProjectSdkStep(ModuleWizardStep projectSdkStep) {
+    myProjectSdkStep = projectSdkStep;
   }
 
   @NotNull
