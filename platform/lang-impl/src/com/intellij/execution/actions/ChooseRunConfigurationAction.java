@@ -836,7 +836,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     }
   }
 
-  private static abstract class RunListPopup extends ListPopupImpl {
+  private abstract static class RunListPopup extends ListPopupImpl {
     private final Project myProject_;
 
     public RunListPopup(final Project project, ListPopupStep step) {
@@ -854,7 +854,7 @@ public class ChooseRunConfigurationAction extends AnAction {
       _handleSelect(handleFinalChoices, e);
     }
 
-    protected void _handleSelect(boolean handleFinalChoices, InputEvent e) {
+    private void _handleSelect(boolean handleFinalChoices, InputEvent e) {
       super.handleSelect(handleFinalChoices, e);
     }
 
