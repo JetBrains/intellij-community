@@ -34,7 +34,6 @@ class C {
 
   public static void main(String[] args) {
     final TestProcessor testProcessor = new TestProcessor();
-    testProcessor.processMap(<warning descr="Unchecked assignment: 'java.util.HashMap' to 'java.util.Map<java.lang.String,java.lang.String>'">new HashMap()</warning>);
-    //                       ^^^ to cdr: should resolve to TestProcessor.processMap() (at UncheckedWarningLocalInspection.java:228)
+    testProcessor.processMap(new HashMap());
   }
 }
