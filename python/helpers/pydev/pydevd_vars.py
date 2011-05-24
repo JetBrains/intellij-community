@@ -2,12 +2,12 @@
     resolution/conversion to XML.
 """
 import pickle
+from django_frame import DjangoTemplateFrame
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 from console import pydevconsole
 from code import compile_command
 from code import InteractiveInterpreter
-
 
 try:
     from StringIO import StringIO
@@ -515,6 +515,10 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
     will probably need some change to the python internals)
     '''
     frame = findFrame(thread_id, frame_id)
+
+    if isinstance(frame, DjangoTemplateFrame):
+        result = eval(expression, frame.f_globals, frame.f_locals)
+        frame.changeVariable(attr, result)
 
     try:
         expression = expression.replace('@LINE@', '\n')
