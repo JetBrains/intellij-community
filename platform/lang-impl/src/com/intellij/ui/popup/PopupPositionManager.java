@@ -79,7 +79,12 @@ public class PopupPositionManager {
     }
 
     final Component existing = discoverPopup(LangDataKeys.CHOOSE_BY_NAME_DROPDOWN, focusOwner);
-    return existing == null ? null : new PositionAdjuster2(existing, discoverPopup(LangDataKeys.CHOOSE_BY_NAME_POPUP, focusOwner));
+    if (existing != null) {
+      return new PositionAdjuster2(existing, discoverPopup(LangDataKeys.CHOOSE_BY_NAME_POPUP, focusOwner));
+    }
+
+    final Window window = SwingUtilities.getWindowAncestor(focusOwner);
+    return window == null ? null : new PositionAdjuster(window);
   }
   
   private static class PositionAdjuster2 extends PositionAdjuster {
