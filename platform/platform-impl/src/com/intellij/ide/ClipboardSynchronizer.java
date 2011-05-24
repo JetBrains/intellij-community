@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -256,42 +257,42 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     }
   }
 
-  public Transferable getContentsSafe() {
-    final ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
+  public static Transferable getContentsSafe() {
+    final Ref<Transferable> result = new Ref<Transferable>();
+    Foundation.executeOnMainThread(new Runnable() {
+      @Override
+      public void run() {
+        String plainText = "public.utf8-plain-text";
+        String jvmObject = "application/x-java-jvm";
 
-    try {
-      String plainText = "public.utf8-plain-text";
-      String jvmObject = "application/x-java-jvm";
+        ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
+        ID types = Foundation.invoke(pasteboard, "types");
+        IntegerType count = Foundation.invoke(types, "count");
 
-      ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
-      ID types = Foundation.invoke(pasteboard, "types");
-      IntegerType count = Foundation.invoke(types, "count");
+        ID plainTextType = null;
+        ID vmObjectType = null;
 
-      ID plainTextType = null;
-      ID vmObjectType = null;
+        for (int i = 0; i < count.intValue(); i++) {
+          ID each = Foundation.invoke(types, "objectAtIndex:", i);
+          String eachType = Foundation.toStringViaUTF8(each);
+          if (plainText.equals(eachType)) {
+            plainTextType = each;
+          }
 
-      for (int i = 0; i < count.intValue(); i++) {
-        ID each = Foundation.invoke(types, "objectAtIndex:", i);
-        String eachType = Foundation.toStringViaUTF8(each);
-        if (plainText.equals(eachType)) {
-          plainTextType = each;
+          if (eachType.contains(jvmObject)) {
+            vmObjectType = each;
+          }
+
         }
 
-        if (eachType.contains(jvmObject)) {
-          vmObjectType = each;
+        if (vmObjectType != null && plainTextType != null) {
+          ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
+          result.set(new StringSelection(Foundation.toStringViaUTF8(text)));
         }
 
       }
+    }, true, true);
 
-      if (vmObjectType != null && plainTextType != null) {
-        ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
-        return new StringSelection(Foundation.toStringViaUTF8(text));
-      }
-    }
-    finally {
-      Foundation.invoke(autoReleasePool, Foundation.createSelector("release"));
-    }
-
-    return null;
+    return result.get();
   }
 }
