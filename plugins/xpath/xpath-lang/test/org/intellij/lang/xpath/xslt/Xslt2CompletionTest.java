@@ -32,6 +32,10 @@ public class Xslt2CompletionTest extends TestBase {
         doXsltCompletion();
     }
 
+    public void testSchemaTypeCompletion() throws Throwable {
+        doXsltCompletion();
+    }
+
     private void doXsltCompletion(String... moreFiles) throws Throwable {
         final String name = getTestFileName();
         myFixture.testCompletion(name + ".xsl", name + "_after.xsl", moreFiles);

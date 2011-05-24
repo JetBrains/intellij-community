@@ -15,59 +15,73 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.XmlPatterns;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ProcessingContext;
+import org.intellij.lang.xpath.psi.XPath2TypeElement;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
 import org.intellij.lang.xpath.xslt.impl.references.PrefixReference;
 import org.intellij.lang.xpath.xslt.impl.references.XsltReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.string;
-import static com.intellij.patterns.XmlPatterns.xmlAttribute;
-import static com.intellij.patterns.XmlPatterns.xmlTag;
+import static com.intellij.patterns.XmlPatterns.*;
 
 /**
  * @author yole
  */
-public class XsltReferenceContributor extends PsiReferenceContributor {
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(
-            PlatformPatterns.psiElement(XmlAttributeValue.class).withParent(xmlAttribute().withLocalName(string().oneOf(
-              "name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix"
-            )).withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
-            new XsltReferenceProvider());
-
-// TODO: 1. SchemaReferencesProvider doesn't know about "as" attribute / 2. what to do with non-schema types (xs:yearMonthDuretion, xs:dayTimeDuration)?
-//    registrar.registerReferenceProvider(
-//            XmlPatterns.xmlAttributeValue().withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
-//            new SchemaReferencesProvider());
-
-    registrar.registerReferenceProvider(
-            XmlPatterns.xmlAttributeValue().withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
-            new PsiReferenceProvider() {
-              @NotNull
-              @Override
-              public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-                if (element.textContains(':')) {
-                  return new PsiReference[]{ new NamespacePrefixReference(element) };
-                }
-                return PsiReference.EMPTY_ARRAY;
-              }
-            });
+public class XsltReferenceContributor {
+  private XsltReferenceContributor() {
   }
 
-  private static class NamespacePrefixReference extends PrefixReference implements QuickFixProvider {
+  public static class XPath extends PsiReferenceContributor {
+    public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+      registrar.registerReferenceProvider(psiElement(XPath2TypeElement.class), SchemaTypeProvider.INSTANCE);
+    }
+  }
+
+  public static class XML extends PsiReferenceContributor {
+    public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+      registrar.registerReferenceProvider(
+        psiElement(XmlAttributeValue.class).withParent(xmlAttribute().withLocalName(string().oneOf(
+          "name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix"
+        )).withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
+        new XsltReferenceProvider());
+
+      registrar.registerReferenceProvider(
+        xmlAttributeValue()
+          .withValue(string().matches("[^()]+"))
+          .withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))), SchemaTypeProvider.INSTANCE);
+
+      registrar.registerReferenceProvider(
+        xmlAttributeValue()
+          .withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS)))
+          .withValue(string().contains(":")), new PsiReferenceProvider() {
+        @NotNull
+        @Override
+        public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+          return new PsiReference[]{ new NamespacePrefixReference(element) };
+        }
+      });
+    }
+  }
+
+  static class NamespacePrefixReference extends PrefixReference implements QuickFixProvider {
     public NamespacePrefixReference(PsiElement element) {
       super((XmlAttribute)element.getParent());
     }
@@ -80,12 +94,64 @@ public class XsltReferenceContributor extends PsiReferenceContributor {
 
     @Override
     public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-      QuickFixAction.registerQuickFixAction(info, new CreateNSDeclarationIntentionFix(myAttribute.getValueElement(), getCanonicalText(), (XmlFile)myAttribute.getContainingFile()) {
-        @Override
-        public boolean showHint(Editor editor) {
-          return false;
-        }
-      });
+      final XmlAttributeValue valueElement = myAttribute.getValueElement();
+      if (valueElement != null) {
+        QuickFixAction.registerQuickFixAction(info, new CreateNSDeclarationIntentionFix(valueElement, getCanonicalText(), (XmlFile)myAttribute.getContainingFile()) {
+          @Override
+          public boolean showHint(Editor editor) {
+            return false;
+          }
+        });
+      }
+    }
+  }
+
+  public static class SchemaTypeReference extends SchemaReferencesProvider.TypeOrElementOrAttributeReference implements
+                                                                                                             EmptyResolveMessageProvider {
+    private static final Pattern NAME_PATTERN = Pattern.compile("(?:\\w+:)\\w+");
+
+    private SchemaTypeReference(PsiElement element, TextRange range) {
+      super(element, range, ReferenceType.TypeReference);
+    }
+
+    private static TextRange getTextRange(PsiElement element) {
+      final Matcher matcher = NAME_PATTERN.matcher(element.getText());
+      if (matcher.find()) {
+        return TextRange.create(matcher.start(), matcher.end());
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public boolean isSoft() {
+      final String text = getCanonicalText();
+      return super.isSoft() || isType(text, "yearMonthDuration") || isType(text, "dayTimeDuration");
+    }
+
+    private static boolean isType(String text, String name) {
+      return name.equals(text) || text.endsWith(":" + name);
+    }
+
+    @Override
+    public String getUnresolvedMessagePattern() {
+      return "Unknown Type";
+    }
+
+    public static SchemaTypeReference create(PsiElement element) {
+      final TextRange range = getTextRange(element);
+      return range != null ? new SchemaTypeReference(element, range) : null;
+    }
+  }
+
+  static class SchemaTypeProvider extends PsiReferenceProvider {
+    static final PsiReferenceProvider INSTANCE = new SchemaTypeProvider();
+
+    @NotNull
+    @Override
+    public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+      final SchemaTypeReference reference = SchemaTypeReference.create(element);
+      return reference != null ? new PsiReference[] { reference } : PsiReference.EMPTY_ARRAY;
     }
   }
 }
