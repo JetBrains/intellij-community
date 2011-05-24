@@ -25,6 +25,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
+import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -285,6 +286,9 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     int group = getGroup(action);
     if (a instanceof IntentionActionWrapper) {
       a = ((IntentionActionWrapper)a).getDelegate();
+    }
+    if (a instanceof IntentionWrapper) {
+      a = ((IntentionWrapper)a).getAction();
     }
     if (a instanceof HighPriorityAction) {
       return group + 3;

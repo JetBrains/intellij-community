@@ -44,28 +44,24 @@ public class NavigateToTestDataAction extends AnAction {
       return;
     }
     final String name = method.getName();
+    
+    
+    String testDataPath = null;
     if (name.startsWith("test")) {
-      final String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
-      if (testDataPath == null) {
-        final Notification notification =
-          new Notification("testdata", "No testdata path", "Cannot find testdata path for class", NotificationType.INFORMATION);
-        Notifications.Bus.notify(notification, method.getProject());
+      testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
+    }
+    final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
+    List<String> fileNames = collector.collectTestDataReferences(method);
+    if (fileNames.isEmpty()) {
+      String message = collector.getLog();
+      if (message == null) {
+        message = "Cannot find testdata files for class";
       }
-      else {
-        final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
-        List<String> fileNames = collector.collectTestDataReferences(method);
-        if (fileNames.size() == 0) {
-          String message = collector.getLog();
-          if (message == null) {
-            message = "Cannot find testdata files for class";
-          }
-          final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
-          Notifications.Bus.notify(notification, method.getProject());
-        }
-        else {
-          new TestDataNavigationHandler().navigate(method, JBPopupFactory.getInstance().guessBestPopupLocation(editor));
-        }
-      }
+      final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
+      Notifications.Bus.notify(notification, method.getProject());
+    }
+    else {
+      new TestDataNavigationHandler().navigate(method, JBPopupFactory.getInstance().guessBestPopupLocation(editor), fileNames);
     }
   }
 

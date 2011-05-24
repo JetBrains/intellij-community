@@ -1,37 +1,23 @@
 package com.intellij.openapi.module;
 
-import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author yole
  */
-public class PlatformWebModuleType extends ModuleType<EmptyModuleBuilder> {
+public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   @NonNls public static final String WEB_MODULE = "WEB_MODULE";
 
-  public PlatformWebModuleType() {
+  public WebModuleTypeBase() {
     super(WEB_MODULE);
-  }
-
-  @NotNull
-  public static PlatformWebModuleType getInstance() {
-    return (PlatformWebModuleType)ModuleTypeManager.getInstance().findByID(WEB_MODULE);
-  }
-
-  public EmptyModuleBuilder createModuleBuilder() {
-    return new EmptyModuleBuilder() {
-      @Override
-      public ModuleType getModuleType() {
-        return getInstance();
-      }
-    };
   }
 
   public String getName() {

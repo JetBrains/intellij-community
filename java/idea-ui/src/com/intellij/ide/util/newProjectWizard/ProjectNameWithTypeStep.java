@@ -320,7 +320,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       assert builder != null;
       builder.setName(myModuleName.getText());
       builder.setModuleFilePath(FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + myModuleName.getText() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      ((SourcePathsBuilder)builder).setContentEntryPath(FileUtil.toSystemIndependentName(myModuleContentRoot.getText()));
+      builder.setContentEntryPath(FileUtil.toSystemIndependentName(myModuleContentRoot.getText()));
     } else {
       mySequence.setType(null);
       super.updateDataModel();

@@ -30,11 +30,13 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 
 /**
  * @author yole
  */
 public class TestDataGroupFileEditor extends UserDataHolderBase implements FileEditor {
+  private WeakReference<JComponent> myComponent;
   private final TestDataGroupVirtualFile myFile;
   private final FileEditor myBeforeEditor;
   private final FileEditor myAfterEditor;
@@ -47,12 +49,25 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements FileE
 
   @NotNull
   public JComponent getComponent() {
+    JComponent result;
+    if (myComponent == null) {
+      myComponent = new WeakReference<JComponent>(result = createComponent());
+      return result;
+    }
+    result = myComponent.get();
+    if (result == null) {
+      myComponent = new WeakReference<JComponent>(result = createComponent());
+    }
+    return result;
+  }
+
+  private JComponent createComponent() {
     Splitter splitter = new Splitter(false);
     splitter.setFirstComponent(wrapWithTitle(myFile.getBeforeFile().getName(), myBeforeEditor));
     splitter.setSecondComponent(wrapWithTitle(myFile.getAfterFile().getName(), myAfterEditor));
     return splitter;
   }
-
+  
   private static JComponent wrapWithTitle(String name, final FileEditor beforeEditor) {
     JPanel panel = new JPanel(new BorderLayout());
     final JLabel label = new JLabel(name);

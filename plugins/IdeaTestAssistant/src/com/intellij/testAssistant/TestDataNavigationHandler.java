@@ -33,6 +33,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,22 +51,34 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     navigate(elt, new RelativePoint(e));
   }
 
-  public void navigate(PsiMethod method, final RelativePoint point) {
+  public static void navigate(PsiMethod method, final RelativePoint point) {
+    List<String> fileNames = null;
     String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
-    if (testDataPath == null) {
+    if (testDataPath != null) {
+      fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4)).collectTestDataReferences(method);
+    }
+
+    if (fileNames == null || fileNames.isEmpty()) {
+      fileNames = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
+    }
+    
+    if (fileNames == null || fileNames.isEmpty()) {
       return;
     }
-    List<String> fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4)).collectTestDataReferences(method);
-    if (fileNames.size() == 1) {
-      openFileByIndex(method.getProject(), fileNames, 0);
+    navigate(method, point, fileNames);
+  }
+  
+  public static void navigate(@NotNull PsiMethod method, @NotNull final RelativePoint point, @NotNull List<String> testDataFiles) {
+    if (testDataFiles.size() == 1) {
+      openFileByIndex(method.getProject(), testDataFiles, 0);
     }
-    else if (fileNames.size() > 1) {
-      TestDataGroupVirtualFile groupFile = getTestDataGroup(fileNames);
+    else if (testDataFiles.size() > 1) {
+      TestDataGroupVirtualFile groupFile = getTestDataGroup(testDataFiles);
       if (groupFile != null) {
         new OpenFileDescriptor(method.getProject(), groupFile).navigate(true);
       }
       else {
-        showNavigationPopup(method.getProject(), fileNames, point);
+        showNavigationPopup(method.getProject(), testDataFiles, point);
       }
     }
   }
