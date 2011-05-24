@@ -171,7 +171,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     Document document = myEditor.getDocument();
     myContext.text = document.getCharsSequence();
     myContext.tokenStartOffset = start;
-    IterationState iterationState = new IterationState(myEditor, start, false);
+    IterationState iterationState = new IterationState(myEditor, start, document.getTextLength(), false);
     TextAttributes attributes = iterationState.getMergedAttributes();
     myContext.fontType = attributes.getFontType();
     myContext.rangeEndOffset = event.getNewEndOffset();
