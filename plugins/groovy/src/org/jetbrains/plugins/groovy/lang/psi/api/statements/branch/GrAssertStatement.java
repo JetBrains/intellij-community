@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author ilyas
  */
 public interface GrAssertStatement extends GrStatement {
+  @Nullable
   GrExpression getAssertion();
 
   @Nullable
