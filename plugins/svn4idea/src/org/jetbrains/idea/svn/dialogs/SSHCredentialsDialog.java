@@ -377,6 +377,10 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
         path[0] = "file://" + System.getProperty(USER_HOME_PROPERTY) + "/.ssh/identity";
         path[0] = path[0].replace(File.separatorChar, '/');
         file = VirtualFileManager.getInstance().findFileByUrl(path[0]);
+        if (file == null || !file.exists()) {
+          path[0] = "file://" + System.getProperty(USER_HOME_PROPERTY) + "/.ssh"; 
+          file = VirtualFileManager.getInstance().findFileByUrl(path[0]); 
+        }
       }
       FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
 
