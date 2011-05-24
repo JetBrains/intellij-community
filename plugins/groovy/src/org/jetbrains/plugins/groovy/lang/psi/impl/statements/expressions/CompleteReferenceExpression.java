@@ -64,7 +64,7 @@ public class CompleteReferenceExpression {
   }
 
   public static void processVariants(PrefixMatcher matcher, Consumer<Object> consumer, GrReferenceExpressionImpl refExpr) {
-    final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer);
+    final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher);
     getVariantsImpl(matcher, refExpr, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (Object o : GroovyCompletionUtil.getCompletionVariants(candidates)) {
@@ -154,17 +154,17 @@ public class CompleteReferenceExpression {
   }
 
   @Nullable
-  public static LookupElementBuilder createPropertyLookupElement(@NotNull PsiMethod accessor, @Nullable GroovyResolveResult resolveResult) {
+  public static LookupElementBuilder createPropertyLookupElement(@NotNull PsiMethod accessor, @Nullable GroovyResolveResult resolveResult,
+                                                                 @Nullable PrefixMatcher matcher) {
     String propName;
     PsiType propType;
     final boolean inUseScope = ResolveUtil.isInUseScope(resolveResult);
-    if (isSimplePropertyGetter(accessor, null, inUseScope)) {
+    final boolean getter = isSimplePropertyGetter(accessor, null, inUseScope);
+    if (getter) {
       propName = getPropertyNameByGetter(accessor);
-      propType = PsiUtil.getSmartReturnType(accessor);
     }
     else if (isSimplePropertySetter(accessor, null, inUseScope)) {
       propName = getPropertyNameBySetter(accessor);
-      propType = accessor.getParameterList().getParameters()[inUseScope ? 1 : 0].getType();
     }
     else {
       return null;
@@ -172,6 +172,16 @@ public class CompleteReferenceExpression {
     assert propName != null;
     if (!PsiUtil.isValidReferenceName(propName)) {
       propName = "'" + propName + "'";
+    }
+
+    if (matcher != null && !matcher.prefixMatches(propName)) {
+      return null;
+    }
+
+    if (getter) {
+      propType = PsiUtil.getSmartReturnType(accessor);
+    } else {
+      propType = accessor.getParameterList().getParameters()[inUseScope ? 1 : 0].getType();
     }
 
     final PsiType substituted = resolveResult != null ? resolveResult.getSubstitutor().substitute(propType) : propType;
@@ -329,15 +339,17 @@ public class CompleteReferenceExpression {
 
   private static class CompleteReferenceProcessor extends ResolverProcessor implements Consumer<Object> {
     private final Consumer<Object> myConsumer;
+    private final PrefixMatcher myMatcher;
     private Collection<String> myPreferredFieldNames;
     private final boolean mySkipPackages;
     private final PsiClass myEventListener;
     private final Set<String> myPropertyNames = new HashSet<String>();
     private final Set<String> myLocalVars = new HashSet<String>();
 
-    protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer) {
+    protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer, @NotNull PrefixMatcher matcher) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
       myConsumer = consumer;
+      myMatcher = matcher;
       myPreferredFieldNames = addAllRestrictedProperties(place);
       mySkipPackages = PsiImplUtil.getRuntimeQualifier(place) == null;
       myEventListener = JavaPsiFacade.getInstance(place.getProject()).findClass("java.util.EventListener", place.getResolveScope());
@@ -398,7 +410,7 @@ public class CompleteReferenceExpression {
     }
 
     private void processProperty(PsiMethod method, GroovyResolveResult resolveResult) {
-      final LookupElementBuilder lookup = createPropertyLookupElement(method, resolveResult);
+      final LookupElementBuilder lookup = createPropertyLookupElement(method, resolveResult, myMatcher);
       if (lookup != null) {
         if (myPropertyNames.add(lookup.getLookupString())) {
           myConsumer.consume(lookup);
