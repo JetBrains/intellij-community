@@ -7,11 +7,12 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 
- /**
+/**
  * @author peter
  */
 class GroovyStressTest extends LightCodeInsightFixtureTestCase {
