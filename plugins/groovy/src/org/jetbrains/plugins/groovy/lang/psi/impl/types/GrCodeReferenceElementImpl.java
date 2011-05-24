@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -529,7 +530,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return (GroovyResolveResult[])results;
   }
 
-  public void processVariants(Consumer<Object> consumer) {
+  @Override
+  public void processVariants(PrefixMatcher matcher, Consumer<Object> consumer) {
     processVariantsImpl(getKind(true), consumer);
   }
 }
