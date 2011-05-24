@@ -2,6 +2,8 @@ package com.jetbrains.python;
 
 import com.jetbrains.python.codeInsight.PyCompletionPatternsTest;
 import com.jetbrains.python.inspections.PyArgumentListInspectionTest;
+import com.jetbrains.python.inspections.PyCompatibilityInspectionTest;
+import com.jetbrains.python.inspections.PyUnusedImportTest;
 import com.jetbrains.python.refactoring.*;
 import com.jetbrains.python.refactoring.classes.PyExtractSuperclassTest;
 import com.jetbrains.python.refactoring.classes.PyPullUpTest;
@@ -74,7 +76,9 @@ public class PythonAllTestsSuite {
     PyTypeParserTest.class,
     PyOverrideTest.class,
     PyBinaryModuleCompletionTest.class,
-    PyCompletionPatternsTest.class
+    PyCompletionPatternsTest.class,
+    PyCompatibilityInspectionTest.class,
+    PyUnusedImportTest.class
   };
 
   public static TestSuite suite() {
