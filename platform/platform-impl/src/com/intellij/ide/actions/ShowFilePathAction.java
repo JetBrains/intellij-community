@@ -184,7 +184,12 @@ public class ShowFilePathAction extends AnAction {
 
           args = new String[] {"osascript", "-e", script};
         } else {
-          args = new String[] {"explorer", String.format("/select,\"%s\"", path)};
+          if (path.indexOf(' ') >= 0) {
+            args = new String[]{"explorer", String.format("/select,\"%s\"", path.substring(0, path.indexOf(' '))), 
+              String.format("\"%s\"", path.substring(path.indexOf(' ') + 1))};
+          } else {
+            args = new String[]{"explorer", String.format("/select,\"%s\"", path)};
+          }
         }
 
         runtime.exec(args);
