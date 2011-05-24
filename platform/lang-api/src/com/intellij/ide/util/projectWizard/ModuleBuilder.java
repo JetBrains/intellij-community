@@ -24,6 +24,7 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -54,6 +55,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   private String myName;
   @NonNls private String myModuleFilePath;
+  private String myContentEntryPath;
   private final List<ModuleConfigurationUpdater> myUpdaters = new ArrayList<ModuleConfigurationUpdater>();
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
@@ -99,6 +101,45 @@ public abstract class ModuleBuilder extends ProjectBuilder{
 
   public void setModuleFilePath(@NonNls String path) {
     myModuleFilePath = acceptParameter(path);
+  }
+
+  @Nullable
+  public String getContentEntryPath() {
+    if (myContentEntryPath == null) {
+      final String directory = getModuleFileDirectory();
+      if (directory == null) {
+        return null;
+      }
+      new File(directory).mkdirs();
+      return directory;
+    }
+    return myContentEntryPath;
+  }
+
+  public void setContentEntryPath(String moduleRootPath) {
+    final String path = acceptParameter(moduleRootPath);
+    if (path != null) {
+      try {
+        myContentEntryPath = FileUtil.resolveShortWindowsName(path);
+      }
+      catch (IOException e) {
+        myContentEntryPath = path;
+      }
+    }
+    else {
+      myContentEntryPath = null;
+    }
+    if (myContentEntryPath != null) {
+      myContentEntryPath = myContentEntryPath.replace(File.separatorChar, '/');
+    }
+  }
+
+  protected @Nullable ContentEntry doAddContentEntry(ModifiableRootModel modifiableRootModel) {
+    final String contentEntryPath = getContentEntryPath();
+    if (contentEntryPath == null) return null;
+    final VirtualFile moduleContentRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath.replace('\\', '/'));
+    if (moduleContentRoot == null) return null;
+    return modifiableRootModel.addContentEntry(moduleContentRoot);
   }
 
   @Nullable

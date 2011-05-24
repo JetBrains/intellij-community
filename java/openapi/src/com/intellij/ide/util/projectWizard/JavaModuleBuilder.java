@@ -41,45 +41,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
-
-  private String myContentEntryPath;
   private String myCompilerOutputPath;
   // Pair<Source Path, Package Prefix>
   private List<Pair<String,String>> mySourcePaths;
   // Pair<Library path, Source path>
   private final List<Pair<String, String>> myModuleLibraries = new ArrayList<Pair<String, String>>();
   private Sdk myJdk;
-
-  @Nullable
-  public final String getContentEntryPath() {
-    if (myContentEntryPath == null) {
-      final String directory = getModuleFileDirectory();
-      if (directory == null) {
-        return null;
-      }
-      new File(directory).mkdirs();
-      return directory;
-    }
-    return myContentEntryPath;
-  }
-
-  public final void setContentEntryPath(String moduleRootPath) {
-    final String path = acceptParameter(moduleRootPath);
-    if (path != null) {
-      try {
-        myContentEntryPath = FileUtil.resolveShortWindowsName(path);
-      }
-      catch (IOException e) {
-        myContentEntryPath = path;
-      }
-    }
-    else {
-      myContentEntryPath = null;
-    }
-    if (myContentEntryPath != null) {
-      myContentEntryPath = myContentEntryPath.replace(File.separatorChar, '/');
-    }
-  }
 
   public final void setCompilerOutputPath(String compilerOutputPath) {
     myCompilerOutputPath = acceptParameter(compilerOutputPath);
@@ -120,19 +87,16 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
       rootModel.inheritSdk();
     }
 
-    final String moduleRootPath = getContentEntryPath();
-    if (moduleRootPath != null) {
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      VirtualFile moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(moduleRootPath));
-      if (moduleContentRoot != null) {
-        final ContentEntry contentEntry = rootModel.addContentEntry(moduleContentRoot);
-        final List<Pair<String,String>> sourcePaths = getSourcePaths();
-        if (sourcePaths != null) {
-          for (final Pair<String, String> sourcePath : sourcePaths) {
-            final VirtualFile sourceRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(sourcePath.first));
-            if (sourceRoot != null) {
-              contentEntry.addSourceFolder(sourceRoot, false, sourcePath.second);
-            }
+    ContentEntry contentEntry = doAddContentEntry(rootModel);
+    if (contentEntry != null) {
+      final List<Pair<String,String>> sourcePaths = getSourcePaths();
+
+      if (sourcePaths != null) {
+        for (final Pair<String, String> sourcePath : sourcePaths) {
+          final VirtualFile sourceRoot = LocalFileSystem.getInstance()
+            .refreshAndFindFileByPath(FileUtil.toSystemIndependentName(sourcePath.first));
+          if (sourceRoot != null) {
+            contentEntry.addSourceFolder(sourceRoot, false, sourcePath.second);
           }
         }
       }
