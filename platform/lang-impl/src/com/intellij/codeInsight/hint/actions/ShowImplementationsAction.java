@@ -36,16 +36,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import org.jetbrains.annotations.NonNls;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class ShowImplementationsAction extends AnAction implements PopupAction {
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
+  private WeakReference<JBPopup> myPopupRef;
 
   public ShowImplementationsAction() {
     setEnabledInModalContext(true);
@@ -159,6 +162,16 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         index = 1;
       }
     }
+    
+    if (myPopupRef != null) {
+      final JBPopup popup = myPopupRef.get();
+      if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
+        final ImplementationViewComponent component = (ImplementationViewComponent) ((AbstractPopup)popup).getComponent();
+        component.update(impls, index);
+        return;
+      }
+    }
+    
     final ImplementationViewComponent component = new ImplementationViewComponent(impls, index);
     if (component.hasElementsToShow()) {
       final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
@@ -173,15 +186,17 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setProject(project)
         .addListener(updateProcessor)
         .addUserData(updateProcessor)
-        .setDimensionServiceKey(project, "ShowImplementationPopup", false)
+        .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
         .setResizable(true)
         .setMovable(true)
         .setRequestFocus(invokedFromEditor && LookupManager.getActiveLookup(editor) == null)
         .setTitle(title)
         .createPopup();
 
-      PopupPositionManager.positionPopupInBestPosition(popup, editor);
+      PopupPositionManager.positionPopupInBestPosition(popup, editor, invokedFromEditor);
       component.setHint(popup, title);
+      
+      myPopupRef = new WeakReference<JBPopup>(popup);
     }
   }
 

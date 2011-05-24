@@ -102,7 +102,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     PsiClass targetClass = method.getContainingClass();
 
     String stmtText = fieldName + " = " + parameterName + ";";
-    if (Comparing.strEqual(fieldName, parameterName)) {
+    if (Comparing.strEqual(fieldName, parameterName) || JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(fieldName, methodBody) != field) {
       @NonNls String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
       stmtText = prefix + stmtText;
     }

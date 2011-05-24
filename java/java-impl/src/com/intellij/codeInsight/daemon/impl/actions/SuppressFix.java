@@ -177,7 +177,7 @@ public class SuppressFix extends SuppressIntentionAction {
     }
     else {
       return JavaPsiFacade.getInstance(project).getElementFactory()
-        .createAnnotationFromText("@" + SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({\"" + id + "\"})", container);
+        .createAnnotationFromText("@" + SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" + id + "\")", container);
     }
     return null;
   }

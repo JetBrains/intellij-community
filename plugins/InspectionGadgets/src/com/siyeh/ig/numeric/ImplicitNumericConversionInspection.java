@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,8 +118,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                 m_name = InspectionGadgetsBundle.message(
                         "implicit.numeric.conversion.convert.quickfix",
                         expectedType.getCanonicalText());
-            }
-            else {
+            } else {
                 m_name = InspectionGadgetsBundle.message(
                         "implicit.numeric.conversion.make.explicit.quickfix");
             }
@@ -137,7 +136,9 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                     PsiExpression)descriptor.getPsiElement();
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, true);
-            assert expectedType != null;
+            if (expectedType == null) {
+                return;
+            }
             if (isConvertible(expression, expectedType)) {
                 final String newExpression =
                         convertExpression(expression, expectedType);

@@ -1,0 +1,32 @@
+<idea-plugin version="2" url="http://www.jetbrains.net/confluence/display/CONTEST/XSLT-Debugger">
+  <name>XSLT-Debugger</name>
+  <id>XSLT-Debugger</id>
+
+  <description><![CDATA[
+    Interactive XSLT Debugger. Allows debugging of XSLT stylesheets in IntelliJ IDEA.
+  ]]></description>
+
+  <version>1.4</version>
+  <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
+  <idea-version since-build="96.1"/>
+
+  <depends>XPathView</depends>
+
+  <change-notes>
+    Xalan Support. To debug with Xalan instead of SAXON, a supported Xalan version (2.7.x) should be present in the
+    classpath or "-Dxslt.transformer.type=xalan" should be added as VM argument for the run configuration. Debugging
+    with SAXON can be forced by adding "-Dxslt.transformer.type=saxon".
+  </change-notes>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <xdebugger.breakpointType implementation="org.intellij.plugins.xsltDebugger.XsltBreakpointType"/>
+
+    <programRunner implementation="org.intellij.plugins.xsltDebugger.XsltDebuggerRunner"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="XPathView">
+    <xsltRunnerExtension implementation="org.intellij.plugins.xsltDebugger.XsltDebuggerExtension"/>
+  </extensions>
+
+  <helpset file="help.jar" path="/Help.hs"/>
+</idea-plugin>

@@ -73,7 +73,6 @@ public abstract class JBListWithHintProvider extends JBList {
 
     final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
     if (updateProcessor != null) {
-      myHint.cancel();
       updateProcessor.updatePopup(element);
     }
   }

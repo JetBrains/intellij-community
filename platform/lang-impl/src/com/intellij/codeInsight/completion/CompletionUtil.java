@@ -21,28 +21,35 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 import static com.intellij.patterns.PlatformPatterns.character;
 
 public class CompletionUtil {
+  static final Key<List<DocumentEvent>> RANGE_TRANSLATION = Key.create("completion.rangeTranslation");
   public static final Key<TailType> TAIL_TYPE_ATTR = LookupItem.TAIL_TYPE_ATTR;
 
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
@@ -204,5 +211,62 @@ public class CompletionUtil {
     offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, tailOffset);
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, tailOffset);
     context.setTailOffset(tailOffset);
+  }
+
+  @Nullable
+  private static Integer translateOffset(int offset, DocumentEvent event) {
+    if (event.getOffset() < offset && offset < event.getNewLength()) {
+      return null;
+    }
+
+    return offset <= event.getOffset() ? offset : offset - event.getNewLength() + event.getOldLength();
+  }
+
+  @Nullable
+  public static PsiElement getTargetElement(LookupElement lookupElement) {
+    final Object object = lookupElement.getObject();
+    if (object instanceof PsiElement) {
+      return getOriginalElement((PsiElement)object);
+    }
+
+    if (object instanceof LookupValueWithPsiElement) {
+      final PsiElement element = ((LookupValueWithPsiElement)object).getElement();
+      if (element != null) return getOriginalElement(element);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
+    final PsiFile file = psi.getContainingFile();
+    if (file != null) {
+      final Document document = file.getViewProvider().getDocument();
+      if (document != null) {
+        final List<DocumentEvent> translator = document.getUserData(RANGE_TRANSLATION);
+        if (translator != null) {
+          TextRange range = psi.getTextRange();
+          Integer start = range.getStartOffset();
+          Integer end = range.getEndOffset();
+          for (DocumentEvent event : translator) {
+            start = translateOffset(range.getStartOffset(), event);
+            end = translateOffset(range.getEndOffset(), event);
+            if (start == null || end == null) {
+              return null;
+            }
+          }
+
+          return (T)PsiTreeUtil.findElementOfClassAtRange(file.getOriginalFile(), start, end, psi.getClass());
+        }
+      }
+    }
+
+    return psi;
+  }
+
+  @NotNull
+  public static <T extends PsiElement> T getOriginalOrSelf(@NotNull T psi) {
+    final T element = getOriginalElement(psi);
+    return element == null ? psi : element;
   }
 }

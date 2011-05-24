@@ -1,0 +1,198 @@
+<project default="rebuild" name="xslt-debugger">
+
+  <property file="build.properties"/>
+
+  <dirname file="${ant.file}" property="project.dir"/>
+  <property name="src.dir" value="${project.dir}/src"/>
+  <property name="src.rt.dir" value="${project.dir}/rt/src"/>
+
+  <property name="build.dir" value="${basedir}/build"/>
+  <property name="build.classes.dir" value="${build.dir}/classes"/>
+  <property name="build.classes.rt.dir" value="${build.dir}/rt/classes"/>
+
+  <path id="classpath.uidesigner">
+    <fileset dir="${idea.home}">
+      <include name="lib/*.jar"/>
+      <include name="redist/*.jar"/>
+    </fileset>
+  </path>
+
+  <taskdef name="javac2" classname="com.intellij.ant.Javac2">
+    <classpath refid="classpath.uidesigner"/>
+  </taskdef>
+  <taskdef name="jflex" classname="JFlex.anttask.JFlexTask">
+    <classpath location="${idea.home}/tools/jflex/lib/JFlex.jar"/>
+  </taskdef>
+
+  <path id="idea.classpath">
+    <fileset dir="${idea.home}">
+      <include name="lib/*.jar"/>
+      <include name="redist/*.jar"/>
+    </fileset>
+  </path>
+
+  <path id="rt.classpath">
+    <fileset dir="${idea.home}/lib">
+      <include name="trove4j.jar" />
+    </fileset>
+    <fileset dir="rt/lib">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <property name="xpathview.plugin.home" value="${idea.plugins.home}/xpath"/>
+
+  <target name="init">
+    <condition property="xpathview.src.available">
+      <available file="${xpathview.src.home}/build.xml"/>
+    </condition>
+  </target>
+
+  <target name="xpathview.compile" depends="init" if="xpathview.src.available">
+    <echo message="Building XPathView from source: ${xpathview.src.home}"/>
+
+    <property name="build.xpathview.dir" value="${build.dir}/xpathview"/>
+    <mkdir dir="${build.xpathview.dir}"/>
+
+    <ant dir="${xpathview.src.home}" target="jar">
+      <property name="build.dir" value="${build.xpathview.dir}"/>
+    </ant>
+
+    <path id="xpathview.classpath">
+      <fileset dir="${build.xpathview.dir}">
+        <include name="xpath-lang/*.jar"/>
+        <include name="*.jar"/>
+      </fileset>
+    </path>
+    <path id="xpathview.rt.classpath">
+      <fileset dir="${build.xpathview.dir}">
+        <include name="xpath-lang/xslt-rt/*.jar"/>
+      </fileset>
+    </path>
+  </target>
+
+  <target name="xpathview.binary" depends="init" unless="xpathview.src.available">
+    <available file="${xpathview.plugin.home}/lib/xpath.jar" property="xpathview.binary.available"/>
+    <available file="${xpathview.plugin.home}/lib/xpath-view.jar" property="xpathview.binary.available"/>
+    <fail unless="xpathview.binary.available">
+      The XPathView plugin is required to build the XSLT-Debugger. Please set the property "xpathview.plugin.home" to
+      point to the installation of the plugin in IntelliJ IDEA.
+    </fail>
+
+    <path id="xpathview.classpath">
+      <fileset dir="${xpathview.plugin.home}">
+        <include name="lib/*.jar"/>
+      </fileset>
+    </path>
+    <path id="xpathview.rt.classpath">
+      <fileset dir="${xpathview.plugin.home}">
+        <include name="lib/rt/*.jar"/>
+      </fileset>
+    </path>
+  </target>
+
+  <target name="compile" depends="init, xpathview.compile, xpathview.binary">
+    <mkdir dir="${build.classes.dir}"/>
+    <mkdir dir="${build.classes.rt.dir}"/>
+
+    <javac2 srcdir="${src.rt.dir}" destdir="${build.classes.rt.dir}" source="1.5" target="1.5" debug="${compile.debug}"
+            optimize="${compile.optimize}">
+      <classpath refid="rt.classpath"/>
+      <classpath refid="xpathview.rt.classpath"/>
+      <exclude name="com/**/*"/>
+    </javac2>
+
+    <javac2 srcdir="${src.dir}" destdir="${build.classes.dir}" source="1.5" target="1.5" debug="${compile.debug}"
+            optimize="${compile.optimize}">
+      <classpath refid="idea.classpath"/>
+      <classpath refid="xpathview.classpath"/>
+      <classpath location="${build.classes.rt.dir}"/>
+      <exclude name="com/**/*"/>
+      <exclude name="Main.java"/>
+    </javac2>
+
+    <rmic base="${build.classes.rt.dir}">
+      <include name="**/remote/Remote*Impl.class"/>
+      <include name="**/remote/DebuggerServer.class"/>
+    </rmic>
+
+    <jar destfile="${build.dir}/rmi-stubs.jar">
+      <fileset dir="${build.classes.rt.dir}">
+        <include name="**/remote/Remote*Impl_*.class"/>
+        <include name="**/remote/DebuggerServer_*.class"/>
+      </fileset>
+    </jar>
+  </target>
+
+  <target name="build" depends="compile" description="Build project"/>
+
+  <target name="jar" depends="build">
+    <jar file="${build.dir}/xslt-debugger.jar" compress="false">
+      <zipfileset dir="${build.classes.dir}">
+        <include name="**/*"/>
+      </zipfileset>
+      <zipfileset dir=".">
+        <include name="META-INF/*.xml"/>
+      </zipfileset>
+      <zipfileset dir="${src.dir}">
+        <include name="**/*.xml"/>
+        <include name="**/*.png"/>
+      </zipfileset>
+    </jar>
+
+    <mkdir dir="${build.dir}/rt"/>
+    <jar file="${build.dir}/xslt-debugger-engine.jar" compress="false">
+      <zipfileset dir="${build.classes.rt.dir}">
+        <include name="**/*"/>
+      </zipfileset>
+      <zipfileset dir="${src.rt.dir}">
+        <include name="**/*.xml"/>
+        <include name="**/*.png"/>
+      </zipfileset>
+    </jar>
+  </target>
+
+  <target name="rebuild" depends="clean, jar" description="Clean and rebuild"/>
+
+  <target name="clean">
+    <delete dir="build"/>
+  </target>
+
+  <target name="dist" depends="rebuild" description="Build distribution ZIP">
+    <mkdir dir="dist"/>
+    <zip file="dist/xslt-debugger.zip">
+      <zipfileset dir="build" prefix="xslt-debugger/lib">
+        <include name="*.jar"/>
+      </zipfileset>
+      <zipfileset dir="rt/lib" prefix="xslt-debugger/lib/rt">
+        <include name="saxon*"/>
+        <include name="xalan.jar"/>
+        <include name="serializer.jar"/>
+      </zipfileset>
+      <zipfileset dir="doc" prefix="xslt-debugger/help">
+        <include name="help.jar"/>
+      </zipfileset>
+      <zipfileset dir="." prefix="xslt-debugger">
+        <include name="LICENSE"/>
+      </zipfileset>
+    </zip>
+    <zip file="dist/xslt-debugger_src.zip">
+      <zipfileset dir="." prefix="xslt-debugger">
+        <include name="src/**/*"/>
+        <include name="rt/src/**/*"/>
+
+        <include name="rt/*.iml"/>
+        <include name="*.iml"/>
+        <include name="*.ipr"/>
+
+        <include name="META-INF/*.xml"/>
+
+        <include name="build.xml"/>
+        <include name="build.properties"/>
+
+        <include name="LICENSE"/>
+        <include name="readme-project.txt"/>
+      </zipfileset>
+    </zip>
+  </target>
+</project>

@@ -48,11 +48,11 @@ public abstract class PopupUpdateProcessor extends JBPopupAdapter {
           if (windowEvent.asPopup().isVisible()) { //was not canceled yet
             final LookupElement item = event.getItem();
             if (item != null) {
-              windowEvent.asPopup().cancel(); //close this one
               updatePopup(item.getObject()); //open next
             }
+          } else {
+            activeLookup.removeLookupListener(this); //do not multiply listeners
           }
-          activeLookup.removeLookupListener(this); //do not multiply listeners
         }
       });
     }
