@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -25,21 +26,35 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
       return null;
     }
     final PsiMethod method = (PsiMethod)element;
-    String name = method.getName();
-    if (!name.startsWith("test")) {
-      return null;
-    }
-    String testDataPath = getTestDataBasePath(method.getContainingClass());
-    if (testDataPath != null) {
-      List<String> fileNames = new TestDataReferenceCollector(testDataPath, name.substring(4)).collectTestDataReferences(method);
-      if (fileNames.size() > 0) {
-        return new LineMarkerInfo<PsiMethod>(method, method.getTextOffset(), Icons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null,
-                                             new TestDataNavigationHandler());
-      }
+    if (isTestMethod(method)) {
+      return new LineMarkerInfo<PsiMethod>(method, method.getTextOffset(), Icons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null,
+                                           new TestDataNavigationHandler());
     }
     return null;
   }
 
+  private static boolean isTestMethod(@NotNull PsiMethod method) {
+    if (isTestMethodWithAnnotation(method)) {
+      return true;
+    }
+
+    final List<String> files = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
+    return files != null && !files.isEmpty();
+  }
+
+  private static boolean isTestMethodWithAnnotation(@NotNull PsiMethod method) {
+    String name = method.getName();
+    if (!name.startsWith("test")) {
+      return false;
+    }
+    String testDataPath = getTestDataBasePath(method.getContainingClass());
+    if (testDataPath == null) {
+      return false;
+    }
+    List<String> fileNames = new TestDataReferenceCollector(testDataPath, name.substring(4)).collectTestDataReferences(method);
+    return !fileNames.isEmpty();
+  }
+  
   public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
   }
 

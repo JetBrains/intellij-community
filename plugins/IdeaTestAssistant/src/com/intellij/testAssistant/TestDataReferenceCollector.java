@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.testFramework.UsefulTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -34,16 +35,20 @@ public class TestDataReferenceCollector {
   private PsiClass myContainingClass;
   private boolean myFoundTestDataParameters = false;
 
-  public TestDataReferenceCollector(String testDataPath, String testName) {
+  public TestDataReferenceCollector(@Nullable String testDataPath, String testName) {
     myTestDataPath = testDataPath;
     myTestName = testName;
   }
 
-  List<String> collectTestDataReferences(final PsiMethod method) {
+  List<String> collectTestDataReferences(@NotNull final PsiMethod method) {
     myContainingClass = method.getContainingClass();
-    final List<String> result = collectTestDataReferences(method, new HashMap<String, Computable<String>>());
+    List<String> result = collectTestDataReferences(method, new HashMap<String, Computable<String>>());
     if (!myFoundTestDataParameters) {
       myLogMessages.add("Found no parameters annotated with @TestDataFile");
+    }
+
+    if (result == null || result.isEmpty()) {
+      result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
     }
     return result;
   }
