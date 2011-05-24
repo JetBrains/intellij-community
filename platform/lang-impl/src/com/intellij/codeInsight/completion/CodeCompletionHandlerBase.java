@@ -35,6 +35,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -66,6 +68,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -458,7 +461,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     Document document = fileCopy.getViewProvider().getDocument();
     assert document != null : "no document";
-    initContext.getFileCopyPatcher().patchFileCopy(fileCopy, document, initContext.getOffsetMap());
+    patchFileCopy(initContext, fileCopy, document);
     final Document hostDocument = hostFile.getViewProvider().getDocument();
     assert hostDocument != null : "no host document";
     PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
@@ -487,6 +490,23 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     assert context.getStartOffset() >= 0 : "start < 0";
 
     return context;
+  }
+
+  private static void patchFileCopy(CompletionInitializationContext initContext, PsiFile fileCopy, Document document) {
+    final LinkedList<DocumentEvent> events = new LinkedList<DocumentEvent>();
+
+    final DocumentAdapter listener = new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        events.addFirst(e);
+      }
+    };
+
+    document.addDocumentListener(listener);
+    initContext.getFileCopyPatcher().patchFileCopy(fileCopy, document, initContext.getOffsetMap());
+    document.removeDocumentListener(listener);
+
+    document.putUserData(CompletionUtil.RANGE_TRANSLATION, events);
   }
 
   private boolean isAutocompleteCommonPrefixOnInvocation() {
@@ -558,7 +578,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   protected PsiFile createFileCopy(PsiFile file) {
-    ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
     final VirtualFile virtualFile = file.getVirtualFile();
     if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
         // must not cache injected file copy, since it does not reflect changes in host document
@@ -568,12 +587,12 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         final Pair<PsiFile, Document> pair = reference.get();
         if (pair != null && pair.first.isValid() && pair.first.getClass().equals(file.getClass())) {
           final PsiFile copy = pair.first;
+          if (copy.getModificationStamp() > file.getModificationStamp()) {
+            ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
+          }
           final Document document = pair.second;
           assert document != null;
-          final String oldDocumentText = document.getText();
-          final String oldCopyText = copy.getText();
-          final String newText = file.getText();
-          document.setText(newText);
+          document.setText(file.getText());
           return copy;
         }
       }

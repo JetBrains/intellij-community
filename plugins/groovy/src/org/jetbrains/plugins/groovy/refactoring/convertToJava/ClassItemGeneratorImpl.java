@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -304,9 +305,44 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   }
 
   @Override
-  public void writeVariableDeclarations(StringBuilder builder, GrVariableDeclaration variableDeclaration) {
-    GenerationUtil.writeSimpleVarDeclaration(variableDeclaration, builder, context.extend());
-    builder.append('\n');
+  public void writeVariableDeclarations(StringBuilder mainBuilder, GrVariableDeclaration variableDeclaration) {
+    ExpressionContext extended = context.extend();
+    GrVariable[] variables = variableDeclaration.getVariables();
+
+    StringBuilder builder = new StringBuilder();
+    StringBuilder initBuilder = new StringBuilder("{\n");
+    for (GrVariable variable : variables) {
+      PsiType type = extended.typeProvider.getVarType(variable);
+      ModifierListGenerator.writeModifiers(builder, variable.getModifierList());
+
+      writeType(builder, type, variable);
+      builder.append(" ");
+
+      builder.append(variable.getName());
+      final GrExpression initializer = variable.getInitializerGroovy();
+
+      if (initializer != null) {
+        int count = extended.myStatements.size();
+        StringBuilder initializerBuilder = new StringBuilder();
+        initializer.accept(new ExpressionGenerator(initializerBuilder, extended));
+        if (extended.myStatements.size() == count) { //didn't use extra statements
+          builder.append(" = ").append(initializerBuilder);
+        }
+        else {
+          StringBuilder assignment = new StringBuilder(variable.getName()).append(" = ").append(initializerBuilder).append(';');
+          GenerationUtil.writeStatement(initBuilder, assignment, null, extended);
+        }
+      }
+
+      builder.append(";\n");
+    }
+
+    if (extended.myStatements.size()>0) {
+      initBuilder.append("}\n");
+      mainBuilder.append(initBuilder);
+    }
+
+     mainBuilder.append(builder);
   }
 
   @Override

@@ -53,6 +53,8 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.XmlTagFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -586,6 +588,37 @@ public class XmlUtil {
     }
     return null;
   }
+
+  public static void expandTag(@NotNull XmlTag tag) {
+    XmlTag newTag = XmlElementFactory.getInstance(tag.getProject()).createTagFromText('<' + tag.getName() + "></" + tag.getName() + '>');
+
+    ASTNode node = tag.getNode();
+    if (!(node instanceof CompositeElement)) return;
+    CompositeElement compositeElement = (CompositeElement)node;
+
+    final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(compositeElement);
+    if (emptyTagEnd == null) return;
+
+    compositeElement.removeChild(emptyTagEnd);
+    PsiElement[] children = newTag.getChildren();
+
+    compositeElement.addChildren(children[2].getNode(), null, null);
+  }
+  //
+  //public static void expandTag(@NotNull XmlTag tag) {
+  //  final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());
+  //  if (emptyTagEnd == null) return;
+  //
+  //  PsiFile file = tag.getContainingFile().getOriginalFile();
+  //
+  //  TextRange textRange = emptyTagEnd.getTextRange();
+  //  Document document = file.getViewProvider().getDocument();
+  //  if (document == null) return;
+  //
+  //  PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+  //  document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), "></" + tag.getName() + '>');
+  //  PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+  //}
 
   private static class XmlElementProcessor {
     private final PsiElementProcessor processor;

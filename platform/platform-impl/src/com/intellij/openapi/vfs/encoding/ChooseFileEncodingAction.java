@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -70,27 +71,28 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   }
 
   public static boolean isEnabled(@Nullable VirtualFile virtualFile) {
+    if (virtualFile == null) {
+      return false;
+    }
     boolean enabled = true;
-    if (virtualFile != null) {
-      Charset charset = cachedCharsetFromContent(virtualFile);
-      if (charset != null) {
-        enabled = false;
-      }
-      else if (!virtualFile.isDirectory()) {
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
-        if (fileType.isBinary()
-            || fileType == StdFileTypes.GUI_DESIGNER_FORM
-            || fileType == StdFileTypes.IDEA_MODULE
-            || fileType == StdFileTypes.IDEA_PROJECT
-            || fileType == StdFileTypes.IDEA_WORKSPACE
-            || fileType == StdFileTypes.PATCH
-            || fileType == StdFileTypes.PROPERTIES
+    Charset charset = cachedCharsetFromContent(virtualFile);
+    if (charset != null) {
+      enabled = false;
+    }
+    else if (!virtualFile.isDirectory()) {
+      FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+      if (fileType.isBinary()
+          || fileType == StdFileTypes.GUI_DESIGNER_FORM
+          || fileType == StdFileTypes.IDEA_MODULE
+          || fileType == StdFileTypes.IDEA_PROJECT
+          || fileType == StdFileTypes.IDEA_WORKSPACE
+          || fileType == StdFileTypes.PATCH
+          || fileType == StdFileTypes.PROPERTIES
 
-            || fileType == StdFileTypes.XML
-            || fileType == StdFileTypes.JSPX
-          ) {
-          enabled = false;
-        }
+          || fileType == StdFileTypes.XML
+          || fileType == StdFileTypes.JSPX && fileType != FileTypes.PLAIN_TEXT // in community tests JSPX==TEXT
+        ) {
+        enabled = false;
       }
     }
     return enabled;
@@ -204,11 +206,16 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     if (showClear) {
       group.add(new ClearThisFileEncodingAction(myVirtualFile));
     }
-    fillCharsetActions(group, myVirtualFile, favorites);
+    if (favorites.isEmpty() && !showClear) {
+      fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
+    }
+    else {
+      fillCharsetActions(group, myVirtualFile, favorites);
 
-    DefaultActionGroup more = new DefaultActionGroup("more", true);
-    group.add(more);
-    fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
+      DefaultActionGroup more = new DefaultActionGroup("more", true);
+      group.add(more);
+      fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
+    }
     return group;
   }
 }

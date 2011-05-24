@@ -244,7 +244,12 @@ public class SelectBranchPopup {
         .setItemChoosenCallback(new Runnable() {
           public void run() {
             if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
-              showBranchPopup(selectedValue, false);
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  showBranchPopup(selectedValue, false);
+                }
+              });
               return;
             }
             SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();

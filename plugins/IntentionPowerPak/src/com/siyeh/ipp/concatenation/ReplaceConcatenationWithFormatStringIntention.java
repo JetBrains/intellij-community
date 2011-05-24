@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -134,11 +135,11 @@ public class ReplaceConcatenationWithFormatStringIntention
         if (expression instanceof PsiLiteralExpression) {
             final PsiLiteralExpression literalExpression =
                     (PsiLiteralExpression) expression;
-            final Object value = literalExpression.getValue();
-            final String text =
-                    String.valueOf(value).replace("%", "%%").replace(
-                            "\\'", "'");
-            formatString.append(text);
+            final String text = String.valueOf(literalExpression.getValue());
+            final String formatText =
+                    StringUtil.escapeStringCharacters(text)
+                        .replace("%", "%%").replace("\\'", "'");
+            formatString.append(formatText);
         } else if (expression instanceof PsiBinaryExpression) {
             final PsiType type = expression.getType();
             if (type != null && type.equalsToText("java.lang.String")) {

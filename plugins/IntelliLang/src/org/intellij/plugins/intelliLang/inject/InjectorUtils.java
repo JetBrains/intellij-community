@@ -27,9 +27,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -92,12 +94,24 @@ public class InjectorUtils {
   }
 
   @NotNull
+  public static Class[] getPatternClasses(final String supportId) {
+    final LanguageInjectionSupport support = findInjectionSupport(supportId);
+    return support == null ? ArrayUtil.EMPTY_CLASS_ARRAY : support.getPatternClasses();
+  }
+
+
+  @Nullable
   public static LanguageInjectionSupport findInjectionSupport(final String id) {
-    final LanguageInjectionSupport result = ContainerUtil.find(getActiveInjectionSupports(), new Condition<LanguageInjectionSupport>() {
+    return ContainerUtil.find(getActiveInjectionSupports(), new Condition<LanguageInjectionSupport>() {
       public boolean value(final LanguageInjectionSupport support) {
         return support.getId().equals(id);
       }
     });
+  }
+
+  @NotNull
+  public static LanguageInjectionSupport findNotNullInjectionSupport(final String id) {
+    final LanguageInjectionSupport result = findInjectionSupport(id);
     assert result != null: id+" injector not found";
     return result;
   }

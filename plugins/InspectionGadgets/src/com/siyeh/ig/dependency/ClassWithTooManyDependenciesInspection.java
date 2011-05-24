@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith
+ * Copyright 2006-2011 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.dependency;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
@@ -24,12 +23,11 @@ import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Set;
@@ -40,11 +38,7 @@ public class ClassWithTooManyDependenciesInspection
     @SuppressWarnings({"PublicField"})
     public int limit = 10;
 
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.DEPENDENCY_GROUP_NAME;
-    }
-
+    @Override
     public void runInspection(
             AnalysisScope scope,
             final InspectionManager inspectionManager,
@@ -68,15 +62,14 @@ public class ClassWithTooManyDependenciesInspection
                 final String errorString = InspectionGadgetsBundle.message(
                         "class.with.too.many.dependencies.problem.descriptor",
                         refClass.getName(), numDependencies, limit);
-                final CommonProblemDescriptor[] descriptors =
-                        new CommonProblemDescriptor[]{
-                                inspectionManager.createProblemDescriptor(errorString)
-                        };
+                final CommonProblemDescriptor[] descriptors = {
+                        inspectionManager.createProblemDescriptor(errorString)};
                 problemDescriptionsProcessor.addProblemElement(refClass, descriptors);
             }
         });  
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleIntegerFieldOptionsPanel(
                 InspectionGadgetsBundle.message(

@@ -139,7 +139,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
 
     public void update(final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(DependencyUISettings.getInstance().SCOPE_TYPE == FILE);
+      e.getPresentation().setVisible(DependencyUISettings.getInstance().SCOPE_TYPE == FILE);
     }
   }
 }

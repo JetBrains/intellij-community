@@ -23,8 +23,11 @@ package org.testng;
 import org.testng.remote.RemoteTestNG;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Vector;
 
 public class RemoteTestNGStarter {
@@ -81,6 +84,25 @@ public class RemoteTestNGStarter {
     finally {
       reader.close();
     }
+
+    try {
+      //testng 5.10 do not initialize xml suites before run in normal main call => No test suite found.
+      //revert "cleanup" to set suites manually again, this time for old versions only
+      final Class aClass = Class.forName("org.testng.TestNGCommandLineArgs");
+      final Method parseCommandLineMethod = aClass.getDeclaredMethod("parseCommandLine", new Class[] {new String[0].getClass()});
+      final Map commandLineArgs = (Map)parseCommandLineMethod.invoke(null, new Object[] {(String[])resultArgs.toArray(new String[resultArgs.size()])});
+      final RemoteTestNG testNG = new RemoteTestNG();
+      testNG.configure(commandLineArgs);
+      //set suites manually
+      testNG.initializeSuitesAndJarFile();
+      //in order to prevent suites to be initialized twice (second time in run)
+      //clear string suites here
+      testNG.setTestSuites(new ArrayList());
+      testNG.run();
+      return;
+    }
+    catch (NoSuchMethodException ignore) {}
+    catch (ClassNotFoundException ignore) {}
 
     RemoteTestNG.main((String[])resultArgs.toArray(new String[resultArgs.size()]));
   }

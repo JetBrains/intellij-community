@@ -45,8 +45,6 @@ import java.util.List;
 public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private static final Icon BIG_ICON = IconLoader.getIcon("/modules/javaModule.png");
 
-  private String myContentRootPath;
-
   private MavenProject myAggregatorProject;
   private MavenProject myParentProject;
 
@@ -104,7 +102,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   public MavenProject findPotentialParentProject(Project project) {
     if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
 
-    File parentDir = new File(myContentRootPath).getParentFile();
+    File parentDir = new File(getContentEntryPath()).getParentFile();
     if (parentDir == null) return null;
     VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(parentDir, "pom.xml"));
     if (parentPom == null) return null;
@@ -113,17 +111,9 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   private VirtualFile createAndGetContentEntry() {
-    String path = FileUtil.toSystemIndependentName(myContentRootPath);
+    String path = FileUtil.toSystemIndependentName(getContentEntryPath());
     new File(path).mkdirs();
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-  }
-
-  public String getContentEntryPath() {
-    return myContentRootPath;
-  }
-
-  public void setContentEntryPath(String path) {
-    myContentRootPath = path;
   }
 
   public List<Pair<String, String>> getSourcePaths() {

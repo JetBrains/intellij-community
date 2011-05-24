@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -46,6 +47,7 @@ public class TypeProvider {
   public TypeProvider() {
   }
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
   public PsiType getReturnType(PsiMethod method) {
     if (method instanceof GrMethod) {
@@ -59,6 +61,7 @@ public class TypeProvider {
     return TypesUtil.getJavaLangObject(method);
   }
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
   public PsiType getVarType(GrVariable variable) {
     PsiType type = variable.getDeclaredType();
@@ -74,6 +77,10 @@ public class TypeProvider {
   @NotNull
   public PsiType getParameterType(PsiParameter parameter) {
     if (!(parameter instanceof GrParameter)) {
+      PsiElement scope = parameter.getDeclarationScope();
+      if (scope instanceof GrAccessorMethod) {
+        return getVarType(((GrAccessorMethod)scope).getProperty());
+      }
       return parameter.getType();
     }
     /*GrTypeElement typeElementGroovy = ((GrParameter)parameter).getTypeElementGroovy();

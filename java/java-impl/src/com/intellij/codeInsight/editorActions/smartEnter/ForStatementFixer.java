@@ -96,10 +96,12 @@ public class ForStatementFixer implements Fixer {
     final Project project = editor.getProject();
     int offset = lastValidForPart.getTextRange().getEndOffset();
     if (project != null && CodeStyleSettingsManager.getSettings(project).SPACE_AFTER_COMMA) {
+      if (editor.getDocument().getCharsSequence().charAt(lastValidForPart.getTextRange().getEndOffset() - 1) != ';') {
+        offset++;
+      }
       for (PsiElement element = lastValidForPart.getNextSibling();
            element != null && element != forStatement.getRParenth() && element.getParent() == forStatement;
-           element = element.getNextSibling())
-      {
+           element = element.getNextSibling()) {
         final ASTNode node = element.getNode();
         if (node != null && ElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) && element.getTextLength() > 0) {
           offset++;

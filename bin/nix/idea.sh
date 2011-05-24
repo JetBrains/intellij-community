@@ -100,7 +100,7 @@ if [ -z "$IDEA_VM_OPTIONS" ]; then
   IDEA_VM_OPTIONS="$IDEA_HOME/bin/idea.vmoptions"
 fi
 
-[ -e $IDEA_HOME/Contents/Info.plist ] && BUNDLE_TYPE="MAC" || BUNDLE_TYPE="NOT_MAC"
+[ -e "$IDEA_HOME/Contents/Info.plist" ] && BUNDLE_TYPE="MAC" || BUNDLE_TYPE="NOT_MAC"
 
 # If vmoptions file exists - use it
 if [ -e "$IDEA_VM_OPTIONS" ]; then

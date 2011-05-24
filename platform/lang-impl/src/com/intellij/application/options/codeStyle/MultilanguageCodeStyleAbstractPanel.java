@@ -34,8 +34,11 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +48,10 @@ import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Base class for code style settings panels supporting multiple programming languages.
@@ -63,23 +70,25 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   }
 
   protected void init() {
-    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+      resetDefaultNames();
       provider.customizeSettings(this, getSettingsType());
     }
   }
 
-  public boolean setPanelLanguage(Language language) {    
+  public boolean setPanelLanguage(Language language) {
 
     boolean languageProviderFound = false;
-    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
       if (provider.getLanguage().is(language)) {
+        resetDefaultNames();
         provider.customizeSettings(this, getSettingsType());
         languageProviderFound = true;
         break;
       }
     }
     if (!languageProviderFound) return false;
-    
+
     myLanguage = language;
 
     setSkipPreviewHighlighting(true);
@@ -100,6 +109,9 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   protected abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();
 
   protected void onLanguageChange(Language language) {
+  }
+
+  protected void resetDefaultNames() {
   }
 
   @Override
@@ -162,21 +174,21 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     final Document doc = manager.getDocument(psiFile);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            doc.replaceString(0, doc.getTextLength(), text);
-            manager.commitDocument(doc);
-            try {
-              CodeStyleManager.getInstance(project).reformat(psiFile);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-    }, "", "");
+                                                    public void run() {
+                                                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                                                        public void run() {
+                                                          doc.replaceString(0, doc.getTextLength(), text);
+                                                          manager.commitDocument(doc);
+                                                          try {
+                                                            CodeStyleManager.getInstance(project).reformat(psiFile);
+                                                          }
+                                                          catch (IncorrectOperationException e) {
+                                                            LOG.error(e);
+                                                          }
+                                                        }
+                                                      });
+                                                    }
+                                                  }, "", "");
     if (doc != null) {
       manager.commitDocument(doc);
     }
@@ -185,7 +197,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   protected static JPanel createPreviewPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
     panel.setPreferredSize(new Dimension(200, 0));
     return panel;
   }
@@ -237,7 +248,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   }
 
   private void selectCurrentLanguageTab() {
-    for(int i = 0; i < tabbedPane.getTabCount(); i ++) {
+    for (int i = 0; i < tabbedPane.getTabCount(); i++) {
       if (getTabName(myLanguage).equals(tabbedPane.getTitleAt(i))) {
         tabbedPane.setSelectedIndex(i);
         return;
@@ -271,5 +282,72 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   @Override
   public Language getDefaultLanguage() {
     return getSelectedLanguage();
+  }
+
+  protected <T extends OrderedOption>List<T> sortOptions(Collection<T> options) {
+    Set<String> names = new THashSet<String>(ContainerUtil.map(options, new Function<OrderedOption, String>() {
+      @Override
+      public String fun(OrderedOption option) {
+        return option.getOptionName();
+      }
+    }));
+
+    List<T> order = new ArrayList<T>(options.size());
+    MultiMap<String, T> afters = new MultiMap<String, T>();
+    MultiMap<String, T> befores = new MultiMap<String, T>();
+
+    for (T each : options) {
+        String anchorOptionName = each.getAnchorOptionName();
+        if (anchorOptionName != null && names.contains(anchorOptionName)) {
+          if (each.getAnchor() == OptionAnchor.AFTER) {
+            afters.putValue(anchorOptionName, each);
+            continue;
+          }
+          else if (each.getAnchor() == OptionAnchor.BEFORE) {
+            befores.putValue(anchorOptionName, each);
+            continue;
+          }
+        }
+      order.add(each);
+    }
+
+    List<T> result = new ArrayList<T>(options.size());
+    for (T each : order) {
+      result.addAll(befores.get(each.getOptionName()));
+      result.add(each);
+      result.addAll(afters.get(each.getOptionName()));
+    }
+
+    assert result.size() == options.size();
+    return result;
+  }
+
+  protected abstract static class OrderedOption {
+    @NotNull private final String optionName;
+    @Nullable private final OptionAnchor anchor;
+    @Nullable private final String anchorOptionName;
+
+    protected OrderedOption(@NotNull String optionName,
+                            OptionAnchor anchor,
+                            String anchorOptionName) {
+      this.optionName = optionName;
+      this.anchor = anchor;
+      this.anchorOptionName = anchorOptionName;
+    }
+
+    @NotNull
+    public String getOptionName() {
+      return optionName;
+    }
+
+    @Nullable
+    public OptionAnchor getAnchor() {
+      return anchor;
+    }
+
+    @Nullable
+    public String getAnchorOptionName() {
+      return anchorOptionName;
+    }
   }
 }

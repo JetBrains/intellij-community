@@ -151,11 +151,12 @@ public class InplaceIntroduceFieldPopup {
     return myOccurrenceMarkers;
   }
 
-  public void startTemplate() {
-    startTemplate(false, null);
+  public boolean startTemplate() {
+    return startTemplate(false, null);
   }
 
-  public void startTemplate(final boolean replaceAllOccurrences, @Nullable final PsiType fieldDefaultType) {
+  public boolean startTemplate(final boolean replaceAllOccurrences, @Nullable final PsiType fieldDefaultType) {
+    final Ref<Boolean> result = new Ref<Boolean>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
@@ -176,6 +177,7 @@ public class InplaceIntroduceFieldPopup {
           IntroduceFieldDialog.createGenerator(myStatic, myLocalVariable, myInitializerExpression, myLocalVariable != null)
             .getSuggestedNameInfo(defaultType);
 
+        boolean started = false;
         final PsiField field = createFieldToStartTemplateOn(suggestedNameInfo.names, defaultType);
         if (field != null) {
           myEditor.getCaretModel().moveToOffset(field.getTextOffset());
@@ -184,10 +186,20 @@ public class InplaceIntroduceFieldPopup {
           nameSuggestions.add(field.getName());
           nameSuggestions.addAll(Arrays.asList(suggestedNameInfo.names));
           final VariableInplaceRenamer renamer = new FieldInplaceIntroducer(field);
-          renamer.performInplaceRename(false, nameSuggestions);
+          started = renamer.performInplaceRename(false, nameSuggestions);
+        }
+        result.set(started);
+        if (!started && field != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              field.delete();
+            }
+          });
         }
       }
     }, IntroduceFieldHandler.REFACTORING_NAME, IntroduceFieldHandler.REFACTORING_NAME);
+    return result.get();
   }
 
   private PsiField createFieldToStartTemplateOn(final String[] names,
@@ -196,22 +208,14 @@ public class InplaceIntroduceFieldPopup {
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
-        final Ref<PsiField> ref = new Ref<PsiField>();
-        PostprocessReformattingAspect.getInstance(myProject).postponeFormattingInside(new Runnable() {
-          @Override
-          public void run() {
-            PsiField field = elementFactory.createField(myFieldName != null ? myFieldName : names[0], defaultType);
-            field = (PsiField)myParentClass.add(field);
-            PsiUtil.setModifierProperty(field, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
-            final String visibility = myIntroduceFieldPanel.getFieldVisibility();
-            if (visibility != null) {
-              PsiUtil.setModifierProperty(field, visibility, true);
-            }
-            ref.set(field);
-          }
-        });
-
-        return ref.get();
+        PsiField field = elementFactory.createField(myFieldName != null ? myFieldName : names[0], defaultType);
+        field = (PsiField)myParentClass.add(field);
+        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
+        final String visibility = myIntroduceFieldPanel.getFieldVisibility();
+        if (visibility != null) {
+          PsiUtil.setModifierProperty(field, visibility, true);
+        }
+        return field;
       }
     });
   }

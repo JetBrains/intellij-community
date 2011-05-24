@@ -161,7 +161,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   public boolean intersectsWith(final BaseInjection template) {
     if (!Comparing.equal(getInjectedLanguageId(), template.getInjectedLanguageId())) return false;
     for (InjectionPlace other : template.getInjectionPlaces()) {
-      if (findPlaceByText(other.getText()) != null) return true;
+      if (myPlaces.contains(other)) return true;
     }
     return false;
   }
@@ -173,14 +173,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     if (!myValuePattern.equals(that.myValuePattern)) return false;
     if (mySingleFile != that.mySingleFile) return false;
     return true;
-  }
-
-  @Nullable
-  public InjectionPlace findPlaceByText(final String text) {
-    for (InjectionPlace cur : myPlaces) {
-      if (Comparing.equal(text, cur.getText())) return cur;
-    }
-    return null;
   }
 
   @SuppressWarnings({"unchecked"})
@@ -196,6 +188,13 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     final BaseInjection that = (BaseInjection)o;
 
     if (!sameLanguageParameters(that)) return false;
+    if (myPlaces.size() != that.myPlaces.size()) return false;
+    for (int i = 0, len = myPlaces.size(); i < len; i++) {
+      if (myPlaces.get(i).isEnabled() != that.myPlaces.get(i).isEnabled()) {
+        return false;
+      }
+    }
+    // enabled flag is not counted this way:
     if (!myPlaces.equals(that.myPlaces)) return false;
     return true;
   }
@@ -227,6 +226,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   public void loadState(Element element) {
+    final PatternCompiler<PsiElement> helper = getCompiler();
     final Element e = element.getChild(getClass().getSimpleName());
     if (e != null) {
       myInjectedLanguageId = JDOMExternalizer.readString(e, "LANGUAGE");
@@ -235,7 +235,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       setValuePattern(JDOMExternalizer.readString(e, "VALUE_PATTERN"));
       mySingleFile = JDOMExternalizer.readBoolean(e, "SINGLE_FILE");
       readExternalImpl(e);
-      initializePlaces(false);
     }
     else {
       myDisplayName = StringUtil.notNullize(element.getChildText("display-name"));
@@ -248,41 +247,21 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       for (Element placeElement : (List<Element>)element.getChildren("place")) {
         final boolean enabled = !Boolean.parseBoolean(placeElement.getAttributeValue("disabled"));
         final String text = placeElement.getText();
-        myPlaces.add(new InjectionPlace(text, null, enabled));
+        myPlaces.add(new InjectionPlace(helper.createElementPattern(text, getDisplayName()), enabled));
       }
-      myPlaces.trimToSize();
     }
-  }
-
-  public void initializePlaces(final boolean compile) {
-    final PatternCompiler<PsiElement> helper =
-      PatternCompilerFactory.getFactory().getPatternCompiler(InjectorUtils.findInjectionSupport(getSupportId()).getPatternClasses());
     if (myPlaces.isEmpty()) {
-      for (String text : generatePlaces()) {
-        myPlaces.add(new InjectionPlace(text, compile? helper.createElementPattern(text, getDisplayName()) : null, true));
-      }
+      generatePlaces();
     }
-    else if (compile) {
-      boolean replace = false;
-      final ArrayList<InjectionPlace> newPlaces = new ArrayList<InjectionPlace>();
-      for (InjectionPlace place : myPlaces) {
-        if (StringUtil.isNotEmpty(place.getText()) && place.getElementPattern() == null) {
-          replace = true;
-          newPlaces.add(new InjectionPlace(place.getText(), helper.createElementPattern(place.getText(), getDisplayName()), place.isEnabled()));
-        }
-        else {
-          newPlaces.add(place);
-        }
-      }
-      if (replace) {
-        myPlaces.clear();
-        myPlaces.addAll(newPlaces);
-      }
-    }
+    myPlaces.trimToSize();
   }
 
-  protected List<String> generatePlaces() {
-    return Collections.emptyList();
+
+  public PatternCompiler<PsiElement> getCompiler() {
+    return PatternCompilerFactory.getFactory().getPatternCompiler(InjectorUtils.getPatternClasses(getSupportId()));
+  }
+
+  public void generatePlaces() {
   }
 
   protected void readExternalImpl(Element e) {}
@@ -387,13 +366,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public void mergeOriginalPlacesFrom(final BaseInjection injection, final boolean enabled) {
     for (InjectionPlace place : injection.getInjectionPlaces()) {
-      if (findPlaceByText(place.getText()) == null) {
-        if (enabled || !place.isEnabled()) {
-          myPlaces.add(place);
-        }
-        else {
-          myPlaces.add(new InjectionPlace(place.getText(), place.getElementPattern(), false));
-        }
+      if (!myPlaces.contains(place)) {
+        myPlaces.add(enabled || !place.isEnabled() ? place : place.enabled(false));
       }
     }
   }
@@ -403,7 +377,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       final InjectionPlace cur = myPlaces.get(i);
       if (text == null || Comparing.equal(text, cur.getText())) {
         if (cur.isEnabled() != enabled) {
-          myPlaces.set(i, new InjectionPlace(cur.getText(), cur.getElementPattern(), enabled));
+          myPlaces.set(i, cur.enabled(enabled));
         }
       }
     }

@@ -66,7 +66,6 @@ import java.util.*;
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42);
   private final NewVirtualFileSystem myFS;
-  private static final boolean IS_UNIT_TESTS = false;//ApplicationManager.getApplication().isUnitTestMode();
 
   // guarded by this
   private Object myChildren; // Either HashMap<String, VFile> or VFile[]
@@ -174,8 +173,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return child;
   }
 
+
+  private static final boolean IS_UNDER_TEAMCITY = System.getProperty("bootstrap.testcases") != null;
+  private static final boolean IS_UNIT_TESTS = ApplicationManager.getApplication().isUnitTestMode();
+  private static final Collection<String> additionalRoots = new THashSet<String>();
+  @TestOnly
+  public static void allowToAccess(@NotNull String root) { additionalRoots.add(FileUtil.toSystemIndependentName(root)); }
+  @TestOnly
   private static void assertAccessInTests(VirtualFileSystemEntry child) {
-    if (IS_UNIT_TESTS && ApplicationManager.getApplication() instanceof ApplicationImpl && ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()) {
+    if (IS_UNIT_TESTS && IS_UNDER_TEAMCITY && ApplicationManager.getApplication() instanceof ApplicationImpl && ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()) {
       NewVirtualFileSystem fileSystem = child.getFileSystem();
       if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
         return;
@@ -206,7 +212,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       if (!isUnder) {
         if (!allowed.isEmpty()) {
-          //assert false : "File accessed outside project: " + child +"; project roots: "+new ArrayList(allowed);
+          assert false : "File accessed outside allowed roots: " + child +";\n Allowed roots: "+new ArrayList(allowed);
         }
       }
     }
@@ -217,7 +223,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (insideGettingRoots) return null;
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
-    Set<String> allowed = new THashSet<String>();
+    final Set<String> allowed = new THashSet<String>();
     String homePath = PathManager.getHomePath();
     allowed.add(FileUtil.toSystemIndependentName(homePath));
     try {
@@ -233,8 +239,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     allowed.add(FileUtil.toSystemIndependentName(tempDirectorySpecific));
     String tempDirectory = System.getProperty("java.io.tmpdir");
     allowed.add(FileUtil.toSystemIndependentName(tempDirectory));
-    String home = SystemProperties.getUserHome();
-    allowed.add(FileUtil.toSystemIndependentName(home));
+    String userHome = SystemProperties.getUserHome();
+    allowed.add(FileUtil.toSystemIndependentName(userHome));
     for (Project project : openProjects) {
       if (!project.isInitialized()) {
         return null; // all is allowed
@@ -249,6 +255,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       allowed.add(FileUtil.toSystemIndependentName(location));
     }
 
+    //for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+    //  allowed.add(FileUtil.toSystemIndependentName(sdk.getHomePath()));
+    //}
+    for (String root : additionalRoots) {
+      allowed.add(root);
+    }
     return allowed;
   }
 

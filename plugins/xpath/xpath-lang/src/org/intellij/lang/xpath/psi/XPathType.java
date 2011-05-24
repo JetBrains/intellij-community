@@ -67,7 +67,7 @@ public class XPathType {
     return isAbstract() || type.isAbstract() || this != NODESET || type == NODESET;
   }
 
-  protected boolean canBePromotedTo(XPathType type) {
+  public boolean canBePromotedTo(XPathType type) {
     return type != NODESET;
   }
 
@@ -92,9 +92,9 @@ public class XPathType {
       myTypes = types;
     }
 
-    public static XPathType create(XPath2Type... types) {
+    public static XPathType create(XPathType... types) {
       final StringBuilder name = new StringBuilder();
-      for (XPath2Type type : types) {
+      for (XPathType type : types) {
         if (name.length() > 0) {
           name.append(", ");
         }
@@ -114,7 +114,7 @@ public class XPathType {
     }
 
     @Override
-    protected boolean canBePromotedTo(XPathType type) {
+    public boolean canBePromotedTo(XPathType type) {
       return false;
     }
   }

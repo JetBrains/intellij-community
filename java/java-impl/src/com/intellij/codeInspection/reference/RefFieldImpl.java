@@ -13,15 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Oct 21, 2001
- * Time: 4:29:10 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,25 +21,24 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ * Date: Oct 21, 2001
+ */
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
   private static final int ASSIGNED_ONLY_IN_INITIALIZER = 0x40000;
 
-  RefFieldImpl(PsiField field, RefManager manager) {
-    this((RefClass)((RefManagerImpl)manager).getReference(field.getContainingClass(), true), field, manager);
-  }
-
-  RefFieldImpl(RefClass ownerClass, PsiField field, RefManager manager) {
+  RefFieldImpl(@NotNull RefClass ownerClass, PsiField field, RefManager manager) {
     super(field, manager);
 
     ((RefClassImpl)ownerClass).add(this);
 
-    PsiClass psiClass = field.getContainingClass();
-
-    if (psiClass.isInterface()) {
+    if (ownerClass.isInterface()) {
       setIsStatic(true);
       setIsFinal(true);
     }    

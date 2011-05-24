@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -101,5 +103,11 @@ public class FileContentUtil {
       }
     }
     events.add(new VFilePropertyChangeEvent(FORCE_RELOAD_REQUESTOR, virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(), virtualFile.getName(), false));
+  }
+
+  public static void reparseOpenedFiles() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+    }
   }
 }

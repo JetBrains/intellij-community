@@ -31,6 +31,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiReferenceProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -70,6 +71,8 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
       if ((refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) && refMethod.getDerivedMethods().isEmpty()) return null;
 
       if (RefUtil.isEntryPoint(refMethod)) return null;
+
+      if (refMethod.isAppMain()) return null;
 
       final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
 

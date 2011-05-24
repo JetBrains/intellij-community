@@ -135,15 +135,15 @@ public class XPath2Type extends XPathType {
   }
 
   @Override
-  protected boolean canBePromotedTo(XPathType type) {
+  public boolean canBePromotedTo(XPathType type) {
     while (type instanceof XPath2SequenceType) {
       type = ((XPath2SequenceType)type).getType();
     }
     if (this == ITEM || NODE.isAssignableFrom(this) || (this == ANYATOMICTYPE && ANYATOMICTYPE.isAssignableFrom(type))) return true;
 
-    if (this == FLOAT && type == DOUBLE) return true;
-    if (DECIMAL.isAssignableFrom(DECIMAL) && (type == DOUBLE || type == FLOAT)) return true;
-    if (NUMERIC.isAssignableFrom(this) && (type == DOUBLE || type == FLOAT || type == INTEGER || type == DECIMAL)) return true;
+    if (FLOAT.isAssignableFrom(this) && type == DOUBLE) return true;
+    if (DECIMAL.isAssignableFrom(this) && (type == DOUBLE || type == FLOAT)) return true;
+    if (INTEGER.isAssignableFrom(this) && (type == DOUBLE || type == FLOAT || type == INTEGER || type == DECIMAL)) return true;
 
     if (ANYURI.isAssignableFrom(this) && type == STRING) return true;
 

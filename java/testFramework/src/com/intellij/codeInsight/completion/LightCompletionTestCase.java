@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -6,9 +21,11 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author mike
@@ -97,6 +114,32 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
       LookupElement item = myItems[i];
       assertEquals(items[i], item.getLookupString());
     }
+  }
+
+  protected void assertContainsItems(final String... expected) {
+    final Set<String> actual = getLookupStrings();
+    for (String s : expected) {
+      assertTrue("Expected '" + s + "' not found in " + actual,
+                 actual.contains(s));
+    }
+  }
+
+  protected void assertNotContainItems(final String... unexpected) {
+    final Set<String> actual = getLookupStrings();
+    for (String s : unexpected) {
+      assertFalse("Unexpected '" + s + "' presented in " + actual,
+                  actual.contains(s));
+    }
+  }
+
+  private Set<String> getLookupStrings() {
+    final Set<String> actual = new HashSet<String>();
+    if (myItems != null) {
+      for (LookupElement lookupElement : myItems) {
+        actual.add(lookupElement.getLookupString());
+      }
+    }
+    return actual;
   }
 
   protected static LookupImpl getLookup() {

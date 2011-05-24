@@ -109,6 +109,11 @@ public class PsiDiamondType extends PsiType {
 
   public static DiamondInferenceResult resolveInferredTypes(PsiNewExpression newExpression,
                                                             PsiElement context) {
+    final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.getChildOfType(newExpression, PsiReferenceParameterList.class);
+    if (referenceParameterList != null && referenceParameterList.getTypeParameterElements().length > 0) {
+      return DiamondInferenceResult.EXPLICIT_CONSTRUCTOR_TYPE_ARGS;
+    }
+
     final PsiClass psiClass = findClass(newExpression);
     if (psiClass == null) return DiamondInferenceResult.NULL_RESULT;
     final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -236,6 +241,18 @@ public class PsiDiamondType extends PsiType {
   }
 
   public static class DiamondInferenceResult {
+    public static final DiamondInferenceResult EXPLICIT_CONSTRUCTOR_TYPE_ARGS = new DiamondInferenceResult() {
+      @Override
+      public PsiType[] getTypes() {
+        return PsiType.EMPTY_ARRAY;
+      }
+
+      @Override
+      public String getErrorMessage() {
+        return "Cannot use diamonds with explicit type parameters for constructor";
+      }
+    };
+
     public static final DiamondInferenceResult NULL_RESULT = new DiamondInferenceResult() {
       @Override
       public PsiType[] getTypes() {

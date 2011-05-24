@@ -120,7 +120,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the root, or null if the specified file is not in a VCS-managed directory.
    */
   @Nullable
-  public abstract VirtualFile getVcsRootFor(VirtualFile file);
+  public abstract VirtualFile getVcsRootFor(@Nullable VirtualFile file);
 
   /**
    * Return the parent directory of the specified file path which is mapped to a VCS.

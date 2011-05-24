@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class FileContentQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContentQueue");
   private static final long SIZE_THRESHOLD = 1024*1024;
+  private static final long TAKEN_FILES_THRESHOLD = 1024*1024*4;
+  private static final long LARGE_SIZE_REQUEST_THRESHOLD = TAKEN_FILES_THRESHOLD - SIZE_THRESHOLD;
+
   private long myTotalSize;
+  private long myTakenSize;
+  private boolean myLargeSizeRequested;
 
   private final ArrayBlockingQueue<FileContent> myQueue = new ArrayBlockingQueue<FileContent>(256);
   private final Queue<FileContent> myPushbackBuffer = new ArrayDeque<FileContent>();
@@ -97,20 +101,18 @@ public class FileContentQueue {
 
     boolean counterUpdated = false;
     try {
-      if (contentLength < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
-        synchronized (this) {
-          while (myTotalSize > SIZE_THRESHOLD) {
-            if (indicator != null) {
-              indicator.checkCanceled();
-            }
-            wait(300);
+      synchronized (this) {
+        while (myTotalSize > SIZE_THRESHOLD) {
+          if (indicator != null) {
+            indicator.checkCanceled();
           }
-          myTotalSize += contentLength;
-          counterUpdated = true;
+          wait(300);
         }
-
-        content.getBytes(); // Reads the content bytes and caches them.
+        myTotalSize += contentLength;
+        counterUpdated = true;
       }
+
+      content.getBytes(); // Reads the content bytes and caches them.
 
       return true;
     }
@@ -138,6 +140,49 @@ public class FileContentQueue {
 
   @Nullable
   public FileContent take() {
+
+    FileContent content = doTake();
+    if (content != null) {
+      final long length = content.getLength();
+      while (true) {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          try {
+            indicator.checkCanceled();
+          }
+          catch (ProcessCanceledException e) {
+            pushback(content);
+            throw e;
+          }
+        }
+        synchronized (this) {
+          boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
+          if (requestingLargeSize) {
+            myLargeSizeRequested = true;
+          }
+          try {
+            if (myLargeSizeRequested && !requestingLargeSize ||
+                myTakenSize + length > Math.max(TAKEN_FILES_THRESHOLD, length))
+              wait(300);
+            else {
+              myTakenSize += length;
+              if (requestingLargeSize) {
+                myLargeSizeRequested = false;
+              }
+              return content;
+            }
+          }
+          catch (InterruptedException ignore) {
+
+          }
+        }
+      }
+    }
+    return content;
+  }
+
+  @Nullable
+  private FileContent doTake() {
     FileContent result;
     synchronized (this) {
       result = myPushbackBuffer.poll();
@@ -163,18 +208,21 @@ public class FileContentQueue {
       }
       return null;
     }
-    if (result.getLength() < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
-      synchronized (this) {
-        try {
-          myTotalSize -= result.getLength();
-        }
-        finally {
-          notifyAll();
-        }
+    synchronized (this) {
+      try {
+        myTotalSize -= result.getLength();
+      }
+      finally {
+        notifyAll();
       }
     }
 
     return result;
+  }
+
+  public synchronized void release(@NotNull FileContent content) {
+    myTakenSize -= content.getLength();
+    notifyAll();
   }
 
   public synchronized void pushback(@NotNull FileContent content) {

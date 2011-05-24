@@ -18,8 +18,12 @@ package git4idea.tests;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
@@ -31,6 +35,7 @@ import org.testng.annotations.BeforeMethod;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * The common ancestor for git test cases which need git executable.
@@ -119,12 +124,31 @@ public abstract class GitTest extends AbstractVcsTestCase {
     setStandardConfirmation(GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
   }
 
-  protected void doNothingSilently(final VcsConfiguration.StandardConfirmation op) {
-    setStandardConfirmation(GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
+  protected String tos(FilePath fp) {
+    return FileUtil.getRelativePath(new File(myMainRepo.getDir().getPath()), fp.getIOFile());
   }
 
-  protected void showConfirmation(final VcsConfiguration.StandardConfirmation op) {
-    setStandardConfirmation(GitVcs.NAME, op, VcsShowConfirmationOption.Value.SHOW_CONFIRMATION);
+  protected String tos(Change change) {
+    switch (change.getType()) {
+      case NEW: return "A: " + tos(change.getAfterRevision());
+      case DELETED: return "D: " + tos(change.getBeforeRevision());
+      case MOVED: return "M: " + tos(change.getBeforeRevision()) + " -> " + tos(change.getAfterRevision());
+      case MODIFICATION: return "M: " + tos(change.getAfterRevision());
+      default: return "~: " +  tos(change.getBeforeRevision()) + " -> " + tos(change.getAfterRevision());
+    }
+  }
+
+  protected String tos(ContentRevision revision) {
+    return tos(revision.getFile());
+  }
+
+  protected String tos(Map<FilePath, Change> changes) {
+    StringBuilder stringBuilder = new StringBuilder("[");
+    for (Change change : changes.values()) {
+      stringBuilder.append(tos(change)).append(", ");
+    }
+    stringBuilder.append("]");
+    return stringBuilder.toString();
   }
 
 }

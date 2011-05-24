@@ -19,17 +19,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
 import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
+import com.intellij.testFramework.vcs.MockDirtyScope;
 import com.intellij.ui.GuiUtils;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeProvider;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +44,7 @@ import static org.testng.Assert.*;
 /**
  * Tests GitChangeProvider functionality. Scenario is the same for all tests:
  * 1. Modifies files on disk (creates, edits, deletes, etc.)
- * 2. Manually adds them to a dirty scope (better to use VcsDirtyScopeManagerImpl, but it's too asynchronous - couldn't overcome this for now.
+ * 2. Manually adds them to a dirty scope.
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
  * @author Kirill Likhodedov
  */
@@ -51,41 +54,46 @@ public class GitChangeProviderTest extends GitSingleUserTest {
   private VcsModifiableDirtyScope myDirtyScope;
   private Map<String, VirtualFile> myFiles;
   private VirtualFile afile;
+  private VirtualFile myRootDir;
 
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myChangeProvider = (GitChangeProvider) GitVcs.getInstance(myProject).getChangeProvider();
-    myDirtyScope = new VcsDirtyScopeImpl(GitVcs.getInstance(myProject), myProject);
 
     myFiles = GitTestUtil.createFileStructure(myProject, myRepo, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
+    myRepo.addCommit();
+    myRepo.refresh();
+
     afile = myFiles.get("a.txt"); // the file is commonly used, so save it in a field.
-    myRepo.commit();
+    myRootDir = myRepo.getDir();
+
+    myDirtyScope = new MockDirtyScope(myProject, GitVcs.getInstance(myProject));
   }
 
   @Test
   public void testCreateFile() throws Exception {
-    VirtualFile bfile = myRepo.createFile("new.txt");
-    assertChanges(bfile, ADDED);
+    VirtualFile file = create(myRootDir, "new.txt");
+    assertChanges(file, ADDED);
   }
 
   @Test
   public void testCreateFileInDir() throws Exception {
-    VirtualFile dir = createDirInCommand(myRepo.getDir(), "newdir");
-    VirtualFile bfile = createFileInCommand(dir, "new.txt", "initial b");
+    VirtualFile dir = createDir(myRootDir, "newdir");
+    VirtualFile bfile = create(dir, "new.txt");
     assertChanges(new VirtualFile[] {bfile, dir}, new FileStatus[] { ADDED, null} );
   }
 
   @Test
   public void testEditFile() throws Exception {
-    editFileInCommand(afile, "new content");
+    edit(afile, "new content");
     assertChanges(afile, MODIFIED);
   }
 
   @Test
   public void testDeleteFile() throws Exception {
-    deleteFileInCommand(afile);
+    delete(afile);
     assertChanges(afile, DELETED);
   }
 
@@ -97,7 +105,9 @@ public class GitChangeProviderTest extends GitSingleUserTest {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            FileUtil.delete(new File(myRepo.getDir().getPath(), "dir"));
+            final VirtualFile dir= myRepo.getDir().findChild("dir");
+            myDirtyScope.addDirtyDirRecursively(new FilePathImpl(dir));
+            FileUtil.delete(VfsUtil.virtualToIoFile(dir));
           }
         });
       }
@@ -106,14 +116,28 @@ public class GitChangeProviderTest extends GitSingleUserTest {
   }
 
   @Test
+  public void testMoveNewFile() throws Exception {
+    // IDEA-59587
+    // Reproducibility of the bug (in the original roots cause) depends on the order of new and old paths in the dirty scope.
+    // MockDirtyScope shouldn't preserve the order of items added there - a Set is returned from getDirtyFiles().
+    // But the order is likely preserved if it meets the natural order of the items inserted into the dirty scope.
+    // That's why the test moves from .../repo/dir/new.txt to .../repo/new.txt - to make the old path appear later than the new one.
+    // This is not consistent though.
+    final VirtualFile dir= myRepo.getDir().findChild("dir");
+    final VirtualFile file = create(dir, "new.txt");
+    move(file, myRootDir);
+    assertChanges(file, ADDED);
+  }
+
+  @Test
   public void testSimultaneousOperationsOnMultipleFiles() throws Exception {
     VirtualFile dfile = myFiles.get("dir/subdir/d.txt");
     VirtualFile cfile = myFiles.get("dir/c.txt");
 
-    editFileInCommand(afile, "new content");
-    editFileInCommand(cfile, "new content");
-    deleteFileInCommand(dfile);
-    VirtualFile newfile = createFileInCommand("newfile.txt", "new content");
+    edit(afile, "new afile content");
+    edit(cfile, "new cfile content");
+    delete(dfile);
+    VirtualFile newfile = create(myRootDir, "newfile.txt");
 
     assertChanges(new VirtualFile[] {afile, cfile, dfile, newfile}, new FileStatus[] {MODIFIED, MODIFIED, DELETED, ADDED});
   }
@@ -194,19 +218,24 @@ public class GitChangeProviderTest extends GitSingleUserTest {
     VirtualFile file = myRepo.getDir().findChild(filename);
     switch (action) {
       case CREATE:
-        createFileInCommand(filename, "initial content in branch " + branchName);
+        final VirtualFile createdFile = createFileInCommand(filename, "initial content in branch " + branchName);
+        dirty(createdFile);
         myRepo.add(filename);
         break;
       case MODIFY:
         editFileInCommand(file, "new content in branch " + branchName);
+        dirty(file);
         myRepo.add(filename);
         break;
       case DELETE:
+        dirty(file);
         myRepo.rm(filename);
         break;
       case RENAME:
-        String name = filename + "_" + branchName.replaceAll("\\s", "_") + "_new";
-        myRepo.mv(filename, name);
+        String newName = filename + "_" + branchName.replaceAll("\\s", "_") + "_new";
+        dirty(file);
+        myRepo.mv(filename, newName);
+        dirty(myRootDir.findChild(newName));
         break;
       default:
         break;
@@ -223,11 +252,11 @@ public class GitChangeProviderTest extends GitSingleUserTest {
       FilePath fp = new FilePathImpl(virtualFiles[i]);
       FileStatus status = fileStatuses[i];
       if (status == null) {
-        assertFalse(result.containsKey(fp), "File [" + fp + " shouldn't be in the change list, but it was.");
+        assertFalse(result.containsKey(fp), "File [" + tos(fp) + " shouldn't be in the change list, but it was.");
         continue;
       }
-      assertTrue(result.containsKey(fp), "File [" + fp + "] didn't change. Changes: " + result);
-      assertEquals(result.get(fp).getFileStatus(), status, "File statuses don't match for file [" + fp + "]");
+      assertTrue(result.containsKey(fp), "File [" + tos(fp) + "] didn't change. Changes: " + tos(result));
+      assertEquals(result.get(fp).getFileStatus(), status, "File statuses don't match for file [" + tos(fp) + "]");
     }
   }
 
@@ -237,17 +266,10 @@ public class GitChangeProviderTest extends GitSingleUserTest {
 
   /**
    * Marks the given files dirty in myDirtyScope, gets changes from myChangeProvider and groups the changes in the map.
-   * Assumes that only one change for a file happened.
+   * Assumes that only one change for a file has happened.
    */
   private Map<FilePath, Change> getChanges(VirtualFile... changedFiles) throws VcsException {
     final List<FilePath> changedPaths = ObjectsConvertor.vf2fp(Arrays.asList(changedFiles));
-
-    // populate dirty scope
-    //for (FilePath path : changedPaths) {
-    //  myDirtyScope.addDirtyFile(path);
-    //}
-    VcsDirtyScopeManagerImpl.getInstance(myProject).markEverythingDirty();
-    myDirtyScope.addDirtyDirRecursively(new FilePathImpl(myRepo.getDir()));
 
     // get changes
     MockChangelistBuilder builder = new MockChangelistBuilder();
@@ -275,4 +297,37 @@ public class GitChangeProviderTest extends GitSingleUserTest {
     return result;
   }
 
+  private VirtualFile create(VirtualFile parent, String name) {
+    return create(parent, name, false);
+  }
+
+  private VirtualFile createDir(VirtualFile parent, String name) {
+    return create(parent, name, true);
+  }
+
+  private VirtualFile create(VirtualFile parent, String name, boolean dir) {
+    final VirtualFile file = dir ? createDirInCommand(parent, name) : createFileInCommand(parent, name, "content" + Math.random());
+    dirty(file);
+    return file;
+  }
+
+  private void edit(VirtualFile file, String content) {
+    editFileInCommand(file, content);
+    dirty(file);
+  }
+
+  private void move(VirtualFile file, VirtualFile newParent) {
+    dirty(file);
+    moveFileInCommand(file, newParent);
+    dirty(file);
+  }
+
+  private void delete(VirtualFile file) {
+    dirty(file);
+    deleteFileInCommand(file);
+  }
+
+  private void dirty(VirtualFile file) {
+    myDirtyScope.addDirtyFile(new FilePathImpl(file));
+  }
 }

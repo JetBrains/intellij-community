@@ -399,6 +399,9 @@ public class PsiUtilBase {
     return host != null && isUnderPsiRoot(root, host);
   }
 
+  /**
+   * @deprecated use CompletionUtil#getOriginalElement where appropriate instead
+   */
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, final Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();

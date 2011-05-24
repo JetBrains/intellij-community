@@ -18,8 +18,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
+import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,14 +29,20 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private final SmartPsiElementPointer<PsiField> myField;
@@ -95,9 +103,45 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         }
       }
     });
-    for (PsiMethod constructor : constructors) {
-      if (!addParameterToConstructor(project, file, editor, constructor)) break;
+    final ArrayList<PsiMethod> constrs = filterConstructorsIfFieldAlreadyAssigned(constructors);
+    if (constrs.size() > 1) {
+      final PsiMethodMember[] members = new PsiMethodMember[constrs.size()];
+      int i = 0;
+      for (PsiMethod constructor : constrs) {
+        members[i++] = new PsiMethodMember(constructor);
+      }
+      final List<PsiMethodMember> elements;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        elements = Arrays.asList(members);
+      } else {
+        final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(members, false, true, project);
+        chooser.setTitle("Choose constructors to add parameter to");
+        chooser.show();
+        elements = chooser.getSelectedElements();
+        if (elements == null) return;
+      }
+
+      for (PsiMethodMember member : elements) {
+        if (!addParameterToConstructor(project, file, editor, member.getElement())) break;
+      }
+
+    } else if (!constrs.isEmpty()) {
+      addParameterToConstructor(project, file, editor, constrs.get(0));
     }
+  }
+
+  private ArrayList<PsiMethod> filterConstructorsIfFieldAlreadyAssigned(PsiMethod[] constructors) {
+    final ArrayList<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(constructors));
+    for (PsiReference reference : ReferencesSearch.search(getField(), new LocalSearchScope(constructors))) {
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
+        final PsiExpression rExpression = ((PsiAssignmentExpression)element.getParent()).getRExpression();
+        if (rExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)rExpression).resolve() instanceof PsiParameter) {
+          result.remove(PsiTreeUtil.getParentOfType(element, PsiMethod.class));
+        }
+      }
+    }
+    return result;
   }
 
   private boolean addParameterToConstructor(final Project project, final PsiFile file, final Editor editor, PsiMethod constructor) throws IncorrectOperationException {

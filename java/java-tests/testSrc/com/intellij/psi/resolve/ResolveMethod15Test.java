@@ -465,7 +465,7 @@ public class ResolveMethod15Test extends Resolve15TestCase {
   }
 
 
-  private static void assertGenericResolve(PsiReference ref, final String methodName, final String[] expectedTypeParameterValues, final String expectedCallType) {
+  private static void assertGenericResolve(PsiReference ref, final String methodName, final String[] expectedTypeParameterValues, @NonNls final String expectedCallType) {
     PsiElement target = ref.resolve();
     assertThat(target, instanceOf(PsiMethod.class));
 
@@ -507,6 +507,18 @@ public class ResolveMethod15Test extends Resolve15TestCase {
     PsiJavaReference ref = (PsiJavaReference) configureByFile();
     final JavaResolveResult result = ref.advancedResolve(true);
     assertResolvesToMethodInClass(result, "A");
+  }
+
+  public void testRawVsGenericConflictInCaseOfOverride() throws Exception{
+    PsiJavaReference ref = (PsiJavaReference) configureByFile();
+    final JavaResolveResult result = ref.advancedResolve(true);
+    assertResolvesToMethodInClass(result, "B");
+  }
+
+  public void testRawVsGenericConflictInCaseOfOverride2() throws Exception{
+    PsiJavaReference ref = (PsiJavaReference) configureByFile();
+    final JavaResolveResult result = ref.advancedResolve(true);
+    assertResolvesToMethodInClass(result, "TestProcessor");
   }
 
   public void testAutoboxingAndWidening() throws Exception{

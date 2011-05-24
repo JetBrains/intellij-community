@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Utility wrappers for accessing system properties.
  *
@@ -23,6 +25,8 @@ package com.intellij.util;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SystemProperties {
+  private static String ourTestUserName;
+
   private SystemProperties() {
   }
 
@@ -36,7 +40,11 @@ public class SystemProperties {
   }
 
   public static String getUserName() {
-    return System.getProperty("user.name");
+    return ourTestUserName != null ? ourTestUserName : System.getProperty("user.name");
+  }
+
+  public static void setTestUserName(@Nullable String name) {
+    ourTestUserName = name;
   }
 
   /**

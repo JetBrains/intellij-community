@@ -87,7 +87,6 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
         final BaseInjection newInjection = showDefaultInjectionUI(project, originalInjection.copy());
         if (newInjection != null) {
           originalInjection.copyFrom(newInjection);
-          originalInjection.initializePlaces(true);
         }
       }
     };
@@ -134,7 +133,6 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
       }
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
-      injection.initializePlaces(false);
       return injection;
     }
     return null;

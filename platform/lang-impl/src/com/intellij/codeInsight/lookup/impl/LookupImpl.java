@@ -893,6 +893,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void updateHint(@NotNull final LookupElement item) {
+    checkValid();
     if (myElementHint != null) {
       final JRootPane rootPane = getComponent().getRootPane();
       if (rootPane != null) {

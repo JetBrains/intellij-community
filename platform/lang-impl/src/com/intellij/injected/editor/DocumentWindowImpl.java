@@ -367,7 +367,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @NotNull
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
-    TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
+    ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
   }
@@ -377,7 +377,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     if (!surviveOnExternalChange) {
       return createRangeMarker(startOffset, endOffset);
     }
-    TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
+    ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     //todo persistent?
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
@@ -408,7 +408,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @NotNull
   public RangeMarker createGuardedBlock(final int startOffset, final int endOffset) {
-    TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
+    ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myDelegate.createGuardedBlock(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
 
@@ -421,7 +421,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public RangeMarker getRangeGuard(final int startOffset, final int endOffset) {
-    TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
+    ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
 
     return myDelegate.getRangeGuard(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
@@ -467,7 +467,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
-    TextRange hostRange = injectedToHost(new ProperTextRange(textRange));
+    ProperTextRange hostRange = injectedToHost(new ProperTextRange(textRange));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
   }
@@ -598,7 +598,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @NotNull
-  public TextRange injectedToHost(@NotNull TextRange injected) {
+  public ProperTextRange injectedToHost(@NotNull TextRange injected) {
     ProperTextRange.assertProperRange(injected);
     int start = injectedToHost(injected.getStartOffset(), false);
     int end = injectedToHost(injected.getEndOffset(), true);

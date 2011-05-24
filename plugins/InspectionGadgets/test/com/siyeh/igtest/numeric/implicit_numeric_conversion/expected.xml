@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;1&lt;/code&gt; from 'int' to 'float' #loc</description>
+  </problem>
+  
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;i&lt;/code&gt; from 'int' to 'float' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>21</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;'c'&lt;/code&gt; from 'char' to 'int' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>22</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;ch&lt;/code&gt; from 'char' to 'int' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>24</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;0&lt;/code&gt; from 'int' to 'double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>25</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;0.0F&lt;/code&gt; from 'float' to 'double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>26</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;-0.0F&lt;/code&gt; from 'float' to 'double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>27</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;i&lt;/code&gt; from 'int' to 'double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>28</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;ch&lt;/code&gt; from 'char' to 'double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>29</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;l&lt;/code&gt; from 'long' to 'double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>31</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;f&lt;/code&gt; from 'float' to 'double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>33</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;1.0F&lt;/code&gt; from 'float' to 'double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>35</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;0&lt;/code&gt; from 'int' to 'float' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>36</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;0L&lt;/code&gt; from 'long' to 'float' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>38</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;i&lt;/code&gt; from 'int' to 'float' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>39</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;ch&lt;/code&gt; from 'char' to 'float' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>40</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;l&lt;/code&gt; from 'long' to 'float' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>44</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;i&lt;/code&gt; from 'int' to 'long' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>45</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;ch&lt;/code&gt; from 'char' to 'long' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>51</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;l&lt;/code&gt; from 'long' to 'int' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>78</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;2&lt;/code&gt; from 'int' to 'byte' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>79</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;b&lt;/code&gt; from 'byte' to 'int' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>80</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;b&lt;/code&gt; from 'byte' to 'int' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>80</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;(byte)1&lt;/code&gt; from 'byte' to 'int' #loc</description>
+  </problem>
+</problems>

@@ -88,8 +88,8 @@ public class ProjectNameStep extends ModuleWizardStep {
     final ProjectBuilder moduleBuilder = myMode.getModuleBuilder();
     myWizardContext.setProjectBuilder(moduleBuilder);
     myFormatPanel.updateData(myWizardContext);
-    if (moduleBuilder instanceof SourcePathsBuilder) {
-      ((SourcePathsBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);
+    if (moduleBuilder instanceof ModuleBuilder) {
+      ((ModuleBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);
     }
   }
 

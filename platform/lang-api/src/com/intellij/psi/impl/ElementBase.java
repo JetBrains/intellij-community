@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,11 +77,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     catch (IndexNotReadyException e) {
       throw e;
     }
-    catch(Exception e) {
+    catch (Exception e) {
       LOG.error(e);
-        return null;
-      }
+      return null;
     }
+  }
 
   @Nullable
   private Icon computeIcon(final int flags) {

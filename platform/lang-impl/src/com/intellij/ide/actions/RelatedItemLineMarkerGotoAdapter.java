@@ -74,7 +74,9 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
             continue;
           }
         }
-        ContainerUtil.addIfNotNull(element.getContainingFile(), addedFiles);
+        if (element != null) {
+          ContainerUtil.addIfNotNull(element.getContainingFile(), addedFiles);
+        }
         result.add(item);
       }
     }

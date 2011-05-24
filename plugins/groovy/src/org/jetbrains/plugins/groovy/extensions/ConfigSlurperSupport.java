@@ -16,14 +16,12 @@
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Sergey Evdokimov
@@ -37,8 +35,7 @@ public abstract class ConfigSlurperSupport {
   public abstract PropertiesProvider getProvider(@NotNull GroovyFile file);
 
   public interface PropertiesProvider {
-    void collectVariants(@NotNull List<String> prefix, @NotNull Set<String> variants);
+    void collectVariants(@NotNull List<String> prefix, @NotNull PairConsumer<String, Boolean> consumer);
   }
-
 
 }

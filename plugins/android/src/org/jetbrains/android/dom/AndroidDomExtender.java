@@ -574,6 +574,9 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     else if (element instanceof LevelListItem) {
       registerAttributes(facet, element, "LevelListDrawableItem", SYSTEM_RESOURCE_PACKAGE, registrar);
     }
+    else if (element instanceof AnimationListItem) {
+      registerAttributes(facet, element, "AnimationDrawableItem", SYSTEM_RESOURCE_PACKAGE, registrar);
+    }
   }
 
   @Nullable

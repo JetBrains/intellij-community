@@ -211,7 +211,7 @@ public class NewMappings {
   }
 
   @Nullable
-  public VcsDirectoryMapping getMappingFor(VirtualFile file) {
+  public VcsDirectoryMapping getMappingFor(@Nullable VirtualFile file) {
     if (file == null) return null;
     if (! file.isInLocalFileSystem()) {
       return null;

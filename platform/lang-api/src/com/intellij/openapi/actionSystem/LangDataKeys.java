@@ -21,6 +21,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -54,4 +55,7 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<PsiElement> PASTE_TARGET_PSI_ELEMENT = DataKey.create("psi.pasteTargetElement");
 
   public static final DataKey<ConsoleView> CONSOLE_VIEW = DataKey.create("consoleView");
+  
+  public static final DataKey<JBPopup> CHOOSE_BY_NAME_DROPDOWN = DataKey.create("chooseByNameDropDown");
+  public static final DataKey<JBPopup> CHOOSE_BY_NAME_POPUP = DataKey.create("chooseByNamePopup");
 }

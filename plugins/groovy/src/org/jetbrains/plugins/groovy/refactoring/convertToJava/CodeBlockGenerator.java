@@ -349,6 +349,7 @@ public class CodeBlockGenerator extends Generator {
         final GrExpression initializer = ((GrParameter)initialization).getDefaultInitializer();
         if (initializer != null) {
           final ExpressionContext partContext = forContext.copy();
+          partBuilder.append(" = ");
           initializer.accept(new ExpressionGenerator(partBuilder, partContext));
           for (String statement : partContext.myStatements) {
             builder.append(statement).append(", ");

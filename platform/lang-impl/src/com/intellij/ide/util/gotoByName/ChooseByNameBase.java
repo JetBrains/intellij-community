@@ -54,6 +54,7 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupOwner;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
@@ -300,9 +301,13 @@ public abstract class ChooseByNameBase {
       if (myHint == null || !myHint.isVisible()) return;
       final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
       if (updateProcessor != null) {
-        myHint.cancel();
         updateProcessor.updatePopup(element);
       }
+    }
+    
+    public void repositionHint() {
+      if (myHint == null || !myHint.isVisible()) return;
+      PopupPositionManager.positionPopupInBestPosition(myHint, null, true);
     }
   }
 
@@ -583,6 +588,18 @@ public abstract class ChooseByNameBase {
     rebuildList(initial ? myInitialIndex : 0, REBUILD_DELAY, null, ModalityState.current(), null);
   }
 
+  private void updateDocPosition() {
+    final JBPopup hint = myTextFieldPanel.getHint();
+    if (hint != null) {
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (myTextFieldPanel != null) myTextFieldPanel.repositionHint();
+        }
+      });
+    }
+  }
+  
   private void updateDocumentation() {
     final JBPopup hint = myTextFieldPanel.getHint();
     final Object element = getChosenElement();
@@ -751,6 +768,7 @@ public abstract class ChooseByNameBase {
             (text == null || text.trim().length() == 0)) {
           myListModel.clear();
           hideList();
+          if (myTextFieldPanel != null) myTextFieldPanel.hideHint();
           myCard.show(myCardContainer, CHECK_BOX_CARD);
           return;
         }
@@ -765,10 +783,13 @@ public abstract class ChooseByNameBase {
                   }
 
                   setElementsToList(pos, elements);
-
                   myListIsUpToDate = true;
                   choosenElementMightChange();
 
+                  if (elements.size() == 0 && myTextFieldPanel != null) {
+                    myTextFieldPanel.hideHint();
+                  }
+                  
                   if (postRunnable != null) {
                     postRunnable.run();
                   }
@@ -868,6 +889,7 @@ public abstract class ChooseByNameBase {
       ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
       showList();
+      updateDocPosition();
     }
   }
 
@@ -1001,6 +1023,7 @@ public abstract class ChooseByNameBase {
           }
           if (!myDisposedFlag) {
             showList();
+            updateDocPosition();
           }
         }
       }, DELAY);
@@ -1071,7 +1094,7 @@ public abstract class ChooseByNameBase {
   protected void choosenElementMightChange() {
   }
 
-  protected final class MyTextField extends JTextField implements PopupOwner {
+  protected final class MyTextField extends JTextField implements PopupOwner, TypeSafeDataProvider {
     private final KeyStroke myCompletionKeyStroke;
     private final KeyStroke forwardStroke;
     private final KeyStroke backStroke;
@@ -1095,6 +1118,19 @@ public abstract class ChooseByNameBase {
         }
       }
       return null;
+    }
+
+    @Override
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (LangDataKeys.CHOOSE_BY_NAME_DROPDOWN.equals(key)) {
+        if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
+          sink.put(key, myDropdownPopup);
+        }
+      } else if (LangDataKeys.CHOOSE_BY_NAME_POPUP.equals(key)) {
+        if (myTextPopup != null && myTextPopup.isVisible()) {
+          sink.put(key, myTextPopup);
+        }
+      }
     }
 
     protected void processKeyEvent(KeyEvent e) {

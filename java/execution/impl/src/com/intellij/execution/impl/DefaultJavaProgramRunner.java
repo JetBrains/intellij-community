@@ -54,17 +54,6 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     runCustomPatchers(javaParameters, settings, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class));
   }
 
-  public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
-      throws RuntimeConfigurationException {
-  }
-
-  public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {
-  }
-
-  public AnAction[] createActions(ExecutionResult executionResult) {
-    return AnAction.EMPTY_ARRAY;
-  }
-
   protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
                                            final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();

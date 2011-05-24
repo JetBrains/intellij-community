@@ -35,6 +35,7 @@ import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
@@ -166,10 +168,16 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     String tooltipText = comp.getToolTipText(me);
     if (tooltipText == null || tooltipText.trim().length() == 0) return;
 
-    queueShow(comp, me, Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP)));
+
+
+    boolean centerDefault = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT));
+    boolean centerStrict = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT));
+    int shift = centerStrict ? 0 : (centerDefault ? -4 : 0);
+
+    queueShow(comp, me, centerStrict || centerDefault, shift, -shift, -shift);
   }
 
-  private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter) {
+  private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter, int shift, int posChangeX, int posChangeY) {
     final IdeTooltip tooltip = new IdeTooltip(c, me.getPoint(), null, new Object()) {
       @Override
       protected boolean beforeShow() {
@@ -182,15 +190,21 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
         JLayeredPane layeredPane = IJSwingUtilities.findParentOfType(c, JLayeredPane.class);
 
-        setTipComponent(initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane));
+        final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
+        final Wrapper wrapper = new Wrapper(pane);
+        setTipComponent(wrapper);
         return true;
       }
-    }.setToCenter(toCenter);
+    }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY);
 
     show(tooltip, false);
   }
 
   public IdeTooltip show(final IdeTooltip tooltip, boolean now) {
+    return show(tooltip, now, true);
+  }
+
+  public IdeTooltip show(final IdeTooltip tooltip, boolean now, final boolean animationEnabled) {
     myAlarm.cancelAllRequests();
 
     hideCurrent(null, null, null);
@@ -206,15 +220,15 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         }
 
         if (myQueuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
-          hideCurrent(null, null, null);
+          hideCurrent(null, null, null, animationEnabled);
           return;
         }
 
         if (tooltip.beforeShow()) {
-          show(tooltip, null);
+          show(tooltip, null, animationEnabled);
         }
         else {
-          hideCurrent(null, null, null);
+          hideCurrent(null, null, null, animationEnabled);
         }
       }
     };
@@ -228,16 +242,18 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return tooltip;
   }
 
-  private void show(final IdeTooltip tooltip, Runnable beforeShow) {
+  private void show(final IdeTooltip tooltip, Runnable beforeShow, boolean animationEnabled) {
     boolean toCenterX;
     boolean toCenterY;
 
     boolean toCenter = tooltip.isToCenter();
+    boolean small = false;
     if (!toCenter && tooltip.isToCenterIfSmall()) {
       Dimension size = tooltip.getComponent().getSize();
       toCenterX = size.width < 64;
       toCenterY = size.height < 64;
       toCenter = toCenterX || toCenterY;
+      small = true;
     } else {
       toCenterX = true;
       toCenterY = true;
@@ -263,9 +279,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setPreferredPosition(tooltip.getPreferredPosition())
       .setFillColor(bg)
       .setBorderColor(border)
-      .setAnimationCycle(Registry.intValue("ide.tooltip.animationCycle"))
+      .setAnimationCycle(animationEnabled ? Registry.intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
-      .setCalloutShift(tooltip.getCalloutShift())
+      .setCalloutShift((small && tooltip.getCalloutShift() == 0) ? -2 : tooltip.getCalloutShift())
       .setPositionChangeXShift(tooltip.getPositionChangeX())
       .setPositionChangeYShift(tooltip.getPositionChangeY())
       .setHideOnKeyOutside(!tooltip.isExplicitClose())
@@ -350,6 +366,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event) {
+    return hideCurrent(me, action, event, true);
+  }
+
+  public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event, final boolean animationEnabled) {
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
@@ -373,7 +393,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       @Override
       public void run() {
         if (myHideRunnable != null) {
-          hideCurrentNow();
+          hideCurrentNow(animationEnabled);
           myHideRunnable = null;
         }
       }
@@ -389,8 +409,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return true;
   }
 
-  private void hideCurrentNow() {
+  private void hideCurrentNow(boolean animationEnabled) {
     if (myCurrentTipUi != null) {
+      myCurrentTipUi.setAnimationEnabled(animationEnabled);
       myCurrentTipUi.hide();
       myCurrentTooltip.onHidden();
       myShowDelay = false;

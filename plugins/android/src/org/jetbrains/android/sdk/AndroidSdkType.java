@@ -20,6 +20,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.android.util.AndroidBundle;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,7 +73,18 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    return AndroidSdkUtils.isAndroidSdk(path);
+    if (AndroidSdkUtils.isAndroidSdk(path)) {
+      return true;
+    }
+
+    File f = new File(path).getParentFile();
+    if (f != null) {
+      f = f.getParentFile();
+      if (f != null) {
+        return AndroidSdkUtils.isAndroidSdk(f.getPath());
+      }
+    }
+    return false;
   }
 
   @Override
@@ -88,6 +101,82 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
 
   @Override
   public boolean setupSdkPaths(Sdk sdk, SdkModel sdkModel) {
+    MessageBuildingSdkLog log = new MessageBuildingSdkLog();
+    String homePath = sdk.getHomePath();
+    assert homePath != null;
+
+    AndroidSdk sdkObject = null;
+
+    final boolean sdkFolderChosen = AndroidSdkUtils.isAndroidSdk(homePath);
+
+    if (sdkFolderChosen) {
+      sdkObject = AndroidSdk.parse(homePath, log);
+    }
+    else {
+      File f = new File(homePath).getParentFile();
+      if (f != null) {
+        f = f.getParentFile();
+        if (f != null) {
+          final String sdkRootPath = f.getPath();
+          sdkObject = AndroidSdk.parse(sdkRootPath, log);
+          if (sdkObject != null) {
+            final SdkModificator modificator = sdk.getSdkModificator();
+            modificator.setHomePath(sdkObject.getLocation());
+            modificator.commitChanges();
+          }
+        }
+      }
+    }
+
+    if (sdkObject == null) {
+      String errorMessage = log.getErrorMessage().length() > 0 ? log.getErrorMessage() : AndroidBundle.message("cannot.parse.sdk.error");
+      Messages.showErrorDialog(errorMessage, "SDK parsing error");
+      return false;
+    }
+
+    IAndroidTarget selectedTarget;
+
+    if (!sdkFolderChosen) {
+      // then platform folder chosen
+      selectedTarget = sdkObject.findTargetByLocation(FileUtil.toSystemIndependentName(homePath));
+      if (selectedTarget == null) {
+        Messages.showErrorDialog("The selected directory is not a valid Android platform or add-on", CommonBundle.getErrorTitle());
+        return false;
+      }
+    }
+    else {
+      IAndroidTarget[] targets = sdkObject.getTargets();
+
+      if (targets.length == 0) {
+        Messages.showErrorDialog(AndroidBundle.message("no.android.targets.error"), CommonBundle.getErrorTitle());
+        return false;
+      }
+
+      String[] targetNames = new String[targets.length];
+
+      String newestPlatform = null;
+      AndroidVersion version = null;
+
+      for (int i = 0; i < targets.length; i++) {
+        IAndroidTarget target = targets[i];
+        String targetName = AndroidSdkUtils.getTargetPresentableName(target);
+        targetNames[i] = targetName;
+        if (target.isPlatform() && (version == null || target.getVersion().compareTo(version) > 0)) {
+          newestPlatform = targetName;
+          version = target.getVersion();
+        }
+      }
+
+      int choice =
+        Messages.showChooseDialog("Select build target", "Create new Android SDK", targetNames,
+                                  newestPlatform != null ? newestPlatform : targetNames[0], Messages.getQuestionIcon());
+
+      if (choice == -1) {
+        return false;
+      }
+      selectedTarget = targets[choice];
+    }
+
     final List<String> javaSdks = new ArrayList<String>();
     final Sdk[] sdks = sdkModel.getSdks();
     for (Sdk jdk : sdks) {
@@ -112,46 +201,7 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
     final String name = javaSdks.get(choice);
     final Sdk jdk = sdkModel.findSdk(name);
 
-    MessageBuildingSdkLog log = new MessageBuildingSdkLog();
-    AndroidSdk sdkObject = AndroidSdk.parse(sdk.getHomePath(), log);
-
-    if (sdkObject == null) {
-      String errorMessage = log.getErrorMessage().length() > 0 ? log.getErrorMessage() : AndroidBundle.message("cannot.parse.sdk.error");
-      Messages.showErrorDialog(errorMessage, "SDK parsing error");
-      return false;
-    }
-
-    IAndroidTarget[] targets = sdkObject.getTargets();
-
-    if (targets.length == 0) {
-      Messages.showErrorDialog(AndroidBundle.message("no.android.targets.error"), CommonBundle.getErrorTitle());
-      return false;
-    }
-
-    String[] targetNames = new String[targets.length];
-
-    String newestPlatform = null;
-    AndroidVersion version = null;
-
-    for (int i = 0; i < targets.length; i++) {
-      IAndroidTarget target = targets[i];
-      String targetName = AndroidSdkUtils.getTargetPresentableName(target);
-      targetNames[i] = targetName;
-      if (target.isPlatform() && (version == null || target.getVersion().compareTo(version) > 0)) {
-        newestPlatform = targetName;
-        version = target.getVersion();
-      }
-    }
-
-    choice =
-      Messages.showChooseDialog("Select build target", "Create new Android SDK", targetNames,
-                                newestPlatform != null ? newestPlatform : targetNames[0], Messages.getQuestionIcon());
-
-    if (choice == -1) {
-      return false;
-    }
-
-    AndroidSdkUtils.setUpSdk(sdk, jdk, sdks, targets[choice], true);
+    AndroidSdkUtils.setUpSdk(sdk, jdk, sdks, selectedTarget, true);
 
     return true;
   }
@@ -213,6 +263,11 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
   @Override
   public Icon getIconForAddAction() {
     return getIcon();
+  }
+
+  @Override
+  public boolean supportHomePathChanging() {
+    return false;
   }
 
   @Nullable

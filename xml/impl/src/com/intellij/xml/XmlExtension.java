@@ -202,9 +202,4 @@ public abstract class XmlExtension {
   public boolean isCustomTagAllowed(final XmlTag tag) {
     return false;
   }
-
-  @Nullable
-  public String[] getUsedPrefixes(XmlAttributeValue value) {
-    return null;
-  }
 }

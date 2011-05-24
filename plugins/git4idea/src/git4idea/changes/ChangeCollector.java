@@ -18,15 +18,14 @@ package git4idea.changes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -34,7 +33,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.*;
 
 /**
@@ -113,14 +112,15 @@ class ChangeCollector {
    * @return the set of dirty paths to check, the paths are automatically collapsed if the summary length more than limit
    */
   private Collection<FilePath> dirtyPaths(boolean includeChanges) {
-    // TODO collapse paths with common prefix
-    ArrayList<FilePath> paths = new ArrayList<FilePath>();
-    FilePath rootPath = VcsUtil.getFilePath(myVcsRoot.getPath(), true);
+    final List<String> allPaths = new ArrayList<String>();
+
     for (FilePath p : myDirtyScope.getRecursivelyDirtyDirectories()) {
-      addToPaths(rootPath, paths, p);
+      addToPaths(p, allPaths);
     }
-    ArrayList<FilePath> candidatePaths = new ArrayList<FilePath>();
-    candidatePaths.addAll(myDirtyScope.getDirtyFilesNoExpand());
+    for (FilePath p : myDirtyScope.getDirtyFilesNoExpand()) {
+      addToPaths(p, allPaths);
+    }
+
     if (includeChanges) {
       try {
         for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
@@ -129,10 +129,10 @@ class ChangeCollector {
             case DELETED:
             case MOVED:
               if (c.getAfterRevision() != null) {
-                addToPaths(rootPath, paths, c.getAfterRevision().getFile());
+                addToPaths(c.getAfterRevision().getFile(), allPaths);
               }
               if (c.getBeforeRevision() != null) {
-                addToPaths(rootPath, paths, c.getBeforeRevision().getFile());
+                addToPaths(c.getBeforeRevision().getFile(), allPaths);
               }
             case MODIFICATION:
             default:
@@ -144,61 +144,37 @@ class ChangeCollector {
         // ignore exceptions
       }
     }
-    for (FilePath p : candidatePaths) {
-      addToPaths(rootPath, paths, p);
+
+    removeCommonParents(allPaths);
+
+    final List<FilePath> paths = new ArrayList<FilePath>(allPaths.size());
+    for (String p : allPaths) {
+      final File file = new File(p);
+      paths.add(new FilePathImpl(file, file.isDirectory()));
     }
     return paths;
   }
 
-  /**
-   * Add path to the collection of the paths to check for this vcs root
-   *
-   * @param root  the root path
-   * @param paths the existing paths
-   * @param toAdd the path to add
-   */
-  void addToPaths(FilePath root, Collection<FilePath> paths, FilePath toAdd) {
-    if (GitUtil.getGitRootOrNull(toAdd) != myVcsRoot) {
-      return;
+  private void addToPaths(FilePath pathToAdd, List<String> paths) {
+    File file = pathToAdd.getIOFile();
+    if (myVcsRoot.equals(GitUtil.getGitRootOrNull(file))) {
+      paths.add(file.getPath());
     }
-    if (root.isUnder(toAdd, true)) {
-      toAdd = root;
-    }
-    for (Iterator<FilePath> i = paths.iterator(); i.hasNext();) {
-      FilePath p = i.next();
-      if (isAncestor(toAdd, p, true)) { // toAdd is an ancestor of p => adding toAdd instead of p.
-        i.remove();
-      }
-      if (isAncestor(p, toAdd, false)) { // p is an ancestor of toAdd => no need to add toAdd.
-        return;
-      }
-    }
-    paths.add(toAdd);
   }
 
-  /**
-   * Returns true if childCandidate file is located under parentCandidate.
-   * This is an alternative to {@link com.intellij.openapi.vcs.FilePathImpl#isUnder(com.intellij.openapi.vcs.FilePath, boolean)}:
-   * it doesn't check VirtualFile associated with this FilePath.
-   * When we move a file we get a VcsDirtyScope with old and new FilePaths, but unfortunately the virtual file in the FilePath is
-   * refreshed ({@link com.intellij.openapi.vcs.changes.VirtualFileHolder#cleanAndAdjustScope(com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope)}
-   * and thus points to the new position which makes FilePathImpl#isUnder useless.
-   *
-   * @param parentCandidate FilePath which we check to be the parent of childCandidate.
-   * @param childCandidate  FilePath which we check to be a child of parentCandidate.
-   * @param strict          if false, the method also returns true if files are equal
-   * @return true if childCandidate is a child of parentCandidate.
-   */
-  private static boolean isAncestor(FilePath parentCandidate, FilePath childCandidate, boolean strict) {
-    try {
-      if (childCandidate.getPath().length() < parentCandidate.getPath().length()) return false;
-      if (childCandidate.getVirtualFile() != null && parentCandidate.getVirtualFile() != null) {
-        return VfsUtil.isAncestor(parentCandidate.getVirtualFile(), childCandidate.getVirtualFile(), strict);
+  private static void removeCommonParents(List<String> allPaths) {
+    Collections.sort(allPaths);
+
+    String prevPath = null;
+    Iterator<String> it = allPaths.iterator();
+    while (it.hasNext()) {
+      String path = it.next();
+      if (prevPath != null && FileUtil.startsWith(path, prevPath)) {      // the file is under previous file, so enough to check the parent
+        it.remove();
       }
-      return FileUtil.isAncestor(parentCandidate.getIOFile(), childCandidate.getIOFile(), strict);
-    }
-    catch (IOException e) {
-      return false;
+      else {
+        prevPath = path;
+      }
     }
   }
 

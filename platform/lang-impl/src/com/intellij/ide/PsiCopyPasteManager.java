@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,8 +252,9 @@ public class PsiCopyPasteManager {
     }
   }
 
+  @Nullable
   public static List<File> asFileList(final PsiElement[] elements) {
-    List<File> result = new ArrayList<File>();
+    final List<File> result = new ArrayList<File>();
     for (PsiElement element : elements) {
       final PsiFileSystemItem psiFile;
       if (element instanceof PsiFileSystemItem) {
@@ -273,9 +274,6 @@ public class PsiCopyPasteManager {
         }
       }
     }
-    if (result.isEmpty()) {
-      return null;
-    }
-    return result;
+    return result.isEmpty() ? null : result;
   }
 }

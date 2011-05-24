@@ -31,6 +31,7 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
   @Nullable
   protected abstract Boolean getRunWithEditorSettingsProperty();
 
+  protected abstract String[] optionsBanner();
 
   public void initApplication(InspectionApplication app) {
     app.myHelpProvider = this;
@@ -122,6 +123,10 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
 
   @Override
   public void printHelpAndExit() {
+    final String[] bannerLines = optionsBanner();
+    for (String line : bannerLines) {
+      System.out.println(line);
+    }
     Args.usage(this);
     System.exit(1);
   }

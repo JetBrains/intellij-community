@@ -47,7 +47,7 @@ public class MismatchedStringBuilderQueryUpdateInspection
 
     @Override
     @NotNull
-    public String getID(){
+    public String getID() {
         return "MismatchedQueryAndUpdateOfStringBuilder";
     }
 
@@ -64,11 +64,11 @@ public class MismatchedStringBuilderQueryUpdateInspection
     protected String buildErrorString(Object... infos) {
         final boolean updated = ((Boolean)infos[0]).booleanValue();
         final PsiType type = (PsiType)infos[1]; //"StringBuilder";
-        if(updated){
+        if (updated) {
             return InspectionGadgetsBundle.message(
                     "mismatched.string.builder.updated.problem.descriptor",
                     type.getPresentableText());
-        } else{
+        } else {
             return InspectionGadgetsBundle.message(
                     "mismatched.string.builder.queried.problem.descriptor",
                     type.getPresentableText());
@@ -135,20 +135,20 @@ public class MismatchedStringBuilderQueryUpdateInspection
 
         private static boolean checkVariable(PsiVariable variable,
                                              PsiElement context) {
-            if(context == null){
+            if (context == null) {
                 return false;
             }
             if (!TypeUtils.variableHasTypeOrSubtype(variable,
                     "java.lang.AbstractStringBuilder")) {
                 return false;
             }
-            if(VariableAccessUtils.variableIsAssigned(variable, context)){
+            if (VariableAccessUtils.variableIsAssigned(variable, context)) {
                 return false;
             }
-            if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
+            if (VariableAccessUtils.variableIsAssignedFrom(variable, context)) {
                 return false;
             }
-            if(VariableAccessUtils.variableIsReturned(variable, context)){
+            if (VariableAccessUtils.variableIsReturned(variable, context)) {
                 return false;
             }
             if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
@@ -298,6 +298,18 @@ public class MismatchedStringBuilderQueryUpdateInspection
             queryNames.add("substring");
         }
 
+        @NonNls
+        private static final Set<String> returnThisNames = new HashSet();
+        static {
+            returnThisNames.add("append");
+            returnThisNames.add("appendCodePoint");
+            returnThisNames.add("delete");
+            returnThisNames.add("delete");
+            returnThisNames.add("deleteCharAt");
+            returnThisNames.add("insert");
+            returnThisNames.add("replace");
+        }
+
         private final PsiVariable variable;
         private boolean queried = false;
 
@@ -309,7 +321,7 @@ public class MismatchedStringBuilderQueryUpdateInspection
             return queried;
         }
 
-        @Override public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element) {
             if (queried) {
                 return;
             }
@@ -326,15 +338,53 @@ public class MismatchedStringBuilderQueryUpdateInspection
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String name = methodExpression.getReferenceName();
-            if (!queryNames.contains(name)) {
-                return;
-            }
             final PsiExpression qualifierExpression =
                     methodExpression.getQualifierExpression();
+            if (!queryNames.contains(name)) {
+                if (returnThisNames.contains(name) &&
+                        hasReferenceToVariable(variable, qualifierExpression) &&
+                        isVariableValueUsed(expression)) {
+                    queried = true;
+                }
+                return;
+            }
             if (hasReferenceToVariable(variable, qualifierExpression)) {
                 queried = true;
             }
         }
+    }
+
+    private static boolean isVariableValueUsed(
+            PsiExpression expression) {
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof PsiParenthesizedExpression) {
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression) parent;
+            return isVariableValueUsed(parenthesizedExpression);
+        } else if (parent instanceof PsiTypeCastExpression) {
+            final PsiTypeCastExpression typeCastExpression =
+                    (PsiTypeCastExpression) parent;
+            return isVariableValueUsed(typeCastExpression);
+        } else if (parent instanceof PsiReturnStatement) {
+            return true;
+        } else if (parent instanceof PsiExpressionList) {
+            final PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiMethodCallExpression) {
+                return true;
+            }
+        } else if (parent instanceof PsiArrayInitializerExpression) {
+            return true;
+        } else if (parent instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression = 
+                    (PsiAssignmentExpression) parent;
+            final PsiExpression rhs = assignmentExpression.getRExpression();
+            return expression.equals(rhs);
+        } else if (parent instanceof PsiVariable) {
+            final PsiVariable variable = (PsiVariable) parent;
+            final PsiExpression initializer = variable.getInitializer();
+            return expression.equals(initializer);
+        }
+        return false;
     }
 
     private static boolean hasReferenceToVariable(PsiVariable variable,

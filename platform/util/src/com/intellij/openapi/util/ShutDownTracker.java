@@ -130,19 +130,19 @@ public class ShutDownTracker implements Runnable {
     return list.isEmpty()? null : list.removeLast();
   }
 
-  public static void invokeAndWait(boolean timed, Runnable runnable) {
+  public static void invokeAndWait(boolean timed, final Runnable runnable) {
     if (timed) {
       final Semaphore semaphore = new Semaphore();
       semaphore.down();
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
+          runnable.run();
           semaphore.up();
         }
       });
-      if (!semaphore.waitFor(1000)) {
-        return;
-      }
+      semaphore.waitFor(1000);
+      return;
     }
 
     try {

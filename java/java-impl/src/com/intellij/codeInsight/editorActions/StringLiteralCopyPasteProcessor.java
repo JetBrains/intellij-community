@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
@@ -26,9 +27,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
@@ -73,22 +76,45 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     return text;
   }
 
+  @Nullable
   private static IElementType findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
-    final PsiElement elementAtSelection = file.findElementAt(selectionStart);
-    if (!(elementAtSelection instanceof PsiJavaToken)) {
+    final PsiElement elementAtSelectionStart = file.findElementAt(selectionStart);
+    if (!(elementAtSelectionStart instanceof PsiJavaToken)) {
       return null;
     }
-    final IElementType tokenType = ((PsiJavaToken)elementAtSelection).getTokenType();
+    final IElementType tokenType = ((PsiJavaToken)elementAtSelectionStart).getTokenType();
     if ((tokenType != JavaTokenType.STRING_LITERAL && tokenType != JavaTokenType.CHARACTER_LITERAL)) {
       return null;
     }
-    final TextRange textRange = elementAtSelection.getTextRange();
+
+    if (elementAtSelectionStart.getTextRange().getEndOffset() < selectionEnd) {
+      final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
+      if (!(elementAtSelectionEnd instanceof PsiJavaToken)) {
+        return null;
+      }
+      if (((PsiJavaToken)elementAtSelectionEnd).getTokenType() == tokenType) {
+        return tokenType;
+      }
+    }
+    
+    final TextRange textRange = elementAtSelectionStart.getTextRange();
     if (selectionStart <= textRange.getStartOffset() || selectionEnd >= textRange.getEndOffset()) {
       return null;
     }
     return tokenType;
   }
 
+  @Nullable
+  private static PsiElement next(final @NotNull PsiElement element) {
+    for (PsiElement anchor = element; anchor != null; anchor = anchor.getParent()) {
+      final PsiElement result = element.getNextSibling();
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+  
   @NotNull
   public static String escapeCharCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder();

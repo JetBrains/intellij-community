@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.packaging;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
@@ -26,7 +25,6 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -34,13 +32,6 @@ import java.util.List;
 import java.util.Set;
 
 public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
-
-
-    @Override
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.PACKAGING_GROUP_NAME;
-    }
 
     @Override
     @Nullable

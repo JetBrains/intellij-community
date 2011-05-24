@@ -43,10 +43,10 @@ import java.awt.*;
  */
 public class Settings implements SearchableConfigurable {
 
-  private final Configuration myConfiguration;
+  private final Project myProject;
 
-  Settings(Configuration configuration) {
-    myConfiguration = configuration;
+  Settings(final Project project) {
+    myProject = project;
   }
 
   private SettingsUI mySettingsUI;
@@ -69,32 +69,7 @@ public class Settings implements SearchableConfigurable {
   }
 
   public JComponent createComponent() {
-    final ProjectManager projectManager = ProjectManager.getInstance();
-    final Project[] projects = projectManager.getOpenProjects();
-
-    Project project = null;
-    if (projects.length == 0) {
-      project = projectManager.getDefaultProject();
-    }
-    else {
-      final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
-      final Window focusedWindow = windowManager.getMostRecentFocusedWindow();
-      if (focusedWindow != null) {
-        for (Project p : projects) {
-          final Window w = windowManager.suggestParentWindow(p);
-          if (w == focusedWindow || w.isAncestorOf(focusedWindow) || focusedWindow.isAncestorOf(w)) {
-            project = p;
-            break;
-          }
-        }
-      }
-      if (project == null) {
-        project = projectManager.getDefaultProject();
-      }
-    }
-
-    mySettingsUI = new SettingsUI(project, myConfiguration);
-
+    mySettingsUI = new SettingsUI(myProject, Configuration.getProjectInstance(myProject));
     return mySettingsUI.createComponent();
   }
 

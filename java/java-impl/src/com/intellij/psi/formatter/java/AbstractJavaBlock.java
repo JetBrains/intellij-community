@@ -1127,17 +1127,41 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parent == null || parent.getElementType() != JavaElementType.METHOD_CALL_EXPRESSION) {
       return false;
     }
-    if (node.getElementType() != JavaElementType.NEW_EXPRESSION) {
-      return false;
-    }
-    ASTNode lastChild = node.getLastChildNode();
-    if (lastChild == null || lastChild.getElementType() != JavaElementType.ANONYMOUS_CLASS) {
+    if (!isAnonymousClass(node)) {
       return false;
     }
     
-    // Enforce indent only if anonymous class instance expression doesn't start new line.
+    // Enforce indent only if anonymous class instance expression doesn't start new line and have anonymous class expression sibling.
     ASTNode prev = node.getTreePrev();
-    return prev == null || prev.getElementType() != TokenType.WHITE_SPACE || !StringUtil.containsLineBreak(prev.getChars());
+    if (prev == null || (StringUtil.containsLineBreak(prev.getChars()) && prev.getElementType() != TokenType.WHITE_SPACE)) {
+      return false;
+    }
+    
+    final PsiElement psi = myNode.getPsi();
+    if (!(psi instanceof PsiExpressionList)) {
+      return false;
+    }
+
+    PsiExpressionList expressionList = (PsiExpressionList)psi;
+    for (PsiExpression expression : expressionList.getExpressions()) {
+      final ASTNode argumentNode = expression.getNode();
+      if (argumentNode == node) {
+        continue;
+      }
+      
+      if (isAnonymousClass(argumentNode)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isAnonymousClass(@Nullable ASTNode node) {
+    if (node == null || node.getElementType() != JavaElementType.NEW_EXPRESSION) {
+      return false;
+    }
+    ASTNode lastChild = node.getLastChildNode();
+    return lastChild != null && lastChild.getElementType() == JavaElementType.ANONYMOUS_CLASS;
   }
   
   @Nullable

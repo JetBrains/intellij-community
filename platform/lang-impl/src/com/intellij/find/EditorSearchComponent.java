@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.LightColors;
@@ -93,6 +94,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private MyLivePreviewController myLivePreviewController;
   private LivePreview myLivePreview;
 
+  private boolean mySupressUpdate = false;
+
 
   private boolean myListeningSelection = false;
   private SearchResults mySearchResults;
@@ -109,16 +112,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   @Override
   public void replaceAllPerformed(Editor e) {  }
-
-  @Override
-  public void replaceDenied() {
-    updateReplaceButton();
-  }
-
-  @Override
-  public void replaceAllowed() {
-    updateReplaceButton();
-  }
 
   private void updateReplaceButton() {
     if (myReplaceButton != null) {
@@ -539,7 +532,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     FindSettings settings = FindSettings.getInstance();
     String[] recents = textField == mySearchField ?  settings.getRecentFindStrings() : settings.getRecentReplaceStrings();
     Utils.showCompletionPopup(byClickingToolbarButton ? myToolbarComponent : null, new JBList(ArrayUtil.reverseArray(recents)),
-                              "Recent Searches",
+                              "Recent " + (textField == mySearchField ? "Searches" : "Replaces"),
                               (JTextField)textField);
   }
 
@@ -650,7 +643,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private void initLivePreview() {
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(final DocumentEvent e) {
-        updateResults(false);
+        if (!mySupressUpdate) {
+          myLivePreview.inSmartUpdate();
+          updateResults(false);
+        } else {
+          mySupressUpdate = false;
+        }
       }
     };
 
@@ -787,8 +785,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
 
     public void performReplace() {
+      mySupressUpdate = true;
       String replacement = getStringToReplace(myEditor, mySearchResults.getCursor());
-      performReplace(mySearchResults.getCursor(), replacement, myEditor);
+      final TextRange textRange = performReplace(mySearchResults.getCursor(), replacement, myEditor);
+      if (textRange == null) {
+        mySupressUpdate = false;
+      }
       //getFocusBack();
       addTextToRecents(myReplaceField) ;
     }

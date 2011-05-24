@@ -214,6 +214,12 @@ public class CompleteStatementTest extends EditorActionTestCase {
     doTest();
   }
   
+  public void testForUpdateGeneration() throws Exception { doTest(); }
+
+  public void testLeaveValidCodeBlock() throws Exception { doTest(); }
+
+  public void testLeaveValidCodeBlockWithEmptyLineAfterIt() throws Exception { doTest(); }
+  
   private void doTestBracesNextLineStyle() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

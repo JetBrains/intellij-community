@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,10 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(JavaClassFileType.INSTANCE, "class");
-
     consumer.consume(JavaFileType.INSTANCE, "java");
 
     consumer.consume(new WorkspaceFileType(), WorkspaceFileType.DEFAULT_EXTENSION);
     consumer.consume(new ModuleFileType(), ModuleFileType.DEFAULT_EXTENSION);
     consumer.consume(new ProjectFileType(), ProjectFileType.DEFAULT_EXTENSION);
   }
-
 }

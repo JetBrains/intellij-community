@@ -19,11 +19,14 @@ package com.intellij.packageDependencies;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -32,6 +35,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.text.UniqueNameGenerator;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +51,8 @@ import java.util.*;
     @Storage(
       id="other",
       file = "$PROJECT_FILE$"
-    )}
+    ), @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/scopes/", scheme = StorageScheme.DIRECTORY_BASED,
+                                       stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)}
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.DependencyValidationManagerImpl");
@@ -237,11 +243,13 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   public Element getState() {
     Element element = super.getState();
-    try {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-    }
-    catch (WriteExternalException e) {
-      LOG.info(e);
+    if (SKIP_IMPORT_STATEMENTS) {
+      try {
+        DefaultJDOMExternalizer.writeExternal(this, element);
+      }
+      catch (WriteExternalException e) {
+        LOG.info(e);
+      }
     }
     final List<String> unnamedScopes = new ArrayList<String>(myUnnamedScopes.keySet());
     Collections.sort(unnamedScopes);
@@ -303,4 +311,46 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     if (fromNamedScope == null || toNamedScope == null) return null;
     return new DependencyRule(fromNamedScope, toNamedScope, Boolean.valueOf(denyRule).booleanValue());
   }
+
+  public static class ScopesStateSplitter implements StateSplitter {
+     public List<Pair<Element, String>> splitState(Element e) {
+      final UniqueNameGenerator generator = new UniqueNameGenerator();
+      final List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
+
+      final Element[] elements = JDOMUtil.getElements(e);
+      for (Element element : elements) {
+        if (element.getName().equals("scope")) {
+          element.detach();
+          String scopeName = element.getAttributeValue("name");
+          assert scopeName != null;
+          final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(scopeName)) + ".xml";
+          result.add(new Pair<Element, String>(element, name));
+        }
+      }
+       if (e.getChildren().size() > 0) {
+         result.add(new Pair<Element, String>(e, generator.generateUniqueName("scope_settings") + ".xml"));
+       }
+       return result;
+    }
+
+    public void mergeStatesInto(Element target, Element[] elements) {
+      for (Element element : elements) {
+        if (element.getName().equals("scope")) {
+          element.detach();
+          target.addContent(element);
+        }
+        else {
+          final Element[] states = JDOMUtil.getElements(element);
+          for (Element state : states) {
+            state.detach();
+            target.addContent(state);
+          }
+          for (Object attr : element.getAttributes()) {
+            target.setAttribute((Attribute)((Attribute)attr).clone());
+          }
+        }
+      }
+    }
+  }
+
 }

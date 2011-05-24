@@ -392,6 +392,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         }
         final boolean refresh = (! myInRefresh) && myHistorySession.shouldBeRefreshed();
         myUpdateAlarm.cancelAllRequests();
+        if (myUpdateAlarm.isDisposed()) return;
         myUpdateAlarm.addRequest(this, 20000);
 
         if (refresh) {

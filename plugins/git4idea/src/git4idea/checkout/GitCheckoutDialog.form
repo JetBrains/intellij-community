@@ -53,7 +53,7 @@
           <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="common.current.branch.tooltip"/>
         </properties>
       </component>
-      <component id="2bb02" class="javax.swing.JComboBox" binding="myBranchToCkeckout">
+      <component id="2bb02" class="javax.swing.JComboBox" binding="myBranchToCkeckout" custom-create="true">
         <constraints>
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>

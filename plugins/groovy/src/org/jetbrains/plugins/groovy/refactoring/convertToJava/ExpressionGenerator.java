@@ -224,6 +224,7 @@ public class ExpressionGenerator extends Generator {
     }
 
     if (hasFieldInitialization) {
+      builder.append(';');
       context.myStatements.add(builder.toString());
       final GrNamedArgument[] namedArguments = argList.getNamedArguments();
       for (GrNamedArgument namedArgument : namedArguments) {

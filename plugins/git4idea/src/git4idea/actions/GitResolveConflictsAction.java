@@ -44,6 +44,9 @@ public class GitResolveConflictsAction extends GitAction {
       }
     });
     for (Change change : ChangeListManager.getInstance(project).getAllChanges()) {
+      if (change.getFileStatus() != FileStatus.MERGED_WITH_CONFLICTS) {
+        continue;
+      }
       final ContentRevision before = change.getBeforeRevision();
       final ContentRevision after = change.getAfterRevision();
       if (before != null) {

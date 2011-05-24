@@ -106,4 +106,31 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
   }
 
+  public void testDeeplyNestedClosuresInGenericCalls() {
+    String text = "println it"
+    for (i in 1..10) {
+      text = "foo(it) { $text }"
+    }
+    myFixture.configureByText("a.groovy", "def <T> foo(T t, Closure cl) {}\n" + text)
+    myFixture.enableInspections(new MissingReturnInspection())
+    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+
+  }
+
+  public void testDeeplyNestedClosuresInGenericCalls2() {
+    String text = "println it"
+    for (i in 1..10) {
+      text = "foo(it) { $text }"
+    }
+    myFixture.configureByText("a.groovy", "def <T> foo(T t, Closure<T> cl) {}\n" + text)
+    myFixture.enableInspections(new MissingReturnInspection())
+    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+
+  }
+
+  public void testManyAnnotatedScriptVariables() {
+    myFixture.configureByText("a.groovy", (0..100).collect { "@Anno String i$it = null" }.join("\n"))
+    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+  }
+
 }

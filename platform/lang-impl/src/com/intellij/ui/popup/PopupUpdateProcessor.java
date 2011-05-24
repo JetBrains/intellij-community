@@ -16,12 +16,14 @@
 
 package com.intellij.ui.popup;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.JBListWithHintProvider;
 
 import java.awt.*;
 
@@ -34,6 +36,7 @@ public abstract class PopupUpdateProcessor extends JBPopupAdapter {
 
   protected PopupUpdateProcessor(Project project) {
     myProject = project;
+    
   }
 
   public abstract void updatePopup(Object lookupItemObject);
@@ -46,11 +49,11 @@ public abstract class PopupUpdateProcessor extends JBPopupAdapter {
           if (windowEvent.asPopup().isVisible()) { //was not canceled yet
             final LookupElement item = event.getItem();
             if (item != null) {
-              windowEvent.asPopup().cancel(); //close this one
-              updatePopup(item.getObject()); //open next
+              updatePopup(CompletionUtil.getTargetElement(item)); //open next
             }
+          } else {
+            activeLookup.removeLookupListener(this); //do not multiply listeners
           }
-          activeLookup.removeLookupListener(this); //do not multiply listeners
         }
       });
     }
@@ -60,6 +63,8 @@ public abstract class PopupUpdateProcessor extends JBPopupAdapter {
       if (fromQuickSearch) {
         ChooseByNameBase.JPanelProvider panelProvider = (ChooseByNameBase.JPanelProvider)focusedComponent.getParent();
         panelProvider.registerHint(windowEvent.asPopup());
+      } else if (focusedComponent != null && focusedComponent instanceof JBListWithHintProvider) {
+        ((JBListWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
       }
     }
   }

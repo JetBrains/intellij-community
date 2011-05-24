@@ -44,6 +44,8 @@ public class WizardContext {
   private final List<Listener> myListeners = new ArrayList<Listener>();
   private StorageScheme myProjectStorageFormat = StorageScheme.DEFAULT;
 
+  private ModuleWizardStep myProjectSdkStep;
+
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
   }
@@ -65,6 +67,14 @@ public class WizardContext {
     return myProject;
   }
 
+  public ModuleWizardStep getProjectSdkStep() {
+    return myProjectSdkStep;
+  }
+
+  public void setProjectSdkStep(ModuleWizardStep projectSdkStep) {
+    myProjectSdkStep = projectSdkStep;
+  }
+
   @NotNull
   public String getProjectFileDirectory() {
     if (myProjectFileDirectory != null) {
@@ -78,6 +88,10 @@ public class WizardContext {
     //noinspection HardCodedStringLiteral
     return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
            "Projects";
+  }
+
+  public boolean isProjectFileDirectorySet() {
+    return myProjectFileDirectory != null;
   }
 
   public void setProjectFileDirectory(String projectFileDirectory) {

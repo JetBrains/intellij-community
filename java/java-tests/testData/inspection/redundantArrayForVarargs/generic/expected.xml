@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant array creation</problem_class>
+    <description>Redundant array creation for calling varargs method</description>
+  </problem>
+</problems>

@@ -48,15 +48,18 @@ public class DeleteAction extends EditorAction {
         final VisualPosition visualEnd = editor.logicalToVisualPosition(logicalBlockSelectionEnd);
         if (visualStart.column == visualEnd.column) {
           int column = visualEnd.column;
-          int startLine = Math.min(visualStart.line, visualEnd.line);
-          int endLine = Math.max(visualStart.line, visualEnd.line);
-          for (int i = startLine; i <= endLine; i++) {
+          int startVisLine = Math.min(visualStart.line, visualEnd.line);
+          int endVisLine = Math.max(visualStart.line, visualEnd.line);
+          for (int i = startVisLine; i <= endVisLine; i++) {
             if (EditorUtil.getLastVisualLineColumnNumber(editor, i) >= visualStart.column) {
               editor.getCaretModel().moveToVisualPosition(new VisualPosition(i, column));
               deleteCharAtCaret(editor);
             }
           }
-          selectionModel.setBlockSelection(new LogicalPosition(startLine, column), new LogicalPosition(endLine, column));
+          selectionModel.setBlockSelection(
+            new LogicalPosition(logicalBlockSelectionStart.line, column),
+            new LogicalPosition(logicalBlockSelectionEnd.line, column)
+          );
           return;
         }
         EditorModificationUtil.deleteBlockSelection(editor);

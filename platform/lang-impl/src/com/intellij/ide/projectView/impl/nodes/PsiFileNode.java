@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,7 +80,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   public String getTitle() {
     final PsiFile file = getValue();
     if (file != null) {
-      return file.getVirtualFile().getPresentableUrl();
+      return ProjectUtil.getLocationRelativeToUserHome(file.getVirtualFile().getPresentableUrl());
     }
     return super.getTitle();
   }

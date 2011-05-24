@@ -172,8 +172,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       CharSequence text = document.getCharsSequence();
       int caretLine = document.getLineNumber(caretOffset);
       int lineStartOffset = document.getLineStartOffset(caretLine);
+      int lineEndOffset = document.getLineEndOffset(caretLine);
       boolean fixCaretPosition = true;
-      for (int i = Math.min(caretOffset, text.length() - 1); i>= lineStartOffset; i--) {
+      for (int i = lineStartOffset; i < lineEndOffset; i++) {
         char c = text.charAt(i);
         if (c != ' ' && c != '\t' && c != '\n') {
           fixCaretPosition = false;

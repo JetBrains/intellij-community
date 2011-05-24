@@ -54,7 +54,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
     String whiteSpaceToUse
-      = myDocumentModel.adjustWhiteSpaceIfNecessary(whiteSpace, textRange.getStartOffset(), textRange.getEndOffset()).toString();
+      = myDocumentModel.adjustWhiteSpaceIfNecessary(whiteSpace, textRange.getStartOffset(), textRange.getEndOffset(), true).toString();
     final String wsReplaced = replaceWithPSI(textRange, whiteSpaceToUse);
     
     if (wsReplaced != null){

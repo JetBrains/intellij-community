@@ -38,19 +38,14 @@ public final class ConcurrentSoftValueHashMap<K,V> implements ConcurrentMap<K,V>
   }
 
   private void processQueue() {
-    //int count = 0;
     while(true){
       MyReference<K,V> ref = (MyReference<K,V>)myQueue.poll();
       if (ref == null) {
-        //if (count > 0){
-        //  System.out.println("SoftValueHashMap: " + count + " references have been collected");
-        //}
         return;
       }
       if (myMap.get(ref.key) == ref){
         myMap.remove(ref.key);
       }
-      //count++;
     }
   }
 
@@ -103,7 +98,64 @@ public final class ConcurrentSoftValueHashMap<K,V> implements ConcurrentMap<K,V>
   }
 
   public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
+    return new AbstractSet<Entry<K, V>>() {
+      @Override
+      public Iterator<Entry<K, V>> iterator() {
+        final Iterator<Entry<K,MyReference<K, V>>> refEntries = myMap.entrySet().iterator();
+        return new Iterator<Entry<K, V>>() {
+          Entry<K, V> next;
+          @Override
+          public boolean hasNext() {
+            while (next == null) {
+              if (!refEntries.hasNext()) return false;
+              Entry<K, MyReference<K, V>> ref = refEntries.next();
+              final K k = ref.getKey();
+              V v = ref.getValue().get();
+              next = v == null ? null : new AbstractMap.SimpleEntry<K, V>(k,v){
+                @Override
+                public V setValue(V value) {
+                  V old = super.setValue(value);
+                  put(k, value);
+                  return old;
+                }
+              };
+            }
+            return true;
+          }
+
+          @Override
+          public Entry<K, V> next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            Entry<K, V> r = next;
+            next = null;
+            return r;
+          }
+
+          @Override
+          public void remove() {
+            if (next == null) {
+              throw new NoSuchElementException();
+            }
+            ConcurrentSoftValueHashMap.this.remove(next.getKey());
+          }
+        };
+      }
+
+      @Override
+      public int size() {
+        return myMap.size();
+      }
+
+      @Override
+      public boolean remove(Object o) {
+        return ConcurrentSoftValueHashMap.this.remove(((Entry)o).getKey()) != null;
+      }
+
+      @Override
+      public void clear() {
+        ConcurrentSoftValueHashMap.this.clear();
+      }
+    };
   }
 
   public V putIfAbsent(final K key, final V value) {
@@ -145,10 +197,10 @@ public final class ConcurrentSoftValueHashMap<K,V> implements ConcurrentMap<K,V>
   }
 
   public void putAll(Map<? extends K, ? extends V> t) {
-    for (K k : t.keySet()) {
-      V v = t.get(k);
+    for (Entry<? extends K, ? extends V> entry : t.entrySet()) {
+      V v = entry.getValue();
       if (v != null) {
-        put(k, v);
+        put(entry.getKey(), v);
       }
     }
   }

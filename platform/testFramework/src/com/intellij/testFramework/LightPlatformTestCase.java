@@ -42,6 +42,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -529,10 +530,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static void checkEditorsReleased() {
     final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     if (allEditors.length > 0) {
-      for (Editor allEditor : allEditors) {
-        EditorFactory.getInstance().releaseEditor(allEditor);
+      String fail = null;
+      for (Editor editor : allEditors) {
+        fail = EditorFactoryImpl.notReleasedError(editor);
+        EditorFactory.getInstance().releaseEditor(editor);
       }
-      fail("Unreleased editors: " + allEditors.length);
+      fail("Unreleased editors: " + allEditors.length + "\n"+fail);
     }
   }
 

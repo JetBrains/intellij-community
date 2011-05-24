@@ -21,6 +21,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -62,6 +63,50 @@ public class FormattingAstUtil {
     return result;
   }
 
+  @Nullable
+  public static ASTNode getPrevLeaf(@NotNull final ASTNode node, @NotNull IElementType ... typesToIgnore) {
+    ASTNode prev = getPrev(node, typesToIgnore);
+    if (prev == null) {
+      return null;
+    }
+
+    ASTNode result = prev;
+    ASTNode lastChild = prev.getLastChildNode();
+    while (lastChild != null) {
+      result = lastChild;
+      lastChild = lastChild.getLastChildNode();
+    }
+
+    for (IElementType type : typesToIgnore) {
+      if (result.getElementType() == type) {
+        return getPrevLeaf(result, typesToIgnore);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  public static ASTNode getPrev(@NotNull ASTNode node, @NotNull IElementType... typesToIgnore) {
+    ASTNode prev = node.getTreePrev();
+    ASTNode parent = node.getTreeParent();
+    while (prev == null && parent != null) {
+      prev = parent.getTreePrev();
+      parent = parent.getTreeParent();
+    }
+
+    if (prev == null) {
+      return null;
+    }
+
+    for (IElementType type : typesToIgnore) {
+      if (prev.getElementType() == type) {
+        return getPrev(prev, typesToIgnore);
+      }
+    }
+    
+    return prev;
+  }
+  
   /**
    * Tries to get next non-white space <code>AST</code> node for the given one.
    *

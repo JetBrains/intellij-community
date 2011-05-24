@@ -95,7 +95,11 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   public ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext) {
-    return new ProjectJdkStep(wizardContext){
+    ModuleWizardStep projectSdkStep = wizardContext.getProjectSdkStep();
+    if (projectSdkStep instanceof ProjectJdkStep) {
+      return projectSdkStep;
+    }
+    projectSdkStep = new ProjectJdkStep(wizardContext) {
       public boolean isStepVisible() {
         final Sdk newProjectJdk = AddModuleWizard.getNewProjectJdk(wizardContext);
         if (newProjectJdk == null) return true;
@@ -103,6 +107,8 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
         return projectBuilder != null && !projectBuilder.isSuitableSdk(newProjectJdk);
       }
     };
+    wizardContext.setProjectSdkStep(projectSdkStep);
+    return projectSdkStep;
   }
 
   @Nullable

@@ -95,7 +95,7 @@ public class FindUtil {
     }
   }
 
-  public static void configureFindModel(boolean replace, @Nullable String selectedText, FindModel model) {
+  public static void configureFindModel(boolean replace, @Nullable String selectedText, FindModel model, boolean firstSearch) {
     boolean isGlobal = true;
     String stringToFind = null;
     if (!StringUtil.isEmpty(selectedText)) {
@@ -109,9 +109,12 @@ public class FindUtil {
         stringToFind = selectedText;
       }
     } else {
-      stringToFind = model.getStringToFind();
+      if (firstSearch) {
+        stringToFind = "";
+      } else {
+        stringToFind = model.getStringToFind();
+      }
     }
-
     model.setReplaceState(replace);
     model.setStringToFind(stringToFind);
     model.setGlobal(isGlobal);
@@ -527,6 +530,7 @@ public class FindUtil {
           ((DocumentEx) document).setInBulkUpdate(true);
         }
       }
+      int newOffset;
       if (delegate == null || delegate.shouldReplace(result, toReplace)){
         boolean reallyReplace = toPrompt;
         if (reallyReplace) {
@@ -538,13 +542,17 @@ public class FindUtil {
         }
         TextRange textRange = doReplace(project, document, model, result, toReplace, reallyReplace, rangesToChange);
         replaced = true;
-        int newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
-        if (newOffset == offset) {
-          newOffset += model.isForward() ? 1 : -1;
-        }
-        offset = newOffset;
+        newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
         occurrences++;
       }
+      else {
+        newOffset = model.isForward() ? result.getEndOffset() : result.getStartOffset();
+      }
+
+      if (newOffset == offset) {
+        newOffset += model.isForward() ? 1 : -1;
+      }
+      offset = newOffset;
 
     }
 

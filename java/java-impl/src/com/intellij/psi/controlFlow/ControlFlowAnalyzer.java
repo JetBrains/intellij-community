@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.jsp.JavaJspElementVisitor;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
@@ -947,10 +946,8 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     for (int i = myCatchParameters.size() - 1; i >= 0; i--) {
       ProgressManager.checkCanceled();
       PsiParameter parameter = myCatchParameters.get(i);
-      final PsiType type = parameter.getType();
-      PsiClass caughtClass = PsiUtil.resolveClassInType(type);
-      if (caughtClass == null) continue;
-      if (type.isAssignableFrom(throwType) || throwType.isAssignableFrom(type)) {
+      PsiType catchType = parameter.getType();
+      if (catchType.isAssignableFrom(throwType) || throwType.isAssignableFrom(catchType)) {
         blocks.add(myCatchBlocks.get(i));
       }
     }

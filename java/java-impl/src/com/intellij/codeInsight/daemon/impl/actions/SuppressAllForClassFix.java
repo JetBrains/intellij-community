@@ -72,8 +72,8 @@ public class SuppressAllForClassFix extends SuppressFix {
       if (modifierList != null) {
         final PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
         if (annotation != null) {
-          annotation.replace(JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({\"" +
-                                                                                                             SuppressionUtil.ALL + "\"})", container));
+          annotation.replace(JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" +
+                                                                                                             SuppressionUtil.ALL + "\")", container));
           return;
         }
       }

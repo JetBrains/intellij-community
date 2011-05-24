@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Mar 24, 2002
- * Time: 6:08:14 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.psi.util;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -33,18 +25,25 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+/**
+ * @author max
+ * Date: Mar 24, 2002
+ */
 public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
+
+  private RedundantCastUtil() { }
 
   @NotNull
   public static List<PsiTypeCastExpression> getRedundantCastsInside(PsiElement where) {
     MyCollectingVisitor visitor = new MyCollectingVisitor();
-    where.acceptChildren(visitor);
+    if (where instanceof PsiEnumConstant) {
+      where.accept(visitor);
+    } else {
+      where.acceptChildren(visitor);
+    }
     return new ArrayList<PsiTypeCastExpression>(visitor.myFoundCasts);
   }
 
@@ -217,19 +216,15 @@ public class RedundantCastUtil {
         final PsiType newReturnType = newResult.getSubstitutor().substitute(newTargetMethod.getReturnType());
         final PsiType oldReturnType = resolveResult.getSubstitutor().substitute(targetMethod.getReturnType());
         if (Comparing.equal(newReturnType, oldReturnType)) {
-          if (newTargetMethod.equals(targetMethod)) {
-            addToResults(typeCast);
-          }
-          else if (
-            newTargetMethod.getSignature(newResult.getSubstitutor()).equals(targetMethod.getSignature(resolveResult.getSubstitutor())) &&
-            !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&  // see SCR11555, SCR14559
-            areThrownExceptionsCompatible(targetMethod, newTargetMethod)) { //see IDEADEV-15170
+          if (newTargetMethod.equals(targetMethod) ||
+              (newTargetMethod.getSignature(newResult.getSubstitutor()).equals(targetMethod.getSignature(resolveResult.getSubstitutor())) &&
+               !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&  // see SCR11555, SCR14559
+               areThrownExceptionsCompatible(targetMethod, newTargetMethod))) {
             addToResults(typeCast);
           }
         }
       }
-      catch (IncorrectOperationException e) {
-      }
+      catch (IncorrectOperationException ignore) { }
     }
 
     private static boolean areThrownExceptionsCompatible(final PsiMethod targetMethod, final PsiMethod newTargetMethod) {
@@ -253,11 +248,17 @@ public class RedundantCastUtil {
       super.visitNewExpression(expression);
     }
 
+    @Override
+    public void visitEnumConstant(PsiEnumConstant enumConstant) {
+      processCall(enumConstant);
+      super.visitEnumConstant(enumConstant);
+    }
+
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       //expression.acceptChildren(this);
     }
 
-    private void processCall(PsiCallExpression expression){
+    private void processCall(PsiCall expression){
       PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) return;
       PsiExpression[] args = argumentList.getExpressions();
@@ -274,7 +275,7 @@ public class RedundantCastUtil {
               //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
               continue;
             }
-            PsiCallExpression newCall = (PsiCallExpression) expression.copy();
+            PsiCall newCall = (PsiCall) expression.copy();
             final PsiExpressionList argList = newCall.getArgumentList();
             LOG.assertTrue(argList != null);
             PsiExpression[] newArgs = argList.getExpressions();
@@ -282,10 +283,22 @@ public class RedundantCastUtil {
             PsiExpression castOperand = castExpression.getOperand();
             if (castOperand == null) return;
             castExpression.replace(castOperand);
-            final JavaResolveResult newResult = newCall.resolveMethodGenerics();
-            if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() &&
-                Comparing.equal(newCall.getType(), expression.getType())) {
-              addToResults(cast);
+            if (newCall instanceof PsiEnumConstant) {
+              // do this manually, because PsiEnumConstantImpl.resolveMethodGenerics() will assert (no containing class for the copy)
+              final PsiEnumConstant enumConstant = (PsiEnumConstant)expression;
+              PsiClass containingClass = enumConstant.getContainingClass();
+              final JavaPsiFacade facade = JavaPsiFacade.getInstance(enumConstant.getProject());
+              final PsiClassType type = facade.getElementFactory().createType(containingClass);
+              final JavaResolveResult newResult = facade.getResolveHelper().resolveConstructor(type, newCall.getArgumentList(), enumConstant);
+              if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult()) {
+                addToResults(cast);
+              }
+            } else {
+              final JavaResolveResult newResult = newCall.resolveMethodGenerics();
+              if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() &&
+                Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) {
+                addToResults(cast);
+              }
             }
           }
         }
@@ -397,8 +410,7 @@ public class RedundantCastUtil {
             }
           }
         }
-        catch (IncorrectOperationException e) {
-        }
+        catch (IncorrectOperationException ignore) { }
       }
     });
     return result.get().booleanValue();
@@ -407,9 +419,13 @@ public class RedundantCastUtil {
   public static boolean isTypeCastSemantical(PsiTypeCastExpression typeCast) {
     PsiExpression operand = typeCast.getOperand();
     if (operand == null) return false;
+
+    if (isInPolymorphicCall(typeCast)) return true;
+
     PsiType opType = operand.getType();
     PsiTypeElement typeElement = typeCast.getCastType();
     if (typeElement == null) return false;
+
     PsiType castType = typeElement.getType();
     if (castType instanceof PsiPrimitiveType) {
       if (opType instanceof PsiPrimitiveType) {
@@ -442,11 +458,41 @@ public class RedundantCastUtil {
     }
     return false;
   }
-  private static boolean wrapperCastChangeSemantics(PsiExpression operand, PsiExpression otherOperand, PsiExpression toCast) {
-    boolean isPrimitiveComparisonWithCast = TypeConversionUtil.isPrimitiveAndNotNull(operand.getType()) || TypeConversionUtil.isPrimitiveAndNotNull(otherOperand.getType());
-    boolean isPrimitiveComparisonWithoutCast = TypeConversionUtil.isPrimitiveAndNotNull(toCast.getType()) || TypeConversionUtil.isPrimitiveAndNotNull(otherOperand.getType());
-    // wrapper casted to primitive vs wrapper comparison
 
+  private static boolean wrapperCastChangeSemantics(PsiExpression operand, PsiExpression otherOperand, PsiExpression toCast) {
+    boolean isPrimitiveComparisonWithCast = TypeConversionUtil.isPrimitiveAndNotNull(operand.getType()) ||
+                                            TypeConversionUtil.isPrimitiveAndNotNull(otherOperand.getType());
+    boolean isPrimitiveComparisonWithoutCast = TypeConversionUtil.isPrimitiveAndNotNull(toCast.getType()) ||
+                                               TypeConversionUtil.isPrimitiveAndNotNull(otherOperand.getType());
+    // wrapper casted to primitive vs wrapper comparison
     return isPrimitiveComparisonWithCast != isPrimitiveComparisonWithoutCast;
+  }
+
+  // see http://download.java.net/jdk7/docs/api/java/lang/invoke/MethodHandle.html#sigpoly
+  public static boolean isInPolymorphicCall(final PsiTypeCastExpression typeCast) {
+    if (!PsiUtil.isLanguageLevel7OrHigher(typeCast)) return false;
+
+    // return type
+    final PsiExpression operand = typeCast.getOperand();
+    if (operand instanceof PsiMethodCallExpression) {
+      if (isPolymorphicMethod((PsiMethodCallExpression)operand)) return true;
+    }
+
+    // argument type
+    final PsiElement exprList = typeCast.getParent();
+    if (exprList instanceof PsiExpressionList) {
+      final PsiElement methodCall = exprList.getParent();
+      if (methodCall instanceof PsiMethodCallExpression) {
+        if (isPolymorphicMethod((PsiMethodCallExpression)methodCall)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean isPolymorphicMethod(PsiMethodCallExpression expression) {
+    final PsiElement method = expression.getMethodExpression().resolve();
+    return method instanceof PsiMethod &&
+           AnnotationUtil.isAnnotated((PsiMethod)method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, false, true);
   }
 }

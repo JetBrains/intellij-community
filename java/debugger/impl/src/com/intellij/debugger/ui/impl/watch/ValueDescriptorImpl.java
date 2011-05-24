@@ -29,17 +29,16 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +63,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private boolean myIsDirty = false;
   private boolean myIsLvalue = false;
   private boolean myIsExpandable;
-  public static final int MAX_DISPLAY_LABEL_LENGTH = 1024/*kb*/ *1024 /*bytes*/ / 2; // 1 Mb string
+
+  private boolean myShowIdLabel = true;
 
   protected ValueDescriptorImpl(Project project, Value value) {
     myProject = project;
@@ -97,6 +97,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   
   public boolean isValueValid() {
     return myValueException == null;
+  }
+
+  public boolean isShowIdLabel() {
+    return myShowIdLabel;
+  }
+
+  public void setShowIdLabel(boolean showIdLabel) {
+    myShowIdLabel = showIdLabel;
   }
 
   public Value getValue() {
@@ -211,23 +219,41 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myValue = ((ValueDescriptorImpl)oldDescriptor).getValue();
   }
 
-  protected void setLvalue (boolean value) {
+  protected void setLvalue(boolean value) {
     myIsLvalue = value;
   }
 
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
-    myIsExpandable = (myValueException == null || myValueException.getExceptionFromTargetVM() != null) && getRenderer(context.getDebugProcess()).isExpandable(getValue(), context, this);
+    DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    return setValueLabel(calcValueLabel(context, labelListener));
+    final NodeRenderer renderer = getRenderer(context.getDebugProcess());
+
+    final EvaluateException valueException = myValueException;
+    myIsExpandable = (valueException == null || valueException.getExceptionFromTargetVM() != null) && renderer.isExpandable(getValue(), context, this);
+
+    String label;
+    if (valueException == null) {
+      try {
+        label = renderer.calcLabel(this, context, labelListener);
+      }
+      catch (EvaluateException e) {
+        label = setValueLabelFailed(e);
+      }
+    }
+    else {
+      label = setValueLabelFailed(valueException);
+    }
+
+    return setValueLabel(label);
   }
 
   private String getCustomLabel(String label) {
     //translate only strings in quotes
     final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
-      if(getValue() instanceof ObjectReference) {
-        final ObjectReference value = (ObjectReference)getValue();
-        final String idLabel = value != null? getIdLabel(value) : "";
+      final Value value = getValue();
+      if(isShowIdLabel() && value instanceof ObjectReference) {
+        final String idLabel = getIdLabel((ObjectReference)value);
         if(!label.startsWith(idLabel)) {
           buf.append(idLabel);
         }
@@ -237,24 +263,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         buf.append("null");
       }
       else {
-        final boolean isQuoted = label.length() > 1 && StringUtil.startsWithChar(label, '\"') && StringUtil.endsWithChar(label, '\"');
-        if(isQuoted) {
-          label = label.substring(1, label.length() - 1);
-          buf.append('"');
-        }
-        if (label.length() > MAX_DISPLAY_LABEL_LENGTH) {
-          label = DebuggerUtils.translateStringValue(label.substring(0, MAX_DISPLAY_LABEL_LENGTH));
-          buf.append(label);
-          if (!label.endsWith("...")) {
-            buf.append("...");
-          }
-        }
-        else {
-          buf.append(DebuggerUtils.translateStringValue(label));
-        }
-        if (isQuoted) {
-          buf.append('"');
-        }
+        buf.append(label);
       }
       return buf.toString();
     }
@@ -277,19 +286,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public abstract String calcValueName();
-
-  private String calcValueLabel(EvaluationContextImpl evaluationContext, final DescriptorLabelListener labelListener) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
-      if(myValueException != null) {
-        throw myValueException;
-      }
-      return getRenderer(evaluationContext.getDebugProcess()).calcLabel(this, evaluationContext, labelListener);
-    }
-    catch (EvaluateException e) {
-      return setValueLabelFailed(e);
-    }
-  }
 
   public void displayAs(NodeDescriptor descriptor) {
     if (descriptor instanceof ValueDescriptorImpl) {

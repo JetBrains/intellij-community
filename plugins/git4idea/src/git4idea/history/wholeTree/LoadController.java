@@ -81,16 +81,15 @@ public class LoadController implements Loader {
 
     myUsersComponent.acceptUpdate(myUsersIndex.getKeys());
 
-    final Continuation continuation;
     if (myPreviousAlgorithm != null) {
-      continuation = myPreviousAlgorithm.getContinuation();
-      continuation.clearQueue();
-    } else {
-      continuation = Continuation.createFragmented(myProject, true);
+      final Continuation oldContinuation = myPreviousAlgorithm.getContinuation();
+      oldContinuation.cancelCurrent();
+      oldContinuation.clearQueue();
     }
+
+    final Continuation continuation = Continuation.createFragmented(myProject, true);
     myPreviousAlgorithm = new LoadAlgorithm(myProject, list, shortLoaders, continuation);
     myPreviousAlgorithm.fillContinuation();
-    continuation.cancelCurrent();
     continuation.resume();
   }
 

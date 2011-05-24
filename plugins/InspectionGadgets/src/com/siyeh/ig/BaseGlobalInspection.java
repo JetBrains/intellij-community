@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dave Griffith
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.GlobalJavaInspectionTool;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +27,7 @@ public abstract class BaseGlobalInspection extends GlobalJavaInspectionTool {
     private String shortName = null;
     @NonNls private static final String INSPECTION = "Inspection";
 
+    @Override
     @NotNull
     public String getShortName() {
         if (shortName == null) {
@@ -56,6 +58,7 @@ public abstract class BaseGlobalInspection extends GlobalJavaInspectionTool {
         return builder.toString();
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         @NonNls final String displayNameSuffix = ".display.name";
@@ -63,11 +66,19 @@ public abstract class BaseGlobalInspection extends GlobalJavaInspectionTool {
                 displayNameSuffix);
     }
 
+    @Override
     @NotNull
     public HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.WARNING;
     }
 
+    @Override @Nls
+    @NotNull
+    public final String getGroupDisplayName() {
+        return GroupDisplayNameUtil.getGroupDisplayName(getClass());
+    }
+
+    @Override
     public boolean isEnabledByDefault() {
         return false;
     }

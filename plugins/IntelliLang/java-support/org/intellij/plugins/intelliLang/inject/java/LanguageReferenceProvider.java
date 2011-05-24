@@ -16,7 +16,6 @@
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -32,20 +31,14 @@ import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
  * Provides references to Language-IDs and RegExp enums for completion.
  */
 public final class LanguageReferenceProvider extends PsiReferenceContributor {
-  private final Configuration myConfig = Configuration.getInstance();
-
-  private final Computable<String> ANNOTATION_NAME = new Computable<String>() {
-    public String compute() {
-      return myConfig.getLanguageAnnotationClass();
-    }
-  };
 
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+    final Configuration configuration = Configuration.getInstance();
     registrar.registerReferenceProvider(
       literalExpression().annotationParam(StandardPatterns.string().with(new PatternCondition<String>("isLanguageAnnotation") {
         @Override
         public boolean accepts(@NotNull final String s, final ProcessingContext context) {
-          return Comparing.equal(ANNOTATION_NAME.compute(), s);
+          return Comparing.equal(configuration.getAdvancedConfiguration().getLanguageAnnotationClass(), s);
         }
       }), "value").and(literalExpression().with(new PatternCondition<PsiLiteralExpression>("isStringLiteral") {
         @Override
@@ -72,7 +65,7 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
         final PsiModifierListOwner owner =
           AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
         if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
-          final PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(owner, myConfig.getPatternAnnotationPair(), true);
+          final PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
           if (annotations.length > 0) {
             final String pattern = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
             if (pattern != null) {

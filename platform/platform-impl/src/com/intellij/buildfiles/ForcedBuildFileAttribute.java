@@ -17,6 +17,7 @@ package com.intellij.buildfiles;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -61,6 +62,9 @@ public class ForcedBuildFileAttribute {
 	at com.intellij.util.io.IOUtil.readString(IOUtil.java:40)
 	at com.intellij.buildfiles.ForcedBuildFileAttribute.getFrameworkIdOfBuildFile(ForcedBuildFileAttribute.java:59)
              */
+            if (is.available() == 0) {
+              return null;
+            }
             return is.readUTF();
           }
           finally {
@@ -68,7 +72,7 @@ public class ForcedBuildFileAttribute {
           }
         }
         catch (IOException e) {
-          LOG.error(e);
+          LOG.error(file.getPath(), e);
         }
       }
       return "";
@@ -78,19 +82,27 @@ public class ForcedBuildFileAttribute {
 
 
   public static void forceFileToFramework(VirtualFile file, String frameworkId, boolean value) {
-    if (!value && !frameworkId.equals(getFrameworkIdOfBuildFile(file))) {//belongs to other framework
-      return;
+    if (value) {//belongs to other framework
+      String existingFrameworkId = getFrameworkIdOfBuildFile(file);
+      if (!StringUtil.isEmpty(existingFrameworkId) && !frameworkId.equals(existingFrameworkId)) {
+        return;
+      }
     }
-    forceBuildFile(file, frameworkId);
+    if (value) {//write framework
+      forceBuildFile(file, frameworkId);
+    }
+    else {
+      forceBuildFile(file, null);
+    }
   }
 
 
-  private static void forceBuildFile(VirtualFile file, String value) {
+  private static void forceBuildFile(VirtualFile file, @Nullable String value) {
     if (file instanceof NewVirtualFile) {
       final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
       try {
         try {
-          os.writeUTF(value);
+          os.writeUTF(StringUtil.notNullize(value));
         }
         finally {
           os.close();

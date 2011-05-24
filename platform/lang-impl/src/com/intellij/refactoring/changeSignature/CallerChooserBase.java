@@ -40,6 +40,9 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,6 +53,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Set;
 
@@ -150,14 +154,21 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       int start = getStartOffset(caller);
-      for (PsiReference ref : ReferencesSearch.search(callee, new LocalSearchScope(caller), false)) {
-        final PsiElement element = ref.getElement();
-        if (element != null) {
-          highlighter.addRangeHighlight(myCallerEditor, element.getTextRange().getStartOffset() - start,
-                                        element.getTextRange().getEndOffset() - start, attributes, false, null);
-        }
+      for (PsiElement element : findElementsToHighlight(caller, callee)) {
+        highlighter.addRangeHighlight(myCallerEditor, element.getTextRange().getStartOffset() - start,
+                                      element.getTextRange().getEndOffset() - start, attributes, false, null);
       }
     }
+  }
+
+  protected Collection<PsiElement> findElementsToHighlight(M caller, M callee) {
+    Query<PsiReference> references = ReferencesSearch.search(callee, new LocalSearchScope(caller), false);
+    return ContainerUtil.mapNotNull(references, new Function<PsiReference, PsiElement>() {
+      @Override
+      public PsiElement fun(PsiReference psiReference) {
+        return psiReference.getElement();
+      }
+    });
   }
 
   public void dispose() {

@@ -87,7 +87,9 @@ public class ListWithFilter<T> extends JPanel {
 
   public boolean resetFilter() {
     boolean hadPattern = mySpeedSearch.isHoldingFilter();
-    mySpeedSearch.reset();
+    if (mySpeedSearchPatternField.isVisible()) {
+      mySpeedSearch.reset();
+    }
     return hadPattern;
   }
 

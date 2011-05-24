@@ -32,13 +32,10 @@ public class ImportToRepositoryAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(presentation.isEnabled() &&
-      (! ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()));
+      (project == null || (! ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning())));
   }
 
   public void actionPerformed(AnActionEvent e) {

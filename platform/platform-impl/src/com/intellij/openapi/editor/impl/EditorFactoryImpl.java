@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayCharSequence;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,19 +85,25 @@ public class EditorFactoryImpl extends EditorFactory {
   public void validateEditorsAreReleased(Project project) {
     for (Editor editor : myEditors) {
       if (editor.getProject() == project || editor.getProject() == null) {
-        fireEditorNotReleasedError(editor);
+        try {
+          LOG.error(notReleasedError(editor));
+        }
+        finally {
+          releaseEditor(editor);
+        }
       }
     }
   }
 
-  private static void fireEditorNotReleasedError(final Editor editor) {
+  @NonNls
+  public static String notReleasedError(@NotNull Editor editor) {
     final String creator = editor.getUserData(EDITOR_CREATOR);
     if (creator == null) {
-      LOG.error("Editor for the document with class:" + editor.getClass().getName() +
-                " and the following text hasn't been released:\n" + editor.getDocument().getText());
+      return "Editor of " + editor.getClass() +
+                " and the following text hasn't been released:\n" + editor.getDocument().getText();
     }
     else {
-      LOG.error("Editor with class:" + editor.getClass().getName() + " hasn't been released:\n" + creator);
+      return "Editor of " + editor.getClass() + " hasn't been released:\n" + creator;
     }
   }
 

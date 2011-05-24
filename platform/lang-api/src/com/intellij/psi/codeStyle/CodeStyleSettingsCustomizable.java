@@ -16,8 +16,11 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import org.jetbrains.annotations.Nullable;
 
 public interface CodeStyleSettingsCustomizable {
+  enum OptionAnchor {NONE, BEFORE, AFTER}
+
   String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
   String SPACES_BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
   String SPACES_BEFORE_LEFT_BRACE = ApplicationBundle.message("group.spaces.before.left.brace");
@@ -107,7 +110,15 @@ public interface CodeStyleSettingsCustomizable {
   void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                         String fieldName,
                         String title,
-                        String groupName,
+                        @Nullable String groupName,
+                        Object... options);
+
+  void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                        String fieldName,
+                        String title,
+                        @Nullable String groupName,
+                        @Nullable OptionAnchor anchor,
+                        @Nullable String anchorFieldName,
                         Object... options);
 
   void renameStandardOption(String fieldName, String newTitle);

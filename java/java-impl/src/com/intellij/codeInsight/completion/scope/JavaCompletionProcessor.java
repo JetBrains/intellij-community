@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -112,7 +112,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   private static boolean isInitializedImplicitly(PsiField field) {
-    field = JavaCompletionUtil.getOriginalElement(field);
+    field = CompletionUtil.getOriginalOrSelf(field);
     for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensions()) {
       if (provider.isImplicitWrite(field)) {
         return true;

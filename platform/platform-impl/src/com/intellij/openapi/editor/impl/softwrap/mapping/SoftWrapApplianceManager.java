@@ -166,8 +166,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     // Define start of the visual line that holds target range start.
     int start = event.getNewStartOffset();
     LogicalPosition logical = myDataMapper.offsetToLogicalPosition(start);
-    VisualPosition visual
-      = new VisualPosition(myDataMapper.logicalToVisualPosition(logical, myEditor.logicalToVisualPosition(logical, false)).line, 0);
+    VisualPosition visual = new VisualPosition(myDataMapper.logicalToVisualPosition(logical, myEditor.logicalToVisualPosition(logical, false)).line, 0);
     start = myEditor.logicalPositionToOffset(logical);
     Document document = myEditor.getDocument();
     myContext.text = document.getCharsSequence();

@@ -172,10 +172,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)getTreeParent().getPsi();
       return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
     }
-    CompositeElement parent = getTreeParent();
-    String message = "Unknown parent for java code reference: '" + parent +"'; " +
-                     "Type: "+i+"; \n";
 
+    CompositeElement parent = getTreeParent();
+    String message = "Unknown parent for java code reference: '" + parent + "'; Type: " + i + ";\n";
     while (parent != null && parent.getPsi() instanceof PsiExpression) {
       parent = parent.getTreeParent();
       message += " Parent: '" + parent+"'; \n";

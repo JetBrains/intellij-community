@@ -226,4 +226,12 @@ public class ForCanBeForEach {
             System.out.println(intList.get(i));
         }
     }
+
+    void listIteration(List<String> l) {
+        for (Iterator<String> i = l.listIterator(); l.hasNext(); ) {
+            if ("sit".equals(l.next())) {
+                i.set("stay");
+            }
+        }
+    }
 }
