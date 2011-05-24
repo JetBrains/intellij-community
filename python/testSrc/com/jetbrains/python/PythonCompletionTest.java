@@ -380,4 +380,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.completeBasic();
     myFixture.checkResultByFile("completion/exportedConstants/a.after.py");
   }
+
+  public void testAlias() {  // PY-3672
+    doTest();
+  }
 }
