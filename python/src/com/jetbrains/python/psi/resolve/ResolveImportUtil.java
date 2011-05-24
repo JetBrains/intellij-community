@@ -386,7 +386,7 @@ public class ResolveImportUtil {
     }
   }
 
-  private static void visitRoots(@NotNull Module module, RootVisitor visitor) {
+  public static void visitRoots(@NotNull Module module, RootVisitor visitor) {
     // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
     // Module-based approach works only in the IDEA plugin.
     if (visitModuleContentEntries(module, visitor)) return;
