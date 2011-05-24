@@ -249,7 +249,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     if (!process(root.getLeft(), processor, modCountBefore)) return false;
     if (!root.processAliveKeys(processor)) return false;
-    assert modCount == modCountBefore;
+    if (modCount != modCountBefore) throw new ConcurrentModificationException();
 
     return process(root.getRight(), processor, modCountBefore);
   }
@@ -288,7 +288,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     boolean overlaps = Math.max(myStartOffset, start) <= Math.min(myEndOffset, end);
     if (overlaps) {
       if (!root.processAliveKeys(processor)) return false;
-      assert modCount == modCountBefore;
+      if (modCount != modCountBefore) throw new ConcurrentModificationException();
     }
 
     if (end < myStartOffset) {
@@ -446,7 +446,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     if (overlaps) {
       if (!root.processAliveKeys(processor)) return false;
-      assert modCount == modCountBefore;
+      if (modCount != modCountBefore) throw new ConcurrentModificationException();
     }
 
     if (offset < myStartOffset) {
@@ -931,7 +931,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     int myEndOffset = root.intervalEnd() + delta;
     boolean overlaps = Math.max(myStartOffset, interval.intervalStart()) <= Math.min(myEndOffset, interval.intervalEnd());
     if (overlaps) return root;
-    assert modCount == modCountBefore;
+    if (modCount != modCountBefore) throw new ConcurrentModificationException();
 
     if (interval.intervalEnd() < myStartOffset) {
       return null; // left of the root, cant be in the right subtree
