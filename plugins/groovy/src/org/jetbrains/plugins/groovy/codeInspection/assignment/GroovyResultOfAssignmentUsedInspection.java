@@ -15,25 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-
-import java.util.List;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
 
@@ -52,7 +40,6 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Result of assignment expression used #loc";
-
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -63,21 +50,9 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
 
     public void visitAssignmentExpression(GrAssignmentExpression grAssignmentExpression) {
       super.visitAssignmentExpression(grAssignmentExpression);
-      final PsiElement parent = grAssignmentExpression.getParent();
-      final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(grAssignmentExpression);
-      if (parent instanceof GrCodeBlock || parent instanceof GroovyFile || parent instanceof GrControlStatement || parent == null || parent instanceof GrCaseSection) {
-        //check for method that has void return type. so it does not matter what return statements are.
-        if (flowOwner instanceof GrOpenBlock) {
-          final PsiElement flowParent = flowOwner.getParent();
-          if (flowParent instanceof PsiMethod &&
-              (((PsiMethod)flowParent).getReturnType() == PsiType.VOID || ((PsiMethod)flowParent).isConstructor())) {
-            return;
-          }
-        }
-        final List<GrStatement> returns = ControlFlowUtils.collectReturns(flowOwner);
-        if (!returns.contains(grAssignmentExpression)) return;
+      if (PsiUtil.resultOfExpressionUsed(grAssignmentExpression)) {
+        registerError(grAssignmentExpression);
       }
-      registerError(grAssignmentExpression);
     }
   }
 }
