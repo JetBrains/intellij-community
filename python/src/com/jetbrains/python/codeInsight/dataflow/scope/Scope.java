@@ -26,4 +26,10 @@ public interface Scope {
   boolean isNonlocal(String name);
 
   boolean containsDeclaration(String name);
+
+  /**
+   * @return all declarations available at the end of the scope
+   */
+  @NotNull
+  Collection<ScopeVariable> getAllDeclaredVariables();
 }

@@ -19,6 +19,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
@@ -71,7 +72,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
   }
 
   @Override
-  public void inspectionFinished(LocalInspectionToolSession session) {
+  public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder holder) {
     final Visitor visitor = session.getUserData(KEY);
     assert visitor != null;
     if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
@@ -137,6 +138,25 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       myAllImports.add(node);
     }
 
+    private static boolean isGuardedByImportError(PyElement node) {
+      final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class);
+      if (importStatement != null) {
+        final PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
+        if (tryPart != null) {
+          final PyTryExceptStatement tryExceptStatement = PsiTreeUtil.getParentOfType(tryPart, PyTryExceptStatement.class);
+          if (tryExceptStatement != null) {
+            for (PyExceptPart exceptPart : tryExceptStatement.getExceptParts()) {
+              final PyExpression expr = exceptPart.getExceptClass();
+              if (expr != null && "ImportError".equals(expr.getName())) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    }
+
     @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
@@ -146,6 +166,15 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (reference instanceof PsiReferenceEx) {
           severity = ((PsiReferenceEx) reference).getUnresolvedHighlightSeverity(myTypeEvalContext);
           if (severity == null) continue;
+        }
+        if (isGuardedByImportError(node)) {
+          if (PsiTreeUtil.getParentOfType(node, PyImportElement.class) != null) {
+            if (!ScopeUtil.isDeclaredAndBoundInScope(node)) {
+              registerProblem(node, PyBundle.message("INSP.try.except.import.error", node.getName()),
+                              ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, null);
+            }
+          }
+          return;
         }
         boolean unresolved;
         if (reference instanceof PsiPolyVariantReference) {
@@ -178,7 +207,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final PsiElement ref_element = reference.getElement();
       final boolean ref_is_importable = PythonReferenceImporter.isImportable(ref_element);
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
-      HintAction hintAction = null;
       if (ref_text.length() <= 0) return; // empty text, nothing to highlight
       if (reference.getElement() instanceof PyReferenceExpression) {
         PyReferenceExpression refex = (PyReferenceExpression)reference.getElement();

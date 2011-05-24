@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyImportStatementBase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -14,9 +15,9 @@ public class PyImportStatementNavigator {
   }
 
   @Nullable
-  public static PyImportStatement getImportStatementByElement(final PsiElement element){
-    final PyImportStatement statement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class, false);
-    if (statement == null){
+  public static PyImportStatementBase getImportStatementByElement(final PsiElement element){
+    final PyImportStatementBase statement = PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class, false);
+    if (statement == null) {
       return null;
     }
     for (PyImportElement importElement : statement.getImportElements()) {
