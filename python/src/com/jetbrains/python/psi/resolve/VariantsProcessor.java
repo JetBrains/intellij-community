@@ -112,7 +112,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
     if (element instanceof PsiNamedElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       final String name = psiNamedElement instanceof PyFile
-                          ? FileUtil.getNameWithoutExtension(((PyFile) psiNamedElement).getName())
+                          ? FileUtil.getNameWithoutExtension(((PyFile)psiNamedElement).getName())
                           : psiNamedElement.getName();
       if (name != null && nameIsAcceptable(name)) {
         myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement, name).setIcon(element.getIcon(0))));
@@ -205,15 +205,5 @@ public class VariantsProcessor implements PsiScopeProcessor {
 
   public void setAllowedNames(List<String> namesFilter) {
     myAllowedNames = namesFilter;
-  }
-
-  public void addVariantsFromAllowedNames() {
-    if (myAllowedNames != null) {
-      for (String name : myAllowedNames) {
-        if (!myVariants.containsKey(name)) {
-          myVariants.put(name, LookupElementBuilder.create(name));
-        }
-      }
-    }
   }
 }

@@ -17,8 +17,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Simplest PyStarImportElement possible.
- *
  * @author dcheryasov
  */
 public class PyStarImportElementImpl extends PyElementImpl implements PyStarImportElement {
@@ -29,6 +27,13 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
+    if (getParent() instanceof PyFromImportStatement) {
+      PyFromImportStatement import_from_stmt = (PyFromImportStatement)getParent();
+      final PsiElement source = ResolveImportUtil.resolveFromImportStatementSource(import_from_stmt);
+      if (source instanceof PyFile) {
+        return ((PyFile)source).iterateNames();
+      }
+    }
     return Collections.emptyList();
   }
 

@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +20,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
+import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
@@ -353,7 +355,26 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    throw new UnsupportedOperationException();
+    VariantsProcessor processor = new VariantsProcessor(this);
+    final List<String> dunderAll = getDunderAll();
+    processor.setAllowedNames(dunderAll);
+    processDeclarations(processor, ResolveState.initial(), null, this);
+    List<PyElement> result = new ArrayList<PyElement>();
+    for (LookupElement lookupElement : processor.getResultList()) {
+      final Object value = lookupElement.getObject();
+      if (value instanceof PyElement) {
+        result.add((PyElement) value);
+        if (dunderAll != null) {
+          dunderAll.remove(lookupElement.getLookupString());
+        }
+      }
+    }
+    if (dunderAll != null) {
+      for (String s: dunderAll) {
+        result.add(new LightNamedElement(myManager, PythonLanguage.getInstance(), s));
+      }
+    }
+    return result;
   }
 
   public boolean mustResolveOutside() {

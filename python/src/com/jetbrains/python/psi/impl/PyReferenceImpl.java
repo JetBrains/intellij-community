@@ -10,14 +10,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.django.util.PythonDataflowUtil;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -31,7 +29,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -392,8 +393,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  private static final TokenSet IS_STAR_IMPORT = TokenSet.create(PyElementTypes.STAR_IMPORT_ELEMENT);
-
   @NotNull
   public Object[] getVariants() {
     final List<LookupElement> ret = Lists.newArrayList();
@@ -410,33 +409,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // in a call, include function's arg names
     PythonDataflowUtil.collectFunctionArgNames(myElement, ret);
 
-    // scan all "import *" and include names provided by them
-    CollectProcessor collect_proc = new CollectProcessor(IS_STAR_IMPORT);
-    PyResolveUtil.treeCrawlUp(collect_proc, realContext);
-    List<PsiElement> stars = collect_proc.getResult();
-    for (PsiElement star_elt : stars) {
-      final PyFromImportStatement from_import_stmt = (PyFromImportStatement)star_elt.getParent();
-      if (from_import_stmt != null) {
-        final PyReferenceExpression import_src = from_import_stmt.getImportSource();
-        if (import_src != null) {
-          final String imported_name = import_src.getName();
-          processor.setNotice(imported_name);
-          final PsiElement importedModule = import_src.getReference().resolve();
-          List<String> dunderAll = null;
-          if (importedModule instanceof PyFile) {
-            dunderAll = ((PyFile) importedModule).getDunderAll();
-          }
-          processor.setAllowedNames(dunderAll);
-          try {
-            PyResolveUtil.treeCrawlUp(processor, true, importedModule); // names from that module
-            processor.addVariantsFromAllowedNames();
-          }
-          finally {
-            processor.setAllowedNames(null);
-          }
-        }
-      }
-    }
     // include builtin names
     processor.setNotice("__builtin__");
     PyResolveUtil.treeCrawlUp(processor, true, PyBuiltinCache.getInstance(getElement()).getBuiltinsFile()); // names from __builtin__
