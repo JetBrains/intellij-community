@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'1' unnecessarily cast to &lt;code&gt;double&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'1.0f' unnecessarily cast to &lt;code&gt;double&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'b' unnecessarily cast to &lt;code&gt;double&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'1' unnecessarily cast to &lt;code&gt;char&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'a' unnecessarily cast to &lt;code&gt;double&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'b' unnecessarily cast to &lt;code&gt;double&lt;/code&gt;</description>
+  </problem>
+  
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>23</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'i' unnecessarily cast to &lt;code&gt;double&lt;/code&gt;</description>
+  </problem>
+</problems>

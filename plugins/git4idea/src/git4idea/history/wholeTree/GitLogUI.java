@@ -1117,7 +1117,7 @@ public class GitLogUI implements Disposable {
           string = string.trim();
           if (string.length() == 0) continue;
           myUsersSearchContext.add(string.toLowerCase());
-          final String regexp = StringUtil.escapeToRegexp(string);
+          final String regexp = "\"" + string + "\"";
           userFilters.add(new ChangesFilter.Committer(regexp));
           userFilters.add(new ChangesFilter.Author(regexp));
         }
