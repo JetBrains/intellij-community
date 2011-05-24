@@ -1,1 +1,3 @@
-from smname.moduleY import moduleZ
+import smname
+import smname.moduleY
+smname.moduleY.moduleZ

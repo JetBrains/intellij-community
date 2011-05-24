@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -110,9 +111,11 @@ public class VariantsProcessor implements PsiScopeProcessor {
     // TODO: refactor to look saner; much code duplication
     if (element instanceof PsiNamedElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
-      final String name = psiNamedElement.getName();
-      if (nameIsAcceptable(name)) {
-        myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement).setIcon(element.getIcon(0))));
+      final String name = psiNamedElement instanceof PyFile
+                          ? FileUtil.getNameWithoutExtension(((PyFile) psiNamedElement).getName())
+                          : psiNamedElement.getName();
+      if (name != null && nameIsAcceptable(name)) {
+        myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement, name).setIcon(element.getIcon(0))));
       }
     }
     else if (element instanceof PyReferenceExpression) {

@@ -1,1 +1,3 @@
-from smname.moduleY import mo<caret>
+import smname
+import smname.moduleY
+smname.moduleY.mod<caret>
