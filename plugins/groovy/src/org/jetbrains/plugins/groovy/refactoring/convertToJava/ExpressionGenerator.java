@@ -44,7 +44,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
@@ -286,8 +288,9 @@ public class ExpressionGenerator extends Generator {
 
   private void writeTypeBody(StringBuilder builder, GrAnonymousClassDefinition anonymous) {
     builder.append("{\n");
-    new ClassGenerator(new GeneratorClassNameProvider(), new ClassItemGeneratorImpl(context.extend()))
-      .writeMembers(builder, anonymous, true);
+    final GeneratorClassNameProvider classNameProvider = new GeneratorClassNameProvider();
+    final ClassItemGeneratorImpl classItemGenerator = new ClassItemGeneratorImpl(context.extend());
+    new ClassGenerator(classNameProvider, classItemGenerator).writeMembers(builder, anonymous,true);
     builder.append('}');
   }
 
