@@ -40,6 +40,7 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -339,9 +340,18 @@ public class JavaCompletionContributor extends CompletionContributor {
     final PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;
     if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return false;
+
+    if (parent instanceof PsiJavaCodeReferenceElementImpl &&
+        ((PsiJavaCodeReferenceElementImpl)parent).getKind() == PsiJavaCodeReferenceElementImpl.PACKAGE_NAME_KIND) {
+      return false;
+    }
     
     PsiElement grand = parent.getParent();
     if (grand instanceof PsiSwitchLabelStatement) {
+      return false;
+    }
+
+    if (psiElement().inside(PsiImportStatement.class).accepts(parent)) {
       return false;
     }
 
