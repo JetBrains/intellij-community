@@ -139,47 +139,26 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             if (expectedType == null) {
                 return;
             }
-            final String newExpression;
-            if (expression instanceof PsiTypeCastExpression) {
-                final PsiTypeCastExpression typeCastExpression =
-                        (PsiTypeCastExpression) expression;
-                final PsiExpression operand = typeCastExpression.getOperand();
-                if (operand == null) {
-                    newExpression = buildNewExpressionText(expression, expectedType);
-                } else {
-                final PsiType castType = operand.getType();
-                    if (expectedType.equals(castType)) {
-                        typeCastExpression.replace(operand);
-                        return;
-                    } else {
-                        newExpression = buildNewExpressionText(operand, expectedType);
-                    }
-                }
-            } else if (isConvertible(expression, expectedType)) {
-                newExpression =
+            if (isConvertible(expression, expectedType)) {
+                final String newExpression =
                         convertExpression(expression, expectedType);
                 if (newExpression == null) {
                     return;
                 }
+                replaceExpression(expression, newExpression);
             } else {
-                newExpression = buildNewExpressionText(expression, expectedType);
+                final String newExpression;
+                if (ParenthesesUtils.getPrecedence(expression) <=
+                        ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
+                    newExpression = '(' + expectedType.getCanonicalText() +
+                            ')' + expression.getText();
+                }
+                else {
+                    newExpression = '(' + expectedType.getCanonicalText() +
+                            ")(" + expression.getText() + ')';
+                }
+                replaceExpression(expression, newExpression);
             }
-            replaceExpression(expression, newExpression);
-        }
-
-        private static String buildNewExpressionText(PsiExpression expression,
-                                                     PsiType expectedType) {
-            @NonNls final String newExpression;
-            if (ParenthesesUtils.getPrecedence(expression) <=
-                    ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
-                newExpression = '(' + expectedType.getCanonicalText() +
-                        ')' + expression.getText();
-            }
-            else {
-                newExpression = '(' + expectedType.getCanonicalText() +
-                        ")(" + expression.getText() + ')';
-            }
-            return newExpression;
         }
 
         @Nullable
@@ -432,6 +411,6 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                                      PsiType expectedType) {
         final Integer operandPrecision = typePrecisions.get(expressionType);
         final Integer castPrecision = typePrecisions.get(expectedType);
-        return operandPrecision.intValue() <= castPrecision.intValue();
+        return operandPrecision <= castPrecision;
     }
 }
