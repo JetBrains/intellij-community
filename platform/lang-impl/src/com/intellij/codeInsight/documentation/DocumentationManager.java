@@ -263,6 +263,13 @@ public class DocumentationManager {
       }
     }
 
+    final JBPopup _oldHint = getDocInfoHint();
+    if (_oldHint != null && _oldHint.isVisible() && _oldHint instanceof AbstractPopup) {
+      final DocumentationComponent oldComponent = (DocumentationComponent)((AbstractPopup)_oldHint).getComponent();
+      fetchDocInfo(getDefaultCollector(element, originalElement), oldComponent);
+      return;
+    }
+
     final DocumentationComponent component = new DocumentationComponent(this);
     component.setNavigateCallback(new Consumer<PsiElement>() {
       @Override
@@ -905,7 +912,7 @@ public class DocumentationManager {
   }
 
   void showHint(final JBPopup hint) {
-    PopupPositionManager.positionPopupInBestPosition(hint, myEditor);
+    PopupPositionManager.positionPopupInBestPosition(hint, myEditor, true);
   }
 
   public void requestFocus() {

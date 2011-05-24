@@ -27,7 +27,7 @@ public class PopupPositionManager {
   private PopupPositionManager() {
   }
 
-  public static void positionPopupInBestPosition(final JBPopup hint, @Nullable final Editor editor) {
+  public static void positionPopupInBestPosition(final JBPopup hint, @Nullable final Editor editor, final boolean invokedFromEditor) {
     final LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup != null && lookup.getCurrentItem() != null) {
       new PositionAdjuster(lookup.getComponent()).adjust(hint);
@@ -42,7 +42,7 @@ public class PopupPositionManager {
       return;
     }
 
-    if (editor != null && editor.getComponent().isShowing()) {
+    if (invokedFromEditor && editor != null && editor.getComponent().isShowing()) {
       hint.showInBestPositionFor(editor);
       return;
     }
@@ -178,8 +178,12 @@ public class PopupPositionManager {
       } 
       
       if (popupRect != null) {
-        final Point p = new Point(r.x - myRelativeOnScreen.x, r.y - myRelativeOnScreen.y);
-        popup.show(new RelativePoint(myRelativeTo, p));
+        if (popup.isVisible()) {
+          popup.setLocation(new Point(r.x, r.y));
+        } else {
+          final Point p = new Point(r.x - myRelativeOnScreen.x, r.y - myRelativeOnScreen.y);
+          popup.show(new RelativePoint(myRelativeTo, p));
+        }
       } else {
         // ok, popup does not fit, will try to resize it
         final List<Rectangle> boxes = new ArrayList<Rectangle>();
@@ -214,8 +218,12 @@ public class PopupPositionManager {
                                                   d.width, d.height));
 
         popup.setSize(crop.getSize());
-        popup.show(new RelativePoint(myRelativeTo, new Point(crop.getLocation().x - myRelativeOnScreen.x,
-                                                             crop.getLocation().y - myRelativeOnScreen.y)));
+        if (popup.isVisible()) {
+          popup.setLocation(crop.getLocation());
+        } else {
+          popup.show(new RelativePoint(myRelativeTo, new Point(crop.getLocation().x - myRelativeOnScreen.x,
+                                                               crop.getLocation().y - myRelativeOnScreen.y)));
+        }
       }
     }
     
