@@ -397,7 +397,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @param newParent the directory to move this file to
    * @throws IOException if file failed to be moved
    */
-  public void move(final Object requestor, final VirtualFile newParent) throws IOException {
+  public void move(final Object requestor, @NotNull final VirtualFile newParent) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
@@ -410,7 +410,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     });
   }
 
-  public VirtualFile copy(final Object requestor, final VirtualFile newParent, final String copyName) throws IOException {
+  public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
     }
