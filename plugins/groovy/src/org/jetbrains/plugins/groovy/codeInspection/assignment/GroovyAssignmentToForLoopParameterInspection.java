@@ -17,12 +17,14 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -67,7 +69,11 @@ public class GroovyAssignmentToForLoopParameterInspection extends BaseInspection
       if (!(referent instanceof GrParameter)) {
         return;
       }
-      if (!(referent.getParent() instanceof GrForInClause)) {
+      final PsiElement parent = referent.getParent();
+      if (!(parent instanceof GrForClause)) {
+        return;
+      }
+      if (parent instanceof GrTraditionalForClause && PsiTreeUtil.isAncestor(parent, grAssignmentExpression, true)) {
         return;
       }
       registerError(lhs);
