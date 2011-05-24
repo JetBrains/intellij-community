@@ -1,8 +1,8 @@
-package com.siyeh.igtest.confusing;
+package com.siyeh.igtest.numeric.implicit_numeric_conversion;
 
-public class ImplicitNumericConversionInspection
+public class ImplicitNumericConversion
 {
-    public ImplicitNumericConversionInspection()
+    public ImplicitNumericConversion()
     {
     }
 
@@ -73,14 +73,10 @@ public class ImplicitNumericConversionInspection
     {
         System.out.println(d);
     }
-}
 
- class TestQuickFix{
-    public static final long ONE_HOUR = 3600L;
-
-    public void test(){
-        long time = ONE_HOUR;
-        long minutes = (time % (3600 * 1000)) / 1000;
-        long hours = (time % (24 * 3600 * 1000)) / (3600 * 1000);
+    private void unaryPromotion() {
+        byte b = 2;
+        int a[] = new int[b];
+        a[b] = (byte)1;
     }
 }

@@ -347,9 +347,7 @@ public class ExpectedTypeUtils{
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(returnStatement,
                                                 PsiMethod.class);
-            if(method == null){
-                expectedType = null;
-            } else{
+            if (method != null) {
                 expectedType = method.getReturnType();
             }
         }
@@ -372,7 +370,8 @@ public class ExpectedTypeUtils{
             }
         }
 
-        @Override public void visitExpressionList(PsiExpressionList expressionList){
+        @Override public void visitExpressionList(
+                PsiExpressionList expressionList){
             final JavaResolveResult result = findCalledMethod(expressionList);
             final PsiMethod method = (PsiMethod) result.getElement();
             if(method == null){
@@ -381,6 +380,17 @@ public class ExpectedTypeUtils{
                 final int parameterPosition =
                         getParameterPosition(expressionList, wrappedExpression);
                 expectedType = getTypeOfParameter(result, parameterPosition);
+            }
+        }
+
+        @Override
+        public void visitNewExpression(PsiNewExpression expression) {
+            final PsiExpression[] arrayDimensions =
+                    expression.getArrayDimensions();
+            for (PsiExpression arrayDimension : arrayDimensions) {
+                if (wrappedExpression.equals(arrayDimension)) {
+                    expectedType = PsiType.INT;
+                }
             }
         }
 
