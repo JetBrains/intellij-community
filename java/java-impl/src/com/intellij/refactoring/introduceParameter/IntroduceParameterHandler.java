@@ -53,7 +53,6 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageInfo;
@@ -423,7 +422,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                                                                   typeSelectorManager,
                                                                                   myExpr, myLocalVar, method, methodToSearchFor, occurences,
                                                                                   parametersToRemove,
-                                                                                  mustBeFinal).inplaceIntroduceParameter()) {
+                                                                                  mustBeFinal).startInplaceIntroduceTemplate()) {
           return;
         }
         if (myEditor != null) {
