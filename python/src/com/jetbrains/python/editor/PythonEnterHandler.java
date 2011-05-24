@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -62,24 +63,13 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     }
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     if (codeInsightSettings.JAVADOC_STUB_ON_ENTER && PythonDocCommentUtil.inDocComment(element)) {
-      PythonDocumentationProvider provider = new PythonDocumentationProvider();
-      PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-      if (fun != null) {
-        String docStub = provider.generateDocumentationContentStub(fun, false);
-        docStub += element.getParent().getText().substring(0,3);
-        if (docStub != null && docStub.length() != 0) {
-          editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
-          return Result.Continue;
-        }
-      }
-      PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
-      if (klass != null) {
-        editor.getDocument().insertString(editor.getCaretModel().getOffset(),
-                        PythonDocCommentUtil.generateDocForClass(klass, element.getParent().getText().substring(0,3)));
-        return Result.Continue;
-      }
+      insertDocStringStub(editor, element);
+      return Result.Continue;
     }
 
+    if (!PyCodeInsightSettings.getInstance().INSERT_BACKSLASH_ON_WRAP) {
+      return Result.Continue;
+    }
     if (offset > 0) {
       final PsiElement beforeCaret = file.findElementAt(offset-1);
       if (beforeCaret instanceof PsiWhiteSpace && beforeCaret.getText().indexOf('\\') > 0) {
@@ -137,6 +127,24 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       caretOffset.set(offset+1);
     }
     return Result.Continue;
+  }
+
+  private static void insertDocStringStub(Editor editor, PsiElement element) {
+    PythonDocumentationProvider provider = new PythonDocumentationProvider();
+    PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    if (fun != null) {
+      String docStub = provider.generateDocumentationContentStub(fun, false);
+      docStub += element.getParent().getText().substring(0,3);
+      if (docStub != null && docStub.length() != 0) {
+        editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
+        return;
+      }
+    }
+    PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
+    if (klass != null) {
+      editor.getDocument().insertString(editor.getCaretModel().getOffset(),
+                      PythonDocCommentUtil.generateDocForClass(klass, element.getParent().getText().substring(0, 3)));
+    }
   }
 
   @Nullable
