@@ -72,7 +72,7 @@ public class SpellCheckerManager {
   }
 
   public void fullConfigurationReload() {
-    spellChecker = SpellCheckerFactory.create();
+    spellChecker = SpellCheckerFactory.create(project);
     fillEngineDictionary();
   }
 
