@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.testing.PythonTestConfigurationProducer;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
@@ -57,6 +58,11 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
 
   private static boolean isUnitTestCaseClass(PyClass pyClass) {
     if (pyClass == null || !PythonUnitTestUtil.isUnitTestCaseClass(pyClass)) return false;
+    return true;
+  }
+
+  protected boolean isTestFile(PsiElement file) {
+    if (file == null || !(file instanceof PyFile) || !PythonUnitTestUtil.isUnitTestFile((PyFile)file)) return false;
     return true;
   }
 
