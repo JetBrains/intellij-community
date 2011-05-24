@@ -16,64 +16,129 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.impl.TypeExpression;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.introduceVariable.VariableInplaceIntroducer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import javax.swing.*;
+import java.util.*;
 
 /**
  * User: anna
  * Date: 3/15/11
  */
-public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroducer {
+public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E extends PsiElement> extends AbstractInplaceVariableIntroducer<E> {
+  protected final V myLocalVariable;
+
+  private final String myExprText;
+  private final String myLocalName;
+
+  protected String myConstantName;
+
   public AbstractInplaceIntroducer(Project project,
-                                   TypeExpression expression,
                                    Editor editor,
-                                   PsiVariable elementToRename,
-                                   boolean cantChangeFinalModifier,
-                                   boolean hasTypeSuggestion,
-                                   RangeMarker exprMarker,
-                                   List<RangeMarker> occurrenceMarkers, String commandName, String title) {
-    super(project, expression, editor, elementToRename, cantChangeFinalModifier, hasTypeSuggestion, exprMarker, occurrenceMarkers, commandName, title);
+                                   E expr,
+                                   V localVariable,
+                                   E[] occurrences,
+                                   String title) {
+    super(null, editor, project, title, occurrences, expr);
+    myLocalVariable = localVariable;
+    myExprText = expr != null ? expr.getText() : null;
+    myLocalName = localVariable != null ? localVariable.getName() : null;
   }
 
+  protected abstract String getCommandName();
+
+  protected abstract V createFieldToStartTemplateOn(boolean replaceAll, String[] names);
+  protected abstract String[] suggestNames(boolean replaceAll, V variable);
+
+  protected abstract void performIntroduce();
+  protected void performPostIntroduceTasks() {}
+
+  public abstract E restoreExpression(PsiFile containingFile, V variable, RangeMarker marker, String exprText);
+
   protected abstract boolean isReplaceAllOccurrences();
-
-  protected abstract PsiExpression getExpr();
-
-  protected abstract PsiExpression[] getOccurrences();
+  protected abstract JComponent getComponent();
 
 
+  protected void restoreAnchors() {}
 
-  protected abstract List<RangeMarker> getOccurrenceMarkers();
+  protected abstract void saveSettings(V variable);
+  protected abstract V getVariable();
+
+  public boolean startInplaceIntroduceTemplate() {
+    final boolean replaceAllOccurrences = isReplaceAllOccurrences();
+    final Ref<Boolean> result = new Ref<Boolean>();
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        final String[] names = suggestNames(replaceAllOccurrences, myLocalVariable);
+        final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
+        boolean started = false;
+        if (variable != null) {
+          myEditor.getCaretModel().moveToOffset(variable.getTextOffset());
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+
+          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
+          nameSuggestions.add(variable.getName());
+          nameSuggestions.addAll(Arrays.asList(names));
+          initOccurrencesMarkers();
+          setElementToRename(variable);
+          started = AbstractInplaceIntroducer.super.performInplaceRename(false, nameSuggestions);
+        }
+        result.set(started);
+        if (!started && variable != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              variable.delete();
+            }
+          });
+        }
+      }
+
+    }, getCommandName(), getCommandName());
+    return result.get();
+  }
+
+  protected String getInputName() {
+    return myConstantName;
+  }
+
+  @Override
+  protected boolean performAutomaticRename() {
+    return false;
+  }
+
+
+  @Override
+  public void finish() {
+    super.finish();
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    final V variable = getVariable();
+    if (variable == null) {
+      return;
+    }
+    restoreState(variable);
+  }
 
   @Override
   protected void addReferenceAtCaret(Collection<PsiReference> refs) {
-    final PsiVariable variable = getVariable();
+    final V variable = getVariable();
     if (variable != null) {
       for (PsiReference reference : ReferencesSearch.search(variable)) {
         refs.remove(reference);
@@ -89,7 +154,7 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
   @Override
   protected void collectAdditionalElementsToRename(boolean processTextOccurrences, List<Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
-      for (PsiExpression expression : getOccurrences()) {
+      for (E expression : getOccurrences()) {
         stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
       }
     }
@@ -125,80 +190,84 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
     super.addHighlights(ranges, editor, highlighters, highlightManager);
   }
 
-  protected abstract class VisibilityListener implements ChangeListener {
-    private Project myProject;
-    private final String myCommandName;
-    private Editor myEditor;
-
-    protected VisibilityListener(Project project, String commandName, Editor editor) {
-      myProject = project;
-      myCommandName = commandName;
-      myEditor = editor;
-    }
-
-    @Override
-    public void stateChanged(ChangeEvent e) {
-      new WriteCommandAction(myProject, myCommandName, myCommandName) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          final Document document = myEditor.getDocument();
-          PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-          final PsiVariable variable = getVariable();
-          LOG.assertTrue(variable != null);
-          final PsiModifierList modifierList = variable.getModifierList();
-          LOG.assertTrue(modifierList != null);
-          int textOffset = modifierList.getTextOffset();
-          final String modifierListText = modifierList.getText();
-
-          int length = PsiModifier.PUBLIC.length();
-          int idx = modifierListText.indexOf(PsiModifier.PUBLIC);
-
-          if (idx == -1) {
-            idx = modifierListText.indexOf(PsiModifier.PROTECTED);
-            length = PsiModifier.PROTECTED.length();
-          }
-
-          if (idx == -1) {
-            idx = modifierListText.indexOf(PsiModifier.PRIVATE);
-            length = PsiModifier.PRIVATE.length();
-          }
-
-          String visibility = getVisibility();
-          if (visibility == PsiModifier.PACKAGE_LOCAL) {
-            visibility = "";
-          }
-
-          final boolean wasPackageLocal = idx == -1;
-          final boolean isPackageLocal = visibility.isEmpty();
-
-          final int startOffset = textOffset + (wasPackageLocal ? 0 : idx);
-          final int endOffset;
-          if (wasPackageLocal) {
-            endOffset = startOffset;
-          }
-          else {
-            endOffset = textOffset + length + (isPackageLocal ? 1 : 0);
-          }
-
-          final String finalVisibility = visibility + (wasPackageLocal ? " " : "");
-
-          Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-              document.replaceString(startOffset, endOffset, finalVisibility);
-            }
-          };
-
-          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-          if (lookup != null) {
-            lookup.performGuardedChange(runnable);
-          } else {
-            runnable.run();
+  protected void restoreState(final V psiField) {
+    myConstantName = psiField.getName();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final PsiFile containingFile = psiField.getContainingFile();
+        final RangeMarker exprMarker = getExprMarker();
+        if (exprMarker != null) {
+          myExpr = restoreExpression(containingFile, psiField, exprMarker, myExprText);
+          if (myExpr != null && myExpr.isPhysical()) {
+            myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
           }
         }
-      }.execute();
-    }
+        final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
+        for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
+          RangeMarker marker = occurrenceMarkers.get(i);
+          if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset()) {
+            myOccurrences[i] = myExpr;
+            continue;
+          }
+          final E psiExpression =
+             restoreExpression(containingFile, psiField, marker, myLocalVariable != null ? myLocalName : myExprText);
+          if (psiExpression != null) {
+            myOccurrences[i] = psiExpression;
+          }
+        }
 
-    protected abstract String getVisibility();
+        restoreAnchors();
+        myOccurrenceMarkers = null;
+        if (psiField.isValid()) {
+          psiField.delete();
+        }
+      }
+    });
+  }
+
+  @Override
+  protected void moveOffsetAfter(boolean success) {
+    if (success) {
+      if (myLocalVariable == null && myExpr == null ||
+          getInputName() == null ||
+          myLocalVariable != null && !myLocalVariable.isValid() ||
+          myExpr != null && !myExpr.isValid()) {
+        super.moveOffsetAfter(false);
+        return;
+      }
+      performIntroduce();
+      saveSettings(getVariable());
+    }
+    if (myLocalVariable != null && myLocalVariable.isValid()) {
+      myEditor.getCaretModel().moveToOffset(myLocalVariable.getTextOffset());
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    }
+    else if (getExprMarker() != null) {
+      myEditor.getCaretModel().moveToOffset(getExprMarker().getStartOffset());
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    }
+    super.moveOffsetAfter(success);
+    if (success) {
+      performPostIntroduceTasks();
+    }
+  }
+
+  protected void restartTemplate() {
+    Runnable restartTemplateRunnable = new Runnable() {
+      public void run() {
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+        if (templateState != null) {
+          myEditor.putUserData(INTRODUCE_RESTART, true);
+          try {
+            templateState.gotoEnd(true);
+            startInplaceIntroduceTemplate();
+          }
+          finally {
+            myEditor.putUserData(INTRODUCE_RESTART, false);
+          }
+        }
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, getCommandName(), getCommandName());
   }
 }
