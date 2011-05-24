@@ -12,6 +12,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -257,6 +258,10 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                 for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
                   collectUsages(model);
                 }
+
+                for (UsageInfo2UsageAdapter adapter : UsageInfo2UsageAdapter.convert(usages.toArray(new UsageInfo[usages.size()]))) {
+                  processor.process(adapter);
+                }
               }
 
               private void collectUsages(@NotNull MavenDomProjectModel model) {
@@ -290,10 +295,6 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                 }
               }
             });
-
-            for (UsageInfo2UsageAdapter adapter : UsageInfo2UsageAdapter.convert(usages.toArray(new UsageInfo[usages.size()]))) {
-              processor.process(adapter);
-            }
           }
         };
       }
