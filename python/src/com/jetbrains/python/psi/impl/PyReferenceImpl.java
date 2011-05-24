@@ -171,7 +171,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, roof);
     if ((uexpr != null)) {
       // sort what we got
-      for (NameDefiner hit : processor.getDefiners()) {
+      for (PsiElement hit : processor.getDefiners()) {
         ret.poke(hit, getRate(hit));
       }
       uexpr = PyUtil.turnDirIntoInit(uexpr); // an import statement may have returned a dir

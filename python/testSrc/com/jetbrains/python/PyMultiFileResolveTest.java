@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.*;
  * @author yole
  */
 public class PyMultiFileResolveTest extends PyResolveTestCase {
+  protected String myTestFileName;
   
   private static void checkInitPyDir(PsiElement elt, String dirname) {
     assertTrue(elt instanceof PyFile);
@@ -223,6 +224,27 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo", "/src/mygame/display.py");
   }
 
+  public void testImportPackageIntoSelfInit() {
+    myTestFileName = "mygame/__init__.py";
+    try {
+      assertResolvesTo(PyFile.class, "display.py");
+    }
+    finally {
+      myTestFileName = null;
+    }
+  }
+
+  public void testFromImportPackageIntoSelf() {
+    myTestFileName = "mygame/__init__.py";
+    try {
+      assertResolvesTo(PyFile.class, "display.py");
+    }
+    finally {
+      myTestFileName = null;
+    }
+  }
+
+
   public void testImportPrivateNameWithStar() { // PY-2717
     PsiElement psiElement = doResolve();
     assertNull(psiElement);
@@ -230,7 +252,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
 
   private PsiFile prepareFile() {
     String testName = getTestName(true);
-    String fileName = getTestName(false) + ".py";
+    String fileName = myTestFileName != null ? myTestFileName : getTestName(false) + ".py";
     myFixture.copyDirectoryToProject(testName, "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 

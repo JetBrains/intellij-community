@@ -610,6 +610,14 @@ public class PyUtil {
     } // don't touch non-dirs
   }
 
+  @Nullable
+  public static PsiElement turnInitIntoDir(PsiElement target) {
+    if (target instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile) target).getName())) {
+      return ((PyFile) target).getContainingDirectory();
+    }
+    return target;
+  }
+
   /**
    * Counts initial underscores of an identifier.
    *

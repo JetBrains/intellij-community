@@ -20,11 +20,11 @@ import java.util.List;
 public class ResolveProcessor implements PsiScopeProcessor {
   @NotNull private final String myName;
   private PsiElement myResult = null;
-  private final List<NameDefiner> myDefiners;
+  private final List<PsiElement> myDefiners;
 
   public ResolveProcessor(@NotNull final String name) {
     myName = name;
-    myDefiners = new ArrayList<NameDefiner>(2); // 1 is typical, 2 is sometimes, more is rare.
+    myDefiners = new ArrayList<PsiElement>(2); // 1 is typical, 2 is sometimes, more is rare.
   }
 
   public PsiElement getResult() {
@@ -36,11 +36,11 @@ public class ResolveProcessor implements PsiScopeProcessor {
    *
    * @param definer
    */
-  protected void addNameDefiner(NameDefiner definer) {
+  protected void addNameDefiner(PsiElement definer) {
     myDefiners.add(definer);
   }
 
-  public List<NameDefiner> getDefiners() {
+  public List<PsiElement> getDefiners() {
     return myDefiners;
   }
 
@@ -98,17 +98,38 @@ public class ResolveProcessor implements PsiScopeProcessor {
         }
       }
       else if (element instanceof PyImportElement) {
-        // name is resolved to unresolved import (PY-956)
         final PyImportElement importElement = (PyImportElement) element;
+        final PyQualifiedName qName = importElement.getImportedQName();
+        // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
+        if (qName != null && qName.getComponentCount() > 1 && myName.equals(qName.getLastComponent()) &&
+            PyNames.INIT_DOT_PY.equals(importElement.getContainingFile().getName())) {
+          final PsiElement packageElement = ResolveImportUtil.resolveImportElement(importElement, qName.removeLastComponent());
+          if (PyUtil.turnDirIntoInit(packageElement) == importElement.getContainingFile()) {
+            myResult = PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(importElement));
+            addNameDefiner(importElement);
+          }
+        }
+
+        // name is resolved to unresolved import (PY-956)
         String definedName = importElement.getAsName();
         if (definedName == null) {
-          final PyQualifiedName qName = importElement.getImportedQName();
           if (qName != null && qName.getComponentCount() == 1) {
             definedName = qName.getComponents().get(0);
           }
         }
         if (myName.equals(definedName)) {
           addNameDefiner(importElement);
+        }
+      }
+    }
+    else if (element instanceof PyFromImportStatement && PyNames.INIT_DOT_PY.equals(element.getContainingFile().getName())) {
+      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
+      final PyQualifiedName qName = fromImportStatement.getImportSourceQName();
+      if (qName != null && qName.endsWith(myName)) {
+        final PsiElement source = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement));
+        if (source != null && source.getParent() == element.getContainingFile().getContainingDirectory()) {
+          myResult = source;
+          addNameDefiner(fromImportStatement);
         }
       }
     }

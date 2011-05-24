@@ -279,6 +279,22 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNotParsed(file);
   }
 
+  public void testInitPyExportsSubpackageImport() {
+    myFixture.copyDirectoryToProject("../resolve/multiFile/importPackageIntoSelf", "");
+    final PyFile initPy = (PyFile) myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("mygame/__init__.py"));
+    final PsiElement element = initPy.findExportedName("display");
+    assertTrue(element instanceof PyImportElement);
+    assertNotParsed(initPy);
+  }
+
+  public void testInitPyExportsSubpackageFromImport() {
+    myFixture.copyDirectoryToProject("../resolve/multiFile/fromImportPackageIntoSelf", "");
+    final PyFile initPy = (PyFile) myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("mygame/__init__.py"));
+    final PsiElement element = initPy.findExportedName("display");
+    assertTrue(element instanceof PyFile);
+    assertNotParsed(initPy);
+  }
+
   public void testVariableIndex() {
     getTestFile();
     GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());

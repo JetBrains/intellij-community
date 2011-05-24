@@ -87,7 +87,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    private Set<NameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
+    private Set<PsiElement> myUsedImports = Collections.synchronizedSet(new HashSet<PsiElement>());
     private Set<NameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
     private final ImmutableSet<String> myIgnoredIdentifiers;
 
