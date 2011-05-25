@@ -73,7 +73,16 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (scope.isGlobal(name) || (!scope.containsDeclaration(name))){
           return;
         }
-        final ScopeVariable variable = scope.getDeclaredVariable(node, name);
+        // Start DFA from the assignment statement in case of augmented assignments
+        final PsiElement anchor;
+        final PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(node, PyAugAssignmentStatement.class);
+        if (augAssignment != null && name.equals(augAssignment.getTarget().getName())) {
+          anchor = augAssignment;
+        }
+        else {
+          anchor = node;
+        }
+        final ScopeVariable variable = scope.getDeclaredVariable(anchor, name);
         if (variable == null) {
           boolean resolves2LocalVariable = false;
           boolean resolve2Scope = true;
