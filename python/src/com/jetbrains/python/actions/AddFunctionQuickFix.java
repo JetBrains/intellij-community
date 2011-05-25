@@ -56,22 +56,23 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       // TODO: get parameter style from code style
       PyFunctionBuilder builder = new PyFunctionBuilder(item_name);
       PsiElement pe = problem_elt.getParent();
-      sure(pe instanceof PyCallExpression);
-      PyArgumentList arglist = ((PyCallExpression)pe).getArgumentList();
-      sure(arglist);
-      final PyExpression[] args = arglist.getArguments();
-      for (PyExpression arg : args) {
-        if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(bar_1)
-          builder.parameter(((PyKeywordArgument)arg).getKeyword());
+      if (pe instanceof PyCallExpression) {
+        PyArgumentList arglist = ((PyCallExpression)pe).getArgumentList();
+        sure(arglist);
+        final PyExpression[] args = arglist.getArguments();
+        for (PyExpression arg : args) {
+          if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(bar_1)
+            builder.parameter(((PyKeywordArgument)arg).getKeyword());
+          }
+          else if (arg instanceof PyReferenceExpression) {
+            PyReferenceExpression refex = (PyReferenceExpression)arg;
+            builder.parameter(refex.getReferencedName());
+          }
+          else { // use a boring name
+            builder.parameter("param");
+          }
         }
-        else if (arg instanceof PyReferenceExpression) {
-          PyReferenceExpression refex = (PyReferenceExpression)arg;
-          builder.parameter(refex.getReferencedName());
-        }
-        else { // use a boring name
-          builder.parameter("param");
-        }
-      }
+      } // else: no arglist, use empty args
       PyFunction function = builder.buildFunction(project, LanguageLevel.getDefault());
 
       // add to the bottom
