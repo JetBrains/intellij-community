@@ -103,7 +103,7 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
   }
 
-  public void testDeeplyNestedClosuresInGenericCalls() {
+  public void _testDeeplyNestedClosuresInGenericCalls() {
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
@@ -114,7 +114,7 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
 
   }
 
-  public void testDeeplyNestedClosuresInGenericCalls2() {
+  public void _testDeeplyNestedClosuresInGenericCalls2() {
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
