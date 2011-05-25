@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Dmitry Avdeev
@@ -80,8 +81,7 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   private T getUpToDateOrNull(boolean dispose) {
-    final SoftReference<Data<T>> ref = myData;
-    final Data<T> data = ref == null ? null : ref.get();
+    final Data<T> data = getData();
 
     if (data != null) {
       T value = data.myValue;
@@ -93,6 +93,12 @@ public abstract class CachedValueBase<T> {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private Data<T> getData() {
+    final SoftReference<Data<T>> ref = myData;
+    return ref == null ? null : ref.get();
   }
 
   protected boolean isUpToDate(@NotNull Data data) {
@@ -129,6 +135,10 @@ public abstract class CachedValueBase<T> {
     if (dependency instanceof ModificationTracker) {
       return ((ModificationTracker)dependency).getModificationCount();
     }
+    else if (dependency instanceof CachedValueBase) {
+      Data data = ((CachedValueBase)dependency).getData();
+      return data == null || !isUpToDate(data) ? -1 : data.myTimestamp;
+    }
     else if (dependency instanceof Reference){
       final Object original = ((Reference)dependency).get();
       if(original == null) return -1;
@@ -157,11 +167,15 @@ public abstract class CachedValueBase<T> {
   public abstract boolean isFromMyProject(Project project);
 
   protected static class Data<T> implements Disposable {
+    private static final AtomicLong ourCounter = new AtomicLong();
+
+    private final long myTimestamp;
     private final T myValue;
     private final Object[] myDependencies;
     private final long[] myTimeStamps;
 
     public Data(final T value, final Object[] dependencies, final long[] timeStamps) {
+      myTimestamp = ourCounter.incrementAndGet();
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
