@@ -122,7 +122,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   };
   private final ProjectManager myProjectManager;
   private final TIntHashSet myInitInProgress = new TIntHashSet(); // projectId fior successfully initialized projects
-  private final Object myInitializationLock = new Object();
+  private final Object myAsyncScanLock = new Object();
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager, Application application) {
     myProjectManager = projectManager;
@@ -464,7 +464,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private TIntObjectHashMap<Pair<Integer, Integer>> buildOutputRootsLayout(ProjectRef projRef) {
+  private static TIntObjectHashMap<Pair<Integer, Integer>> buildOutputRootsLayout(ProjectRef projRef) {
     final TIntObjectHashMap<Pair<Integer, Integer>> map = new TIntObjectHashMap<Pair<Integer, Integer>>();
     for (Module module : ModuleManager.getInstance(projRef.get()).getModules()) {
       final CompilerModuleExtension manager = CompilerModuleExtension.getInstance(module);
@@ -967,14 +967,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   public void ensureInitializationCompleted(Project project, ProgressIndicator indicator) {
     final int id = getProjectId(project);
-    synchronized (myInitializationLock) {
+    synchronized (myAsyncScanLock) {
       while (myInitInProgress.contains(id)) {
         if (!project.isOpen() || project.isDisposed() || (indicator != null && indicator.isCanceled())) {
           // makes no sense to continue waiting
           break;
         }
         try {
-          myInitializationLock.wait(500);
+          myAsyncScanLock.wait(500);
         }
         catch (InterruptedException ignored) {
           break;
@@ -1011,7 +1011,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private boolean shouldMark(Integer oldOutputRoot, Integer currentOutputRoot) {
+  private static boolean shouldMark(Integer oldOutputRoot, Integer currentOutputRoot) {
     return oldOutputRoot != null && oldOutputRoot.intValue() > 0 && !Comparing.equal(oldOutputRoot, currentOutputRoot);
   }
 
@@ -1037,10 +1037,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   public void scanSourcesForCompilableFiles(final Project project) {
     final int projectId = getProjectId(project);
-    synchronized (myInitializationLock) {
-      myInitInProgress.add(projectId);
-      myInitializationLock.notifyAll();
-    }
+    startAsyncScan(projectId);
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
         new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
@@ -1099,18 +1096,29 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             catch (ProjectRef.ProjectClosedException swallowed) {
             }
             finally {
-              synchronized (myInitializationLock) {
-                if (myInitInProgress.remove(projectId)) {
-                  myInitializationLock.notifyAll();
-                }
-              }
+              terminateAsyncScan(projectId);
             }
           }
         }.queue();
       }
     });
   }
-  
+
+  private void terminateAsyncScan(int projectId) {
+    synchronized (myAsyncScanLock) {
+      if (myInitInProgress.remove(projectId)) {
+        myAsyncScanLock.notifyAll();
+      }
+    }
+  }
+
+  private void startAsyncScan(final int projectId) {
+    synchronized (myAsyncScanLock) {
+      myInitInProgress.add(projectId);
+      myAsyncScanLock.notifyAll();
+    }
+  }
+
   private class MyProjectManagerListener extends ProjectManagerAdapter {
 
     final Map<Project, MessageBusConnection> myConnections = new HashMap<Project, MessageBusConnection>();
@@ -1119,6 +1127,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
       final ProjectRef projRef = new ProjectRef(project);
+      final int projectId = getProjectId(project);
+
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         private VirtualFile[] myRootsBefore;
 
@@ -1133,35 +1143,48 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
         public void rootsChanged(final ModuleRootEvent event) {
           try {
-            try {
-              final VirtualFile[] rootsAfter = ProjectRootManager.getInstance(projRef.get()).getContentSourceRoots();
-  
-              {
-                final Set<VirtualFile> newRoots = new HashSet<VirtualFile>();
+            final VirtualFile[] rootsBefore = myRootsBefore;
+            myRootsBefore = null;
+            final VirtualFile[] rootsAfter = ProjectRootManager.getInstance(projRef.get()).getContentSourceRoots();
+            final Set<VirtualFile> newRoots = new HashSet<VirtualFile>();
+            final Set<VirtualFile> oldRoots = new HashSet<VirtualFile>();
+            {
+              if (rootsAfter.length > 0) {
                 ContainerUtil.addAll(newRoots, rootsAfter);
-                if (myRootsBefore != null) {
-                  newRoots.removeAll(Arrays.asList(myRootsBefore));
-                }
-                scanSourceContent(projRef, newRoots, newRoots.size(), true);
               }
-  
-              {
-                final Set<VirtualFile> oldRoots = new HashSet<VirtualFile>();
-                if (myRootsBefore != null) {
-                  ContainerUtil.addAll(oldRoots, myRootsBefore);
-                }
-                if (!oldRoots.isEmpty()) {
-                  oldRoots.removeAll(Arrays.asList(rootsAfter));
-                }
-                scanSourceContent(projRef, oldRoots, oldRoots.size(), false);
+              if (rootsBefore != null) {
+                newRoots.removeAll(Arrays.asList(rootsBefore));
               }
             }
-            finally {
-              myRootsBefore = null;
+            {
+              if (rootsBefore != null) {
+                ContainerUtil.addAll(oldRoots, rootsBefore);
+              }
+              if (!oldRoots.isEmpty() && rootsAfter.length > 0) {
+                oldRoots.removeAll(Arrays.asList(rootsAfter));
+              }
             }
 
-
-            markOldOutputRoots(projRef, buildOutputRootsLayout(projRef));
+            startAsyncScan(projectId);
+            new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
+              public void run(@NotNull final ProgressIndicator indicator) {
+                try {
+                  if (newRoots.size() > 0) {
+                    scanSourceContent(projRef, newRoots, newRoots.size(), true);
+                  }
+                  if (oldRoots.size() > 0) {
+                    scanSourceContent(projRef, oldRoots, oldRoots.size(), false);
+                  }
+                  markOldOutputRoots(projRef, buildOutputRootsLayout(projRef));
+                }
+                catch (ProjectRef.ProjectClosedException swallowed) {
+                  // ignored
+                }
+                finally {
+                  terminateAsyncScan(projectId);
+                }
+              }
+            }.queue();
           }
           catch (ProjectRef.ProjectClosedException e) {
             LOG.info(e);
@@ -1174,11 +1197,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
     public void projectClosed(final Project project) {
       final int projectId = getProjectId(project);
-      synchronized (myInitializationLock) {
-        if (myInitInProgress.remove(projectId)) {
-          myInitializationLock.notifyAll();
-        }
-      }
+      terminateAsyncScan(projectId);
       myConnections.remove(project).disconnect();
       synchronized (myDataLock) {
         mySourcesToRecompile.remove(projectId);
@@ -1485,9 +1504,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   public static final class ProjectRef extends Ref<Project> {
     static class ProjectClosedException extends RuntimeException {
-    }
-
-    public ProjectRef() {
     }
 
     public ProjectRef(Project project) {
