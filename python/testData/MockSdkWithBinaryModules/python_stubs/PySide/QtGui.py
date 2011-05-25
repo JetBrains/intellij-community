@@ -1,0 +1,2 @@
+class QPen(object):
+    pass

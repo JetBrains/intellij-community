@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.DocstringQuickFix;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.EpydocString;
@@ -104,10 +105,17 @@ public class PyDocstringInspection extends PyInspection {
         return false;
 
       if (pyDocStringOwner instanceof PyFunction) {
+        PyDecoratorList decoratorList = ((PyFunction)pyDocStringOwner).getDecoratorList();
+        boolean isClassMethod = false;
+        if (decoratorList != null)
+          isClassMethod = decoratorList.findDecorator(PyNames.CLASSMETHOD) != null;
         PyParameter[] tmp = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
         List<String> realParams = new ArrayList<String>();
-        for (PyParameter p : tmp)
-          realParams.add(p.getText());
+        for (PyParameter p : tmp) {
+          if ((!isClassMethod && !p.getText().equals(PyNames.CANONICAL_SELF)) ||
+              (isClassMethod && !p.getText().equals("cls")))
+            realParams.add(p.getText());
+        }
 
         List<String> missingParams = getMissingParams(realParams, docstringParams);
         String missingString = getMissingText("Missing", missingParams);

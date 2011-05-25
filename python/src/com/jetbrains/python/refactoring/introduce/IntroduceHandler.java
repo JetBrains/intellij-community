@@ -145,6 +145,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     PsiElement element1 = null;
     PsiElement element2 = null;
     final SelectionModel selectionModel = editor.getSelectionModel();
+    boolean singleElementSelection = false;
     if (selectionModel.hasSelection()) {
       element1 = file.findElementAt(selectionModel.getSelectionStart());
       element2 = file.findElementAt(selectionModel.getSelectionEnd() - 1);
@@ -155,6 +156,9 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       if (element2 instanceof PsiWhiteSpace) {
         int endOffset = element2.getTextRange().getStartOffset();
         element2 = file.findElementAt(endOffset - 1);
+      }
+      if (element1 == element2) {
+        singleElementSelection = true;
       }
     }
     else {
@@ -170,21 +174,32 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
     if (element1 == null || element2 == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), myDialogTitle,
-                                          "refactoring.extractMethod");
+      showCannotPerformError(project, editor);
       return;
     }
 
     element1 = PyRefactoringUtil.getSelectedExpression(project, file, element1, element2);
     if (element1 == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), myDialogTitle,
-                                          "refactoring.extractMethod");
+      showCannotPerformError(project, editor);
+      return;
+    }
+
+    // Introduce refactoring for substrings is not supported yet
+    TextRange r = element1.getTextRange();
+    if (singleElementSelection && element1 instanceof PyStringLiteralExpression &&
+        (r.getStartOffset() < selectionModel.getSelectionStart() || r.getEndOffset() > selectionModel.getSelectionEnd())) {
+      showCannotPerformError(project, editor);
       return;
     }
     if (!checkIntroduceContext(file, editor, element1)) {
       return;
     }
     performActionOnElement(editor, element1, name, initInConstructor, replaceAll, hasConstructor, isTestClass);
+  }
+
+  private void showCannotPerformError(Project project, Editor editor) {
+    CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), myDialogTitle,
+                                        "refactoring.extractMethod");
   }
 
   private boolean smartIntroduce(final PsiFile file, final Editor editor, final String name, final InitPlace initInConstructor, final boolean replaceAll, final boolean hasConstructor, final boolean isTestClass) {

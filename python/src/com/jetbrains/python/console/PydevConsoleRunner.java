@@ -37,6 +37,8 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.sdk.JythonSdkFlavor;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +67,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   private static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n";
 
-  private static final long APPROPRIATE_TO_WAIT = 10000;
+  private static final long APPROPRIATE_TO_WAIT = 60000;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,

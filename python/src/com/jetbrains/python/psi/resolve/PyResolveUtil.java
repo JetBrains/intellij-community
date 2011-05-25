@@ -91,7 +91,9 @@ public class PyResolveUtil {
                                                                PyElementTypes.ASSIGNMENT_STATEMENT,
                                                                PyElementTypes.PARAMETER_LIST,
                                                                PyElementTypes.EXCEPT_PART,
-                                                               PyElementTypes.FOR_STATEMENT);
+                                                               PyElementTypes.FOR_STATEMENT,
+                                                               PyElementTypes.FROM_IMPORT_STATEMENT);  // this is not exactly a NameDefiner but needed anyway
+                                                                                                       // in mypackage/__init__.py, 'from mypackage.foo import bar' makes 'foo' name visible
 
   /**
    * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.

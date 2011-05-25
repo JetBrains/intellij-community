@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,6 +19,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -337,11 +342,17 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @NotNull
   @Override
   public SearchScope getUseScope() {
-    final PyGlobalStatement globalStatement = PyGlobalStatementNavigator.getByArgument(this);
-    if (globalStatement != null) {
-      return new LocalSearchScope(getContainingFile());
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
+    if (owner != null) {
+      final Scope scope = ControlFlowCache.getScope(owner);
+      if (scope.isGlobal(getName())) {
+        return GlobalSearchScope.projectScope(getProject());
+      }
+      if (scope.isNonlocal(getName())) {
+        return new LocalSearchScope(getContainingFile());
+      }
     }
-    
+
     // find highest level function containing our var
     PyElement container = this;
     while(true) {

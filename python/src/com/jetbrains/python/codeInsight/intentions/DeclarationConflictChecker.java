@@ -9,7 +9,6 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.NameDefiner;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,7 @@ public class DeclarationConflictChecker {
       PyResolveUtil.treeCrawlUp(processor, ref.getElement());
       PsiElement result = processor.getResult();
       if (result != null) {
-        List<NameDefiner> definers = processor.getDefiners();
+        List<PsiElement> definers = processor.getDefiners();
         if (definers != null && definers.size() > 0) {
           result = definers.get(0); // in this case, processor's result is one hop of resolution too far from what we want.
         }

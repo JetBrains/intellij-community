@@ -8,6 +8,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementImpl;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -50,7 +52,7 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
           && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
         if (leftExpression.getText().equals(target.getText())) {
           if (rightExpression instanceof PyNumericLiteralExpression || rightExpression instanceof PyStringLiteralExpression
-            || rightExpression instanceof PyReferenceExpression || isPercentage(rightExpression) ) {
+            || rightExpression instanceof PyReferenceExpression || isPercentage(rightExpression) || isCompound(rightExpression) ) {
 
             PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
             StringBuilder stringBuilder = new StringBuilder();
@@ -63,6 +65,15 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
         }
       }
     }
+  }
+
+  private boolean isCompound(PyExpression rightExpression) {
+    if (rightExpression instanceof PyCallExpression) {
+      PyType type = rightExpression.getType(TypeEvalContext.fast());
+      if (type != null && type.isBuiltin(TypeEvalContext.fast()) &&
+          ("int".equals(type.getName()) || "str".equals(type.getName()))) return true;
+    }
+    return false;
   }
 
   private boolean isPercentage(PyExpression rightExpression) {

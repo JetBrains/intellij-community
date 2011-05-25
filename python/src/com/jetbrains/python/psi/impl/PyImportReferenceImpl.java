@@ -40,7 +40,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    ResultList ret = new ResultList();
+    ResolveResultList ret = new ResolveResultList();
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 

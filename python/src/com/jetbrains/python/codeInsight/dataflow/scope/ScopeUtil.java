@@ -44,24 +44,44 @@ public class ScopeUtil {
   }
 
   @Nullable
-  public static ScopeOwner getDeclarationScopeOwner(PyReferenceExpression node) {
-    final String name = node.getName();
-    PsiElement element = node;
+  public static ScopeOwner getScopeOwner(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
+  }
+
+  @Nullable
+  public static ScopeOwner getDeclarationScopeOwner(PsiElement anchor, String name) {
+    PsiElement element = anchor;
     if (name != null) {
       // References in default values of parameters are defined somewhere in outer scopes
-      if (PsiTreeUtil.getParentOfType(node, PyParameter.class) != null) {
-        element = PsiTreeUtil.getParentOfType(node, ScopeOwner.class);
+      if (PsiTreeUtil.getParentOfType(anchor, PyParameter.class) != null) {
+        element = getScopeOwner(anchor);
       }
 
-      ScopeOwner owner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
+      ScopeOwner owner = getScopeOwner(element);
       while (owner != null) {
         Scope scope = ControlFlowCache.getScope(owner);
         if (scope.containsDeclaration(name)) {
           return owner;
         }
-        owner = PsiTreeUtil.getParentOfType(owner, ScopeOwner.class);
+        owner = getScopeOwner(owner);
       }
     }
     return null;
+  }
+
+  public static boolean isDeclaredAndBoundInScope(PyElement element) {
+    final String name = element.getName();
+    if (name != null) {
+      final ScopeOwner owner = getScopeOwner(element);
+      if (owner != null) {
+        final Scope scope = ControlFlowCache.getScope(owner);
+        for (ScopeVariable v : scope.getAllDeclaredVariables()) {
+          if (v.getName().equals(name)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 }

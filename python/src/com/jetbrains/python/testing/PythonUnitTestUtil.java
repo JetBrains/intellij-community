@@ -43,6 +43,11 @@ public class PythonUnitTestUtil {
     return isUnitTestCaseClass(cls, PYTHON_TEST_QUALIFIED_CLASSES);
   }
 
+  public static boolean isUnitTestFile(PyFile file) {
+    if (!file.getName().startsWith("test")) return false;
+    return true;
+  }
+
   private static boolean isUnitTestCaseClass(PyClass cls, HashSet<String> testQualifiedNames) {
     for (PyClassRef ancestor : cls.iterateAncestors()) {
       if (ancestor == null) continue;

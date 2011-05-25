@@ -192,6 +192,32 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "    <caret>params=1)");
   }
 
+  public void testEnterInSet() {  // PY-1947
+    doTest("test_set = {<caret>'some_value'}",
+           "test_set = {\n" +
+           "    <caret>'some_value'}");
+
+  }
+
+  public void testEnterInList() {  // PY-1947
+    doTest("test_list = [<caret>'some_value']",
+           "test_list = [\n" +
+           "    <caret>'some_value']");
+  }
+
+  public void testEnterInDictInTuple() {  // PY-1947
+    doTest("td = ({<caret>})",
+           "td = ({\n" +
+           "    <caret>\n" +
+           "})");
+  }
+
+  public void testEnterInTuple() {  // PY-1947
+    doTest("test_tuple = (<caret>'some_value')",
+           "test_tuple = (\n" +
+           "    <caret>'some_value')");
+  }
+
   public void testIndentAfterComment() {   // PY-641
     doTest("def foo():\n    #some_call()<caret>\n    another_call()", "def foo():\n    #some_call()\n    <caret>\n    another_call()");
   }
@@ -227,6 +253,22 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "    a = 1\n" +
            "    #comment\n" +
            "    <caret>\n");
+  }
+
+  public void testIndentAfterModuleLevelStatement() {  // PY-3572
+    doTest("def a(var):\n" +
+           "    if var == 'default':\n" +
+           "        pass\n" +
+           "\n" +
+           "b = 1<caret>\n" +
+           "",
+           "def a(var):\n" +
+           "    if var == 'default':\n" +
+           "        pass\n" +
+           "\n" +
+           "b = 1\n" +
+           "<caret>\n" +
+           "");
   }
 
   /*

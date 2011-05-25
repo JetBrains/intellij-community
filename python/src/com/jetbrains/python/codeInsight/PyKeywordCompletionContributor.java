@@ -6,11 +6,13 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
@@ -221,6 +223,39 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       return true;
     }
   }
+
+  private static class NotParameterOrDefaultValue implements ElementFilter {
+
+    @Override
+    public boolean isAcceptable(Object element, PsiElement context) {
+      if (!(element instanceof PsiElement)) {
+        return false;
+      }
+      PsiElement psiElement = (PsiElement) element;
+      PsiElement definition = PsiTreeUtil.getParentOfType(psiElement, PyDocStringOwner.class, false, PyStatementList.class);
+      if (definition != null) {
+        if (PsiTreeUtil.getParentOfType(psiElement, PyParameterList.class) == null) {
+          return true;
+        }
+        PyParameter param = PsiTreeUtil.getParentOfType(psiElement, PyParameter.class);
+        if (param != null) {
+          PyExpression defaultValue = param.getDefaultValue();
+          if (defaultValue != null && PsiTreeUtil.isAncestor(defaultValue, psiElement, false)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      return true;
+    }
+
+    @Override
+    public boolean isClassAcceptable(Class hintClass) {
+      return true;
+    }
+  }
+
+  private static ElementPattern NOT_PARAMETER_OR_DEFAULT_VALUE = new FilterPattern(new NotParameterOrDefaultValue());
 
   // ====== conditions
 
@@ -556,8 +591,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .and(PY3K)
       .andNot(IN_COMMENT)
       .andNot(IN_IMPORT_STMT)
-      .andNot(IN_PARAM_LIST)
-      .andNot(IN_DEFINITION)
+      .and(NOT_PARAMETER_OR_DEFAULT_VALUE)
       .andNot(AFTER_QUALIFIER)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, "True", "False", "None")

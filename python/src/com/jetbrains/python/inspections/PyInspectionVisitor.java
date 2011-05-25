@@ -66,7 +66,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   protected final void registerProblem(final PsiElement element,
                                        final String message,
                                        final ProblemHighlightType type,
-                                       final HintAction action) {
+                                       @Nullable final HintAction action) {
     if (element == null || element.getTextLength() == 0){
         return;
     }

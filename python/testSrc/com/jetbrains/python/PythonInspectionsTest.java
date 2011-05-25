@@ -47,11 +47,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyUnresolvedReferencesInspection() {
-    LocalInspectionTool inspection = new PyUnresolvedReferencesInspection();
-    doTest(getTestName(false), inspection);
-  }
-
   public void testPyArgumentListInspection() {
     LocalInspectionTool inspection = new PyArgumentListInspection();
     doTest(getTestName(false), inspection);

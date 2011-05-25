@@ -35,13 +35,13 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
   @Override
   protected void destroyProcessImpl() {
     doCloseCommunication();
-    super.destroyProcessImpl();
+    killProcess();
   }
 
   @Override
   protected void detachProcessImpl() {
     doCloseCommunication();
-    super.detachProcessImpl();
+    killProcess();
   }
 
   private void doCloseCommunication() {

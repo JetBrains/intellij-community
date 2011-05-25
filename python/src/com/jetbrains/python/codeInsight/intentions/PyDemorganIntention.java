@@ -96,6 +96,8 @@ public class PyDemorganIntention extends BaseIntentionAction {
       return negated.getText();
     }
     else {
+      if (condition instanceof PyBinaryExpression)
+        return "not(" + condition.getText() + ")";
       return "not " + condition.getText();
     }
   }

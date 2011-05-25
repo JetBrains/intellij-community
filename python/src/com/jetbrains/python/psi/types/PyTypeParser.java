@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.base.CharMatcher;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -10,8 +11,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -143,4 +143,29 @@ public class PyTypeParser {
     return result;
   }
 
+  public static Map<TextRange, PyType> parseDocstring(PsiElement anchor, String docstring, int position) {
+    PyType type = getTypeByName(anchor, docstring);
+    Map<TextRange, PyType> res = new HashMap<TextRange, PyType>();
+
+    if (type instanceof PyClassType && type.getName() != null) {
+      String name = type.getName();
+      if (type instanceof PyTupleType)
+        name = docstring;
+      res.put(new TextRange(position, position + name.length()), type);
+    }
+
+    if (type instanceof PyUnionType) {
+      List<PyType> types = ((PyUnionType)type).getMembers();
+      for (int i = 0; i != types.size(); ++i) {
+        String name = types.get(i).getName();
+        if (name != null) {
+          int start = position+docstring.indexOf(name);
+          if (start != -1)
+            res.put(new TextRange(start, start+name.length()), types.get(i));
+        }
+      }
+    }
+
+    return res;
+  }
 }

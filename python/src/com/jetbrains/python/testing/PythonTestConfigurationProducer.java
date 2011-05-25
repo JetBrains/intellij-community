@@ -130,6 +130,11 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     return true;
   }
 
+  protected boolean isTestFile(PsiElement file) {
+    if (file == null || !(file instanceof PyFile)) return false;
+    return true;
+  }
+
   @Nullable
   protected RunnerAndConfigurationSettings createConfigurationFromFolder(Location location) {
     final PsiElement element = location.getPsiElement();
@@ -175,7 +180,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
   @Nullable
   protected RunnerAndConfigurationSettings createConfigurationFromFile(Location location, PsiElement element) {
     PsiElement file = element.getContainingFile();
-    if (file == null || !(file instanceof PyFile)) return null;
+    if (!isTestFile(file)) return null;
 
     final PyFile pyFile = (PyFile)file;
     final List<PyStatement> testCases = PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile);

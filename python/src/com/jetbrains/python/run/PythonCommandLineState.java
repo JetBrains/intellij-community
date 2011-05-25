@@ -15,6 +15,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.process.RunnerMediator;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
@@ -34,10 +35,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
-import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkFlavor;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -141,7 +139,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
-    return PythonProcessHandler.createProcessHandler(commandLine);
+    return PythonProcessRunner.createProcess(commandLine);
   }
 
   public GeneralCommandLine generateCommandLine() throws ExecutionException {

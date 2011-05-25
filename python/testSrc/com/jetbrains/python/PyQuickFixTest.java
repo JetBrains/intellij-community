@@ -31,6 +31,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     doInspectionTest(new String[] { "AddImportDocComment.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
   }
 
+  public void testImportFromModule() {
+    doInspectionTest(new String[] { "importFromModule/foo/bar.py", "importFromModule/foo/baz.py", "importFromModule/foo/__init__.py" },
+                     PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+  }
+
   public void testQualifyByImport() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     boolean oldPreferFrom = settings.PREFER_FROM_IMPORT;
@@ -250,6 +255,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
   public void testPyArgumentEqualDefault() {                      //PY-3125
     doInspectionTest("ArgumentEqualDefault.py", PyArgumentEqualDefaultInspection.class,
                      PyBundle.message("QFIX.remove.argument.equal.default"), true, true);
+  }
+
+  public void testAddCallSuper() {                      //PY-3315
+    doInspectionTest("AddCallSuper.py", PyMissingConstructorInspection.class,
+                     PyBundle.message("QFIX.add.super"), true, true);
   }
 
   public void testRemoveDecorator() {                      //PY-3348

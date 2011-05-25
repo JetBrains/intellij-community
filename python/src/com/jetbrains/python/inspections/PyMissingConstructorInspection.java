@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.actions.AddCallSuperQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,11 @@ public class PyMissingConstructorInspection extends PyInspection {
       if (initMethod != null) {
         if (hasConstructorCall(node, initMethod))
           return;
-        registerProblem(initMethod.getNameIdentifier(), "Call to constructor of super class is missed");
+        if (superClasses.length == 1)
+          registerProblem(initMethod.getNameIdentifier(), "Call to constructor of super class is missed",
+                          new AddCallSuperQuickFix(node.getSuperClasses()[0], superClasses[0].getText()));
+        else
+          registerProblem(initMethod.getNameIdentifier(), "Call to constructor of super class is missed");
       }
     }
 

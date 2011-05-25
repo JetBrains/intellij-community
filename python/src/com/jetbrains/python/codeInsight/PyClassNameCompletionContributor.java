@@ -43,7 +43,6 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                                     @NotNull final CompletionResultSet resultSet) {
         addVariantsFromIndex(resultSet, parameters.getOriginalFile(), PyClassNameIndex.KEY, CLASS_INSERT_HANDLER, Conditions.<PyClass>alwaysTrue());
         addVariantsFromIndex(resultSet, parameters.getOriginalFile(), PyFunctionNameIndex.KEY, FUNCTION_INSERT_HANDLER, TOPLEVEL_FUNCTION);
-        ProjectScope.getAllScope(parameters.getOriginalFile().getProject());
       }
     });
   }

@@ -30,6 +30,10 @@ public class PyArgumentListInspectionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testFunctionStoredInInstance() {  // PY-3623
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("inspections/PyArgumentListInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyArgumentListInspection.class);

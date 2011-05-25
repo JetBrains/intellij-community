@@ -8,6 +8,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -81,5 +82,13 @@ public class PythonUnitTestRunConfiguration extends
 
   public void setPureUnittest(boolean isPureUnittest) {
     myIsPureUnittest = isPureUnittest;
+  }
+
+  @Override
+  public void checkConfiguration() throws RuntimeConfigurationException {
+    super.checkConfiguration();
+    if (myIsPureUnittest && !myScriptName.startsWith("test")) {
+      throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.incorrect.script"));
+    }
   }
 }

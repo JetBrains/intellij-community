@@ -348,4 +348,40 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
       settings.setFormat(DocStringFormat.PLAIN);
     }
   }
+
+  public void testNoneInArgList() {  // PY-3464
+    doTest3K();
+  }
+
+  public void testPep328Completion() {  // PY-3409
+    myFixture.copyDirectoryToProject("completion/pep328", "pep328");
+    myFixture.configureByFile("pep328/package/subpackage1/moduleX.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/pep328/package/subpackage1/moduleX.after.py");
+  }
+
+  public void testImportedSubmoduleCompletion() {  // PY-3227
+    myFixture.copyDirectoryToProject("completion/submodules", "submodules");
+    myFixture.configureByFile("submodules/foo.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/submodules/foo.after.py");
+  }
+
+  public void testFromImportedModuleCompletion() {  // PY-3595
+    myFixture.copyDirectoryToProject("completion/py3595", "");
+    myFixture.configureByFile("moduleX.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/py3595/moduleX.after.py");
+  }
+
+  public void testExportedConstants() {  // PY-3658
+    myFixture.copyDirectoryToProject("completion/exportedConstants", "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/exportedConstants/a.after.py");
+  }
+
+  public void testAlias() {  // PY-3672
+    doTest();
+  }
 }

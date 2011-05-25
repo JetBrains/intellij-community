@@ -105,7 +105,7 @@ if [ "@@isEap@@" = "true" ]; then
  AGENT="-agentlib:yjpagent$BITS=disablej2ee,sessionname=pycharm"
 fi
 
-[ -e $PYCHARM_HOME/Contents/Info.plist ] && BUNDLE_TYPE="MAC" || BUNDLE_TYPE="NOT_MAC"
+[ -e "$PYCHARM_HOME/Contents/Info.plist" ] && BUNDLE_TYPE="MAC" || BUNDLE_TYPE="NOT_MAC"
 
 # If vmoptions file exists - use it
 if [ -e "$PYCHARM_VM_OPTIONS" ]; then

@@ -10,6 +10,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsSemilattice;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ public class ScopeImpl implements Scope {
   private final Instruction[] myFlow;
   private List<DFAMap<ScopeVariable>> myCachedScopeVariables;
   private Set<String> myGlobals;
+  private Set<String> myNonlocals;
   private final ScopeOwner myFlowOwner;
   private Set<String> myAllNames;
 
@@ -74,11 +76,18 @@ public class ScopeImpl implements Scope {
     return myGlobals.contains(name);
   }
 
+  public boolean isNonlocal(final String name) {
+    if (myNonlocals == null){
+      myNonlocals = computeNonlocals(myFlowOwner);
+    }
+    return myNonlocals.contains(name);
+  }
+
   public boolean containsDeclaration(final String name) {
     if (myAllNames == null){
       myAllNames = computeAllNames();
     }
-    return myAllNames.contains(name);
+    return myAllNames.contains(name) && !isNonlocal(name);
   }
 
   @NotNull
@@ -110,11 +119,19 @@ public class ScopeImpl implements Scope {
           names.add(expression.getReferencedName());
         }
       }
+    });
+    return names;
+  }
 
+  private static Set<String> computeNonlocals(final ScopeOwner owner) {
+    final Set<String> names = new HashSet<String>();
+    owner.accept(new PyRecursiveElementVisitor(){
       @Override
       public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
-        for (PyTargetExpression expression : node.getVariables()) {
-          names.add(expression.getReferencedName());
+        if (ScopeUtil.getScopeOwner(node) == owner) {
+          for (PyTargetExpression expression : node.getVariables()) {
+            names.add(expression.getReferencedName());
+          }
         }
       }
     });

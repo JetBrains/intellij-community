@@ -19,7 +19,6 @@ import java.util.List;
  */
 public class PythonModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private List<Pair<String, String>> mySourcePaths;
-  private String myContentRootPath;
   private Sdk mySdk;
   private final List<Runnable> mySdkChangedListeners = new ArrayList<Runnable>();
 
@@ -30,26 +29,12 @@ public class PythonModuleBuilder extends ModuleBuilder implements SourcePathsBui
     else {
       rootModel.inheritSdk();
     }
-    String moduleRootPath = getContentEntryPath();
-    if (moduleRootPath != null) {
-      LocalFileSystem lfs = LocalFileSystem.getInstance();
-      VirtualFile moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(moduleRootPath));
-      if (moduleContentRoot != null) {
-        rootModel.addContentEntry(moduleContentRoot);
-      }
-    }
+
+    doAddContentEntry(rootModel);
   }
 
   public ModuleType getModuleType() {
     return PythonModuleType.getInstance();
-  }
-
-  public String getContentEntryPath() {
-    return myContentRootPath;
-  }
-
-  public void setContentEntryPath(final String moduleRootPath) {
-    myContentRootPath = moduleRootPath;
   }
 
   public List<Pair<String, String>> getSourcePaths() {

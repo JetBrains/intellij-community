@@ -133,9 +133,15 @@ public class ResolveImportUtil {
 
       if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
         final List<PsiElement> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
+        List<PsiElement> resultList = new ArrayList<PsiElement>();
         for (PsiElement candidate : candidates) {
           PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), first_component, file, null, false, true);
-          if (result != null) return Collections.singletonList(result);
+          if (result != null) {
+            resultList.add(result);
+          }
+        }
+        if (!resultList.isEmpty()) {
+          return resultList;
         }
       }
     }
@@ -184,7 +190,7 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  private static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
+  public static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
     return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
@@ -380,7 +386,7 @@ public class ResolveImportUtil {
     }
   }
 
-  private static void visitRoots(@NotNull Module module, RootVisitor visitor) {
+  public static void visitRoots(@NotNull Module module, RootVisitor visitor) {
     // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
     // Module-based approach works only in the IDEA plugin.
     if (visitModuleContentEntries(module, visitor)) return;
@@ -657,6 +663,12 @@ public class ResolveImportUtil {
                                                final PsiDirectory dir, @Nullable VirtualFile root, boolean isFileOnly,
                                                boolean checkForPackage) {
     if (referencedName == null) return null;
+
+    final PsiDirectory subdir = dir.findSubdirectory(referencedName);
+    if (subdir != null && (!checkForPackage || subdir.findFile(PyNames.INIT_DOT_PY) != null)) {
+      return subdir;
+    }
+
     final PsiElement module = findPyFileInDir(dir, referencedName);
     if (module != null) return module;
 
@@ -670,11 +682,7 @@ public class ResolveImportUtil {
       }
     }
 
-    final PsiDirectory subdir = dir.findSubdirectory(referencedName);
-    if (subdir != null && (!checkForPackage || subdir.findFile(PyNames.INIT_DOT_PY) != null)) {
-      return subdir;
-    }
-    else if (!isFileOnly) {
+    if (!isFileOnly) {
       // not a subdir, not a file; could be a name in parent/__init__.py
       final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in

@@ -1,6 +1,7 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
@@ -19,7 +20,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     try {
       System.setProperty(PyExtractMethodUtil.NAME, name);
       try {
-        handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), new FileDataContext(myFixture.getFile()));
+        handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), ((EditorEx) myFixture.getEditor()).getDataContext());
       }
       catch (Exception e) {
         if (result.endsWith(".py")) { // expected output file, not an exception
