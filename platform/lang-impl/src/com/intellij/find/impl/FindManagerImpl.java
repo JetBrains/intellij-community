@@ -304,8 +304,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   private static FindModel normalizeIfMultilined(FindModel findmodel) {
     if (findmodel.isMultiline()) {
       final FindModel model = new FindModel();
-      final String s = model.getStringToFind();
       model.copyFrom(findmodel);
+      final String s = model.getStringToFind();
       model.setStringToFind(StringUtil.escapeToRegexp(s));
       model.setRegularExpressions(true);
       return model;
@@ -506,7 +506,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   private static FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model) {
     Matcher matcher = compileRegExp(model, text);
-
+    if (matcher == null) {
+      return NOT_FOUND_RESULT;
+    }
     if (model.isForward()){
       if (matcher.find(startOffset)) {
         if (matcher.end() <= text.length()) {

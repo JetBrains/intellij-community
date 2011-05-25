@@ -103,6 +103,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (multiline != isMultiline) {
       if (!multiline) {
         initStringToFindNoMultiline(this, getStringToFind());
+      } else {
+        setRegularExpressions(false);
       }
       isMultiline = multiline;
       notifyObservers();
@@ -167,6 +169,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
     isInCommentsOnly = model.isInCommentsOnly;
     isInStringLiteralsOnly = model.isInStringLiteralsOnly;
+
+    isMultiline = model.isMultiline;
   }
 
   /**
