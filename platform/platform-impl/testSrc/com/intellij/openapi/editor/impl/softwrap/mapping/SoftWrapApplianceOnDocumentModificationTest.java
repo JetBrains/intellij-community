@@ -755,6 +755,19 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     myEditor.getDocument().insertString(modificationOffset, "import java.util.HashSet;\n");
     // Used to get StackOverflowError here, hence, no additional checking is performed.
   }
+
+  public void testLongSoftWrappedLineWithNonWrappedEndInTheMiddleOfDocument() throws IOException {
+    // Inspired by IDEA-70114
+    
+    String text = 
+      "111\n" +
+      "222\n" +
+      "33333333 33333333333333333333333333333333\n" +
+      "444";
+    init(100, text);
+    
+    assertEquals(new LogicalPosition(3, 0), myEditor.visualToLogicalPosition(new VisualPosition(4, 0)));
+  }
   
   private void init(final int visibleWidth, String fileText) throws IOException {
     init(fileText);
