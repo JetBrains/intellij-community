@@ -20,6 +20,7 @@ public class ToggleWholeWordsOnlyAction extends EditorHeaderToggleAction {
   public void update(AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(!getEditorSearchComponent().getFindModel().isRegularExpressions());
+    e.getPresentation().setVisible(!getEditorSearchComponent().getFindModel().isMultiline());
   }
 
   @Override
