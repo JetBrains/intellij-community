@@ -26,11 +26,16 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class VariantsCompletionAction extends EditorHeaderAction {
+public class VariantsCompletionAction extends AnAction {
   private Getter<JTextComponent> myTextField;
+  private EditorSearchComponent myEditorSearchComponent;
+
+  public EditorSearchComponent getEditorSearchComponent() {
+    return myEditorSearchComponent;
+  }
 
   public VariantsCompletionAction(EditorSearchComponent editorSearchComponent, Getter<JTextComponent> textField) {
-    super(editorSearchComponent);
+    myEditorSearchComponent = editorSearchComponent;
     final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
     setTextField(textField);
     if (action != null) {
