@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -60,7 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.*;
@@ -300,19 +301,36 @@ public class ExpressionGenerator extends Generator {
     generateMethodCall(applicationStatement);
   }
 
+
   @Override
   public void visitConditionalExpression(GrConditionalExpression expression) {
     final GrExpression condition = expression.getCondition();
     final GrExpression thenBranch = expression.getThenBranch();
     final GrExpression elseBranch = expression.getElseBranch();
 
-    final PsiType type = condition.getType();
-    if (type == null || TypesUtil.unboxPrimitiveTypeWrapper(type) == PsiType.BOOLEAN) {
-      condition.accept(this);
+    final boolean elvis = expression instanceof GrElvisExpression;
+    final String var;
+    if (elvis) {
+      var = createVarByInitializer(condition);
     }
     else {
-      GenerationUtil.invokeMethodByName(
-        condition,
+      var = null;
+    }
+    final PsiType type = condition.getType();
+    if (type == null || TypesUtil.unboxPrimitiveTypeWrapper(type) == PsiType.BOOLEAN) {
+      if (elvis) {
+        builder.append(var);
+      }
+      else {
+        condition.accept(this);
+      }
+    }
+    else {
+      final GroovyResolveResult[] results = ResolveUtil.getMethodCandidates(type, "asBoolean", expression, PsiType.EMPTY_ARRAY);
+      final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
+      GenerationUtil.invokeMethodByResolveResult(
+        elvis ? factory.createReferenceExpressionFromText(var, expression) : condition,
+        result,
         "asBoolean",
         GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
         this,
@@ -321,9 +339,19 @@ public class ExpressionGenerator extends Generator {
     }
 
     builder.append("?");
-    thenBranch.accept(this);
+    if (thenBranch != null) {
+      if (elvis) {
+        builder.append(var);
+      }
+      else {
+        thenBranch.accept(this);
+      }
+    }
+
     builder.append(":");
-    elseBranch.accept(this);
+    if (elseBranch != null) {
+      elseBranch.accept(this);
+    }
   }
 
   /**
@@ -699,6 +727,10 @@ public class ExpressionGenerator extends Generator {
     final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
 
+    if (resolved == null && qualifier == null && context.myUsedVarNames.contains(referenceExpression.getReferenceName())) {
+      builder.append(referenceExpression.getReferenceName());
+      return;
+    }
     if (qualifier == null && (resolved == null || resolved instanceof LightElement) &&
         !(referenceExpression.getParent() instanceof GrCall) &&
         PsiUtil.isInScriptContext(referenceExpression)) {
@@ -779,11 +811,15 @@ public class ExpressionGenerator extends Generator {
   }
 
   private String createVarByInitializer(GrExpression initializer) {
+    GrExpression inner = initializer;
+    while (inner instanceof GrParenthesizedExpression) inner = ((GrParenthesizedExpression)inner).getOperand();
+    if (inner != null) initializer = inner;
+
     if (initializer instanceof GrReferenceExpression) {
       final GrExpression qualifier = ((GrReferenceExpression)initializer).getQualifier();
       if (qualifier == null) {
         final PsiElement resolved = ((GrReferenceExpression)initializer).resolve();
-        if (resolved instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable)resolved)) {
+        if (resolved instanceof GrVariable && !(resolved instanceof GrField)) {
 
           //don't create new var. it is already exists
           return ((GrVariable)resolved).getName();
