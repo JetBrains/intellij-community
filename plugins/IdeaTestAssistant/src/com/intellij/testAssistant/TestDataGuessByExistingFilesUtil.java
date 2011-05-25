@@ -3,6 +3,7 @@ package com.intellij.testAssistant;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
@@ -29,7 +31,9 @@ import java.util.Map;
  */
 public class TestDataGuessByExistingFilesUtil {
 
-  private static final Map<String, TestDataDescriptor> CACHE = new ConcurrentHashMap<String, TestDataDescriptor>();
+  private static final long CACHE_ENTRY_TTL_MS = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
+  
+  private static final Map<String, Pair<TestDataDescriptor, Long>> CACHE = new ConcurrentHashMap<String, Pair<TestDataDescriptor, Long>>();
   
   private TestDataGuessByExistingFilesUtil() {
   }
@@ -127,9 +131,9 @@ public class TestDataGuessByExistingFilesUtil {
       return null;
     }
 
-    final TestDataDescriptor cached = CACHE.get(psiClass.getQualifiedName());
-    if (cached != null) {
-      return cached.isComplete() ? cached : null;
+    final Pair<TestDataDescriptor, Long> cached = CACHE.get(psiClass.getQualifiedName());
+    if (cached != null && cached.second + CACHE_ENTRY_TTL_MS > System.currentTimeMillis()) {
+      return cached.first.isComplete() ? cached.first : null;
     } 
 
     TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
@@ -157,11 +161,11 @@ public class TestDataGuessByExistingFilesUtil {
         descriptor.populate(name, matchedFiles);
       }
       if (descriptor.isComplete()) {
-        CACHE.put(psiClass.getQualifiedName(), descriptor);
+        CACHE.put(psiClass.getQualifiedName(), new Pair<TestDataDescriptor, Long>(descriptor, System.currentTimeMillis()));
         return descriptor;
       }
     }
-    CACHE.put(psiClass.getQualifiedName(), new TestDataDescriptor());
+    CACHE.put(psiClass.getQualifiedName(), new Pair<TestDataDescriptor, Long>(new TestDataDescriptor(), System.currentTimeMillis()));
     return null;
   }
 
