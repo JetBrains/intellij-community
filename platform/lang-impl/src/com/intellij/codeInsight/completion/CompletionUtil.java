@@ -158,9 +158,6 @@ public class CompletionUtil {
     if(insertedElement == null) return "";
     final String text = insertedElement.getText();
 
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) indicator.checkCanceled();
-
     final int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
     int start = offsetInElement - 1;
     while (start >=0 ) {
