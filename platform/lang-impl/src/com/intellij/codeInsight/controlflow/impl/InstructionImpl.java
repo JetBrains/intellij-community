@@ -18,17 +18,19 @@ package com.intellij.codeInsight.controlflow.impl;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author oleg
  */
 public class InstructionImpl implements Instruction {
-  final ArrayList<Instruction> myPred = new ArrayList<Instruction>();
-  final ArrayList<Instruction> mySucc = new ArrayList<Instruction>();
+  final List<Instruction> myPred = new SmartList<Instruction> ();
+  final List<Instruction> mySucc = new SmartList<Instruction>();
 
   protected final PsiElement myElement;
   private final int myNumber;
