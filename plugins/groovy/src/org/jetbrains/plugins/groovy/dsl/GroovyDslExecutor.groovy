@@ -71,6 +71,8 @@ public class GroovyDslExecutor {
     mc.contribute = contribute
 
     mc.currentType = { arg -> DslPointcut.currentType(handleImplicitBind(arg)) }
+    mc.enclosingType = { arg -> DslPointcut.enclosingType(handleImplicitBind(arg)) }
+    mc.enclosingMethod = { arg -> DslPointcut.enclosingMethod(handleImplicitBind(arg)) }
     mc.bind = { arg -> DslPointcut.bind(arg) }
 
     oldStylePrimitives(mc)

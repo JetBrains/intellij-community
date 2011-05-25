@@ -32,6 +32,27 @@ class DsldTest extends LightGroovyTestCase {
                       'println "".ing + "".<warning>foo</warning>'
   }
 
+  public void testEnclosingType() {
+    checkHighlighting 'contribute(enclosingType("Foo")) { property name:"foo" }',
+                      '''
+class Foo {
+  def goo() { println foo + "".foo }
+}
+println new Foo().<warning>foo</warning>
+println <warning>foo</warning>
+'''
+  }
+
+  public void testEnclosingMethod() {
+    checkHighlighting 'contribute(enclosingMethod("goo")) { property name:"foo" }',
+                      '''
+class Foo {
+  def goo() { println foo + "".foo }
+  def doo() { println <warning>foo</warning> }
+}
+'''
+  }
+
   private def checkHighlighting(String dsl, String code) {
     def file = myFixture.addFileToProject('a.gdsl', dsl)
     GroovyDslFileIndex.activateUntilModification(file.virtualFile)

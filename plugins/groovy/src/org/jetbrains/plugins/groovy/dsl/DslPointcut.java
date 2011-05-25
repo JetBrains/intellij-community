@@ -1,6 +1,11 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
@@ -39,6 +44,58 @@ public abstract class DslPointcut<T,V> {
           return Arrays.asList(new GdslType(ClassContextFilter.findPsiType(src, context)));
         }
         return null;
+      }
+
+      @Override
+      boolean operatesOn(Class c) {
+        return GroovyClassDescriptor.class == c;
+      }
+    };
+  }
+
+  public static DslPointcut<GroovyClassDescriptor, GdslType> enclosingType(final Object arg) {
+    return new DslPointcut<GroovyClassDescriptor, GdslType>() {
+      @Override
+      List<GdslType> matches(GroovyClassDescriptor src, ProcessingContext context) {
+        List<GdslType> result = new ArrayList<GdslType>();
+        PsiElement place = src.getPlace();
+        while (true) {
+          final PsiClass cls = PsiTreeUtil.getContextOfType(place, PsiClass.class);
+          if (cls == null) {
+            break;
+          }
+          if (arg.equals(cls.getQualifiedName())) {
+            result.add(new GdslType(JavaPsiFacade.getElementFactory(cls.getProject()).createType(cls)));
+          }
+          place = cls;
+        }
+        return result.isEmpty() ? null : result;
+      }
+
+      @Override
+      boolean operatesOn(Class c) {
+        return GroovyClassDescriptor.class == c;
+      }
+    };
+  }
+
+  public static DslPointcut<GroovyClassDescriptor, GdslMethod> enclosingMethod(final Object arg) {
+    return new DslPointcut<GroovyClassDescriptor, GdslMethod>() {
+      @Override
+      List<GdslMethod> matches(GroovyClassDescriptor src, ProcessingContext context) {
+        List<GdslMethod> result = new ArrayList<GdslMethod>();
+        PsiElement place = src.getPlace();
+        while (true) {
+          final PsiMethod method = PsiTreeUtil.getContextOfType(place, PsiMethod.class);
+          if (method == null) {
+            break;
+          }
+          if (arg.equals(method.getName())) {
+            result.add(new GdslMethod());
+          }
+          place = method;
+        }
+        return result.isEmpty() ? null : result;
       }
 
       @Override
