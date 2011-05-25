@@ -239,6 +239,6 @@ public class PyEditingTest extends PyLightFixtureTestCase {
   }
 
   public void testEnterBeforeString() {  // PY-3673
-    doTestEnter("<caret>''", "\n<caret<''");
+    doTestEnter("<caret>''", "\n''");
   }
 }

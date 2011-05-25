@@ -30,4 +30,19 @@
     <line>123</line>
     <description>"Local variable 'sys' might be referenced before assignment"</description>
   </problem>
+  <problem>
+    <file>test.py</file>
+    <line>132</line>
+    <description>"Local variable 'g' might be referenced before assignment"</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>140</line>
+    <description>"Local variable 'os' might be referenced before assignment"</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>147</line>
+    <description>"Local variable 'x' might be referenced before assignment"</description>
+  </problem>
 </problems>

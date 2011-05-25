@@ -1,13 +1,17 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.DocstringQuickFix;
+import com.jetbrains.python.actions.PySuppressInspectionFix;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.EpydocString;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -15,6 +19,7 @@ import com.jetbrains.python.documentation.SphinxDocString;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -81,7 +86,11 @@ public class PyDocstringInspection extends PyInspection {
           if (n != null) marker = n.getPsi();
         }
         else if (node instanceof PyFile) {
-          marker = node.findElementAt(0);
+          TextRange tr = new TextRange(0,0);
+          ProblemsHolder holder = getHolder();
+          if (holder != null)
+            holder.registerProblem(node, tr, PyBundle.message("INSP.no.docstring"));
+          return;
         }
         if (marker == null) marker = node;
         registerProblem(marker, PyBundle.message("INSP.no.docstring"));
@@ -154,5 +163,18 @@ public class PyDocstringInspection extends PyInspection {
       missingString.append(" in docstring.");
       return missingString.toString();
     }
+  }
+  @Override
+  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
+    List<SuppressIntentionAction> result = new ArrayList<SuppressIntentionAction>();
+    if (element != null) {
+      if (PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
+        result.add(new PySuppressInspectionFix(getShortName().replace("Inspection", ""), "Suppress for function", PyFunction.class));
+      }
+      if (PsiTreeUtil.getParentOfType(element, PyClass.class) != null) {
+        result.add(new PySuppressInspectionFix(getShortName().replace("Inspection", ""), "Suppress for class", PyClass.class));
+      }
+    }
+    return result.toArray(new SuppressIntentionAction[result.size()]);
   }
 }
