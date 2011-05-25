@@ -49,9 +49,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         // Ignore qualifier inspections
-        final PyExpression qualifier = node.getQualifier();
-        if (qualifier != null){
-          qualifier.accept(this);
+        if (node.getQualifier() != null) {
           return;
         }
         // Ignore import subelements
