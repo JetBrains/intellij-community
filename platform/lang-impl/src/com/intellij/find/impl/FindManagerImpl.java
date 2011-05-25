@@ -301,7 +301,20 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return isWordStart && isWordEnd;
   }
 
-  private static FindResult doFindString(CharSequence text, int offset, final FindModel model, @Nullable VirtualFile file) {
+  private static FindModel normalizeIfMultilined(FindModel findmodel) {
+    if (findmodel.isMultiline()) {
+      final FindModel model = new FindModel();
+      final String s = model.getStringToFind();
+      model.copyFrom(findmodel);
+      model.setStringToFind(StringUtil.escapeToRegexp(s));
+      model.setRegularExpressions(true);
+      return model;
+    }
+    return findmodel;
+  }
+
+  private static FindResult doFindString(CharSequence text, int offset, final FindModel findmodel, @Nullable VirtualFile file) {
+    FindModel model = normalizeIfMultilined(findmodel);
     String toFind = model.getStringToFind();
     if (toFind.length() == 0){
       return NOT_FOUND_RESULT;

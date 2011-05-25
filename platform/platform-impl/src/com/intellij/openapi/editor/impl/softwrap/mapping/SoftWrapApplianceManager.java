@@ -357,7 +357,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
 
       char c = myContext.text.charAt(offset);
       if (c == '\n') {
-        notifyListenersOnVisualLineEnd();
         myContext.onNewLine();
         continue;
       }
@@ -1022,6 +1021,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
      * Asks current context to update its state assuming that it begins to point to the line next to its current position.
      */
     public void onNewLine() {
+      notifyListenersOnVisualLineEnd();
       currentPosition.onNewLine();
       softWrapStartOffset = currentPosition.offset;
       lineStartPosition.from(currentPosition);

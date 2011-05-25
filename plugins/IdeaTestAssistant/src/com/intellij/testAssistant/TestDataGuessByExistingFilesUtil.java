@@ -11,12 +11,14 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
@@ -27,6 +29,8 @@ import java.util.List;
  */
 public class TestDataGuessByExistingFilesUtil {
 
+  private static final Map<String, TestDataDescriptor> CACHE = new ConcurrentHashMap<String, TestDataDescriptor>();
+  
   private TestDataGuessByExistingFilesUtil() {
   }
 
@@ -123,6 +127,11 @@ public class TestDataGuessByExistingFilesUtil {
       return null;
     }
 
+    final TestDataDescriptor cached = CACHE.get(psiClass.getQualifiedName());
+    if (cached != null) {
+      return cached.isComplete() ? cached : null;
+    } 
+
     TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     TestFramework framework = null;
     for (TestFramework each : frameworks) {
@@ -148,12 +157,42 @@ public class TestDataGuessByExistingFilesUtil {
         descriptor.populate(name, matchedFiles);
       }
       if (descriptor.isComplete()) {
+        CACHE.put(psiClass.getQualifiedName(), descriptor);
         return descriptor;
       }
     }
+    CACHE.put(psiClass.getQualifiedName(), new TestDataDescriptor());
     return null;
   }
 
+  //@NotNull
+  //private static Collection<VirtualFile> getMatchedFiles(@NotNull final Project project, @NotNull final String testName) {
+  //  final List<VirtualFile> result = new ArrayList<VirtualFile>();
+  //  final char c = testName.charAt(0);
+  //  final String testNameWithDifferentRegister =
+  //    (Character.isLowerCase(c) ? Character.toUpperCase(c) : Character.toLowerCase(c)) + testName.substring(1);
+  //  final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
+  //  FileBasedIndex.getInstance().processAllKeys(FilenameIndex.NAME, new Processor<String>() {
+  //    @Override
+  //    public boolean process(String s) {
+  //      if (!s.contains(testName) && !s.contains(testNameWithDifferentRegister)) {
+  //        return true;
+  //      }
+  //
+  //      final NavigationItem[] items = FilenameIndex.getFilesByName(project, s, scope);
+  //      if (items != null) {
+  //        for (NavigationItem item : items) {
+  //          if (item instanceof PsiFile) {
+  //            result.add(((PsiFile)item).getVirtualFile());
+  //          }
+  //        }
+  //      }
+  //      return true;
+  //    }
+  //  }, project);
+  //  return result;
+  //}
+  
   @NotNull
   private static Collection<VirtualFile> getMatchedFiles(@NotNull GotoFileModel gotoModel, @NotNull String testName) {
     String pattern = String.format("*%s*", testName);

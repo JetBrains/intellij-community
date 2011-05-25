@@ -20,7 +20,7 @@ public class TogglePreserveCaseAction extends EditorHeaderToggleAction  implemen
   public void update(AnActionEvent e) {
     super.update(e);
     FindModel findModel = getEditorSearchComponent().getFindModel();
-    e.getPresentation().setVisible(findModel.isReplaceState());
+    e.getPresentation().setVisible(findModel.isReplaceState() && !findModel.isMultiline());
     e.getPresentation().setEnabled(!findModel.isRegularExpressions());
   }
 

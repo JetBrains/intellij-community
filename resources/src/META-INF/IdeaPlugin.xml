@@ -11,7 +11,8 @@
   <module value="com.intellij.modules.all"/>
 
   <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/idea/IdeaActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/idea/RichPlatformActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/component/*)"/>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>

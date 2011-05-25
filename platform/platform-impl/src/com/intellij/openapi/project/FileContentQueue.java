@@ -39,8 +39,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class FileContentQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContentQueue");
   private static final long SIZE_THRESHOLD = 1024*1024;
-  private static final long TAKEN_FILES_THRESHOLD = 1024*1024*4;
-  private static final long LARGE_SIZE_REQUEST_THRESHOLD = TAKEN_FILES_THRESHOLD - SIZE_THRESHOLD;
+  private static final long TAKEN_FILES_THRESHOLD = 1024*1024*3;
+  private static final long LARGE_SIZE_REQUEST_THRESHOLD = TAKEN_FILES_THRESHOLD - 1024 * 300; // 300k for other threads
 
   private long myTotalSize;
   private long myTakenSize;

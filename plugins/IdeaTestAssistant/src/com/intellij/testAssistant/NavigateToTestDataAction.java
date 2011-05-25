@@ -18,16 +18,14 @@ package com.intellij.testAssistant;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -38,42 +36,49 @@ import java.util.List;
 public class NavigateToTestDataAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final PsiMethod method = findTargetMethod(e);
+    final PsiMethod method = findTargetMethod(e.getDataContext());
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (method == null || editor == null) {
       return;
     }
+    List<String> fileNames = findTestDataFiles(e.getDataContext());
+    if (fileNames == null || fileNames.isEmpty()) {
+      String message = "Cannot find testdata files for class";
+      final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
+      Notifications.Bus.notify(notification, method.getProject());
+    }
+    else {
+      TestDataNavigationHandler.navigate(method, JBPopupFactory.getInstance().guessBestPopupLocation(editor), fileNames);
+    }
+  }
+
+  @Nullable
+  public static List<String> findTestDataFiles(@NotNull DataContext context) {
+    final PsiMethod method = findTargetMethod(context);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    if (method == null || editor == null) {
+      return null;
+    }
     final String name = method.getName();
-    
-    
+
+
     String testDataPath = null;
     if (name.startsWith("test")) {
       testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
     }
     final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
-    List<String> fileNames = collector.collectTestDataReferences(method);
-    if (fileNames.isEmpty()) {
-      String message = collector.getLog();
-      if (message == null) {
-        message = "Cannot find testdata files for class";
-      }
-      final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
-      Notifications.Bus.notify(notification, method.getProject());
-    }
-    else {
-      new TestDataNavigationHandler().navigate(method, JBPopupFactory.getInstance().guessBestPopupLocation(editor), fileNames);
-    }
+    return collector.collectTestDataReferences(method);
   }
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(findTargetMethod(e) != null);
+    e.getPresentation().setEnabled(findTargetMethod(e.getDataContext()) != null);
   }
 
   @Nullable
-  private static PsiMethod findTargetMethod(AnActionEvent e) {
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    final PsiFile file = e.getData(LangDataKeys.PSI_FILE);
+  private static PsiMethod findTargetMethod(@NotNull DataContext context) {
+    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    final PsiFile file = LangDataKeys.PSI_FILE.getData(context);
     if (file != null && editor != null) {
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);

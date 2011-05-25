@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
@@ -17,6 +18,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -25,14 +27,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class VariantsCompletionAction extends EditorHeaderAction {
-  private JTextField myTextField;
+  private Getter<JTextComponent> myTextField;
 
-  public VariantsCompletionAction(EditorSearchComponent editorSearchComponent, JTextField textField) {
+  public VariantsCompletionAction(EditorSearchComponent editorSearchComponent, Getter<JTextComponent> textField) {
     super(editorSearchComponent);
     final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
-    myTextField = textField;
+    setTextField(textField);
     if (action != null) {
-      registerCustomShortcutSet(action.getShortcutSet(), myTextField);
+      registerCustomShortcutSet(action.getShortcutSet(), getTextField());
     }
   }
 
@@ -59,7 +61,7 @@ public class VariantsCompletionAction extends EditorHeaderAction {
 
       Utils.showCompletionPopup(
         e.getInputEvent() instanceof MouseEvent ? getEditorSearchComponent().getToolbarComponent() : null,
-        list, null, myTextField);
+        list, null, getTextField());
     }
   }
 
@@ -70,8 +72,16 @@ public class VariantsCompletionAction extends EditorHeaderAction {
     //  int offset = editor.getCaretModel().getOffset();
     //  return myTextField.getText().substring(0, offset);
     //}
-    int offset = myTextField.getCaretPosition();
-    return myTextField.getText().substring(0, offset);
+    int offset = getTextField().getCaretPosition();
+    return getTextField().getText().substring(0, offset);
+  }
+
+  public JTextComponent getTextField() {
+    return myTextField.get();
+  }
+
+  public void setTextField(Getter<JTextComponent> textField) {
+    myTextField = textField;
   }
 
   private static String[] calcWords(final String prefix, Editor editor) {

@@ -64,10 +64,23 @@ public class TitlePanel extends CaptionPanel {
     myLabel.setText(titleText);
   }
 
+  @Override
+  public Dimension getMinimumSize() {
+    return new Dimension(10, getPreferredSize().height);
+  }
 
   public Dimension getPreferredSize() {
     final String text = myLabel.getText();
-    return text != null && text.trim().length() > 0 ? super.getPreferredSize() : new Dimension(0, 0);
+    if (text == null || text.trim().length() == 0) {
+      return new Dimension(0, 0);
+    }
+
+    final Dimension preferredSize = super.getPreferredSize();
+    if (preferredSize.width > 100) { // do not allow caption to extend parent container
+      return new Dimension(100, preferredSize.height);
+    }
+    
+    return preferredSize;
   }
 }
 

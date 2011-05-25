@@ -19,10 +19,10 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.lang.StdLanguages
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.util.TestUtils
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
 /**
  * @author Maxim.Medvedev
@@ -154,4 +154,7 @@ public final class Matcher {
   void testUnresolvedArrayAccess() {doTest()}
   void testArrayAccess() {doTest()}
   void testCastWithEquality() {doTest()}
+  void testAsserts() {doTest()}
+  void testConditional() {doTest()}
+  void testBinary() {doTest()}
 }

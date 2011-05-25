@@ -793,7 +793,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     @Override
     public void paint(Graphics g) {
-      UIUtil.applyRenderingHints(g);
+      if (!SystemInfo.isMac || UIUtil.isUnderAquaLookAndFeel()) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
+        // actually, it's a bad idea to globally enable this for dialog graphics since renderers, for example, may not
+        // inherit graphics so rendering hints won't be applied and trees or lists may render ugly.
+        UIUtil.applyRenderingHints(g);
+      }
+      
       super.paint(g);
     }
 

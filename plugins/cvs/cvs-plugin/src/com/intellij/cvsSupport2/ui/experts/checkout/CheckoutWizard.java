@@ -24,6 +24,7 @@ import com.intellij.cvsSupport2.ui.experts.SelectCVSConfigurationStep;
 import com.intellij.cvsSupport2.ui.experts.SelectCvsElementStep;
 import com.intellij.cvsSupport2.ui.experts.SelectLocationStep;
 import com.intellij.openapi.project.Project;
+import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.tree.TreeSelectionModel;
 import java.io.File;
@@ -62,7 +63,12 @@ public class CheckoutWizard extends CvsWizard {
 
     config.MAKE_CHECKED_OUT_FILES_READONLY = myChooseModeStep.getMakeNewFilesReadOnly();
     config.CHECKOUT_PRUNE_EMPTY_DIRECTORIES = myChooseModeStep.getPruneEmptyDirectories();
-    config.CHECKOUT_KEYWORD_SUBSTITUTION = myChooseModeStep.getKeywordSubstitution().toString();
+    final KeywordSubstitution keywordSubstitution = myChooseModeStep.getKeywordSubstitution();
+    if (keywordSubstitution == null) {
+      config.CHECKOUT_KEYWORD_SUBSTITUTION = null;
+    } else {
+      config.CHECKOUT_KEYWORD_SUBSTITUTION = keywordSubstitution.toString();
+    }
 
     super.doOKAction();
   }

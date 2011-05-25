@@ -57,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
@@ -1240,6 +1241,12 @@ public class PsiUtil {
         parent instanceof GrVariable) {
       return true;
     }
-    return ControlFlowUtils.collectReturns(ControlFlowUtils.findControlFlowOwner(expr), true).contains(expr);
+    final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expr);
+    if (controlFlowOwner instanceof GrOpenBlock &&
+        controlFlowOwner.getParent() instanceof PsiMethod &&
+        ((PsiMethod)controlFlowOwner.getParent()).getReturnType() == PsiType.VOID) {
+      return false;
+    }
+    return ControlFlowUtils.collectReturns(controlFlowOwner, true).contains(expr);
   }
 }
