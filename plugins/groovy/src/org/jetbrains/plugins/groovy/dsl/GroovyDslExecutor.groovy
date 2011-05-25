@@ -43,11 +43,11 @@ public class GroovyDslExecutor {
 
     def mc = new ExpandoMetaClass(script.class, false)
 
-    mc.methodMissing = { String name, Object args ->
-      return DslPointcut.unknownPointcut()
-    }
+    mc.methodMissing = { String name, Object args -> return DslPointcut.UNKNOWN }
 
     def contribute = {cts, Closure toDo ->
+      cts = handleImplicitBind(cts)
+
       if (cts instanceof DslPointcut) {
         assert cts.operatesOn(GroovyClassDescriptor) : "A non top-level pointcut passed to contributor"
         addClassEnhancer([new PointcutContextFilter(cts)], toDo)
@@ -70,7 +70,7 @@ public class GroovyDslExecutor {
     mc.contributor = contribute
     mc.contribute = contribute
 
-    mc.currentType = { arg -> DslPointcut.currentType(arg) }
+    mc.currentType = { arg -> DslPointcut.currentType(handleImplicitBind(arg)) }
     mc.bind = { arg -> DslPointcut.bind(arg) }
 
     oldStylePrimitives(mc)
@@ -80,6 +80,13 @@ public class GroovyDslExecutor {
     script.run()
 
     locked = true
+  }
+
+  private def handleImplicitBind(arg) {
+    if (arg instanceof Map && arg.size() == 1 && arg.keySet().iterator().next() instanceof String && arg.values().iterator().next() instanceof DslPointcut) {
+      return DslPointcut.bind(arg)
+    }
+    return arg
   }
 
   private void oldStylePrimitives(MetaClass mc) {

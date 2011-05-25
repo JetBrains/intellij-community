@@ -11,6 +11,18 @@ import java.util.*;
  * @author peter
  */
 public abstract class DslPointcut<T,V> {
+  public static final DslPointcut UNKNOWN = new DslPointcut() {
+
+    @Override
+    List matches(Object src, ProcessingContext context) {
+      return Collections.emptyList();
+    }
+
+    @Override
+    boolean operatesOn(Class c) {
+      return true;
+    }
+  };
   public static Key<Map<String, List>> BOUND = Key.create("gdsl.bound");
 
   @Nullable
@@ -63,18 +75,4 @@ public abstract class DslPointcut<T,V> {
     };
   }
 
-  public static DslPointcut unknownPointcut() {
-    return new DslPointcut() {
-
-      @Override
-      List matches(Object src, ProcessingContext context) {
-        return Collections.emptyList();
-      }
-
-      @Override
-      boolean operatesOn(Class c) {
-        return true;
-      }
-    };
-  }
 }

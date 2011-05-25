@@ -27,6 +27,11 @@ class DsldTest extends LightGroovyTestCase {
                       'println "".ing + "".<warning>foo</warning>'
   }
 
+  public void testImplicitBind() {
+    checkHighlighting 'contribute(types:currentType("java.lang.CharSequence")) { property name:types[0].name[-3..-1] }',
+                      'println "".ing + "".<warning>foo</warning>'
+  }
+
   private def checkHighlighting(String dsl, String code) {
     def file = myFixture.addFileToProject('a.gdsl', dsl)
     GroovyDslFileIndex.activateUntilModification(file.virtualFile)
