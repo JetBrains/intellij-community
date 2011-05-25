@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.util.ProcessingContext
+import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider
 import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
 import org.jetbrains.plugins.groovy.dsl.toplevel.Context
@@ -70,6 +71,7 @@ public class GroovyDslExecutor {
     mc.contribute = contribute
 
     mc.currentType = { arg -> DslPointcut.currentType(arg) }
+    mc.bind = { arg -> DslPointcut.bind(arg) }
 
     oldStylePrimitives(mc)
 
@@ -112,11 +114,12 @@ public class GroovyDslExecutor {
     enhancers << Pair.create(CompositeContextFilter.compose(cts, false), toDo)
   }
 
-  def processVariants(GroovyClassDescriptor descriptor, consumer, ProcessingContext ctx) {
+  def processVariants(GroovyClassDescriptor descriptor, CustomMembersGenerator consumer, ProcessingContext ctx) {
     for (pair in enhancers) {
       if (pair.first.isApplicable(descriptor, ctx)) {
         Closure f = pair.second.clone()
         f.delegate = consumer
+        consumer.metaClass = contributionDelegateMetaClass(ctx, consumer)
         f.resolveStrategy = Closure.DELEGATE_FIRST
 
         use(cats) {
@@ -124,6 +127,29 @@ public class GroovyDslExecutor {
         }
       }
     }
+  }
+
+  static final def memberProviders = GdslMembersProvider.EP_NAME.getExtensions()
+
+  private ExpandoMetaClass contributionDelegateMetaClass(ProcessingContext ctx, CustomMembersGenerator consumer) {
+    def mc = new ExpandoMetaClass(CustomMembersGenerator)
+    mc.methodMissing = { String name, Object args ->
+      final def newArgs = consumer.constructNewArgs(args)
+
+      // Get other DSL methods from extensions
+      for (d in memberProviders) {
+        final def variants = d.metaClass.respondsTo(d, name, newArgs)
+        if (variants.size() == 1) {
+          return d.invokeMethod(name, newArgs)
+        }
+      }
+      return null
+    }
+
+    def bound = ctx.get(DslPointcut.BOUND)
+    bound.each { name, value -> mc."$name" = value }
+    mc.initialize()
+    return mc
   }
 
   def String toString() {

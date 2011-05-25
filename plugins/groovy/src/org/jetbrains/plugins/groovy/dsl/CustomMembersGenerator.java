@@ -90,7 +90,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
     myDepot.addHolder(holder);
   }
 
-  protected Object[] constructNewArgs(Object[] args) {
+  public Object[] constructNewArgs(Object[] args) {
     final Object[] newArgs = new Object[args.length + 1];
     //noinspection ManualArrayCopy
     for (int i = 0; i < args.length; i++) {

@@ -7,14 +7,14 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
  * @author peter
  */
 public class PointcutContextFilter implements ContextFilter {
-  private final DslPointcut<GroovyClassDescriptor> myPointcut;
+  private final DslPointcut<GroovyClassDescriptor,?> myPointcut;
 
-  public PointcutContextFilter(DslPointcut<GroovyClassDescriptor> pointcut) {
+  public PointcutContextFilter(DslPointcut<GroovyClassDescriptor,?> pointcut) {
     myPointcut = pointcut;
   }
 
   @Override
   public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-    return myPointcut.matches(descriptor, ctx);
+    return myPointcut.matches(descriptor, ctx) != null;
   }
 }
