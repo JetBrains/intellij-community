@@ -113,18 +113,29 @@ public abstract class DslPointcut<T,V> {
         if (src instanceof GdslType) {
           return arg.equals(((GdslType)src).getName()) ? Arrays.asList((String)arg) : null;
         }
+        if (src instanceof GdslMethod) {
+          return arg.equals(((GdslMethod)src).getName()) ? Arrays.asList((String)arg) : null;
+        }
         return Collections.emptyList();
       }
 
       @Override
       boolean operatesOn(Class c) {
-        return c == GdslType.class;
+        return c == GdslType.class || c == GdslMethod.class;
       }
     };
 
   }
 
   public static DslPointcut<GroovyClassDescriptor, GdslMethod> enclosingMethod(final Object arg) {
+    final DslPointcut<? super GdslMethod,?> inner;
+    if (arg instanceof String) {
+      inner = name(arg);
+    } else {
+      inner = (DslPointcut<GdslMethod, ?>)arg;
+      assert inner.operatesOn(GdslMethod.class) : "The argument to enclosingMethod should be a pointcut working with types, e.g. name";
+    }
+
     return new DslPointcut<GroovyClassDescriptor, GdslMethod>() {
       @Override
       List<GdslMethod> matches(GroovyClassDescriptor src, ProcessingContext context) {
@@ -135,8 +146,9 @@ public abstract class DslPointcut<T,V> {
           if (method == null) {
             break;
           }
-          if (arg.equals(method.getName())) {
-            result.add(new GdslMethod());
+          final GdslMethod wrapper = new GdslMethod(method);
+          if (inner.matches(wrapper, context) != null) {
+            result.add(wrapper);
           }
           place = method;
         }

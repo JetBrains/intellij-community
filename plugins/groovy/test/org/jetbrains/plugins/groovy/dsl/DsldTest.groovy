@@ -70,6 +70,14 @@ class Foo {
 '''
   }
 
+  public void testMethodName() {
+    checkHighlighting 'contribute(enclosingMethod(name("goo"))) { property name:"foo" }',
+                      '''
+def goo() { println foo + "".foo }
+def doo() { println <warning>foo</warning> }
+'''
+  }
+
 
   private def checkHighlighting(String dsl, String code) {
     def file = myFixture.addFileToProject('a.gdsl', dsl)
