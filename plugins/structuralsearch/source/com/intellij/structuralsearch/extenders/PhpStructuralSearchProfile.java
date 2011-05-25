@@ -1,11 +1,13 @@
 package com.intellij.structuralsearch.extenders;
 
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.jetbrains.php.lang.PhpFileType;
 import com.jetbrains.php.lang.lexer.PhpTokenTypes;
+import com.jetbrains.php.refactoring.PhpTemplateContextType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,5 +49,10 @@ public class PhpStructuralSearchProfile extends StructuralSearchProfileBase {
   @Override
   protected TokenSet getVariableDelimiters() {
     return VAR_DELIMITERS;
+  }
+
+  @Override
+  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+    return PhpTemplateContextType.class;
   }
 }

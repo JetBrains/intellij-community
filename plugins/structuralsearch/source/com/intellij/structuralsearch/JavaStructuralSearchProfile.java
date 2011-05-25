@@ -1,11 +1,18 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
@@ -14,6 +21,8 @@ import com.intellij.structuralsearch.impl.matcher.filters.JavaLexicalNodesFilter
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
+import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,6 +123,55 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       result = PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", text).getChildren();
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public Editor createEditor(@NotNull SearchContext searchContext,
+                             @NotNull FileType fileType,
+                             Language dialect,
+                             String text,
+                             boolean useLastConfiguration) {
+    // provides autocompletion
+
+    PsiElement element = searchContext.getFile();
+
+    if (element != null && !useLastConfiguration) {
+      final Editor selectedEditor = FileEditorManager.getInstance(searchContext.getProject()).getSelectedTextEditor();
+
+      if (selectedEditor != null) {
+        int caretPosition = selectedEditor.getCaretModel().getOffset();
+        PsiElement positionedElement = searchContext.getFile().findElementAt(caretPosition);
+
+        if (positionedElement == null) {
+          positionedElement = searchContext.getFile().findElementAt(caretPosition + 1);
+        }
+
+        if (positionedElement != null) {
+          element = PsiTreeUtil.getParentOfType(
+            positionedElement,
+            PsiClass.class, PsiCodeBlock.class
+          );
+        }
+      }
+    }
+
+    final PsiManager psimanager = PsiManager.getInstance(searchContext.getProject());
+    final Project project = psimanager.getProject();
+    final PsiCodeFragment file = createCodeFragment(project, text, element);
+    final Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument(file);
+    DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(file, false);
+    return UIUtil.createEditor(doc, searchContext.getProject(), true, true, getTemplateContextType());
+  }
+
+  @Override
+  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+    return JavaCodeContextType.class;
+  }
+
+  protected PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    return factory.createCodeBlockCodeFragment(text, context, true);
   }
 
   @Override

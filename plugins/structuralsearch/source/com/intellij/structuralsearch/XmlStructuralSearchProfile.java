@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.XmlContextType;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.xml.XMLLanguage;
@@ -86,6 +88,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     }
 
     return document.getRootTag().getValue().getChildren();
+  }
+
+  @Override
+  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+    return XmlContextType.class;
   }
 
   @NotNull

@@ -17,10 +17,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.MatchResultSink;
-import com.intellij.structuralsearch.MatchingProcess;
-import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
@@ -258,7 +255,17 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
 
     if (replaceButton!=null) {
       if (pointer.getElement().isValid()) {
-        UIUtil.setContent( replacement, replacements.get(index).getReplacement(), 0, -1, project );
+        final ReplacementInfo replacementInfo = replacements.get(index);
+        UIUtil.setContent( replacement, replacementInfo.getReplacement(), 0, -1, project );
+
+        final PsiElement firstMatch = replacementInfo.getMatch(0);
+        if (firstMatch != null) {
+          final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(firstMatch);
+          if (profile != null) {
+            UIUtil.updateHighlighter(editor, profile);
+          }
+        }
+
         replaceButton.setVisible(true);
         replacement.getComponent().setVisible(true);
       } else {
@@ -320,7 +327,8 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
             )
           ),
           project,
-          true
+          true,
+          null
         );
 
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file,false);

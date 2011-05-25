@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
@@ -8,6 +10,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +124,8 @@ public class SelectTemplateDialog extends DialogWrapper {
       EditorFactory.getInstance().createDocument(""),
       project,
       false,
-      true
+      true,
+      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class)
     );
 
     JComponent centerComponent;
@@ -131,7 +135,8 @@ public class SelectTemplateDialog extends DialogWrapper {
         EditorFactory.getInstance().createDocument(""),
         project,
         false,
-        true
+        true,
+        ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class)
       );
       centerComponent = new Splitter(true);
       ((Splitter)centerComponent).setFirstComponent(searchPatternEditor.getComponent());

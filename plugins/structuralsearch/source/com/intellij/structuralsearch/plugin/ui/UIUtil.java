@@ -1,11 +1,11 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -27,8 +27,9 @@ import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,11 +44,15 @@ public class UIUtil {
   private static final String MODIFY_EDITOR_CONTENT = SSRBundle.message("modify.editor.content.command.name");
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
-  public static Editor createEditor(Document doc, final Project project, boolean editable) {
-    return createEditor(doc, project, editable, false);
+  public static Editor createEditor(Document doc, final Project project, boolean editable, @Nullable TemplateContextType contextType) {
+    return createEditor(doc, project, editable, false, contextType);
   }
 
-  public static Editor createEditor(Document doc, final Project project, boolean editable, boolean addToolTipForVariableHandler) {
+  public static Editor createEditor(@NotNull Document doc,
+                                    final Project project,
+                                    boolean editable,
+                                    boolean addToolTipForVariableHandler,
+                                    @Nullable TemplateContextType contextType) {
     final Editor editor =
         editable ? EditorFactory.getInstance().createEditor(doc, project) : EditorFactory.getInstance().createViewer(doc, project);
 
@@ -74,12 +79,11 @@ public class UIUtil {
       ((EditorEx)editor).setEmbeddedIntoDialogWrapper(true);
     }
 
-    TemplateContext context = new TemplateContext();
-    // TODO: this should be managed on template file type basis
-    final TemplateContextType contextType =
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
-    context.setEnabled(contextType, true);
-    TemplateEditorUtil.setHighlighter(editor, context);
+    if (contextType != null) {
+      TemplateContext context = new TemplateContext();
+      context.setEnabled(contextType, true);
+      TemplateEditorUtil.setHighlighter(editor, context);
+    }
 
     if (addToolTipForVariableHandler) {
       SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor);
@@ -300,5 +304,14 @@ public class UIUtil {
 
     Point p = SwingUtilities.convertPoint(editor.getContentComponent(), bestPoint, editor.getComponent().getRootPane().getLayeredPane());
     TooltipController.getInstance().showTooltip(editor, p, text, false, group);
+  }
+
+  public static void updateHighlighter(Editor editor, StructuralSearchProfile profile) {
+    final TemplateContextType contextType = profile.getTemplateContextType();
+    if (contextType != null) {
+      TemplateContext context = new TemplateContext();
+      context.setEnabled(contextType, true);
+      TemplateEditorUtil.setHighlighter(editor, context);
+    }
   }
 }

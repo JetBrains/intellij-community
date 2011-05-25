@@ -1,7 +1,9 @@
 package com.intellij.structuralsearch.extenders;
 
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JSTokenTypes;
+import com.intellij.lang.javascript.JavaScriptCodeContextType;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiElement;
@@ -33,6 +35,11 @@ public class JSStructuralSearchProfile2 extends StructuralSearchProfileBase {
   @Override
   protected TokenSet getVariableDelimiters() {
     return VARIABLE_DELIMETERS;
+  }
+
+  @Override
+  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+    return JavaScriptCodeContextType.class;
   }
 
   @NotNull

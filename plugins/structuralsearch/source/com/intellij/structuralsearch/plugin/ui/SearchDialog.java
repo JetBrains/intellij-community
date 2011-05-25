@@ -28,10 +28,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
@@ -48,7 +49,6 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -103,6 +103,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private final boolean myRunFindActionOnClose;
   private boolean myDoingOkAction;
 
+  private String mySavedEditorText;
+  private JPanel myContentPanel;
+  private JComponent myEditorPanel;
+
   public SearchDialog(SearchContext searchContext) {
     this(searchContext, true, true);
   }
@@ -148,34 +152,30 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     initiateValidation();
   }
 
-  protected Editor createEditor(final SearchContext searchContext) {
-    PsiElement element = searchContext.getFile();
+  protected Editor createEditor(final SearchContext searchContext, String text) {
+    Editor editor = null;
 
-    if (element != null && !useLastConfiguration) {
-      final Editor selectedEditor = FileEditorManager.getInstance(searchContext.getProject()).getSelectedTextEditor();
+    if (fileTypes != null) {
+      final String selectedFileTypeName = (String)fileTypes.getSelectedItem();
+      if (selectedFileTypeName != null) {
+        final FileType fileType = getFileTypeByName(selectedFileTypeName);
+        final Language dialect = (Language)dialects.getSelectedItem();
 
-      if (selectedEditor != null) {
-        int caretPosition = selectedEditor.getCaretModel().getOffset();
-        PsiElement positionedElement = searchContext.getFile().findElementAt(caretPosition);
-
-        if (positionedElement == null) {
-          positionedElement = searchContext.getFile().findElementAt(caretPosition + 1);
-        }
-
-        if (positionedElement != null) {
-          element = PsiTreeUtil.getParentOfType(
-            positionedElement,
-            PsiClass.class, PsiCodeBlock.class
-          );
+        if (fileType != null) {
+          final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+          if (profile != null) {
+            editor = profile.createEditor(searchContext, fileType, dialect, text, useLastConfiguration);
+          }
         }
       }
     }
 
-    final PsiManager psimanager = PsiManager.getInstance(searchContext.getProject());
-    PsiCodeFragment file = JavaPsiFacade.getInstance(psimanager.getProject()).getElementFactory().createCodeBlockCodeFragment("", element, true);
-    Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument(file);
-    DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(file, false);
-    Editor editor = UIUtil.createEditor(doc, searchContext.getProject(), true, true);
+    if (editor == null) {
+      final EditorFactory factory = EditorFactory.getInstance();
+      final Document document = factory.createDocument("");
+      editor = factory.createEditor(document, searchContext.getProject());
+      editor.getSettings().setFoldingOutlineShown(false);
+    }
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(final DocumentEvent event) {}
@@ -273,10 +273,11 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }
 
     fileTypes = new JComboBox(ArrayUtil.toStringArray(typeNames));
-    fileTypes.addActionListener(new ActionListener() {
+    fileTypes.addItemListener(new ItemListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void itemStateChanged(ItemEvent e) {
         updateDialectsAndContexts();
+        updateEditor();
       }
     });
 
@@ -299,6 +300,12 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           value = ((Language)value).getDisplayName();
         }
         return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
+    });
+    dialects.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        updateEditor();
       }
     });
 
@@ -337,6 +344,18 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     contexts.setSelectedItem(ourContext);
 
     updateDialectsAndContexts();
+  }
+
+  private void updateEditor() {
+    if (myContentPanel != null) {
+      if (myEditorPanel != null) {
+        myContentPanel.remove(myEditorPanel);
+      }
+      disposeEditorContent();
+      myEditorPanel = createEditorContent();
+      myContentPanel.add(myEditorPanel, BorderLayout.CENTER);
+      myContentPanel.revalidate();
+    }
   }
 
   private void updateDialectsAndContexts() {
@@ -606,7 +625,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     JPanel result = new JPanel(new BorderLayout());
 
     result.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("search.template")));
-    searchCriteriaEdit = createEditor(searchContext);
+    searchCriteriaEdit = createEditor(searchContext, mySavedEditorText != null ? mySavedEditorText : "");
     result.add(BorderLayout.CENTER, searchCriteriaEdit.getComponent());
     result.setMinimumSize(new Dimension(150, 100));
 
@@ -618,14 +637,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected JComponent createCenterPanel() {
-
-    JPanel editorPanel = new JPanel(new BorderLayout());
-    editorPanel.add(BorderLayout.CENTER, createEditorContent());
-    editorPanel.add(BorderLayout.SOUTH, Box.createVerticalStrut(8));
+    myContentPanel = new JPanel(new BorderLayout());
+    myEditorPanel = createEditorContent();
+    myContentPanel.add(BorderLayout.CENTER, myEditorPanel);
+    myContentPanel.add(BorderLayout.SOUTH, Box.createVerticalStrut(8));
     JComponent centerPanel = new JPanel(new BorderLayout());
     {
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(BorderLayout.CENTER, editorPanel);
+      panel.add(BorderLayout.CENTER, myContentPanel);
       panel.add(BorderLayout.SOUTH, createTemplateManagementButtons());
       centerPanel.add(BorderLayout.CENTER, panel);
     }
@@ -681,6 +700,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     optionsContent.add(BorderLayout.SOUTH, panel);
 
+    updateEditor();
     return centerPanel;
   }
 
@@ -1031,18 +1051,23 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   public void dispose() {
     Configuration.setActiveCreator(null);
+    disposeEditorContent();
 
-    // this will remove from myExcludedSet
-    DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(
-      PsiDocumentManager.getInstance(searchContext.getProject()).getPsiFile(
-        searchCriteriaEdit.getDocument()
-      ), true
-    );
-
-    EditorFactory.getInstance().releaseEditor(searchCriteriaEdit);
     myAlarm.cancelAllRequests();
 
     super.dispose();
+  }
+
+  protected void disposeEditorContent() {
+    mySavedEditorText = searchCriteriaEdit.getDocument().getText();
+
+    // this will remove from myExcludedSet
+    final PsiFile file = PsiDocumentManager.getInstance(searchContext.getProject()).getPsiFile(searchCriteriaEdit.getDocument());
+    if (file != null) {
+      DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(file, true);
+    }
+
+    EditorFactory.getInstance().releaseEditor(searchCriteriaEdit);
   }
 
   protected void doHelpAction() {

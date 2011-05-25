@@ -36,6 +36,8 @@ public class ReplaceDialog extends SearchDialog {
   private JCheckBox shortenFQN;
   private JCheckBox formatAccordingToStyle;
 
+  private String mySavedEditorText;
+
   protected String getDefaultTitle() {
     return SSRBundle.message("structural.replace.title");
   }
@@ -64,7 +66,7 @@ public class ReplaceDialog extends SearchDialog {
     result.add(BorderLayout.CENTER, p = new Splitter(true, 0.5f));
     p.setFirstComponent(super.createEditorContent());
 
-    replaceCriteriaEdit = createEditor(searchContext);
+    replaceCriteriaEdit = createEditor(searchContext, mySavedEditorText != null ? mySavedEditorText : "");
     JPanel replace = new JPanel(new BorderLayout());
     replace.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("replacement.template.label")));
     replace.add(BorderLayout.CENTER, replaceCriteriaEdit.getComponent());
@@ -239,9 +241,10 @@ public class ReplaceDialog extends SearchDialog {
     return configuration;
   }
 
-  public void dispose() {
+  protected void disposeEditorContent() {
+    mySavedEditorText = replaceCriteriaEdit.getDocument().getText();
     EditorFactory.getInstance().releaseEditor(replaceCriteriaEdit);
-    super.dispose();
+    super.disposeEditorContent();
   }
 
   public void setValuesFromConfig(Configuration configuration) {

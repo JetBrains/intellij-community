@@ -18,6 +18,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.usageView.UsageInfo;
 
@@ -51,6 +53,11 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     Segment range = info.getSegment();
     hilight(element.getContainingFile().getVirtualFile(), range.getStartOffset(), range.getEndOffset());
     UIUtil.setContent(replacement, replacementString,0,-1,project);
+
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+    if (profile != null) {
+      UIUtil.updateHighlighter(replacement, profile);
+    }
   }
 
   private void hilight(VirtualFile file,int start, int end) {
@@ -92,7 +99,8 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
         )
       ),
       project,
-      true
+      true,
+      null
     );
 
     DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file,false);

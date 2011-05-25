@@ -1,13 +1,16 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -15,8 +18,11 @@ import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisito
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
+import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +86,55 @@ public abstract class StructuralSearchProfile {
                                         @NotNull Project project,
                                         boolean physical) {
     return createPatternTree(text, context, fileType, null, null, null, project, physical);
+  }
+
+  @NotNull
+  public Editor createEditor(@NotNull SearchContext searchContext,
+                             @NotNull FileType fileType,
+                             Language dialect,
+                             String text,
+                             boolean useLastConfiguration) {
+    PsiFile codeFragment = createCodeFragment(searchContext.getProject(), text, null);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(searchContext, fileType, dialect, text);
+    }
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(codeFragment, false);
+      return UIUtil.createEditor(doc, searchContext.getProject(), true, true, getTemplateContextType());
+    }
+
+    final EditorFactory factory = EditorFactory.getInstance();
+    final Document document = factory.createDocument(text);
+    final EditorEx editor = (EditorEx)factory.createEditor(document, searchContext.getProject());
+    editor.getSettings().setFoldingOutlineShown(false);
+    return editor;
+  }
+
+  private static PsiFile createFileFragment(SearchContext searchContext, FileType fileType, Language dialect, String text) {
+    final String name = "__dummy." + fileType.getDefaultExtension();
+    final PsiFileFactory factory = PsiFileFactory.getInstance(searchContext.getProject());
+
+    return dialect == null ?
+           factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), true, true) :
+           factory.createFileFromText(name, dialect, text, true, true);
+  }
+
+  @Nullable
+  protected PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
+    return null;
+  }
+
+  @Nullable
+  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+    return null;
+  }
+
+  public final TemplateContextType getTemplateContextType() {
+    final Class<? extends TemplateContextType> clazz = getTemplateContextTypeClass();
+    return clazz != null ? ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz) : null;
   }
 
   @Nullable

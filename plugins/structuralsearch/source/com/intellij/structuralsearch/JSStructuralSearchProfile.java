@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.*;
@@ -208,6 +209,11 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
     }
 
     return originalElements;
+  }
+
+  @Override
+  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+    return JavaScriptCodeContextType.class;
   }
 
   public static boolean shouldBeParsedInBlockContext(PsiElement[] elements) {
