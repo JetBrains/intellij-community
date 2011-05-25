@@ -26,7 +26,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -66,6 +65,12 @@ public class GrMapType extends GrLiteralClassType {
 
     myJavaClassName =
       facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : CommonClassNames.JAVA_UTIL_MAP;
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType rawType() {
+    return new GrMapType(myFacade, getResolveScope(), Collections.<String, PsiType>emptyMap(), Collections.<Pair<PsiType,PsiType>>emptyList(), getLanguageLevel());
   }
 
   @NotNull
