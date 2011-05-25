@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.local;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -35,6 +36,9 @@ public class EditComment implements ChangeListCommand {
     myListCopy = worker.getCopyByName(myName);
     if (myListCopy != null) {
       myOldComment = worker.editComment(myName, myNewComment);
+      if (Comparing.equal(myOldComment, myNewComment)) {
+        myListCopy = null;  // nothing changed, no notify
+      }
     }
   }
 
