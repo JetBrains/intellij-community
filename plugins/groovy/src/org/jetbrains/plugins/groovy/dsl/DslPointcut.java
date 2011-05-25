@@ -133,7 +133,7 @@ public abstract class DslPointcut<T,V> {
       inner = name(arg);
     } else {
       inner = (DslPointcut<GdslMethod, ?>)arg;
-      assert inner.operatesOn(GdslMethod.class) : "The argument to enclosingMethod should be a pointcut working with types, e.g. name";
+      assert inner.operatesOn(GdslMethod.class) : "The argument to enclosingMethod should be a pointcut working with methods, e.g. name";
     }
 
     return new DslPointcut<GroovyClassDescriptor, GdslMethod>() {
