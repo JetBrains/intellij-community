@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -187,9 +188,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         instruction = ReadWriteInstruction.write(myBuilder, importElement, asNameElement.getName());
       }
       else {
-        final PyReferenceExpression importReference = importElement.getImportReference();
-        if (importReference != null) {
-          instruction = ReadWriteInstruction.write(myBuilder, importElement, importReference.getReferencedName());
+        final PyQualifiedName name = importElement.getImportedQName();
+        if (name != null && name.getComponentCount() > 0) {
+          instruction = ReadWriteInstruction.write(myBuilder, importElement, name.getComponents().get(0));
         }
       }
       if (instruction != null) {
