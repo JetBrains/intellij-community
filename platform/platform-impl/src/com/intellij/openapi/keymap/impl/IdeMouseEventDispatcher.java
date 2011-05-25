@@ -34,7 +34,11 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+
+import static java.awt.event.MouseEvent.*;
 
 /**
  * Current implementation of the dispatcher is intended to filter mouse event addressed to
@@ -48,6 +52,18 @@ public final class IdeMouseEventDispatcher {
   private final ArrayList<AnAction> myActions = new ArrayList<AnAction>(1);
   private final Map<Container, Integer> myRootPane2BlockedId = new HashMap<Container, Integer>();
   private int myLastHorScrolledComponentHash = 0;
+
+  // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
+  // then mouse_pressed(501), mouse_released(502) etc. Here, mouse events sorted so we can compare
+  // theirs ids to properly use method blockNextEvents(MouseEvent)
+  private static final List<Integer> SWING_EVENTS_PRIORITY = Arrays.asList(MOUSE_PRESSED,
+                                                                           MOUSE_ENTERED,
+                                                                           MOUSE_EXITED,
+                                                                           MOUSE_MOVED,
+                                                                           MOUSE_DRAGGED,
+                                                                           MOUSE_WHEEL,
+                                                                           MOUSE_RELEASED,
+                                                                           MOUSE_CLICKED);
 
   public IdeMouseEventDispatcher() {
   }
@@ -108,7 +124,7 @@ public final class IdeMouseEventDispatcher {
 
     if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
           e.getID() == MouseEvent.MOUSE_RELEASED ||
-          e.getID() == MouseEvent.MOUSE_CLICKED)) {
+          e.getID() == MOUSE_CLICKED)) {
       ignore = true;
     }
 
@@ -125,12 +141,11 @@ public final class IdeMouseEventDispatcher {
     if (root != null) {
       final Integer lastId = myRootPane2BlockedId.get(root);
       if (lastId != null) {
-        if (e.getID() <= lastId.intValue()) {
-          myRootPane2BlockedId.remove(root);
-        }
-        else {
+        if (SWING_EVENTS_PRIORITY.indexOf(lastId) < SWING_EVENTS_PRIORITY.indexOf(e.getID())) {
           myRootPane2BlockedId.put(root, e.getID());
           return true;
+        } else {
+          myRootPane2BlockedId.remove(root);
         }
       }
     }
