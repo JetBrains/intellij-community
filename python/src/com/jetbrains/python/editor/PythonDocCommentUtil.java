@@ -29,7 +29,7 @@ public class PythonDocCommentUtil {
             if (error != null)
               return true;
 
-            if (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''")))
+            if (text.length() > 3 && (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''"))))
               return true;
           }
         }
