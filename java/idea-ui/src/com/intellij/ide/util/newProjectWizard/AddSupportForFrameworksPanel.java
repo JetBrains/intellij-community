@@ -21,6 +21,7 @@ import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelAdapter;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
@@ -32,10 +33,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -180,19 +178,31 @@ public class AddSupportForFrameworksPanel implements Disposable {
       optionsPanel.add(librariesOptionsPanelWrapper);
       configurable.addListener(new FrameworkSupportConfigurableListener() {
         public void frameworkVersionChanged() {
-          librariesOptionsPanelWrapper.removeAll();
-          addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper, addSeparator);
-          librariesOptionsPanelWrapper.revalidate();
+          updateLibrariesPanel(librariesOptionsPanelWrapper, node, addSeparator);
         }
       });
+      myModel.addFrameworkListener(new FrameworkSupportModelAdapter() {
+        @Override
+        public void wizardStepUpdated() {
+          if (node.isSettingsObsolete()) {
+            updateLibrariesPanel(librariesOptionsPanelWrapper, node, addSeparator);
+          }
+        }
+      }, this);
       addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper, addSeparator);
       myOptionsPanel.add(id, optionsPanel);
       myInitializedOptionsPanelIds.add(id);
     }
   }
 
+  private void updateLibrariesPanel(JPanel librariesOptionsPanelWrapper, FrameworkSupportNode node, boolean addSeparator) {
+    librariesOptionsPanelWrapper.removeAll();
+    addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper, addSeparator);
+    librariesOptionsPanelWrapper.revalidate();
+  }
+
   private void addLibrariesOptionsPanel(FrameworkSupportNode node, JPanel librariesOptionsPanelWrapper, boolean addSeparator) {
-    final LibraryCompositionSettings libraryCompositionSettings = node.getLibraryCompositionSettings();
+    final LibraryCompositionSettings libraryCompositionSettings = node.getLibraryCompositionSettings(true);
     final LibraryOptionsPanel oldPanel = node.getLibraryCompositionOptionsPanel();
     LibraryOptionsPanel newPanel = oldPanel;
     if (oldPanel == null || !oldPanel.getSettings().equals(libraryCompositionSettings)) {
@@ -223,7 +233,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     List<LibraryCompositionSettings> list = new ArrayList<LibraryCompositionSettings>();
     List<FrameworkSupportNode> selected = getFrameworkNodes(true);
     for (FrameworkSupportNode node : selected) {
-      final LibraryCompositionSettings settings = node.getLibraryCompositionSettings();
+      final LibraryCompositionSettings settings = node.getLibraryCompositionSettings(false);
       if (settings != null) {
         list.add(settings);
       }
@@ -336,7 +346,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     for (FrameworkSupportNode node : selectedFrameworks) {
       FrameworkSupportConfigurable configurable = node.getConfigurable();
       selectedConfigurables.add(configurable);
-      final LibraryCompositionSettings settings = node.getLibraryCompositionSettings();
+      final LibraryCompositionSettings settings = node.getLibraryCompositionSettings(false);
       Library library = settings != null ? settings.addLibraries(rootModel, addedLibraries, myLibrariesContainer) : null;
       configurable.addSupport(module, rootModel, library);
     }

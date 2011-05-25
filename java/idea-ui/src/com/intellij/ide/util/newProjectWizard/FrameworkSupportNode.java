@@ -126,9 +126,13 @@ public class FrameworkSupportNode extends CheckedTreeNode {
     return version != null ? version.getLibraries() : LibraryInfo.EMPTY_ARRAY;
   }
 
+  public boolean isSettingsObsolete() {
+    return myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings);
+  }
+
   @Nullable
-  public LibraryCompositionSettings getLibraryCompositionSettings() {
-    if (myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings)) {
+  public LibraryCompositionSettings getLibraryCompositionSettings(final boolean recreateIfObsolete) {
+    if (myLibraryCompositionSettings == null || recreateIfObsolete && isObsolete(myLibraryCompositionSettings)) {
       final CustomLibraryDescription description = getOrCreateLibraryDescription();
       if (description != null) {
         myLibraryCompositionSettings = new LibraryCompositionSettings(description, myBaseDirForLibrariesGetter.compute());
