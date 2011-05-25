@@ -15,6 +15,7 @@ import java.util.*;
 /**
  * @author peter
  */
+@SuppressWarnings("UnusedDeclaration")
 public abstract class DslPointcut<T,V> {
   public static final DslPointcut UNKNOWN = new DslPointcut() {
 

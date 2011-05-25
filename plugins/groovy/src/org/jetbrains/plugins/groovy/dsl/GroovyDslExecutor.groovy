@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.util.ProcessingContext
+import java.lang.reflect.Modifier
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider
 import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
@@ -70,10 +71,16 @@ public class GroovyDslExecutor {
     mc.contributor = contribute
     mc.contribute = contribute
 
-    mc.currentType = { arg -> DslPointcut.currentType(handleImplicitBind(arg)) }
-    mc.enclosingType = { arg -> DslPointcut.enclosingType(handleImplicitBind(arg)) }
-    mc.enclosingMethod = { arg -> DslPointcut.enclosingMethod(handleImplicitBind(arg)) }
     mc.bind = { arg -> DslPointcut.bind(arg) }
+
+    for (m in DslPointcut.class.declaredMethods) {
+      if ((m.modifiers & Modifier.STATIC) && (m.modifiers & Modifier.PUBLIC)) {
+        def name = m.name
+        if (name != 'bind') {
+          mc."$name" = { arg -> org.jetbrains.plugins.groovy.dsl.DslPointcut."$name"(handleImplicitBind(arg)) }
+        }
+      }
+    }
 
     oldStylePrimitives(mc)
 
