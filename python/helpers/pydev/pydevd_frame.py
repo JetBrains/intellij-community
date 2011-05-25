@@ -38,13 +38,13 @@ class PyDBFrame:
 
             can_skip = False
 
-            if not always_exception_set:
-                if info.pydev_state == STATE_RUN:
-                    #we can skip if:
-                    #- we have no stop marked
-                    #- we should make a step return/step over and we're not in the current frame
-                    can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
-                    or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
+            #if not len(always_exception_set):
+            #    if info.pydev_state == STATE_RUN:
+            #        #we can skip if:
+            #        #- we have no stop marked
+            #        #- we should make a step return/step over and we're not in the current frame
+            #        can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
+            #        or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
 
             if mainDebugger.django_breakpoints:
                 can_skip = False
@@ -87,7 +87,7 @@ class PyDBFrame:
                 (exception, value, trace) = arg
                 global exception_set
 
-                exception_breakpoint = get_exception_breakpoint(exception, tuple(exception_set), NOTIFY_ALWAYS)
+                exception_breakpoint = get_exception_breakpoint(exception, dict(exception_set), NOTIFY_ALWAYS)
                 if exception_breakpoint is not None:
                     curr_func_name = frame.f_code.co_name
                     self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)

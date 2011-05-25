@@ -3,7 +3,7 @@ import sys
 
 _original_excepthook = None
 _handle_exceptions = None
-exception_set = set()
+exception_set = {}
 always_exception_set = set()
 
 NOTIFY_ALWAYS="NOTIFY_ALWAYS"
@@ -15,11 +15,19 @@ threadingCurrentThread = threading.currentThread
 from pydevd_comm import GetGlobalDebugger
 
 class ExceptionBreakpoint:
-    def __init__(self, qname, exctype, notify_always, notify_on_terminate):
+    def __init__(self, qname, notify_always, notify_on_terminate):
+        exctype = get_class(qname)
         self.qname = qname
-        self.name = exctype.__name__
+        if exctype is not None:
+            self.name = exctype.__name__
+        else:
+            self.name = None
+
         self.type = exctype
         self.notify = {NOTIFY_ALWAYS: notify_always, NOTIFY_ON_TERMINATE: notify_on_terminate}
+
+    def __str__(self):
+        return self.qname
 
 class LineBreakpoint:
     def __init__(self, type, flag, condition, func_name, expression):
@@ -50,10 +58,14 @@ class LineBreakpoint:
 
 
 def get_exception_breakpoint(exctype, exceptions, notify_class):
+    name = exctype.__module__ + '.' + exctype.__name__
     exc = None
     if exceptions is not None:
-        for e in exceptions:
-            if e.notify[notify_class] and issubclass(exctype, e.type):
+        for k, e in exceptions.items():
+            if name == k:
+                exc = e
+                break
+            if e.notify[notify_class] and ((e.type is not None and issubclass(exctype, e.type))):
                 if exc is None or issubclass(e.type, exc.type):
                     exc = e
     return exc
