@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsKey;
 import org.jetbrains.annotations.NotNull;
@@ -46,5 +47,10 @@ public abstract class VcsCheckinHandlerFactory implements BaseCheckinHandlerFact
 
   public VcsKey getKey() {
     return myKey;
+  }
+
+  @Override
+  public BeforeCheckinDialogHandler createSystemReadyHandler(Project project) {
+    return null;
   }
 }

@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,4 +45,9 @@ public abstract class CheckinHandlerFactory implements BaseCheckinHandlerFactory
    */
   @NotNull
   public abstract CheckinHandler createHandler(final CheckinProjectPanel panel);
+
+  @Override
+  public BeforeCheckinDialogHandler createSystemReadyHandler(Project project) {
+    return null;
+  }
 }
