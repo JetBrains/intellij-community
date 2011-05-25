@@ -27,6 +27,7 @@ import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.find.impl.livePreview.LivePreviewControllerBase;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -261,6 +262,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myActionsGroup.add(new ToggleMatchCase(this));
     myActionsGroup.add(new ToggleRegex(this));
 
+    myActionsToolbar = ActionManager.getInstance().createActionToolbar("SearchBar", myActionsGroup, true);
+    myActionsToolbar.setSecondaryActionsTooltip("More Options(" + ShowMoreOptions.SHORT_CUT + ")");
+
     myActionsGroup.addAction(new ToggleWholeWordsOnlyAction(this));
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
       myActionsGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
@@ -269,13 +273,18 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myActionsGroup.addAction(new TogglePreserveCaseAction(this)).setAsSecondary(true);
     myActionsGroup.addAction(new ToggleSelectionOnlyAction(this));
 
-    myActionsToolbar = ActionManager.getInstance().createActionToolbar("SearchBar", myActionsGroup, true);
 
     myActionsToolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
     myToolbarComponent = myActionsToolbar.getComponent();
     myToolbarComponent.setBorder(null);
     myToolbarComponent.setOpaque(false);
+
     myLeadPanel.add(myToolbarComponent);
+
+    if (myToolbarComponent instanceof ActionToolbarImpl) {
+      new ShowMoreOptions(myToolbarComponent, mySearchField);
+    }
+
 
     JPanel tailPanel = new NonOpaquePanel(new BorderLayout(5, 0));
     JPanel tailContainer = new NonOpaquePanel(new BorderLayout(5, 0));
@@ -443,6 +452,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myReplacementPane = createLeadPane();
     myReplaceField = createTextField(myReplacementPane);
 
+    if (myToolbarComponent instanceof ActionToolbarImpl) {
+      new ShowMoreOptions(myToolbarComponent, myReplaceField);
+    }
 
     DocumentListener replaceFieldListener = new DocumentListener() {
       @Override
@@ -617,7 +629,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       }
     });
     new CloseOnESCAction(this, editorTextField);
-
     return editorTextField;
   }
 
