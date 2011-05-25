@@ -774,5 +774,12 @@ public class UTest {
     assert myFixture.lookupElementStrings == ['new', 'nextWord']
   }
 
+  public void testNoClassesInUnqualifiedImports() {
+    myFixture.addClass("package xxxxx; public class Xxxxxxxxx {}")
+    myFixture.configureByText 'a.java', 'package foo; import <caret>'
+    type 'xxx'
+    assert !lookup
+  }
+
 
 }
