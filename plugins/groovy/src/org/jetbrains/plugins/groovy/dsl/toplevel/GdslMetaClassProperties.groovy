@@ -25,24 +25,6 @@ class GdslMetaClassProperties {
   Closure context = {Map args -> return new Context(args) }
 
   /**
-   * Contributor definition
-   */
-  Closure contributor = {cts, Closure toDo ->
-    if (cts instanceof Map) {
-      cts = new Context(cts)
-    }
-    if (!(cts instanceof List)) {
-      assert cts instanceof Context: "The contributor() argument must be a context"
-      cts = [cts]
-    }
-    def contexts = cts.findAll { it != null } as List
-    if (contexts) {
-      def filters = contexts.collect { return it.filter }
-      myExecutor.addClassEnhancer(filters, toDo)
-    }
-  }
-
-  /**
    * Auxiliary methods for context definition
    */
   Closure closureScope = {Map args -> return new ClosureScope(args)}

@@ -6,10 +6,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
+import org.jetbrains.plugins.groovy.dsl.toplevel.Context
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter
 import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
 
- /**
+/**
  * @author ilyas
  */
 
@@ -37,6 +38,10 @@ public class GroovyDslExecutor {
     def mc = new ExpandoMetaClass(script.class, false)
     def enhancer = new GdslMetaClassProperties(this)
 
+    mc.methodMissing = { String name, Object args ->
+      return new Context([:])
+    }
+
     // Fill script with necessary properties
     def properties = enhancer.metaClass.properties
     for (MetaProperty p in properties) {
@@ -44,6 +49,24 @@ public class GroovyDslExecutor {
         mc."$p.name" = p.getProperty(enhancer)
       }
     }
+
+
+    def contribute = {cts, Closure toDo ->
+      if (cts instanceof Map) {
+        cts = new Context(cts)
+      }
+      if (!(cts instanceof List)) {
+        assert cts instanceof Context: "The contributor() argument must be a context"
+        cts = [cts]
+      }
+      def contexts = cts.findAll { it != null } as List
+      if (contexts) {
+        def filters = contexts.collect { return it.filter }
+        addClassEnhancer(filters, toDo)
+      }
+    }
+    mc.contributor = contribute
+    mc.contribute = contribute
 
     mc.supportsVersion = { String ver ->
       StringUtil.compareVersionNumbers(ideaVersion, ver) >= 0
