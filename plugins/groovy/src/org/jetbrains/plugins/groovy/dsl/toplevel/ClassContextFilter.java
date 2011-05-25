@@ -63,18 +63,20 @@ public class ClassContextFilter implements ContextFilter {
     return new ClassContextFilter(new Condition<Pair<PsiType, PsiFile>>() {
       @Override
       public boolean value(Pair<PsiType, PsiFile> p) {
-        PsiFile place = p.second;
-        //PsiType myType = JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(typeText, place);
-        PsiType myType = getCachedType(typeText, place);
-        if (p.first == PsiType.NULL) return myType == PsiType.NULL;
-        return TypesUtil.isAssignable(myType, p.first, place.getManager(), place.getResolveScope(), false);
+        return isSubtype(p.first, p.second, typeText);
       }
     });
   }
 
+  public static boolean isSubtype(PsiType checked, PsiFile placeFile, String typeText) {
+    PsiType myType = getCachedType(typeText, placeFile);
+    if (checked == PsiType.NULL) return myType == PsiType.NULL;
+    return TypesUtil.isAssignable(myType, checked, placeFile.getManager(), placeFile.getResolveScope(), false);
+  }
+
   private static final Key<Map<String, PsiType>> CACHED_TYPES = Key.create("Cached types");
 
-  private static PsiType getCachedType(String typeText, PsiFile context) {
+  public static PsiType getCachedType(String typeText, PsiFile context) {
     Map<String, PsiType> map = context.getUserData(CACHED_TYPES);
     if (map == null) {
       map = new ConcurrentHashMap<String, PsiType>();

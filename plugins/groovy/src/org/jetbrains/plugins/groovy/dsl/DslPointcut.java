@@ -1,10 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
@@ -36,13 +33,42 @@ public abstract class DslPointcut<T,V> {
 
   abstract boolean operatesOn(Class c);
 
+  public static DslPointcut<GdslType, GdslType> subType(final Object arg) {
+    return new DslPointcut<GdslType, GdslType>() {
+
+      @Override
+      List<GdslType> matches(GdslType src, ProcessingContext context) {
+        final PsiFile placeFile = context.get(GroovyDslScript.INITIAL_CONTEXT).getPlaceFile();
+        if (ClassContextFilter.isSubtype(src.psiType, placeFile, (String)arg)) {
+          return Arrays.asList(src);
+        }
+        return null;
+      }
+
+      @Override
+      boolean operatesOn(Class c) {
+        return GdslType.class == c;
+      }
+    };
+
+  }
+
   public static DslPointcut<GroovyClassDescriptor, GdslType> currentType(final Object arg) {
+    final DslPointcut<GdslType,?> inner;
+    if (arg instanceof String) {
+      inner = subType(arg);
+    } else {
+      inner = (DslPointcut<GdslType, ?>)arg;
+      assert inner.operatesOn(GdslType.class) : "The argument to currentType should be a pointcut working with types, e.g. subType";
+    }
+
     return new DslPointcut<GroovyClassDescriptor, GdslType>() {
 
       @Override
       List<GdslType> matches(GroovyClassDescriptor src, ProcessingContext context) {
-        if (ClassContextFilter.subtypeOf((String)arg).isApplicable(src, context)) {
-          return Arrays.asList(new GdslType(ClassContextFilter.findPsiType(src, context)));
+        final GdslType currentType = new GdslType(ClassContextFilter.findPsiType(src, context));
+        if (inner.matches(currentType, context) != null) {
+          return Arrays.asList(currentType);
         }
         return null;
       }

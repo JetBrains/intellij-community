@@ -9,14 +9,14 @@ import com.intellij.psi.PsiWildcardType;
  * @author peter
  */
 public class GdslType {
-  private final PsiType myPsiType;
+  public final PsiType psiType;
 
   public GdslType(PsiType psiType) {
-    myPsiType = psiType;
+    this.psiType = psiType;
   }
 
   public String getName() {
-    PsiType type = myPsiType;
+    PsiType type = psiType;
     if (type instanceof PsiWildcardType) {
       type = ((PsiWildcardType)type).getBound();
     }

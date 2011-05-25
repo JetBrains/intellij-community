@@ -22,6 +22,11 @@ class DsldTest extends LightGroovyTestCase {
                       'println "".foo + [].<warning>foo</warning>'
   }
 
+  public void testSubType() {
+    checkHighlighting 'contribute(currentType(subType("java.lang.String"))) { property name:"foo" }',
+                      'println "".foo + [].<warning>foo</warning>'
+  }
+
   public void testBind() {
     checkHighlighting 'contribute(bind(types:currentType("java.lang.CharSequence"))) { property name:types[0].name[-3..-1] }',
                       'println "".ing + "".<warning>foo</warning>'
@@ -52,6 +57,7 @@ class Foo {
 }
 '''
   }
+
 
   private def checkHighlighting(String dsl, String code) {
     def file = myFixture.addFileToProject('a.gdsl', dsl)
