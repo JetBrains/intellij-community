@@ -7,7 +7,6 @@ import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -34,9 +33,9 @@ public class FindAllAction extends EditorHeaderAction implements DumbAware {
 
   public void update(final AnActionEvent e) {
     super.update(e);
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    if (project != null && editor != null) {
+    Editor editor = getEditorSearchComponent().getEditor();
+    Project project = editor.getProject();
+    if (project != null) {
       e.getPresentation().setEnabled(getEditorSearchComponent().hasMatches() &&
                                      PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
     }
