@@ -39,7 +39,7 @@ public class GroovyDslExecutor {
     def enhancer = new GdslMetaClassProperties(this)
 
     mc.methodMissing = { String name, Object args ->
-      return new Context([:])
+      return DslPointcut.unknownPointcut()
     }
 
     // Fill script with necessary properties
@@ -52,6 +52,12 @@ public class GroovyDslExecutor {
 
 
     def contribute = {cts, Closure toDo ->
+      if (cts instanceof DslPointcut) {
+        assert cts.operatesOn(GroovyClassDescriptor) : "A non top-level pointcut passed to contributor"
+        addClassEnhancer([new PointcutContextFilter(cts)], toDo)
+        return
+      }
+
       if (cts instanceof Map) {
         cts = new Context(cts)
       }
@@ -71,6 +77,8 @@ public class GroovyDslExecutor {
     mc.supportsVersion = { String ver ->
       StringUtil.compareVersionNumbers(ideaVersion, ver) >= 0
     }
+
+    mc.currentType = { arg -> DslPointcut.currentType(arg) }
 
     mc.initialize()
     script.metaClass = mc

@@ -13,10 +13,20 @@ class DsldTest extends LightGroovyTestCase {
   }
 
   public void testUnknownPointcut() {
-    def file = myFixture.addFileToProject('a.gdsl', "contribute(asdfsadf()) { property name:'foo', type:'String' }")
+    checkHighlighting "contribute(asdfsadf()) { property name:'foo', type:'String' }",
+                      'println foo.substring(2) + <warning>bar</warning>'
+  }
+
+  public void testCurrentType() {
+    checkHighlighting 'contribute(currentType("java.lang.String")) { property name:"foo" }',
+                      'println "".foo + [].<warning>foo</warning>'
+  }
+
+  private def checkHighlighting(String dsl, String code) {
+    def file = myFixture.addFileToProject('a.gdsl', dsl)
     GroovyDslFileIndex.activateUntilModification(file.virtualFile)
 
-    checkHighlighting('println foo.substring(2) + <warning>bar</warning>')
+    checkHighlighting(code)
   }
 
   private def checkHighlighting(String text) {
