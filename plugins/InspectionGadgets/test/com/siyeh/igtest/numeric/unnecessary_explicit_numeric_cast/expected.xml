@@ -48,4 +48,49 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
     <description>'i' unnecessarily cast to &lt;code&gt;double&lt;/code&gt;</description>
   </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>28</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'b' unnecessarily cast to &lt;code&gt;int&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>29</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'b' unnecessarily cast to &lt;code&gt;int&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>30</line>    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'b' unnecessarily cast to &lt;code&gt;int&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>31</line>    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'b' unnecessarily cast to &lt;code&gt;int&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>32</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'b' unnecessarily cast to &lt;code&gt;int&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>33</line>    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'b' unnecessarily cast to &lt;code&gt;int&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>34</line>    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>'b' unnecessarily cast to &lt;code&gt;long&lt;/code&gt;</description>
+  </problem>
 </problems>

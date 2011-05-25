@@ -22,4 +22,18 @@ public class UnnecessaryExplicitNumericCast {
 
         double d = 123.0 / (456.0 * (double) i);
     }
+
+    void unary() {
+        byte b = 2;
+        int a[] = new int[(int)b];
+        final int c = a[((int) b)];
+        int[] a2 = new int[]{(int)b};
+        int[] a3 = {(int)b};
+        final int result = (int) b << 1;
+        c((int)b);
+        new UnnecessaryExplicitNumericCast((long)b);
+    }
+
+    void c(int i) {}
+    UnnecessaryExplicitNumericCast(long i) {}
 }
