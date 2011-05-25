@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -85,7 +86,11 @@ public class PyDocstringInspection extends PyInspection {
           if (n != null) marker = n.getPsi();
         }
         else if (node instanceof PyFile) {
-          marker = node.findElementAt(0);
+          TextRange tr = new TextRange(0,0);
+          ProblemsHolder holder = getHolder();
+          if (holder != null)
+            holder.registerProblem(node, tr, PyBundle.message("INSP.no.docstring"));
+          return;
         }
         if (marker == null) marker = node;
         registerProblem(marker, PyBundle.message("INSP.no.docstring"));
