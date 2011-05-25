@@ -14,6 +14,7 @@ import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -53,8 +54,8 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           qualifier.accept(this);
           return;
         }
-        // Ignore import arguments
-        if (PyImportStatementNavigator.getImportStatementByElement(node) != null){
+        // Ignore import subelements
+        if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
           return;
         }
         final String name = node.getReferencedName();
@@ -101,8 +102,23 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
               break;
             }
           }
-          // Ignore this if can resolve not to local variable
+
+          // TODO: This mechanism for detecting unbound variables would be enough for the whole inspection if the CFG builder was unaware of 'self'
           if (!resolves2LocalVariable) {
+            if (PyControlFlowBuilder.isSelf(node)) {
+              return;
+            }
+            if (owner instanceof PyClass) {
+              if (ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {
+                return;
+              }
+            }
+            if (owner instanceof PyFile) {
+              registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
+            }
+            else {
+              registerUnboundLocal(node);
+            }
             return;
           }
 

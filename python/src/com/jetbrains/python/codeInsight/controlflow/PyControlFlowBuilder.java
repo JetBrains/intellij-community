@@ -100,7 +100,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.checkPending(readWriteInstruction);
   }
 
-  private static boolean isSelf(PsiElement qualifier) {
+  public static boolean isSelf(PsiElement qualifier) {
     PyFunction func = PsiTreeUtil.getParentOfType(qualifier, PyFunction.class);
     if (func == null || PsiTreeUtil.getParentOfType(func, PyClass.class) == null) {
       return false;
@@ -181,10 +181,18 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private void visitPyImportStatementBase(PyImportStatementBase node) {
     myBuilder.startNode(node);
     for (PyImportElement importElement : node.getImportElements()) {
-      final PyReferenceExpression importReference = importElement.getImportReference();
-      if (importReference != null) {
-        final ReadWriteInstruction instruction =
-          ReadWriteInstruction.write(myBuilder, importElement, importReference.getReferencedName());
+      ReadWriteInstruction instruction = null;
+      final PyTargetExpression asNameElement = importElement.getAsNameElement();
+      if (asNameElement != null) {
+        instruction = ReadWriteInstruction.write(myBuilder, importElement, asNameElement.getName());
+      }
+      else {
+        final PyReferenceExpression importReference = importElement.getImportReference();
+        if (importReference != null) {
+          instruction = ReadWriteInstruction.write(myBuilder, importElement, importReference.getReferencedName());
+        }
+      }
+      if (instruction != null) {
         myBuilder.addNode(instruction);
         myBuilder.checkPending(instruction);
       }
