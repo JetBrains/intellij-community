@@ -361,22 +361,25 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     final Runnable parseScript = new Runnable() {
       public void run() {
         GroovyDslExecutor executor = getCachedExecutor(vfile, stamp);
-        if (executor == null) {
-          executor = createExecutor(text, vfile, project);
-          // executor is not only time-consuming to create, but also takes some PermGenSpace
-          // => we can't afford garbage-collecting it together with PsiFile
-          // => cache globally by file instance
-          vfile.putUserData(CACHED_EXECUTOR, Pair.create(executor, stamp));
-          if (executor != null) {
-            activateUntilModification(vfile);
+        try {
+          if (executor == null) {
+            executor = createExecutor(text, vfile, project);
+            // executor is not only time-consuming to create, but also takes some PermGenSpace
+            // => we can't afford garbage-collecting it together with PsiFile
+            // => cache globally by file instance
+            vfile.putUserData(CACHED_EXECUTOR, Pair.create(executor, stamp));
+            if (executor != null) {
+              activateUntilModification(vfile);
+            }
           }
         }
-
-        // access to our MultiMap should be synchronized
-        synchronized (vfile) {
-          // put evaluated executor to all queues
-          for (LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue : filesInProcessing.remove(fileUrl)) {
-            queue.offer(Pair.create(vfile, executor));
+        finally {
+          // access to our MultiMap should be synchronized
+          synchronized (vfile) {
+            // put evaluated executor to all queues
+            for (LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue : filesInProcessing.remove(fileUrl)) {
+              queue.offer(Pair.create(vfile, executor));
+            }
           }
         }
       }
