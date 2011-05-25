@@ -16,9 +16,9 @@
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.JBAwtEventQueue;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.Processor;
@@ -49,9 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -525,7 +522,7 @@ public class AbstractPopup implements JBPopup {
       }
 
       if (e instanceof MouseEvent) {
-        JBAwtEventQueue.getInstance().blockNextEvents(((MouseEvent)e));
+        IdeEventQueue.getInstance().blockNextEvents(((MouseEvent)e));
       }
 
       myPopup.hide(false);
