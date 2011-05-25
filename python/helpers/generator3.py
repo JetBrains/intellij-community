@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.91" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.92" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1045,14 +1045,15 @@ class ModuleRedeclarator(object):
         bin_collections_name: ('collections',),
         "_functools": ('functools',),
         "_socket": ('socket',), # .error, etc
-        "gnomecanvas": ("gnome.canvas",)
+        "gnomecanvas": ("gnome.canvas",),
+        "pyexpat": ('xml.parsers.expat',),
     }
 
     # names that look genuinely exported but aren't.
     # e.g. 'xml.parsers.expat.ExpatError' is actually defined in pyexpat, and xml.parsers.expat imports it from there.
     # {'qualified_purported_module': ('name',..)}
     KNOWN_FAKE_EXPORTS = {
-        'xml.parsers.expat': ('ExpatError', 'error'),
+    #    'xml.parsers.expat': ('ExpatError', 'error'),
     }
 
     # Some builtin classes effectively change __init__ signature without overriding it.
@@ -1856,13 +1857,8 @@ class ModuleRedeclarator(object):
                 # NOTE: if we fail to import, we define 'imported' names here lest we lose them at all
                 if want_to_import:
                     import_list = self.used_imports[mod_name]
-                    excluded = self.KNOWN_FAKE_EXPORTS.get(mod_name, ())
-                    if item_name not in excluded:
-                        if item_name not in import_list:
-                            import_list.append(item_name)
-                    else:
-                        note("not fake-importing %r from %r", item_name, mod_name)
-                        want_to_import = False
+                    if item_name not in import_list:
+                        import_list.append(item_name)
             if not want_to_import:
                 if isinstance(item, type): # some classes are callable, check them before functions
                     classes[item_name] = item
