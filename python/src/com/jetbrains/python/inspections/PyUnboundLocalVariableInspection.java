@@ -91,7 +91,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                 continue;
               }
             }
-            if (PyAssignmentStatementNavigator.getStatementByTarget(element) != null || 
+            if (PyAssignmentStatementNavigator.getStatementByTarget(element) != null ||
                 PyForStatementNavigator.getPyForStatementByIterable(element) != null ||
                 PyExceptPartNavigator.getPyExceptPartByTarget(element) != null ||
                 PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element) != null ||

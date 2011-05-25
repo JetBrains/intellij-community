@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -110,9 +111,11 @@ public class VariantsProcessor implements PsiScopeProcessor {
     // TODO: refactor to look saner; much code duplication
     if (element instanceof PsiNamedElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
-      final String name = psiNamedElement.getName();
-      if (nameIsAcceptable(name)) {
-        myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement).setIcon(element.getIcon(0))));
+      final String name = psiNamedElement instanceof PyFile
+                          ? FileUtil.getNameWithoutExtension(((PyFile)psiNamedElement).getName())
+                          : psiNamedElement.getName();
+      if (name != null && nameIsAcceptable(name)) {
+        myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement, name).setIcon(element.getIcon(0))));
       }
     }
     else if (element instanceof PyReferenceExpression) {
@@ -125,9 +128,10 @@ public class VariantsProcessor implements PsiScopeProcessor {
     else if (element instanceof NameDefiner) {
       boolean handled_as_imported = false;
       if (element instanceof PyImportElement) {
-        PyReferenceExpression ref = ((PyImportElement)element).getImportReference();
+        final PyImportElement importElement = (PyImportElement)element;
+        PyReferenceExpression ref = importElement.getImportReference();
         if (ref != null && ref.getQualifier() == null) {
-          String name = ref.getName();
+          String name = importElement.getAsName() != null ? importElement.getAsName() : ref.getName();
           if (name != null && nameIsAcceptable(name)) {
             PsiElement resolved = ref.getReference().resolve();
             if (resolved instanceof PsiNamedElement) {
@@ -202,15 +206,5 @@ public class VariantsProcessor implements PsiScopeProcessor {
 
   public void setAllowedNames(List<String> namesFilter) {
     myAllowedNames = namesFilter;
-  }
-
-  public void addVariantsFromAllowedNames() {
-    if (myAllowedNames != null) {
-      for (String name : myAllowedNames) {
-        if (!myVariants.containsKey(name)) {
-          myVariants.put(name, LookupElementBuilder.create(name));
-        }
-      }
-    }
   }
 }

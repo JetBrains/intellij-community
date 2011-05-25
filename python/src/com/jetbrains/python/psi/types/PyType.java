@@ -1,11 +1,11 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -24,20 +24,21 @@ public interface PyType {
    *
    * @param name      attribute name
    * @param location  the expression of type qualifierType on which the member is being resolved (optional)
-    *@param direction
-   * @param resolveContext   @return null if name definitely cannot be found (e.g. in a qualified reference),
+   * @param direction
+   * @param resolveContext
+   * @return null if name definitely cannot be found (e.g. in a qualified reference),
    *         or an empty list if name is not found but other contexts are worth looking at,
    *         or a list of elements that define the name, a la multiResolve().
    */
   @Nullable
-  List<? extends PsiElement> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
-                                           PyResolveContext resolveContext);
+  List<? extends RatedResolveResult> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
+                                                   PyResolveContext resolveContext);
 
   /**
    * Proposes completion variants from type's attributes.
    *
-   * @param referenceExpression which is to be completed
-   * @param context             to share state between nested invocations
+   * @param location   the reference on which the completion was invoked
+   * @param context    to share state between nested invocations
    * @return completion variants good for {@link com.intellij.psi.PsiReference#getVariants} return value.
    */
   Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context);

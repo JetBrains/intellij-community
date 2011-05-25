@@ -68,4 +68,20 @@ public class ScopeUtil {
     }
     return null;
   }
+
+  public static boolean isDeclaredAndBoundInScope(PyElement element) {
+    final String name = element.getName();
+    if (name != null) {
+      final ScopeOwner owner = getScopeOwner(element);
+      if (owner != null) {
+        final Scope scope = ControlFlowCache.getScope(owner);
+        for (ScopeVariable v : scope.getAllDeclaredVariables()) {
+          if (v.getName().equals(name)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
 }

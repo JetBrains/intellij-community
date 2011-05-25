@@ -177,6 +177,9 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
+    else if (parentType == PyElementTypes.PARENTHESIZED_EXPRESSION) {
+      childIndent = Indent.getNormalIndent();
+    }
 
     if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2)) {  // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();

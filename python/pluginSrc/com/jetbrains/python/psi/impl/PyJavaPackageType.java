@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -14,12 +13,12 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,19 +34,22 @@ public class PyJavaPackageType implements PyType {
   }
 
   @Override
-  public List<? extends PsiElement> resolveMember(String name,
-                                                  @Nullable PyExpression location,
-                                                  AccessDirection direction,
-                                                  PyResolveContext resolveContext) {
+  public List<? extends RatedResolveResult> resolveMember(String name,
+                                                          @Nullable PyExpression location,
+                                                          AccessDirection direction,
+                                                          PyResolveContext resolveContext) {
     Project project = myPackage.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     String childName = myPackage.getQualifiedName() + "." + name;
     GlobalSearchScope scope = getScope(project);
-    List<PsiElement> result = new ArrayList<PsiElement>();
-    Collections.addAll(result, facade.findClasses(childName, scope));
+    ResolveResultList result = new ResolveResultList();
+    final PsiClass[] classes = facade.findClasses(childName, scope);
+    for (PsiClass aClass : classes) {
+      result.poke(aClass, RatedResolveResult.RATE_NORMAL);
+    }
     final PsiPackage psiPackage = facade.findPackage(childName);
     if (psiPackage != null) {
-      result.add(psiPackage);
+      result.poke(psiPackage, RatedResolveResult.RATE_NORMAL);
     }
     return result;
   }

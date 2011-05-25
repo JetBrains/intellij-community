@@ -45,9 +45,9 @@ public interface PyFromImportStatement extends PyImportStatementBase, StubBasedP
   PsiElement getLeftParen();
 
   /**
-   * If the from ... import statement uses an import list in parentheses, returns the opening parenthesis.
+   * If the from ... import statement uses an import list in parentheses, returns the closing parenthesis.
    *
-   * @return opening parenthesis token or null
+   * @return closing parenthesis token or null
    */
   @Nullable
   PsiElement getRightParen();

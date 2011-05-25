@@ -190,7 +190,7 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  private static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
+  public static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
     return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
@@ -386,7 +386,7 @@ public class ResolveImportUtil {
     }
   }
 
-  private static void visitRoots(@NotNull Module module, RootVisitor visitor) {
+  public static void visitRoots(@NotNull Module module, RootVisitor visitor) {
     // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
     // Module-based approach works only in the IDEA plugin.
     if (visitModuleContentEntries(module, visitor)) return;

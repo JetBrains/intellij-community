@@ -39,4 +39,9 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
   public String getName() {
     return myName;
   }
+
+  @Override
+  public String toString() {
+    return "PyNamedParameterStub(" + myName + ")";
+  }
 }

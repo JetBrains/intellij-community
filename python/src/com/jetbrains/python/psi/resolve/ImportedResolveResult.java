@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.NameDefiner;
 
 import java.util.List;
 
@@ -9,14 +8,14 @@ import java.util.List;
  * @author yole
  */
 public class ImportedResolveResult extends RatedResolveResult {
-  private final List<NameDefiner> myNameDefiners;
+  private final List<PsiElement> myNameDefiners;
 
-  public ImportedResolveResult(PsiElement element, int rate, List<NameDefiner> nameDefiners) {
+  public ImportedResolveResult(PsiElement element, int rate, List<PsiElement> nameDefiners) {
     super(rate, element);
     myNameDefiners = nameDefiners;
   }
 
-  public List<NameDefiner> getNameDefiners() {
+  public List<PsiElement> getNameDefiners() {
     return myNameDefiners;
   }
 

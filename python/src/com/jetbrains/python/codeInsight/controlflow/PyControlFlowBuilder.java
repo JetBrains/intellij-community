@@ -170,6 +170,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyImportStatement(final PyImportStatement node) {
+    visitPyImportStatementBase(node);
+  }
+
+  @Override
+  public void visitPyFromImportStatement(PyFromImportStatement node) {
+    visitPyImportStatementBase(node);
+  }
+
+  private void visitPyImportStatementBase(PyImportStatementBase node) {
     myBuilder.startNode(node);
     for (PyImportElement importElement : node.getImportElements()) {
       final PyReferenceExpression importReference = importElement.getImportReference();

@@ -212,6 +212,12 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "})");
   }
 
+  public void testEnterInTuple() {  // PY-1947
+    doTest("test_tuple = (<caret>'some_value')",
+           "test_tuple = (\n" +
+           "    <caret>'some_value')");
+  }
+
   public void testIndentAfterComment() {   // PY-641
     doTest("def foo():\n    #some_call()<caret>\n    another_call()", "def foo():\n    #some_call()\n    <caret>\n    another_call()");
   }
