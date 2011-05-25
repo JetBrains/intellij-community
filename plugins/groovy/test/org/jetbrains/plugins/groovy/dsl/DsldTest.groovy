@@ -27,6 +27,15 @@ class DsldTest extends LightGroovyTestCase {
                       'println "".foo + [].<warning>foo</warning>'
   }
 
+  public void testTypeName() {
+    checkHighlighting 'contribute(currentType(name("Foo"))) { property name:"foo" }',
+                      '''
+class Foo {}
+class Bar extends Foo {}
+println new Foo().foo + new Bar().<warning>foo</warning>
+'''
+  }
+
   public void testBind() {
     checkHighlighting 'contribute(bind(types:currentType("java.lang.CharSequence"))) { property name:types[0].name[-3..-1] }',
                       'println "".ing + "".<warning>foo</warning>'
@@ -42,6 +51,9 @@ class DsldTest extends LightGroovyTestCase {
                       '''
 class Foo {
   def goo() { println foo + "".foo }
+}
+class Bar extends Foo {
+  def goo() { println <warning>foo</warning> }
 }
 println new Foo().<warning>foo</warning>
 println <warning>foo</warning>

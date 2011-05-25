@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.dsl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
@@ -13,6 +14,10 @@ public class GdslType {
 
   public GdslType(PsiType psiType) {
     this.psiType = psiType;
+  }
+
+  public String getShortName() {
+    return StringUtil.getShortName(getName());
   }
 
   public String getName() {

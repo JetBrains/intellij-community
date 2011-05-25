@@ -106,6 +106,24 @@ public abstract class DslPointcut<T,V> {
     };
   }
 
+  public static DslPointcut<Object, String> name(final Object arg) {
+    return new DslPointcut<Object, String>() {
+      @Override
+      List<String> matches(Object src, ProcessingContext context) {
+        if (src instanceof GdslType) {
+          return arg.equals(((GdslType)src).getName()) ? Arrays.asList((String)arg) : null;
+        }
+        return Collections.emptyList();
+      }
+
+      @Override
+      boolean operatesOn(Class c) {
+        return c == GdslType.class;
+      }
+    };
+
+  }
+
   public static DslPointcut<GroovyClassDescriptor, GdslMethod> enclosingMethod(final Object arg) {
     return new DslPointcut<GroovyClassDescriptor, GdslMethod>() {
       @Override
