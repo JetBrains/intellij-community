@@ -365,14 +365,23 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           indexStorage = memIndexStorage.getBackendStorage();
         }
       }
-      final ValueContainer<SerializedStubTree> valueContainer = indexStorage.read(key);
-      if (valueContainer.size() != 1) {
-        LOG.assertTrue(valueContainer.size() == 0);
+      try {
+        final ValueContainer<SerializedStubTree> valueContainer = indexStorage.read(key);
+        if (valueContainer.size() != 1) {
+          LOG.assertTrue(valueContainer.size() == 0);
+          return result;
+        }
+
+        result.put(key, valueContainer.getValueIterator().next());
         return result;
       }
-
-      result.put(key, valueContainer.getValueIterator().next());
-      return result;
+      catch (RuntimeException e) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof IOException) {
+          throw new StorageException(cause);
+        }
+        throw e;
+      }
     }
 
     public void clear() throws StorageException {

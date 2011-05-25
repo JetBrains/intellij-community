@@ -28,8 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
@@ -157,9 +155,6 @@ public class CompletionUtil {
                                              ElementPattern<Character> idStart) {
     if(insertedElement == null) return "";
     final String text = insertedElement.getText();
-
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) indicator.checkCanceled();
 
     final int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
     int start = offsetInElement - 1;

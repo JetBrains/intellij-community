@@ -2194,5 +2194,11 @@ public class UIUtil {
     c.putClientProperty(ROOT_PANE, new WeakReference<JRootPane>(pane));
   }
 
+  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
+    if (c == null || !c.isShowing()) return true;
+
+    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane;
+  }
+
 }
 

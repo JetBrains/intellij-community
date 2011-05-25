@@ -582,7 +582,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
     public void show() {
-      myFocusTrackback = new FocusTrackback(myDialogWrapper, this, true);
+      myFocusTrackback = new FocusTrackback(myDialogWrapper, getParent(), true);
 
       final DialogWrapper dialogWrapper = getDialogWrapper();
 
@@ -632,6 +632,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         public void windowActivated(final WindowEvent e) {
           final DialogWrapper wrapper = getDialogWrapper();
           if (wrapper != null && myFocusTrackback != null) {
+            myFocusTrackback.cleanParentWindow();
             myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
               public Component getComponent() {
                 return wrapper.getPreferredFocusedComponent();

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -11,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentHashMap;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -29,18 +28,19 @@ public class ClassContextFilter implements ContextFilter {
 
   public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
     final PsiFile place = descriptor.getPlaceFile();
-    return myPattern.value(Pair.create(findPsiType(descriptor.getProject(), descriptor.getTypeText(), place, ctx), place));
+    return myPattern.value(Pair.create(findPsiType(descriptor, ctx), place));
   }
 
-  @Nullable
-  private static PsiType findPsiType(Project project, String typeText, PsiFile place, ProcessingContext ctx) {
+  @NotNull
+  public static PsiType findPsiType(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
+    String typeText = descriptor.getTypeText();
     final String key = getClassKey(typeText);
     final Object cached = ctx.get(key);
     if (cached instanceof PsiType) {
       return (PsiType)cached;
     }
 
-    final PsiType found = JavaPsiFacade.getElementFactory(project).createTypeFromText(typeText, place);
+    final PsiType found = JavaPsiFacade.getElementFactory(descriptor.getProject()).createTypeFromText(typeText, descriptor.getPlaceFile());
     ctx.put(key, found);
     return found;
   }
