@@ -27,6 +27,51 @@ class DsldTest extends LightGroovyTestCase {
                       'println "".foo + [].<warning>foo</warning>'
   }
 
+  public void testAnd() {
+    checkHighlighting 'contribute(currentType(subType("java.lang.Runnable") & name("Foo"))) { property name:"foo" }',
+                      '''
+class Foo implements Runnable {
+  void run() { println foo }
+}
+class Bar implements Runnable {
+  void run() { println <warning>foo</warning> }
+  class Foo {
+   void run() { println <warning>foo</warning> }
+  }
+}
+println <warning>foo</warning>
+'''
+  }
+
+  public void testOr() {
+    checkHighlighting 'contribute(currentType(subType("MyRunnable") | name("Foo"))) { property name:"foo" }',
+                      '''
+interface MyRunnable {}
+class Foo implements MyRunnable {
+ void run() { println foo }
+}
+class Bar implements MyRunnable {
+ void run() { println foo }
+ static class Foo {
+   void run() { println foo }
+ }
+}
+println <warning>foo</warning>
+'''
+  }
+
+  public void testNot() {
+    checkHighlighting 'contribute(currentType(~name("Foo"))) { property name:"foo" }',
+                      '''
+class Foo {
+ void run() { println <warning>foo</warning> }
+}
+class Bar extends Foo {
+ void run() { println foo }
+}
+'''
+  }
+
   public void testTypeName() {
     checkHighlighting 'contribute(currentType(name("Foo"))) { property name:"foo" }',
                       '''

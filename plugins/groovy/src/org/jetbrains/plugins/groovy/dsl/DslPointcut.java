@@ -33,6 +33,71 @@ public abstract class DslPointcut<T,V> {
 
   abstract boolean operatesOn(Class c);
 
+  public DslPointcut<T, V> and(final DslPointcut<T, V> next) {
+    final DslPointcut<T, V> first = this;
+    return new DslPointcut<T, V>() {
+      @Override
+      List<V> matches(T src, ProcessingContext context) {
+        final List<V> vs1 = first.matches(src, context);
+        if (vs1 == null) return null;
+
+        final List<V> vs2 = next.matches(src, context);
+        if (vs2 == null) return null;
+
+        final List<V> result = new ArrayList<V>(vs1);
+        result.retainAll(new HashSet<V>(vs2));
+        return result;
+      }
+
+      @Override
+      boolean operatesOn(Class c) {
+        return first.operatesOn(c) && next.operatesOn(c);
+      }
+    };
+  }
+
+  public DslPointcut<T, V> or(final DslPointcut<T, V> next) {
+    final DslPointcut<T, V> first = this;
+    return new DslPointcut<T, V>() {
+      @Override
+      List<V> matches(T src, ProcessingContext context) {
+        final List<V> vs1 = first.matches(src, context);
+        final List<V> vs2 = next.matches(src, context);
+
+        if (vs1 == null && vs2 == null) return null;
+
+        final Set<V> result = new LinkedHashSet<V>();
+        if (vs1 != null) {
+          result.addAll(vs1);
+        }
+        if (vs2 != null) {
+          result.addAll(vs2);
+        }
+        return new ArrayList<V>(result);
+      }
+
+      @Override
+      boolean operatesOn(Class c) {
+        return first.operatesOn(c) && next.operatesOn(c);
+      }
+    };
+  }
+  public DslPointcut<T, V> bitwiseNegate() {
+    final DslPointcut<T, V> base = this;
+    return new DslPointcut<T, V>() {
+      @Override
+      List<V> matches(T src, ProcessingContext context) {
+        return base.matches(src, context) == null ? Collections.<V>emptyList() : null;
+      }
+
+      @Override
+      boolean operatesOn(Class c) {
+        return base.operatesOn(c);
+      }
+    };
+  }
+
+
   public static DslPointcut<GdslType, GdslType> subType(final Object arg) {
     return new DslPointcut<GdslType, GdslType>() {
 
