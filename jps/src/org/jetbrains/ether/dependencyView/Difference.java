@@ -20,24 +20,50 @@ public abstract class Difference {
     public static final int SUPERCLASS = 16;
 
     public interface Specifier<T> {
-        public Collection<T> added ();
-        public Collection<T> removed ();
+        public Collection<T> added();
+
+        public Collection<T> removed();
+
         public Collection<Pair<T, Difference>> changed();
-        public boolean unchanged ();
+
+        public boolean unchanged();
     }
 
-    public static <T> Specifier<T> make (final Set<T> past, final Set<T> now) {
-        final Set<T> added = new HashSet<T> (now);
+    public static <T> Specifier<T> make(final Set<T> past, final Set<T> now) {
+        if (past == null) {
+            final Collection<T> removed = new HashSet<T>();
+            final Collection<Pair<T, Difference>> changed = new HashSet<Pair<T, Difference>>();
+
+            return new Specifier<T>() {
+                public Collection<T> added() {
+                    return now;
+                }
+
+                public Collection<T> removed() {
+                    return removed;
+                }
+
+                public Collection<Pair<T, Difference>> changed() {
+                    return changed;
+                }
+
+                public boolean unchanged() {
+                    return false;
+                }
+            };
+        }
+
+        final Set<T> added = new HashSet<T>(now);
 
         added.removeAll(past);
 
-        final Set<T> removed = new HashSet<T> (past);
+        final Set<T> removed = new HashSet<T>(past);
 
         removed.removeAll(now);
 
-        final Set<Pair<T, Difference>> changed = new HashSet<Pair<T, Difference>> ();
-        final Set<T> intersect = new HashSet<T> (past);
-        final Map<T, T> nowMap = new HashMap<T, T> ();
+        final Set<Pair<T, Difference>> changed = new HashSet<Pair<T, Difference>>();
+        final Set<T> intersect = new HashSet<T>(past);
+        final Map<T, T> nowMap = new HashMap<T, T>();
 
         for (T s : now) {
             if (intersect.contains(s)) {
@@ -54,35 +80,35 @@ public abstract class Difference {
                 final Proto px = (Proto) x;
                 final Proto py = (Proto) y;
 
-                changed.add(new Pair<T, Difference> (x, py.difference(px)));
+                changed.add(new Pair<T, Difference>(x, py.difference(px)));
             }
         }
 
-        return new Specifier<T> () {
-            public Collection<T> added () {
+        return new Specifier<T>() {
+            public Collection<T> added() {
                 return added;
             }
 
-            public Collection<T> removed () {
+            public Collection<T> removed() {
                 return removed;
             }
 
-            public Collection<Pair<T, Difference>> changed () {
+            public Collection<Pair<T, Difference>> changed() {
                 return changed;
             }
 
-            public boolean unchanged (){
+            public boolean unchanged() {
                 return changed.isEmpty() && added.isEmpty() && removed.isEmpty();
             }
 
         };
     }
 
-    public abstract int base ();
+    public abstract int base();
 
-    public static Difference createBase (final int d) {
-        return new Difference () {
-            public int base () {
+    public static Difference createBase(final int d) {
+        return new Difference() {
+            public int base() {
                 return d;
             }
         };

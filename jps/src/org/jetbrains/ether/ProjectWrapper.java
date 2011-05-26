@@ -318,7 +318,7 @@ public class ProjectWrapper {
                 final Set<StringCache.S> result = new HashSet<StringCache.S>();
 
                 for (FileWrapper now : mySources.keySet()) {
-                    final FileWrapper than = past.mySources.get(now);
+                    final FileWrapper than = past == null ? null : past.mySources.get(now);
 
                     if (than == null || than.getStamp() < now.getStamp() || affectedFiles.contains(now.getName())) {
                         result.add(now.getName());
@@ -331,11 +331,13 @@ public class ProjectWrapper {
             public Set<StringCache.S> getRemovedFiles(final Properties past) {
                 final Set<StringCache.S> result = new HashSet<StringCache.S>();
 
-                for (FileWrapper was : past.mySources.keySet()) {
-                    final FileWrapper now = mySources.get(was);
+                if (past != null) {
+                    for (FileWrapper was : past.mySources.keySet()) {
+                        final FileWrapper now = mySources.get(was);
 
-                    if (now == null) {
-                        result.add(was.getName());
+                        if (now == null) {
+                            result.add(was.getName());
+                        }
                     }
                 }
 
@@ -444,19 +446,19 @@ public class ProjectWrapper {
         final Set<LibraryWrapper> myLibraries;
 
         public Set<StringCache.S> getOutdatedSources() {
-            return mySource.getOutdatedFiles(myHistory.getModule(myName).mySource);
+            return mySource.getOutdatedFiles(myHistory == null ? null : myHistory.getModule(myName).mySource);
         }
 
         public Set<StringCache.S> getOutdatedTests() {
-            return myTest.getOutdatedFiles(myHistory.getModule(myName).myTest);
+            return myTest.getOutdatedFiles(myHistory == null ? null : myHistory.getModule(myName).myTest);
         }
 
         public Set<StringCache.S> getRemovedSources() {
-            return mySource.getRemovedFiles(myHistory.getModule(myName).mySource);
+            return mySource.getRemovedFiles(myHistory == null ? null : myHistory.getModule(myName).mySource);
         }
 
         public Set<StringCache.S> getRemovedTests() {
-            return myTest.getRemovedFiles(myHistory.getModule(myName).myTest);
+            return myTest.getRemovedFiles(myHistory == null ? null : myHistory.getModule(myName).myTest);
         }
 
         public void updateOutputStatus() {
@@ -939,13 +941,17 @@ public class ProjectWrapper {
             final Set<StringCache.S> safeFiles = new HashSet<StringCache.S>();
 
             if (outdated != null) {
+                for (StringCache.S s : outdated) {
+                    assert (s != null);
+                }
+
                 filesToCompile.addAll(outdated);
 
                 for (StringCache.S f : outdated) {
                     if (f.value.endsWith(".form")) {
                         final StringCache.S sourceFileName = dependencyMapping.getJavaByForm(f);
 
-                        if (!filesToCompile.contains(sourceFileName)) {
+                        if (sourceFileName != null && !filesToCompile.contains(sourceFileName)) {
                             safeFiles.add(sourceFileName);
                             filesToCompile.add(sourceFileName);
                         }
@@ -961,19 +967,25 @@ public class ProjectWrapper {
 
             filesToCompile.removeAll(compiledFiles);
 
-            if (!filesToCompile.isEmpty()) {
+            if (!filesToCompile.isEmpty() || removed != null) {
                 final Set<StringCache.S> outputFiles = new HashSet<StringCache.S>();
 
                 for (StringCache.S f : filesToCompile) {
-                    for (ClassRepr cr : dependencyMapping.getClasses(f)) {
-                        outputFiles.add(cr.fileName);
-                    }
+                    final Set<ClassRepr> classes = dependencyMapping.getClasses(f);
+
+                    if (classes != null)
+                        for (ClassRepr cr : classes) {
+                            outputFiles.add(cr.fileName);
+                        }
                 }
 
                 if (removed != null) {
                     for (StringCache.S f : removed) {
-                        for (ClassRepr cr : dependencyMapping.getClasses(f)) {
-                            outputFiles.add(cr.fileName);
+                        final Set<ClassRepr> classes = dependencyMapping.getClasses(f);
+                        if (classes != null) {
+                            for (ClassRepr cr : classes) {
+                                outputFiles.add(cr.fileName);
+                            }
                         }
                     }
                 }
@@ -1171,14 +1183,10 @@ public class ProjectWrapper {
 
         builder.buildStart();
 
-        try {
-            beaver.build(modules, false, flags.incremental());
+        beaver.build(modules, false, flags.incremental());
 
-            if (flags.tests()) {
-                beaver.build(modules, true, flags.incremental());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (flags.tests()) {
+            beaver.build(modules, true, flags.incremental());
         }
 
         builder.buildStop();

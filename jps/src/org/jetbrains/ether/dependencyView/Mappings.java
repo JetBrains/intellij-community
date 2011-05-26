@@ -116,12 +116,16 @@ public class Mappings {
                 dependants.removeAll(compiledFiles);
 
                 for (StringCache.S depFile : dependants) {
-                    final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>(sourceFileToUsages.foxyGet(depFile));
+                    final Collection<UsageRepr.Usage> depUsages = sourceFileToUsages.foxyGet(depFile);
 
-                    usages.retainAll(affectedUsages);
+                    if (depUsages != null) {
+                        final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>(depUsages);
 
-                    if (!usages.isEmpty()) {
-                        affectedFiles.add(depFile);
+                        usages.retainAll(affectedUsages);
+
+                        if (!usages.isEmpty()) {
+                            affectedFiles.add(depFile);
+                        }
                     }
                 }
             }
@@ -275,11 +279,13 @@ public class Mappings {
     public StringCache.S getFormByJava(final StringCache.S javaFileName) {
         final Set<ClassRepr> classes = getClasses(javaFileName);
 
-        for (ClassRepr c : classes) {
-            final StringCache.S formName = classToForm.get(c.name);
+        if (classes != null) {
+            for (ClassRepr c : classes) {
+                final StringCache.S formName = classToForm.get(c.name);
 
-            if (formName != null) {
-                return formName;
+                if (formName != null) {
+                    return formName;
+                }
             }
         }
 
@@ -295,13 +301,15 @@ public class Mappings {
                 w.write(key.value + " -->");
                 w.newLine();
 
-                for (StringCache.S s : value) {
-                    if (s == null)
-                        w.write("  <null>");
-                    else
-                        w.write("  " + s.value);
+                if (value != null) {
+                    for (StringCache.S s : value) {
+                        if (s == null)
+                            w.write("  <null>");
+                        else
+                            w.write("  " + s.value);
 
-                    w.newLine();
+                        w.newLine();
+                    }
                 }
             }
 
