@@ -5,7 +5,6 @@ import com.intellij.javaee.appServerIntegrations.AppServerIntegration;
 import com.intellij.javaee.appServerIntegrations.ApplicationServerHelper;
 import com.intellij.javaee.appServerIntegrations.ApplicationServerPersistentDataEditor;
 import com.intellij.javaee.openapi.ex.AppServerIntegrationsManager;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -35,11 +34,6 @@ public class AppEngineServerIntegration extends AppServerIntegration {
   public ApplicationServerPersistentDataEditor createNewServerEditor() {
     //Google App Engine server should not be shown in 'Application Server' combobox in the new project wizard because there is a special 'Google App Engine' option
     return null;
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "AppEngineServerIntegration";
   }
 
   @Override
