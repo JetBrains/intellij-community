@@ -182,17 +182,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private void visitPyImportStatementBase(PyImportStatementBase node) {
     myBuilder.startNode(node);
     for (PyImportElement importElement : node.getImportElements()) {
-      ReadWriteInstruction instruction = null;
-      final PyTargetExpression asNameElement = importElement.getAsNameElement();
-      if (asNameElement != null) {
-        instruction = ReadWriteInstruction.write(myBuilder, importElement, asNameElement.getName());
-      }
-      else {
-        final PyQualifiedName name = importElement.getImportedQName();
-        if (name != null && name.getComponentCount() > 0) {
-          instruction = ReadWriteInstruction.write(myBuilder, importElement, name.getComponents().get(0));
-        }
-      }
+      final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, importElement, importElement.getVisibleName());
       if (instruction != null) {
         myBuilder.addNode(instruction);
         myBuilder.checkPending(instruction);

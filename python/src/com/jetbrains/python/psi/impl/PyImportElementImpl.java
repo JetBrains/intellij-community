@@ -78,12 +78,20 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
         return asName;
       }
       final PyQualifiedName importedName = stub.getImportedQName();
-      return importedName != null ? importedName.getLastComponent() : null;
+      if (importedName != null && importedName.getComponentCount() > 0) {
+        return importedName.getComponents().get(0);
+      }
     }
-    PyTargetExpression asname = getAsNameElement();
-    if (asname != null) return asname.getName();
-    final PyReferenceExpression import_ref = getImportReference();
-    if (import_ref != null) return PyResolveUtil.toPath(import_ref, ".");
+    else {
+      PyTargetExpression asNameElement = getAsNameElement();
+      if (asNameElement != null) {
+        return asNameElement.getName();
+      }
+      final PyQualifiedName importedName = getImportedQName();
+      if (importedName != null && importedName.getComponentCount() > 0) {
+        return importedName.getComponents().get(0);
+      }
+    }
     return null; // we might have not found any names
   }
 
