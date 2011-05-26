@@ -1958,7 +1958,7 @@ class ModuleRedeclarator(object):
                     "    __module__ = None" "\n"
                     "    __class__ = None" "\n"
                     "    #" "\n"
-                    "    def __init__(cls):" "\n"
+                    "    def __init__(self):" "\n"
                     "        pass" "\n"
                     "    __dict__ = {}" "\n"
                     "    __doc__ = ''" "\n"
