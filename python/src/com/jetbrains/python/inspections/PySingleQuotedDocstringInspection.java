@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
@@ -41,8 +42,21 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(string, PyDocStringOwner.class);
       if (docStringOwner != null) {
         if (docStringOwner.getDocStringExpression() == string)  {
-          if (!stringText.startsWith("\"\"\"") && !stringText.endsWith("\"\"\""))
-            registerProblem(string, "Triple double-quoted strings should be used for docstrings.", new ConvertDocstringQuickFix());
+          if (!stringText.startsWith("\"\"\"") && !stringText.endsWith("\"\"\"")) {
+            ProblemsHolder holder = getHolder();
+            if (holder != null) {
+              int quoteCount = 1;
+              if (stringText.startsWith("'''") && stringText.endsWith("'''")) {
+                quoteCount = 3;
+              }
+              TextRange trStart = new TextRange(0, quoteCount);
+              TextRange trEnd = new TextRange(stringText.length()-quoteCount, stringText.length());
+              holder.registerProblem(string, trStart,
+                                     PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix());
+              holder.registerProblem(string, trEnd,
+                                     PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix());
+            }
+          }
         }
       }
     }
