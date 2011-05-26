@@ -265,6 +265,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testDictKeyPrefix2() {      //PY-3683
+    doTest();
+  }
+
   public void testFromDotImport() {  // PY-2772
     doTest3K();
   }

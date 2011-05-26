@@ -1,15 +1,15 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.jetbrains.python.debugger.pydev.AddExceptionBreakpointCommand;
+import com.jetbrains.python.debugger.pydev.ExceptionBreakpointCommand;
+import com.jetbrains.python.debugger.pydev.RemoteDebugger;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
  */
-public class PyExceptionBreakpointProperties extends XBreakpointProperties<PyExceptionBreakpointProperties> {
-  @Attribute("exception")
-  public String myException;
+public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperties<PyExceptionBreakpointProperties> {
   @Attribute("notifyAlways")
   public boolean myNotifyAlways;
   @Attribute("notifyOnTerminate")
@@ -36,10 +36,6 @@ public class PyExceptionBreakpointProperties extends XBreakpointProperties<PyExc
     myNotifyOnTerminate = state.myNotifyOnTerminate;
   }
 
-  public String getException() {
-    return myException;
-  }
-
   public boolean isNotifyOnTerminate() {
     return myNotifyOnTerminate;
   }
@@ -54,5 +50,18 @@ public class PyExceptionBreakpointProperties extends XBreakpointProperties<PyExc
 
   public void setNotifyAlways(boolean notifyAlways) {
     myNotifyAlways = notifyAlways;
+  }
+
+  @Override
+  public ExceptionBreakpointCommand createAddCommand(RemoteDebugger debugger) {
+    return ExceptionBreakpointCommand.addExceptionBreakpointCommand(debugger, getException(),
+                                                                    new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(
+                                                                      isNotifyAlways(),
+                                                                      isNotifyOnTerminate()));
+  }
+
+  @Override
+  public ExceptionBreakpointCommand createRemoveCommand(RemoteDebugger debugger) {
+    return ExceptionBreakpointCommand.removeExceptionBreakpointCommand(debugger, getException());
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
+import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandler;
 import com.jetbrains.python.debugger.pydev.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,8 +51,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final ProcessHandler myProcessHandler;
   private final ExecutionConsole myExecutionConsole;
   private final Map<PySourcePosition, XLineBreakpoint> myRegisteredBreakpoints = new ConcurrentHashMap<PySourcePosition, XLineBreakpoint>();
-  private final Map<String, XBreakpoint<PyExceptionBreakpointProperties>> myRegisteredExceptionBreakpoints =
-    new ConcurrentHashMap<String, XBreakpoint<PyExceptionBreakpointProperties>>();
+  private final Map<String, XBreakpoint<? extends ExceptionBreakpointProperties>> myRegisteredExceptionBreakpoints =
+    new ConcurrentHashMap<String, XBreakpoint<? extends ExceptionBreakpointProperties>>();
 
   private final List<PyThreadInfo> mySuspendedThreads = Lists.newArrayList();
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newHashMap();
@@ -69,7 +70,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     session.setPauseActionSupported(true);
     myDebugger = new RemoteDebugger(this, serverSocket, 10);
     myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this), new PyExceptionBreakpointHandler(this),
-      new DjangoLineBreakpointHandler(this)};
+      new DjangoLineBreakpointHandler(this), new DjangoExceptionBreakpointHandler(this)};
     myEditorsProvider = new PyDebuggerEditorsProvider();
     myProcessHandler = processHandler;
     myExecutionConsole = executionConsole;
@@ -177,7 +178,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void registerExceptionBreakpoints() {
-    for (XBreakpoint<PyExceptionBreakpointProperties> bp : myRegisteredExceptionBreakpoints.values()) {
+    for (XBreakpoint<? extends ExceptionBreakpointProperties> bp : myRegisteredExceptionBreakpoints.values()) {
       addExceptionBreakpoint(bp);
     }
   }
@@ -349,24 +350,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  public void addExceptionBreakpoint(XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
+  public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
     myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
     if (myDebugger.isConnected()) {
-      final ExceptionBreakpointCommand command =
-        ExceptionBreakpointCommand.addExceptionBreakpointCommand(myDebugger, breakpoint.getProperties().getException(),
-                                                                 new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(
-                                                                   breakpoint.getProperties().isNotifyAlways(),
-                                                                   breakpoint.getProperties().isNotifyOnTerminate()));
-      myDebugger.execute(command);
+      myDebugger.execute(breakpoint.getProperties().createAddCommand(myDebugger));
     }
   }
 
-  public void removeExceptionBreakpoint(XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
+  public void removeExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
     myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getException());
     if (myDebugger.isConnected()) {
-      final ExceptionBreakpointCommand command =
-        ExceptionBreakpointCommand.removeExceptionBreakpointCommand(myDebugger, breakpoint.getProperties().getException());
-      myDebugger.execute(command);
+      myDebugger.execute(breakpoint.getProperties().createRemoveCommand(myDebugger));
     }
   }
 

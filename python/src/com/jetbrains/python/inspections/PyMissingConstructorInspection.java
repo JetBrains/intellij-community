@@ -58,7 +58,7 @@ public class PyMissingConstructorInspection extends PyInspection {
     private static boolean superHasConstructor(PyClass node) {
       for (PyClass s : node.iterateAncestorClasses()) {
         if (!PyNames.OBJECT.equals(s.getName()) && !PyNames.FAKE_OLD_BASE.equals(s.getName()) &&
-            !node.getName().equals(s.getName())
+            node.getName() != null && !node.getName().equals(s.getName())
             && s.findMethodByName(PyNames.INIT, false) != null) {
           return true;
         }

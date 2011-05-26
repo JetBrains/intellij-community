@@ -58,8 +58,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyCallExpression(final PyCallExpression node) {
+    final PyExpression callee = node.getCallee();
     // Flow abrupted
-    if (node.isCalleeText("exit")) {
+    if (callee != null && "sys.exit".equals(PyUtil.getReadableRepr(callee, true))) {
+      callee.accept(this);
       for (PyExpression expression : node.getArguments()) {
         expression.accept(this);
       }
@@ -182,17 +184,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private void visitPyImportStatementBase(PyImportStatementBase node) {
     myBuilder.startNode(node);
     for (PyImportElement importElement : node.getImportElements()) {
-      ReadWriteInstruction instruction = null;
-      final PyTargetExpression asNameElement = importElement.getAsNameElement();
-      if (asNameElement != null) {
-        instruction = ReadWriteInstruction.write(myBuilder, importElement, asNameElement.getName());
-      }
-      else {
-        final PyQualifiedName name = importElement.getImportedQName();
-        if (name != null && name.getComponentCount() > 0) {
-          instruction = ReadWriteInstruction.write(myBuilder, importElement, name.getComponents().get(0));
-        }
-      }
+      final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, importElement, importElement.getVisibleName());
       if (instruction != null) {
         myBuilder.addNode(instruction);
         myBuilder.checkPending(instruction);

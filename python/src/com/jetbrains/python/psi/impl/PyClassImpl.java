@@ -783,7 +783,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   private boolean calculateNewStyleClass() {
-    if (((PyFile) getContainingFile()).getLanguageLevel().isPy3K()) {
+    final PsiFile containingFile = getContainingFile();
+    if (containingFile instanceof PyFile && ((PyFile)containingFile).getLanguageLevel().isPy3K()) {
       return true;
     }
     PyClass objclass = PyBuiltinCache.getInstance(this).getClass("object");

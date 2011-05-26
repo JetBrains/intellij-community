@@ -1,14 +1,21 @@
 package com.jetbrains.python.codeInsight.dataflow.scope;
 
+import com.intellij.codeInsight.controlflow.ControlFlow;
+import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyListCompExpressionNavigator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author oleg
@@ -69,10 +76,9 @@ public class ScopeUtil {
     return null;
   }
 
-  public static boolean isDeclaredAndBoundInScope(PyElement element) {
-    final String name = element.getName();
+  public static boolean isDeclaredAndBoundInScope(PsiElement anchor, String name) {
     if (name != null) {
-      final ScopeOwner owner = getScopeOwner(element);
+      final ScopeOwner owner = getScopeOwner(anchor);
       if (owner != null) {
         final Scope scope = ControlFlowCache.getScope(owner);
         for (ScopeVariable v : scope.getAllDeclaredVariables()) {
@@ -83,5 +89,23 @@ public class ScopeUtil {
       }
     }
     return false;
+  }
+
+  @NotNull
+  public static Collection<PsiElement> getReadWriteElements(String name, ScopeOwner scopeOwner, boolean isReadAccess, boolean isWriteAccess) {
+    ControlFlow flow = ControlFlowCache.getControlFlow(scopeOwner);
+    Collection<PsiElement> result = new ArrayList<PsiElement>();
+    for (Instruction instr : flow.getInstructions()) {
+      if (instr instanceof ReadWriteInstruction) {
+        ReadWriteInstruction rw = (ReadWriteInstruction)instr;
+        if (name.equals(rw.getName())) {
+          ReadWriteInstruction.ACCESS access = rw.getAccess();
+          if ((isReadAccess && access.isReadAccess()) || (isWriteAccess && access.isWriteAccess())) {
+            result.add(rw.getElement());
+          }
+        }
+      }
+    }
+    return result;
   }
 }

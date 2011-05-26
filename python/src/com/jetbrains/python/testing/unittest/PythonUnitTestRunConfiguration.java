@@ -13,6 +13,8 @@ import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 /**
  * @author Leonid Shalupov
  */
@@ -87,7 +89,7 @@ public class PythonUnitTestRunConfiguration extends
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    if (myIsPureUnittest && !myScriptName.startsWith("test")) {
+    if (myIsPureUnittest && !new File(myScriptName).getName().startsWith("test")) {
       throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.incorrect.script"));
     }
   }

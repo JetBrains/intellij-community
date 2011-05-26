@@ -27,6 +27,8 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_ADD_EXCEPTION_BREAK, \
                          CMD_REMOVE_EXCEPTION_BREAK, \
                          CMD_LOAD_SOURCE, \
+                         CMD_ADD_DJANGO_EXCEPTION_BREAK, \
+                         CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
                          GetGlobalDebugger, \
                          InternalChangeVariable, \
                          InternalGetCompletions, \
@@ -197,6 +199,9 @@ class PyDB:
         self.cmdQueue = {}     # the hash of Queues. Key is thread id, value is thread
         self.breakpoints = {}
         self.django_breakpoints = {}
+        self.exception_set = {}
+        self.always_exception_set = set()
+        self.django_exception_break = {}
         self.additional_frames = getAdditionalFramesContainer()
         self.readyToRun = False
         self.lock = threading.RLock()
@@ -622,34 +627,27 @@ class PyDB:
                     self.postInternalCommand(int_cmd, thread_id)
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
-                    global exception_set
                     exception, notify_always, notify_on_terminate = text.split('\t', 2)
 
                     is_notify_always = int(notify_always) == 1
                     is_notify_on_terminate = int(notify_on_terminate) == 1
 
-                    exc_type = get_class(exception)
-
-                    if exc_type is not None:
-                        exception_set.add(ExceptionBreakpoint(exception, exc_type, is_notify_always, is_notify_on_terminate))
+                    self.exception_set[exception] = ExceptionBreakpoint(exception, is_notify_always, is_notify_on_terminate)
 
                     if is_notify_on_terminate:
-                        update_exception_hook()
+                        update_exception_hook(self)
                     if is_notify_always:
-                        global always_exception_set
-                        always_exception_set.add(exc_type)
+                        self.always_exception_set.add(exception)
                         self.enable_tracing()
 
                 elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
                     exception = text
-                    exc_type = get_class(exception)
-                    if exc_type is not None:
-                        try:
-                            exception_set.remove(exc_type)
-                            always_exception_set.remove(exc_type)
-                        except:
-                            pass
-                    update_exception_hook()
+                    try:
+                        del self.exception_set[exception]
+                        self.always_exception_set.remove(exception)
+                    except:
+                        pass
+                    update_exception_hook(self)
 
                 elif cmd_id == CMD_LOAD_SOURCE:
                     path = text
@@ -659,6 +657,20 @@ class PyDB:
                         self.cmdFactory.makeLoadSourceMessage(seq, source, self)
                     except:
                         return self.cmdFactory.makeErrorMessage(seq, GetExceptionTracebackStr())
+
+                elif cmd_id == CMD_ADD_DJANGO_EXCEPTION_BREAK:
+                    exception = text
+
+                    self.django_exception_break[exception] = True
+                    self.enable_tracing()
+
+                elif cmd_id == CMD_REMOVE_DJANGO_EXCEPTION_BREAK:
+                    exception = text
+
+                    try:
+                        del self.django_exception_break[exception]
+                    except :
+                        pass
 
                 else:
                     #I have no idea what this is all about

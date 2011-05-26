@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -138,7 +139,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       myAllImports.add(node);
     }
 
-    private static boolean isGuardedByImportError(PyElement node) {
+    @Nullable
+    private static PyExceptPart getImportErrorGuard(PyElement node) {
       final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class);
       if (importStatement != null) {
         final PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
@@ -148,13 +150,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             for (PyExceptPart exceptPart : tryExceptStatement.getExceptParts()) {
               final PyExpression expr = exceptPart.getExceptClass();
               if (expr != null && "ImportError".equals(expr.getName())) {
-                return true;
+                return exceptPart;
               }
             }
           }
         }
       }
-      return false;
+      return null;
     }
 
     @Override
@@ -167,10 +169,25 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           severity = ((PsiReferenceEx) reference).getUnresolvedHighlightSeverity(myTypeEvalContext);
           if (severity == null) continue;
         }
-        if (isGuardedByImportError(node)) {
-          if (PsiTreeUtil.getParentOfType(node, PyImportElement.class) != null) {
-            if (!ScopeUtil.isDeclaredAndBoundInScope(node)) {
-              registerProblem(node, PyBundle.message("INSP.try.except.import.error", node.getName()),
+        PyExceptPart guard = getImportErrorGuard(node);
+        if (guard != null) {
+          final PyImportElement importElement = PsiTreeUtil.getParentOfType(node, PyImportElement.class);
+          if (importElement != null) {
+            Collection<PsiElement> allWrites = ScopeUtil.getReadWriteElements(importElement.getVisibleName(),
+                                                                           ScopeUtil.getScopeOwner(importElement),
+                                                                           false, true);
+            Collection<PsiElement> writesInsideGuard = new ArrayList<PsiElement>();
+            for (PsiElement write : allWrites) {
+              if (PsiTreeUtil.isAncestor(guard, write, false)) {
+                 writesInsideGuard.add(write);
+              }
+            }
+            if (writesInsideGuard.isEmpty()) {
+              final PyTargetExpression asElement = importElement.getAsNameElement();
+              final PyElement toHighlight = asElement != null ? asElement : node;
+              registerProblem(toHighlight,
+                              PyBundle.message("INSP.try.except.import.error",
+                                               importElement.getVisibleName()),
                               ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, null);
             }
           }
