@@ -661,8 +661,6 @@ class PyDB:
                 elif cmd_id == CMD_ADD_DJANGO_EXCEPTION_BREAK:
                     exception = text
 
-
-                    print "set"
                     self.django_exception_break[exception] = True
                     self.enable_tracing()
 
@@ -670,7 +668,6 @@ class PyDB:
                     exception = text
 
                     try:
-                        print "del"
                         del self.django_exception_break[exception]
                     except :
                         pass
