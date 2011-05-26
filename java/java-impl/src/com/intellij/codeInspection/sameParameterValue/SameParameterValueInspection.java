@@ -169,8 +169,14 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
       catch (IncorrectOperationException e) {
         return;
       }
-
-      inlineSameParameterValue(method, parameter, defToInline);
+      final PsiParameter parameterToInline = parameter;
+      //move change signature from write action
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          inlineSameParameterValue(method, parameterToInline, defToInline);
+        }
+      });
     }
 
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
@@ -190,16 +196,15 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
             for (final PsiExpression expr : exprs) {
               if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
             }
-
-            removeParameter(method, parameter);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
           }
         }
       };
-
       ApplicationManager.getApplication().runWriteAction(runnable);
+
+      removeParameter(method, parameter);
     }
 
     public static void removeParameter(final PsiMethod method, final PsiParameter parameter) {
