@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.introduceParameter;
+package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -52,10 +52,12 @@ import java.util.List;
 public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> extends VariableInplaceRenamer {
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
 
-  protected List<RangeMarker> myOccurrenceMarkers;
-  protected RangeMarker myExprMarker;
   protected E myExpr;
+  protected RangeMarker myExprMarker;
+
   protected E[] myOccurrences;
+  protected List<RangeMarker> myOccurrenceMarkers;
+
   protected Balloon myBalloon;
   protected String myTitle;
 
@@ -72,7 +74,6 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
   }
 
   protected abstract JComponent getComponent();
-  protected abstract String getCommandName();
 
   public void setOccurrenceMarkers(List<RangeMarker> occurrenceMarkers) {
     myOccurrenceMarkers = occurrenceMarkers;

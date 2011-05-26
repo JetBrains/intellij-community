@@ -34,7 +34,7 @@ import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.introduceParameter.AbstractInplaceVariableIntroducer;
+import com.intellij.refactoring.introduce.inplace.AbstractInplaceVariableIntroducer;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -221,11 +221,6 @@ public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
     final PsiTypeElement typeElement = getVariable().getTypeElement();
     builder.replaceElement(typeElement, "Variable_Type", AbstractJavaInplaceIntroducer.createExpression(myExpression, typeElement.getText()), true, true);
-  }
-
-  @Override
-  protected String getCommandName() {
-    return IntroduceVariableBase.REFACTORING_NAME;
   }
 
   private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,

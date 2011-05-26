@@ -217,7 +217,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
         @Override
         public void itemStateChanged(ItemEvent e) {
-          restartTemplate();
+          restartInplaceIntroduceTemplate();
         }
       });
 
