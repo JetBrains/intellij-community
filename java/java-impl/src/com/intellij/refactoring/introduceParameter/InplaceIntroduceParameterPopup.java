@@ -38,7 +38,7 @@ import java.util.List;
  * User: anna
  * Date: 2/25/11
  */
-class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
+public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
   private static final Logger LOG = Logger.getInstance("#" + InplaceIntroduceParameterPopup.class.getName());
 
   private final Project myProject;
@@ -170,7 +170,7 @@ class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
                                       parametersToRemove);
     final Runnable runnable = new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        final Runnable performRefactoring = new Runnable() {
           public void run() {
             final boolean[] conflictsFound = new boolean[]{true};
             processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
@@ -184,7 +184,12 @@ class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
             InplaceIntroduceParameterPopup.super.moveOffsetAfter(!conflictsFound[0]);
             InplaceIntroduceParameterPopup.super.saveSettings(getParameter());
           }
-        });
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          performRefactoring.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(performRefactoring);
+        }
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);
@@ -204,5 +209,9 @@ class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
         return true;
       }
     });
+  }
+
+  public void setReplaceAllOccurrences(boolean replaceAll) {
+    myPanel.setReplaceAllOccurrences(replaceAll);
   }
 }

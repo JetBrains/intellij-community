@@ -199,4 +199,11 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_CREATE_FINALS;
     return createFinals == null ? CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS : createFinals.booleanValue();
   }
+
+
+  public void setReplaceAllOccurrences(boolean replaceAll) {
+    if (myCbReplaceAllOccurences != null) {
+      myCbReplaceAllOccurences.setSelected(replaceAll);
+    }
+  }
 }

@@ -35,7 +35,10 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
@@ -68,7 +71,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -77,6 +81,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
   static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private Project myProject;
   private JBPopup myEnclosingMethodsPopup;
+  private InplaceIntroduceParameterPopup myInplaceIntroduceParameterPopup;
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -334,7 +339,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     return method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.getManager().isInProject(method);
   }
 
-  private static class Introducer {
+  private class Introducer {
 
     private final Project myProject;
 
@@ -388,14 +393,28 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         Util.analyzeExpression(myExpr, localVars, classMemberRefs, params);
       }
 
-      if (myExpr instanceof PsiReferenceExpression) {
-        PsiElement resolved = ((PsiReferenceExpression)myExpr).resolve();
-        if (resolved instanceof PsiLocalVariable) {
-          myLocalVar = (PsiLocalVariable) resolved;
+      final String propName = myLocalVar != null ? JavaCodeStyleManager
+        .getInstance(myProject).variableNameToPropertyName(myLocalVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
+      final PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, myExpr, myLocalVar);
+
+      TypeSelectorManagerImpl typeSelectorManager = myExpr != null
+                                                ? new TypeSelectorManagerImpl(myProject, initializerType, myExpr, occurences)
+                                                : new TypeSelectorManagerImpl(myProject, initializerType, occurences);
+
+      NameSuggestionsGenerator nameSuggestionsGenerator = createNameSuggestionGenerator(myExpr, propName, myProject);
+      boolean isInplaceAvailableOnDataContext = myEditor != null && myEditor.getSettings().isVariableInplaceRenameEnabled();
+
+      if (isInplaceAvailableOnDataContext) {
+        myInplaceIntroduceParameterPopup =
+          new InplaceIntroduceParameterPopup(myProject, myEditor, classMemberRefs,
+                                             typeSelectorManager,
+                                             myExpr, myLocalVar, method, methodToSearchFor, occurences,
+                                             parametersToRemove,
+                                             mustBeFinal);
+        if (myInplaceIntroduceParameterPopup.startInplaceIntroduceTemplate()) {
+          return;
         }
       }
-
-
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         @NonNls String parameterName = "anObject";
         boolean replaceAllOccurences = true;
@@ -405,26 +424,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                         replaceAllOccurences, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, mustBeFinal,
                                         false, null,
                                         parametersToRemove).run();
-      }
-      else {
-        final String propName = myLocalVar != null ? JavaCodeStyleManager
-          .getInstance(myProject).variableNameToPropertyName(myLocalVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
-        final PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, myExpr, myLocalVar);
-
-        TypeSelectorManagerImpl typeSelectorManager = myExpr != null
-                                                  ? new TypeSelectorManagerImpl(myProject, initializerType, myExpr, occurences)
-                                                  : new TypeSelectorManagerImpl(myProject, initializerType, occurences);
-
-        NameSuggestionsGenerator nameSuggestionsGenerator = createNameSuggestionGenerator(myExpr, propName, myProject);
-        boolean isInplaceAvailableOnDataContext = myEditor != null && myEditor.getSettings().isVariableInplaceRenameEnabled();
-
-        if (isInplaceAvailableOnDataContext && new InplaceIntroduceParameterPopup(myProject, myEditor, classMemberRefs,
-                                                                                  typeSelectorManager,
-                                                                                  myExpr, myLocalVar, method, methodToSearchFor, occurences,
-                                                                                  parametersToRemove,
-                                                                                  mustBeFinal).startInplaceIntroduceTemplate()) {
-          return;
-        }
+      } else {
         if (myEditor != null) {
           RefactoringUtil.highlightAllOccurences(myProject, occurences, myEditor);
         }
@@ -437,5 +437,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     }
   }
 
-
+  public InplaceIntroduceParameterPopup getInplaceIntroduceParameterPopup() {
+      return myInplaceIntroduceParameterPopup;
+  }
 }
