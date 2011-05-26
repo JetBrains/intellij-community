@@ -55,6 +55,9 @@ public class TestDataReferenceCollector {
 
   private List<String> collectTestDataReferences(final PsiMethod method, final Map<String, Computable<String>> argumentMap) {
     final List<String> result = new ArrayList<String>();
+    if (myTestDataPath == null) {
+      return result;
+    }
     method.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
