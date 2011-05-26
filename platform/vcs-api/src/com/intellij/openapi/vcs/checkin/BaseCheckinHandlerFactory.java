@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
@@ -35,4 +37,7 @@ public interface BaseCheckinHandlerFactory {
    */
   @NotNull
   CheckinHandler createHandler(final CheckinProjectPanel panel);
+
+  @Nullable
+  BeforeCheckinDialogHandler createSystemReadyHandler(Project project);
 }

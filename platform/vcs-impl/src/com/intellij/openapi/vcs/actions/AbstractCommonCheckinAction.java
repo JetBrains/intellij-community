@@ -129,6 +129,11 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       return;
     }
 
+    /*if (! checkEnvironments(plVcsManager)) {
+      presentation.setEnabled(false);
+      return;
+    }*/
+
     if (! approximatelyHasRoots(vcsContext)) {
       presentation.setEnabled(false);
       return;
@@ -140,6 +145,16 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     presentation.setEnabled(! plVcsManager.isBackgroundVcsOperationRunning());
     presentation.setVisible(true);
   }
+
+  /*protected static boolean checkEnvironments(ProjectLevelVcsManager plVcsManager) {
+    final AbstractVcs[] allActiveVcss = plVcsManager.getAllActiveVcss();
+    for (AbstractVcs vcs : allActiveVcss) {
+      if (vcs.getCheckinEnvironment() != null) {
+        return true;
+      }
+    }
+    return false;
+  }*/
 
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;

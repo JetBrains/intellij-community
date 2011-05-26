@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +29,11 @@ import java.util.List;
 public class Dummy extends CheckinHandlersManager {
   @Override
   public List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull List<AbstractVcs> keys) {
     return Collections.emptyList();
   }
 
