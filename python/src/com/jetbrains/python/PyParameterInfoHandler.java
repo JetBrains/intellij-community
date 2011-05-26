@@ -221,8 +221,11 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     if (can_offer_next) {
       if (last_param_index < raw_params.size() - 1 || flat_args.size() == 0) {
         int highlight_index;
-        if (flat_args.size() > 0) highlight_index = last_param_index+1;
-        else highlight_index = marked.getImplicitOffset();
+        if (flat_args.size() == 0) highlight_index = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
+        else {
+          if (n_param_list.get(last_param_index).isPositionalContainer()) highlight_index = last_param_index; // stick to *arg
+          else highlight_index = last_param_index+1; // highlight next
+        }
         hint_flags.get(param_indexes.get(n_param_list.get(highlight_index))).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
       }
     }
