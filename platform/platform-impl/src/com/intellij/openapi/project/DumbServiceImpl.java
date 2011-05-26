@@ -19,12 +19,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -41,8 +39,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -232,20 +228,7 @@ public class DumbServiceImpl extends DumbService {
       return emptyBalloonHandler;
     }
     StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-    HyperlinkListener listener = new HyperlinkListener() {
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-
-        Messages.showMessageDialog("<html>" +
-                                   ApplicationNamesInfo.getInstance().getFullProductName() +
-                                   " is now indexing project sources and libraries to enable advanced features <br>" +
-                                   "(refactorings, navigation, usage search, code analysis, formatting, etc.)<br>" +
-                                   "During this process you can use code editor and VCS integrations,<br>" +
-                                   "and adjust IDE and Run Configurations settings." +
-                                   "</html>", "Don't panic!", null);
-      }
-    };
-    return statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, listener);
+    return statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
   }
 
   private static final Ref<CacheUpdateRunner> NULL_ACTION = new Ref<CacheUpdateRunner>(null);
