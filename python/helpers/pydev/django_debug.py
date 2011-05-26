@@ -75,6 +75,12 @@ def suspend_django(py_db_frame, mainDebugger, thread, frame):
 
     return frame
 
+def find_django_render_frame(frame):
+    while frame is not None and not is_django_render_call(frame):
+        frame = frame.f_back
+
+    return frame
+
 
 
 

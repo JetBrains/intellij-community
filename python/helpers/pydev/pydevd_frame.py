@@ -1,4 +1,6 @@
 from django_debug import is_django_render_call, get_template_file_name, get_template_line, is_django_suspended, suspend_django
+from django_debug import find_django_render_frame
+from django_frame import just_raised
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
 import traceback #@Reimport
@@ -38,7 +40,7 @@ class PyDBFrame:
 
             can_skip = False
 
-            #if not len(always_exception_set):
+            #if not len(mainDebugger.always_exception_set):
             #    if info.pydev_state == STATE_RUN:
             #        #we can skip if:
             #        #- we have no stop marked
@@ -85,14 +87,21 @@ class PyDBFrame:
 
             if event == 'exception' and info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
                 (exception, value, trace) = arg
-                global exception_set
 
-                exception_breakpoint = get_exception_breakpoint(exception, dict(exception_set), NOTIFY_ALWAYS)
+                exception_breakpoint = get_exception_breakpoint(exception, dict(mainDebugger.exception_set), NOTIFY_ALWAYS)
                 if exception_breakpoint is not None:
                     curr_func_name = frame.f_code.co_name
                     self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
                     thread.additionalInfo.message = exception_breakpoint.qname
-                    #self.doWaitSuspend(thread, frame, event, arg)
+                else:
+                    if len(mainDebugger.django_exception_break) and get_exception_name(exception) in ['django.template.base.VariableDoesNotExist', 'django.template.base.TemplateDoesNotExist', 'django.template.base.TemplateSyntaxError'] and just_raised(frame):
+                        print mainDebugger.django_exception_break
+                        render_frame = find_django_render_frame(frame)
+                        if render_frame:
+                            suspend_frame = suspend_django(self, mainDebugger, thread, render_frame)
+                            if suspend_frame:
+                                suspend_frame.f_back = frame
+                                frame = suspend_frame
 
             elif event == 'call' and info.pydev_state != STATE_SUSPEND and mainDebugger.django_breakpoints \
             and is_django_render_call(frame):

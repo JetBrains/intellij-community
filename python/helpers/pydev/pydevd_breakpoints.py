@@ -3,8 +3,7 @@ import sys
 
 _original_excepthook = None
 _handle_exceptions = None
-exception_set = {}
-always_exception_set = set()
+
 
 NOTIFY_ALWAYS="NOTIFY_ALWAYS"
 NOTIFY_ON_TERMINATE="NOTIFY_ON_TERMINATE"
@@ -57,8 +56,12 @@ class LineBreakpoint:
       breakDict[line] = self
 
 
+def get_exception_name(exctype):
+    return exctype.__module__ + '.' + exctype.__name__
+
+
 def get_exception_breakpoint(exctype, exceptions, notify_class):
-    name = exctype.__module__ + '.' + exctype.__name__
+    name = get_exception_name(exctype)
     exc = None
     if exceptions is not None:
         for k, e in exceptions.items():
@@ -142,9 +145,9 @@ def restore_pm_excepthook():
         _original_excepthook = None
 
 
-def update_exception_hook():
-    if len(exception_set) >0:
-        set_pm_excepthook(tuple(exception_set))
+def update_exception_hook(dbg):
+    if len(dbg.exception_set) >0:
+        set_pm_excepthook(tuple(dbg.exception_set))
     else:
         restore_pm_excepthook()
 
