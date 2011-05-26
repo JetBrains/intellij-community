@@ -29,3 +29,12 @@ try:
     import foo as bar
 except ImportError:
     import <warning descr="Module 'bar' not found">bar</warning>
+
+# PY-3678
+def f():
+    try:
+        from foo import bar #pass
+    except ImportError:
+        import <warning descr="Module 'bar' not found">bar</warning> #fail
+    finally:
+        pass

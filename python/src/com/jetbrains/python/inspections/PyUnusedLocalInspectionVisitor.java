@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Collection;
-import java.util.ArrayList;
 
 /**
  * @author oleg
@@ -152,7 +151,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             final PyReferenceExpression ref = (PyReferenceExpression)element;
             final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(ref, ref.getName());
             if (declOwner != null && declOwner != owner) {
-              Collection<PsiElement> writeElements = getWriteElements(name, declOwner);
+              Collection<PsiElement> writeElements = ScopeUtil.getReadWriteElements(name, declOwner, false, true);
               for (PsiElement e : writeElements) {
                 myUsedElements.add(e);
                 myUnusedElements.remove(e);
@@ -201,21 +200,6 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
-  }
-
-  @NotNull
-  private static Collection<PsiElement> getWriteElements(String name, ScopeOwner scopeOwner) {
-    ControlFlow flow = ControlFlowCache.getControlFlow(scopeOwner);
-    Collection<PsiElement> result = new ArrayList<PsiElement>();
-    for (Instruction instr : flow.getInstructions()) {
-      if (instr instanceof ReadWriteInstruction) {
-        ReadWriteInstruction rw = (ReadWriteInstruction)instr;
-        if (name.equals(rw.getName()) && rw.getAccess().isWriteAccess()){
-          result.add(rw.getElement());
-        }
-      }
-    }
-    return result;
   }
 
   private static boolean isAssignedOnEachExceptFlow(final Instruction inst,
