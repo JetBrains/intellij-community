@@ -26,6 +26,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
+import com.intellij.refactoring.introduceField.IntroduceFieldCentralPanel;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -48,14 +49,21 @@ public class InplaceIntroduceFieldTest extends LightCodeInsightTestCase {
   }
 
   public void testMakeFinal() throws Exception {
-
-    doTest(new Pass<InplaceIntroduceFieldPopup>() {
-      @Override
-      public void pass(InplaceIntroduceFieldPopup inplaceIntroduceFieldPopup) {
-        inplaceIntroduceFieldPopup.setInitializeInFieldDeclaration();
-        inplaceIntroduceFieldPopup.setCreateFinal(true);
-      }
-    });
+    final boolean oldCreateFinals = IntroduceFieldCentralPanel.ourLastCbFinalState;
+    try {
+      IntroduceFieldCentralPanel.ourLastCbFinalState = false;
+      doTest(new Pass<InplaceIntroduceFieldPopup>() {
+        @Override
+        public void pass(InplaceIntroduceFieldPopup inplaceIntroduceFieldPopup) {
+          inplaceIntroduceFieldPopup.setInitializeInFieldDeclaration();
+          inplaceIntroduceFieldPopup.setCreateFinal(true);
+        }
+      });
+      assertTrue(IntroduceFieldCentralPanel.ourLastCbFinalState);
+    }
+    finally {
+      IntroduceFieldCentralPanel.ourLastCbFinalState = oldCreateFinals;
+    }
   }
 
   public void testReplaceAll() throws Exception {

@@ -31,6 +31,7 @@ import com.intellij.refactoring.introduceParameter.VisibilityListener;
 import com.intellij.refactoring.introduceVariable.FinalListener;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -146,6 +147,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
     myIntroduceFieldPanel.setReplaceAllOccurrences(replaceAllOccurrences);
   }
 
+  @TestOnly
   public void setCreateFinal(boolean createFinal) {
     myIntroduceFieldPanel.setCreateFinal(createFinal);
   }
