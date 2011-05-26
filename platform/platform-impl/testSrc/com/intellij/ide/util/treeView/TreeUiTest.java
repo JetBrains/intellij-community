@@ -532,6 +532,98 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
 
+  public void testExpandEqualElements() throws Exception {
+    buildStructure(myRoot, false);
+    myRoot.getChildNode("org").addChild("jetbrains").addChild("commuinity").addChild("ide");
+
+    activate();
+    expand(getPath("/"));
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.expandPath(getPath("org"));
+        myTree.setSelectionPath(myTree.getPathForRow(5));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  +[jetbrains]\n"
+               + " +xunit\n");
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.expandPath(myTree.getPathForRow(5));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  -[jetbrains]\n"
+               + "   +commuinity\n"
+               + " +xunit\n");
+
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.expandPath(myTree.getPathForRow(6));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  -[jetbrains]\n"
+               + "   -commuinity\n"
+               + "    ide\n"
+               + " +xunit\n");
+
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.collapsePath(myTree.getPathForRow(5));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  +[jetbrains]\n"
+               + " +xunit\n");
+
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.expandPath(myTree.getPathForRow(5));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  -[jetbrains]\n"
+               + "   +commuinity\n"
+               + " +xunit\n");
+
+  }
+
   public void testAutoExpandInNonVisibleNode() throws Exception {
     myAutoExpand.add(new NodeElement("fabrique"));
     buildStructure(myRoot);
@@ -2440,6 +2532,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(true, false);
     }
 
+    @Override
+    public void testExpandEqualElements() throws Exception {
+      super.testExpandEqualElements();
+    }
   }
 
   public static class BgLoadingSyncUpdate extends TreeUiTest {
