@@ -218,8 +218,13 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     }
 
     // highlight the next parameter to be filled
-    if (can_offer_next && last_param_index < raw_params.size()-1 && flat_args.size() > 0) {
-      hint_flags.get(param_indexes.get(n_param_list.get(last_param_index+1))).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+    if (can_offer_next) {
+      if (last_param_index < raw_params.size() - 1 || flat_args.size() == 0) {
+        int highlight_index;
+        if (flat_args.size() > 0) highlight_index = last_param_index+1;
+        else highlight_index = marked.getImplicitOffset();
+        hint_flags.get(param_indexes.get(n_param_list.get(highlight_index))).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+      }
     }
 
     final String NO_PARAMS_MSG = "<No parameters>";
