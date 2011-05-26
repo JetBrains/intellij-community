@@ -1,12 +1,11 @@
-class SingletonConstructor {
-  private SingletonConstructor() {}
+class A {
+  def getProperty(String name) {
+   return 2
+  }
 }
 -----
-public class SingletonConstructor extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public SingletonConstructor() {
-
-}
-public java.lang.Object getProperty(java.lang.String property) {
+public class A extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public java.lang.Object getProperty(java.lang.String name) {
 return null;
 }
 

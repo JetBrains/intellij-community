@@ -1,22 +1,22 @@
-interface IBar extends groovy.lang.GroovyObject {}
-interface Foo extends IBar {
+interface IBar170 extends groovy.lang.GroovyObject {}
+interface Foo170 extends IBar170 {
 
 }
-class Test1 implements Foo {
+class Test1 implements Foo170 {
 }
 -----
-public interface IBar extends groovy.lang.GroovyObject {
+public interface IBar170 extends groovy.lang.GroovyObject {
 }
 ---
-public interface Foo extends IBar {
+public interface Foo170 extends IBar170 {
 }
 ---
-public class Test1 extends groovy.lang.GroovyObjectSupport implements Foo, groovy.lang.GroovyObject {
-public groovy.lang.MetaClass getMetaClass() {
+public class Test1 extends groovy.lang.GroovyObjectSupport implements Foo170, groovy.lang.GroovyObject {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -24,11 +24,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 

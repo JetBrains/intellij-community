@@ -1,24 +1,24 @@
-class MyTestClass {
+class Grvy903 {
 
-    public MyTestClass(String s) {}
+    public Grvy903(String s) {}
 
-    public MyTestClass() {
+    public Grvy903() {
         this('some value')
     }
 }
 -----
-public class MyTestClass extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public MyTestClass(java.lang.String s) {
+public class Grvy903 extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public Grvy903(java.lang.String s) {
 
 }
-public MyTestClass() {
+public Grvy903() {
 this((java.lang.String)null);
 }
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -26,11 +26,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 

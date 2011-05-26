@@ -1,30 +1,30 @@
-class Foo {
-  private Foo(Void v, Foo p) {}
-  protected Foo(Foo p) {}
-  protected Foo() {}
+class InaccessibleConstructor {
+  private InaccessibleConstructor(Void v, InaccessibleConstructor p) {}
+  protected InaccessibleConstructor(InaccessibleConstructor p) {}
+  protected InaccessibleConstructor() {}
 }
 
-class ExtensionLoader extends Foo {
+class ExtensionLoader extends InaccessibleConstructor {
   ExtensionLoader(parent) {
     super(parent);
   }
 }
 -----
-public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public Foo(java.lang.Void v, Foo p) {
+public class InaccessibleConstructor extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public InaccessibleConstructor(java.lang.Void v, InaccessibleConstructor p) {
 
 }
-public Foo(Foo p) {
+public InaccessibleConstructor(InaccessibleConstructor p) {
 
 }
-public Foo() {
+public InaccessibleConstructor() {
 
 }
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -32,25 +32,25 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 
 }
 ---
-public class ExtensionLoader extends Foo implements groovy.lang.GroovyObject {
+public class ExtensionLoader extends InaccessibleConstructor implements groovy.lang.GroovyObject {
 public ExtensionLoader(java.lang.Object parent) {
-super((Foo)null);
+super((InaccessibleConstructor)null);
 }
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -58,11 +58,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 
