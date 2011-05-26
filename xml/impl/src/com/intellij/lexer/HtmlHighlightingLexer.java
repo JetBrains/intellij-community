@@ -17,6 +17,7 @@ package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
@@ -33,7 +34,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private Lexer scriptLexer;
   protected Lexer elLexer;
   private boolean hasNoEmbeddments;
-  private static FileType ourStyleFileType;
+  private final static FileType ourStyleFileType = FileTypeManager.getInstance().getStdFileType("CSS");
   private static FileType ourScriptFileType;
 
   public class XmlEmbeddmentHandler implements TokenHandler {
@@ -46,7 +47,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
           tokenType==XmlTokenType.XML_COMMENT_CHARACTERS && hasSeenTag()
           ) {
         setEmbeddedLexer();
-        
+
         if (embeddedLexer!=null) {
           embeddedLexer.start(
             getBufferSequence(),
@@ -54,7 +55,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
             skipToTheEndOfTheEmbeddment(),
             embeddedLexer instanceof EmbedmentLexer ? ((EmbedmentLexer)embeddedLexer).getEmbeddedInitialState(tokenType) : 0
           );
-          
+
           if (embeddedLexer.getTokenType() == null) {
             // no content for embeddment
             embeddedLexer = null;
@@ -164,7 +165,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       } else if (tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
                tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN
               ) {
-        // we need to convert char entity ref & entity ref in comments as comment chars 
+        // we need to convert char entity ref & entity ref in comments as comment chars
         final int state = getState() & BASE_STATE_MASK;
         if (state == _HtmlLexer.COMMENT) return XmlTokenType.XML_COMMENT_CHARACTERS;
       }
@@ -186,10 +187,6 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     } else {
       return super.getTokenEnd();
     }
-  }
-
-  public static final void registerStyleFileType(FileType fileType) {
-    ourStyleFileType = fileType;
   }
 
   public static void registerScriptFileType(FileType _scriptFileType) {
