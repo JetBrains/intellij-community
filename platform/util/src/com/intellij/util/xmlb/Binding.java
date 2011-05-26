@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.Nullable;
 
 interface Binding {
-  Object serialize(Object o, Object context);
+  Object serialize(Object o, @Nullable Object context);
 
   @Nullable
   Object deserialize(Object context, Object... nodes);
