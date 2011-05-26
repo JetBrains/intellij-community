@@ -1,12 +1,17 @@
 /*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
- */
-
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 18-Aug-2006
- * Time: 13:42:59
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.codeInspection;
 
@@ -14,32 +19,34 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.IdeaTestFixture;
-import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.LightIdeaTestCase;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import java.io.IOException;
-import java.io.StringWriter;
 
-public class InspectionProfileTest extends UsefulTestCase {
+import static com.intellij.testFramework.PlatformTestUtil.assertElementsEqual;
+
+/**
+ * @author Anna.Kozlova
+ * Date: 18-Aug-2006
+ */
+public class InspectionProfileTest extends LightIdeaTestCase {
   private static final String PROFILE = "ToConvert";
-  private final IdeaTestFixture myFixture = JavaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture();
 
   @Override
   protected void setUp() throws Exception {
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     super.setUp();
-    myFixture.setUp();
     InspectionToolRegistrar.getInstance().ensureInitialized();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
     super.tearDown();
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     InspectionProfileImpl.INIT_INSPECTIONS = false;
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
   }
@@ -52,9 +59,7 @@ public class InspectionProfileTest extends UsefulTestCase {
     model.commit();
     final Element copy = new Element("inspections");
     profile.writeExternal(copy);
-    StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(copy, writer, "\n");
-    assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(element, copy));
+    assertElementsEqual(element, copy);
   }
 
   public void testConvertOldProfile() throws Exception {
@@ -65,9 +70,7 @@ public class InspectionProfileTest extends UsefulTestCase {
     model.commit();
     final Element copy = new Element("inspections");
     profile.writeExternal(copy);
-    StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(copy, writer, "\n");
-    assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(loadProfile(), copy));
+    assertElementsEqual(loadProfile(), copy);
   }
 
   private static Element loadOldStyleProfile() throws IOException, JDOMException {
@@ -143,11 +146,10 @@ public class InspectionProfileTest extends UsefulTestCase {
                                                     "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
                                                     "  </inspection_tool>\n" +
                                                     "</inspections>");
-
     return document.getRootElement();
   }
 
-   public void testReloadProfileWithUnknownScopes() throws Exception {
+  public void testReloadProfileWithUnknownScopes() throws Exception {
     final Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
                                                   "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                   "  <option name=\"myLocal\" value=\"true\" />\n" +
@@ -167,8 +169,6 @@ public class InspectionProfileTest extends UsefulTestCase {
     model.commit();
     final Element copy = new Element("inspections");
     profile.writeExternal(copy);
-    StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(copy, writer, "\n");
-    assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(element, copy));
+    assertElementsEqual(element, copy);
   }
 }
