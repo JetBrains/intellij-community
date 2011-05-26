@@ -168,9 +168,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (severity == null) continue;
         }
         if (isGuardedByImportError(node)) {
-          if (PsiTreeUtil.getParentOfType(node, PyImportElement.class) != null) {
-            if (!ScopeUtil.isDeclaredAndBoundInScope(node)) {
-              registerProblem(node, PyBundle.message("INSP.try.except.import.error", node.getName()),
+          final PyImportElement importElement = PsiTreeUtil.getParentOfType(node, PyImportElement.class);
+          if (importElement != null) {
+            if (!ScopeUtil.isDeclaredAndBoundInScope(importElement, importElement.getVisibleName())) {
+              final PyTargetExpression asElement = importElement.getAsNameElement();
+              final PyElement toHighlight = asElement != null ? asElement : node;
+              registerProblem(toHighlight,
+                              PyBundle.message("INSP.try.except.import.error",
+                                               importElement.getVisibleName()),
                               ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, null);
             }
           }

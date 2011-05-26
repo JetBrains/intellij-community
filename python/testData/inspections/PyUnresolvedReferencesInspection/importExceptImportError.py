@@ -1,5 +1,4 @@
 # PY-3639
-
 def f(x):
     from <warning descr="Unresolved reference 'foo'">foo</warning> import <warning descr="Unresolved reference 'StringIO'">StringIO</warning>
     return StringIO(x)
@@ -24,3 +23,9 @@ def f(x):
     except ImportError:
         StringIO = lambda x: x
     return StringIO(x)
+
+# PY-3675
+try:
+    import foo as bar
+except ImportError:
+    import <warning descr="Module 'bar' not found">bar</warning>
