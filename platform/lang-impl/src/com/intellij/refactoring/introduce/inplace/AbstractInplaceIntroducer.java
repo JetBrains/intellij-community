@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.introduceParameter;
+package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -70,16 +70,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
   protected abstract void performIntroduce();
   protected void performPostIntroduceTasks() {}
 
-  public abstract E restoreExpression(PsiFile containingFile, V variable, RangeMarker marker, String exprText);
-
   protected abstract boolean isReplaceAllOccurrences();
   protected abstract JComponent getComponent();
 
-
-  protected void restoreAnchors() {}
-
   protected abstract void saveSettings(V variable);
   protected abstract V getVariable();
+
+  public abstract E restoreExpression(PsiFile containingFile, V variable, RangeMarker marker, String exprText);
+  protected void restoreAnchors() {}
 
   public boolean startInplaceIntroduceTemplate() {
     final boolean replaceAllOccurrences = isReplaceAllOccurrences();
@@ -113,6 +111,25 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
 
     }, getCommandName(), getCommandName());
     return result.get();
+  }
+
+  public void restartInplaceIntroduceTemplate() {
+    Runnable restartTemplateRunnable = new Runnable() {
+      public void run() {
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+        if (templateState != null) {
+          myEditor.putUserData(INTRODUCE_RESTART, true);
+          try {
+            templateState.gotoEnd(true);
+            startInplaceIntroduceTemplate();
+          }
+          finally {
+            myEditor.putUserData(INTRODUCE_RESTART, false);
+          }
+        }
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, getCommandName(), getCommandName());
   }
 
   protected String getInputName() {
@@ -250,24 +267,5 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
     if (success) {
       performPostIntroduceTasks();
     }
-  }
-
-  protected void restartTemplate() {
-    Runnable restartTemplateRunnable = new Runnable() {
-      public void run() {
-        final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-        if (templateState != null) {
-          myEditor.putUserData(INTRODUCE_RESTART, true);
-          try {
-            templateState.gotoEnd(true);
-            startInplaceIntroduceTemplate();
-          }
-          finally {
-            myEditor.putUserData(INTRODUCE_RESTART, false);
-          }
-        }
-      }
-    };
-    CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, getCommandName(), getCommandName());
   }
 }

@@ -87,7 +87,7 @@ class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
       protected void updateControls(JCheckBox[] removeParamsCb) {
         super.updateControls(removeParamsCb);
         if (myParameterIndex < 0) return;
-        restartTemplate();
+        restartInplaceIntroduceTemplate();
       }
     };
     myPanel.append2MainPanel(myWholePanel);

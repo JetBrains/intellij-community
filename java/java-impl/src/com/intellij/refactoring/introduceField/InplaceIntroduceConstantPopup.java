@@ -334,7 +334,7 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
     myReplaceAllCb.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        restartTemplate();
+        restartInplaceIntroduceTemplate();
       }
     });
 
