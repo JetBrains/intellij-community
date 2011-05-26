@@ -208,7 +208,12 @@ public class DumbServiceImpl extends DumbService {
         runnable = myRunWhenSmartQueue.pullFirst();
       }
       if (!myProject.isDisposed()) {
-        runnable.run();
+        try {
+          runnable.run();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }
