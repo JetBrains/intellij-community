@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -96,6 +96,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     PsiClass targetClass = PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
     return
       myParameter.isValid()
+      && myParameter.getLanguage().isKindOf(StdLanguages.JAVA)
       && myParameter.getDeclarationScope() instanceof PsiMethod
       && ((PsiMethod)myParameter.getDeclarationScope()).getBody() != null
       && myParameter.getManager().isInProject(myParameter)
