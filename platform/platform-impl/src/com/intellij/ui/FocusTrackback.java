@@ -68,7 +68,7 @@ public class FocusTrackback {
   private boolean myForcedRestore;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
-    this(requestor, parent instanceof Window ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
+    this(requestor, parent == null || parent instanceof Window ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
   }
 
   public FocusTrackback(@NotNull Object requestor, Window parent, boolean mustBeShown) {
