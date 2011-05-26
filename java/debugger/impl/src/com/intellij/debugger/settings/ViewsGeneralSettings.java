@@ -36,10 +36,8 @@ public class ViewsGeneralSettings implements PersistentStateComponent<Element> {
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;
-  private final NodeRendererSettings myNodeRendererSettings;
 
-  public ViewsGeneralSettings(NodeRendererSettings instance) {
-    myNodeRendererSettings = instance;
+  public ViewsGeneralSettings() {
   }
 
   public static ViewsGeneralSettings getInstance() {
@@ -64,10 +62,6 @@ public class ViewsGeneralSettings implements PersistentStateComponent<Element> {
       // ignore
     }
     return element;
-  }
-
-  void fireRendererSettingsChanged() {
-    myNodeRendererSettings.fireRenderersChanged();
   }
 
   public boolean equals(Object object) {

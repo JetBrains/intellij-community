@@ -121,7 +121,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     }
 
     public boolean canNavigate() {
-      return true;
+      return myFile.isValid();
     }
 
     public boolean canNavigateToSource() {

@@ -11,8 +11,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
@@ -44,8 +42,11 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
 
   private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal, final boolean generateDelegate,
                       String conflict) throws Exception {
+    boolean enabled = true;
     try {
       configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
+      enabled = myEditor.getSettings().isVariableInplaceRenameEnabled();
+      myEditor.getSettings().setVariableInplaceRenameEnabled(false);
       perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, generateDelegate);
       checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
       if (conflict != null) {
@@ -57,6 +58,8 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
         throw e;
       }
       assertEquals(conflict, e.getMessage());
+    } finally {
+      myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
     }
   }
 
@@ -270,14 +273,23 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
 
   private void doTestThroughHandler() throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-    new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, new DataContext() {
-      @Override
-      @Nullable
-      public Object getData(@NonNls final String dataId) {
-        return null;
-      }
-    });
-    checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
+    boolean enabled = true;
+    try {
+      configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
+      enabled = myEditor.getSettings().isVariableInplaceRenameEnabled();
+      myEditor.getSettings().setVariableInplaceRenameEnabled(false);
+      new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, new DataContext() {
+        @Override
+        @Nullable
+        public Object getData(@NonNls final String dataId) {
+          return null;
+        }
+      });
+      checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
+    }
+    finally {
+      myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
+    }
   }
 
   public void testEnclosingWithParamDeletion() throws Exception {

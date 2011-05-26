@@ -50,7 +50,7 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
 
     public void visitAssignmentExpression(GrAssignmentExpression grAssignmentExpression) {
       super.visitAssignmentExpression(grAssignmentExpression);
-      if (PsiUtil.resultOfExpressionUsed(grAssignmentExpression)) {
+      if (PsiUtil.isExpressionUsed(grAssignmentExpression)) {
         registerError(grAssignmentExpression);
       }
     }

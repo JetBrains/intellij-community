@@ -164,8 +164,13 @@ public class JavaSdkImpl extends JavaSdk {
   @Override
   public String adjustSelectedSdkHome(String homePath) {
     if (SystemInfo.isMac) {
-      return homePath + MAC_HOME_PATH;
+      File home = new File(homePath, MAC_HOME_PATH);
+      if (home.exists()) return home.getPath();
+      
+      home = new File(new File(homePath, "Contents"), "Home");
+      if (home.exists()) return home.getPath();
     }
+    
     return homePath;
   }
 
@@ -457,6 +462,18 @@ public class JavaSdkImpl extends JavaSdk {
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {
         result.add(vFile);
+      }
+    }
+    
+    if (SystemInfo.isMac) {
+      final File openJdkRtJar = new File(new File(new File(file, "jre"), "lib"), "rt.jar");
+      if (openJdkRtJar.exists() && !openJdkRtJar.isDirectory()) {
+        String url =
+          JarFileSystem.PROTOCOL_PREFIX + openJdkRtJar.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+        VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
+        if (vFile != null){
+          result.add(vFile);
+        }
       }
     }
 

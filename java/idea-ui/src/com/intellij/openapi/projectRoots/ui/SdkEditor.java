@@ -231,7 +231,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       configurable.reset();
     }
 
-    myHomeComponent.setEnabled(mySdk != null && mySdk.getSdkType().supportHomePathChanging());
+    myHomeComponent.setEnabled(mySdk != null);
 
     for(int i = 0; i < myTabbedPane.getTabCount(); i++){
       myTabbedPane.setEnabledAt(i, mySdk != null);
