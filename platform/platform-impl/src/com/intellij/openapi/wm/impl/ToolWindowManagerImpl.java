@@ -84,7 +84,6 @@ import java.util.List;
  */
 public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements ProjectComponent, JDOMExternalizable, KeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
-  private static final String TOOL_WINDOW_BALLOON_GROUP = "Tool Window Balloon";
 
   private final Project myProject;
   private final WindowManagerEx myWindowManager;
@@ -157,8 +156,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myWindowManager = windowManagerEx;
     myFileEditorManager = fem;
     myListenerList = new EventListenerList();
-
-    Notifications.Bus.register(TOOL_WINDOW_BALLOON_GROUP, NotificationDisplayType.NONE);
 
     if (!project.isDefault()) {
       actionManager.addAnActionListener(new AnActionListener() {
@@ -1268,9 +1265,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (existing != null) {
       existing.hide();
     }
-    final String group = TOOL_WINDOW_BALLOON_GROUP;
-    final Notification notification = createNotification(group, type, text, listener);
-    Notifications.Bus.notify(notification, myProject);
+    Notifications.Bus.notify(createNotification(type, text, listener), myProject);
 
     if (NotificationsManagerImpl.isEventLogVisible(myProject)) {
       return;
@@ -1379,7 +1374,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   }
 
-  public static Notification createNotification(String group, MessageType type, String text, final HyperlinkListener listener) {
+  public static Notification createNotification(MessageType type, String text, final HyperlinkListener listener) {
     final NotificationListener notificationListener = listener == null ? null : new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
@@ -1389,7 +1384,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final NotificationType notificationType = type == MessageType.ERROR
                                    ? NotificationType.ERROR
                                    : type == MessageType.WARNING ? NotificationType.WARNING : NotificationType.INFORMATION;
-    return new Notification(group, "", text, notificationType, notificationListener);
+    return new Notification(Notifications.LOG_ONLY_GROUP_ID, "", text, notificationType, notificationListener);
   }
 
   @Override

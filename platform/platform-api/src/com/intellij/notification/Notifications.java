@@ -36,12 +36,17 @@ public interface Notifications {
   Topic<Notifications> TOPIC = Topic.create("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
 
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
+  String LOG_ONLY_GROUP_ID = "Log Only";
 
   void notify(@NotNull Notification notification);
   void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType);
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {
+
+    static {
+      register(LOG_ONLY_GROUP_ID, NotificationDisplayType.NONE);
+    }
 
     /**
      * Registration is OPTIONAL: STICKY_BALLOON display type will be used by default.

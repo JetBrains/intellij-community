@@ -17,7 +17,6 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.Notifications;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -64,7 +63,6 @@ import java.util.List;
  * User: spLeaner
  */
 public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
-  private static final String STATUS_BAR_BALLOON_GROUP = "Status Bar Balloon";
   private InfoAndProgressPanel myInfoAndProgressPanel;
   private IdeFrame myFrame;
 
@@ -177,8 +175,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     if (master == null) {
       addWidget(new ToolWindowsWidget(), Position.LEFT);
     }
-
-    Notifications.Bus.register(STATUS_BAR_BALLOON_GROUP, NotificationDisplayType.NONE);
   }
 
 
@@ -452,7 +448,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
                                                 @NotNull String htmlBody,
                                                 @Nullable Icon icon,
                                                 @Nullable HyperlinkListener listener) {
-    Notifications.Bus.notify(ToolWindowManagerImpl.createNotification(STATUS_BAR_BALLOON_GROUP, type, htmlBody, listener), myFrame.getProject());
+    Notifications.Bus.notify(ToolWindowManagerImpl.createNotification(type, htmlBody, listener), myFrame.getProject());
 
     if (NotificationsManagerImpl.isEventLogVisible(myFrame.getProject())) {
       return new BalloonHandler() {

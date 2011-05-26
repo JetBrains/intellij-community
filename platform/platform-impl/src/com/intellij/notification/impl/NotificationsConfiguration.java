@@ -75,7 +75,12 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   }
 
   private NotificationSettings[] _getAllSettings() {
-    final List<NotificationSettings> result = new ArrayList<NotificationSettings>(myIdToSettingsMap.values());
+    final List<NotificationSettings> result = new ArrayList<NotificationSettings>();
+    for (String s : myIdToSettingsMap.keySet()) {
+      if (s != Notifications.LOG_ONLY_GROUP_ID) {
+        result.add(myIdToSettingsMap.get(s));
+      }
+    }
 
     Collections.sort(result, new Comparator<NotificationSettings>() {
       public int compare(NotificationSettings o1, NotificationSettings o2) {
