@@ -189,6 +189,9 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
 
   public Object[] getCompletionVariants(String prefix, PyExpression location, ProcessingContext context) {
+    if (myClass == null) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
       visited = new HashSet<PyClassType>();
