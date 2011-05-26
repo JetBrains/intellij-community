@@ -82,14 +82,35 @@ public class GroovyDslExecutor {
       }
     }
 
+    mc.supportsVersion = { ver -> return supportsVersion(ver) }
+    mc.assertVersion = { ver -> if (!supportsVersion(ver)) throw new InvalidVersionException() }
+
     oldStylePrimitives(mc)
 
     mc.initialize()
     script.metaClass = mc
-    script.run()
+    try {
+      script.run()
+    }
+    catch (InvalidVersionException ignore) {
+      enhancers.clear()
+    }
 
     locked = true
   }
+
+  private boolean supportsVersion(ver) {
+    if (ver instanceof String) {
+      return StringUtil.compareVersionNumbers(ideaVersion, ver) >= 0
+    }
+    else if (ver instanceof Map) {
+      def we = ver.ide?.intellij
+      return we != null && StringUtil.compareVersionNumbers(ideaVersion, we) >= 0
+    }
+    return false
+  }
+
+  private static class InvalidVersionException extends Exception {}
 
   private def handleImplicitBind(arg) {
     if (arg instanceof Map && arg.size() == 1 && arg.keySet().iterator().next() instanceof String && arg.values().iterator().next() instanceof DslPointcut) {
@@ -99,10 +120,6 @@ public class GroovyDslExecutor {
   }
 
   private void oldStylePrimitives(MetaClass mc) {
-    mc.supportsVersion = { String ver ->
-      StringUtil.compareVersionNumbers(ideaVersion, ver) >= 0
-    }
-
     /**
      * Context definition
      */
