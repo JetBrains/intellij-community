@@ -317,6 +317,10 @@ public class StubGenerator implements ClassItemGenerator {
     return false;
   }
 
+  @Override
+  public void writePostponed(StringBuilder text, PsiClass psiClass) {
+  }
+
   private static LightMethodBuilder mirrorMethod(PsiClass typeDefinition,
                                                  PsiMethod method,
                                                  PsiClass baseClass,

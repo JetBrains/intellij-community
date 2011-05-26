@@ -5,8 +5,7 @@ org.codehaus.groovy.runtime.DefaultGroovyMethods.each(X.this, new groovy.lang.Cl
 public java.lang.Object doCall(java.lang.Object it) {
 return org.codehaus.groovy.runtime.DefaultGroovyMethods.each(X.this, new groovy.lang.Closure<java.lang.Integer>(this, this) {
 public java.lang.Integer doCall(java.lang.Object it) {
-ab.set(2);
-return ab.get();
+return setGroovyRef(ab, 2);
 }
 
 public java.lang.Integer doCall() {
@@ -24,4 +23,7 @@ return doCall(null);
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(X.this, ab.get());
 }
 
-}
+private static <T> T setGroovyRef(groovy.lang.Reference<T> ref, T newValue) {
+ref.set(newValue);
+return newValue;
+}}

@@ -30,7 +30,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
 
@@ -133,6 +135,8 @@ public class ClassGenerator {
         text.append("\n");
       }
     }
+
+    classItemGenerator.writePostponed(text, typeDefinition);
   }
 
   private void writeImplementsList(StringBuilder text, PsiClass typeDefinition, boolean isInterface) {
