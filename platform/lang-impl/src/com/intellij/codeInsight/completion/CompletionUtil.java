@@ -106,7 +106,9 @@ public class CompletionUtil {
   public static void registerCompletionData(FileType fileType, NotNullLazyValue<CompletionData> completionData) {
     ourCustomCompletionDatas.put(fileType, completionData);
   }
-  
+
+  /** @see CompletionDataEP */
+  @Deprecated
   public static void registerCompletionData(FileType fileType, final CompletionData completionData) {
     registerCompletionData(fileType, new NotNullLazyValue<CompletionData>() {
       @NotNull
