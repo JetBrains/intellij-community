@@ -92,14 +92,6 @@ public class PsiDiamondType extends PsiType {
       return PsiDiamondType.DiamondInferenceResult.NULL_RESULT;
     }
 
-    final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
-    if (anonymousClass != null) {
-      final PsiElement resolve = anonymousClass.getBaseClassReference().resolve();
-      if (resolve instanceof PsiClass && ((PsiClass)resolve).getContainingClass() != null) {
-        return PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT;
-      }
-
-    }
     return resolveInferredTypes(newExpression);
   }
 
@@ -109,6 +101,14 @@ public class PsiDiamondType extends PsiType {
 
   public static DiamondInferenceResult resolveInferredTypes(PsiNewExpression newExpression,
                                                             PsiElement context) {
+    final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+    if (anonymousClass != null) {
+      final PsiElement resolve = anonymousClass.getBaseClassReference().resolve();
+      if (resolve instanceof PsiClass && ((PsiClass)resolve).getContainingClass() != null) {
+        return PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT;
+      }
+    }
+
     final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.getChildOfType(newExpression, PsiReferenceParameterList.class);
     if (referenceParameterList != null && referenceParameterList.getTypeParameterElements().length > 0) {
       return DiamondInferenceResult.EXPLICIT_CONSTRUCTOR_TYPE_ARGS;

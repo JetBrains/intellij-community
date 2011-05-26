@@ -42,10 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.*;
 
@@ -122,21 +119,6 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     //append return type
     if (!method.isConstructor()) {
       PsiType retType = context.typeProvider.getReturnType(method);
-
-      /*
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        final List<MethodSignatureBackedByPsiMethod> superSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-        for (MethodSignatureBackedByPsiMethod superSignature : superSignatures) {
-          final PsiType superType = superSignature.getSubstitutor().substitute(superSignature.getMethod().getReturnType());
-          if (superType != null &&
-              !superType.isAssignableFrom(retType) &&
-              !(PsiUtil.resolveClassInType(superType) instanceof PsiTypeParameter)) {
-            retType = superType;
-          }
-        }
-      }
-      */
-
       writeType(builder, retType, method, classNameProvider);
       builder.append(" ");
     }
@@ -364,4 +346,80 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   public boolean generateAnnotations() {
     return true;
   }
+
+  @Override
+  public void writePostponed(StringBuilder builder, PsiClass psiClass) {
+    if (psiClass.getContainingClass() != null) return;
+    if (psiClass instanceof PsiAnonymousClass) return;
+
+    Map<PsiMethod, String> setters = context.getSetters();
+    for (Map.Entry<PsiMethod, String> entry : setters.entrySet()) {
+      PsiMethod setter = entry.getKey();
+      String name = entry.getValue();
+      PsiParameter[] parameters = setter.getParameterList().getParameters();
+      LOG.assertTrue(parameters.length == 1 || parameters.length == 2);
+      PsiParameter[] actual;
+      PsiParameter parameter = parameters[parameters.length - 1];
+      final PsiType parameterType = context.typeProvider.getParameterType(parameter);
+
+      builder.append("private static ");
+      if (setter.hasTypeParameters()) {
+        writeTypeParameters(builder, setter, classNameProvider);
+      }
+
+      if (parameterType instanceof PsiPrimitiveType) {
+        builder.append(parameterType.getCanonicalText()).append(' ');
+      }
+      else {
+        if (setter.hasTypeParameters()) {
+          builder.delete(builder.length() - 1, builder.length());
+        }
+        else {
+          builder.append('<');
+        }
+        builder.append(" Value");
+        if (!parameterType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          builder.append(" extends ");
+          writeType(builder, parameterType, psiClass, classNameProvider);
+        }
+        builder.append('>');
+        builder.append("Value ");
+      }
+      builder.append(name);
+
+      final boolean isStatic = setter.hasModifierProperty(PsiModifier.STATIC);
+      final PsiClass containingClass = setter.getContainingClass();
+      LOG.assertTrue(containingClass != null);
+
+      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
+      if (!(parameterType instanceof PsiPrimitiveType)) {
+        parameter = factory.createParameter(parameter.getName(), "Value", null);
+      }
+      if (isStatic) {
+        actual = new PsiParameter[]{parameter};
+      }
+      else {
+        final GrParameter propOwner =
+          factory.createParameter("propOwner", containingClass.getQualifiedName(), null);
+        actual = new PsiParameter[]{propOwner, parameter};
+      }
+      GenerationUtil.writeParameterList(builder, actual, classNameProvider, context);
+
+      if (isStatic) {
+        builder.append("{\n").append(containingClass.getQualifiedName());
+      }
+      else {
+        builder.append("{\npropOwner");
+      }
+      builder.append(".").append(setter.getName()).append('(').append(parameter.getName()).append(");\nreturn ").append(parameter.getName())
+        .append(";\n}\n");
+    }
+
+    final String name = context.getRefSetterName();
+    if (name != null) {
+      builder.append("private static <T> T ").append(name).
+        append("(groovy.lang.Reference<T> ref, T newValue) {\nref.set(newValue);\nreturn newValue;\n}");
+    }
+  }
+
 }

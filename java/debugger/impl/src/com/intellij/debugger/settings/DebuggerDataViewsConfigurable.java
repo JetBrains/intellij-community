@@ -195,6 +195,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myAutoTooltip.save();
 
     myArrayRendererConfigurable.apply();
+
+    rendererSettings.fireRenderersChanged();
   }
 
   public void reset() {

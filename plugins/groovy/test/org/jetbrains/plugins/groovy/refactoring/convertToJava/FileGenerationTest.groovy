@@ -67,4 +67,8 @@ class FileGenerationTest extends LightGroovyTestCase {
   void testClosureParamInInnerClosure() {doTest()}
   void testMethodParamInClosureImplicitReturn() {doTest()}
   void testField() {doTest()}
+
+  void testIntPropAssignment() {doTest()}
+  void testPropAssignment() {doTest()}
+  void testStaticPropAssignment() {doTest()}
 }

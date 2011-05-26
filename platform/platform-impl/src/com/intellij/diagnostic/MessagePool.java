@@ -16,6 +16,10 @@
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
@@ -30,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class MessagePool {
 
   private static final int MAX_POOL_SIZE_FOR_FATALS = 100;
+  private static final String IDE_FATAL_ERRORS_GROUP_ID = "IDE Fatal Errors";
 
   private final List<AbstractMessage> myIdeFatals = new ArrayList<AbstractMessage>();
 
@@ -41,6 +46,7 @@ public class MessagePool {
   MessagePool(int maxGroupSize, int timeout) {
     myFatalsGrouper = new MessageGrouper(timeout, maxGroupSize);
     JobScheduler.getScheduler().scheduleAtFixedRate(myFatalsGrouper, (long)300, (long)300, TimeUnit.MILLISECONDS);
+    Notifications.Bus.register(IDE_FATAL_ERRORS_GROUP_ID, NotificationDisplayType.NONE);
   }
 
   private static class MessagePoolHolder {
@@ -52,12 +58,10 @@ public class MessagePool {
   }
 
   public void addIdeFatalMessage(IdeaLoggingEvent aEvent) {
-    addIdeFatalMessage(new LogMessage(aEvent));
-  }
-
-  private void addIdeFatalMessage(LogMessage message) {
+    LogMessage message = new LogMessage(aEvent);
     if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
       myFatalsGrouper.add(message);
+      Notifications.Bus.notify(new Notification(IDE_FATAL_ERRORS_GROUP_ID, "Exception", message.getMessage(), NotificationType.ERROR));
     } else if (myIdeFatals.size() == MAX_POOL_SIZE_FOR_FATALS) {
       myFatalsGrouper.add(new LogMessage(new LoggingEvent(DiagnosticBundle.message("error.monitor.too.many.errors"),
                                                           Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException())));

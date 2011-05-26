@@ -1149,7 +1149,7 @@ public class PsiUtil {
     return qualifier == null;
   }
 
-  public static boolean isExpressionStatement(GrExpression expr) {
+  public static boolean isExpressionStatement(PsiElement expr) {
     final PsiElement parent = expr.getParent();
     if (parent instanceof GrControlFlowOwner) return true;
     if (parent instanceof GrExpression ||
@@ -1228,7 +1228,7 @@ public class PsiUtil {
     return defaultValue;
   }
 
-  public static boolean resultOfExpressionUsed(GrExpression expr) {
+  public static boolean isExpressionUsed(GrExpression expr) {
     while (expr.getParent() instanceof GrParenthesizedExpression) expr = (GrExpression)expr.getParent();
 
     final PsiElement parent = expr.getParent();
