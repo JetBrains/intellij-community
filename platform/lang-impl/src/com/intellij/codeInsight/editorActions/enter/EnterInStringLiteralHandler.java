@@ -42,7 +42,7 @@ public class EnterInStringLiteralHandler implements EnterHandlerDelegate {
       Document document = editor.getDocument();
       CharSequence text = document.getText();
       ASTNode token = psiAtOffset.getNode();
-      final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile());
+      final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile(), editor);
       JavaLikeQuoteHandler quoteHandler = fileTypeQuoteHandler instanceof JavaLikeQuoteHandler ?
                                                        (JavaLikeQuoteHandler) fileTypeQuoteHandler:null;
 
