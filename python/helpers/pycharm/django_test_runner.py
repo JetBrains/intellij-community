@@ -100,7 +100,7 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[], **kwa
     Returns the number of tests that failed.
     """
     TeamcityServiceMessages(sys.stdout).testMatrixEntered()
-    TeamcityServiceMessages(sys.stdout).testCount(len(test_labels))
+    TeamcityServiceMessages(sys.stdout).testCount(len(test_labels)-1)
     if django.VERSION[1] > 1:
       return DjangoTeamcityTestRunner().run_tests(test_labels, extra_tests=extra_tests)
 
