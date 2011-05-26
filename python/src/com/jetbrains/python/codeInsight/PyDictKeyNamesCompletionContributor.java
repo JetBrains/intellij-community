@@ -181,7 +181,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
       if (isDictKeys) {
         if (str.getText().startsWith("'") && str.getText().endsWith("'") ||
             str.getText().startsWith("\"") && str.getText().endsWith("\""))
-          context.setReplacementOffset(context.getSelectionEndOffset()+1);
+          context.setReplacementOffset(str.getTextOffset()+str.getTextLength());
       }
     }
   }
