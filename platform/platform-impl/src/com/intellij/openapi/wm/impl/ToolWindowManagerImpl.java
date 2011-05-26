@@ -18,6 +18,8 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.Patches;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -66,6 +68,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -81,6 +84,7 @@ import java.util.List;
  */
 public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements ProjectComponent, JDOMExternalizable, KeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
+  private static final String TOOL_WINDOW_BALLOON_GROUP = "Tool Window Balloon";
 
   private final Project myProject;
   private final WindowManagerEx myWindowManager;
@@ -153,6 +157,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myWindowManager = windowManagerEx;
     myFileEditorManager = fem;
     myListenerList = new EventListenerList();
+
+    Notifications.Bus.register(TOOL_WINDOW_BALLOON_GROUP, NotificationDisplayType.NONE);
 
     if (!project.isDefault()) {
       actionManager.addAnActionListener(new AnActionListener() {
@@ -1254,13 +1260,20 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                               @NotNull final MessageType type,
                               @NotNull final String text,
                               @Nullable final Icon icon,
-                              @Nullable HyperlinkListener listener) {
+                              @Nullable final HyperlinkListener listener) {
     checkId(toolWindowId);
 
 
     Balloon existing = myWindow2Balloon.get(toolWindowId);
     if (existing != null) {
       existing.hide();
+    }
+    final String group = TOOL_WINDOW_BALLOON_GROUP;
+    final Notification notification = createNotification(group, type, text, listener);
+    Notifications.Bus.notify(notification, myProject);
+
+    if (NotificationsManagerImpl.isEventLogVisible(myProject)) {
+      return;
     }
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
@@ -1364,6 +1377,19 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       show.run();
     }
 
+  }
+
+  public static Notification createNotification(String group, MessageType type, String text, final HyperlinkListener listener) {
+    final NotificationListener notificationListener = listener == null ? null : new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        listener.hyperlinkUpdate(event);
+      }
+    };
+    final NotificationType notificationType = type == MessageType.ERROR
+                                   ? NotificationType.ERROR
+                                   : type == MessageType.WARNING ? NotificationType.WARNING : NotificationType.INFORMATION;
+    return new Notification(group, "", text, notificationType, notificationListener);
   }
 
   @Override
