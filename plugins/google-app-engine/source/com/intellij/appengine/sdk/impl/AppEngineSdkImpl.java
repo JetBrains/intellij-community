@@ -4,6 +4,7 @@ import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.server.integration.AppEngineServerData;
 import com.intellij.appengine.server.integration.AppEngineServerIntegration;
 import com.intellij.appengine.util.AppEngineUtil;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,6 +58,17 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   public File[] getJspLibraries() {
     File sdkHome = new File(FileUtil.toSystemDependentName(myHomePath));
     return getJarsFromDirectory(new File(sdkHome, "lib" + File.separator + "shared" + File.separator + "jsp"));
+  }
+
+  public void patchJavaParametersForDevServer(ParametersList vmParameters) {
+    final String agentPath = myHomePath + "/lib/agent/appengine-agent.jar";
+    if (new File(FileUtil.toSystemDependentName(agentPath)).exists()) {
+      vmParameters.add("-javaagent:" + agentPath);
+    }
+    String patchPath = myHomePath + "/lib/override/appengine-dev-jdk-overrides.jar";
+    if (new File(FileUtil.toSystemDependentName(patchPath)).exists()) {
+      vmParameters.add("-Xbootclasspath/p:" + patchPath);
+    }
   }
 
   private static File[] getJarsFromDirectory(File libFolder) {
@@ -193,9 +205,5 @@ public class AppEngineSdkImpl implements AppEngineSdk {
       reader.close();
     }
     return map;
-  }
-
-  public String getAgentPath() {
-    return myHomePath + "/lib/agent/appengine-agent.jar";
   }
 }

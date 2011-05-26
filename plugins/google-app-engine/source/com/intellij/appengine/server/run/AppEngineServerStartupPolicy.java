@@ -61,14 +61,10 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
     parameters.add(explodedPathParameter);
     javaParameters.setWorkingDirectory(explodedPathParameter);
     final ParametersList vmParameters = javaParameters.getVMParametersList();
-    final String agentPath = sdk.getAgentPath();
-    if (new File(FileUtil.toSystemDependentName(agentPath)).exists()) {
-      vmParameters.add("-javaagent:" + agentPath);
-    }
+    sdk.patchJavaParametersForDevServer(vmParameters);
     if (SystemInfo.isMac) {
       vmParameters.add("-XstartOnFirstThread");
     }
     return javaParameters;
   }
-
 }

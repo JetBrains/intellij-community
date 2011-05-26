@@ -1,5 +1,6 @@
 package com.intellij.appengine.sdk;
 
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +35,9 @@ public interface AppEngineSdk {
 
   VirtualFile[] getOrmLibSources();
 
-  String getAgentPath();
-
   File getWebSchemeFile();
 
   File[] getJspLibraries();
+
+  void patchJavaParametersForDevServer(ParametersList vmParameters);
 }
