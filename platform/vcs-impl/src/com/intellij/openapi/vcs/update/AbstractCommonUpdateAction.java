@@ -91,16 +91,16 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles = createVcsToFilesMap(roots, project);
 
-        if (showUpdateOptions || OptionsDialog.shiftIsPressed(context.getModifiers())) {
-          showOptionsDialog(vcsToVirtualFiles, project, context);
-        }
-
         for (AbstractVcs vcs : vcsToVirtualFiles.keySet()) {
           final UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
           if ((updateEnvironment != null) && (! updateEnvironment.validateOptions(vcsToVirtualFiles.get(vcs)))) {
             // messages already shown
             return;
           }
+        }
+
+        if (showUpdateOptions || OptionsDialog.shiftIsPressed(context.getModifiers())) {
+          showOptionsDialog(vcsToVirtualFiles, project, context);
         }
 
         if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -257,6 +257,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       if (supportingVcsesAreEmpty(vcsManager, myActionInfo)) {
         presentation.setVisible(myAlwaysVisible);
         presentation.setEnabled(false);
+        return;
       }
 
       if (filterRootsBeforeAction()) {
@@ -264,6 +265,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         if (roots.length == 0) {
           presentation.setVisible(myAlwaysVisible);
           presentation.setEnabled(false);
+          return;
         }
       }
 

@@ -16,8 +16,6 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -108,8 +106,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled()) {
       myInplaceIntroduceFieldPopup =
         new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
-                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, expr != null ? createOccurenceManager(expr, parentClass) : null);
-      if (myInplaceIntroduceFieldPopup.startTemplate()) {
+                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, expr != null ? createOccurenceManager(expr, parentClass) : null,
+                                       project);
+      if (myInplaceIntroduceFieldPopup.startInplaceIntroduceTemplate()) {
         return null;
       }
     }

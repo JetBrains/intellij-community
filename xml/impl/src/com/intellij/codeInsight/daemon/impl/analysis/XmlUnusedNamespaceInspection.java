@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -135,18 +136,23 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
         XmlAttributeValue value = attribute.getValueElement();
         if (value == null) return;
         PsiReference[] references = value.getReferences();
-        for (int i = 0, referencesLength = references.length; i < referencesLength; i+=2) {
+        for (int i = 0, referencesLength = references.length; i < referencesLength; i++) {
           PsiReference reference = references[i];
-          String ns = getNamespaceFromReference(reference);
-          if (ArrayUtil.indexOf(attribute.getParent().knownNamespaces(), ns) == -1) {
-            if (!XmlHighlightVisitor.hasBadResolve(reference, false))
-            holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
-                                               new RemoveNamespaceLocationFix(ns));
-            if (i + 1 < referencesLength) {
-              PsiReference nextRef = references[i + 1];
-              if (!XmlHighlightVisitor.hasBadResolve(nextRef, false))
-              holder.registerProblemForReference(nextRef, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
-                                                 new RemoveNamespaceLocationFix(ns));
+          if (reference instanceof URLReference) {
+            String ns = getNamespaceFromReference(reference);
+            if (ArrayUtil.indexOf(attribute.getParent().knownNamespaces(), ns) == -1) {
+              if (!XmlHighlightVisitor.hasBadResolve(reference, false)) {
+                holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
+                                                   new RemoveNamespaceLocationFix(ns));
+              }
+              for (int j = i + 1; j < referencesLength; j++) {
+                PsiReference nextRef = references[j];
+                if (nextRef instanceof URLReference) break;
+                if (!XmlHighlightVisitor.hasBadResolve(nextRef, false)) {
+                  holder.registerProblemForReference(nextRef, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
+                                                     new RemoveNamespaceLocationFix(ns));
+                }
+              }
             }
           }
         }

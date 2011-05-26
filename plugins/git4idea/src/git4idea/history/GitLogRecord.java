@@ -85,6 +85,7 @@ class GitLogRecord {
   String getCommitterEmail() { return lookup(COMMITTER_EMAIL); }
   String getSubject() { return lookup(SUBJECT); }
   String getBody() { return lookup(BODY); }
+  String getRawBody() { return lookup(RAW_BODY); }
   String getShortenedRefLog() { return lookup(SHORT_REF_LOG_SELECTOR); }
 
   // access methods with some formatting or conversion
@@ -108,7 +109,7 @@ class GitLogRecord {
   }
 
   String getFullMessage() {
-    return (getSubject() + "\n\n" + getBody()).trim();
+    return getRawBody().trim();
   }
 
   String[] getParentsShortHashes() {

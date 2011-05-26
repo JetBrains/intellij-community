@@ -134,7 +134,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       initLabel.setDisplayedMnemonic('i');
       groupPanel.add(initLabel, gridBagConstraints);
       JComboBox initializersCombo = new JComboBox(myInitialisersPlaceModel);
-      InplaceIntroduceConstantPopup.appendActions(initializersCombo, myParentClass.getProject());
+      InplaceCombosUtil.appendActions(initializersCombo, myParentClass.getProject());
       initLabel.setLabelFor(initializersCombo);
       initializersCombo.setRenderer(new ListCellRendererWrapper<BaseExpressionToFieldHandler.InitializationPlace>(initializersCombo) {
         @Override
@@ -176,8 +176,8 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     if (visibility == null) {
       visibility = PsiModifier.PRIVATE;
     }
-    myVisibilityCombo = InplaceIntroduceConstantPopup.createVisibilityCombo(groupPanel, gridBagConstraints, myParentClass.getProject(),
-                                                                            visibility);
+    myVisibilityCombo = InplaceCombosUtil.createVisibilityCombo(groupPanel, gridBagConstraints, myParentClass.getProject(),
+                                                                visibility);
 
     mainPanel.add(groupPanel, BorderLayout.CENTER);
 

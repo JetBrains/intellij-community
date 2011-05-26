@@ -84,6 +84,13 @@ public class JUnitUtil {
     if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return true;
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && BaseTestRunner.SUITE_METHODNAME.equals(psiMethod.getName())) return false;
+
+    for (JUnitRecognizer jUnitRecognizer : JUnitRecognizer.EP_NAME.getExtensions()) {
+      if (jUnitRecognizer.isTestMethod(psiMethod)) {
+        return true;
+      }
+    }
+
     if (!psiMethod.getName().startsWith("test")) return false;
     PsiClass testCaseClass = getTestCaseClassOrNull(location);
     return testCaseClass != null && psiMethod.getContainingClass().isInheritor(testCaseClass, true);
@@ -120,6 +127,12 @@ public class JUnitUtil {
       ProgressManager.checkCanceled();
       if (isSuiteMethod(method)) return true;
       if (isTestAnnotated(method)) return true;
+    }
+
+    for (JUnitRecognizer jUnitRecognizer : JUnitRecognizer.EP_NAME.getExtensions()) {
+      if (jUnitRecognizer.isTestClass(psiClass)) {
+        return true;
+      }
     }
 
     return false;

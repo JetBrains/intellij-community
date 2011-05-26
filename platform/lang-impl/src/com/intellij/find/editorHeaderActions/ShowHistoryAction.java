@@ -30,8 +30,9 @@ public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
     super(editorSearchComponent);
     myTextField = textField;
     getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/search.png"));
-    getTemplatePresentation().setDescription("Search history");
-    getTemplatePresentation().setText("Search History");
+    final String s = getTextField() == getEditorSearchComponent().getSearchField() ? "Search" : "Replace";
+    getTemplatePresentation().setDescription(s + " history");
+    getTemplatePresentation().setText(s + " History");
 
     ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
     if (getTextField() == getEditorSearchComponent().getSearchField()) {

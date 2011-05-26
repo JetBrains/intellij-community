@@ -4,10 +4,11 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
 
-public abstract class EditorHeaderToggleAction extends CheckboxAction {
+public abstract class EditorHeaderToggleAction extends CheckboxAction implements DumbAware {
 
   @Override
   public boolean displayTextInToolbar() {

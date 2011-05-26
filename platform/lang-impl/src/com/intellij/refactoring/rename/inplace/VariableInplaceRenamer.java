@@ -90,12 +90,12 @@ public class VariableInplaceRenamer {
     "com.intellij.rename.inplace.resolveSnapshotProvider"
   );
 
-  private final PsiNamedElement myElementToRename;
+  private PsiNamedElement myElementToRename;
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
   private ArrayList<RangeHighlighter> myHighlighters;
-  private final Editor myEditor;
-  private final Project myProject;
+  protected final Editor myEditor;
+  protected final Project myProject;
   private RangeMarker myRenameOffset;
 
   public void setAdvertisementText(String advertisementText) {
@@ -107,10 +107,16 @@ public class VariableInplaceRenamer {
   private static final Stack<VariableInplaceRenamer> ourRenamersStack = new Stack<VariableInplaceRenamer>();
 
   public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename, Editor editor) {
+    this(elementToRename, editor, elementToRename.getProject());
+  }
+
+  public VariableInplaceRenamer(PsiNamedElement elementToRename,
+                                Editor editor,
+                                Project project) {
     myElementToRename = elementToRename;
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
-    myProject = myElementToRename.getProject();
-    myRenameOffset = myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange());
+    myProject = project;
+    myRenameOffset = myElementToRename != null ? myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange()) : null;
   }
 
   public boolean performInplaceRename() {
@@ -391,6 +397,10 @@ public class VariableInplaceRenamer {
         }
       }
     }
+  }
+
+  public void setElementToRename(PsiNamedElement elementToRename) {
+    myElementToRename = elementToRename;
   }
 
   private static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {

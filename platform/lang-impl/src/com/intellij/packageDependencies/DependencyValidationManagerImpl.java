@@ -243,13 +243,11 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   public Element getState() {
     Element element = super.getState();
-    if (SKIP_IMPORT_STATEMENTS) {
-      try {
-        DefaultJDOMExternalizer.writeExternal(this, element);
-      }
-      catch (WriteExternalException e) {
-        LOG.info(e);
-      }
+    try {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+    catch (WriteExternalException e) {
+      LOG.info(e);
     }
     final List<String> unnamedScopes = new ArrayList<String>(myUnnamedScopes.keySet());
     Collections.sort(unnamedScopes);

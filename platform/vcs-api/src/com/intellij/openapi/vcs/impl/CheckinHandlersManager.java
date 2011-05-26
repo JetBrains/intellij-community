@@ -16,7 +16,10 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -37,6 +40,8 @@ public abstract class CheckinHandlersManager {
    * @return the list of registered factories.
    */
   public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories();
+
+  public abstract List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull final List<AbstractVcs> keys);
   /**
    * Registers a factory which provides callbacks to run before and after VCS checkin operations.
    *
