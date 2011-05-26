@@ -3,6 +3,8 @@ package com.intellij.testAssistant;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -163,7 +165,8 @@ public class TestDataGuessByExistingFilesUtil {
       }
       testNames.add(name);
     }
-    final Pair<String, Collection<VirtualFile>> matchedFiles = getMatchedFiles(gotoModel, testNames, psiClass);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
+    final Pair<String, Collection<VirtualFile>> matchedFiles = getMatchedFiles(gotoModel, fileIndex, testNames, psiClass);
     if (matchedFiles == null) {
       CACHE.put(psiClass.getQualifiedName(), new Pair<TestDataDescriptor, Long>(descriptor, System.currentTimeMillis()));
       return descriptor;
@@ -207,6 +210,7 @@ public class TestDataGuessByExistingFilesUtil {
 
   @Nullable
   private static Pair<String, Collection<VirtualFile>> getMatchedFiles(@NotNull GotoFileModel gotoModel,
+                                                                       @NotNull ProjectFileIndex fileIndex,
                                                                        @NotNull Collection<String> testNames,
                                                                        @NotNull PsiClass psiClass)
   {
@@ -236,9 +240,10 @@ public class TestDataGuessByExistingFilesUtil {
             continue;
           }
           final VirtualFile file = ((PsiFile)element).getVirtualFile();
-          if (file == null) {
+          if (file == null || fileIndex.isInSource(file)) {
             continue;
           }
+
 
           final String filePath = PathUtil.getFileName(file.getPath()).toLowerCase();
           int i = filePath.indexOf(trinity.second.toLowerCase());
@@ -288,13 +293,17 @@ public class TestDataGuessByExistingFilesUtil {
     final String candidatePath = candidate.getPath();
     final String candidateDir = PathUtil.getParentPath(candidatePath);
     final String currentDir = PathUtil.getParentPath(current.get(0).getPath());
+    boolean candidateMatched;
+    boolean currentMatched;
 
     // By package.
     int i = className.lastIndexOf(".");
     if (i >= 0) {
       String packageAsPath = className.substring(0, i).replace('.', '/').toLowerCase();
-      if (candidateDir.toLowerCase().contains(packageAsPath) && !currentDir.toLowerCase().contains(packageAsPath)) {
-        return true;
+      candidateMatched = candidateDir.toLowerCase().contains(packageAsPath);
+      currentMatched = currentDir.toLowerCase().contains(packageAsPath);
+      if (candidateMatched ^ currentMatched) {
+        return candidateMatched;
       }
     }
 
@@ -307,8 +316,10 @@ public class TestDataGuessByExistingFilesUtil {
     if (i >= 0) {
       pattern = pattern.substring(i + 1);
     }
-    if (candidateDir.toLowerCase().contains(pattern) && !currentDir.toLowerCase().contains(pattern)) {
-      return true;
+    candidateMatched = candidateDir.toLowerCase().contains(pattern);
+    currentMatched = currentDir.toLowerCase().contains(pattern);
+    if (candidateMatched ^ currentMatched) {
+      return candidateMatched;
     }
 
     // By test name.
