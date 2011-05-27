@@ -15,13 +15,14 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nullable;
-import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.Arrays;
+
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 /**
  * Handles nodes in Structure View.
@@ -159,9 +160,10 @@ public class PyStructureViewElement implements StructureViewTreeElement {
           PyClass[] superClasses = c.getSuperClasses();
           if (superClasses.length > 0) {
             result.append("(");
-            result.append(join(Arrays.asList(c.getSuperClasses()), new Function<PyClass, String>() {
-              public String fun(PyClass c) {
-                return notNullize(c.getName(), unnamed);
+            result.append(join(Arrays.asList(c.getSuperClassExpressions()), new Function<PyExpression, String>() {
+              public String fun(PyExpression expr) {
+                String name = expr.getText();
+                return notNullize(name, unnamed);
               }
             }, ", "));
             result.append(")");
