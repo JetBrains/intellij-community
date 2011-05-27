@@ -2,7 +2,7 @@ import lib1
 
 class B1:
     def f(self, x):
-        return x + self.y
+        return x
 
 class B2(object):
     @staticmethod
