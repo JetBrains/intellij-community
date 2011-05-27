@@ -210,6 +210,13 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     return result;
   }
 
+  @Override
+  @Nullable
+  public <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type) {
+    //noinspection unchecked
+    return (B)myDefaultBreakpoints.get(type);
+  }
+
   @Nullable
   public <P extends XBreakpointProperties> XLineBreakpoint<P> findBreakpointAtLine(@NotNull final XLineBreakpointType<P> type, @NotNull final VirtualFile file,
                                                                                    final int line) {
