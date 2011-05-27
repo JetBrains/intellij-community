@@ -11,7 +11,8 @@ import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
  */
 public class PyStructureViewTest extends PyLightFixtureTestCase {
   public void testBaseClassNames() {
-    myFixture.configureByFile("structureView/baseClassNames.py");
+    myFixture.configureByFiles("structureView/baseClassNames.py",
+                               "structureView/lib1.py");
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
       public void consume(StructureViewComponent component) {
@@ -22,7 +23,8 @@ public class PyStructureViewTest extends PyLightFixtureTestCase {
                                              "  g(x)\n" +
                                              " C(B1, B2)\n" +
                                              " D1(C)\n" +
-                                             " D2(C)\n");
+                                             " D2(C)\n" +
+                                             " D3(lib1.C)\n");
       }
     });
   }
