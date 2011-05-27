@@ -42,6 +42,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -98,7 +99,7 @@ public class TypedHandler implements TypedActionHandler {
   private static FileType getFileType(PsiFile file, Editor editor) {
     FileType fileType = file.getFileType();
     Language language = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
-    if (language != null) {
+    if (language != null && language != PlainTextLanguage.INSTANCE) {
       LanguageFileType associatedFileType = language.getAssociatedFileType();
       if (associatedFileType != null) fileType = associatedFileType;
     }
