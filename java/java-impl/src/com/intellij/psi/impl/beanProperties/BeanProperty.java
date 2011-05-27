@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.beanProperties;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@Presentation(icon = "/nodes/property.png")
 public class BeanProperty {
 
   public static final Icon ICON = IconLoader.getIcon("/nodes/property.png");
