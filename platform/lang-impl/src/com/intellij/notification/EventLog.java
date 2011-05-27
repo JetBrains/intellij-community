@@ -100,6 +100,8 @@ public class EventLog implements Notifications {
       showLink = true;
     }
 
+    mainText = mainText.replaceAll("<[^>]*>", "");
+
     final NotificationType type = notification.getType();
     view.print(mainText, type == NotificationType.ERROR
                                         ? ConsoleViewContentType.ERROR_OUTPUT
