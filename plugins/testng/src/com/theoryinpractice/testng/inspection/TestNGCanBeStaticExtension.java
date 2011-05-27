@@ -23,10 +23,11 @@ package com.theoryinpractice.testng.inspection;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
-public class TestNGCanBeStaticExtension implements Condition<PsiMember> {
-  public boolean value(PsiMember member) {
+public class TestNGCanBeStaticExtension implements Condition<PsiNamedElement> {
+  public boolean value(PsiNamedElement member) {
     if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
       return TestNGUtil.hasTest(method, false) || TestNGUtil.hasConfig(method);

@@ -24,9 +24,10 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
 
-public class JUnitCantBeStaticExtension implements Condition<PsiMember> {
-  public boolean value(PsiMember member) {
+public class JUnitCantBeStaticExtension implements Condition<PsiNamedElement> {
+  public boolean value(PsiNamedElement member) {
     if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
       if (JUnitUtil.isTestMethodOrConfig(method)){

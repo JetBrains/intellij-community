@@ -50,10 +50,6 @@
     <extensionPoint name="javaDocNotNecessary"
                     interface="com.intellij.openapi.util.Condition"/>
 
-    <!-- PsiMember -->
-    <extensionPoint name="cantBeStatic"
-                    interface="com.intellij.openapi.util.Condition"/>
-
     <!-- RefMethod -->
     <extensionPoint name="canBeEmpty"
                     interface="com.intellij.openapi.util.Condition"/>
