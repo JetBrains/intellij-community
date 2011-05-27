@@ -172,28 +172,26 @@ public class GenerationUtil {
     writeTypeParameters(builder, referenceElement.getTypeArguments(), referenceElement, new GeneratorClassNameProvider());
   }
 
-  public static void invokeMethodByName(GrExpression caller,
+  public static void invokeMethodByName(@Nullable GrExpression caller,
                                         String methodName,
                                         GrExpression[] exprs,
                                         GrNamedArgument[] namedArgs,
                                         GrClosableBlock[] closureArgs,
                                         ExpressionGenerator expressionGenerator,
                                         GroovyPsiElement psiContext) {
-    final GroovyResolveResult call;
-
-    final PsiType type = caller.getType();
-    if (type == null) {
-      call = GroovyResolveResult.EMPTY_RESULT;
-    }
-    else {
-      final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null);
-      final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, methodName, psiContext, argumentTypes);
-      call = PsiImplUtil.extractUniqueResult(candidates);
+    GroovyResolveResult call = GroovyResolveResult.EMPTY_RESULT;
+    if (caller != null) {
+      final PsiType type = caller.getType();
+      if (type != null) {
+        final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null);
+        final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, methodName, psiContext, argumentTypes);
+        call = PsiImplUtil.extractUniqueResult(candidates);
+      }
     }
     invokeMethodByResolveResult(caller, call, methodName, exprs, namedArgs, closureArgs, expressionGenerator, psiContext);
   }
 
-  public static void invokeMethodByResolveResult(GrExpression caller,
+  public static void invokeMethodByResolveResult(@Nullable GrExpression caller,
                                                  GroovyResolveResult resolveResult,
                                                  String methodName,
                                                  GrExpression[] exprs,
@@ -211,8 +209,11 @@ public class GenerationUtil {
     final StringBuilder builder = expressionGenerator.getBuilder();
     final ExpressionContext expressionContext = expressionGenerator.getContext();
 
-    caller.accept(expressionGenerator);
-    builder.append(".").append(methodName);
+    if (caller != null) {
+      caller.accept(expressionGenerator);
+      builder.append(".");
+    }
+    builder.append(methodName);
     final ArgumentListGenerator argumentListGenerator = new ArgumentListGenerator(builder, expressionContext);
     argumentListGenerator.generate(null, exprs, namedArgs, closureArgs, psiContext);
   }
@@ -513,6 +514,7 @@ public class GenerationUtil {
         new MethodResolverProcessor(name, place, false, null, null, null, true, true),
         classes) != null) {
       name = initialName + count;
+      count++;
     }
     return name;
   }

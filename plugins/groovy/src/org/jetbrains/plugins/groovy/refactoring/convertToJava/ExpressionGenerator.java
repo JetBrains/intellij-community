@@ -65,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock.EMPTY_ARRAY;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.*;
 
 /**
@@ -181,7 +182,7 @@ public class ExpressionGenerator extends Generator {
     }
 
     final GrArgumentList argList = newExpression.getArgumentList();
-    if (argList!=null) {
+    if (argList != null) {
 
       GrClosureSignature signature = null;
 
@@ -203,7 +204,7 @@ public class ExpressionGenerator extends Generator {
         signature,
         argList.getExpressionArguments(),
         namedArgs,
-        GrClosableBlock.EMPTY_ARRAY,
+        EMPTY_ARRAY,
         newExpression
       );
     }
@@ -240,7 +241,7 @@ public class ExpressionGenerator extends Generator {
           final GroovyResolveResult resolveResult = referenceElement.advancedResolve();
           final PsiElement resolved = resolveResult.getElement();
           LOG.assertTrue(resolved instanceof PsiClass);
-          initializeField(varName, type,  ((PsiClass)resolved), resolveResult.getSubstitutor(), fieldName, namedArgument.getExpression());
+          initializeField(varName, type, ((PsiClass)resolved), resolveResult.getSubstitutor(), fieldName, namedArgument.getExpression());
         }
       }
     }
@@ -257,7 +258,7 @@ public class ExpressionGenerator extends Generator {
     if (setter != null) {
       final GrVariableDeclaration var = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, null, type, varName);
       final GrReferenceExpression caller = factory.createReferenceExpressionFromText(varName, var);
-      invokeMethodOn(setter, caller, new GrExpression[]{expression}, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, substitutor,
+      invokeMethodOn(setter, caller, new GrExpression[]{expression}, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY, substitutor,
                      expression);
     }
     else {
@@ -293,7 +294,7 @@ public class ExpressionGenerator extends Generator {
     builder.append("{\n");
     final GeneratorClassNameProvider classNameProvider = new GeneratorClassNameProvider();
     final ClassItemGeneratorImpl classItemGenerator = new ClassItemGeneratorImpl(context.extend());
-    new ClassGenerator(classNameProvider, classItemGenerator).writeMembers(builder, anonymous,true);
+    new ClassGenerator(classNameProvider, classItemGenerator).writeMembers(builder, anonymous, true);
     builder.append('}');
   }
 
@@ -333,7 +334,7 @@ public class ExpressionGenerator extends Generator {
         elvis ? factory.createReferenceExpressionFromText(var, expression) : condition,
         result,
         "asBoolean",
-        GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+        GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY,
         this,
         expression
       );
@@ -356,13 +357,13 @@ public class ExpressionGenerator extends Generator {
   }
 
   /**
-   *  x= expr ->
-   *    x = expr
-   *    x.set(expr)[: x.get()]
-   *  x+= expr ->
-   *    x+=expr
-   *    x= plus(x, expr)
-   *    x.set(plus(x, expr))[:x.get()]
+   * x= expr ->
+   * x = expr
+   * x.set(expr)[: x.get()]
+   * x+= expr ->
+   * x+=expr
+   * x= plus(x, expr)
+   * x.set(plus(x, expr))[:x.get()]
    */
   @Override
   public void visitAssignmentExpression(GrAssignmentExpression expression) {
@@ -380,6 +381,17 @@ public class ExpressionGenerator extends Generator {
       }
       else if (resolved instanceof PsiMethod && resolveResult.isInvokedOnProperty()) {
         writeAssignmentWithSetter(((GrReferenceExpression)realLValue).getQualifier(), (PsiMethod)resolved, expression);
+        return;
+      }
+    }
+    else if (realLValue instanceof GrIndexProperty) {
+      final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(((GrIndexProperty)realLValue).multiResolve(false));
+      final PsiElement resolved = result.getElement();
+      if (resolved instanceof PsiMethod) {
+        final GrExpression[] args = ((GrIndexProperty)realLValue).getArgumentList().getExpressionArguments();
+        writeAssignmentWithSetter(((GrIndexProperty)realLValue).getSelectedExpression(), (PsiMethod)resolved,
+                                  ArrayUtil.append(args, getRValue(expression)), GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY,
+                                  result.getSubstitutor(), expression);
         return;
       }
     }
@@ -401,7 +413,7 @@ public class ExpressionGenerator extends Generator {
           (GrExpression)lValue.copy(),
           rValue == null ? GrExpression.EMPTY_ARRAY : new GrExpression[]{rValue},
           GrNamedArgument.EMPTY_ARRAY,
-          GrClosableBlock.EMPTY_ARRAY,
+          EMPTY_ARRAY,
           resolveResult.getSubstitutor(),
           expression
         );
@@ -437,7 +449,7 @@ public class ExpressionGenerator extends Generator {
 
   /**
    * returns rValue         for lValue =  expr
-   *         lValue+Rvalue  for lValue += rValue
+   * lValue+Rvalue  for lValue += rValue
    */
   @Nullable
   private GrExpression getRValue(GrAssignmentExpression expression) {
@@ -453,28 +465,35 @@ public class ExpressionGenerator extends Generator {
     return factory.createExpressionFromText(lValue.getText() + pair.getFirst() + rValue.getText(), expression);
   }
 
-  private void writeAssignmentWithSetter(@Nullable GrExpression qualifier, PsiMethod method, GrAssignmentExpression assignment) {
+  private void writeAssignmentWithSetter(GrExpression qualifier, PsiMethod setter, GrAssignmentExpression assignment) {
     GrExpression rValue = getRValue(assignment);
     LOG.assertTrue(rValue != null);
+    writeAssignmentWithSetter(qualifier, setter, new GrExpression[]{rValue}, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY, PsiSubstitutor.EMPTY,
+                              assignment);
+  }
+
+  private void writeAssignmentWithSetter(@Nullable GrExpression qualifier,
+                                         PsiMethod method,
+                                         GrExpression[] exprs,
+                                         GrNamedArgument[] namedArgs,
+                                         GrClosableBlock[] closures,
+                                         PsiSubstitutor substitutor,
+                                         GrAssignmentExpression assignment) {
     if (PsiUtil.isExpressionUsed(assignment)) {
       String setterName = context.getSetterName(method, assignment);
-      LOG.assertTrue(setterName != null);
-      builder.append(setterName).append('(');
-      if (qualifier != null) {
-        qualifier.accept(this);
-        builder.append(", ");
+      GrExpression[] args;
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        args = exprs;
       }
-      rValue.accept(this);
-      builder.append(')');
+      else {
+        args = new GrExpression[exprs.length + 1];
+        args[0] = qualifier;
+        System.arraycopy(exprs, 0, args, 1, exprs.length);
+      }
+      invokeMethodByName(null, setterName, args, namedArgs, closures, this, assignment);
     }
     else {
-      if (qualifier != null) {
-        qualifier.accept(this);
-        builder.append('.');
-      }
-      builder.append(method.getName()).append('(');
-      rValue.accept(this);
-      builder.append(')');
+      invokeMethodOn(method, qualifier, exprs, namedArgs, closures, substitutor, assignment);
     }
   }
 
@@ -522,13 +541,19 @@ public class ExpressionGenerator extends Generator {
         left,
         new GrExpression[]{right},
         GrNamedArgument.EMPTY_ARRAY,
-        GrClosableBlock.EMPTY_ARRAY,
+        EMPTY_ARRAY,
         resolveResult.getSubstitutor(),
         expression
       );
-      if (op == mGE) builder.append(" >= 0");
-      else if (op == mGT) builder.append(" > 0");
-      else if (op == mLT) builder.append(" < 0");
+      if (op == mGE) {
+        builder.append(" >= 0");
+      }
+      else if (op == mGT) {
+        builder.append(" > 0");
+      }
+      else if (op == mLT) {
+        builder.append(" < 0");
+      }
       else if (op == mLE) builder.append(" <= 0");
     }
     else {
@@ -538,8 +563,8 @@ public class ExpressionGenerator extends Generator {
 
   private static boolean shouldNotReplaceOperatorWithMethod(PsiType ltype, @Nullable GrExpression right, IElementType op) {
     return GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers &&
-        (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
-         (op == mPLUS || op == mPLUS_ASSIGN) && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING));
+           (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
+            (op == mPLUS || op == mPLUS_ASSIGN) && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING));
   }
 
   private void writeSimpleBinaryExpression(PsiElement opToken, GrExpression left, GrExpression right) {
@@ -581,7 +606,7 @@ public class ExpressionGenerator extends Generator {
           operand,
           GrExpression.EMPTY_ARRAY,
           GrNamedArgument.EMPTY_ARRAY,
-          GrClosableBlock.EMPTY_ARRAY,
+          EMPTY_ARRAY,
           resolveResult.getSubstitutor(),
           expression
         );
@@ -630,7 +655,7 @@ public class ExpressionGenerator extends Generator {
         generator.invokeMethodOn(
           method,
           operand,
-          GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+          GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY,
           resolveResult.getSubstitutor(),
           unary
         );
@@ -639,7 +664,7 @@ public class ExpressionGenerator extends Generator {
       invokeMethodOn(
         setter,
         qualifier,
-        new GrExpression[]{fromText}, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+        new GrExpression[]{fromText}, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY,
         resolveResult.getSubstitutor(),
         unary
       );
@@ -679,7 +704,7 @@ public class ExpressionGenerator extends Generator {
         curGenerator.invokeMethodOn(
           method,
           (GrExpression)operand.copy(),
-          GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+          GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY,
           resolveResult.getSubstitutor(),
           unary
         );
@@ -759,6 +784,12 @@ public class ExpressionGenerator extends Generator {
     final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
 
+    if (resolved instanceof PsiClass && PsiUtil.isExpressionUsed(referenceExpression)) {
+      builder.append(((PsiClass)resolved).getQualifiedName());
+      builder.append(".class");
+      return;
+    }
+
     if (resolved == null && qualifier == null && context.myUsedVarNames.contains(referenceExpression.getReferenceName())) {
       builder.append(referenceExpression.getReferenceName());
       return;
@@ -802,7 +833,7 @@ public class ExpressionGenerator extends Generator {
         qualifierToUse,
         GrExpression.EMPTY_ARRAY,
         GrNamedArgument.EMPTY_ARRAY,
-        GrClosableBlock.EMPTY_ARRAY,
+        EMPTY_ARRAY,
         resolveResult.getSubstitutor(),
         referenceExpression
       );
@@ -897,7 +928,8 @@ public class ExpressionGenerator extends Generator {
     writeType(builder, typeElement.getType(), typeElement);
     builder.append(")");
 
-    boolean insertParentheses = operand instanceof GrBinaryExpression && ((GrBinaryExpression)operand).getOperationTokenType() == GroovyTokenTypes.mEQUAL;
+    boolean insertParentheses =
+      operand instanceof GrBinaryExpression && ((GrBinaryExpression)operand).getOperationTokenType() == GroovyTokenTypes.mEQUAL;
     if (insertParentheses) builder.append('(');
 
     if (operand != null) {
@@ -925,7 +957,7 @@ public class ExpressionGenerator extends Generator {
         operand,
         new GrExpression[]{typeParam},
         GrNamedArgument.EMPTY_ARRAY,
-        GrClosableBlock.EMPTY_ARRAY,
+        EMPTY_ARRAY,
         resolveResult.getSubstitutor(),
         typeCastExpression
       );
@@ -948,7 +980,11 @@ public class ExpressionGenerator extends Generator {
   public void visitBuiltinTypeClassExpression(GrBuiltinTypeClassExpression expression) {
     final IElementType type = expression.getFirstChild().getNode().getElementType();
     final String boxed = TypesUtil.getBoxedTypeName(type);
-    builder.append(boxed).append(".class");
+    builder.append(boxed);
+    if (expression.getParent() instanceof GrIndexProperty) {
+      builder.append("[]");
+    }
+    builder.append(".class");
   }
 
   @Override
@@ -967,6 +1003,19 @@ public class ExpressionGenerator extends Generator {
     final PsiType thisType = selectedExpression.getType();
 
     final GrArgumentList argList = expression.getArgumentList();
+
+    if (argList.getAllArguments().length == 0) {                       // int[] or String[]
+      if (selectedExpression instanceof GrBuiltinTypeClassExpression) {
+        selectedExpression.accept(this);
+        return;
+      }
+      else if (selectedExpression instanceof GrReferenceExpression &&
+               ((GrReferenceExpression)selectedExpression).resolve() instanceof PsiClass) {
+        builder.append(((PsiClass)((GrReferenceExpression)selectedExpression).resolve()).getQualifiedName());
+        builder.append("[].class");
+        return;
+      }
+    }
     final PsiType[] argTypes = PsiUtil.getArgumentTypes(argList, false, null);
     final PsiManager manager = expression.getManager();
     final GlobalSearchScope resolveScope = expression.getResolveScope();
@@ -974,28 +1023,28 @@ public class ExpressionGenerator extends Generator {
     final GrExpression[] exprArgs = argList.getExpressionArguments();
     final GrNamedArgument[] namedArgs = argList.getNamedArguments();
 
-    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope)) {
-      selectedExpression.accept(this);
-      builder.append("[");
-      final GrExpression arg = exprArgs[0];
-      arg.accept(this);
-      builder.append("]");
-      return;
+    if (!PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope)) {
+      final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
+      if (candidate.getElement() != null || !PsiUtil.isLValue(expression)) {
+        invokeMethodByResolveResult(selectedExpression, candidate, "getAt", exprArgs, namedArgs, EMPTY_ARRAY, this, expression);
+        return;
+      }
     }
 
-    final GroovyResolveResult candidate = PsiImplUtil.getIndexPropertyMethodCandidate(thisType, argTypes, expression);
-    invokeMethodByResolveResult(
-      selectedExpression, candidate, "getAt", exprArgs, namedArgs, GrClosableBlock.EMPTY_ARRAY, this, expression
-    );
+    selectedExpression.accept(this);
+    builder.append("[");
+    final GrExpression arg = exprArgs[0];
+    arg.accept(this);
+    builder.append("]");
   }
 
   public void invokeMethodOn(PsiMethod method,
-                              @Nullable GrExpression caller,
-                              GrExpression[] exprs,
-                              GrNamedArgument[] namedArgs,
-                              GrClosableBlock[] closures,
-                              PsiSubstitutor substitutor,
-                              GroovyPsiElement context) {
+                             @Nullable GrExpression caller,
+                             GrExpression[] exprs,
+                             GrNamedArgument[] namedArgs,
+                             GrClosableBlock[] closures,
+                             PsiSubstitutor substitutor,
+                             GroovyPsiElement context) {
     if (method instanceof GrGdkMethod) {
 
       GrExpression[] newArgs = new GrExpression[exprs.length + 1];

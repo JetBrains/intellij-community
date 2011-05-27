@@ -166,33 +166,7 @@ public class TypeInferenceHelper {
   @Nullable
   public static PsiType getInitializerType(final PsiElement element) {
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null) {
-      final PsiElement parent = element.getParent();
-      if (parent instanceof GrAssignmentExpression) {
-        return ((GrAssignmentExpression)parent).getType();
-      }
-
-      if (parent instanceof GrTupleExpression) {
-        GrTupleExpression list = (GrTupleExpression)parent;
-        if (list.getParent() instanceof GrAssignmentExpression) { // multiple assignment
-          final GrExpression rValue = ((GrAssignmentExpression) list.getParent()).getRValue();
-          int idx = list.indexOf(element);
-          if (idx >= 0 && rValue != null) {
-            PsiType rType = rValue.getType();
-            if (rType instanceof GrTupleType) {
-              PsiType[] componentTypes = ((GrTupleType) rType).getComponentTypes();
-              if (idx < componentTypes.length) return componentTypes[idx];
-              return null;
-            }
-            return PsiUtil.extractIterableTypeParameter(rType, false);
-          }
-        }
-      }
-      if (parent instanceof GrUnaryExpression && TokenSets.POSTFIX_UNARY_OP_SET.contains(
-        ((GrUnaryExpression)parent).getOperationTokenType())) {
-        return ((GrUnaryExpression)parent).getType();
-      }
-
-      return null;
+      return getInitializerFor(element);
     }
 
     if (element instanceof GrVariable) {
@@ -204,6 +178,36 @@ public class TypeInferenceHelper {
           }
         }
         return variable.getTypeGroovy();
+    }
+
+    return null;
+  }
+
+  public static PsiType getInitializerFor(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof GrAssignmentExpression) {
+      return ((GrAssignmentExpression)parent).getType();
+    }
+
+    if (parent instanceof GrTupleExpression) {
+      GrTupleExpression list = (GrTupleExpression)parent;
+      if (list.getParent() instanceof GrAssignmentExpression) { // multiple assignment
+        final GrExpression rValue = ((GrAssignmentExpression) list.getParent()).getRValue();
+        int idx = list.indexOf(element);
+        if (idx >= 0 && rValue != null) {
+          PsiType rType = rValue.getType();
+          if (rType instanceof GrTupleType) {
+            PsiType[] componentTypes = ((GrTupleType) rType).getComponentTypes();
+            if (idx < componentTypes.length) return componentTypes[idx];
+            return null;
+          }
+          return PsiUtil.extractIterableTypeParameter(rType, false);
+        }
+      }
+    }
+    if (parent instanceof GrUnaryExpression &&
+        TokenSets.POSTFIX_UNARY_OP_SET.contains(((GrUnaryExpression)parent).getOperationTokenType())) {
+      return ((GrUnaryExpression)parent).getType();
     }
 
     return null;

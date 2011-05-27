@@ -1232,7 +1232,13 @@ public class PsiUtil {
     while (expr.getParent() instanceof GrParenthesizedExpression) expr = (GrExpression)expr.getParent();
 
     final PsiElement parent = expr.getParent();
-    if (parent instanceof GrExpression ||
+    if (parent instanceof GrBinaryExpression ||
+        parent instanceof GrUnaryExpression ||
+        parent instanceof GrConditionalExpression ||
+        parent instanceof GrAssignmentExpression ||
+        parent instanceof GrInstanceOfExpression ||
+        parent instanceof GrSafeCastExpression ||
+        parent instanceof GrTupleExpression ||
         parent instanceof GrArgumentList ||
         parent instanceof GrReturnStatement ||
         parent instanceof GrAssertStatement ||
