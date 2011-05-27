@@ -16,6 +16,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -24,6 +25,7 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -32,12 +34,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
-import com.sun.jdi.Value;
+import com.intellij.util.ui.ColorIcon;
+import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +74,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private final ClassRenderer myClassRenderer = new ClassRenderer();
   private final HexRenderer myHexRenderer = new HexRenderer();
   private final ToStringRenderer myToStringRenderer = new ToStringRenderer();
+  private final CompoundReferenceRenderer myColorRenderer;
   // alternate collections
   private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
     createCompoundReferenceRenderer(
@@ -92,10 +98,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
   
   public NodeRendererSettings() {
+    myColorRenderer = new ColorObjectRenderer(this);
     // default configuration
     myHexRenderer.setEnabled(false);
     myToStringRenderer.setEnabled(true);
     setAlternateCollectionViewsEnabled(true);
+    myColorRenderer.setEnabled(true);
   }
   
   public static NodeRendererSettings getInstance() {
@@ -256,6 +264,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     for (NodeRenderer myAlternateCollectionRenderer : myAlternateCollectionRenderers) {
       allRenderers.add(myAlternateCollectionRenderer);
     }
+    allRenderers.add(myColorRenderer);
     allRenderers.add(myToStringRenderer);
     allRenderers.add(myArrayRenderer);
     allRenderers.add(myClassRenderer);
@@ -381,7 +390,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   private static class MapEntryLabelRenderer extends ReferenceRenderer implements ValueLabelRenderer{
     private static final Computable<String> NULL_LABEL_COMPUTABLE = new Computable<String>() {
-      @Override
       public String compute() {
         return "null";
       }
@@ -394,6 +402,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       super("java.util.Map$Entry");
       myKeyExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()"));
       myValueExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()"));
+    }
+
+    public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+      return null;
     }
 
     public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
@@ -496,4 +508,40 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
+  private static class ColorObjectRenderer extends CompoundReferenceRenderer {
+
+    public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
+      super(rendererSettings, "Color", null, null);
+      setClassName("java.awt.Color");
+    }
+
+    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+      final ToStringRenderer toStringRenderer = myRendererSettings.getToStringRenderer();
+      if (toStringRenderer.isEnabled() && DebuggerManagerEx.getInstanceEx(evaluationContext.getProject()).getContext().isEvaluationPossible()) {
+        return toStringRenderer.calcLabel(descriptor, evaluationContext, listener);
+      }
+      return super.calcLabel(descriptor, evaluationContext, listener);
+    }
+
+    public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+      final Value value = descriptor.getValue();
+      if (value instanceof ObjectReference) {
+        try {
+          final ObjectReference objRef = (ObjectReference)value;
+          final ReferenceType refType = objRef.referenceType();
+          final Field valueField = refType.fieldByName("value");
+          if (valueField != null) {
+            final Value rgbValue = objRef.getValue(valueField);
+            if (rgbValue instanceof IntegerValue) {
+              return new ColorIcon(13, new Color(((IntegerValue)rgbValue).value()));
+            }
+          }
+        }
+        catch (Exception e) {
+          throw new EvaluateException(e.getMessage(), e);
+        }
+      }
+      return null;
+    }
+  }
 }
