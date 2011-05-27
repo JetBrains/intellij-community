@@ -125,6 +125,8 @@ public class TypedHandler implements TypedActionHandler {
     return quoteHandlers.get(fileType);
   }
 
+  /** @see QuoteHandlerEP */
+  @Deprecated
   public static void registerQuoteHandler(FileType fileType, QuoteHandler quoteHandler) {
     quoteHandlers.put(fileType, quoteHandler);
   }
