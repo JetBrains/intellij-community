@@ -103,6 +103,8 @@ public class CompletionUtil {
     return mainData != null ? mainData : ourGenericCompletionData;
   }
 
+  /** @see CompletionDataEP */
+  @Deprecated
   public static void registerCompletionData(FileType fileType, NotNullLazyValue<CompletionData> completionData) {
     ourCustomCompletionDatas.put(fileType, completionData);
   }
