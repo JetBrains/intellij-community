@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.util.containers.StripedLockConcurrentHashMap;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +25,7 @@ import java.util.Map;
 * @author peter
 */
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
-  private final Map<LookupElement, Comparable> myWeights = new StripedLockConcurrentHashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
+  private final Map<LookupElement, Comparable> myWeights = new THashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
   private final LookupElementWeigher myWeigher;
 
   public CachingComparingClassifier(Classifier<LookupElement> next, LookupElementWeigher weigher) {

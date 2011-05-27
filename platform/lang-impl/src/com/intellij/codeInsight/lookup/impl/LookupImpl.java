@@ -566,11 +566,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       Collections.sort(better, itemComparator);
     }
 
-    final Classifier<LookupElement> classifier = arranger.createRelevanceClassifier();
-    for (LookupElement element : better) {
-      classifier.addElement(element);
-    }
-    return ContainerUtil.flatten(classifier.classify(better));
+    return myModel.classifyByRelevance(better);
+
+
   }
 
   @NotNull
