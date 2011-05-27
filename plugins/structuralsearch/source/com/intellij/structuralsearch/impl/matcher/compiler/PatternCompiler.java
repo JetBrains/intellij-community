@@ -31,6 +31,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeItera
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,22 +131,17 @@ public class PatternCompiler {
       return Collections.emptyList();
     }
 
-    List<PsiElement> elements = doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
+    LinkedList<PsiElement> elements = doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
     if (elements.size() == 0) {
       return elements;
     }
 
-    final PsiFile file = elements.get(0).getContainingFile();
+    final PsiFile file = elements.getFirst().getContainingFile();
     if (file == null) {
       return elements;
     }
 
-    final PsiElement last = elements.get(elements.size() - 1);
-
-    if (elements.size() == 0 || !containsErrorElementBeforeOffset(file, last.getTextRange().getEndOffset())) {
-      return elements;
-    }
-
+    final PsiElement last = elements.getLast();
     final Pattern[] patterns = new Pattern[applicablePrefixes.length];
 
     for (int i = 0; i < applicablePrefixes.length; i++) {
@@ -153,16 +149,25 @@ public class PatternCompiler {
       patterns[i] = Pattern.compile(s + "\\w+\\b");
     }
 
-    final int varCount = findAllTypedVarOffsets(file, patterns).length;
+    final int[] varEndOffsets = findAllTypedVarOffsets(file, patterns);
+
+    final int patternEndOffset = last.getTextRange().getEndOffset();
+    if (elements.size() == 0 ||
+        checkErrorElements(file, patternEndOffset, patternEndOffset, varEndOffsets, true) != Boolean.TRUE) {
+      return elements;
+    }
+
+    final int varCount = varEndOffsets.length;
     final String[] prefixSequence = new String[varCount];
 
     for (int i = 0; i < varCount; i++) {
       prefixSequence[i] = applicablePrefixes[0];
     }
 
-    elements = compileByPrefixes(project, options, pattern, context, applicablePrefixes, patterns, prefixSequence, 0);
-    return elements != null
-           ? elements
+    final List<PsiElement> finalElements =
+      compileByPrefixes(project, options, pattern, context, applicablePrefixes, patterns, prefixSequence, 0);
+    return finalElements != null
+           ? finalElements
            : doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
   }
 
@@ -176,45 +181,61 @@ public class PatternCompiler {
                                                     String[] prefixSequence,
                                                     int index) {
     if (index >= prefixSequence.length) {
-      final List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
+      final LinkedList<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
       if (elements.size() == 0) {
         return elements;
       }
 
-      final PsiElement parent = elements.get(0);
-      final PsiElement last = elements.get(elements.size() - 1);
-      return !containsErrorElementBeforeOffset(parent, last.getTextRange().getEndOffset() - 1)
+      final PsiElement parent = elements.getFirst().getParent();
+      final PsiElement last = elements.getLast();
+      final int[] varEndOffsets = findAllTypedVarOffsets(parent.getContainingFile(), substitutionPatterns);
+      final int patternEndOffset = last.getTextRange().getEndOffset();
+      return checkErrorElements(parent, patternEndOffset, patternEndOffset, varEndOffsets, false) != Boolean.TRUE
              ? elements
              : null;
     }
 
+    String[] alternativeVariant = null;
+
     for (String applicablePrefix : applicablePrefixes) {
       prefixSequence[index] = applicablePrefix;
 
-      List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
+      LinkedList<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
       if (elements.size() == 0) {
         return elements;
       }
 
-      final PsiFile file = elements.get(0).getContainingFile();
+      final PsiFile file = elements.getFirst().getContainingFile();
       if (file == null) {
         return elements;
       }
 
-      final int[] endOffsets = findAllTypedVarOffsets(file, substitutionPatterns);
-      final int offset = endOffsets[index];
+      final int[] varEndOffsets = findAllTypedVarOffsets(file, substitutionPatterns);
+      final int offset = varEndOffsets[index];
 
-      if (containsErrorElementBeforeOffset(file, offset)) {
+      final int patternEndOffset = elements.getLast().getTextRange().getEndOffset();
+      final Boolean result = checkErrorElements(file, offset, patternEndOffset, varEndOffsets, false);
+
+      if (result == Boolean.TRUE) {
         continue;
       }
 
-      elements = compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, prefixSequence, index + 1);
-      if (elements != null) {
-        return elements;
+      if (result == Boolean.FALSE || (result == null && alternativeVariant == null)) {
+        final List<PsiElement> finalElements =
+          compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, prefixSequence, index + 1);
+        if (finalElements != null) {
+          if (result == Boolean.FALSE) {
+            return finalElements;
+          }
+          alternativeVariant = new String[prefixSequence.length];
+          System.arraycopy(prefixSequence, 0, alternativeVariant, 0, prefixSequence.length);
+        }
       }
     }
 
-    return null;
+    return alternativeVariant != null ?
+           compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, alternativeVariant, index + 1) :
+           null;
   }
 
   @NotNull
@@ -235,21 +256,49 @@ public class PatternCompiler {
     return resultArray;
   }
 
-  private static boolean containsErrorElementBeforeOffset(PsiElement element, final int offset) {
-    final boolean[] result = {false};
+
+  /**
+   * False: there are no error elements before offset, except patternEndOffset
+   * Null: there are only error elements located exactly after template variables or at the end of the pattern
+   * True: otherwise
+   */
+  private static Boolean checkErrorElements(PsiElement element,
+                                            final int offset,
+                                            final int patternEndOffset,
+                                            final int[] varEndOffsets,
+                                            final boolean strict) {
+    final TIntArrayList errorOffsets = new TIntArrayList();
+    final boolean[] containsErrorTail = {false};
+    final TIntHashSet varEndOffsetsSet = new TIntHashSet(varEndOffsets);
 
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
 
-        if (element instanceof PsiErrorElement && element.getTextRange().getStartOffset() < offset) {
-          result[0] = true;
+        if (!(element instanceof PsiErrorElement)) {
+          return;
+        }
+
+        final int startOffset = element.getTextRange().getStartOffset();
+
+        if ((strict || !varEndOffsetsSet.contains(startOffset)) && startOffset != patternEndOffset) {
+          errorOffsets.add(startOffset);
+        }
+
+        if (startOffset == offset) {
+          containsErrorTail[0] = true;
         }
       }
     });
 
-    return result[0];
+    for (int i = 0; i < errorOffsets.size(); i++) {
+      final int errorOffset = errorOffsets.get(i);
+      if (errorOffset <= offset) {
+        return true;
+      }
+    }
+    return containsErrorTail[0] ? null : false;
   }
 
   private interface PrefixProvider {
@@ -282,11 +331,11 @@ public class PatternCompiler {
     }
   }
 
-  private static List<PsiElement> doCompile(Project project,
-                                            MatchOptions options,
-                                            CompiledPattern result,
-                                            PrefixProvider prefixProvider,
-                                            CompileContext context) {
+  private static LinkedList<PsiElement> doCompile(Project project,
+                                                  MatchOptions options,
+                                                  CompiledPattern result,
+                                                  PrefixProvider prefixProvider,
+                                                  CompileContext context) {
     result.clearHandlers();
     context.init(result, options, project, options.getScope() instanceof GlobalSearchScope);
 
@@ -449,7 +498,6 @@ public class PatternCompiler {
 
     buf.append(text.substring(prevOffset,text.length()));
 
-    PsiElement patternNode;
     PsiElement[] matchStatements;
 
     try {
@@ -464,7 +512,7 @@ public class PatternCompiler {
 
     GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
     compilingVisitor.compile(matchStatements,context);
-    List<PsiElement> elements = new LinkedList<PsiElement>();
+    LinkedList<PsiElement> elements = new LinkedList<PsiElement>();
 
     for (PsiElement matchStatement : matchStatements) {
       if (!filter.accepts(matchStatement)) {

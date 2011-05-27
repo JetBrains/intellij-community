@@ -20,22 +20,22 @@ public class PhpStructuralSearchTest extends StructuralSearchTestCase {
                "if ($exp) {\n" +
                "  print b;\n" +
                "}";
+    doTest(s, "if ($exp$)", 1);
     doTest(s, "if ($exp$) {\n" +
               "  $st$\n" +
               "}", 1);
     doTest(s, "if ($exp$) {\n" +
               "  $st$;\n" +
               "}", 1);
-    doTest(s, "if ($exp$)", 1);
     doTest(s, "if ($exp$) {}", 0);
   }
 
   public void test2() throws Exception {
     String s = "<?php\n" +
                "$this->_buckets = $bu;";
-    doTest(s, "$a$->_buckets = $c$;", 1);
-    doTest(s, "$a$->_buckets = $bu;", 1);
     doTest(s, "$a$->$b$ = $c$;", 1);
+    doTest(s, "$a$->_buckets = $bu;", 1);
+    doTest(s, "$a$->_buckets = $c$;", 1);
     doTest(s, "$a$->_buckets = $bu1;", 0);
 
     doTest(s, "$this->_buckets = $bu;", 1);
@@ -56,6 +56,7 @@ public class PhpStructuralSearchTest extends StructuralSearchTestCase {
                "  echo $param;\n" +
                "}";
 
+    doTest(s, "function f($param$)", 2);
     doTest(s, "function f($param$) {\n" +
               "  echo \"hello\";\n" +
               "}", 1);
@@ -74,7 +75,6 @@ public class PhpStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "function g($param$) {\n" +
               "  echo $param$;\n" +
               "}", 1);
-    doTest(s, "function f($param$)", 2);
     doTest(s, "function $f$($param$)", 3);
   }
 
@@ -157,6 +157,45 @@ public class PhpStructuralSearchTest extends StructuralSearchTestCase {
               "}", 1);*/
   }
 
+  public void test7() throws Exception {
+    String s = "<?php\n" +
+               "foreach ($names as $name) {\n" +
+               "  $command = 1;" +
+               "}\n" +
+               "foreach ($names as $name) {}\n" +
+               "foreach ($a as $b) {\n" +
+               "  $command = 1;\n" +
+               "  echo 'hello';\n" +
+               "}\n" +
+               "foreach ($a as $b) {\n" +
+               "  f('hello');\n" +
+               "  $mu = 1;\n" +
+               "  f('abacaba');\n" +
+               "}\n" +
+               "foreach ($a as $b) {\n" +
+               "  echo '1';\n" +
+               "  echo '2';\n" +
+               "  $mu = 1;\n" +
+               "}";
+    doTest(s, "foreach('_T as '_T1)", 5);
+    doTest(s, "foreach('_T as '_T1) {$command = 1;}", 1);
+    doTest(s, "foreach('_T as '_T1) {'_T2 = 1;}", 1);
+    doTest(s, "foreach('_T as '_T1) {'_T2 = '_T3;}", 1);
+    doTest(s, "foreach('_T as '_T1) {'_T2;}", 1);
+    doTest(s, "foreach('_T as '_T1) {'_T2}", 1);
+    doTest(s, "foreach('_T as '_T1) {'_T2*}", 5);
+    doTest(s, "foreach('_T as '_T1) {'_T2+}", 4);
+    doTest(s, "foreach('_T as '_T1) {'_T2 '_T3}", 1);
+    doTest(s, "foreach('_T as '_T1) {'_T2 '_T3 '_T4}", 2);
+    doTest(s, "foreach('_T as '_T1) {'_T2 $mu = 1; '_T3}", 1);
+    doTest(s, "foreach('_T as '_T1) {'_T2; $mu = 1; '_T3;}", 1);
+    doTest(s, "foreach('_T as '_T1) {'_T2* $var$ = 1; '_T3*}", 4);
+    doTest(s, "foreach('_T as '_T1) {'_T2* $var$ = $value$; '_T3*}", 4);
+    doTest(s, "foreach('_T as '_T1) {'_T2+ $var$ = $value$; '_T3*}", 2);
+    doTest(s, "foreach('_T as '_T1) {'_T2+ $var$ = $value$; '_T3+}", 1);
+    doTest(s, "foreach('_T as '_T1) {'_T2* $var$ = $value$; '_T3+}", 2);
+  }
+
   public void testMethod() throws Exception {
     String s = "<?php\n" +
                "class C {\n" +
@@ -166,8 +205,12 @@ public class PhpStructuralSearchTest extends StructuralSearchTestCase {
                "  public function g() {}" +
                "}";
     options.setPatternContext(PhpStructuralSearchProfile.CLASS_CONTEXT);
+    doTest(s, "public function $f$($param1$, $param2$)", 1);
     doTest(s, "public function '_T('_T1*) {'_T2*}", 2);
+    doTest(s, "public function f($param1$, $param2$)", 1);
     doTest(s, "public function g() {}", 1);
+    doTest(s, "public function g()", 1);
+    doTest(s, "public function f($param1, $param2)", 1);
   }
 
   private void doTest(String source,
