@@ -54,10 +54,10 @@ public interface EditorSettings {
   void setSmartHome(boolean val);
 
   boolean isVirtualSpace();
-  void setVirtualSpace(boolean val);
+  void setVirtualSpace(boolean allow);
 
   boolean isCaretInsideTabs();
-  void setCaretInsideTabs(boolean val);
+  void setCaretInsideTabs(boolean allow);
 
   boolean isBlinkCaret();
   void setBlinkCaret(boolean blinkCaret);

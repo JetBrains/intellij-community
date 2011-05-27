@@ -253,8 +253,8 @@ public class SettingsImpl implements EditorSettings {
            : EditorSettingsExternalizable.getInstance().isVirtualSpace();
   }
 
-  public void setVirtualSpace(boolean val) {
-    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+  public void setVirtualSpace(boolean allow) {
+    final Boolean newValue = allow;
     if (newValue.equals(myIsVirtualSpace)) return;
     myIsVirtualSpace = newValue;
     fireEditorRefresh();
@@ -277,8 +277,8 @@ public class SettingsImpl implements EditorSettings {
            : EditorSettingsExternalizable.getInstance().isCaretInsideTabs();
   }
 
-  public void setCaretInsideTabs(boolean val) {
-    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+  public void setCaretInsideTabs(boolean allow) {
+    final Boolean newValue = allow;
     if (newValue.equals(myIsCaretInsideTabs)) return;
     myIsCaretInsideTabs = newValue;
     fireEditorRefresh();
