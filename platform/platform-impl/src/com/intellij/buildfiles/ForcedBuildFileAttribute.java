@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,17 +56,10 @@ public class ForcedBuildFileAttribute {
       if (is != null) {
         try {
           try {
-            /*
-        //todo[lene] IOUtil throws   java.io.EOFException
-	at java.io.DataInputStream.readFully(DataInputStream.java:180)
-	at java.io.DataInputStream.readFully(DataInputStream.java:152)
-	at com.intellij.util.io.IOUtil.readString(IOUtil.java:40)
-	at com.intellij.buildfiles.ForcedBuildFileAttribute.getFrameworkIdOfBuildFile(ForcedBuildFileAttribute.java:59)
-             */
             if (is.available() == 0) {
               return null;
             }
-            return is.readUTF();
+            return IOUtil.readString(is);
           }
           finally {
             is.close();
@@ -102,7 +96,7 @@ public class ForcedBuildFileAttribute {
       final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
       try {
         try {
-          os.writeUTF(StringUtil.notNullize(value));
+          IOUtil.writeString(StringUtil.notNullize(value), os);
         }
         finally {
           os.close();
