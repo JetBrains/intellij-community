@@ -130,7 +130,7 @@ public class CommitHelper {
               text += ", " + changesFailedToCommit.size() + " Change(s) Failed To Commit";
             }
             final String title = "VCS Commit Finished";
-            Notifications.Bus.notify(new Notification(Notifications.LOG_ONLY_GROUP_ID, title, text, NotificationType.INFORMATION), myProject);
+            Notifications.Bus.notify(new Notification(Notifications.LOG_ONLY_GROUP_ID, title + ", " + text, myCommitMessage, NotificationType.INFORMATION), myProject);
             return new NotificationInfo("VCS Commit", title, text, true);
           }
         };
