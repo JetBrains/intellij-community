@@ -110,7 +110,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         }
       }
     });
-    final ArrayList<PsiMethod> constrs = filterConstructorsIfFieldAlreadyAssigned(constructors);
+    final ArrayList<PsiMethod> constrs = filterConstructorsIfFieldAlreadyAssigned(constructors, getField());
     if (constrs.size() > 1) {
       final PsiMethodMember[] members = new PsiMethodMember[constrs.size()];
       int i = 0;
@@ -134,14 +134,18 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
 
     } else if (!constrs.isEmpty()) {
       final Collection<SmartPsiElementPointer<PsiField>> fieldsToFix = getFieldsToFix();
+      final PsiMethod constructor = constrs.get(0);
       final List<PsiField> fields = new ArrayList<PsiField>();
       for (SmartPsiElementPointer<PsiField> elementPointer : fieldsToFix) {
         final PsiField field = elementPointer.getElement();
-        if (field != null) {
+        if (field != null && filterConstructorsIfFieldAlreadyAssigned(new PsiMethod[]{constructor}, field).contains(constructor)) {
           fields.add(field);
         }
       }
-      addParameterToConstructor(project, file, editor, constrs.get(0), constrs.size() == constructors.length ? fields.toArray(new PsiField[fields.size()]) : new PsiField[]{getField()});
+
+
+      addParameterToConstructor(project, file, editor, constructor, constrs.size() == constructors.length ? fields.toArray(new PsiField[fields.size()]) : new PsiField[]{getField()});
+      fieldsToFix.clear();
     }
   }
 
@@ -165,18 +169,20 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       public int size() {
         return finalFields.size();
       }
+
+      @Override
+      public void clear() {
+        finalFields.clear();
+      }
     };
   }
 
-  private ArrayList<PsiMethod> filterConstructorsIfFieldAlreadyAssigned(PsiMethod[] constructors) {
+  private static ArrayList<PsiMethod> filterConstructorsIfFieldAlreadyAssigned(PsiMethod[] constructors, PsiField field) {
     final ArrayList<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(constructors));
-    for (PsiReference reference : ReferencesSearch.search(getField(), new LocalSearchScope(constructors))) {
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(constructors))) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
-        final PsiExpression rExpression = ((PsiAssignmentExpression)element.getParent()).getRExpression();
-        if (rExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)rExpression).resolve() instanceof PsiParameter) {
-          result.remove(PsiTreeUtil.getParentOfType(element, PsiMethod.class));
-        }
+        result.remove(PsiTreeUtil.getParentOfType(element, PsiMethod.class));
       }
     }
     return result;
