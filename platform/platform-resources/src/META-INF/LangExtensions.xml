@@ -560,6 +560,8 @@
                   serviceImplementation="com.intellij.usageView.impl.UsageViewManagerImpl"/>
   <projectService serviceInterface="com.intellij.ide.projectView.ProjectView"
                   serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
+  <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
+                  serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
 
   <projectService serviceInterface="com.intellij.ide.bookmarks.BookmarkManager"
                   serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
