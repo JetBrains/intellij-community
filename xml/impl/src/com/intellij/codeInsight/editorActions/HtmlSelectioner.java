@@ -42,15 +42,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.HtmlUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class HtmlSelectioner extends AbstractWordSelectioner {
-  private static ExtendWordSelectionHandler ourStyleSelectioner;
-
-  public static void setStyleSelectioner(ExtendWordSelectionHandler _styleSelectioner) {
-    ourStyleSelectioner = _styleSelectioner;
-  }
 
   public boolean canSelect(PsiElement e) {
     return canSelectElement(e);
@@ -58,8 +52,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
 
   static boolean canSelectElement(final PsiElement e) {
     if (e instanceof XmlToken) {
-      return HtmlUtil.hasHtml(e.getContainingFile()) ||
-             (ourStyleSelectioner != null && ourStyleSelectioner.canSelect(e));
+      return HtmlUtil.hasHtml(e.getContainingFile());
     }
     return false;
   }
@@ -74,11 +67,6 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     }
     else {
       result = Lists.newArrayList();
-    }
-
-    if (ourStyleSelectioner != null) {
-      List<TextRange> o = ourStyleSelectioner.select(e, editorText, cursorOffset, editor);
-      if (o != null) result.addAll(o);
     }
 
     final PsiElement parent = e.getParent();

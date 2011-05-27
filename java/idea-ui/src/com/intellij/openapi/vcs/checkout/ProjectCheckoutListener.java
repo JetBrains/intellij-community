@@ -32,10 +32,10 @@ public class ProjectCheckoutListener implements CheckoutListener {
   public boolean processCheckedOutDirectory(Project project, File directory) {
     File[] files = directory.listFiles((FilenameFilter) new GlobFilenameFilter("*" + ProjectFileType.DOT_DEFAULT_EXTENSION));
     if (files != null && files.length > 0) {
-      int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", files[0].getAbsolutePath()),
+      int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", files[0].getPath()),
                                         VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
       if (rc == 0) {
-        ProjectUtil.openProject(files [0].getAbsolutePath(), project, false);
+        ProjectUtil.openProject(files[0].getPath(), project, false);
       }
       return true;
     }

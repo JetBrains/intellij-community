@@ -50,10 +50,6 @@
     <extensionPoint name="javaDocNotNecessary"
                     interface="com.intellij.openapi.util.Condition"/>
 
-    <!-- PsiMember -->
-    <extensionPoint name="cantBeStatic"
-                    interface="com.intellij.openapi.util.Condition"/>
-
     <!-- RefMethod -->
     <extensionPoint name="canBeEmpty"
                     interface="com.intellij.openapi.util.Condition"/>
@@ -757,6 +753,7 @@
     <javaExpressionSurrounder implementation="com.intellij.debugger.codeinsight.JavaWithRuntimeCastSurrounder"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
+    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.NewProjectCheckoutListener"/>
 
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>

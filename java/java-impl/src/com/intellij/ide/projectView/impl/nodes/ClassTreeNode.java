@@ -157,7 +157,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   }
 
   private boolean canRepresent(final PsiClass psiClass, final Object element) {
-    if (psiClass == null) return false;
+    if (psiClass == null || !psiClass.isValid()) return false;
 
     final PsiFile parentFile = parentFileOf(psiClass);
     if (parentFile != null && (parentFile == element || parentFile.getVirtualFile() == element)) return true;

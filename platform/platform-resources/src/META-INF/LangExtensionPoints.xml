@@ -69,6 +69,10 @@
   <extensionPoint name="implicitUsageProvider"
                   interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
 
+  <!-- com.intellij.psi.PsiNamedElement -->
+  <extensionPoint name="cantBeStatic"
+                  interface="com.intellij.openapi.util.Condition"/>
+
   <extensionPoint name="daemon.changeLocalityDetector"
                   interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector"/>
 

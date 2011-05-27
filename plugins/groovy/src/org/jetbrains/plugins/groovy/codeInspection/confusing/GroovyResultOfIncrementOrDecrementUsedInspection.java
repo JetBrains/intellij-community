@@ -58,7 +58,7 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
         return;
       }
 
-      if (PsiUtil.resultOfExpressionUsed(grUnaryExpression)) {
+      if (PsiUtil.isExpressionUsed(grUnaryExpression)) {
         registerError(grUnaryExpression);
       }
     }

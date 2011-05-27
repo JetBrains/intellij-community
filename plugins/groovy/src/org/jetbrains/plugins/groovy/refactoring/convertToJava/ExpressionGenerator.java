@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -149,7 +150,7 @@ public class ExpressionGenerator extends Generator {
     final String varName;
     if (hasFieldInitialization) {
       builder = new StringBuilder();
-      varName = suggestVarName(type, newExpression, this.context);
+      varName = suggestVarName(type, newExpression, context);
       writeType(builder, type, newExpression);
       builder.append(" ").append(varName).append(" = ");
     }
@@ -369,53 +370,36 @@ public class ExpressionGenerator extends Generator {
     GrExpression rValue = expression.getRValue();
     final IElementType token = expression.getOperationToken();
 
-    boolean toWrap = false;
-
     PsiElement realLValue = PsiUtil.skipParentheses(lValue, false);
-    if (realLValue instanceof GrReferenceExpression) {
-      PsiElement resolved = ((GrReferenceExpression)realLValue).resolve();
-      if (resolved instanceof GrVariable && context.analyzedVars.toWrap((GrVariable)resolved)) toWrap = true;
-    }
-
-    StringBuilder curBuilder;
-    ExpressionGenerator curGenerator;
-    boolean doNeedExpression = toWrap && PsiUtil.resultOfExpressionUsed(expression);
-    if (doNeedExpression) {
-      curBuilder = new StringBuilder();
-      curGenerator = new ExpressionGenerator(curBuilder, context);
-    }
-    else {
-      curBuilder = builder;
-      curGenerator = this;
-    }
-
-
-    lValue.accept(curGenerator);
-    if (toWrap) {
-      curBuilder.append(".set(");
-    }
-    else {
-      curBuilder.append(" = ");
+    if (realLValue instanceof GrReferenceExpression && rValue != null) {
+      GroovyResolveResult resolveResult = ((GrReferenceExpression)realLValue).advancedResolve();
+      PsiElement resolved = resolveResult.getElement();
+      if (resolved instanceof GrVariable && context.analyzedVars.toWrap((GrVariable)resolved)) {
+        writeAssignmentWithRefSetter((GrExpression)realLValue, expression);
+        return;
+      }
+      else if (resolved instanceof PsiMethod && resolveResult.isInvokedOnProperty()) {
+        writeAssignmentWithSetter(((GrReferenceExpression)realLValue).getQualifier(), (PsiMethod)resolved, expression);
+        return;
+      }
     }
 
     if (token == mASSIGN) {
+      lValue.accept(this);
+      builder.append(" = ");
       if (rValue != null) {
-        rValue.accept(curGenerator);
+        rValue.accept(this);
       }
     }
     else {
       final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
       final PsiElement resolved = resolveResult.getElement();
 
-      if (resolved instanceof PsiMethod &&
-          !shouldNotReplaceOperatorWithMethod(lValue.getType(), rValue, expression.getOperationToken())) {
-        if (rValue == null) {
-          rValue = factory.createExpressionFromText("null");
-        }
-        curGenerator.invokeMethodOn(
+      if (resolved instanceof PsiMethod && !shouldNotReplaceOperatorWithMethod(lValue.getType(), rValue, expression.getOperationToken())) {
+        invokeMethodOn(
           ((PsiMethod)resolved),
           (GrExpression)lValue.copy(),
-          new GrExpression[]{rValue},
+          rValue == null ? GrExpression.EMPTY_ARRAY : new GrExpression[]{rValue},
           GrNamedArgument.EMPTY_ARRAY,
           GrClosableBlock.EMPTY_ARRAY,
           resolveResult.getSubstitutor(),
@@ -423,26 +407,74 @@ public class ExpressionGenerator extends Generator {
         );
       }
       else {
-        if (toWrap) {
-          GrBinaryExpression bin =
-            (GrBinaryExpression)factory.createExpressionFromText("a" + expression.getOpToken().getText().charAt(0) + "b", expression);
-          GrExpression newLValue = (GrExpression)bin.getLeftOperand().replace(lValue);
-          GrExpression newRValue = rValue == null ? null : (GrExpression)bin.getRightOperand().replace(rValue);
-          curGenerator.writeSimpleBinaryExpression(bin.getOperationToken(), newLValue, newRValue);
-        }
-        else {
-          curGenerator.writeSimpleBinaryExpression(expression.getOpToken(), lValue, rValue);
-        }
+        writeSimpleBinaryExpression(expression.getOpToken(), lValue, rValue);
       }
     }
-    if (toWrap) {
-      curBuilder.append(')');
-      if (doNeedExpression) {
-        curBuilder.append(';');
-        context.myStatements.add(curBuilder.toString());
-        lValue.accept(this);
-        builder.append(".get()");
+  }
+
+  private void writeAssignmentWithRefSetter(GrExpression ref, GrAssignmentExpression expression) {
+    GrExpression rValue = getRValue(expression);
+
+    if (PsiUtil.isExpressionUsed(expression)) {
+      LOG.assertTrue(context.getRefSetterName(expression) != null);
+      builder.append(context.getRefSetterName(expression)).append('(');
+      ref.accept(this);
+      builder.append(", ");
+      if (rValue != null) {
+        rValue.accept(this);
       }
+      builder.append(')');
+    }
+    else {
+      ref.accept(this);
+      builder.append(".set(");
+      if (rValue != null) {
+        rValue.accept(this);
+      }
+      builder.append(')');
+    }
+  }
+
+  /**
+   * returns rValue         for lValue =  expr
+   *         lValue+Rvalue  for lValue += rValue
+   */
+  @Nullable
+  private GrExpression getRValue(GrAssignmentExpression expression) {
+    GrExpression rValue = expression.getRValue();
+    if (rValue == null) return null;
+
+    GrExpression lValue = expression.getLValue();
+    IElementType opToken = expression.getOperationToken();
+    if (opToken == GroovyTokenTypes.mASSIGN) return rValue;
+    Pair<String, IElementType> pair = GenerationUtil.getBinaryOperatorType(opToken);
+    LOG.assertTrue(pair != null);
+
+    return factory.createExpressionFromText(lValue.getText() + pair.getFirst() + rValue.getText(), expression);
+  }
+
+  private void writeAssignmentWithSetter(@Nullable GrExpression qualifier, PsiMethod method, GrAssignmentExpression assignment) {
+    GrExpression rValue = getRValue(assignment);
+    LOG.assertTrue(rValue != null);
+    if (PsiUtil.isExpressionUsed(assignment)) {
+      String setterName = context.getSetterName(method, assignment);
+      LOG.assertTrue(setterName != null);
+      builder.append(setterName).append('(');
+      if (qualifier != null) {
+        qualifier.accept(this);
+        builder.append(", ");
+      }
+      rValue.accept(this);
+      builder.append(')');
+    }
+    else {
+      if (qualifier != null) {
+        qualifier.accept(this);
+        builder.append('.');
+      }
+      builder.append(method.getName()).append('(');
+      rValue.accept(this);
+      builder.append(')');
     }
   }
 
@@ -614,7 +646,7 @@ public class ExpressionGenerator extends Generator {
     }
     else if (resolved instanceof PsiVariable) {
       boolean wrap = context.analyzedVars.toWrap((PsiVariable)resolved);
-      boolean doNeedExpression = PsiUtil.resultOfExpressionUsed(unary);
+      boolean doNeedExpression = PsiUtil.isExpressionUsed(unary);
       StringBuilder curBuilder;
       ExpressionGenerator curGenerator;
       if (doNeedExpression && wrap) {
@@ -764,6 +796,7 @@ public class ExpressionGenerator extends Generator {
 
     if (resolveResult.isInvokedOnProperty()) {
       LOG.assertTrue(resolved instanceof PsiMethod);
+      LOG.assertTrue(GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)resolved));
       invokeMethodOn(
         ((PsiMethod)resolved),
         qualifierToUse,

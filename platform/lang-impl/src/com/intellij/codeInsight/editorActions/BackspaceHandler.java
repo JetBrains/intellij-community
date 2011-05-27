@@ -87,7 +87,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     FileType fileType = file.getFileType();
-    final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
+    final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file, editor);
 
     HighlighterIterator hiterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
     boolean wasClosingQuote = quoteHandler != null && quoteHandler.isClosingQuote(hiterator, offset);

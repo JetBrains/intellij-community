@@ -572,6 +572,9 @@
               factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
   <toolWindow id="Structure" anchor="left" icon="/general/toolWindowStructure.png" secondary="true"
               factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
+  <toolWindow id="Event log" anchor="bottom" secondary="true"
+              factoryClass="com.intellij.notification.EventLog$FactoryItself"/>
+
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
   <projectConfigurable instance="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>

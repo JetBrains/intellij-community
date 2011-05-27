@@ -64,7 +64,7 @@ import java.util.regex.Pattern;
  * @author max
  */
 public class UIUtil {
-  public enum FontSize { NORMAL, SMALL };
+  public enum FontSize { NORMAL, SMALL }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
   @NonNls public static final String HTML_MIME = "text/html";
@@ -1632,7 +1632,6 @@ public class UIUtil {
       this(true);
     }
 
-
     public MacTreeUI(final boolean wideSelection) {
       myWideSelection = wideSelection;
     }
@@ -1643,8 +1642,7 @@ public class UIUtil {
         final JTree tree = (JTree)e.getSource();
         if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
           // if we can't stop any ongoing editing, do nothing
-          if (isEditing(tree) && tree.getInvokesStopCellEditing()
-              && !stopEditing(tree)) {
+          if (isEditing(tree) && tree.getInvokesStopCellEditing() && !stopEditing(tree)) {
             return;
           }
 
@@ -1656,12 +1654,14 @@ public class UIUtil {
               return;
             }
 
-            if (bounds.contains(e.getPoint()) || isLocationInExpandControl(pressedPath, e.getX(), e.getY())) return;
+            if (bounds.contains(e.getPoint()) || isLocationInExpandControl(pressedPath, e.getX(), e.getY())) {
+              return;
+            }
+
             if (tree.getDragEnabled() || !startEditing(pressedPath, e)) {
               selectPathForEvent(pressedPath, e);
             }
           }
-
         }
       }
     };

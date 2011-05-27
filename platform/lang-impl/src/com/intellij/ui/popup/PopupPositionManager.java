@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nullable;
@@ -112,14 +113,7 @@ public class PopupPositionManager {
     public PositionAdjuster(final Component relativeTo) {
       myRelativeTo = relativeTo;
       myRelativeOnScreen = relativeTo.getLocationOnScreen();
-
-      GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-      //final DisplayMode displayMode = gd.getDisplayMode();
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      final Insets screenInsets = toolkit.getScreenInsets(gd.getDefaultConfiguration());
-
-      myScreenRect = new Rectangle(screenInsets.left, screenInsets.top, toolkit.getScreenSize().width - screenInsets.left - screenInsets.right, 
-                                   toolkit.getScreenSize().height - screenInsets.top - screenInsets.bottom);
+      myScreenRect = ScreenUtil.getScreenRectangle(myRelativeOnScreen);
     }
     
     protected Rectangle positionRight(final Dimension d) {

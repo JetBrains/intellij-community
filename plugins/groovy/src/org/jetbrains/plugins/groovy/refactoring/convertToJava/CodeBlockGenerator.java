@@ -93,7 +93,6 @@ public class CodeBlockGenerator extends Generator {
   }
 
   public void generateMethodBody(GrMethod method) {
-    context.searchForLocalVarsToWrap(method);
     final GrOpenBlock block = method.getBlock();
 
     boolean shouldInsertReturnNull = false;

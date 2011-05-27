@@ -19,6 +19,9 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.Editor;
 
+/**
+ * @see QuoteHandlerEP
+ */
 public interface QuoteHandler {
   boolean isClosingQuote(HighlighterIterator iterator, int offset);
   boolean isOpeningQuote(HighlighterIterator iterator, int offset);

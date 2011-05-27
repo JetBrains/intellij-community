@@ -16,7 +16,10 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +42,37 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBAND;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBAND_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBOR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBOR_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBSR_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBXOR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBXOR_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDIV;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDIV_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMINUS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMINUS_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMOD;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMOD_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSR_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
 /**
  * @author Maxim.Medvedev
@@ -452,5 +480,40 @@ public class GenerationUtil {
     builder.append(" ");
 
     writeVariableWithoutType(builder, expressionContext, variable, wrapped, originalType);
+  }
+
+  private static final Map<IElementType, Pair<String, IElementType>> binOpTypes = new HashMap<IElementType, Pair<String, IElementType>>();
+
+  static {
+    binOpTypes.put(mPLUS_ASSIGN, new Pair<String, IElementType>("+", mPLUS));
+    binOpTypes.put(mMINUS_ASSIGN, new Pair<String, IElementType>("-", mMINUS));
+    binOpTypes.put(mSTAR_ASSIGN, new Pair<String, IElementType>("*", mSTAR));
+    binOpTypes.put(mDIV_ASSIGN, new Pair<String, IElementType>("/", mDIV));
+    binOpTypes.put(mMOD_ASSIGN, new Pair<String, IElementType>("%", mMOD));
+    binOpTypes.put(mSL_ASSIGN, new Pair<String, IElementType>("<<", COMPOSITE_LSHIFT_SIGN));
+    binOpTypes.put(mSR_ASSIGN, new Pair<String, IElementType>(">>", COMPOSITE_RSHIFT_SIGN));
+    binOpTypes.put(mBSR_ASSIGN, new Pair<String, IElementType>(">>>", COMPOSITE_TRIPLE_SHIFT_SIGN));
+    binOpTypes.put(mBAND_ASSIGN, new Pair<String, IElementType>("&", mBAND));
+    binOpTypes.put(mBOR_ASSIGN, new Pair<String, IElementType>("|", mBOR));
+    binOpTypes.put(mBXOR_ASSIGN, new Pair<String, IElementType>("^", mBXOR));
+    binOpTypes.put(mSTAR_STAR_ASSIGN, new Pair<String, IElementType>("**", mSTAR_STAR));
+  }
+
+  public static Pair<String, IElementType> getBinaryOperatorType(IElementType op_assign) {
+    return binOpTypes.get(op_assign);
+  }
+
+  public static String suggestMethodName(GroovyPsiElement place, String initialName, ExpressionContext context) {
+    int count = 0;
+    String name = initialName;
+    Class[] classes = {PsiMethod.class};
+    final Map<PsiMethod, String> setters = context.getSetters();
+    while (setters.containsValue(name) || ResolveUtil.resolveExistingElement(
+        place,
+        new MethodResolverProcessor(name, place, false, null, null, null, true, true),
+        classes) != null) {
+      name = initialName + count;
+    }
+    return name;
   }
 }

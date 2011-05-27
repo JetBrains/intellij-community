@@ -16,6 +16,9 @@
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
@@ -52,12 +55,10 @@ public class MessagePool {
   }
 
   public void addIdeFatalMessage(IdeaLoggingEvent aEvent) {
-    addIdeFatalMessage(new LogMessage(aEvent));
-  }
-
-  private void addIdeFatalMessage(LogMessage message) {
+    LogMessage message = new LogMessage(aEvent);
     if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
       myFatalsGrouper.add(message);
+      Notifications.Bus.notify(new Notification(Notifications.LOG_ONLY_GROUP_ID, "Exception", message.getMessage(), NotificationType.ERROR));
     } else if (myIdeFatals.size() == MAX_POOL_SIZE_FOR_FATALS) {
       myFatalsGrouper.add(new LogMessage(new LoggingEvent(DiagnosticBundle.message("error.monitor.too.many.errors"),
                                                           Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException())));

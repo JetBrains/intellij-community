@@ -9,12 +9,11 @@ return null;
 }
 
 public void foo(int x) {
-final groovy.lang.Reference<java.lang.Integer> i1 = new groovy.lang.Reference<java.lang.Integer>(x);
+final groovy.lang.Reference<java.lang.Integer> i = new groovy.lang.Reference<java.lang.Integer>(x);
 org.codehaus.groovy.runtime.DefaultGroovyMethods.each(new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1, 2, 3)), new groovy.lang.Closure<java.lang.Number>(this, this) {
 public java.lang.Number doCall(java.lang.Object it) {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.print(methodParamInClosureImplicitReturn.this, i1.get());
-i1.set(i1.get() + 1);
-return i1.get();
+org.codehaus.groovy.runtime.DefaultGroovyMethods.print(methodParamInClosureImplicitReturn.this, i.get());
+return setGroovyRef(i, i.get() + 1);
 }
 
 public java.lang.Number doCall() {
@@ -24,9 +23,9 @@ return doCall(null);
 });
 org.codehaus.groovy.runtime.DefaultGroovyMethods.each(new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1, 2, 3)), new groovy.lang.Closure<java.lang.Integer>(this, this) {
 public java.lang.Integer doCall(java.lang.Object it) {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.print(methodParamInClosureImplicitReturn.this, i1.get());
-i1.set(i1.get()++);
-return i1.get();
+org.codehaus.groovy.runtime.DefaultGroovyMethods.print(methodParamInClosureImplicitReturn.this, i.get());
+i.set(i.get()++);
+return i.get();
 }
 
 public java.lang.Integer doCall() {
@@ -34,7 +33,7 @@ return doCall(null);
 }
 
 });
-print(i1.get());
+print(i.get());
 }
 
 public methodParamInClosureImplicitReturn(groovy.lang.Binding binding) {
@@ -43,4 +42,7 @@ super(binding);
 public methodParamInClosureImplicitReturn() {
 super();
 }
-}
+private static <T> T setGroovyRef(groovy.lang.Reference<T> ref, T newValue) {
+ref.set(newValue);
+return newValue;
+}}

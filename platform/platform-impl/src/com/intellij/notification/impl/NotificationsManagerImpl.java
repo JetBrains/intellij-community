@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
@@ -62,6 +63,8 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
+  public static final String LOG_TOOL_WINDOW_ID = "Event log";
+
   private final NotificationModel myModel = new NotificationModel();
 
   @NotNull
@@ -151,6 +154,10 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public static void showNotification(final Notification notification, @Nullable final Project project) {
+    if (isEventLogVisible(project)) {
+      return;
+    }
+
     final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
     switch (settings.getDisplayType()) {
       case NONE:
@@ -167,7 +174,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
   }
 
-  private static void notifyByBalloon(final Notification notification,
+  public static void notifyByBalloon(final Notification notification,
                                       final NotificationDisplayType displayType,
                                       @Nullable final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -251,6 +258,10 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
         show.run();
       }
     });
+  }
+
+  public static boolean isEventLogVisible(Project project) {
+    return project != null && ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID).isVisible();
   }
 
   private static void notifyByExternal(final Notification notification) {

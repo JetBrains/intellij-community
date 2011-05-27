@@ -51,6 +51,8 @@ public interface XBreakpointManager {
 
 
   boolean isDefaultBreakpoint(@NotNull XBreakpoint<?> breakpoint);
+  @Nullable
+  <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type);
 
   <B extends XBreakpoint<P>, P extends XBreakpointProperties>
   void addBreakpointListener(@NotNull XBreakpointType<B,P> type, @NotNull XBreakpointListener<B> listener);

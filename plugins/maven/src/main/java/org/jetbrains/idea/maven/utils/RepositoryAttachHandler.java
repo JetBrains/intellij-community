@@ -148,7 +148,6 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     }
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (MavenArtifact each : artifacts) {
-      if (MavenConstants.SCOPE_TEST.equals(each.getScope())) continue;
       try {
         File repoFile = each.getFile();
         File toFile = repoFile;
@@ -283,28 +282,23 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
 
   public static void resolveLibrary(final Project project,
                                     final String coord,
-                                    List<MavenExtraArtifactType> extraTypes,
+                                    final List<MavenExtraArtifactType> extraTypes,
                                     final Collection<MavenRepositoryInfo> repositories,
                                     boolean modal,
                                     final Processor<List<MavenArtifact>> resultProcessor) {
-    final List<MavenArtifactInfo> artifacts = new ArrayList<MavenArtifactInfo>(3);
     final MavenId mavenId = getMavenId(coord);
-    artifacts.add(new MavenArtifactInfo(mavenId, "jar", null));
-    for (MavenExtraArtifactType extraType : extraTypes) {
-      artifacts.add(new MavenArtifactInfo(mavenId, extraType.getDefaultExtension(), extraType.getDefaultClassifier()));
-    }
     final Task task;
     if (modal) {
       task = new Task.Modal(project, "Maven", false) {
         public void run(@NotNull ProgressIndicator indicator) {
-          doResolveInner(project, artifacts, repositories, resultProcessor, indicator);
+          doResolveInner(project, mavenId, extraTypes, repositories, resultProcessor, indicator);
         }
       };
     }
     else {
       task = new Task.Backgroundable(project, "Maven", false, PerformInBackgroundOption.DEAF) {
         public void run(@NotNull ProgressIndicator indicator) {
-          doResolveInner(project, artifacts, repositories, resultProcessor, indicator);
+          doResolveInner(project, mavenId, extraTypes, repositories, resultProcessor, indicator);
         }
 
         @Override
@@ -318,33 +312,58 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   }
 
   private static void doResolveInner(Project project,
-                                     List<MavenArtifactInfo> artifacts,
+                                     MavenId mavenId,
+                                     List<MavenExtraArtifactType> extraTypes,
                                      Collection<MavenRepositoryInfo> repositories,
                                      final Processor<List<MavenArtifact>> resultProcessor,
                                      ProgressIndicator indicator) {
-    final Ref<List<MavenArtifact>> result = new Ref<List<MavenArtifact>>();
-
+    boolean cancelled = false;
+    final Collection<MavenArtifact> result = new LinkedHashSet<MavenArtifact>();
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     try {
       embedder.customizeForResolve(new SoutMavenConsole(), new MavenProgressIndicator(indicator));
-      List<MavenArtifact> resolved = embedder.resolveTransitively(artifacts, convertRepositories(repositories));
-      result.set(ContainerUtil.findAll(resolved, new Condition<MavenArtifact>() {
-        public boolean value(MavenArtifact mavenArtifact) {
-          return mavenArtifact.isResolved();
+      final List<MavenRemoteRepository> remoteRepositories = convertRepositories(repositories);
+      final List<MavenArtifact> firstResult = embedder.resolveTransitively(
+        Collections.singletonList(new MavenArtifactInfo(mavenId, "jar", null)), remoteRepositories);
+      for (MavenArtifact artifact : firstResult) {
+        if (!artifact.isResolved()) continue;
+        if (MavenConstants.SCOPE_TEST.equals(artifact.getScope())) continue;
+        result.add(artifact);
+      }
+      // download docs & sources
+      if (!extraTypes.isEmpty()) {
+        final HashSet<String> allowedClassifiers = new HashSet<String>();
+        final Collection<MavenArtifactInfo> resolve = new LinkedHashSet<MavenArtifactInfo>();
+        for (MavenExtraArtifactType extraType : extraTypes) {
+          allowedClassifiers.add(extraType.getDefaultClassifier());
+          resolve.add(new MavenArtifactInfo(mavenId, extraType.getDefaultExtension(), extraType.getDefaultClassifier()));
+          for (MavenArtifact artifact : firstResult) {
+            if (MavenConstants.SCOPE_TEST.equals(artifact.getScope())) continue;
+            resolve.add(new MavenArtifactInfo(artifact.getMavenId(), extraType.getDefaultExtension(), extraType.getDefaultClassifier()));
+          }
         }
-      }));
+        final List<MavenArtifact> secondResult = embedder.resolveTransitively(new ArrayList<MavenArtifactInfo>(resolve), remoteRepositories);
+        for (MavenArtifact artifact : secondResult) {
+          if (!artifact.isResolved()) continue;
+          if (MavenConstants.SCOPE_TEST.equals(artifact.getScope())) continue;
+          if (!allowedClassifiers.contains(artifact.getClassifier())) continue;
+          result.add(artifact);
+        }
+      }
     }
     catch (MavenProcessCanceledException e) {
-      return;
+      cancelled = true;
     }
     finally {
       manager.release(embedder);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          resultProcessor.process(result.get());
-        }
-      });
+      if (!cancelled) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            resultProcessor.process(new ArrayList<MavenArtifact>(result));
+          }
+        });
+      }
     }
   }
 
