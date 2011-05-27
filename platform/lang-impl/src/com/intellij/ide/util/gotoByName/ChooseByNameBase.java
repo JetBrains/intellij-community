@@ -22,8 +22,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.NavigationItemListCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -61,6 +59,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -800,12 +799,10 @@ public abstract class ChooseByNameBase {
             cancelCalcElementsThread();
 
             final ListCellRenderer cellRenderer = myList.getCellRenderer();
-            if (cellRenderer instanceof PsiElementListCellRenderer) {
-              final String namePattern = getNamePattern(text);
-              ((PsiElementListCellRenderer)cellRenderer).setPatternMatcher(buildPatternMatcher(isSearchInAnyPlace() ? "*" + namePattern + "*" : namePattern));
-            } else if (cellRenderer instanceof NavigationItemListCellRenderer) {
-              final String namePattern = getNamePattern(text);
-              ((NavigationItemListCellRenderer)cellRenderer).setPatternMatcher(buildPatternMatcher(isSearchInAnyPlace() ? "*" + namePattern + "*" : namePattern));
+            if (cellRenderer instanceof MatcherHolder) {
+              final String pattern = getNamePattern(text);
+              final NameUtil.Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern + "*" : pattern);
+              ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
             }
 
             myCalcElementsThread = new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState, postRunnable == null);
