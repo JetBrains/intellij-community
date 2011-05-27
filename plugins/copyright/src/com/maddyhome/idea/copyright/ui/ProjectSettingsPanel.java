@@ -279,14 +279,18 @@ public class ProjectSettingsPanel extends PanelWithButtons {
     final List<ScopeSetting> mappings = new ArrayList<ScopeSetting>();
     final Map<String, String> copyrights = myManager.getCopyrightsMapping();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(myProject);
+    final Set<String> scopes2Unmap = new HashSet<String>();
     for (final String scopeName : copyrights.keySet()) {
       final NamedScope scope = manager.getScope(scopeName);
       if (scope != null) {
         mappings.add(new ScopeSetting(scope, copyrights.get(scopeName)));
       }
       else {
-        myManager.unmapCopyright(scopeName);
+        scopes2Unmap.add(scopeName);
       }
+    }
+    for (String scopeName : scopes2Unmap) {
+      myManager.unmapCopyright(scopeName);
     }
     myScopeMappingModel.setItems(mappings);
     updateButtons();
