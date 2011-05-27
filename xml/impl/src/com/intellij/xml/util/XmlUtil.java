@@ -620,7 +620,6 @@ public class XmlUtil {
   private static class XmlElementProcessor {
     private final PsiElementProcessor processor;
     private final PsiFile targetFile;
-    private static final Key<CachedValue<PsiElement[]>> KEY_RESOLVED_XINCLUDE = Key.create("RESOLVED_XINCLUDE");
 
     XmlElementProcessor(PsiElementProcessor _processor, PsiFile _targetFile) {
       processor = _processor;
@@ -670,11 +669,16 @@ public class XmlUtil {
 
     private boolean processXInclude(final boolean deepFlag, final boolean wideFlag, final XmlTag xincludeTag) {
 
-      final PsiElement[] inclusion = CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, KEY_RESOLVED_XINCLUDE, new CachedValueProvider<PsiElement[]>() {
+      final PsiElement[] inclusion = CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, new CachedValueProvider<PsiElement[]>() {
           public Result<PsiElement[]> compute() {
-            return computeInclusion(xincludeTag);
+            return RecursionManager.createGuard("xinclude").doPreventingRecursion(xincludeTag, new Computable<Result<PsiElement[]>>() {
+              @Override
+              public Result<PsiElement[]> compute() {
+                return computeInclusion(xincludeTag);
+              }
+            });
           }
-        }, false);
+        });
 
       if (inclusion != null) {
         for (PsiElement psiElement : inclusion) {
