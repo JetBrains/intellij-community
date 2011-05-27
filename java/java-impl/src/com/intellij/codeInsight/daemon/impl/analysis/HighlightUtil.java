@@ -1648,7 +1648,18 @@ public class HighlightUtil {
             !thisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), aClass)) {
           return null;
         }
-        return createMemberReferencedError(resolvedName, expression.getTextRange());
+        final HighlightInfo highlightInfo = createMemberReferencedError(resolvedName, expression.getTextRange());
+        if (expression instanceof PsiReferenceExpression && PsiUtil.isInnerClass(aClass)) {
+          final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
+          final PsiClass containingClass = aClass.getContainingClass();
+          LOG.assertTrue(containingClass != null);
+          final PsiField fieldInContainingClass = containingClass.findFieldByName(referenceName, true);
+          if (fieldInContainingClass != null && ((PsiReferenceExpression)expression).getQualifierExpression() == null) {
+            QuickFixAction.registerQuickFixAction(highlightInfo, new QualifyWithThisFix(containingClass, expression));
+          }
+        }
+
+        return highlightInfo;
       }
       element = element.getParent();
     }
