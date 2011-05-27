@@ -39,12 +39,13 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer {
+public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer, MatcherHolder {
 
   private NameUtil.Matcher myMatcher;
 
