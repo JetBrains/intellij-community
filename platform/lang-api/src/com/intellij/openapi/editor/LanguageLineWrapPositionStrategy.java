@@ -48,7 +48,7 @@ public class LanguageLineWrapPositionStrategy extends LanguageExtension<LineWrap
     if (project != null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
-        result = LanguageLineWrapPositionStrategy.INSTANCE.forLanguage(psiFile.getLanguage());
+        result = INSTANCE.forLanguage(psiFile.getLanguage());
       }
     }
     return result;
