@@ -231,11 +231,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public void selectTail() {
     //myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
-
+    final int listIndex = myModel.getSelectedIndex();
     myUpdateQueue.queueSelect(new Runnable() {
       @Override
       public void run() {
         if (!myList.isEmpty()) {
+          if (listIndex != myModel.getSelectedIndex()) {
+            return;
+          }
           myModel.setSelectedIndex(myList.size() - 1);
           IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
         }
