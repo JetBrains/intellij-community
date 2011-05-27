@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.notification.NotificationType;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -40,5 +41,9 @@ public class MessageType {
 
   public Color getPopupBackground() {
     return myPopupBackground;
+  }
+
+  public NotificationType toNotificationType() {
+    return this == ERROR ? NotificationType.ERROR : this == WARNING ? NotificationType.WARNING : NotificationType.INFORMATION;
   }
 }
