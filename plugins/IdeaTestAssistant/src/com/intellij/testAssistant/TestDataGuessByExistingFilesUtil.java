@@ -356,6 +356,9 @@ public class TestDataGuessByExistingFilesUtil {
       else {
         startWithLowerCase = testNameStartsWithLowerCase;
       }
+      if (i < 0) {
+        return;
+      } 
 
       filePrefix = fileName.substring(0, i);
       fileSuffix = fileName.substring(i + testName.length());
