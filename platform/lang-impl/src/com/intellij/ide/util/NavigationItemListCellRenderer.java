@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
@@ -39,6 +38,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 
@@ -47,7 +47,7 @@ import java.awt.*;
 
 public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer, MatcherHolder {
 
-  private NameUtil.Matcher myMatcher;
+  private Matcher myMatcher;
 
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());
@@ -92,15 +92,15 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     return this;
   }
 
-  public void setPatternMatcher(final NameUtil.Matcher matcher) {
+  public void setPatternMatcher(final Matcher matcher) {
     myMatcher = matcher;
   }
 
   private static class LeftRenderer extends ColoredListCellRenderer {
     public final boolean myRenderLocation;
-    private NameUtil.Matcher myMatcher;
+    private Matcher myMatcher;
 
-    public LeftRenderer(boolean renderLocation, NameUtil.Matcher matcher) {
+    public LeftRenderer(boolean renderLocation, Matcher matcher) {
       myRenderLocation = renderLocation;
       myMatcher = matcher;
     }

@@ -19,6 +19,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,11 +204,11 @@ public class TestDataGuessByExistingFilesUtil {
                                                     @NotNull Collection<String> testNames,
                                                     @NotNull PsiClass psiClass)
   {
-    List<Trinity<NameUtil.Matcher, String, String>> input = new ArrayList<Trinity<NameUtil.Matcher, String, String>>();
+    List<Trinity<Matcher, String, String>> input = new ArrayList<Trinity<Matcher, String, String>>();
     Set<String> testNamesLowerCase = new HashSet<String>();
     for (String testName : testNames) {
       String pattern = String.format("*%s*", testName);
-      input.add(new Trinity<NameUtil.Matcher, String, String>(
+      input.add(new Trinity<Matcher, String, String>(
         NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern)), testName, pattern
       ));
       testNamesLowerCase.add(testName.toLowerCase());
@@ -215,7 +216,7 @@ public class TestDataGuessByExistingFilesUtil {
     Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
     for (String name : gotoModel.getNames(false)) {
       boolean currentNameProcessed = false;
-      for (Trinity<NameUtil.Matcher, String, String> trinity : input) {
+      for (Trinity<Matcher, String, String> trinity : input) {
         if (!trinity.first.matches(name)) {
           continue;
         }

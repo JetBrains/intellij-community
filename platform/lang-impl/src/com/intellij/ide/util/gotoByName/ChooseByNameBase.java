@@ -59,6 +59,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -87,7 +88,7 @@ public abstract class ChooseByNameBase {
   private boolean myPreselectInitialText;
   private final Reference<PsiElement> myContext;
   private boolean mySearchInAnyPlace = false;
-  private NameUtil.Matcher myLastMatcher;
+  private Matcher myLastMatcher;
 
   protected Component myPreviouslyFocusedComponent;
 
@@ -801,7 +802,7 @@ public abstract class ChooseByNameBase {
             final ListCellRenderer cellRenderer = myList.getCellRenderer();
             if (cellRenderer instanceof MatcherHolder) {
               final String pattern = getNamePattern(text);
-              final NameUtil.Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern + "*" : pattern);
+              final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern + "*" : pattern);
               ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
             }
 
@@ -896,7 +897,7 @@ public abstract class ChooseByNameBase {
     int bestMatch = Integer.MIN_VALUE;
     final int count = myListModel.getSize();
 
-    NameUtil.Matcher matcher = buildPatternMatcher(getNamePattern(myTextField.getText()));
+    Matcher matcher = buildPatternMatcher(getNamePattern(myTextField.getText()));
 
     final String statContext = statisticsContext();
     for (int i = 0; i < count; i++) {
@@ -1421,13 +1422,13 @@ public abstract class ChooseByNameBase {
     if (name == null) return false;
 
     final List<String> suspects = split(name);
-    final List<Pair<String, NameUtil.Matcher>> patternsAndMatchers =
-      ContainerUtil.map2List(split(qualifierPattern), new Function<String, Pair<String, NameUtil.Matcher>>() {
-        public Pair<String, NameUtil.Matcher> fun(String s) {
+    final List<Pair<String, Matcher>> patternsAndMatchers =
+      ContainerUtil.map2List(split(qualifierPattern), new Function<String, Pair<String, Matcher>>() {
+        public Pair<String, Matcher> fun(String s) {
           final String pattern = getNamePattern(s);
-          final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
+          final Matcher matcher = buildPatternMatcher(pattern);
 
-          return new Pair<String, NameUtil.Matcher>(pattern, matcher);
+          return new Pair<String, Matcher>(pattern, matcher);
         }
       });
 
@@ -1435,9 +1436,9 @@ public abstract class ChooseByNameBase {
 
     try {
       patterns:
-      for (Pair<String, NameUtil.Matcher> patternAndMatcher : patternsAndMatchers) {
+      for (Pair<String, Matcher> patternAndMatcher : patternsAndMatchers) {
         final String pattern = patternAndMatcher.first;
-        final NameUtil.Matcher matcher = patternAndMatcher.second;
+        final Matcher matcher = patternAndMatcher.second;
         if (pattern.length() > 0) {
           for (int j = matchPosition; j < suspects.size() - 1; j++) {
             String suspect = suspects.get(j);
@@ -1472,7 +1473,7 @@ public abstract class ChooseByNameBase {
     }
 
     final String[] names = checkboxState ? myNames[1] : myNames[0];
-    final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
+    final Matcher matcher = buildPatternMatcher(pattern);
 
     try {
       for (String name : names) {
@@ -1497,7 +1498,7 @@ public abstract class ChooseByNameBase {
      return myTextField.isCompletionKeyStroke();
   }
 
-  private boolean matches(String pattern, NameUtil.Matcher matcher, String name) {
+  private boolean matches(String pattern, Matcher matcher, String name) {
     boolean matches = false;
     if (name != null) {
       if (myModel instanceof CustomMatcherModel) {
@@ -1512,7 +1513,7 @@ public abstract class ChooseByNameBase {
     return matches;
   }
 
-  private static NameUtil.Matcher buildPatternMatcher(String pattern) {
+  private static Matcher buildPatternMatcher(String pattern) {
     return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
   }
 

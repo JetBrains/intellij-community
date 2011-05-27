@@ -16,10 +16,10 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -34,7 +34,7 @@ import java.awt.*;
 public class InspectionListCellRenderer extends DefaultListCellRenderer implements MatcherHolder {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  private NameUtil.Matcher myMatcher;
+  private Matcher myMatcher;
   private final SimpleTextAttributes SELECTED;
   private final SimpleTextAttributes PLAIN;
 
@@ -78,7 +78,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
   }
 
   @Override
-  public void setPatternMatcher(NameUtil.Matcher matcher) {
+  public void setPatternMatcher(Matcher matcher) {
     myMatcher = matcher;
   }
 }

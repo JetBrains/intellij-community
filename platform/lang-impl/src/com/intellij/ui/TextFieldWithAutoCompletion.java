@@ -40,6 +40,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -152,7 +153,7 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     if (lookupPrefix.length() == 0) {
       items.addAll(myVariants);
     } else {
-      final NameUtil.Matcher matcher = NameUtil.buildMatcher(lookupPrefix, 0, true, true);
+      final Matcher matcher = NameUtil.buildMatcher(lookupPrefix, 0, true, true);
 
       for (LookupElement variant : myVariants) {
         if (matcher.matches(variant.getLookupString())) {

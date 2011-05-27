@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.ListSpeedSearch;
@@ -38,6 +37,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
+import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,21 +49,21 @@ import java.util.Comparator;
 
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer, MatcherHolder {
 
-  private NameUtil.Matcher myMatcher;
+  private Matcher myMatcher;
 
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
   }
 
-  public void setPatternMatcher(final NameUtil.Matcher matcher) {
+  public void setPatternMatcher(final Matcher matcher) {
     myMatcher = matcher;
   }
 
   private class LeftRenderer extends ColoredListCellRenderer {
     private final String myModuleName;
-    private NameUtil.Matcher myMatcher;
+    private Matcher myMatcher;
 
-    public LeftRenderer(final String moduleName, NameUtil.Matcher matcher) {
+    public LeftRenderer(final String moduleName, Matcher matcher) {
       myModuleName = moduleName;
       myMatcher = matcher;
     }

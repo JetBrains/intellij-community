@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -90,7 +91,7 @@ public class VariantsCompletionAction extends AnAction {
   }
 
   private static String[] calcWords(final String prefix, Editor editor) {
-    final NameUtil.Matcher matcher = NameUtil.buildMatcher(prefix, 0, true, true);
+    final Matcher matcher = NameUtil.buildMatcher(prefix, 0, true, true);
     final Set<String> words = new HashSet<String>();
     CharSequence chars = editor.getDocument().getCharsSequence();
 
