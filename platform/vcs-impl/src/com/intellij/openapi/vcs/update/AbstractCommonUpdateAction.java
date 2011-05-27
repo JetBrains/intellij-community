@@ -19,6 +19,9 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,7 +57,6 @@ import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -447,15 +449,19 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
-    @Nullable
-    public NotificationInfo getNotificationInfo() {
+    @Override
+    public NotificationInfo notifyFinished() {
       StringBuffer text = new StringBuffer();
       final List<FileGroup> groups = myUpdatedFiles.getTopLevelGroups();
       for (FileGroup group : groups) {
         appendGroup(text, group);
       }
 
-      return new NotificationInfo("VCS Update", "VCS Update Finished", text.toString(), true);
+      final String title = "VCS Update Finished";
+      final String content = text.toString();
+
+      Notifications.Bus.notify(new Notification(Notifications.LOG_ONLY_GROUP_ID, title, content, NotificationType.INFORMATION), myProject);
+      return new NotificationInfo("VCS Update", title, content, true);
     }
 
     private void appendGroup(final StringBuffer text, final FileGroup group) {
