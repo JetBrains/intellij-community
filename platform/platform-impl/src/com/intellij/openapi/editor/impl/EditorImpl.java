@@ -906,12 +906,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myIsColumnMode;
   }
 
-  private int yPositionToVisibleLineNumber(int y) {
+  private int yPositionToVisibleLine(int y) {
     return y / getLineHeight();
   }
 
-  public int yPositionToLogicalLineNumber(int y) {
-    int line = yPositionToVisibleLineNumber(y);
+  int yPositionToLogicalLine(int y) {
+    int line = yPositionToVisibleLine(y);
     if (line <= 0) {
       return 0;
     }
@@ -921,7 +921,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
-    int line = yPositionToVisibleLineNumber(p.y);
+    int line = yPositionToVisibleLine(p.y);
     int px = p.x;
     if (line == 0 && myPrefixText != null) {
       for (char c : myPrefixText) {
@@ -1106,7 +1106,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (softWrapAware) {
       return mySoftWrapModel.offsetToLogicalPosition(offset);
     }
-    int line = calcLogicalLineNumber(offset, false);
+    int line = offsetToLogicalLine(offset, false);
     int column = calcColumnNumber(offset, line, false);
     return new LogicalPosition(line, column);
   }
@@ -1128,15 +1128,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       return result;
     }
-    int line = calcLogicalLineNumber(offset);
-    int lineStartOffset;
-    if (line >= myDocument.getLineCount()) {
-      lineStartOffset = myDocument.getTextLength();
-    }
-    else {
-      lineStartOffset = myDocument.getLineStartOffset(line);
-    }
-    
+    int line = offsetToLogicalLine(offset);
+    int lineStartOffset = line >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(line);
+
     int result = logicalToVisualLine(line);
     
     // There is a possible case that logical line that contains target offset is soft-wrapped (represented in more than one visual
@@ -1169,7 +1163,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int logicalLineToY(int line) {
     VisualPosition visible = logicalToVisualPosition(new LogicalPosition(line, 0));
-    return visibleLineNumberToYPosition(visible.line);
+    return visibleLineToY(visible.line);
   }
 
   @NotNull
@@ -1180,7 +1174,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public Point visualPositionToXY(@NotNull VisualPosition visible) {
-    int y = visibleLineNumberToYPosition(visible.line);
+    int y = visibleLineToY(visible.line);
     LogicalPosition logical = visualToLogicalPosition(new VisualPosition(visible.line, 0));
     int logLine = logical.line;
 
@@ -1311,9 +1305,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return x;
   }
 
-  public int visibleLineNumberToYPosition(int lineNum) {
-    if (lineNum < 0) throw new IndexOutOfBoundsException("Wrong line: " + lineNum);
-    return lineNum * getLineHeight();
+  public int visibleLineToY(int line) {
+    if (line < 0) throw new IndexOutOfBoundsException("Wrong line: " + line);
+    return line * getLineHeight();
   }
 
   public void repaint(int startOffset, int endOffset) {
@@ -1423,8 +1417,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     validateSize();
 
-    int startLine = calcLogicalLineNumber(e.getOffset());
-    int endLine = calcLogicalLineNumber(e.getOffset() + e.getNewLength());
+    int startLine = offsetToLogicalLine(e.getOffset());
+    int endLine = offsetToLogicalLine(e.getOffset() + e.getNewLength());
 
     boolean painted = false;
     if (myDocument.getTextLength() > 0) {
@@ -1484,8 +1478,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myPreferredSize = dim;
 
       stopOptimizedScrolling();
-      int lineNum = Math.max(1, getDocument().getLineCount());
-      myGutterComponent.setLineNumberAreaWidth(getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNum + 2)) + 6);
+      int line = Math.max(1, getDocument().getLineCount());
+      myGutterComponent.setLineNumberAreaWidth(getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(line + 2)) + 6);
 
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();
@@ -1682,7 +1676,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myInputMethodRequestsHandler != null && myInputMethodRequestsHandler.composedText != null) {
       VisualPosition visStart =
         offsetToVisualPosition(Math.min(myInputMethodRequestsHandler.composedTextStart, myDocument.getTextLength()));
-      int y = visibleLineNumberToYPosition(visStart.line) + getLineHeight() - getDescent() + 1;
+      int y = visibleLineToY(visStart.line) + getLineHeight() - getDescent() + 1;
       Point p1 = visualPositionToXY(visStart);
       Point p2 =
         logicalPositionToXY(offsetToLogicalPosition(Math.min(myInputMethodRequestsHandler.composedTextEnd, myDocument.getTextLength())));
@@ -1709,25 +1703,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void paintSegmentHighlightersBorderAndAfterEndOfLine(Graphics g, Rectangle clip) {
     if (myDocument.getLineCount() == 0) return;
-    int startLineNumber = yPositionToVisibleLineNumber(clip.y);
-    int endLineNumber = yPositionToVisibleLineNumber(clip.y + clip.height) + 1;
+    int startLine = yPositionToVisibleLine(clip.y);
+    int endLine = yPositionToVisibleLine(clip.y + clip.height) + 1;
 
     final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
     RangeHighlighter[] segmentHighlighters = docMarkup.getAllHighlighters();
     for (RangeHighlighter segmentHighlighter : segmentHighlighters) {
-      paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLineNumber, endLineNumber);
+      paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLine, endLine);
     }
 
     segmentHighlighters = getMarkupModel().getAllHighlighters();
     for (RangeHighlighter segmentHighlighter : segmentHighlighters) {
-      paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLineNumber, endLineNumber);
+      paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLine, endLine);
     }
   }
 
   private void paintSegmentHighlighterAfterEndOfLine(Graphics g,
                                                      RangeHighlighterEx segmentHighlighter,
-                                                     int startLineNumber,
-                                                     int endLineNumber) {
+                                                     int startLine,
+                                                     int endLine) {
     if (!segmentHighlighter.isValid()) {
       return;
     }
@@ -1736,8 +1730,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int visibleStartLine = offsetToVisualLine(startOffset);
 
       if (!getFoldingModel().isOffsetCollapsed(startOffset)) {
-        if (visibleStartLine >= startLineNumber && visibleStartLine <= endLineNumber) {
-          int logStartLine = offsetToLogicalPosition(startOffset).line;
+        if (visibleStartLine >= startLine && visibleStartLine <= endLine) {
+          int logStartLine = offsetToLogicalLine(startOffset);
           if (logStartLine >= myDocument.getLineCount()) {
             return;
           }
@@ -1751,7 +1745,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             g.fillRect(end.x, end.y, charWidth, lineHeight);
           }
           if (attributes != null && attributes.getEffectColor() != null) {
-            int y = visibleLineNumberToYPosition(visibleStartLine) + getLineHeight() - getDescent() + 1;
+            int y = visibleLineToY(visibleStartLine) + getLineHeight() - getDescent() + 1;
             g.setColor(attributes.getEffectColor());
             if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
               drawWave(g, end.x, end.x + charWidth - 1, y);
@@ -1803,14 +1797,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int lineHeight = getLineHeight();
 
-    int visibleLineNumber = clip.y / lineHeight;
+    int visibleLine = clip.y / lineHeight;
 
     VisualPosition visualPosition = xyToVisualPosition(new Point(0, clip.y));
-    VisualPosition endVisualPosition = xyToVisualPosition(new Point(0, clip.y+clip.height+getLineHeight()));
     LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
-    LogicalPosition endLogicalPosition = visualToLogicalPosition(endVisualPosition);
 
-    Point position = new Point(0, visibleLineNumber * lineHeight);
+    Point position = new Point(0, visibleLine * lineHeight);
     if (visualPosition.line == 0 && myPrefixText != null) {
       position.x = drawBackground(g, myPrefixAttributes.getBackgroundColor(), new String(myPrefixText), position, myPrefixAttributes.getFontType(),
                                   defaultBackground, clip);
@@ -1826,6 +1818,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     
     boolean locateBeforeSoftWrap = !SoftWrapHelper.isCaretAfterSoftWrap(this);
     int start = logicalPositionToOffset(logicalPosition);
+    VisualPosition endVisualPosition = xyToVisualPosition(new Point(0, clip.y + clip.height + getLineHeight()));
+    LogicalPosition endLogicalPosition = visualToLogicalPosition(endVisualPosition);
     int end = logicalPositionToOffset(endLogicalPosition);
     getSoftWrapModel().registerSoftWrapsIfNecessary();
     IterationState iterationState = new IterationState(this, start, end, paintSelection());
@@ -1950,7 +1944,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       validateSize();
 
       // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
-      repaintToScreenBottom(xyToLogicalPosition(position).line);
+      repaintToScreenBottom(yPositionToLogicalLine(position.y));
 
       // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
       // in accordance with the newly introduced soft wrap(s).
@@ -2249,7 +2243,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int lineHeight = getLineHeight();
 
-    int visibleLineNumber = clip.y / lineHeight;
+    int visibleLine = clip.y / lineHeight;
 
     // The main idea is that there is a possible case that we need to perform painting starting from soft-wrapped logical line.
     // We may want to skip necessary number of visual lines then. Hence, we remember logical position that corresponds to the starting
@@ -2258,17 +2252,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // current painting iteration.
     Ref<LogicalPosition> logicalPosition = new Ref<LogicalPosition>(xyToLogicalPosition(new Point(0, clip.y)));
     LogicalPosition endLogicalPosition = xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight()));
-    int startLineNumber = logicalPosition.get().line;
+    int startLine = logicalPosition.get().line;
     int start = logicalPositionToOffset(logicalPosition.get());
     int end = logicalPositionToOffset(endLogicalPosition);
 
-    Point position = new Point(0, visibleLineNumber * lineHeight);
-    if (startLineNumber == 0 && myPrefixText != null) {
+    Point position = new Point(0, visibleLine * lineHeight);
+    if (startLine == 0 && myPrefixText != null) {
       position.x = drawStringWithSoftWraps(g, myPrefixText, 0, myPrefixText.length, position, clip,
                                            myPrefixAttributes.getEffectColor(), myPrefixAttributes.getEffectType(),
                                            myPrefixAttributes.getFontType(), myPrefixAttributes.getForegroundColor(), logicalPosition);
     }
-    if (startLineNumber >= myDocument.getLineCount() || startLineNumber < 0) {
+    if (startLine >= myDocument.getLineCount() || startLine < 0) {
       if (position.x > 0) flushCachedChars(g);
       return;
     }
@@ -2488,9 +2482,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     Color separatorColor = marker.getLineSeparatorColor();
     if (separatorColor != null) {
-      int lineNumber = marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP ? marker.getDocument()
+      int line = marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP ? marker.getDocument()
         .getLineNumber(marker.getStartOffset()) : marker.getDocument().getLineNumber(marker.getEndOffset());
-      if (lineNumber < 0 || lineNumber >= myDocument.getLineCount()) {
+      if (line < 0 || line >= myDocument.getLineCount()) {
         return;
       }
 
@@ -2500,14 +2494,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int y;
       SeparatorPlacement placement = marker.getLineSeparatorPlacement();
       if (placement == SeparatorPlacement.TOP) {
-        y = visibleLineNumberToYPosition(logicalToVisualLine(lineNumber));
+        y = visibleLineToY(logicalToVisualLine(line));
       }
       else {
-        if (lineNumber + 1 >= myDocument.getLineCount()) {
-          y = visibleLineNumberToYPosition(offsetToVisualLine(myDocument.getTextLength()));
+        if (line + 1 >= myDocument.getLineCount()) {
+          y = visibleLineToY(offsetToVisualLine(myDocument.getTextLength()));
         }
         else {
-          y = logicalLineToY(lineNumber + 1);
+          y = logicalLineToY(line + 1);
         }
       }
 
@@ -3140,13 +3134,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (softWrapAware) {
       return mySoftWrapModel.adjustVisualPosition(logicalPos, softWrapUnawarePosition);
     }
-    else {
-      return softWrapUnawarePosition;
-    }
+    return softWrapUnawarePosition;
   }
 
   @Nullable
-  private FoldRegion getLastCollapsedBeforePosition(VisualPosition visual) {
+  private FoldRegion getLastCollapsedBeforePosition(VisualPosition visualPos) {
     FoldRegion[] topLevelCollapsed = myFoldingModel.fetchTopLevel();
 
     if (topLevelCollapsed == null) return null;
@@ -3158,21 +3150,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     while (start <= end) {
       i = (start + end) / 2;
       FoldRegion region = topLevelCollapsed[i];
-      LogicalPosition logFoldEnd = offsetToLogicalPosition(region.getEndOffset() - 1);
-      VisualPosition visFoldEnd = logicalToVisualPosition(logFoldEnd);
-      if (visFoldEnd.line < visual.line) {
+      int regionVisualLine = offsetToVisualLine(region.getEndOffset() - 1);
+      if (regionVisualLine < visualPos.line) {
         start = i + 1;
       }
       else {
-        if (visFoldEnd.line > visual.line) {
+        if (regionVisualLine > visualPos.line) {
           end = i - 1;
         }
         else {
-          if (visFoldEnd.column < visual.column) {
+          VisualPosition visFoldEnd = offsetToVisualPosition(region.getEndOffset() - 1);
+          if (visFoldEnd.column < visualPos.column) {
             start = i + 1;
           }
           else {
-            if (visFoldEnd.column > visual.column) {
+            if (visFoldEnd.column > visualPos.column) {
               end = i - 1;
             }
             else {
@@ -3191,9 +3183,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (i >= 0 && i < topLevelCollapsed.length) {
       FoldRegion region = topLevelCollapsed[i];
-      LogicalPosition logFoldEnd = offsetToLogicalPosition(region.getEndOffset() - 1);
-      VisualPosition visFoldEnd = logicalToVisualPosition(logFoldEnd);
-      if (visFoldEnd.line > visual.line || visFoldEnd.line == visual.line && visFoldEnd.column > visual.column) {
+      VisualPosition visFoldEnd = offsetToVisualPosition(region.getEndOffset() - 1);
+      if (visFoldEnd.line > visualPos.line || visFoldEnd.line == visualPos.line && visFoldEnd.column > visualPos.column) {
         i--;
         if (i >= 0) {
           return topLevelCollapsed[i];
@@ -3225,11 +3216,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     FoldRegion lastCollapsedBefore = getLastCollapsedBeforePosition(visiblePos);
 
     if (lastCollapsedBefore != null) {
-      LogicalPosition logFoldEnd = offsetToLogicalPosition(lastCollapsedBefore.getEndOffset(), false);
-      VisualPosition visFoldEnd = logicalToVisualPosition(logFoldEnd, false);
+      int logFoldEndLine = offsetToLogicalLine(lastCollapsedBefore.getEndOffset(), false);
+      int visFoldEndLine = logicalToVisualLine(logFoldEndLine);
 
-      line = logFoldEnd.line + visiblePos.line - visFoldEnd.line;
-      if (visFoldEnd.line == visiblePos.line) {
+      line = logFoldEndLine + visiblePos.line - visFoldEndLine;
+      if (visFoldEndLine == visiblePos.line) {
+        LogicalPosition logFoldEnd = offsetToLogicalPosition(lastCollapsedBefore.getEndOffset(), false);
+        VisualPosition visFoldEnd = logicalToVisualPosition(logFoldEnd, false);
         if (visiblePos.column >= visFoldEnd.column) {
           column = logFoldEnd.column + visiblePos.column - visFoldEnd.column;
         }
@@ -3244,11 +3237,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new LogicalPosition(line, column);
   }
 
-  private int calcLogicalLineNumber(int offset) {
-    return calcLogicalLineNumber(offset, true);
+  private int offsetToLogicalLine(int offset) {
+    return offsetToLogicalLine(offset, true);
   }
 
-  private int calcLogicalLineNumber(int offset, boolean softWrapAware) {
+  private int offsetToLogicalLine(int offset, boolean softWrapAware) {
     int textLength = myDocument.getTextLength();
     if (textLength == 0) return 0;
 
@@ -3275,13 +3268,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public int calcColumnNumber(int offset, int lineIndex, boolean softWrapAware) {
     if (myDocument.getTextLength() == 0) return 0;
 
-    CharSequence text = myDocument.getCharsSequence();
     int start = myDocument.getLineStartOffset(lineIndex);
     if (start == offset) return 0;
+    CharSequence text = myDocument.getCharsSequence();
     int column = EditorUtil.calcColumnNumber(this, text, start, offset, EditorUtil.getTabSize(this));
 
     if (softWrapAware) {
-      int line = calcLogicalLineNumber(offset, false);
+      int line = offsetToLogicalLine(offset, false);
       return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(line, column), offset).column;
     }
     else {
@@ -3296,15 +3289,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     LogicalPosition pos = xyToLogicalPosition(new Point(x, y));
 
-    int columnNumber = pos.column;
-    int lineNumber = pos.line;
+    int column = pos.column;
+    int line = pos.line;
     int softWrapLinesBeforeTargetLogicalLine = pos.softWrapLinesBeforeCurrentLogicalLine;
     int softWrapLinesOnTargetLogicalLine = pos.softWrapLinesOnCurrentLogicalLine;
     int softWrapColumns = pos.softWrapColumnDiff;
 
-    if (lineNumber < 0) {
-      lineNumber = 0;
-      columnNumber = 0;
+    if (line < 0) {
+      line = 0;
+      column = 0;
       softWrapLinesBeforeTargetLogicalLine = 0;
       softWrapLinesOnTargetLogicalLine = 0;
       softWrapColumns = 0;
@@ -3316,38 +3309,38 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (lineNumber >= totalLines && totalLines > 0) {
+    if (line >= totalLines && totalLines > 0) {
       int visibleLineCount = getVisibleLineCount();
-      int newY = visibleLineCount > 0 ? visibleLineNumberToYPosition(visibleLineCount - 1) : 0;
+      int newY = visibleLineCount > 0 ? visibleLineToY(visibleLineCount - 1) : 0;
       if (newY > 0 && newY == y) {
-        newY = visibleLineNumberToYPosition(getVisibleLogicalLinesCount());
+        newY = visibleLineToY(getVisibleLogicalLinesCount());
       }
       moveCaretToScreenPos(x, newY);
       return;
     }
 
     if (!mySettings.isVirtualSpace() && !mySelectionModel.hasBlockSelection()) {
-      int lineEndOffset = myDocument.getLineEndOffset(lineNumber);
-      int lineEndColumnNumber = calcColumnNumber(lineEndOffset, lineNumber);
-      if (columnNumber > lineEndColumnNumber) {
-        columnNumber = lineEndColumnNumber;
+      int lineEndOffset = myDocument.getLineEndOffset(line);
+      int lineEndColumn = calcColumnNumber(lineEndOffset, line);
+      if (column > lineEndColumn) {
+        column = lineEndColumn;
         if (softWrapColumns != 0) {
-          softWrapColumns -= columnNumber - lineEndColumnNumber;
+          softWrapColumns -= column - lineEndColumn;
         }
       }
     }
 
     if (!mySettings.isCaretInsideTabs()) {
-      int offset = logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
+      int offset = logicalPositionToOffset(new LogicalPosition(line, column));
       CharSequence text = myDocument.getCharsSequence();
       if (offset >= 0 && offset < myDocument.getTextLength()) {
         if (text.charAt(offset) == '\t') {
-          columnNumber = calcColumnNumber(offset, lineNumber);
+          column = calcColumnNumber(offset, line);
         }
       }
     }
     LogicalPosition pos1 = new LogicalPosition(
-      lineNumber, columnNumber, softWrapLinesBeforeTargetLogicalLine, softWrapLinesOnTargetLogicalLine, softWrapColumns,
+      line, column, softWrapLinesBeforeTargetLogicalLine, softWrapLinesOnTargetLogicalLine, softWrapColumns,
       pos.foldedLines, pos.foldingColumnDiff
     );
     getCaretModel().moveToLogicalPosition(pos1);
@@ -3891,23 +3884,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             public void run() {
               int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
               VisualPosition caretPosition = getCaretModel().getVisualPosition();
-              int columnNumber = caretPosition.column;
+              int column = caretPosition.column;
               xPassedCycles++;
               if (xPassedCycles >= myXCycles) {
                 xPassedCycles = 0;
-                columnNumber += myDx;
+                column += myDx;
               }
 
-              int lineNumber = caretPosition.line;
+              int line = caretPosition.line;
               yPassedCycles++;
               if (yPassedCycles >= myYCycles) {
                 yPassedCycles = 0;
-                lineNumber += myDy;
+                line += myDy;
               }
 
-              lineNumber = Math.max(0, lineNumber);
-              columnNumber = Math.max(0, columnNumber);
-              VisualPosition pos = new VisualPosition(lineNumber, columnNumber);
+              line = Math.max(0, line);
+              column = Math.max(0, column);
+              VisualPosition pos = new VisualPosition(line, column);
               getCaretModel().moveToVisualPosition(pos);
               getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
@@ -4919,7 +4912,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int endSelectionOffset = getSelectionModel().getSelectionEnd();
     int endVisLine = offsetToVisualLine(endSelectionOffset - 1);
 
-    int clickVisLine = xyToVisualPosition(e.getPoint()).line;
+    int clickVisLine = yPositionToVisibleLine(e.getPoint().y);
 
     if (clickVisLine < startVisLine) {
       // Expand selection at backward direction.
@@ -5400,7 +5393,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMaxWidth = mySize != null ? mySize.width : -1;
       }
 
-      myOldEndLine = offsetToLogicalPosition(e.getOffset() + e.getOldLength()).line;
+      myOldEndLine = offsetToLogicalLine(e.getOffset() + e.getOldLength());
     }
 
     /**
@@ -5627,8 +5620,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int endToUse = Math.min(lineCount, myLineWidths.size());
         if (endToUse > 0 && getSoftWrapModel().isSoftWrappingEnabled()) {
           Rectangle visibleArea = getScrollingModel().getVisibleArea();
-          startToUse = xyToLogicalPosition(visibleArea.getLocation()).line;
-          endToUse = Math.min(endToUse, xyToLogicalPosition(new Point(0, visibleArea.y + visibleArea.height)).line);
+          startToUse = yPositionToLogicalLine(visibleArea.getLocation().y);
+          endToUse = Math.min(endToUse, yPositionToLogicalLine(visibleArea.y + visibleArea.height));
         }
         int maxWidth = 0;
         for (int i = startToUse; i < endToUse; i++) {

@@ -188,7 +188,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
     if (!oldBatchFlag) {
-      mySavedCaretShift = myEditor.visibleLineNumberToYPosition(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
+      mySavedCaretShift = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
     }
 
     myIsBatchFoldingProcessing = true;
@@ -394,7 +394,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     if (mySavedCaretShift > 0) {
       myEditor.getScrollingModel().disableAnimation();
-      int scrollTo = myEditor.visibleLineNumberToYPosition(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift;
+      int scrollTo = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift;
       myEditor.getScrollingModel().scrollVertically(scrollTo);
       myEditor.getScrollingModel().enableAnimation();
     }
