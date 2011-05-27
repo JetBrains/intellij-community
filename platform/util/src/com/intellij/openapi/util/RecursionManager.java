@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -58,7 +60,7 @@ public class RecursionManager {
    * @param id just some string to separate different recursion prevention policies from each other
    * @return a helper object which allow you to perform reentrancy-safe computations and check whether caching will be safe.
    */
-  public static RecursionGuard createGuard(final String id) {
+  public static RecursionGuard createGuard(@NonNls final String id) {
     return new RecursionGuard() {
       @Override
       public <T> T doPreventingRecursion(Object key, Computable<T> computation) {
