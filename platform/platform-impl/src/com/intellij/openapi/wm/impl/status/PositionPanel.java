@@ -68,7 +68,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
 
   @NotNull
   public String getMaxPossibleText() {
-    return "#############";
+    return "0000000000000";
   }
 
   @Override
