@@ -368,6 +368,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
     for (Map.Entry<PsiMethod, String> entry : entries) {
       PsiMethod setter = entry.getKey();
+      if (setter instanceof PsiCompiledElement) setter = (PsiMethod)((PsiCompiledElement)setter).getMirror();
       String name = entry.getValue();
       PsiParameter[] parameters = setter.getParameterList().getParameters();
       PsiParameter parameter = parameters[parameters.length - 1];

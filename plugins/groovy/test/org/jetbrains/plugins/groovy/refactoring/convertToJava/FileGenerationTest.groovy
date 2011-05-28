@@ -73,4 +73,6 @@ class FileGenerationTest extends LightGroovyTestCase {
   void testStaticPropAssignment() {doTest()}
   void testArrayAccess() {doTest()}
   void testClosureInUse() {doTest()}
+  void testDynamicPropertiesAccess() {doTest()}
+  void testDynamicMethodsAccess() {doTest()}
 }

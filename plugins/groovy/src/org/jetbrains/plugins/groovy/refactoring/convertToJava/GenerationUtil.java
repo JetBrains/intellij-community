@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -180,14 +181,20 @@ public class GenerationUtil {
                                         ExpressionGenerator expressionGenerator,
                                         GroovyPsiElement psiContext) {
     GroovyResolveResult call = GroovyResolveResult.EMPTY_RESULT;
-    if (caller != null) {
-      final PsiType type = caller.getType();
-      if (type != null) {
-        final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null);
-        final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, methodName, psiContext, argumentTypes);
-        call = PsiImplUtil.extractUniqueResult(candidates);
-      }
+
+    final PsiType type;
+    if (caller == null) {
+      type = GroovyPsiElementFactory.getInstance(psiContext.getProject()).createExpressionFromText("this", psiContext).getType();
     }
+    else {
+      type = caller.getType();
+    }
+    if (type != null) {
+      final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null);
+      final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, methodName, psiContext, argumentTypes);
+      call = PsiImplUtil.extractUniqueResult(candidates);
+    }
+
     invokeMethodByResolveResult(caller, call, methodName, exprs, namedArgs, closureArgs, expressionGenerator, psiContext);
   }
 
@@ -313,6 +320,7 @@ public class GenerationUtil {
     while (i < parameters.length) {
       PsiParameter parameter = parameters[i];
       if (parameter == null) continue;
+      if (parameter instanceof PsiCompiledElement) parameter = (PsiParameter)((PsiCompiledElement)parameter).getMirror();
 
       if (i > 0) text.append(", ");  //append ','
       if (!classNameProvider.forStubs()) {
