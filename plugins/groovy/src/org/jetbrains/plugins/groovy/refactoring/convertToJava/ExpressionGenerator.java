@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -684,8 +685,7 @@ public class ExpressionGenerator extends Generator {
       }
 
 
-      PsiElement parent = unary.getParent();
-      boolean shouldInsertParentheses = parent instanceof GrExpression;
+      boolean shouldInsertParentheses = !wrap && doNeedExpression;
       if (shouldInsertParentheses) {
         curBuilder.append('(');
       }
@@ -794,7 +794,7 @@ public class ExpressionGenerator extends Generator {
       builder.append(referenceExpression.getReferenceName());
       return;
     }
-    if (qualifier == null && (resolved == null || resolved instanceof LightElement) &&
+    if (qualifier == null && (resolved == null || resolved instanceof LightElement && !(resolved instanceof ClosureSyntheticParameter)) &&
         !(referenceExpression.getParent() instanceof GrCall) &&
         PsiUtil.isInScriptContext(referenceExpression)) {
       final GrExpression thisExpr = factory.createExpressionFromText("this", referenceExpression);

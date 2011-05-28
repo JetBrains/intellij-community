@@ -16,18 +16,23 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+
+import java.util.Collection;
 
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
 
@@ -36,6 +41,7 @@ import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationU
  */
 public class ClosureGenerator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ClosureGenerator");
+  public static final String[] MODIFIERS = new String[]{PsiModifier.PUBLIC};
 
   StringBuilder builder;
   ExpressionContext context;
@@ -52,9 +58,26 @@ public class ClosureGenerator {
     builder.append('(');
     builder.append(owner).append(", ").append(owner).append(") {\n");
 
+    generateClosureMainMethod(closure);
     final GrMethod method = generateClosureMethod(closure);
-    ClassGenerator.writeAllSignaturesOfMethod(builder, method, new ClassItemGeneratorImpl(context));
+    ClassGenerator.writeAllSignaturesOfMethod(builder, method, new ClassItemGeneratorImpl(context), false);
     builder.append("}");
+  }
+
+  private void generateClosureMainMethod(GrClosableBlock block) {
+    builder.append("public ");
+    final PsiType returnType = block.getReturnType();
+    writeType(builder, returnType, block);
+    builder.append(" doCall");
+    final GrParameter[] parameters = block.getAllParameters();
+    GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider(), context);
+
+    Collection<GrStatement> myExitPoints = ControlFlowUtils.collectReturns(block);
+    boolean shouldInsertReturnNull =
+      !(returnType instanceof PsiPrimitiveType) && MissingReturnInspection.methodMissesSomeReturns(block, false);
+
+    new CodeBlockGenerator(builder, context.extend(), myExitPoints).generateCodeBlock(block, shouldInsertReturnNull);
+    builder.append('\n');
   }
 
   private GrMethod generateClosureMethod(GrClosableBlock block) {
@@ -62,12 +85,8 @@ public class ClosureGenerator {
     final GrMethod method = factory.createMethodFromText("def doCall(){}", block);
 
     method.setReturnType(block.getReturnType());
-    final PsiElement first;
     if (block.hasParametersSection()) {
       method.getParameterList().replace(block.getParameterList());
-      final PsiElement arrow = block.getArrow();
-      LOG.assertTrue(arrow != null);
-      first = arrow.getNextSibling();
     }
     else {
       final GrParameter[] allParameters = block.getAllParameters();
@@ -75,16 +94,7 @@ public class ClosureGenerator {
       final GrParameter itParameter = allParameters[0];
       final GrParameter parameter = factory.createParameter("it", itParameter.getType().getCanonicalText(), "null", block);
       method.getParameterList().addParameterToEnd(parameter);
-      final PsiElement lBrace = block.getLBrace();
-      LOG.assertTrue(lBrace != null);
-      first = lBrace.getNextSibling();
     }
-
-    final PsiElement rBrace = block.getRBrace();
-    final PsiElement last = rBrace != null ? rBrace.getPrevSibling() : block.getLastChild();
-
-    final GrOpenBlock methodBlock = method.getBlock();
-    methodBlock.addRangeAfter(first, last, methodBlock.getLBrace());
     return method;
   }
 
@@ -93,7 +103,7 @@ public class ClosureGenerator {
     LOG.assertTrue(context != null);
 
     if (context instanceof GrTypeDefinition) {
-      LOG.assertTrue(false, "closure must have member parent");
+      LOG.error("closure must have member parent");
       return "this";
     }
     if (context instanceof GrMember && ((GrMember)context).hasModifierProperty(PsiModifier.STATIC)) {

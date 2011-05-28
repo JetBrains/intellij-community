@@ -309,6 +309,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       if (initializer != null) {
         int count = extended.myStatements.size();
         StringBuilder initializerBuilder = new StringBuilder();
+        extended.searchForLocalVarsToWrap(initializer);
         initializer.accept(new ExpressionGenerator(initializerBuilder, extended));
         if (extended.myStatements.size() == count) { //didn't use extra statements
           builder.append(" = ").append(initializerBuilder);

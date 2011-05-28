@@ -395,7 +395,7 @@ public class PsiUtil {
         GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
         if (qualifier != null) {
           PsiClass containingClass = ((PsiMember)owner).getContainingClass();
-          final boolean isStatic = owner.hasModifierProperty(PsiModifier.STATIC) && !(ResolveUtil.isInUseScope(resolveContext));
+          final boolean isStatic = owner.hasModifierProperty(PsiModifier.STATIC) && !(ResolveUtil.isInUseScope(resolveContext, owner));
           if (qualifier instanceof GrReferenceExpression) {
             if ("class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
               //invoke static members of class from A.class.foo()
@@ -866,6 +866,9 @@ public class PsiUtil {
     }
     else if (method instanceof GrAccessorMethod) {
       return ((GrAccessorMethod)method).getInferredReturnType();
+    }
+    else if (method instanceof GrGdkMethod) {
+      return getSmartReturnType(((GrGdkMethod)method).getStaticMethod());
     }
     else {
       return method.getReturnType();

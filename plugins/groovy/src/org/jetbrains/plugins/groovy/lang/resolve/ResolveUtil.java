@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -50,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -373,7 +375,7 @@ public class ResolveUtil {
     return true;
   }
 
-  private static boolean categoryIteration(PsiElement place, PsiScopeProcessor processor, PsiElement prev, Ref<Boolean> result) {
+  private static boolean categoryIteration(PsiElement place, final PsiScopeProcessor processor, PsiElement prev, Ref<Boolean> result) {
     if (!(place instanceof GrMethodCall)) return false;
 
     final GrMethodCall call = (GrMethodCall)place;
@@ -390,11 +392,25 @@ public class ResolveUtil {
 
     result.set(Boolean.TRUE);
     final GrExpression[] args = argList.getExpressionArguments();
+
+    final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (element instanceof PsiMethod) {
+          if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return true;
+          if (((PsiMethod)element).getParameterList().getParametersCount() == 0) return true;
+          return processor.execute(new GrGdkMethodImpl((PsiMethod)element, false), state);
+        }
+        else {
+          return processor.execute(element, state);
+        }
+      }
+    };
     for (GrExpression arg : args) {
       if (arg instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)arg).resolve();
         if (resolved instanceof PsiClass) {
-          if (!resolved.processDeclarations(processor, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, call), null, place)) {
+          if (!resolved.processDeclarations(delegate, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, call), null, place)) {
             result.set(Boolean.FALSE);
           }
         }
@@ -524,10 +540,12 @@ public class ResolveUtil {
   }
 
   public static boolean isInUseScope(GroovyResolveResult resolveResult) {
-    return resolveResult != null && isInUseScope(resolveResult.getCurrentFileResolveContext());
+    if (resolveResult != null && resolveResult.getElement() instanceof GrGdkMethod) return false;
+    return resolveResult != null && isInUseScope(resolveResult.getCurrentFileResolveContext(), resolveResult.getElement());
   }
 
-  public static boolean isInUseScope(@Nullable PsiElement context) {
+  public static boolean isInUseScope(@Nullable PsiElement context, @Nullable PsiElement method) {
+    if (method instanceof GrGdkMethod) return false;
     if (context instanceof GrMethodCall && context.isValid()) {
       final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
       if (expression instanceof GrReferenceExpression) {
