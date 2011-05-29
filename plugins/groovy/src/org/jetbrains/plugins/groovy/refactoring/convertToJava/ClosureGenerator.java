@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 
 import java.util.Collection;
 
@@ -95,6 +96,7 @@ public class ClosureGenerator {
       final GrParameter parameter = factory.createParameter("it", itParameter.getType().getCanonicalText(), "null", block);
       method.getParameterList().addParameterToEnd(parameter);
     }
+    ((GroovyFileImpl)method.getContainingFile()).setContextNullable(null);
     return method;
   }
 
