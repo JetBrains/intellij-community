@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.google.common.collect.ImmutableSortedSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.util.ArrayUtil;
@@ -56,10 +55,6 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ClassItemGeneratorImpl");
   private ClassNameProvider classNameProvider;
   private ExpressionContext context;
-
-  public ClassItemGeneratorImpl(Project project) {
-    this(new ExpressionContext(project));
-  }
 
   public ClassItemGeneratorImpl(@NotNull ExpressionContext context) {
     classNameProvider = new GeneratorClassNameProvider();

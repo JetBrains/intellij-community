@@ -17,9 +17,11 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.*;
@@ -39,16 +41,21 @@ class ExpressionContext implements Cloneable {
   private Ref<String> myRefSetterName = new Ref<String>(null);
 
   private Map<PsiMethod, String> setters;
+  private Set<PsiClass> myClasses;
 
-  private ExpressionContext(Project project, Set<String> usedVarNames, Map<PsiMethod, String> setters) {
+  private ExpressionContext(Project project, Set<String> usedVarNames, Map<PsiMethod, String> setters, Set<PsiClass> myClasses) {
     this.project = project;
     myUsedVarNames = usedVarNames;
     this.setters = setters;
+    this.myClasses = myClasses;
   }
 
-  ExpressionContext(Project project) {
-    this(project, new HashSet<String>(), new HashMap<PsiMethod, String>());
+  ExpressionContext(Project project, GroovyFile[] filesToConvert) {
+    this(project, new HashSet<String>(), new HashMap<PsiMethod, String>(), new HashSet<PsiClass>());
     typeProvider = new TypeProvider();
+    for (GroovyFile groovyFile : filesToConvert) {
+      myClasses.addAll(Arrays.asList(groovyFile.getClasses()));
+    }
   }
 
   @Override
@@ -57,7 +64,7 @@ class ExpressionContext implements Cloneable {
   }
 
   ExpressionContext copy() {
-    final ExpressionContext expressionContext = new ExpressionContext(project, myUsedVarNames, setters);
+    final ExpressionContext expressionContext = new ExpressionContext(project, myUsedVarNames, setters, myClasses);
     expressionContext.myProps.putAll(myProps);
     expressionContext.analyzedVars = analyzedVars;
     expressionContext.typeProvider = typeProvider;
@@ -68,7 +75,7 @@ class ExpressionContext implements Cloneable {
   ExpressionContext extend() {
     final HashSet<String> usedVarNames = new HashSet<String>();
     usedVarNames.addAll(myUsedVarNames);
-    final ExpressionContext expressionContext = new ExpressionContext(project, usedVarNames, setters);
+    final ExpressionContext expressionContext = new ExpressionContext(project, usedVarNames, setters, myClasses);
     expressionContext.myProps.putAll(myProps);
     expressionContext.analyzedVars = analyzedVars;
     expressionContext.typeProvider = typeProvider;
@@ -124,4 +131,10 @@ class ExpressionContext implements Cloneable {
   public Map<PsiMethod, String> getSetters() {
     return Collections.unmodifiableMap(setters);
   }
+
+  public boolean isClassConverted(PsiClass aClass) {
+    if (aClass == null) return false;
+    return myClasses.contains(aClass);
+  }
+
 }

@@ -63,10 +63,14 @@ public class TypeProvider {
 
   @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
-  public PsiType getVarType(GrVariable variable) {
-    PsiType type = variable.getDeclaredType();
-    if (type == null) {
-      type = variable.getTypeGroovy();
+  public PsiType getVarType(PsiVariable variable) {
+    if (variable instanceof PsiParameter) return getParameterType((PsiParameter)variable);
+    PsiType type = null;
+    if (variable instanceof GrVariable) {
+      type = ((GrVariable)variable).getDeclaredType();
+      if (type == null) {
+        type = ((GrVariable)variable).getTypeGroovy();
+      }
     }
     if (type == null) {
       type = variable.getType();

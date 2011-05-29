@@ -1231,7 +1231,7 @@ public class PsiUtil {
     return defaultValue;
   }
 
-  public static boolean isExpressionUsed(GrExpression expr) {
+  public static boolean isExpressionUsed(PsiElement expr) {
     while (expr.getParent() instanceof GrParenthesizedExpression) expr = (GrExpression)expr.getParent();
 
     final PsiElement parent = expr.getParent();
