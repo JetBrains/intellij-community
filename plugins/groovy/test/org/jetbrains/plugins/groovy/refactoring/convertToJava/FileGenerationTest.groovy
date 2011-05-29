@@ -76,4 +76,5 @@ class FileGenerationTest extends LightGroovyTestCase {
   void testDynamicPropertiesAccess() {doTest()}
   void testDynamicMethodsAccess() {doTest()}
   void testCasts() {doTest()}
+  void testArgs() {doTest()}
 }
