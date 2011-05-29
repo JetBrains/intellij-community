@@ -533,7 +533,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
           if (valueField != null) {
             final Value rgbValue = objRef.getValue(valueField);
             if (rgbValue instanceof IntegerValue) {
-              return new ColorIcon(13, new Color(((IntegerValue)rgbValue).value()));
+              return new ColorIcon(16, 12, new Color(((IntegerValue)rgbValue).value()), true);
             }
           }
         }
