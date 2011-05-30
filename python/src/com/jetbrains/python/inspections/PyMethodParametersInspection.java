@@ -1,9 +1,13 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
@@ -11,9 +15,15 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
 import com.jetbrains.python.actions.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Looks for the 'self' or its equivalents.
@@ -39,13 +49,44 @@ public class PyMethodParametersInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
 
+    private Ref<PsiElement> myPossibleZopeRef;
+
     public Visitor(final ProblemsHolder holder) {
       super(holder);
+      myPossibleZopeRef = new Ref<PsiElement>();
+    }
+
+    @Nullable
+    private PsiElement findZopeInterface(PsiElement foothold) {
+      // NOTE: we don't sync access: we can only set it to the same value; if multiple threads do so, not much of a problem
+      PsiElement ret = myPossibleZopeRef.get();
+      if (ret != null) return ret;
+      else {
+        ret = ResolveImportUtil.resolveInRoots(foothold, "zope.interface.Interface");
+        myPossibleZopeRef.set(ret); // null is OK
+      }
+      return ret;
+    }
+
+    private static boolean ultimatelyListsInBases(PyClass cls, PsiElement target_base) {
+      for (PyClassRef cref : cls.iterateAncestors()) {
+        if (cref.getElement() == target_base) return true;
+        PyClass base_class = cref.getPyClass();
+        if (base_class != null && ultimatelyListsInBases(base_class, target_base)) return true;
+      }
+      return false;
     }
 
 
     @Override
     public void visitPyFunction(final PyFunction node) {
+      // maybe it's a zope interface?
+      PsiElement zope_interface = findZopeInterface(node);
+      if (zope_interface != null) {
+        PyClass cls = node.getContainingClass();
+        if (cls != null && ultimatelyListsInBases(cls, zope_interface)) return; // it can have any params
+      }
+      // analyze function itself
       PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(node);
       if (flags != null) {
         PyParameterList plist = node.getParameterList();
@@ -67,11 +108,19 @@ public class PyMethodParametersInspection extends PyInspection {
             ) {
               String paramName;
               if (flags.isMetaclassMethod()) {
-                if(flags.isClassMethod()) paramName = MCS;
-                else paramName = CLS;
+                if (flags.isClassMethod()) {
+                  paramName = MCS;
+                }
+                else {
+                  paramName = CLS;
+                }
               }
-              else if (flags.isClassMethod()) paramName = CLS;
-              else paramName = PyNames.CANONICAL_SELF;
+              else if (flags.isClassMethod()) {
+                paramName = CLS;
+              }
+              else {
+                paramName = PyNames.CANONICAL_SELF;
+              }
               registerProblem(
                 plist, PyBundle.message("INSP.must.have.first.parameter", paramName),
                 ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickFix(paramName)
@@ -95,9 +144,15 @@ public class PyMethodParametersInspection extends PyInspection {
             }
             if (flags.isMetaclassMethod()) {
               String expected_name;
-              if (PyNames.NEW.equals(method_name) || flags.isClassMethod()) expected_name = MCS;
-              else if (flags.isSpecialMetaclassMethod()) expected_name = CLS;
-              else expected_name = PyNames.CANONICAL_SELF;
+              if (PyNames.NEW.equals(method_name) || flags.isClassMethod()) {
+                expected_name = MCS;
+              }
+              else if (flags.isSpecialMetaclassMethod()) {
+                expected_name = CLS;
+              }
+              else {
+                expected_name = PyNames.CANONICAL_SELF;
+              }
               if (!expected_name.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
