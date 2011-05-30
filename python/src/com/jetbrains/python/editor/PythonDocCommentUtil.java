@@ -11,6 +11,9 @@ import com.jetbrains.python.psi.*;
  */
 public class PythonDocCommentUtil {
 
+  private PythonDocCommentUtil() {
+  }
+
   static public boolean inDocComment(PsiElement element) {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
     if (string != null) {
@@ -21,7 +24,8 @@ public class PythonDocCommentUtil {
         if (docStringOwner == func) {
           PyStringLiteralExpression str = docStringOwner.getDocStringExpression();
           String text = element.getText();
-          if (str != null && text.equals(str.getText())) {
+          if (str != null && text.equals(str.getText()) &&
+                      (text.startsWith("\"\"\"") || text.startsWith("'''"))) {
             PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(string, PsiErrorElement.class);
             if (error != null)
               return true;
@@ -29,7 +33,7 @@ public class PythonDocCommentUtil {
             if (error != null)
               return true;
 
-            if (text.length() > 3 && (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''"))))
+            if (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''")))
               return true;
           }
         }

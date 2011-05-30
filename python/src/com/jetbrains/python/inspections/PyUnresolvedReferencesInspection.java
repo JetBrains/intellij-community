@@ -455,6 +455,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
       Set<NameDefiner> unusedImports = new HashSet<NameDefiner>(myAllImports);
       unusedImports.removeAll(myUsedImports);
+      Set<String> usedImportNames = new HashSet<String>();
+      for (PsiElement usedImport: myUsedImports) {
+        if (usedImport instanceof NameDefiner) {
+          for (PyElement e : ((NameDefiner)usedImport).iterateNames()) {
+            usedImportNames.add(e.getName());
+          }
+        }
+      }
 
       Set<PyImportStatementBase> unusedStatements = new HashSet<PyImportStatementBase>();
       for (NameDefiner unusedImport : unusedImports) {
@@ -463,6 +471,18 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           // don't remove as unused imports in try/except statements
           if (PsiTreeUtil.getParentOfType(importStatement, PyTryExceptStatement.class) != null) {
             continue;            
+          }
+          // Don't report conditional imports as unused
+          if (PsiTreeUtil.getParentOfType(unusedImport, PyIfStatement.class) != null) {
+            boolean isUsed = false;
+            for (PyElement e : unusedImport.iterateNames()) {
+              if (usedImportNames.contains(e.getName())) {
+                isUsed = true;
+              }
+            }
+            if (isUsed) {
+              continue;
+            }
           }
           if (unusedImport instanceof PyImportElement) {
             if (ResolveImportUtil.resolveImportElement((PyImportElement)unusedImport) == null) {

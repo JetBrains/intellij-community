@@ -20,14 +20,10 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     myConfiguration = configuration;
   }
 
-  @Override
-  protected void setRunnerPath(GeneralCommandLine cmd) {
-    cmd.setExePath(myConfiguration.getRunnerScriptPath());
-  }
-
   protected void addTestRunnerParameters(GeneralCommandLine cmd) {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
+    script_params.addParameter(myConfiguration.getRunnerScriptPath());
     script_params.addParameters("-p", "pytest_teamcity");
     script_params.addParameters(getTestSpecs());
 

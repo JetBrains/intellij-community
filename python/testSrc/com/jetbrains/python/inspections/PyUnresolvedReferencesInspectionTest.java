@@ -6,6 +6,8 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
  * @author yole
  */
 public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase {
+  private static final String TEST_DIRECTORY = "inspections/PyUnresolvedReferencesInspection/";
+
   public void testSelfReference() {
     doTest();
   }
@@ -34,8 +36,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase
     doTest();
   }
 
+  public void testConditionalImports() { // PY-983
+    myFixture.configureByFiles(TEST_DIRECTORY + getTestName(true) + ".py",
+                               TEST_DIRECTORY + "lib1.py",
+                               TEST_DIRECTORY + "lib2.py");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.checkHighlighting(true, false, false);
+  }
+
   private void doTest() {
-    myFixture.configureByFile("inspections/PyUnresolvedReferencesInspection/" + getTestName(true) + ".py");
+    myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.checkHighlighting(true, false, false);
   }

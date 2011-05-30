@@ -1,12 +1,12 @@
-<warning descr="Triple double-quoted strings should be used for docstrings.">'''package docstring'''</warning>
+<warning descr="Triple double-quoted strings should be used for docstrings.">'''</warning>package docstring<warning descr="Triple double-quoted strings should be used for docstrings.">'''</warning>
 
 def foo():
-  <warning descr="Triple double-quoted strings should be used for docstrings.">"foo docstring"</warning>
+  <warning descr="Triple double-quoted strings should be used for docstrings.">"</warning>foo docstring<warning descr="Triple double-quoted strings should be used for docstrings.">"</warning>
   pass
 
 class Klass:
-  <warning descr="Triple double-quoted strings should be used for docstrings.">'class docstring\
-  second line'</warning>
+  <warning descr="Triple double-quoted strings should be used for docstrings.">'</warning>class docstring\
+  second line<warning descr="Triple double-quoted strings should be used for docstrings.">'</warning>
   pass
 
 def bar():
