@@ -135,10 +135,16 @@ public class TestDataGuessByExistingFilesUtil {
       return null;
     }
 
-    final Pair<TestDataDescriptor, Long> cached = CACHE.get(psiClass.getQualifiedName());
-    if (cached != null && cached.second + CACHE_ENTRY_TTL_MS > System.currentTimeMillis()) {
-      return cached.first.isComplete() ? cached.first : null;
-    }
+    final String qualifiedName = psiClass.getQualifiedName();
+    final Pair<TestDataDescriptor, Long> cached = CACHE.get(qualifiedName);
+    if (cached != null) {
+      if (cached.first.isComplete()) {
+        return cached.first;
+      }
+      if (cached.second > System.currentTimeMillis()) {
+        return null;
+      } 
+    } 
 
     TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     TestFramework framework = null;
@@ -166,7 +172,7 @@ public class TestDataGuessByExistingFilesUtil {
     }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     final TestDataDescriptor descriptor = buildDescriptor(gotoModel, fileIndex, testNames, psiClass);
-    CACHE.put(psiClass.getQualifiedName(), new Pair<TestDataDescriptor, Long>(descriptor, System.currentTimeMillis()));
+    CACHE.put(qualifiedName, new Pair<TestDataDescriptor, Long>(descriptor, System.currentTimeMillis() + CACHE_ENTRY_TTL_MS));
     return descriptor;
   }
 
