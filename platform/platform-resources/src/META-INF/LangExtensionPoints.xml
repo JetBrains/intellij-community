@@ -69,7 +69,7 @@
   <extensionPoint name="implicitUsageProvider"
                   interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
 
-  <!-- com.intellij.psi.PsiNamedElement -->
+  <!-- com.intellij.psi.PsiElement -->
   <extensionPoint name="cantBeStatic"
                   interface="com.intellij.openapi.util.Condition"/>
 

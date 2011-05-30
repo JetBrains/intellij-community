@@ -36,6 +36,7 @@ import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -65,8 +66,19 @@ public final class NavigationUtil {
 
   public static <T extends PsiElement> JBPopup getPsiElementPopup(final T[] elements, final PsiElementListCellRenderer<T> renderer,
                                                                   final String title, final PsiElementProcessor<T> processor) {
+    return getPsiElementPopup(elements, renderer, title, processor, null);
+  }
+
+  public static <T extends PsiElement> JBPopup getPsiElementPopup(final T[] elements,
+                                                                  final PsiElementListCellRenderer<T> renderer,
+                                                                  final String title,
+                                                                  final PsiElementProcessor<T> processor,
+                                                                  @Nullable final T selection) {
     final JList list = new JBList(elements);
     list.setCellRenderer(renderer);
+    if (selection != null) {
+      list.setSelectedValue(selection, true);
+    }
 
     final Runnable runnable = new Runnable() {
       public void run() {

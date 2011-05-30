@@ -70,10 +70,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.*;
@@ -410,10 +407,7 @@ public class CompileDriver {
                                                     forceCompile
                                                     ? CompilerBundle.message("compiler.content.name.compile")
                                                     : CompilerBundle.message("compiler.content.name.make"), ApplicationManager.getApplication().isUnitTestMode());
-    final WindowManager windowManager = WindowManager.getInstance();
-    if (windowManager != null) {
-      windowManager.getStatusBar(myProject).setInfo("");
-    }
+    StatusBar.Info.set("Compiling...", myProject, "Compiler");
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
