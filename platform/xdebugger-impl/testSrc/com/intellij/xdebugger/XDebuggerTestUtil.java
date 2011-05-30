@@ -29,10 +29,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XNavigatable;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import junit.framework.Assert;
@@ -133,7 +130,7 @@ public class XDebuggerTestUtil {
     if (value instanceof XNamedValue) {
       node.myName = ((XNamedValue)value).getName();
     }
-    value.computePresentation(node);
+    value.computePresentation(node, XValuePlace.TREE);
     Assert.assertTrue(node.waitFor(TIMEOUT));
     return node;
   }
