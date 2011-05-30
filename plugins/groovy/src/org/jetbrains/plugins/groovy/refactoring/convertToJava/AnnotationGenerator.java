@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -53,14 +52,15 @@ public class AnnotationGenerator extends Generator {
   @Override
   public void visitAnnotationArrayInitializer(GrAnnotationArrayInitializer arrayInitializer) {
     GrAnnotationMemberValue[] initializers = arrayInitializer.getInitializers();
-    builder.append("{");
+    builder.append('{');
     for (GrAnnotationMemberValue initializer : initializers) {
       initializer.accept(this);
       builder.append(", ");
     }
 
     if (initializers.length > 0) {
-      builder.delete(builder.length() - 2, builder.length());
+      builder.delete(builder.length()-2, builder.length());
+      //builder.removeFromTheEnd(2);
     }
 
     builder.append('}');
@@ -89,7 +89,8 @@ public class AnnotationGenerator extends Generator {
       }
       builder.append(", ");
     }
-    builder.delete(builder.length() - 2, builder.length());
+    builder.delete(builder.length()-2, builder.length());
+    //builder.removeFromTheEnd(2);
     builder.append(')');
   }
 

@@ -39,6 +39,19 @@ class FileGenerationTest extends LightGroovyTestCase {
     myFixture.checkResultByFile("${testName}.java")
   }
 
+  def length
+  @Override
+  protected void setUp() {
+    super.setUp()
+    length = System.currentTimeMillis()
+  }
+
+  @Override
+  protected void tearDown() {
+    println (System.currentTimeMillis()-length)
+    super.tearDown()
+  }
+
   void testEnum() {doTest()}
 
   void testGrScript() {doTest()}

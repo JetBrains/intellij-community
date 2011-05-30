@@ -71,7 +71,7 @@ class ArgumentListGenerator {
     final GrClosureParameter[] params = signature.getParameters();
 
     final Project project = context.getProject();
-    myBuilder.append("(");
+    myBuilder.append('(');
     boolean hasArgs = false;
     for (int i = 0; i < argInfos.length; i++) {
       GrClosureSignatureUtil.ArgInfo<PsiElement> arg = argInfos[i];
@@ -83,10 +83,11 @@ class ArgumentListGenerator {
     }
 
     if (hasArgs) {
-      myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
+      myBuilder.delete(myBuilder.length()-2, myBuilder.length());
+      //myBuilder.removeFromTheEnd(2);
     }
 
-    myBuilder.append(")");
+    myBuilder.append(')');
   }
 
   private boolean generateSingeArg(GrClosureSignatureUtil.ArgInfo<PsiElement> arg, GrClosureParameter param) {
@@ -134,8 +135,9 @@ class ArgumentListGenerator {
         ((GrExpression)element).accept(myExpressionGenerator);
         myBuilder.append(", ");
       }
-      if (arg.args.size() > 0) myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
-      myBuilder.append("}");
+      if (arg.args.size() > 0) myBuilder.delete(myBuilder.length()- 2, myBuilder.length());
+      //if (arg.args.size() > 0) myBuilder.removeFromTheEnd(2);
+      myBuilder.append('}');
     }
     else {
       final GrExpression listOrMap = GroovyRefactoringUtil.generateArgFromMultiArg(substitutor, arg.args, type, project);
@@ -150,7 +152,7 @@ class ArgumentListGenerator {
                               GrClosableBlock[] closures,
                               GroovyPsiElement context,
                               PsiSubstitutor substitutor) {
-    myBuilder.append("(");
+    myBuilder.append('(');
     if (namedArgs.length > 0) {
       final GrExpression listOrMap =
         GroovyRefactoringUtil.generateArgFromMultiArg(substitutor, Arrays.asList(namedArgs), null, context.getProject());
@@ -170,9 +172,10 @@ class ArgumentListGenerator {
     }
 
     if (namedArgs.length + exprs.length + closures.length > 0) {
-      myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
+      myBuilder.delete(myBuilder.length()-2, myBuilder.length());
+      //myBuilder.removeFromTheEnd(2);
     }
 
-    myBuilder.append(")");
+    myBuilder.append(')');
   }
 }
