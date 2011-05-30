@@ -175,10 +175,10 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         else if (myElement instanceof PyClass && myElement.isValid()) {
           PyClass c = (PyClass) myElement;
           StringBuilder result = new StringBuilder(notNullize(c.getName(), unnamed));
-          PyClass[] superClasses = c.getSuperClasses();
-          if (superClasses.length > 0) {
+          PyExpression[] superClassExpressions = c.getSuperClassExpressions();
+          if (superClassExpressions.length > 0) {
             result.append("(");
-            result.append(join(Arrays.asList(c.getSuperClassExpressions()), new Function<PyExpression, String>() {
+            result.append(join(Arrays.asList(superClassExpressions), new Function<PyExpression, String>() {
               public String fun(PyExpression expr) {
                 String name = expr.getText();
                 return notNullize(name, unnamed);
