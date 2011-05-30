@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Dmitry Avdeev
@@ -114,11 +113,14 @@ public abstract class CachedValueBase<T> {
   }
 
   protected boolean isDependencyOutOfDate(Object dependency, long oldTimeStamp) {
+    if (dependency instanceof CachedValueBase) {
+      return !((CachedValueBase)dependency).hasUpToDateValue();
+    }
     final long timeStamp = getTimeStamp(dependency);
     return timeStamp < 0 || timeStamp != oldTimeStamp;
   }
 
-  protected void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {
+  private void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {
     for (Object dependency : dependencies) {
       if (dependency == null || dependency == ObjectUtils.NULL) continue;
       if (dependency instanceof Object[]) {
@@ -134,10 +136,6 @@ public abstract class CachedValueBase<T> {
   protected long getTimeStamp(Object dependency) {
     if (dependency instanceof ModificationTracker) {
       return ((ModificationTracker)dependency).getModificationCount();
-    }
-    else if (dependency instanceof CachedValueBase) {
-      Data data = ((CachedValueBase)dependency).getData();
-      return data == null || !isUpToDate(data) ? -1 : data.myTimestamp;
     }
     else if (dependency instanceof Reference){
       final Object original = ((Reference)dependency).get();
@@ -167,15 +165,11 @@ public abstract class CachedValueBase<T> {
   public abstract boolean isFromMyProject(Project project);
 
   protected static class Data<T> implements Disposable {
-    private static final AtomicLong ourCounter = new AtomicLong();
-
-    private final long myTimestamp;
     private final T myValue;
     private final Object[] myDependencies;
     private final long[] myTimeStamps;
 
     public Data(final T value, final Object[] dependencies, final long[] timeStamps) {
-      myTimestamp = ourCounter.incrementAndGet();
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
