@@ -19,10 +19,9 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -40,7 +39,7 @@ import java.util.List;
  */
 public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
 
-  private final JavadocNavigationHelper myHelper = JavadocNavigationHelper.getInstance();
+  private final JavadocHelper myHelper = JavadocHelper.getInstance();
   
   /**
    * Improves navigation in case of incomplete javadoc parameter descriptions.
@@ -111,20 +110,20 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
       return Result.CONTINUE;
     }
 
-    final List<JavadocNavigationHelper.JavadocParameterInfo> infos = myHelper.parse(psiFile, editor, offset);
-    JavadocNavigationHelper.JavadocParameterInfo info = null;
+    final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair = myHelper.parse(psiFile, editor, offset);
+    if (pair.first == null) {
+      return Result.CONTINUE;
+    } 
+      
     int descriptionStartColumn = -1;
     int parameterNameEndColumn = -1;
-    for (JavadocNavigationHelper.JavadocParameterInfo parameterInfo : infos) {
+    for (JavadocHelper.JavadocParameterInfo parameterInfo : pair.second) {
       parameterNameEndColumn = Math.max(parameterNameEndColumn, parameterInfo.parameterNameEndPosition.column);
       if (parameterInfo.parameterDescriptionStartPosition != null) {
         descriptionStartColumn = Math.max(descriptionStartColumn, parameterInfo.parameterDescriptionStartPosition.column);
       }
-      if (line == parameterInfo.parameterNameEndPosition.line) {
-        info = parameterInfo;
-      }
     }
-    if (info == null || info.parameterDescriptionStartPosition != null) {
+    if (pair.first.parameterDescriptionStartPosition != null) {
       return Result.CONTINUE;
     }
 
@@ -138,21 +137,10 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
       }
     }
     else {
-      column = info.parameterNameEndPosition.column + indentSize;
+      column = pair.first.parameterNameEndPosition.column + indentSize;
     }
     
-    if (!editor.getSettings().isVirtualSpace() && endLineLogicalPosition.column < column && !editor.isViewer()) {
-      final String toInsert = StringUtil.repeat(" ", column - endLineLogicalPosition.column);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          document.insertString(endLineOffset, toInsert);
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-        }
-      });
-    } 
-    
-    caretModel.moveToLogicalPosition(new LogicalPosition(line, column));
+    myHelper.navigate(new LogicalPosition(line, column), editor, psiFile.getProject());
     return Result.STOP;
   }
 }

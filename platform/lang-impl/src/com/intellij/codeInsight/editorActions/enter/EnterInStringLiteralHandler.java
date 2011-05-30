@@ -31,10 +31,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.NotNull;
 
-public class EnterInStringLiteralHandler implements EnterHandlerDelegate {
-  public Result preprocessEnter(final PsiFile file, final Editor editor, Ref<Integer> caretOffsetRef, final Ref<Integer> caretAdvanceRef, 
-                                final DataContext dataContext, final EditorActionHandler originalHandler) {
+public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
+  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull Ref<Integer> caretOffsetRef,
+                                @NotNull final Ref<Integer> caretAdvanceRef, @NotNull final DataContext dataContext,
+                                final EditorActionHandler originalHandler) {
     int caretOffset = caretOffsetRef.get().intValue();
     int caretAdvance = caretAdvanceRef.get().intValue();
     PsiElement psiAtOffset = file.findElementAt(caretOffset);

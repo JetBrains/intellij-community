@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -33,6 +35,9 @@ public interface EnterHandlerDelegate {
     Default, Continue, DefaultForceIndent, Stop
   }
 
-  Result preprocessEnter(final PsiFile file, final Editor editor, final Ref<Integer> caretOffset, final Ref<Integer> caretAdvance, 
-                         final DataContext dataContext, final EditorActionHandler originalHandler);
+  Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset,
+                         @NotNull final Ref<Integer> caretAdvance, @NotNull final DataContext dataContext,
+                         @Nullable final EditorActionHandler originalHandler);
+
+  Result postProcessEnter(@NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext);
 }

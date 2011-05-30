@@ -27,10 +27,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
+import org.jetbrains.annotations.NotNull;
 
-public class EnterInPropertiesFileHandler implements EnterHandlerDelegate {
-  public Result preprocessEnter(final PsiFile file, final Editor editor, final Ref<Integer> caretOffsetRef, final Ref<Integer> caretAdvance,
-                                final DataContext dataContext, final EditorActionHandler originalHandler) {
+public class EnterInPropertiesFileHandler extends EnterHandlerDelegateAdapter {
+  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
+                                @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     int caretOffset = caretOffsetRef.get().intValue();
     PsiElement psiAtOffset = file.findElementAt(caretOffset);
     if (file instanceof PropertiesFile) {

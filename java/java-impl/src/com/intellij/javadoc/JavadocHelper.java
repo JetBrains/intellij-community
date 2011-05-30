@@ -16,20 +16,22 @@
 package com.intellij.javadoc;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,49 +40,84 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 5/27/11 2:35 PM
  */
-public class JavadocNavigationHelper {
+public class JavadocHelper {
   
-  private static final JavadocNavigationHelper INSTANCE = new JavadocNavigationHelper();
+  private static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
+    = new Pair<JavadocParameterInfo, List<JavadocParameterInfo>>(null, Collections.<JavadocParameterInfo>emptyList());
+  private static final JavadocHelper INSTANCE = new JavadocHelper();
   
   @NotNull
-  public static JavadocNavigationHelper getInstance() {
+  public static JavadocHelper getInstance() {
     return INSTANCE;
   }
 
+  /**
+   * Tries to navigate caret at the given editor to the target position inserting missing white spaces if necessary.
+   * 
+   * @param position  target caret position
+   * @param editor    target editor
+   * @param project   target project
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  public void navigate(@NotNull LogicalPosition position, @NotNull Editor editor, @NotNull final Project project) {
+    final Document document = editor.getDocument();
+    final CaretModel caretModel = editor.getCaretModel();
+    final int endLineOffset = document.getLineEndOffset(position.line);
+    final LogicalPosition endLinePosition = editor.offsetToLogicalPosition(endLineOffset);
+    if (endLinePosition.column < position.column && !editor.getSettings().isVirtualSpace() && !editor.isViewer()) {
+      final String toInsert = StringUtil.repeat(" ", position.column - endLinePosition.column);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          document.insertString(endLineOffset, toInsert);
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+        }
+      });
+      
+    }
+    caretModel.moveToLogicalPosition(position);
+  }
+  
   /**
    * Returns information about all lines that contain javadoc parameters and are adjacent to the one that holds given offset.  
    *
    * @param psiFile       PSI holder for the document exposed the given editor
    * @param editor        target editor
    * @param offset        target offset that identifies anchor line to check
-   * @return              list of javadoc parameter infos for the target lines if any; empty list otherwise
+   * @return              pair like (javadoc info for the line identified by the given offset; list of javadoc parameter infos for
+   *                      adjacent lines if any
    */
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
-  public List<JavadocParameterInfo> parse(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset) {
+  public Pair<JavadocParameterInfo, List<JavadocParameterInfo>> parse(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset) {
     List<JavadocParameterInfo> result = new ArrayList<JavadocParameterInfo>();
     final PsiElement elementAtCaret = psiFile.findElementAt(offset);
     if (elementAtCaret == null) {
-      return result;
+      return EMPTY;
     }
 
     PsiDocTag tag = PsiTreeUtil.getParentOfType(elementAtCaret, PsiDocTag.class);
     if (tag == null) {
       // Due to javadoc PSI specifics.
       if (elementAtCaret instanceof PsiWhiteSpace) {
-        final PsiElement prevSibling = elementAtCaret.getPrevSibling();
-        if (prevSibling != null) {
-          tag = PsiTreeUtil.getParentOfType(prevSibling, PsiDocTag.class, false);
-        } 
+        for (PsiElement e = elementAtCaret.getPrevSibling(); e != null && tag == null; e = e.getPrevSibling()) {
+          tag = PsiTreeUtil.getParentOfType(e, PsiDocTag.class, false);
+          if (e instanceof PsiWhiteSpace
+              || (e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS))
+          {
+            continue;
+          }
+          break; 
+        }
       }
     }
     if (tag == null) {
-      return result;
+      return EMPTY;
     } 
     
     JavadocParameterInfo anchorInfo = parse(tag, editor);
     if (anchorInfo == null) {
-      return result;
+      return EMPTY;
     }
     
     // Parse previous parameters.
@@ -103,7 +140,7 @@ public class JavadocNavigationHelper {
       result.add(info);
     }
 
-    return result;
+    return new Pair<JavadocParameterInfo, List<JavadocParameterInfo>>(anchorInfo, result);
   }
 
   @Nullable

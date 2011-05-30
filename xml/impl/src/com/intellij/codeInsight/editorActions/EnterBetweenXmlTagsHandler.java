@@ -15,22 +15,23 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.Ref;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
 
-public class EnterBetweenXmlTagsHandler implements EnterHandlerDelegate {
-  public Result preprocessEnter(final PsiFile file, final Editor editor, final Ref<Integer> caretOffset, final Ref<Integer> caretAdvance,
-                                final DataContext dataContext, final EditorActionHandler originalHandler) {
+public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
+  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset, @NotNull final Ref<Integer> caretAdvance,
+                                @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset.get().intValue())) {
       originalHandler.execute(editor, dataContext);
       return Result.DefaultForceIndent;
