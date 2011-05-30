@@ -150,6 +150,10 @@ public abstract class CachedValueBase<T> {
     else if (dependency instanceof Document) {
       return ((Document)dependency).getModificationStamp();
     }
+    else if (dependency instanceof CachedValueBase) {
+      // to check for up to date for a cached value dependency we use .isUpToDate() method, not the timestamp
+      return 0;
+    }
     else {
       LOG.error("Wrong dependency type: " + dependency.getClass());
       return -1;
