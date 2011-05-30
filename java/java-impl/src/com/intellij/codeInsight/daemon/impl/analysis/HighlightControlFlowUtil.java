@@ -550,7 +550,7 @@ public class HighlightControlFlowUtil {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
       try {
-        final ControlFlow controlFlow = getControlFlowNoConstantEvaluate(codeBlock);
+        final ControlFlow controlFlow = getControlFlow(codeBlock);
         codeBlockProblems = ControlFlowUtil.getInitializedTwice(controlFlow);
       }
       catch (AnalysisCanceledException e) {
