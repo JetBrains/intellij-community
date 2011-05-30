@@ -2,7 +2,7 @@ package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class PythonEnterHandler implements EnterHandlerDelegate {
+public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   private static final Class[] IMPLICIT_WRAP_CLASSES = new Class[]{
     PsiComment.class,
     PyStringLiteralExpression.class,
@@ -41,11 +41,11 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
   };
 
   @Override
-  public Result preprocessEnter(PsiFile file,
-                                Editor editor,
-                                Ref<Integer> caretOffset,
-                                Ref<Integer> caretAdvance,
-                                DataContext dataContext,
+  public Result preprocessEnter(@NotNull PsiFile file,
+                                @NotNull Editor editor,
+                                @NotNull Ref<Integer> caretOffset,
+                                @NotNull Ref<Integer> caretAdvance,
+                                @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
     if (!(file instanceof PyFile)) {
       return Result.Continue;
