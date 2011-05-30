@@ -25,6 +25,7 @@ import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
@@ -289,6 +290,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           description_buf.append(errmsg);
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
         }
+      }
+      if (reference instanceof DocStringParameterReference) {
+        String refname = reference.getCanonicalText();
+        if (myIgnoredIdentifiers.contains(refname))
+          return;
       }
       if (reference instanceof PsiReferenceEx) {
         final String s = ((PsiReferenceEx)reference).getUnresolvedDescription();

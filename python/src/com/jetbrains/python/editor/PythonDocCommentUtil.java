@@ -49,7 +49,7 @@ public class PythonDocCommentUtil {
       if (whitespace != null) {
         String[] spaces = whitespace.getText().split("\n");
         if (spaces.length > 1)
-          ws = ws + whitespace.getText().split("\n")[1];
+          ws += spaces[1];
       }
     }
     return ws+suffix;
