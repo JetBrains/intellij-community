@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,10 +111,6 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return file instanceof PsiJavaFile && ((PsiJavaFile)file).getPackageName().equals(packageName);
   }
 
-  private static enum Domination {
-    DOMINATES, DOMINATED_BY, EQUAL
-  }
-
   private Domination dominates(PsiClass aClass, boolean accessible, String fqName, ClassCandidateInfo info) {
     final PsiClass otherClass = info.getElement();
     assert otherClass != null;
@@ -195,8 +191,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   private boolean checkAccessibility(final PsiClass aClass) {
-    //We don't care about accessibility in javadocs
-
+    //We don't care about accessibility in javadoc
     if (JavaResolveUtil.isInJavaDoc(myPlace)) {
       return true;
     }
@@ -233,17 +228,17 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
       accessible = false;
-      if (facade.arePackagesTheSame(aClass, myPlace)) {
+      if (myPlace != null && facade.arePackagesTheSame(aClass, myPlace)) {
         accessible = true;
       }
       else {
         if (aClass.getContainingClass() != null) {
-          accessible = myAccessClass == null || facade.getResolveHelper().isAccessible(aClass, myPlace, myAccessClass);
+          accessible = myAccessClass == null || myPlace != null && facade.getResolveHelper().isAccessible(aClass, myPlace, myAccessClass);
         }
       }
     }
     if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      if (!facade.arePackagesTheSame(aClass, myPlace)) {
+      if (myPlace == null || !facade.arePackagesTheSame(aClass, myPlace)) {
         accessible = false;
       }
     }
@@ -253,9 +248,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   @Override
   public <T> T getHint(Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY || hintKey == NameHint.KEY) {
+      //noinspection unchecked
       return (T)this;
     }
-
     return super.getHint(hintKey);
   }
 }

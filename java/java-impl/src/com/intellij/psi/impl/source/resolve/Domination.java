@@ -13,16 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package x;
+package com.intellij.psi.impl.source.resolve;
 
-public class Base1 {
-  public static final int F = 1;
-  public static void m(int i) { }
-  public static class F { }
-  public interface I1 {
-    int IF = 1;
-  }
-  public interface I2 {
-    float IF = 2.0f;
-  }
+public enum Domination {
+  DOMINATES, DOMINATED_BY, EQUAL
 }

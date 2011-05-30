@@ -44,7 +44,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -67,7 +66,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
   private final Map<PsiParameter, Boolean> myParameterIsReassigned = new THashMap<PsiParameter, Boolean>();
 
-  private final Map<String, Pair<PsiImportStatementBase, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStatementBase, PsiClass>>();
+  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiClass>>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
   private PsiFile myFile;
   private final PsiElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementWalkingVisitor() {
@@ -445,50 +444,52 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Override public void visitImportStatement(PsiImportStatement statement) {
+  @Override
+  public void visitImportStatement(final PsiImportStatement statement) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSingleImportClassConflict(statement, mySingleImportedClasses));
   }
 
-  @Override public void visitImportStaticReferenceElement(PsiImportStaticReferenceElement ref) {
-    String refName = ref.getReferenceName();
-    JavaResolveResult[] results = ref.multiResolve(false);
+  @Override
+  public void visitImportStaticReferenceElement(final PsiImportStaticReferenceElement ref) {
+    final String refName = ref.getReferenceName();
+    final JavaResolveResult[] results = ref.multiResolve(false);
 
     if (results.length == 0) {
-      String description = JavaErrorMessages.message("cannot.resolve.symbol", refName);
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
-      myHolder.add(info);
+      final String description = JavaErrorMessages.message("cannot.resolve.symbol", refName);
+      final PsiElement nameElement = ref.getReferenceNameElement();
+      assert nameElement != null : ref;
+      final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, nameElement, description);
       QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
+      myHolder.add(info);
     }
     else {
-      PsiManager manager = ref.getManager();
+      final PsiManager manager = ref.getManager();
       for (JavaResolveResult result : results) {
-        PsiElement element = result.getElement();
-        if (!(element instanceof PsiModifierListOwner) || !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
-          continue;
-        }
-        @NonNls String messageKey = null;
-        if (element instanceof PsiClass) {
-          Pair<PsiImportStatementBase, PsiClass> imported = mySingleImportedClasses.get(refName);
-          PsiClass aClass = imported == null ? null : imported.getSecond();
-          PsiImportStaticStatement statement = (PsiImportStaticStatement)ref.getParent();
+        final PsiElement element = result.getElement();
 
-          if (aClass != null && !manager.areElementsEquivalent(aClass, element) && !imported.getFirst().equals(statement)) {
-            messageKey = "class.is.already.defined.in.single.type.import";
+        String description = null;
+        if (element instanceof PsiClass) {
+          final Pair<PsiImportStaticReferenceElement, PsiClass> imported = mySingleImportedClasses.get(refName);
+          final PsiClass aClass = imported == null ? null : imported.getSecond();
+          if (aClass != null && !manager.areElementsEquivalent(aClass, element)) {
+            description = imported.getFirst().equals(ref)
+                          ? JavaErrorMessages.message("class.is.ambiguous.in.single.static.import", refName)
+                          : JavaErrorMessages.message("class.is.already.defined.in.single.static.import", refName);
           }
-          mySingleImportedClasses.put(refName, Pair.<PsiImportStatementBase, PsiClass>create(statement, (PsiClass)element));
+          mySingleImportedClasses.put(refName, Pair.create(ref, (PsiClass)element));
         }
         else if (element instanceof PsiField) {
-          Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
-          PsiField field = imported == null ? null : imported.getSecond();
-
-          if (field != null && !manager.areElementsEquivalent(field, element) && !imported.getFirst().equals(ref.getParent())) {
-            messageKey = "field.is.already.defined.in.single.type.import";
+          final Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
+          final PsiField field = imported == null ? null : imported.getSecond();
+          if (field != null && !manager.areElementsEquivalent(field, element)) {
+            description = imported.getFirst().equals(ref)
+                          ? JavaErrorMessages.message("field.is.ambiguous.in.single.static.import", refName)
+                          : JavaErrorMessages.message("field.is.already.defined.in.single.static.import", refName);
           }
           mySingleImportedFields.put(refName, Pair.create(ref, (PsiField)element));
         }
 
-        if (messageKey != null) {
-          String description = JavaErrorMessages.message(messageKey, refName);
+        if (description != null) {
           myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref, description));
         }
       }
