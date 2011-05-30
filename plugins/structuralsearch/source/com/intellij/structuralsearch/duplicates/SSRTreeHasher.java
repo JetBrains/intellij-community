@@ -10,6 +10,7 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.structuralsearch.equivalence.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.SkippingHandler;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,13 @@ class SSRTreeHasher extends AbstractTreeHasher {
       return hashCodeBlock(hasher.getNodeChildren(root), upper, hasher, true);
     }
 
-    final PsiElement element = SkippingHandler.getOnlyChild(root, ((SSRNodeSpecificHasher)hasher).getNodeFilter());
+    final SSRNodeSpecificHasher ssrNodeSpecificHasher = (SSRNodeSpecificHasher)hasher;
+
+    if (shouldBeAnonymized(root, ssrNodeSpecificHasher)) {
+      return computeElementHash(root, upper, hasher);
+    }
+
+    final PsiElement element = SkippingHandler.getOnlyChild(root, ssrNodeSpecificHasher.getNodeFilter());
     if (element != root) {
       final TreeHashResult result = hash(element, upper, hasher);
       final int cost = hasher.getNodeCost(root);
@@ -66,6 +73,52 @@ class SSRTreeHasher extends AbstractTreeHasher {
     }
 
     return computeElementHash(element, upper, hasher);
+  }
+
+  @Override
+  protected TreeHashResult computeElementHash(@NotNull PsiElement root, PsiFragment upper, NodeSpecificHasher hasher) {
+    final List<PsiElement> children = hasher.getNodeChildren(root);
+    final int size = children.size();
+    final int[] childHashes = new int[size];
+    final int[] childCosts = new int[size];
+
+    final PsiFragment fragment = new TreePsiFragment(hasher, root, getCost(root));
+
+    if (upper != null) {
+      fragment.setParent(upper);
+    }
+
+    if (size == 0 && !(root instanceof LeafElement)) {
+      // contains only whitespaces and other unmeaning children
+      return new TreeHashResult(0, hasher.getNodeCost(root), fragment);
+    }
+
+    for (int i = 0; i < size; i++) {
+      final TreeHashResult res = this.hash(children.get(i), fragment, hasher);
+      childHashes[i] = res.getHash();
+      childCosts[i] = res.getCost();
+    }
+
+    final int c = hasher.getNodeCost(root) + AbstractTreeHasher.vector(childCosts);
+    final int h1 = hasher.getNodeHash(root);
+
+    for (int i = 0; i < size; i++) {
+      if (childCosts[i] <= myDiscardCost && ignoreChildHash(children.get(i))) {
+        childHashes[i] = 0;
+      }
+    }
+
+    int h = h1 + AbstractTreeHasher.vector(childHashes);
+
+    if (shouldBeAnonymized(root, (SSRNodeSpecificHasher)hasher)) {
+      h = 0;
+    }
+
+    if (myCallBack != null) {
+      myCallBack.add(h, c, fragment);
+    }
+
+    return new TreeHashResult(h, c, fragment);
   }
 
   private TreeHashResult computeHash(PsiElement element,
@@ -159,6 +212,30 @@ class SSRTreeHasher extends AbstractTreeHasher {
       }
     }
     return result;
+  }
+
+  private boolean shouldBeAnonymized(PsiElement element, SSRNodeSpecificHasher nodeSpecificHasher) {
+    final PsiElementRole role = nodeSpecificHasher.getDuplicatesProfile().getRole(element);
+    if (role != null) {
+      switch (role) {
+        case VARIABLE_NAME:
+          if (!mySettings.DISTINGUISH_VARIABLES) {
+            return true;
+          }
+          break;
+        case FIELD_NAME:
+          if (!mySettings.DISTINGUISH_FIELDS) {
+            return true;
+          }
+          break;
+        case FUNCTION_NAME:
+          if (!mySettings.DISTINGUISH_METHODS) {
+            return true;
+          }
+          break;
+      }
+    }
+    return false;
   }
 
   @NotNull

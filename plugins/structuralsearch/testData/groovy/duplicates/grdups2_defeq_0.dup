@@ -1,0 +1,11 @@
+occurence 0:
+{
+  System.out.println("Hello!");
+  System.out.println("Hello!");
+}
+
+occurence 1:
+{
+  System.out.println("Hello!");
+  System.out.println("Hello!");
+}

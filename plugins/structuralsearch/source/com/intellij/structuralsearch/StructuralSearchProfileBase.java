@@ -33,6 +33,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,6 +168,10 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
     if (!(element instanceof LeafElement)) {
       return false;
+    }
+
+    if (CharArrayUtil.containsOnlyWhiteSpaces(element.getText())) {
+      return true;
     }
 
     EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(element);

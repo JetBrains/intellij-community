@@ -10,6 +10,7 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
 import java.io.File;
@@ -51,9 +52,27 @@ public abstract class DuplicatesTestCase extends LightCodeInsightTestCase {
                         boolean distinguishMethods,
                         boolean distinguishListerals,
                         int patternCount,
+                        int patternCountWithDefaultEquivalence,
                         String suffix,
-                        int lowerBound)
-    throws Exception {
+                        int lowerBound) throws Exception {
+    if (patternCountWithDefaultEquivalence >= 0) {
+      try {
+        EquivalenceDescriptorProvider.ourUseDefaultEquivalence = true;
+        findAndCheck(fileName, distinguishVars, distinguishMethods, distinguishListerals, patternCountWithDefaultEquivalence,
+                     suffix + "_defeq", lowerBound);
+      }
+      finally {
+        EquivalenceDescriptorProvider.ourUseDefaultEquivalence = false;
+      }
+    }
+    findAndCheck(fileName, distinguishVars, distinguishMethods, distinguishListerals, patternCount, suffix, lowerBound);
+  }
+
+  private void findAndCheck(String fileName,
+                            boolean distinguishVars,
+                            boolean distinguishMethods,
+                            boolean distinguishListerals,
+                            int patternCount, String suffix, int lowerBound) throws Exception {
     DuplocatorSettings settings = DuplocatorSettings.getInstance();
     boolean oldMethods = settings.DISTINGUISH_METHODS;
     boolean oldLits = settings.DISTINGUISH_LITERALS;

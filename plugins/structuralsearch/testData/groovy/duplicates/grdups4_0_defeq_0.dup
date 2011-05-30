@@ -1,17 +1,9 @@
 occurence 0:
-def v = 10
 for (int i = 0; i < v; i++) {
   System.out.println(i + 1);
 }
 
 occurence 1:
-def v = 10
 for (int i = 0; i < v; i++) {
   System.out.println(i + 1);
-}
-
-occurence 2:
-def v = 10
-for (int i = 0; i < v; i++) {
-  System.out.println(i + 10);
 }

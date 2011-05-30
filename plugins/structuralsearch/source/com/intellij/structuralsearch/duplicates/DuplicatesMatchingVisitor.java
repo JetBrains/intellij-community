@@ -98,6 +98,12 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       return true;
     }
 
+    final PsiElementRole role1 = myNodeSpecificHasher.getDuplicatesProfile().getRole(element1);
+    final PsiElementRole role2 = myNodeSpecificHasher.getDuplicatesProfile().getRole(element2);
+    if (role1 == role2 && mySkippedRoles.contains(role1)) {
+      return true;
+    }
+
     final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(element1);
     EquivalenceDescriptor descriptor1 = descriptorProvider != null ? descriptorProvider.buildDescriptor(element1) : null;
     EquivalenceDescriptor descriptor2 = descriptorProvider != null ? descriptorProvider.buildDescriptor(element2) : null;

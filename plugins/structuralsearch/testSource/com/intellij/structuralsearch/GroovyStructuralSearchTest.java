@@ -1,6 +1,9 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -13,13 +16,13 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
                "int z = 10;\n" +
                "def int x1";
 
-    doTest(s, "def $x$", 4);
-    doTest(s, "int $x$", 3);
-    doTest(s, "def $x$ = $value$", 3);
-    doTest(s, "def $x$ = 0", 2);
-    doTest(s, "int $x$ = 0", 1);
-    doTest(s, "int $x$ = $value$", 2);
-    doTest(s, "def $x$ = $value$;", 3);
+    doTest(s, "def $x$ = $value$;", 3, 1);
+    doTest(s, "def $x$", 4, 3);
+    doTest(s, "int $x$", 3, 3);
+    doTest(s, "def $x$ = $value$", 3, 1);
+    doTest(s, "def $x$ = 0", 2, 1);
+    doTest(s, "int $x$ = 0", 1, 1);
+    doTest(s, "int $x$ = $value$", 2, 2);
   }
 
   public void test2() throws Exception {
@@ -34,18 +37,20 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
                "}\n" +
                "def int f() {}";
 
-    doTest(s, "def $f$($param$)", 5);
-    doTest(s, "def $f$($param$) {}", 3);
-    doTest(s, "void $f$($param$) {}", 2);
-    doTest(s, "void $f$(def x)", 2);
-    doTest(s, "def $f$(def x)", 4);
-    doTest(s, "void $f$(def $x$)", 3);
-    doTest(s, "void $f$(int $x$)", 2);
-    doTest(s, "def $f$(int $x$)", 3);
-    doTest(s, "def g($param$)", 1);
-    doTest(s, "def '_T1('_T2*)", 6);
-    doTest(s, "def '_T1('_T2*) {'_T3*}", 6);
-    doTest(s, "def '_T1('_T2*) {'_T3+}", 2);
+    doTest(s, "def $f$($param$)", 5, 2);
+    doTest(s, "def $f$($param$) {}", 3, 1);
+    doTest(s, "void $f$($param$) {}", 2, 2);
+    doTest(s, "void $f$(def x)", 2, 0);
+    doTest(s, "def $f$(def x)", 4, 1);
+    doTest(s, "void $f$(def $x$)", 3, 0);
+    doTest(s, "void $f$(int $x$)", 2, 2);
+    doTest(s, "def $f$(int $x$)", 3, 1);
+    doTest(s, "def g($param$)", 1, 0);
+    doTest(s, "def '_T1('_T2*)", 6, 2);
+
+    // a problem with default eq is that ; is not part of statement
+    doTest(s, "def '_T1('_T2*) {'_T3+}", 2, 0);
+    doTest(s, "def '_T1('_T2*) {'_T3*}", 6, 1);
   }
 
   public void test3() throws Exception {
@@ -56,15 +61,15 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
                "  }\n" +
                "}";
 
-    doTest(s, "class $name$", 1);
-    doTest(s, "class $name$ implements I1, I2", 1);
-    doTest(s, "class $name$ implements $interface$", 1);
-    doTest(s, "class '_T1 implements '_T2*", 1);
-    doTest(s, "class '_T1 implements '_T2+", 1);
-    doTest(s, "class $name$ implements I2, I1", 1);
-    doTest(s, "class C implements I1, I2 {}", 1);
-    doTest(s, "def a = 1;\n def b = 2;", 1);
-    doTest(s, "def a = 1\n def b = 2", 1);
+    doTest(s, "class $name$", 1, 1);
+    doTest(s, "class $name$ implements I1, I2", 1, 1);
+    doTest(s, "class $name$ implements $interface$", 1, 0);
+    doTest(s, "class '_T1 implements '_T2*", 1, 1);
+    doTest(s, "class '_T1 implements '_T2+", 1, 1);
+    doTest(s, "class $name$ implements I2, I1", 1, 0);
+    doTest(s, "class C implements I1, I2 {}", 1, 0);
+    doTest(s, "def a = 1;\n def b = 2;", 1, 0);
+    doTest(s, "def a = 1\n def b = 2", 1, 0);
   }
 
   public void test4() throws Exception {
@@ -75,27 +80,44 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "for ($a$ in $b$) {\n" +
               "  $st1$;\n" +
               "  $st2$\n" +
-              "}", 1);
+              "}", 1, 0);
+    doTest(s, "for ($a$ in $b$) {\n" +
+              "  $st1$;\n" +
+              "  $st2$;\n" +
+              "}", 1, 1);
     doTest(s, "for ($a$ in $b$) {\n" +
               "  $st1$\n" +
               "  $st2$\n" +
-              "}", 1);
+              "}", 1, 0);
     doTest(s, "for ($a$ in $b$) {\n" +
               "  $st$\n" +
-              "}", 0);
+              "}", 0, 0);
     doTest(s, "for ($a$ in $b$) {\n" +
               "  '_T*\n" +
-              "}", 1);
+              "}", 1, 0);
     doTest(s, "for ($a$ in $b$) {\n" +
               "  '_T+\n" +
-              "}", 1);
+              "}", 1, 0);
   }
 
   private void doTest(String source,
                       String pattern,
-                      int expectedOccurences) {
-    assertEquals(expectedOccurences,
-                 findMatches(source, pattern, true, GroovyFileType.GROOVY_FILE_TYPE, null, GroovyFileType.GROOVY_FILE_TYPE, null, false)
-                   .size());
+                      int expectedOccurences,
+                      int expectedWithDefaultEquivalence) {
+    findAndCheck(source, pattern, expectedOccurences);
+    try {
+      EquivalenceDescriptorProvider.ourUseDefaultEquivalence = true;
+      findAndCheck(source, pattern, expectedWithDefaultEquivalence);
+    }
+    finally {
+      EquivalenceDescriptorProvider.ourUseDefaultEquivalence = false;
+    }
+  }
+
+  private void findAndCheck(String source, String pattern, int expectedOccurences) {
+    testMatcher.clearContext();
+    final List<MatchResult> matches =
+      findMatches(source, pattern, true, GroovyFileType.GROOVY_FILE_TYPE, null, GroovyFileType.GROOVY_FILE_TYPE, null, false);
+    assertEquals(expectedOccurences, matches.size());
   }
 }

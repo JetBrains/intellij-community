@@ -176,6 +176,10 @@ public class MatcherImpl {
     return true;
   }
 
+  public void clearContext() {
+    matchContext.clear();
+  }
+
   private void configureOptions(MatchContext context,
                                 final Configuration configuration,
                                 PsiElement psiFile,
