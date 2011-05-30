@@ -53,17 +53,19 @@ public class PyMethodParametersInspection extends PyInspection {
 
     public Visitor(final ProblemsHolder holder) {
       super(holder);
-      myPossibleZopeRef = new Ref<PsiElement>();
+      myPossibleZopeRef = null;
     }
 
     @Nullable
     private PsiElement findZopeInterface(PsiElement foothold) {
-      // NOTE: we don't sync access: we can only set it to the same value; if multiple threads do so, not much of a problem
-      PsiElement ret = myPossibleZopeRef.get();
-      if (ret != null) return ret;
-      else {
-        ret = ResolveImportUtil.resolveInRoots(foothold, "zope.interface.Interface");
-        myPossibleZopeRef.set(ret); // null is OK
+      PsiElement ret;
+      synchronized (this) { // other threads would wait as long in resolveInRoots() anyway
+        if (myPossibleZopeRef == null) {
+          myPossibleZopeRef = new Ref<PsiElement>();
+          ret = ResolveImportUtil.resolveInRoots(foothold, "zope.interface.Interface");
+          myPossibleZopeRef.set(ret); // null is OK
+        }
+        else ret = myPossibleZopeRef.get();
       }
       return ret;
     }
