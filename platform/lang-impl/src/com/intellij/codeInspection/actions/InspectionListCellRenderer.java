@@ -16,6 +16,11 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.text.Matcher;
+import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
@@ -26,8 +31,24 @@ import java.awt.*;
 * @author Konstantin Bulenkov
 */
 @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
-public class InspectionListCellRenderer extends DefaultListCellRenderer {
+public class InspectionListCellRenderer extends DefaultListCellRenderer implements MatcherHolder {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
+
+  private Matcher myMatcher;
+  private final SimpleTextAttributes SELECTED;
+  private final SimpleTextAttributes PLAIN;
+
+  public InspectionListCellRenderer() {
+    SELECTED = new SimpleTextAttributes(UIUtil.getListSelectionBackground(),
+                                                                   UIUtil.getListSelectionForeground(),
+                                                                   Color.RED,
+                                                                   SimpleTextAttributes.STYLE_PLAIN);
+    PLAIN = new SimpleTextAttributes(UIUtil.getListBackground(),
+                                                                UIUtil.getListForeground(),
+                                                                Color.RED,
+                                                                SimpleTextAttributes.STYLE_PLAIN);
+  }
+
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean sel, boolean focus) {
     final JPanel panel = new JPanel(new BorderLayout());
@@ -38,20 +59,26 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
     panel.setBackground(bg);
     panel.setForeground(fg);
 
+    SimpleTextAttributes attr = sel ? SELECTED : PLAIN;
     if (value instanceof InspectionProfileEntry) {
       final InspectionProfileEntry tool = (InspectionProfileEntry)value;
+      final SimpleColoredComponent c = new SimpleColoredComponent();
+      SpeedSearchUtil.appendColoredFragmentForMatcher("  " + tool.getDisplayName(), c, attr, myMatcher, bg, sel);
+      panel.add(c, BorderLayout.WEST);
 
-      final JLabel label = new JLabel("  " + tool.getDisplayName());
-      label.setBackground(bg);
-      label.setForeground(fg);
-      panel.add(label, BorderLayout.WEST);
-
-      final JLabel groupLabel = new JLabel(tool.getGroupDisplayName() + "  ", EMPTY_ICON, LEFT);
-      groupLabel.setBackground(bg);
-      groupLabel.setForeground(fg);
-      panel.add(groupLabel, BorderLayout.EAST);
+      //final JLabel groupLabel = new JLabel(tool.getGroupDisplayName() + "  ", EMPTY_ICON, LEFT);
+      final SimpleColoredComponent g = new SimpleColoredComponent();
+      SpeedSearchUtil.appendColoredFragmentForMatcher(tool.getGroupDisplayName() + "  ", g, attr, myMatcher, bg, sel);
+      //groupLabel.setBackground(bg);
+      //groupLabel.setForeground(fg);
+      panel.add(g, BorderLayout.EAST);
     }
 
     return panel;
+  }
+
+  @Override
+  public void setPatternMatcher(Matcher matcher) {
+    myMatcher = matcher;
   }
 }

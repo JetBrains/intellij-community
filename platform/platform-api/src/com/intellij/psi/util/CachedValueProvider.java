@@ -24,7 +24,6 @@ public interface CachedValueProvider<T> {
   class Result<T> {
     private final T myValue;
     private final Object[] myDependencyItems;
-    private boolean myLockValue = false;
 
     public Result(@Nullable T value, Object... dependencyItems) {
       myValue = value;
@@ -47,15 +46,8 @@ public interface CachedValueProvider<T> {
       return new Result<T>(value, dependencies);
     }
 
-    public boolean isLockValue() {
-      return myLockValue;
-    }
-
-    /**
-     * If the value is locked it won't be released after 60 seconds of inactivity
-     */
+    @Deprecated
     public void setLockValue(final boolean lockValue) {
-      myLockValue = lockValue;
     }
   }
 }

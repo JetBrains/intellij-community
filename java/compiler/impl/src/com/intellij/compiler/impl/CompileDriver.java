@@ -29,6 +29,7 @@ import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
@@ -552,9 +553,15 @@ public class CompileDriver {
             if (statusBar != null) { // because this code is in invoke later, the code may work for already closed project
               // in case another project was opened in the frame while the compiler was working (See SCR# 28591)
               StatusBar.Info.set(statusMessage, myProject);
+              final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
               if (duration > ONE_MINUTE_MS) {
-                final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
                 ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
+              } else {
+                String logMessage = statusMessage;
+                if (_status == ExitStatus.UP_TO_DATE) {
+                  logMessage = "Compilation: all files are up to date";
+                }
+                Notifications.Bus.logEvent(logMessage, messageType.toNotificationType(), myProject);
               }
             }
             if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {

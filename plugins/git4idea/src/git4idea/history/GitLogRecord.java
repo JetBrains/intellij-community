@@ -45,11 +45,13 @@ class GitLogRecord {
   private final Map<GitLogParser.GitLogOption, String> myOptions;
   private final List<String> myPaths;
   private final List<List<String>> myParts;
+  private final boolean mySupportsRawBody;
 
-  GitLogRecord(Map<GitLogParser.GitLogOption, String> options, List<String> paths, List<List<String>> parts) {
+  GitLogRecord(Map<GitLogParser.GitLogOption, String> options, List<String> paths, List<List<String>> parts, boolean supportsRawBody) {
     myOptions = options;
     myPaths = paths;
     myParts = parts;
+    mySupportsRawBody = supportsRawBody;
   }
 
   List<String> getPaths() {
@@ -109,7 +111,7 @@ class GitLogRecord {
   }
 
   String getFullMessage() {
-    return getRawBody().trim();
+    return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
   }
 
   String[] getParentsShortHashes() {

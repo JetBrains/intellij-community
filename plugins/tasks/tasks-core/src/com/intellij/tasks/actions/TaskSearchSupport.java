@@ -23,15 +23,16 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.Matcher;
 
-import java.util.*;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
 * @author Dmitry Avdeev
 */
 public class TaskSearchSupport {
-
-  protected NameUtil.Matcher myMatcher;
+  protected Matcher myMatcher;
   private final TaskManagerImpl myManager;
 
   public TaskSearchSupport(final Project project) {
@@ -39,7 +40,7 @@ public class TaskSearchSupport {
   }
 
   public List<Task> getItems(String pattern, boolean cached) {
-    final NameUtil.Matcher matcher = getMatcher(pattern);
+    final Matcher matcher = getMatcher(pattern);
     return ContainerUtil.mapNotNull(getTasks(pattern, cached), new NullableFunction<Task, Task>() {
       public Task fun(Task task) {
         return matcher.matches(task.getId()) || matcher.matches(task.getSummary()) ? task : null;
@@ -47,7 +48,7 @@ public class TaskSearchSupport {
     });
   }
 
-  private NameUtil.Matcher getMatcher(String pattern) {
+  private Matcher getMatcher(String pattern) {
     if (myMatcher == null) {
       StringTokenizer tokenizer = new StringTokenizer(pattern, " ");
       StringBuilder builder = new StringBuilder();

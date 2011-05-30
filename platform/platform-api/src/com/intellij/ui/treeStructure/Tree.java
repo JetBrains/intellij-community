@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
@@ -39,11 +40,9 @@ import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.dnd.Autoscroll;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -95,10 +94,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void setUI(final TreeUI ui) {
     TreeUI actualUI = ui;
-    if (SystemInfo.isMac && !isCustomUI() && UIUtil.isUnderAquaLookAndFeel() && !(ui instanceof UIUtil.MacTreeUI)) {
-      actualUI = new UIUtil.MacTreeUI(isMacWideSelection());
+    if (!isCustomUI()) {
+      if (!(ui instanceof UIUtil.MacTreeUI) && UIUtil.isUnderAquaLookAndFeel()) {
+        actualUI = new UIUtil.MacTreeUI(isMacWideSelection());
+      }
     }
-
     super.setUI(actualUI);
   }
 
@@ -247,6 +247,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       else {
         myBusyIcon.suspend();
         myBusyIcon.setToolTipText(null);
+        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             if (myBusyIcon != null) {
@@ -280,21 +281,58 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * Hack to prevent loosing multiple selection on Mac when clicking Ctrl+Left Mouse Button.
    * See faulty code at BasicTreeUI.selectPathForEvent():2245
    *
+   * Another hack to match selection UI (wide) and selection behavior (narrow) in Nimbus/GTK+.
+   *
    * @param e
    */
   protected void processMouseEvent(MouseEvent e) {
     if (SystemInfo.isMac) {
       if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown() && e.getID() == MouseEvent.MOUSE_PRESSED) {
-        int modifiers = (e.getModifiers() & ~(MouseEvent.CTRL_MASK | MouseEvent.BUTTON1_MASK)) | MouseEvent.BUTTON3_MASK;
+        int modifiers = (e.getModifiers() & ~(InputEvent.CTRL_MASK | InputEvent.BUTTON1_MASK)) | InputEvent.BUTTON3_MASK;
         e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(), true,
                            MouseEvent.BUTTON3);
+      }
+    }
+    else if (UIUtil.isUnderNimbusLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()) {
+      if (SwingUtilities.isLeftMouseButton(e) && e.getID() == MouseEvent.MOUSE_PRESSED) {
+        final TreePath path = getClosestPathForLocation(e.getX(), e.getY());
+        if (path != null) {
+          final Rectangle bounds = getPathBounds(path);
+          if ((e.getY() > bounds.y && e.getY() < bounds.y + bounds.height) &&
+              (e.getX() >= bounds.x + bounds.width ||
+               e.getX() < bounds.x && !isLocationInExpandControl(path, e.getX(), e.getY()))) {
+            int newX = bounds.x + bounds.width - 2;
+            e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), newX, e.getY(), e.getClickCount(),
+                               e.isPopupTrigger(), e.getButton());
+          }
+        }
       }
     }
     super.processMouseEvent(e);
   }
 
+  private boolean isLocationInExpandControl(final TreePath path, final int x, final int y) {
+    final TreeUI ui = getUI();
+    if (!(ui instanceof BasicTreeUI)) return false;
+
+    try {
+      Class aClass = ui.getClass();
+      while (BasicTreeUI.class.isAssignableFrom(aClass) && !BasicTreeUI.class.equals(aClass)) {
+        aClass = aClass.getSuperclass();
+      }
+      final Method method = ReflectionUtil.getDeclaredMethod(aClass, "isLocationInExpandControl", TreePath.class, int.class, int.class);
+      if (method != null) {
+        method.setAccessible(true);
+        return (Boolean)method.invoke(ui, path, x, y);
+      }
+    }
+    catch (Throwable ignore) { }
+
+    return false;
+  }
+
   /**
-   * Disable Sun's speedsearch
+   * Disable Sun's speed search
    */
   public TreePath getNextMatch(String prefix, int startingRow, Position.Bias bias) {
     return null;
@@ -307,14 +345,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public void autoscroll(Point p) {
-    int realrow = getClosestRowForLocation(p.x, p.y);
+    int realRow = getClosestRowForLocation(p.x, p.y);
     if (getLocation().y + p.y <= AUTOSCROLL_MARGIN) {
-      if (realrow >= 1) realrow--;
+      if (realRow >= 1) realRow--;
     }
     else {
-      if (realrow < getRowCount() - 1) realrow++;
+      if (realRow < getRowCount() - 1) realRow++;
     }
-    scrollRowToVisible(realrow);
+    scrollRowToVisible(realRow);
   }
 
   protected boolean highlightSingleNode() {
@@ -594,7 +632,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     final TreePath[] selection = getSelectionPaths();
     if (selection == null) return;
 
-    StringBuffer nodesText = new StringBuffer();
+    final StringBuilder nodesText = new StringBuilder();
 
     for (TreePath eachPath : selection) {
       final Object eachNode = eachPath.getLastPathComponent();

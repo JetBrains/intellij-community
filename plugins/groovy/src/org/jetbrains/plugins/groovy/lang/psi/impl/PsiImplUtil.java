@@ -22,7 +22,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.AstBufferUtil;
@@ -39,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -57,14 +55,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrRangeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.psi.impl.source.tree.Factory.createSingleLeafElement;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.RELATIONS;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.SHIFT_SIGNS;
 
 /**
  *
@@ -440,19 +438,6 @@ public class PsiImplUtil {
     return exprType instanceof PsiArrayType &&
            argTypes.length == 1 &&
            TypesUtil.isAssignable(PsiType.INT, argTypes[0], manager, resolveScope);
-  }
-
-  public static GroovyResolveResult getIndexPropertyMethodCandidate(@Nullable PsiType thisType,
-                                                                    PsiType[] argTypes,
-                                                                    GroovyPsiElement place) {
-    if (thisType == null) return GroovyResolveResult.EMPTY_RESULT;
-    GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", place, argTypes);
-    if (candidates.length != 1) {
-      final GrTupleType tupleType = new GrTupleType(argTypes, JavaPsiFacade.getInstance(place.getProject()), place.getResolveScope());
-      candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", place, tupleType);
-    }
-    if (candidates.length == 1) return candidates[0];
-    return GroovyResolveResult.EMPTY_RESULT;
   }
 
   public static String getTextSkipWhiteSpaceAndComments(ASTNode node) {

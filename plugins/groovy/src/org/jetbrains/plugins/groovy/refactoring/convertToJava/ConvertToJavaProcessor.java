@@ -74,7 +74,9 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
     final GeneratorClassNameProvider classNameProvider = new GeneratorClassNameProvider();
-    final ClassGenerator classGenerator = new ClassGenerator(classNameProvider, new ClassItemGeneratorImpl(myProject));
+
+    ExpressionContext context = new ExpressionContext(myProject, myFiles);
+    final ClassGenerator classGenerator = new ClassGenerator(classNameProvider, new ClassItemGeneratorImpl(context));
 
     for (GroovyFile file : myFiles) {
       final PsiClass[] classes = file.getClasses();

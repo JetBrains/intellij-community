@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import com.google.common.collect.ImmutableSortedSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.util.ArrayUtil;
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -53,10 +55,6 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ClassItemGeneratorImpl");
   private ClassNameProvider classNameProvider;
   private ExpressionContext context;
-
-  public ClassItemGeneratorImpl(Project project) {
-    this(new ExpressionContext(project));
-  }
 
   public ClassItemGeneratorImpl(@NotNull ExpressionContext context) {
     classNameProvider = new GeneratorClassNameProvider();
@@ -212,12 +210,11 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
     final GrStatement delegateCall;
 
-    PsiElement context = method.getContainingClass() == null ? method : method.getContainingClass();
     if (method.isConstructor()) {
-      delegateCall = factory.createConstructorInvocation(builder.toString(), context);
+      delegateCall = factory.createConstructorInvocation(builder.toString(), method);
     }
     else {
-      delegateCall = factory.createStatementFromText(builder.toString(), context);
+      delegateCall = factory.createStatementFromText(builder.toString(), method);
     }
 
     final StringBuilder result = new StringBuilder();
@@ -306,6 +303,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       if (initializer != null) {
         int count = extended.myStatements.size();
         StringBuilder initializerBuilder = new StringBuilder();
+        extended.searchForLocalVarsToWrap(initializer);
         initializer.accept(new ExpressionGenerator(initializerBuilder, extended));
         if (extended.myStatements.size() == count) { //didn't use extra statements
           builder.append(" = ").append(initializerBuilder);
@@ -353,15 +351,25 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     if (psiClass instanceof PsiAnonymousClass) return;
 
     Map<PsiMethod, String> setters = context.getSetters();
-    for (Map.Entry<PsiMethod, String> entry : setters.entrySet()) {
+    Set<Map.Entry<PsiMethod, String>> entries = setters.entrySet();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      entries = ImmutableSortedSet.copyOf(new Comparator<Map.Entry<PsiMethod, String>>() {
+        @Override
+        public int compare(Map.Entry<PsiMethod, String> o1, Map.Entry<PsiMethod, String> o2) {
+          return o1.getValue().compareTo(o2.getValue());
+        }
+      }, entries);
+    }
+    for (Map.Entry<PsiMethod, String> entry : entries) {
       PsiMethod setter = entry.getKey();
+      if (setter instanceof PsiCompiledElement) setter = (PsiMethod)((PsiCompiledElement)setter).getMirror();
       String name = entry.getValue();
       PsiParameter[] parameters = setter.getParameterList().getParameters();
-      LOG.assertTrue(parameters.length == 1 || parameters.length == 2);
-      PsiParameter[] actual;
       PsiParameter parameter = parameters[parameters.length - 1];
       final PsiType parameterType = context.typeProvider.getParameterType(parameter);
 
+
+      //type parameters
       builder.append("private static ");
       if (setter.hasTypeParameters()) {
         writeTypeParameters(builder, setter, classNameProvider);
@@ -373,11 +381,12 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       else {
         if (setter.hasTypeParameters()) {
           builder.delete(builder.length() - 1, builder.length());
+          builder.append(", ");
         }
         else {
           builder.append('<');
         }
-        builder.append(" Value");
+        builder.append("Value");
         if (!parameterType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
           builder.append(" extends ");
           writeType(builder, parameterType, psiClass, classNameProvider);
@@ -388,31 +397,79 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append(name);
 
       final boolean isStatic = setter.hasModifierProperty(PsiModifier.STATIC);
-      final PsiClass containingClass = setter.getContainingClass();
-      LOG.assertTrue(containingClass != null);
+
 
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
+
       if (!(parameterType instanceof PsiPrimitiveType)) {
         parameter = factory.createParameter(parameter.getName(), "Value", null);
       }
+
+      //parameters
+      parameters[parameters.length - 1] = parameter;
+      PsiParameter[] actual;
       if (isStatic) {
-        actual = new PsiParameter[]{parameter};
+        actual = parameters;
       }
       else {
-        final GrParameter propOwner =
-          factory.createParameter("propOwner", containingClass.getQualifiedName(), null);
-        actual = new PsiParameter[]{propOwner, parameter};
+        final String typeText;
+        final PsiClass containingClass = setter.getContainingClass();
+        if (containingClass == null) {
+          if (setter instanceof GrGdkMethod) {
+            typeText = ((GrGdkMethod)setter).getStaticMethod().getParameterList().getParameters()[0].getType().getCanonicalText();
+          }
+          else {
+            typeText = CommonClassNames.JAVA_LANG_OBJECT;
+          }
+        }
+        else {
+          typeText = containingClass.getQualifiedName();
+        }
+
+        final GrParameter propOwner = factory.createParameter("propOwner", typeText, null);
+
+        actual = new PsiParameter[parameters.length + 1];
+        actual[0] = propOwner;
+        System.arraycopy(parameters, 0, actual, 1, parameters.length);
       }
+
+
       GenerationUtil.writeParameterList(builder, actual, classNameProvider, context);
 
-      if (isStatic) {
-        builder.append("{\n").append(containingClass.getQualifiedName());
+
+      //method body
+      builder.append("{\n");
+
+      //arg initialization
+      context.myUsedVarNames.add("propOwner");
+      final GrExpression[] args = new GrExpression[parameters.length];
+      for (int i = 0; i < parameters.length; i++) {
+        args[i] = factory.createExpressionFromText(parameters[i].getName());
+        context.myUsedVarNames.add(parameters[i].getName());
+      }
+      GroovyPsiElement place;
+      if (psiClass instanceof GroovyPsiElement) {
+        place = (GroovyPsiElement)psiClass;
+      }
+      else if (psiClass instanceof GroovyScriptClass) {
+        place = ((GroovyScriptClass)psiClass).getContainingFile();
       }
       else {
-        builder.append("{\npropOwner");
+        LOG.error("wrong class!!!");
+        place = null;
       }
-      builder.append(".").append(setter.getName()).append('(').append(parameter.getName()).append(");\nreturn ").append(parameter.getName())
-        .append(";\n}\n");
+      new ExpressionGenerator(builder, context).invokeMethodOn(
+        setter,
+        isStatic ? null : factory.createExpressionFromText("propOwner"),
+        args,
+        GrNamedArgument.EMPTY_ARRAY,
+        GrClosableBlock.EMPTY_ARRAY,
+        PsiSubstitutor.EMPTY,
+        place
+      );
+      builder.append(";\n");
+      builder.append("return ").append(parameter.getName()).append(";\n");
+      builder.append("}\n");
     }
 
     final String name = context.getRefSetterName();

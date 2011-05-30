@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ui.popup.BalloonHandler;
@@ -25,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DumbModeIndicator extends AbstractProjectComponent {
+  private static final String DUMB_MODE_MESSAGE = "Updating project indices...<br>\n" +
+                                                  "Refactorings, usage search and some other features will become available after indexing is complete";
   private final Alarm myAlarm;
 
   public DumbModeIndicator(Project project) {
@@ -35,16 +40,24 @@ public class DumbModeIndicator extends AbstractProjectComponent {
   public void projectOpened() {
     myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       boolean myFirstNotification = true; // first dumb mode is always a "forced" dumb mode including initial project scan
+      boolean myLogged;
       BalloonHandler myHandler;
 
       public void enteredDumbMode() {
         final boolean first = myFirstNotification;
         myFirstNotification = false;
         myAlarm.addRequest(new Runnable() {
+          @Override
           public void run() {
-            myHandler = DumbService.getInstance(myProject).showDumbModeNotification(
-              "Updating project indices...<br>" +
-              "Refactorings, usage search and some other features will become available after indexing is complete");
+            Notifications.Bus.logEvent(DUMB_MODE_MESSAGE, NotificationType.INFORMATION, myProject);
+            myLogged = true;
+          }
+        }, 100);
+        myAlarm.addRequest(new Runnable() {
+          public void run() {
+            if (!NotificationsManagerImpl.isEventLogVisible(myProject)) {
+              myHandler = DumbService.getInstance(myProject).showDumbModeNotification(DUMB_MODE_MESSAGE);
+            }
           }
         }, first? 10000 : 1000);
       }
@@ -52,6 +65,10 @@ public class DumbModeIndicator extends AbstractProjectComponent {
       public void exitDumbMode() {
         myAlarm.cancelAllRequests();
         if (myHandler != null) myHandler.hide();
+        if (myLogged) {
+          Notifications.Bus.logEvent("Indexing finished", NotificationType.INFORMATION, myProject);
+        }
+        myLogged = false;
         myHandler = null;
         FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
       }

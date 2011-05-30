@@ -95,6 +95,11 @@ public abstract class Task implements TaskInfo, Progressive {
     return null;
   }
 
+  @Nullable
+  public NotificationInfo notifyFinished() {
+    return getNotificationInfo();
+  }
+
   public boolean isHeadless() {
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }

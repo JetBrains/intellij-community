@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
  * @author ven
  */
 public interface GroovyFile extends GroovyFileBase, FileResolveScopeProvider {
+  GroovyFile[] EMPTY_ARRAY = new GroovyFile[0];
 
   GrImportStatement[] getImportStatements();
 

@@ -147,13 +147,21 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
                                      final int height,
                                      final Graphics2D g,
                                      Integer key) {
-    if (myComponent.isRowSelected(key) && rComponent instanceof JComponent) {
-      if (myComponent.getUI() instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)myComponent.getUI()).isWideSelection()) {
-        ((JComponent)rComponent).setOpaque(true);
-        rComponent.setBackground(myComponent.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground());
-      }
+    final boolean opaque = rComponent.isOpaque();
+    if (rComponent instanceof JComponent) {
+      ((JComponent)rComponent).setOpaque(true);
     }
 
+    if (myComponent.isRowSelected(key)) {
+      rComponent.setBackground(myComponent.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground());
+    } else {
+      rComponent.setBackground(UIUtil.getTreeTextBackground());
+    }
+    
     super.doPaintTooltipImage(rComponent, cellBounds, height, g, key);
+
+    if (rComponent instanceof JComponent) {
+      ((JComponent)rComponent).setOpaque(opaque);
+    }
   }
 }

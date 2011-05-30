@@ -34,6 +34,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -98,11 +99,11 @@ public class XValueHint extends AbstractValueHint {
           }
 
           @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull final String separator,
+          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
                                       @NonNls @NotNull final String value, @Nullable final NotNullFunction<String, String> valuePresenter, final boolean hasChildren) {
             DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
               public void run() {
-                doShowHint(result, separator, value, valuePresenter != null ? valuePresenter : XValueNodeImpl.DEFAULT_VALUE_PRESENTER, hasChildren);
+                doShowHint(result, separator, value, type, valuePresenter != null ? valuePresenter : XValueNodeImpl.DEFAULT_VALUE_PRESENTER, hasChildren);
               }
             });
           }
@@ -126,7 +127,7 @@ public class XValueHint extends AbstractValueHint {
             //todo[nik]
             return false;
           }
-        });
+        }, XValuePlace.TOOLTIP);
       }
 
       public void errorOccurred(@NotNull final String errorMessage) {
@@ -135,14 +136,16 @@ public class XValueHint extends AbstractValueHint {
     }, myExpressionPosition);
   }
 
-  private void doShowHint(final XValue xValue, final String separator, final String value,
-                          @NotNull NotNullFunction<String, String> valuePresenter,
-                          final boolean hasChildren) {
+  private void doShowHint(final XValue xValue, final String separator, final String value, String type,
+                          @NotNull NotNullFunction<String, String> valuePresenter, final boolean hasChildren) {
     if (isHintHidden()) return;
 
     SimpleColoredText text = new SimpleColoredText();
     text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
     text.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    if (type != null) {
+      text.append("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
+    }
     text.append(valuePresenter.fun(value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
     if (!hasChildren) {

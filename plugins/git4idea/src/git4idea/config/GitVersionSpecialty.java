@@ -55,6 +55,13 @@ public enum GitVersionSpecialty {
     public boolean existsIn(GitVersion version) {
       return generallyValid(version) && version.getType().equals(GitVersion.Type.CYGWIN);
     }
+  },
+
+  STARTED_USING_RAW_BODY_IN_FORMAT {
+    @Override
+    public boolean existsIn(GitVersion version) {
+      return generallyValid(version) && version.isLaterOrEqual(new GitVersion(1, 7, 2, 0));
+    }
   };
 
   public abstract boolean existsIn(GitVersion version);

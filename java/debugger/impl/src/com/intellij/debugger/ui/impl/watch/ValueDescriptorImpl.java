@@ -42,6 +42,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   protected EvaluationContextImpl myStoredEvaluationContext = null;
 
   private String myValueLabel;
+  @Nullable
+  private Icon myValueIcon;
 
   protected boolean myIsNew = true;
   private boolean myIsDirty = false;
@@ -231,6 +234,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     final EvaluateException valueException = myValueException;
     myIsExpandable = (valueException == null || valueException.getExceptionFromTargetVM() != null) && renderer.isExpandable(getValue(), context, this);
 
+    try {
+      setValueIcon(renderer.calcValueIcon(this, context, labelListener));
+    }
+    catch (EvaluateException e) {
+      LOG.info(e);
+      setValueIcon(null);
+    }
+
     String label;
     if (valueException == null) {
       try {
@@ -283,6 +294,15 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     final String label = setFailed(e);
     setValueLabel(label);
     return label;
+  }
+
+  public Icon setValueIcon(Icon icon) {
+    return myValueIcon = icon;
+  }
+
+  @Nullable
+  public Icon getValueIcon() {
+    return myValueIcon;
   }
 
   public abstract String calcValueName();

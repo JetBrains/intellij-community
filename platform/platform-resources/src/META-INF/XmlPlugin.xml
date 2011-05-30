@@ -49,6 +49,7 @@
     <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor"/>
 
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
+    <extensionPoint name="html.embeddedTokenTypesProvider" interface="com.intellij.lexer.HtmlEmbeddedTokenTypesProvider"/>
   </extensionPoints>
 
   <project-components>

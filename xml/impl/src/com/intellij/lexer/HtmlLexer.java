@@ -15,6 +15,7 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
@@ -27,6 +28,16 @@ public class HtmlLexer extends BaseHtmlLexer {
   private static IElementType ourInlineStyleElementType;
   private static IElementType ourScriptElementType;
   private static IElementType ourInlineScriptElementType;
+
+  static {
+    HtmlEmbeddedTokenTypesProvider[] extensions = Extensions.getExtensions(HtmlEmbeddedTokenTypesProvider.EXTENSION_POINT_NAME);
+    for (HtmlEmbeddedTokenTypesProvider extension : extensions) {
+      if ("style".equals(extension.getName())) {
+        ourStyleElementType = extension.getElementType();
+        ourInlineStyleElementType = extension.getInlineElementType();
+      }
+    }
+  }
 
   private IElementType myTokenType;
   private int myTokenStart;
@@ -88,11 +99,6 @@ public class HtmlLexer extends BaseHtmlLexer {
 
   protected HtmlLexer(Lexer _baseLexer, boolean _caseInsensitive) {
     super(_baseLexer,_caseInsensitive);
-  }
-
-  public static void setStyleElementTypes(IElementType _styleElementType,IElementType _inlineStyleElementType) {
-    ourStyleElementType = _styleElementType;
-    ourInlineStyleElementType = _inlineStyleElementType;
   }
 
   protected boolean isHtmlTagState(int state) {

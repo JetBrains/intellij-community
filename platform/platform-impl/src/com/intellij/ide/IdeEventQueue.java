@@ -28,6 +28,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
+import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -476,6 +477,10 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
+      if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
+        myKeyEventDispatcher.setState(KeyState.STATE_INIT);
+      }
+      
       return;
     }
 

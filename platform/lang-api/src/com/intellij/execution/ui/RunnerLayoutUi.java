@@ -20,18 +20,17 @@ import com.intellij.execution.ui.layout.LayoutStateDefaults;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
-import com.intellij.ui.switcher.SwitchTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 public interface RunnerLayoutUi  {
 
@@ -87,7 +86,7 @@ public interface RunnerLayoutUi  {
     }
 
     public static Factory getInstance(Project project) {
-      return project.getComponent(Factory.class);
+      return ServiceManager.getService(project, Factory.class);
     }
 
     public abstract RunnerLayoutUi create(@NotNull String runnerType, @NotNull String runnerTitle, @NotNull String sessionName, @NotNull Disposable parent);

@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -78,7 +77,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       setReturnType(PsiType.getJavaLangObject(getManager(), getResolveScope())).
       addModifier(PsiModifier.PUBLIC);
 
-    myModifierList = new LightModifierList(myManager, Collections.singleton(GrModifier.PUBLIC));
+    myModifierList = new LightModifierList(myManager, Collections.singleton(PsiModifier.PUBLIC));
   }
 
 
@@ -100,7 +99,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return new GroovyScriptClass(myFile);
   }
 
-  public PsiFile getContainingFile() {
+  public GroovyFile getContainingFile() {
     return myFile;
   }
 

@@ -782,7 +782,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int width = getFoldingAnchorWidth();
     VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
 
-    return myEditor.visibleLineNumberToYPosition(foldStart.line) + myEditor.getLineHeight() - myEditor.getDescent() - width / 2;
+    return myEditor.visibleLineToY(foldStart.line) + myEditor.getLineHeight() - myEditor.getDescent() - width / 2;
   }
 
   private void drawAnchor(FoldRegion foldRange, int width, Rectangle clip, Graphics2D g,
@@ -798,7 +798,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return;
     }
 
-    int y = myEditor.visibleLineNumberToYPosition(foldStart.line) + myEditor.getLineHeight() - myEditor.getDescent() -
+    int y = myEditor.visibleLineToY(foldStart.line) + myEditor.getLineHeight() - myEditor.getDescent() -
             width;
     int height = width + 2;
 
@@ -813,7 +813,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
     else {
-      int endY = myEditor.visibleLineNumberToYPosition(foldEnd.line) + myEditor.getLineHeight() -
+      int endY = myEditor.visibleLineToY(foldEnd.line) + myEditor.getLineHeight() -
                  myEditor.getDescent();
 
       if (y <= clip.y + clip.height && y + height >= clip.y) {
@@ -904,8 +904,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (foldRange.isExpanded() && foldRange.isValid()) {
       VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
       VisualPosition foldEnd = offsetToLineStartPosition(getEndOffset(foldRange));
-      int startY = myEditor.visibleLineNumberToYPosition(foldStart.line + 1) - myEditor.getDescent();
-      int endY = myEditor.visibleLineNumberToYPosition(foldEnd.line) + myEditor.getLineHeight() -
+      int startY = myEditor.visibleLineToY(foldStart.line + 1) - myEditor.getDescent();
+      int endY = myEditor.visibleLineToY(foldEnd.line) + myEditor.getLineHeight() -
                  myEditor.getDescent();
 
       if (startY > clip.y + clip.height || endY + 1 + myEditor.getDescent() < clip.y) return;
@@ -1044,7 +1044,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private Rectangle rectangleByFoldOffset(VisualPosition foldStart, int anchorWidth, int anchorX) {
-    int anchorY = myEditor.visibleLineNumberToYPosition(foldStart.line) + myEditor.getLineHeight() -
+    int anchorY = myEditor.visibleLineToY(foldStart.line) + myEditor.getLineHeight() -
                   myEditor.getDescent() - anchorWidth;
     return new Rectangle(anchorX, anchorY, anchorWidth, anchorWidth);
   }
@@ -1090,7 +1090,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (toolTip != null && toolTip.length() != 0) {
       final Ref<Point> t = new Ref<Point>(e.getPoint());
-      int line = myEditor.yPositionToLogicalLineNumber(e.getY());
+      int line = myEditor.yPositionToLogicalLine(e.getY());
       ArrayList<GutterIconRenderer> row = myLineToGutterRenderers.get(line);
       Balloon.Position ballPosition = Balloon.Position.atRight;
       if (row != null) {
@@ -1153,7 +1153,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getLineNumAtPoint(final Point clickPoint) {
-    return myEditor.yPositionToLogicalLineNumber(clickPoint.y);
+    return myEditor.yPositionToLogicalLine(clickPoint.y);
   }
 
   @Nullable
@@ -1280,7 +1280,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       actionGroup.add(new CloseAnnotationsAction());
       final List<AnAction> addActions = new ArrayList<AnAction>();
       final Point p = e.getPoint();
-      int line = myEditor.yPositionToLogicalLineNumber((int)p.getY());
+      int line = myEditor.yPositionToLogicalLine((int)p.getY());
       if (line >= myEditor.getDocument().getLineCount()) return;
 
       for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
@@ -1327,7 +1327,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int convertPointToLineNumber(final Point p) {
-    int line = myEditor.yPositionToLogicalLineNumber((int)p.getY());
+    int line = myEditor.yPositionToLogicalLine((int)p.getY());
 
     if (line >= myEditor.getDocument().getLineCount()) return -1;
     int startOffset = myEditor.getDocument().getLineStartOffset(line);

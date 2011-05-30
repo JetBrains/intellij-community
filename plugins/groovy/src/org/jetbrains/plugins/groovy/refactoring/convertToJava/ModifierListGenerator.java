@@ -19,6 +19,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
@@ -35,7 +36,7 @@ public class ModifierListGenerator {
     PsiModifier.PUBLIC,
     PsiModifier.PROTECTED,
     PsiModifier.PRIVATE,
-    PsiModifier.PACKAGE_LOCAL,
+    //PsiModifier.PACKAGE_LOCAL,
     PsiModifier.STATIC,
     PsiModifier.ABSTRACT,
     PsiModifier.FINAL,
@@ -50,7 +51,7 @@ public class ModifierListGenerator {
     PsiModifier.PUBLIC,
   PsiModifier.PROTECTED,
   PsiModifier.PRIVATE,
-  PsiModifier.PACKAGE_LOCAL,
+  //PsiModifier.PACKAGE_LOCAL,
   PsiModifier.STATIC,
   //PsiModifier.ABSTRACT,
   PsiModifier.FINAL,
@@ -83,7 +84,7 @@ public class ModifierListGenerator {
 
     if (writeAnnotations && modifierList instanceof GrModifierList) {
       GrAnnotation[] annotations = ((GrModifierList)modifierList).getAnnotations();
-      AnnotationGenerator annotationGenerator = new AnnotationGenerator(builder, new ExpressionContext(modifierList.getProject()));
+      AnnotationGenerator annotationGenerator = new AnnotationGenerator(builder, new ExpressionContext(modifierList.getProject(), GroovyFile.EMPTY_ARRAY));
       wasAddedModifiers = annotations.length > 0;
       for (GrAnnotation annotation : annotations) {
         annotation.accept(annotationGenerator);
