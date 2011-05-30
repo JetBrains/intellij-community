@@ -407,7 +407,7 @@ public class CompileDriver {
                                                     forceCompile
                                                     ? CompilerBundle.message("compiler.content.name.compile")
                                                     : CompilerBundle.message("compiler.content.name.make"), ApplicationManager.getApplication().isUnitTestMode());
-    StatusBar.Info.set("Compiling...", myProject, "Compiler");
+    StatusBar.Info.set("", myProject, "Compiler");
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
