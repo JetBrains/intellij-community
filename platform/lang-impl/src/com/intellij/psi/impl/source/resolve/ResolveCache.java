@@ -107,7 +107,7 @@ public class ResolveCache {
     final int clearCountOnStart = myClearCount.intValue();
 
     final boolean physical = ref.getElement().isPhysical();
-    final TResult result = getCached(ref, maps, physical, incompleteCode);
+    TResult result = getCached(ref, maps, physical, incompleteCode);
     if (result != null) {
       return result;
     }
@@ -115,15 +115,16 @@ public class ResolveCache {
     Computable<TResult> computable = new Computable<TResult>() {
       @Override
       public TResult compute() {
-        RecursionGuard.StackStamp stamp = myGuard.markStack();
-        TResult result = resolver.resolve(ref, incompleteCode);
-        if (stamp.mayCacheNow()) {
-          cache(ref, result, maps, physical, incompleteCode, clearCountOnStart);
-        }
-        return result;
+        return resolver.resolve(ref, incompleteCode);
       }
     };
-    return needToPreventRecursion ? myGuard.doPreventingRecursion(ref, computable) : computable.compute();
+
+    RecursionGuard.StackStamp stamp = myGuard.markStack();
+    result = needToPreventRecursion ? myGuard.doPreventingRecursion(ref, computable) : computable.compute();
+    if (stamp.mayCacheNow()) {
+      cache(ref, result, maps, physical, incompleteCode, clearCountOnStart);
+    }
+    return result;
   }
 
    public <T extends PsiPolyVariantReference> ResolveResult[] resolveWithCaching(T ref,
