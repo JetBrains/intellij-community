@@ -21,3 +21,7 @@ class D2(C):
 # PY-3714
 class D3(lib1.C):
     pass
+
+# PY-3731
+class D4(foo.bar.C):
+    pass

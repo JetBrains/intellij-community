@@ -23,7 +23,8 @@ public class PyStructureViewTest extends PyLightFixtureTestCase {
            " C(B1, B2)\n" +
            " D1(C)\n" +
            " D2(C)\n" +
-           " D3(lib1.C)\n");
+           " D3(lib1.C)\n" +
+           " D4(foo.bar.C)\n");
   }
 
   public void testAttributes() { // PY-3371
