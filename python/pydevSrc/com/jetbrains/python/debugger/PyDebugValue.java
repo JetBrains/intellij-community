@@ -120,7 +120,7 @@ public class PyDebugValue extends XNamedValue {
       value = value.substring(0, MAX_VALUE) + "...";
     }
 
-    node.setPresentation(getValueIcon(), place == XValuePlace.TOOLTIP ? null : myType, value, myContainer);
+    node.setPresentation(getValueIcon(),  myType, value, myContainer);
   }
 
   @Override
