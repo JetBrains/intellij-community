@@ -241,7 +241,7 @@ public class PyCallExpressionHelper {
   }
 
   private static boolean isQualifiedByInstance(Callable resolved, List<PyExpression> qualifiers, TypeEvalContext context) {
-    PyDocStringOwner owner = PsiTreeUtil.getParentOfType(resolved, PyDocStringOwner.class);
+    PyDocStringOwner owner = PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyDocStringOwner.class);
     if (!(owner instanceof PyClass)) {
       return false;
     }
