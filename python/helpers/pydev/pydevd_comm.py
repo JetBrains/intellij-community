@@ -775,10 +775,13 @@ class InternalGetCompletions(InternalThreadCommand):
             try:
                 import console._completer
             except:
-                path = os.environ['PYDEV_COMPLETER_PYTHONPATH']
-                sys.path.append(path)
-                remove_path = path
-                import console._completer
+                try:
+                    path = os.environ['PYDEV_COMPLETER_PYTHONPATH']
+                    sys.path.append(path)
+                    remove_path = path
+                    import console._completer
+                except :
+                    traceback.print_exc()
             
             try:
                 
