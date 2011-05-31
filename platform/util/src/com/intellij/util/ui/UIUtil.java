@@ -64,6 +64,36 @@ import java.util.regex.Pattern;
  * @author max
  */
 public class UIUtil {
+  public static String getHtmlBody(String text) {
+    return getHtmlBody(new Html(text));
+  }
+
+  public static String getHtmlBody(Html html) {
+    String text = html.getText();
+    String result = text;
+    if (!text.startsWith("<html>")) {
+      result = text.replaceAll("\n", "<br>");
+    }
+    else {
+      final int bodyIdx = text.indexOf("<body>");
+      final int closedBodyIdx = text.indexOf("</body>");
+      if (bodyIdx != -1 && closedBodyIdx != -1) {
+        result = text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
+      }
+      else {
+        text = StringUtil.trimStart(text, "<html>").trim();
+        text = StringUtil.trimEnd(text, "</html>").trim();
+        text = StringUtil.trimStart(text, "<body>").trim();
+        text = StringUtil.trimEnd(text, "</body>").trim();
+        result = text;
+      }
+    }
+
+
+
+    return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
+  }
+
   public enum FontSize { NORMAL, SMALL }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
