@@ -459,7 +459,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       final PsiElement nameElement = ref.getReferenceNameElement();
       assert nameElement != null : ref;
       final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, nameElement, description);
-      QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
+      QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstance());
       myHolder.add(info);
     }
     else {
