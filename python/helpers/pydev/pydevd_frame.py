@@ -40,13 +40,16 @@ class PyDBFrame:
 
             can_skip = False
 
-            #if not len(mainDebugger.always_exception_set):
-            #    if info.pydev_state == STATE_RUN:
-            #        #we can skip if:
-            #        #- we have no stop marked
-            #        #- we should make a step return/step over and we're not in the current frame
-            #        can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
-            #        or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
+
+            if info.pydev_state == STATE_RUN:
+                #we can skip if:
+                #- we have no stop marked
+                #- we should make a step return/step over and we're not in the current frame
+                can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
+                or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
+
+            if mainDebugger.always_exception_set:
+                can_skip = False
 
             if mainDebugger.django_breakpoints:
                 can_skip = False
