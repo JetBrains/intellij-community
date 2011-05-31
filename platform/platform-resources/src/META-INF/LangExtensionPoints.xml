@@ -481,4 +481,9 @@
 
   <extensionPoint name="inspectionsReportConverter"
                   interface="com.intellij.codeInspection.InspectionsReportConverter"/>
+
+  <extensionPoint name="patternProvider"
+                  interface="com.intellij.codeInsight.generation.PatternProvider"/>
+
+
 </extensionPoints>
