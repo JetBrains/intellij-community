@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -243,7 +244,12 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public static boolean isEventLogVisible(Project project) {
-    return project != null && ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID).isVisible();
+    if (project == null) {
+      return false;
+    }
+
+    final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
+    return window != null && window.isVisible();
   }
 
   private static PairFunction<Notification, Project, Boolean> createFilter(@Nullable final Project project, final boolean strict) {
