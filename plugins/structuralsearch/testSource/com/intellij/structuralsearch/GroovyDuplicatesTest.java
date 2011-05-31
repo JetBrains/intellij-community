@@ -6,7 +6,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 /**
  * @author Eugene.Kudelevsky
  */
-public class GroovyDuplicatesTest1 extends DuplicatesTestCase {
+public class GroovyDuplicatesTest extends DuplicatesTestCase {
   /*
   def x = 1;
   def int x = 1;
