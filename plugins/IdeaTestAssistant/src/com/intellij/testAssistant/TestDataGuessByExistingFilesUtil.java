@@ -143,8 +143,8 @@ public class TestDataGuessByExistingFilesUtil {
       }
       if (cached.second > System.currentTimeMillis()) {
         return null;
-      } 
-    } 
+      }
+    }
 
     TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     TestFramework framework = null;
@@ -257,27 +257,39 @@ public class TestDataGuessByExistingFilesUtil {
           if (!current.isComplete()) {
             continue;
           }
-          String pattern = current.filePrefix.toLowerCase();
-          if (!StringUtil.isEmpty(current.filePrefix)) {
-            // Handle situations like the one below:
-            //     *) test class has tests with names 'testAlignedParameters' and 'testNonAlignedParameters';
-            //     *) test data files with the following names present: 'AlignedParameters.java' and 'NonAlignedParameters.java';
-            //     *) we're processing the following (test; test data file) pair - ('testAlignedParameters'; 'NonAlignedParameters.java');
-            // We don't want to store descriptor with file prefix 'Non' here.
-            boolean skip = false;
-            for (String testName : testNamesLowerCase) {
-              if (testName.startsWith(pattern)) {
-                skip = true;
-                break;
-              }
+
+          // Handle situations like the one below:
+          //     *) test class has tests with names 'testAlignedParameters' and 'testNonAlignedParameters';
+          //     *) test data files with the following names present: 'AlignedParameters.java' and 'NonAlignedParameters.java';
+          //     *) we're processing the following (test; test data file) pair - ('testAlignedParameters'; 'NonAlignedParameters.java');
+          // We don't want to store descriptor with file prefix 'Non' here.
+          // The same is true for suffixes, e.g. tests like 'testLeaveValidCodeBlock()' and 'testLeaveValidCodeBlockWithEmptyLineAfterIt()'
+          String prefixPattern = current.filePrefix.toLowerCase();
+          boolean checkPrefix = !StringUtil.isEmpty(prefixPattern);
+          String suffixPattern = current.fileSuffix;
+          for (TestLocationDescriptor descriptor : descriptors) {
+            if (suffixPattern.endsWith(descriptor.fileSuffix)) {
+              suffixPattern = suffixPattern.substring(0, suffixPattern.length() - descriptor.fileSuffix.length());
             }
-            if (skip) {
+          }
+          suffixPattern = suffixPattern.toLowerCase();
+          boolean checkSuffix = !StringUtil.isEmpty(suffixPattern);
+          boolean skip = false;
+          for (String testName : testNamesLowerCase) {
+            if (testName.equals(trinity.second)) {
               continue;
             }
+            if ((checkPrefix && testName.startsWith(prefixPattern)) || (checkSuffix && testName.endsWith(suffixPattern))) {
+              skip = true;
+              break;
+            }
+          }
+          if (skip) {
+            continue;
           }
 
           currentNameProcessed = true;
-          if (descriptors.isEmpty() || descriptors.iterator().next().dir.equals(current.dir)) {
+          if (descriptors.isEmpty() || (descriptors.iterator().next().dir.equals(current.dir) && !descriptors.contains(current))) {
             descriptors.add(current);
             continue;
           }
@@ -364,7 +376,7 @@ public class TestDataGuessByExistingFilesUtil {
       }
       if (i < 0) {
         return;
-      } 
+      }
 
       filePrefix = fileName.substring(0, i);
       fileSuffix = fileName.substring(i + testName.length());

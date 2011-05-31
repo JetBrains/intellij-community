@@ -40,6 +40,7 @@ public class TestDataReferenceCollector {
     myTestName = testName;
   }
 
+  @Nullable
   List<String> collectTestDataReferences(@NotNull final PsiMethod method) {
     myContainingClass = method.getContainingClass();
     List<String> result = collectTestDataReferences(method, new HashMap<String, Computable<String>>());
