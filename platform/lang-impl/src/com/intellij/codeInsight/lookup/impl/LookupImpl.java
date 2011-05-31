@@ -42,10 +42,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -390,7 +387,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     String oldInvariant = mySelectionInvariant;
 
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
-    model.addAll(getPrefixItems(items));
+    model.addAll(getPrefixItems(items, true));
+    model.addAll(getPrefixItems(items, false));
     model.addAll(myFrozenItems);
     addMostRelevantItems(model, snapshot.second);
     if (hasPreselected) {
@@ -424,7 +422,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!model.isEmpty()) {
       myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getAdComponent().getPreferredSize().width));
 
-      if (isFocused() && (!isExactPrefixItem(model.iterator().next()) || mySelectionTouched)) {
+      if (isFocused() && (!isExactPrefixItem(model.iterator().next(), true) || mySelectionTouched)) {
         restoreSelection(oldSelected, hasPreselected, oldInvariant);
       }
       else {
@@ -552,10 +550,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myFrozenItems.contains(element);
   }
 
-  private List<LookupElement> getPrefixItems(final Collection<LookupElement> elements) {
+  private List<LookupElement> getPrefixItems(final Collection<LookupElement> elements, final boolean caseSensitive) {
     List<LookupElement> better = new ArrayList<LookupElement>();
     for (LookupElement element : elements) {
-      if (isExactPrefixItem(element)) {
+      if (isExactPrefixItem(element, caseSensitive)) {
         better.add(element);
       }
     }
@@ -584,8 +582,23 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myCustomArranger;
   }
 
-  private boolean isExactPrefixItem(LookupElement item) {
-    return item.getAllLookupStrings().contains(itemPattern(item));
+  private boolean isExactPrefixItem(LookupElement item, final boolean caseSensitive) {
+    final String pattern = itemPattern(item);
+    final Set<String> strings = item.getAllLookupStrings();
+    if (strings.contains(pattern)) {
+      return caseSensitive; //to not add the same elements twice to the model, as sensitive and then as insensitive
+    }
+
+    if (caseSensitive) {
+      return false;
+    }
+
+    for (String s : strings) {
+      if (s.equalsIgnoreCase(pattern)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean prefixMatches(final LookupElement item) {
@@ -1231,7 +1244,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      if (isExactPrefixItem(item)) {
+      if (isExactPrefixItem(item, true)) {
         return i;
       }
     }
