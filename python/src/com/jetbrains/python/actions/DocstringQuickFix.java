@@ -18,18 +18,23 @@ import org.jetbrains.annotations.NotNull;
 public class DocstringQuickFix implements LocalQuickFix {
 
   PyParameter myMissing;
+  String myMissingText;
   String myUnexpected;
   String myPrefix;
 
   public DocstringQuickFix(PyParameter missing, String unexpected) {
     myMissing = missing;
+    if (myMissing.getText().startsWith("*"))
+      myMissingText = myMissing.getText();
+    else
+      myMissingText = myMissing.getName();
     myUnexpected = unexpected;
   }
 
   @NotNull
   public String getName() {
     if (myMissing != null)
-      return PyBundle.message("QFIX.docstring.add.$0", myMissing.getName());
+      return PyBundle.message("QFIX.docstring.add.$0", myMissingText);
     else
       return PyBundle.message("QFIX.docstring.remove.$0", myUnexpected);
   }
@@ -40,7 +45,9 @@ public class DocstringQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyStringLiteralExpression element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class).getDocStringExpression();
+    PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyDocStringOwner.class);
+    if (docStringOwner == null) return;
+    PyStringLiteralExpression element = docStringOwner.getDocStringExpression();
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(element.getProject());
     if (documentationSettings.isEpydocFormat(element.getContainingFile()))
@@ -119,7 +126,7 @@ public class DocstringQuickFix implements LocalQuickFix {
     newText.deleteCharAt(newText.length()-1);
     newText.append(ws);
 
-    String paramText = myMissing.getName();
+    String paramText = myMissingText;
     newText.append(myPrefix).append("param ").append(paramText).append(": ");
     newText.append("\n");
     for (int i = ind; i != lines.length; ++i) {
