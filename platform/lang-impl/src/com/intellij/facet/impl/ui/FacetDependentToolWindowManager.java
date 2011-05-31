@@ -7,7 +7,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -37,8 +36,11 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
       @Override
       public void facetAdded(Facet facet) {
         if (myFacetManager.getFacets(facet.getTypeId()).size() == 1) {
-          for (ToolWindowEP extension : getDependentExtensions(facet)) {
-            myToolWindowManager.initToolWindow(extension);
+          for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
+            ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
+            if (toolWindow == null) {
+              myToolWindowManager.initToolWindow(extension);
+            }
           }
         }
       }
@@ -46,9 +48,16 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
       @Override
       public void facetRemoved(Facet facet) {
         if (myFacetManager.getFacets(facet.getTypeId()).isEmpty()) {
-          for (ToolWindowEP extension : getDependentExtensions(facet)) {
+          for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
             ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
             if (toolWindow != null) {
+              String[] ids = extension.facetIdList.split(",");
+              if (ids.length > 1) {
+                for (String id : ids) {
+                  FacetType facetType = FacetTypeRegistry.getInstance().findFacetType(id);
+                  if (myFacetManager.hasFacets(facetType.getId())) return;
+                }
+              }
               myToolWindowManager.unregisterToolWindow(extension.id);
             }
           }
@@ -62,7 +71,11 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
     return ContainerUtil.filter(extensions, new Condition<FacetDependentToolWindow>() {
       @Override
       public boolean value(FacetDependentToolWindow toolWindowEP) {
-        return facet.getType().getStringId().equals(toolWindowEP.facetId);
+        String[] ids = toolWindowEP.facetIdList.split(",");
+        for (String id : ids) {
+          if (facet.getType().getStringId().equals(id)) return true;
+        }
+        return false;
       }
     });
   }
