@@ -17,7 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
-import com.sun.istack.internal.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
