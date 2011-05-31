@@ -358,19 +358,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     VariantsProcessor processor = new VariantsProcessor(this);
     final List<String> dunderAll = getDunderAll();
     processor.setAllowedNames(dunderAll);
+    final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
     processDeclarations(processor, ResolveState.initial(), null, this);
     List<PyElement> result = new ArrayList<PyElement>();
     for (LookupElement lookupElement : processor.getResultList()) {
       final Object value = lookupElement.getObject();
       if (value instanceof PyElement) {
         result.add((PyElement) value);
-        if (dunderAll != null) {
-          dunderAll.remove(lookupElement.getLookupString());
+        if (remainingDunderAll != null) {
+          remainingDunderAll.remove(lookupElement.getLookupString());
         }
       }
     }
-    if (dunderAll != null) {
-      for (String s: dunderAll) {
+    if (remainingDunderAll != null) {
+      for (String s: remainingDunderAll) {
         result.add(new LightNamedElement(myManager, PythonLanguage.getInstance(), s));
       }
     }
@@ -428,7 +429,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       return ((PyFileStub) stubElement).getDunderAll();
     }
     if (!myDunderAllCalculated) {
-      myDunderAll = calculateDunderAll();
+      final List<String> dunderAll = calculateDunderAll();
+      myDunderAll = dunderAll == null ? null : Collections.unmodifiableList(dunderAll);
       myDunderAllCalculated = true;
     }
     return myDunderAll;
