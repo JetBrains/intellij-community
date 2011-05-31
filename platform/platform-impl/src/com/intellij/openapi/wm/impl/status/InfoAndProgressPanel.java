@@ -55,15 +55,12 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   private final ProcessPopup myPopup;
 
-  private final TextPanel myInfoPanel = new TextPanel();
+  private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
   private final AsyncProcessIcon myProgressIcon;
 
@@ -177,7 +174,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   public void addProgress(final ProgressIndicatorEx original, TaskInfo info) {
     synchronized (myOriginals) {
-      final boolean veryFirst = myOriginals.isEmpty();
+      final boolean veryFirst = !hasProgressIndicators();
+
+      if (veryFirst) {
+        myInfoPanel.hideLog();
+      }
 
       myOriginals.add(original);
       myInfos.add(info);
@@ -199,6 +200,12 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       }
 
       runQuery();
+    }
+  }
+
+  private boolean hasProgressIndicators() {
+    synchronized (myOriginals) {
+      return !myOriginals.isEmpty();
     }
   }
 
@@ -233,6 +240,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       }
 
       runQuery();
+
+      if (last) {
+        myInfoPanel.restoreLogIfNeeded();
+      }
     }
   }
 
@@ -254,7 +265,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void openProcessPopup(boolean requestFocus) {
     synchronized (myOriginals) {
       if (myPopup.isShowing()) return;
-      if (!myOriginals.isEmpty()) {
+      if (hasProgressIndicators()) {
         myShouldClosePopupAndOnProcessFinish = true;
         buildInProcessCount();
       }
@@ -273,7 +284,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       if (myOriginals.size() == 1) {
         buildInInlineIndicator(createInlineDelegate(myInfos.get(0), myOriginals.get(0), true));
       }
-      else if (myOriginals.isEmpty()) {
+      else if (!hasProgressIndicators()) {
         restoreEmptyStatus();
       }
       else {
@@ -351,8 +362,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
     }
 
-    myInfoPanel.setText(text);
-    myCurrentRequestor = requestor;
+    final boolean logMode = StringUtil.isEmpty(text) && !hasProgressIndicators();
+    myInfoPanel.updateText(logMode, text);
+    myCurrentRequestor = logMode ? requestor : null;
     return Pair.create(text, requestor);
   }
 
@@ -408,6 +420,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         });
       }
     };
+  }
+
+  public void setLogMessage(String text) {
+    myInfoPanel.setLogMessage(text);
   }
 
   private static class InlineLayout extends AbstractLayoutManager {
