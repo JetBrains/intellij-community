@@ -95,7 +95,6 @@
 
   <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP"/>
 
-  <extensionPoint name="progressFunComponentProvider" interface="com.intellij.openapi.progress.ProgressFunComponentProvider"/>
   <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 
   <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>
