@@ -1,0 +1,7 @@
+occurence 0:
+function g(): String {
+}
+
+occurence 1:
+public function f() {
+}
