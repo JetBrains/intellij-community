@@ -75,6 +75,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private final Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myShouldClosePopupAndOnProcessFinish;
+
+  private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private AsyncProcessIcon myRefreshIcon;
   private EmptyIcon myEmptyRefreshIcon;
 
@@ -369,15 +371,20 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   public void setRefreshVisible(final boolean visible) {
-    if (visible) {
-      myRefreshIcon.resume();
-    }
-    else {
-      myRefreshIcon.suspend();
-    }
-
-    myRefreshIcon.revalidate();
-    myRefreshIcon.repaint();
+    myRefreshAlarm.cancelAllRequests();
+    myRefreshAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (visible) {
+          myRefreshIcon.resume();
+        }
+        else {
+          myRefreshIcon.suspend();
+        }
+        myRefreshIcon.revalidate();
+        myRefreshIcon.repaint();
+      }
+    }, visible ? 100 : 300);
   }
 
   public void setRefreshToolTipText(final String tooltip) {
