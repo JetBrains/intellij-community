@@ -283,4 +283,19 @@ public class PyPsiUtils {
     }
     return element;
   }
+
+  public static int findArgumentIndex(PyCallExpression call, PsiElement argument) {
+    final PyExpression[] args = call.getArguments();
+    for (int i = 0; i < args.length; i++) {
+      PyExpression expression = args[i];
+      if (expression instanceof PyKeywordArgumentImpl) {
+        expression = ((PyKeywordArgumentImpl)expression).getValueExpression();
+      }
+      expression = PyUtil.flattenParens(expression);
+      if (expression == argument) {
+        return i;
+      }
+    }
+    return -1;
+  }
 }
