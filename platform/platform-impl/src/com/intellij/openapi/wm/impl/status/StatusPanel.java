@@ -29,11 +29,13 @@ class StatusPanel extends TextPanel {
   private boolean myLogMode;
   private String myLogMessage;
   private Date myLogTime;
+  private boolean myDirty;
   private final Alarm myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public void setLogMessage(String text) {
     myLogMessage = text;
     myLogTime = new Date();
+    myDirty = false;
   }
 
   public void updateText(boolean logMode, @Nullable String nonLogText) {
@@ -43,11 +45,16 @@ class StatusPanel extends TextPanel {
       new Runnable() {
         @Override
         public void run() {
-          setText(myLogMessage + " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(myLogTime)) + ")");
+          String text = myLogMessage;
+          if (myDirty || System.currentTimeMillis() - myLogTime.getTime() >= DateFormatUtil.MINUTE) {
+            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(myLogTime)) + ")";
+          }
+          setText(text);
           myLogAlarm.addRequest(this, 30000);
         }
       }.run();
     } else {
+      myDirty = true;
       setText(nonLogText);
       myLogAlarm.cancelAllRequests();
     }
