@@ -18,16 +18,18 @@ import org.jetbrains.annotations.NotNull;
 public class DocstringQuickFix implements LocalQuickFix {
 
   PyParameter myMissing;
-  String myMissingText;
+  String myMissingText = "";
   String myUnexpected;
   String myPrefix;
 
   public DocstringQuickFix(PyParameter missing, String unexpected) {
     myMissing = missing;
-    if (myMissing.getText().startsWith("*"))
-      myMissingText = myMissing.getText();
-    else
-      myMissingText = myMissing.getName();
+    if (myMissing != null) {
+      if (myMissing.getText().startsWith("*"))
+        myMissingText = myMissing.getText();
+      else
+        myMissingText = myMissing.getName();
+    }
     myUnexpected = unexpected;
   }
 
@@ -48,6 +50,7 @@ public class DocstringQuickFix implements LocalQuickFix {
     PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyDocStringOwner.class);
     if (docStringOwner == null) return;
     PyStringLiteralExpression element = docStringOwner.getDocStringExpression();
+    if (element == null) return;
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(element.getProject());
     if (documentationSettings.isEpydocFormat(element.getContainingFile()))
@@ -64,7 +67,7 @@ public class DocstringQuickFix implements LocalQuickFix {
     }
     if (!replacement.equals(element.getText())) {
       PyStringLiteralExpression str = (PyStringLiteralExpression)elementGenerator.createFromText(LanguageLevel.forElement(element),
-                                                                        PyExpressionStatement.class, replacement.toString()).getExpression();
+                                                                        PyExpressionStatement.class, replacement).getExpression();
       element.replace(str);
     }
   }
