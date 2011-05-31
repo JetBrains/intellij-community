@@ -68,6 +68,6 @@ class StatusPanel extends TextPanel {
           updateText(true, "");
         }
       }
-    }, 500);
+    }, 300);
   }
 }
