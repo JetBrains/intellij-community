@@ -15,22 +15,70 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Date;
 
 /**
  * @author peter
  */
-class StatusPanel extends TextPanel {
+class StatusPanel extends JPanel {
+  private static final Icon ourShowLogIcon = IconLoader.getIcon("/general/hideSideUp.png");
+  private static final Icon ourHideLogIcon = IconLoader.getIcon("/general/hideSideDown.png");
   private boolean myLogMode;
   private String myLogMessage;
   private Date myLogTime;
   private boolean myDirty;
   private final Alarm myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final TextPanel myTextPanel = new TextPanel();
+  private final JLabel myShowLog = new JLabel();
+
+  StatusPanel() {
+    super(new BorderLayout());
+
+    myShowLog.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        final ToolWindow eventLog = getEventLog();
+        if (eventLog != null) {
+          if (!eventLog.isVisible()) {
+            eventLog.activate(null, true);
+          } else {
+            eventLog.hide(null);
+          }
+        }
+      }
+    });
+
+    add(myShowLog, BorderLayout.WEST);
+    add(myTextPanel, BorderLayout.CENTER);
+  }
+
+  @Nullable
+  private ToolWindow getEventLog() {
+    // a better way of finding a project would be great
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      final JComponent frame = WindowManager.getInstance().getIdeFrame(project).getComponent();
+      if (SwingUtilities.isDescendingFrom(this, frame)) {
+        return ToolWindowManager.getInstance(project).getToolWindow(NotificationsManagerImpl.LOG_TOOL_WINDOW_ID);
+      }
+    }
+    return null;
+  }
 
   public void setLogMessage(String text) {
     myLogMessage = text;
@@ -41,6 +89,8 @@ class StatusPanel extends TextPanel {
   public void updateText(boolean logMode, @Nullable String nonLogText) {
     myLogMode = logMode;
 
+    myShowLog.setVisible(logMode);
+
     if (logMode) {
       new Runnable() {
         @Override
@@ -49,13 +99,29 @@ class StatusPanel extends TextPanel {
           if (myDirty || System.currentTimeMillis() - myLogTime.getTime() >= DateFormatUtil.MINUTE) {
             text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(myLogTime)) + ")";
           }
-          setText(text);
+          myTextPanel.setText(text);
           myLogAlarm.addRequest(this, 30000);
+        }
+      }.run();
+      new Runnable() {
+        @Override
+        public void run() {
+          final ToolWindow eventLog = getEventLog();
+          if (eventLog == null) {
+            myShowLog.setVisible(false);
+            return;
+          }
+
+          final boolean visible = eventLog.isVisible();
+          myShowLog.setIcon(visible ? ourHideLogIcon : ourShowLogIcon);
+          myShowLog.setToolTipText(visible ? "" : "Click to open the event log");
+
+          myLogAlarm.addRequest(this, 50);
         }
       }.run();
     } else {
       myDirty = true;
-      setText(nonLogText);
+      myTextPanel.setText(nonLogText);
       myLogAlarm.cancelAllRequests();
     }
 
@@ -71,10 +137,14 @@ class StatusPanel extends TextPanel {
     myLogAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (StringUtil.isEmpty(getText())) {
+        if (StringUtil.isEmpty(myTextPanel.getText())) {
           updateText(true, "");
         }
       }
     }, 300);
+  }
+
+  public String getText() {
+    return myTextPanel.getText();
   }
 }
