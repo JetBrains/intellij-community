@@ -15,9 +15,14 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -35,6 +40,12 @@ public class DirDiffSettings {
   public CompareMode compareMode = CompareMode.CONTENT;
 
   public boolean showInFrame = true; // in dialog otherwise
+
+  //Usually used to set additional compare settings
+  private final List<AnAction> extraToolbarActions = new ArrayList<AnAction>();
+
+  //Non-standard diff tools can store additional data here to use it while building data model
+  public final HashMap<Object, Object> customSettings = new HashMap<Object, Object>();
 
   private String filter = "";
   private Pattern filterPattern = PatternUtil.fromMask("*");
@@ -60,5 +71,19 @@ public class DirDiffSettings {
     public String getPresentableName() {
       return StringUtil.capitalize(name().toLowerCase());
     }
+  }
+
+  public <T extends AnAction & DirDiffModelHolder> void addExtraAction(@NotNull T action) {
+    extraToolbarActions.add(action);
+  }
+
+  public void setModelToExtraActions(DirDiffModel model) {
+    for (AnAction action : extraToolbarActions) {
+      ((DirDiffModelHolder)action).setModel(model);
+    }
+  }
+
+  public List<AnAction> getExtraActions() {
+    return extraToolbarActions;
   }
 }

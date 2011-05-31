@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -32,10 +31,10 @@ import java.awt.*;
 public class DirDiffFrame extends FrameWrapper {
   private DirDiffPanel myPanel;
 
-  public DirDiffFrame(Project project, DirDiffTableModel model, DirDiffSettings settings) {
+  public DirDiffFrame(Project project, DirDiffTableModel model) {
     super(project, "DirDiffDialog");
     setSize(new Dimension(800, 600));
-    myPanel = new DirDiffPanel(model, new DirDiffWindow(this), settings);
+    myPanel = new DirDiffPanel(model, new DirDiffWindow(this));
     Disposer.register(this, myPanel);
     setComponent(myPanel.getPanel());
     setProject(project);
