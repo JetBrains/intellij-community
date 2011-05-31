@@ -777,11 +777,15 @@ class InternalGetCompletions(InternalThreadCommand):
             except:
                 try:
                     path = os.environ['PYDEV_COMPLETER_PYTHONPATH']
-                    sys.path.append(path)
-                    remove_path = path
+                except :
+                    path = os.path.dirname(__file__)
+                print (path)
+                sys.path.append(path)
+                remove_path = path
+                try:
                     import console._completer
                 except :
-                    traceback.print_exc()
+                    pass
             
             try:
                 
@@ -793,10 +797,13 @@ class InternalGetCompletions(InternalThreadCommand):
                 updated_globals = {}
                 updated_globals.update(frame.f_globals)
                 updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
-            
-                completer = console._completer.Completer(updated_globals, None)
-                #list(tuple(name, descr, parameters, type))
-                completions = completer.complete(self.act_tok)
+
+                try:
+                    completer = console._completer.Completer(updated_globals, None)
+                    #list(tuple(name, descr, parameters, type))
+                    completions = completer.complete(self.act_tok)
+                except :
+                    completions = []
                 
                 
                 def makeValid(s):
