@@ -3,6 +3,7 @@ package com.intellij.testAssistant;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
@@ -221,6 +222,7 @@ public class TestDataGuessByExistingFilesUtil {
     }
     Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
     for (String name : gotoModel.getNames(false)) {
+      ProgressManager.checkCanceled();
       boolean currentNameProcessed = false;
       for (Trinity<Matcher, String, String> trinity : input) {
         if (!trinity.first.matches(name)) {
