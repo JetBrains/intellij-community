@@ -67,7 +67,7 @@ public class IntLCSTest extends TestCase {
     assertEquals(expectedNonDiags, intLCS.execute());
     Reindexer reindexer = new Reindexer();
     reindexer.idInit(first.length, second.length);
-    Diff.ChangeBuilder builder = new Diff.ChangeBuilder();
+    Diff.ChangeBuilder builder = new Diff.ChangeBuilder(0);
     reindexer.reindex(intLCS.getPaths(), builder);
     return builder.getFirstChange();
   }

@@ -69,7 +69,7 @@ public class LinkedDiffPathsTest extends TestCase {
   private Diff.Change decode(LinkedDiffPaths paths) {
     Reindexer reindexer = new Reindexer();
     reindexer.idInit(paths.getXSize(), paths.getYSize());
-    Diff.ChangeBuilder builder = new Diff.ChangeBuilder();
+    Diff.ChangeBuilder builder = new Diff.ChangeBuilder(0);
     reindexer.reindex(paths, builder);
     return builder.getFirstChange();
   }
