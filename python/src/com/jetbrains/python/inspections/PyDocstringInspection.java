@@ -118,50 +118,56 @@ public class PyDocstringInspection extends PyInspection {
         boolean isClassMethod = false;
         if (decoratorList != null)
           isClassMethod = decoratorList.findDecorator(PyNames.CLASSMETHOD) != null;
-        PyParameter[] tmp = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
-        List<String> realParams = new ArrayList<String>();
-        for (PyParameter p : tmp) {
-          if ((!isClassMethod && !p.getText().equals(PyNames.CANONICAL_SELF)) ||
-              (isClassMethod && !p.getText().equals("cls")))
-            realParams.add(p.getText());
-        }
+        PyParameter[] realParams = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
 
-        List<String> missingParams = getMissingParams(realParams, docstringParams);
-        String missingString = getMissingText("Missing", missingParams);
-        List<String> unexpectedParams = getMissingParams(docstringParams, realParams);
-        String unexpectedString = getMissingText("Unexpected", unexpectedParams);
-
-        String problem = missingString + " " + unexpectedString;
-        if (!problem.equals(" ")) {
-          registerProblem(node, problem, new DocstringQuickFix(missingParams, unexpectedParams));
-          return true;
+        List<PyParameter> missingParams = getMissingParams(realParams, docstringParams, isClassMethod);
+        boolean registered = false;
+        if (!missingParams.isEmpty()) {
+          for (PyParameter param : missingParams) {
+            registerProblem(param, "Missing parameter " + param.getName() + " in docstring",
+                            new DocstringQuickFix(param, null));
+          }
+          registered = true;
         }
+        List<String> unexpectedParams = getUnexpectedParams(docstringParams, realParams, node);
+        if (!unexpectedParams.isEmpty()) {
+          for (String param : unexpectedParams) {
+            ProblemsHolder holder = getHolder();
+            int index = node.getText().indexOf("param "+param+":") +6;
+            if (holder != null)
+              holder.registerProblem(node, TextRange.create(index, index+param.length()),
+                                   "Unexpected parameter " + param + " in docstring",
+                                    new DocstringQuickFix(null, param));
+          }
+          registered = true;
+        }
+        return registered;
       }
       return false;
     }
-    private List<String> getMissingParams(List<String> realParams, List<String> docstringParams) {
-       List<String> missing = new ArrayList<String>();
-      boolean hasMissing = false;
-      for (String p : realParams) {
-        if (!docstringParams.contains(p)) {
-          hasMissing = true;
-          missing.add(p);
+
+    private List<String> getUnexpectedParams(List<String> docstringParams, PyParameter[] realParams, PyStringLiteralExpression node) {
+      for (PyParameter p : realParams) {
+        if (docstringParams.contains(p.getName())) {
+          docstringParams.remove(p.getName());
         }
       }
-      return hasMissing? missing : Collections.<String>emptyList();
+      return docstringParams;
     }
 
-    private String getMissingText(String prefix, List<String> missing) {
-      if (missing.isEmpty())
-        return "";
-      StringBuilder missingString = new StringBuilder(prefix);
-      missingString.append(" parameters ");
-      for (String param : missing) {
-        missingString.append(param).append(", ");
+    private List<PyParameter> getMissingParams(PyParameter[] realParams, List<String> docstringParams, boolean isClassMethod) {
+      List<PyParameter> missing = new ArrayList<PyParameter>();
+      boolean hasMissing = false;
+      for (PyParameter p : realParams) {
+        if ((!isClassMethod && !p.getText().equals(PyNames.CANONICAL_SELF)) ||
+              (isClassMethod && !p.getText().equals("cls"))) {
+          if (!docstringParams.contains(p.getName())) {
+            hasMissing = true;
+            missing.add(p);
+          }
+        }
       }
-      missingString.delete(missingString.length()-2, missingString.length());
-      missingString.append(" in docstring.");
-      return missingString.toString();
+      return hasMissing? missing : Collections.<PyParameter>emptyList();
     }
   }
   @Override

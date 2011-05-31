@@ -283,7 +283,19 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
       doInspectionTest("DocstringParams.py", PyDocstringInspection.class,
-                     PyBundle.message("QFIX.docstring"), true, true);
+                     PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
+  }
+
+  public void testDocstringParams1() {
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      doInspectionTest("DocstringParams1.py", PyDocstringInspection.class,
+                     PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
     }
     finally {
       documentationSettings.setFormat(DocStringFormat.PLAIN);
