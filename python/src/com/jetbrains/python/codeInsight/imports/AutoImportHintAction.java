@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.imports;
 
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class AutoImportHintAction implements LocalQuickFix, HintAction {
+public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPriorityAction {
   private final AutoImportQuickFix myDelegate;
 
   public AutoImportHintAction(AutoImportQuickFix delegate) {
