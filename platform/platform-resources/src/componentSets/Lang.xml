@@ -209,6 +209,11 @@
       <interface-class>com.intellij.facet.pointers.FacetPointersManager</interface-class>
       <implementation-class>com.intellij.facet.impl.pointers.FacetPointersManagerImpl</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.facet.impl.ui.FacetDependentToolWindowManager</implementation-class>
+      <skipForDefaultProject/>
+    </component>
   </project-components>
 
   <module-components>

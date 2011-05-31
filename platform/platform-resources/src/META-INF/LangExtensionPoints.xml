@@ -383,6 +383,8 @@
                   beanClass="com.intellij.ide.util.projectWizard.ModuleBuilderFactory"/>
   <extensionPoint name="facetType"
                   interface="com.intellij.facet.FacetType"/>
+  <extensionPoint name="facet.toolWindow"
+                  beanClass="com.intellij.facet.ui.FacetDependentToolWindow"/>
 
   <extensionPoint name="methodNavigationOffsetProvider"
                   interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider"/>
