@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -31,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -76,6 +79,44 @@ public class JavadocHelper {
       
     }
     caretModel.moveToLogicalPosition(position);
+  }
+
+  /**
+   * Calculates desired position of target javadoc parameter's description start.
+   * 
+   * @param psiFile  PSI holder
+   * @param data     parsed adjacent javadoc parameters
+   * @param anchor   descriptor for the target parameter
+   * @return         logical position that points to the desired parameter description start location
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @NotNull
+  public LogicalPosition calculateDescriptionStartPosition(@NotNull PsiFile psiFile,
+                                                           @NotNull Collection<JavadocParameterInfo> data,
+                                                           @NotNull JavadocHelper.JavadocParameterInfo anchor)
+  {
+    int descriptionStartColumn = -1;
+    int parameterNameEndColumn = -1;
+    for (JavadocHelper.JavadocParameterInfo parameterInfo : data) {
+      parameterNameEndColumn = Math.max(parameterNameEndColumn, parameterInfo.parameterNameEndPosition.column);
+      if (parameterInfo.parameterDescriptionStartPosition != null) {
+        descriptionStartColumn = Math.max(descriptionStartColumn, parameterInfo.parameterDescriptionStartPosition.column);
+      }
+    }
+
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(psiFile.getProject()).getCurrentSettings();
+    final int indentSize = codeStyleSettings.getIndentSize(psiFile.getFileType());
+    int column;
+    if (codeStyleSettings.JD_ALIGN_PARAM_COMMENTS) {
+      column = Math.max(descriptionStartColumn, parameterNameEndColumn);
+      if (column <= parameterNameEndColumn) {
+        column = parameterNameEndColumn + indentSize;
+      }
+    }
+    else {
+      column = anchor.parameterNameEndPosition.column + indentSize;
+    }
+    return new LogicalPosition(anchor.parameterNameEndPosition.line, column);
   }
   
   /**

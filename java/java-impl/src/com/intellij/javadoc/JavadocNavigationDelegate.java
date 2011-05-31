@@ -24,8 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +37,7 @@ import java.util.List;
  */
 public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
 
-  private final JavadocHelper myHelper = JavadocHelper.getInstance();
+  private static final JavadocHelper ourHelper = JavadocHelper.getInstance();
   
   /**
    * Improves navigation in case of incomplete javadoc parameter descriptions.
@@ -94,11 +92,16 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
     }
     if (psiFile == null) {
       return Result.CONTINUE;
-    } 
+    }
 
+    return navigateToLineEnd(editor, project, psiFile);
+  }
+  
+  public static Result navigateToLineEnd(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile psiFile) {
+    final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
     final int offset = caretModel.getOffset();
-    
+
     final CharSequence text = document.getCharsSequence();
     int line = caretModel.getLogicalPosition().line;
     final int endLineOffset = document.getLineEndOffset(line);
@@ -110,37 +113,13 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
       return Result.CONTINUE;
     }
 
-    final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair = myHelper.parse(psiFile, editor, offset);
-    if (pair.first == null) {
-      return Result.CONTINUE;
-    } 
-      
-    int descriptionStartColumn = -1;
-    int parameterNameEndColumn = -1;
-    for (JavadocHelper.JavadocParameterInfo parameterInfo : pair.second) {
-      parameterNameEndColumn = Math.max(parameterNameEndColumn, parameterInfo.parameterNameEndPosition.column);
-      if (parameterInfo.parameterDescriptionStartPosition != null) {
-        descriptionStartColumn = Math.max(descriptionStartColumn, parameterInfo.parameterDescriptionStartPosition.column);
-      }
-    }
-    if (pair.first.parameterDescriptionStartPosition != null) {
+    final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair = ourHelper.parse(psiFile, editor, offset);
+    if (pair.first == null || pair.first.parameterDescriptionStartPosition != null) {
       return Result.CONTINUE;
     }
 
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    final int indentSize = codeStyleSettings.getIndentSize(psiFile.getFileType());
-    int column;
-    if (codeStyleSettings.JD_ALIGN_PARAM_COMMENTS) {
-      column = Math.max(descriptionStartColumn, parameterNameEndColumn);
-      if (column <= parameterNameEndColumn) {
-        column = parameterNameEndColumn + indentSize;
-      }
-    }
-    else {
-      column = pair.first.parameterNameEndPosition.column + indentSize;
-    }
-    
-    myHelper.navigate(new LogicalPosition(line, column), editor, psiFile.getProject());
+    final LogicalPosition position = ourHelper.calculateDescriptionStartPosition(psiFile, pair.second, pair.first);
+    ourHelper.navigate(position, editor, psiFile.getProject());
     return Result.STOP;
   }
 }
