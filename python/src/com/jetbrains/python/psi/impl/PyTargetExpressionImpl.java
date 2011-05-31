@@ -25,6 +25,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
@@ -317,8 +318,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   public PyQualifiedName getCalleeName() {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null) {
-      if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
+      final PyTargetExpressionStub.InitializerType initializerType = stub.getInitializerType();
+      if (initializerType == PyTargetExpressionStub.InitializerType.CallExpression) {
         return stub.getInitializer();
+      }
+      else if (initializerType == PyTargetExpressionStub.InitializerType.Custom) {
+        return stub.getCustomStub(CustomTargetExpressionStub.class).getCalleeName();
       }
       return null;
     }
