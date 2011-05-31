@@ -49,9 +49,7 @@ import java.util.Map;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 
 /**
  * @author ven
@@ -118,6 +116,14 @@ public class TypesUtil {
     ourPrimitiveTypesToClassNames.put(kFALSE, JAVA_LANG_BOOLEAN);
     ourPrimitiveTypesToClassNames.put(kTRUE, JAVA_LANG_BOOLEAN);
     ourPrimitiveTypesToClassNames.put(kNULL, NULL);
+
+    ourPrimitiveTypesToClassNames.put(kINT, JAVA_LANG_INTEGER);
+    ourPrimitiveTypesToClassNames.put(kLONG, JAVA_LANG_LONG);
+    ourPrimitiveTypesToClassNames.put(kFLOAT, JAVA_LANG_FLOAT);
+    ourPrimitiveTypesToClassNames.put(kDOUBLE, JAVA_LANG_DOUBLE);
+    ourPrimitiveTypesToClassNames.put(kBOOLEAN, JAVA_LANG_BOOLEAN);
+    ourPrimitiveTypesToClassNames.put(kCHAR, JAVA_LANG_CHARACTER);
+    ourPrimitiveTypesToClassNames.put(kBYTE, JAVA_LANG_BYTE);
   }
 
   private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<IElementType, String>();

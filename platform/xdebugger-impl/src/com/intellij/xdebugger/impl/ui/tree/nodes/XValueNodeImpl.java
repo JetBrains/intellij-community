@@ -61,7 +61,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       myText.append(XDebuggerUIConstants.EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     myText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
-    value.computePresentation(this);
+    value.computePresentation(this, XValuePlace.TREE);
   }
 
   @Override

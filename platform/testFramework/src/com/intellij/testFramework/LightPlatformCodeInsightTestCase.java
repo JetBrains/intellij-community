@@ -261,7 +261,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    * @throws Exception
    */
-  protected void checkResultByFile(String message, final String filePath, final boolean ignoreTrailingSpaces) throws Exception {
+  protected void checkResultByFile(@Nullable String message, final String filePath, final boolean ignoreTrailingSpaces) throws Exception {
     bringRealEditorBack();
 
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
  * For "lightweight" tests use LightAdvHighlightingTest
  */
 public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
-  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
+  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7/";
 
   @Override
   protected Sdk getTestProjectJdk() {
@@ -41,7 +41,15 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{new DefUseInspection()};
   }
 
+  public void testStaticImports() throws Exception {
+    doTest(BASE_PATH + "staticImports/staticImports.java", BASE_PATH + "/staticImports", false, false);
+  }
+
+  public void testEnumSyntheticMethods() throws Exception {
+    doTest(BASE_PATH + getTestName(true) + ".java", false, false);
+  }
+
   public void testStaticImportConflict() throws Exception {
-    doTest(BASE_PATH + "/staticImportConflict/Usage.java", BASE_PATH + "/staticImportConflict", false, false);
+    doTest(BASE_PATH + "staticImportConflict/Usage.java", BASE_PATH + "/staticImportConflict", false, false);
   }
 }

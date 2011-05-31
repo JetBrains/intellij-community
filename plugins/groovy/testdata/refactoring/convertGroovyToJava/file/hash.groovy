@@ -1,4 +1,18 @@
-import java.security.MessageDigest
+class BigInteger {
+  BigInteger(int i, byte[] arr) {}
+}
+
+class NoSuchAlgorithmException extends Exception {}
+
+class MessageDigest {
+  public static MessageDigest getInstance(String algorithm) throws NoSuchAlgorithmException {
+	return new MessageDigest()
+  }
+
+  public byte[] digest() {return new byte[0]}
+  public void update(byte[] input, int offset, int len) {}
+}
+
 
 int KB = 1024
 int MB = 1024*KB

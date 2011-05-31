@@ -1374,17 +1374,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   }
 
-  public static Notification createNotification(MessageType type, String text, final HyperlinkListener listener) {
+  public static Notification createNotification(MessageType type, String text, @Nullable final HyperlinkListener listener) {
     final NotificationListener notificationListener = listener == null ? null : new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         listener.hyperlinkUpdate(event);
       }
     };
-    final NotificationType notificationType = type == MessageType.ERROR
-                                   ? NotificationType.ERROR
-                                   : type == MessageType.WARNING ? NotificationType.WARNING : NotificationType.INFORMATION;
-    return new Notification(Notifications.LOG_ONLY_GROUP_ID, "", text, notificationType, notificationListener);
+    return new Notification(Notifications.LOG_ONLY_GROUP_ID, "", text, type.toNotificationType(), notificationListener);
   }
 
   @Override

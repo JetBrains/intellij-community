@@ -41,16 +41,16 @@ public class EndHandler extends EditorActionHandler {
 
   public void execute(final Editor editor, DataContext dataContext) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (!settings.SMART_END_ACTION){
-      if (myOriginalHandler != null){
+    if (!settings.SMART_END_ACTION) {
+      if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, dataContext);
       }
       return;
     }
 
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-    if (project == null){
-      if (myOriginalHandler != null){
+    if (project == null) {
+      if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, dataContext);
       }
       return;
@@ -58,11 +58,20 @@ public class EndHandler extends EditorActionHandler {
     final Document document = editor.getDocument();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
-    if (file == null){
+    if (file == null) {
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, dataContext);
       }
       return;
+    }
+
+    final EditorNavigationDelegate[] extensions = EditorNavigationDelegate.EP_NAME.getExtensions();
+    if (extensions != null) {
+      for (EditorNavigationDelegate delegate : extensions) {
+        if (delegate.navigateToLineEnd(editor, dataContext) == EditorNavigationDelegate.Result.STOP) {
+          return;
+        }
+      }
     }
 
     final CaretModel caretModel = editor.getCaretModel();
@@ -70,9 +79,9 @@ public class EndHandler extends EditorActionHandler {
     CharSequence chars = editor.getDocument().getCharsSequence();
     int length = editor.getDocument().getTextLength();
 
-    if (caretOffset < length){
+    if (caretOffset < length) {
       final int offset1 = CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t");
-      if (offset1 < 0 || chars.charAt(offset1) == '\n' || chars.charAt(offset1) == '\r'){
+      if (offset1 < 0 || chars.charAt(offset1) == '\n' || chars.charAt(offset1) == '\r') {
         int offset2 = CharArrayUtil.shiftForward(chars, offset1 + 1, " \t");
         boolean isEmptyLine = offset2 >= length || chars.charAt(offset2) == '\n' || chars.charAt(offset2) == '\r';
         if (isEmptyLine) {

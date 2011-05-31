@@ -251,7 +251,7 @@ public class ProgressManagerImpl extends ProgressManager {
         }, task.getTitle(), task.isCancellable(), task.getProject(), parentComponent, task.getCancelText());
     if (result) {
       final long end = System.currentTimeMillis();
-      final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
+      final Task.NotificationInfo notificationInfo = task.notifyFinished();
       time = end - start;
       if (notificationInfo != null && time > 5000) { // show notification only if process took more than 5 secs
         final JFrame frame = WindowManager.getInstance().getFrame(task.getProject());
@@ -357,7 +357,7 @@ public class ProgressManagerImpl extends ProgressManager {
           }, ModalityState.NON_MODAL);
         }
         else if (!canceled) {
-          final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
+          final Task.NotificationInfo notificationInfo = task.notifyFinished();
           if (notificationInfo != null && time > 5000) { // snow notification if process took more than 5 secs
             final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
             if (window == null || notificationInfo.isShowWhenFocused()) {

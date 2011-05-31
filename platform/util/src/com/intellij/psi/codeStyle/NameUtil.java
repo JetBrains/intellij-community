@@ -350,21 +350,24 @@ public class NameUtil {
     }
   }
 
+  /**
+   * @deprecated use com.intellij.util.text.Matcher
+   */
   public interface Matcher {
     boolean matches(String name);
   }
 
-  public static Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
+  public static com.intellij.util.text.Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
     return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), options);
   }
 
-  public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
+  public static com.intellij.util.text.Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
     return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower), options);
   }
 
-  public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
+  public static com.intellij.util.text.Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
     return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false), options);
   }
@@ -373,11 +376,11 @@ public class NameUtil {
     return Registry.is("minuscule.humps.matching");
   }
 
-  private static Matcher buildMatcher(final String pattern, String regexp, MatchingCaseSensitivity options) {
+  private static com.intellij.util.text.Matcher buildMatcher(final String pattern, String regexp, MatchingCaseSensitivity options) {
     return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern, options) : new OptimizedMatcher(pattern, regexp);
   }
 
-  private static class OptimizedMatcher implements Matcher {
+  private static class OptimizedMatcher implements com.intellij.util.text.Matcher {
     private final char[] myPreparedPattern;
     private final boolean myEnsureFirstSymbolsMatch;
     private final Perl5Matcher myMatcher;
@@ -458,7 +461,7 @@ public class NameUtil {
     NONE, FIRST_LETTER, ALL
   }
 
-  public static class MinusculeMatcher implements Matcher {
+  public static class MinusculeMatcher implements com.intellij.util.text.Matcher {
     private final char[] myPattern;
     private final MatchingCaseSensitivity myOptions;
 

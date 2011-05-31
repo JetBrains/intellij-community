@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,19 +37,19 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 1/20/11 12:32 PM
  */
-public class EnterAfterJavadocTagHandler implements EnterHandlerDelegate {
+public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
 
   private static final Context NOT_MATCHED_CONTEXT = new Context();
   
   @Override
-  public Result preprocessEnter(PsiFile file,
-                                Editor editor,
-                                Ref<Integer> caretOffset,
-                                Ref<Integer> caretAdvance,
-                                DataContext dataContext,
+  public Result preprocessEnter(@NotNull PsiFile file,
+                                @NotNull Editor editor,
+                                @NotNull Ref<Integer> caretOffset,
+                                @NotNull Ref<Integer> caretAdvance,
+                                @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) 
   {
-    if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER || file == null) {
+    if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       return Result.Continue;
     }
 
@@ -195,14 +196,14 @@ public class EnterAfterJavadocTagHandler implements EnterHandlerDelegate {
     public final int startTagEndOffset;
     public final int endTagStartOffset;
 
-    private final CharSequence myText;
+    @Nullable private final CharSequence myText;
     private final int          myOffset;
 
     Context() {
       this(null, -1, -1, -1);
     }
 
-    Context(CharSequence text, int startTagEndOffset, int endTagStartOffset, int offset) {
+    Context(@Nullable CharSequence text, int startTagEndOffset, int endTagStartOffset, int offset) {
       myText = text;
       this.startTagEndOffset = startTagEndOffset;
       this.endTagStartOffset = endTagStartOffset;
@@ -214,7 +215,7 @@ public class EnterAfterJavadocTagHandler implements EnterHandlerDelegate {
     }
     
     public boolean shouldIndent() {
-      if (startTagEndOffset < 0) {
+      if (startTagEndOffset < 0 || myText == null) {
         return false;
       }
       for (int i = startTagEndOffset + 1; i < myOffset; i++) {

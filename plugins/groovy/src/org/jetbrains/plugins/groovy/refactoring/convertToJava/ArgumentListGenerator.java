@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -93,6 +94,13 @@ class ArgumentListGenerator {
     if (argExists) {
       final PsiElement actual = arg.args.get(0);
       LOG.assertTrue(actual instanceof GrExpression);
+      final PsiType type = param.getType();
+      final PsiType declaredType = GenerationUtil.getDeclaredType((GrExpression)actual, myExpressionGenerator.getContext());
+      if (type != null && declaredType != null && !TypesUtil.isAssignableByMethodCallConversion(type, declaredType,(GrExpression)actual)) {
+        myBuilder.append('(');
+        GenerationUtil.writeType(myBuilder, type, actual);
+        myBuilder.append(')');
+      }
       ((GrExpression)actual).accept(myExpressionGenerator);
       return true;
     }

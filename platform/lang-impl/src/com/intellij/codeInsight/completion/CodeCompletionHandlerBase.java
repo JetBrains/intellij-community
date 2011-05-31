@@ -535,7 +535,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         assert context.getStartOffset() >= 0 : "stale startOffset";
         assert context.getTailOffset() >= 0 : "stale tailOffset";
 
-        PsiDocumentManager.getInstance(indicator.getProject()).commitAllDocuments();
         item.handleInsert(context);
         PostprocessReformattingAspect.getInstance(indicator.getProject()).doPostponedFormatting();
 

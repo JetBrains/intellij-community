@@ -17,8 +17,6 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.notification.Notifications;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.TaskInfo;
@@ -448,16 +446,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
                                                 @NotNull String htmlBody,
                                                 @Nullable Icon icon,
                                                 @Nullable HyperlinkListener listener) {
-    Notifications.Bus.notify(ToolWindowManagerImpl.createNotification(type, htmlBody, listener), myFrame.getProject());
-
-    if (NotificationsManagerImpl.isEventLogVisible(myFrame.getProject())) {
-      return new BalloonHandler() {
-        @Override
-        public void hide() {
-        }
-      };
-    }
-
     return myInfoAndProgressPanel.notifyByBalloon(type, htmlBody, icon, listener);
   }
 

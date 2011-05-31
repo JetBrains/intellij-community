@@ -18,6 +18,9 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +43,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -119,15 +121,17 @@ public class CommitHelper {
             }
           }
 
-          @Nullable
-          public NotificationInfo getNotificationInfo() {
+          @Override
+          public NotificationInfo notifyFinished() {
             final List<Change> changesFailedToCommit = processor.getChangesFailedToCommit();
             
             String text = (myIncludedChanges.size() - changesFailedToCommit.size()) + " Change(s) Commited";
             if (changesFailedToCommit.size() > 0) {
               text += ", " + changesFailedToCommit.size() + " Change(s) Failed To Commit";
             }
-            return new NotificationInfo("VCS Commit",  "VCS Commit Finished", text, true);
+            final String title = "VCS Commit Finished";
+            Notifications.Bus.notify(new Notification(Notifications.LOG_ONLY_GROUP_ID, title + ", " + text, myCommitMessage, NotificationType.INFORMATION), myProject);
+            return new NotificationInfo("VCS Commit", title, text, true);
           }
         };
       ProgressManager.getInstance().run(task);

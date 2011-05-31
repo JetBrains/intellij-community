@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -43,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  * @date 11/17/10
  */
-public class BaseIndentEnterHandler implements EnterHandlerDelegate {
+public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   private final Language myLanguage;
   private final TokenSet myIndentTokens;
   private final IElementType myLineCommentType;
@@ -62,11 +63,11 @@ public class BaseIndentEnterHandler implements EnterHandlerDelegate {
     myWhitespaceTokens = whitespaceTokens;
   }
 
-  public Result preprocessEnter(final PsiFile file,
-                                final Editor editor,
-                                final Ref<Integer> caretOffset,
-                                final Ref<Integer> caretAdvance,
-                                final DataContext dataContext,
+  public Result preprocessEnter(@NotNull final PsiFile file,
+                                @NotNull final Editor editor,
+                                @NotNull final Ref<Integer> caretOffset,
+                                @NotNull final Ref<Integer> caretAdvance,
+                                @NotNull final DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {

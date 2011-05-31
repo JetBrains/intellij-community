@@ -21,11 +21,11 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.InconsistentDebugInfoException;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.ObjectReference;
@@ -45,7 +45,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   public boolean myIsSynthetic = false;
 
   private EvaluateException myEvaluateException;
-  private String            myLabel = "";
+  private String myLabel = UNKNOWN_VALUE_MESSAGE;
 
   private HashMap<Key, Object> myUserData;
 
@@ -136,8 +136,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   }
 
   protected String setLabel(String customLabel) {
-    myLabel = customLabel;
-    return myLabel;
+    return myLabel = customLabel;
   }
 
   //Context is set to null

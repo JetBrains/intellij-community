@@ -23,6 +23,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +62,7 @@ public final class SpeedSearchUtil {
   public static void appendColoredFragmentForMatcher(final String text,
                                                      final SimpleColoredComponent component,
                                                      final SimpleTextAttributes attributes,
-                                                     final NameUtil.Matcher matcher,
+                                                     final Matcher matcher,
                                                      final Color selectedBg,
                                                      final boolean selected) {
     if (!(matcher instanceof NameUtil.MinusculeMatcher) || (Registry.is("ide.highlight.match.in.selected.only") && !selected)) {

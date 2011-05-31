@@ -33,6 +33,8 @@ import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
+
 /**
  * User: lex
  * Date: Sep 20, 2003
@@ -58,6 +60,10 @@ public class LabelRenderer extends com.intellij.debugger.ui.tree.render.Referenc
 
   public LabelRenderer clone() {
     return (LabelRenderer)super.clone();
+  }
+
+  public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+    return null;
   }
 
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)

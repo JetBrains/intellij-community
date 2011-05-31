@@ -512,6 +512,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
+  public void setContextNullable(PsiElement context) {
+    myContext = context;
+  }
+
   @NotNull
   public PsiClass[] getClasses() {
     final PsiClass[] declaredDefs = super.getClasses();

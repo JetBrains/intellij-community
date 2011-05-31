@@ -95,10 +95,7 @@ public class AntTasksProvider {
         for (String name : antObjects.keySet()) {
           methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name), stringType));
         }
-        final Result<Set<LightMethodBuilder>> result =
-          Result.create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
-        result.setLockValue(true);
-        return result;
+        return Result.create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
       }
     }, false);
   }
@@ -130,9 +127,7 @@ public class AntTasksProvider {
         @Override
         public Result<Map<List<URL>, SoftReference<AntClassLoader>>> compute() {
           final Map<List<URL>, SoftReference<AntClassLoader>> map = CollectionFactory.hashMap();
-          final Result<Map<List<URL>, SoftReference<AntClassLoader>>> result = Result.create(map, ProjectRootManager.getInstance(project));
-          result.setLockValue(true);
-          return result;
+          return Result.create(map, ProjectRootManager.getInstance(project));
         }
       });
 

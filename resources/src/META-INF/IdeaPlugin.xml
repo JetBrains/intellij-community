@@ -1117,6 +1117,9 @@
 
     <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.JavaMethodNavigationOffsetProvider"/>
 
+    <editorNavigation implementation="com.intellij.javadoc.JavadocNavigationDelegate"/>
+    <enterHandlerDelegate implementation="com.intellij.javadoc.EnterInJavadocParamDescriptionHandler"/>
+    
     <filePasteProvider implementation="com.intellij.ide.JavaFilePasteProvider"/>
 
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>

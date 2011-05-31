@@ -25,7 +25,7 @@ super(binding);
 public propAssignment() {
 super();
 }
-private static < Value>Value setProp(A propOwner, Value prop) {
+private static <Value>Value setProp(A propOwner, Value prop) {
 propOwner.setProp(prop);
 return prop;
 }

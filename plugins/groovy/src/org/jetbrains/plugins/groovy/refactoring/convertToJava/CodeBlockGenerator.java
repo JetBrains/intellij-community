@@ -121,17 +121,25 @@ public class CodeBlockGenerator extends Generator {
 
   public void generateCodeBlock(GrCodeBlock block, boolean shouldInsertReturnNull) {
     builder.append("{\n");
+    GrParameter[] parameters;
     if (block.getParent() instanceof GrMethod) {
       GrMethod method = (GrMethod)block.getParent();
-      GrParameter[] parameters = method.getParameters();
-      for (GrParameter parameter : parameters) {
-        if (context.analyzedVars.toWrap(parameter)) {
-          StringBuilder typeText = new StringBuilder(GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
-          writeTypeParameters(typeText, new PsiType[]{context.typeProvider.getParameterType(parameter)}, method,
-                              new GeneratorClassNameProvider());
-          builder.append("final ").append(typeText).append(' ').append(context.analyzedVars.toVarName(parameter))
-            .append(" = new ").append(typeText).append('(').append(parameter.getName()).append(");\n");
-        }
+      parameters = method.getParameters();
+    }
+    else if (block instanceof GrClosableBlock) {
+      parameters = ((GrClosableBlock)block).getAllParameters();
+    }
+    else {
+      parameters = GrParameter.EMPTY_ARRAY;
+    }
+
+    for (GrParameter parameter : parameters) {
+      if (context.analyzedVars.toWrap(parameter)) {
+        StringBuilder typeText = new StringBuilder(GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
+        writeTypeParameters(typeText, new PsiType[]{context.typeProvider.getParameterType(parameter)}, parameter,
+                            new GeneratorClassNameProvider());
+        builder.append("final ").append(typeText).append(' ').append(context.analyzedVars.toVarName(parameter))
+          .append(" = new ").append(typeText).append('(').append(parameter.getName()).append(");\n");
       }
     }
     visitStatementOwner(block, shouldInsertReturnNull);

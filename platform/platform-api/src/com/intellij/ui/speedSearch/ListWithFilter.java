@@ -75,11 +75,16 @@ public class ListWithFilter<T> extends JPanel {
       }
     });
 
+    final int selectedIndex = myList.getSelectedIndex();
+    final int modelSize = myList.getModel().getSize();
     myModel = new NameFilteringListModel<T>(myList, namer, new Condition<String>() {
       public boolean value(String s) {
         return mySpeedSearch.shouldBeShowing(s);
       }
     }, mySpeedSearch);
+    if (myModel.getSize() == modelSize) {
+      myList.setSelectedIndex(selectedIndex);
+    }
 
     setBackground(list.getBackground());
     //setFocusable(true);

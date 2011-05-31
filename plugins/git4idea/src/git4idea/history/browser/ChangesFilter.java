@@ -161,8 +161,7 @@ public class ChangesFilter {
       myPattern = Pattern.compile(myRegexp);
       myCommandParametersFilter = new CommandParametersFilter() {
         public void applyToCommandLine(List<String> sink) {
-          sink.add("--author");
-          sink.add(myRegexp);
+          sink.add("--author=" + myRegexp);
         }
       };
       myMemoryFilter = new MemoryFilter() {
@@ -210,8 +209,7 @@ public class ChangesFilter {
       myPattern = Pattern.compile(myRegexp);
       myCommandParametersFilter = new CommandParametersFilter() {
         public void applyToCommandLine(List<String> sink) {
-          sink.add("--committer");
-          sink.add(myRegexp);
+          sink.add("--committer=" + myRegexp);
         }
       };
       myMemoryFilter = new MemoryFilter() {

@@ -175,7 +175,9 @@ public class TemplateBuilderImpl implements TemplateBuilder {
 
     //this is kinda hacky way of doing things, but have not got a better idea
     for (RangeMarker element : myElements) {
-      myDocument.deleteString(element.getStartOffset(), element.getEndOffset());
+      if (element != myEndElement) {
+        myDocument.deleteString(element.getStartOffset(), element.getEndOffset());
+      }
     }
 
     return template;

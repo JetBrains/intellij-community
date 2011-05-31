@@ -13,7 +13,7 @@ new staticPropAssignment(new groovy.lang.Binding(args)).run();
 }
 
 public java.lang.Object run() {
-print(3 + (setProp(A, 2 + 1)));
+print(3 + (setProp(2 + 1)));
 return null;
 
 }
@@ -24,7 +24,7 @@ super(binding);
 public staticPropAssignment() {
 super();
 }
-private static < Value>Value setProp(Value prop) {
+private static <Value>Value setProp(Value prop) {
 A.setProp(prop);
 return prop;
 }

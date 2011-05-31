@@ -846,6 +846,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ThreadDeathRethrownInspection.class);
         m_inspectionClasses.add(ThrowCaughtLocallyInspection.class);
         m_inspectionClasses.add(ThrowFromFinallyBlockInspection.class);
+        m_inspectionClasses.add(NullThrownInspection.class);
         m_inspectionClasses.add(TooBroadCatchInspection.class);
         m_inspectionClasses.add(TooBroadThrowsInspection.class);
         m_inspectionClasses.add(UncheckedExceptionClassInspection.class);

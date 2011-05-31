@@ -157,4 +157,6 @@ public final class Matcher {
   void testAsserts() {doTest()}
   void testConditional() {doTest()}
   void testBinary() {doTest()}
+  void testSafeCast() {doTest()}
+  void testNewExpr() {doTest()}
 }

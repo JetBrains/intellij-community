@@ -192,7 +192,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   }
 
   public boolean isSoftWrappingEnabled() {
-    if (myEditor.isOneLineMode()) {
+    if (!myUseSoftWraps || myEditor.isOneLineMode()) {
       return false;
     }
 
@@ -210,12 +210,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       }
     }
 
+    if (application.isUnitTestMode()) return true;
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    if (!application.isUnitTestMode() && (visibleArea.width <= 0 || visibleArea.height <= 0)) {
-      return false;
-    }
-
-    return myUseSoftWraps;
+    return visibleArea.width > 0 && visibleArea.height > 0;
   }
 
   @Nullable

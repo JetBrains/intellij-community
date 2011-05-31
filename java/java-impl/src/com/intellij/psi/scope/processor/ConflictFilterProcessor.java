@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,17 @@ import com.intellij.psi.util.PsiUtil;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
+ * @author ik
  * Date: 31.03.2003
- * Time: 14:46:31
- * To change this template use Options | File Templates.
  */
-public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo> implements NameHint{
+public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo> implements NameHint {
   private final PsiConflictResolver[] myResolvers;
   private JavaResolveResult[] myCachedResult = null;
   protected String myName;
   protected final PsiElement myPlace;
   protected final PsiFile myPlaceFile;
 
-  public ConflictFilterProcessor(String name, ElementFilter filter, PsiConflictResolver[] resolvers, List<CandidateInfo> container,
-                                 final PsiElement place){
+  public ConflictFilterProcessor(String name, ElementFilter filter, PsiConflictResolver[] resolvers, List<CandidateInfo> container, PsiElement place) {
     super(filter, container);
     myResolvers = resolvers;
     myName = name;
@@ -49,34 +45,33 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     myPlaceFile = place.getContainingFile();
   }
 
-  public boolean execute(PsiElement element, ResolveState state){
-    if(myCachedResult != null && myCachedResult.length == 1 && myCachedResult[0].isAccessible()) {
+  public boolean execute(PsiElement element, ResolveState state) {
+    if (myCachedResult != null && myCachedResult.length == 1 && myCachedResult[0].isAccessible()) {
       return false;
     }
-
-    if(myName == null || PsiUtil.checkName(element, myName, myPlace)){
+    if (myName == null || PsiUtil.checkName(element, myName, myPlace)) {
       return super.execute(element, state);
     }
     return true;
   }
 
-  protected void add(PsiElement element, PsiSubstitutor substitutor){
+  protected void add(PsiElement element, PsiSubstitutor substitutor) {
     add(new CandidateInfo(element, substitutor));
   }
 
-  protected void add(CandidateInfo info){
+  protected void add(CandidateInfo info) {
     myCachedResult = null;
     myResults.add(info);
   }
 
-  public void handleEvent(Event event, Object associated){
-    if(event == JavaScopeProcessorEvent.CHANGE_LEVEL && myName != null){
+  public void handleEvent(Event event, Object associated) {
+    if (event == JavaScopeProcessorEvent.CHANGE_LEVEL && myName != null) {
       getResult();
     }
   }
 
-  public JavaResolveResult[] getResult(){
-    if(myCachedResult == null){
+  public JavaResolveResult[] getResult() {
+    if (myCachedResult == null) {
       final List<CandidateInfo> conflicts = getResults();
       for (PsiConflictResolver resolver : myResolvers) {
         CandidateInfo candidate = resolver.resolveConflict(conflicts);
@@ -92,16 +87,17 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     return myCachedResult;
   }
 
-  public String getName(ResolveState state){
+  public String getName(ResolveState state) {
     return myName;
   }
 
-  public void setName(String name){
+  public void setName(String name) {
     myName = name;
   }
 
   public <T> T getHint(Key<T> hintKey) {
-    if (hintKey == NameHint.KEY){
+    if (hintKey == NameHint.KEY) {
+      //noinspection unchecked
       return myName != null ? (T)this : null;
     }
     return super.getHint(hintKey);

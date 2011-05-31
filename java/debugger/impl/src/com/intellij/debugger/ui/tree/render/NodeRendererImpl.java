@@ -15,10 +15,15 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+
+import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -47,6 +52,10 @@ public abstract class NodeRendererImpl implements NodeRenderer{
 
   public void setEnabled(boolean enabled) {
     myProperties.setEnabled(enabled);
+  }
+
+  public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+    return null;
   }
 
   public NodeRendererImpl clone() {

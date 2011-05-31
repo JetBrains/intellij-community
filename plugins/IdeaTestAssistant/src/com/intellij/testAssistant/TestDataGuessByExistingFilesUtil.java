@@ -3,6 +3,7 @@ package com.intellij.testAssistant;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
@@ -19,6 +20,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,9 +136,15 @@ public class TestDataGuessByExistingFilesUtil {
       return null;
     }
 
-    final Pair<TestDataDescriptor, Long> cached = CACHE.get(psiClass.getQualifiedName());
-    if (cached != null && cached.second + CACHE_ENTRY_TTL_MS > System.currentTimeMillis()) {
-      return cached.first.isComplete() ? cached.first : null;
+    final String qualifiedName = psiClass.getQualifiedName();
+    final Pair<TestDataDescriptor, Long> cached = CACHE.get(qualifiedName);
+    if (cached != null) {
+      if (cached.first.isComplete()) {
+        return cached.first;
+      }
+      if (cached.second > System.currentTimeMillis()) {
+        return null;
+      }
     }
 
     TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
@@ -165,7 +173,7 @@ public class TestDataGuessByExistingFilesUtil {
     }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     final TestDataDescriptor descriptor = buildDescriptor(gotoModel, fileIndex, testNames, psiClass);
-    CACHE.put(psiClass.getQualifiedName(), new Pair<TestDataDescriptor, Long>(descriptor, System.currentTimeMillis()));
+    CACHE.put(qualifiedName, new Pair<TestDataDescriptor, Long>(descriptor, System.currentTimeMillis() + CACHE_ENTRY_TTL_MS));
     return descriptor;
   }
 
@@ -203,19 +211,20 @@ public class TestDataGuessByExistingFilesUtil {
                                                     @NotNull Collection<String> testNames,
                                                     @NotNull PsiClass psiClass)
   {
-    List<Trinity<NameUtil.Matcher, String, String>> input = new ArrayList<Trinity<NameUtil.Matcher, String, String>>();
+    List<Trinity<Matcher, String, String>> input = new ArrayList<Trinity<Matcher, String, String>>();
     Set<String> testNamesLowerCase = new HashSet<String>();
     for (String testName : testNames) {
       String pattern = String.format("*%s*", testName);
-      input.add(new Trinity<NameUtil.Matcher, String, String>(
+      input.add(new Trinity<Matcher, String, String>(
         NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern)), testName, pattern
       ));
       testNamesLowerCase.add(testName.toLowerCase());
     }
     Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
     for (String name : gotoModel.getNames(false)) {
+      ProgressManager.checkCanceled();
       boolean currentNameProcessed = false;
-      for (Trinity<NameUtil.Matcher, String, String> trinity : input) {
+      for (Trinity<Matcher, String, String> trinity : input) {
         if (!trinity.first.matches(name)) {
           continue;
         }
@@ -250,27 +259,39 @@ public class TestDataGuessByExistingFilesUtil {
           if (!current.isComplete()) {
             continue;
           }
-          String pattern = current.filePrefix.toLowerCase();
-          if (!StringUtil.isEmpty(current.filePrefix)) {
-            // Handle situations like the one below:
-            //     *) test class has tests with names 'testAlignedParameters' and 'testNonAlignedParameters';
-            //     *) test data files with the following names present: 'AlignedParameters.java' and 'NonAlignedParameters.java';
-            //     *) we're processing the following (test; test data file) pair - ('testAlignedParameters'; 'NonAlignedParameters.java');
-            // We don't want to store descriptor with file prefix 'Non' here.
-            boolean skip = false;
-            for (String testName : testNamesLowerCase) {
-              if (testName.startsWith(pattern)) {
-                skip = true;
-                break;
-              }
+
+          // Handle situations like the one below:
+          //     *) test class has tests with names 'testAlignedParameters' and 'testNonAlignedParameters';
+          //     *) test data files with the following names present: 'AlignedParameters.java' and 'NonAlignedParameters.java';
+          //     *) we're processing the following (test; test data file) pair - ('testAlignedParameters'; 'NonAlignedParameters.java');
+          // We don't want to store descriptor with file prefix 'Non' here.
+          // The same is true for suffixes, e.g. tests like 'testLeaveValidCodeBlock()' and 'testLeaveValidCodeBlockWithEmptyLineAfterIt()'
+          String prefixPattern = current.filePrefix.toLowerCase();
+          boolean checkPrefix = !StringUtil.isEmpty(prefixPattern);
+          String suffixPattern = current.fileSuffix;
+          for (TestLocationDescriptor descriptor : descriptors) {
+            if (suffixPattern.endsWith(descriptor.fileSuffix)) {
+              suffixPattern = suffixPattern.substring(0, suffixPattern.length() - descriptor.fileSuffix.length());
             }
-            if (skip) {
+          }
+          suffixPattern = suffixPattern.toLowerCase();
+          boolean checkSuffix = !StringUtil.isEmpty(suffixPattern);
+          boolean skip = false;
+          for (String testName : testNamesLowerCase) {
+            if (testName.equals(trinity.second)) {
               continue;
             }
+            if ((checkPrefix && testName.startsWith(prefixPattern)) || (checkSuffix && testName.endsWith(suffixPattern))) {
+              skip = true;
+              break;
+            }
+          }
+          if (skip) {
+            continue;
           }
 
           currentNameProcessed = true;
-          if (descriptors.isEmpty() || descriptors.iterator().next().dir.equals(current.dir)) {
+          if (descriptors.isEmpty() || (descriptors.iterator().next().dir.equals(current.dir) && !descriptors.contains(current))) {
             descriptors.add(current);
             continue;
           }
@@ -354,6 +375,9 @@ public class TestDataGuessByExistingFilesUtil {
       }
       else {
         startWithLowerCase = testNameStartsWithLowerCase;
+      }
+      if (i < 0) {
+        return;
       }
 
       filePrefix = fileName.substring(0, i);

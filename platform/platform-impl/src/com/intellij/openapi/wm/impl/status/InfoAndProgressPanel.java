@@ -25,10 +25,12 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -45,6 +47,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -343,12 +346,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.repaint();
   }
 
-  public Pair<String, String> setText(final String text, final String requestor) {
-    if (text == null || text.length() == 0) {
-      if ((requestor != null && !requestor.equals(myCurrentRequestor))
-          || (myCurrentRequestor != null && !myCurrentRequestor.equals(requestor))) {
-        return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
-      }
+  public Pair<String, String> setText(@Nullable final String text, @Nullable final String requestor) {
+    if (StringUtil.isEmpty(text) && !Comparing.equal(requestor, myCurrentRequestor)) {
+      return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
     }
 
     myInfoPanel.setText(text);

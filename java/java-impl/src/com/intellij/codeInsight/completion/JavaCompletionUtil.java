@@ -820,6 +820,8 @@ public class JavaCompletionUtil {
       hasParams = false;
     }
 
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
+
     final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
     ParenthesesInsertHandler.getInstance(hasParams,
                                          styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,

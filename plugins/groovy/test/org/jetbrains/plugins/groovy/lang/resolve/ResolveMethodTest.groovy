@@ -405,7 +405,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   public void testUseOperator() throws Exception {
     PsiReference ref = configureByFile("useOperator/A.groovy");
     final PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod && ((PsiMethod) resolved).hasModifierProperty(PsiModifier.STATIC));
+    assertTrue(resolved instanceof GrGdkMethod);
   }
 
   public void testClosureMethodInsideClosure() throws Exception {
