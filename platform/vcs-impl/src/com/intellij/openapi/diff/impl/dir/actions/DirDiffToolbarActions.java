@@ -15,39 +15,49 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
+import com.intellij.ide.diff.DirDiffModelHolder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DirDiffToolbarActions extends ActionGroup {
-  private final AnAction[] myActions;
-  private final DirDiffTableModel myModel;
+  private final AnAction[] myActions;  
 
   public DirDiffToolbarActions(DirDiffTableModel model, JComponent panel) {
     super("Directory Diff Actions", false);
-    myModel = model;
-    myActions = new AnAction[] {
-      new RefreshDirDiffAction(myModel),
+    final List<AnAction> actions = new ArrayList<AnAction>(Arrays.asList(
+      new RefreshDirDiffAction(model),
       Separator.getInstance(),
-      new EnableLeft(myModel),
-      new EnableNotEqual(myModel),
-      new EnableEqual(myModel),
-      new EnableRight(myModel),
+      new EnableLeft(model),
+      new EnableNotEqual(model),
+      new EnableEqual(model),
+      new EnableRight(model),
       Separator.getInstance(),
-      new ChangeCompareModeGroup(myModel),
-      Separator.getInstance()
-    };
-    for (AnAction action : myActions) {
+      new ChangeCompareModeGroup(model),
+      Separator.getInstance()));
+
+    for (AnAction action : model.getSettings().getExtraActions()) {
+      actions.add(action);
+    }
+
+    for (AnAction action : actions) {
       if (action instanceof ShortcutProvider) {
         action.registerCustomShortcutSet(new CustomShortcutSet(((ShortcutProvider)action).getShortcut()), panel);
       }
+      if (action instanceof DirDiffModelHolder) {
+        ((DirDiffModelHolder)action).setModel(model);
+      }
     }
+    myActions = actions.toArray(new AnAction[actions.size()]);
   }
 
   @NotNull

@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
-import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -73,7 +72,7 @@ public class DirDiffPanel implements Disposable {
   private DiffElement myCurrentElement;
   private String oldFilter;
 
-  public DirDiffPanel(DirDiffTableModel model, DirDiffWindow wnd, DirDiffSettings settings) {
+  public DirDiffPanel(DirDiffTableModel model, DirDiffWindow wnd) {
     myModel = model;
     myDiffWindow = wnd;
     mySourceDirField.setText(model.getSourceDir().getPath());
@@ -102,43 +101,7 @@ public class DirDiffPanel implements Disposable {
           myTable.getSelectionModel().setLeadSelectionIndex(e.getLastIndex());
         }
         else {
-          final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
-          if (element == null
-              || (myCurrentElement != null && (myCurrentElement == element.getSource() || myCurrentElement == element.getTarget()))) {
-            return;
-          }
-          clearDiffPanel();
-          if (element.getType() == DType.CHANGED) {
-            myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow());
-            if (myDiffPanelComponent != null) {
-              myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
-              myCurrentElement = element.getSource();
-            } else {
-              myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
-              myDiffPanel.revalidate();
-              myDiffPanel.repaint();
-            }
-          } else {
-            final DiffElement object;
-            if (element.getType() == DType.ERROR) {
-              object = element.getSource() == null ? element.getTarget() : element.getSource();
-            } else {
-              object = element.isSource() ? element.getSource() : element.getTarget();
-            }
-            myViewComponent = object.getViewComponent(project, null);
-
-            if (myViewComponent != null) {
-              myCurrentElement = object;
-              myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
-              DataManager.registerDataProvider(myDiffPanel, myCurrentElement.getDataProvider(project));
-              myDiffPanel.revalidate();
-              myDiffPanel.repaint();
-            } else {
-              myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
-              myDiffPanel.revalidate();
-              myDiffPanel.repaint();
-            }
-          }
+          update(false);
         }
         myDiffWindow.setTitle(myModel.getTitle());
       }
@@ -237,7 +200,7 @@ public class DirDiffPanel implements Disposable {
       }
     });
     myFilter.getTextEditor().setColumns(10);
-    myFilter.setFilter(settings.getFilter());
+    myFilter.setFilter(myModel.getSettings().getFilter());
     //oldFilter = myFilter.getText();
     oldFilter = myFilter.getFilter();
     myFilterPanel.add(myFilter, BorderLayout.CENTER);
@@ -288,6 +251,52 @@ public class DirDiffPanel implements Disposable {
       myTargetDirField.setButtonEnabled(false);
       myTargetDirField.getButton().setVisible(false);
       myTargetDirField.setEditable(false);
+    }
+  }
+
+  public void update(boolean force) {
+    final Project project = myModel.getProject();
+    final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
+    if (element == null) {
+      clearDiffPanel();
+      return;
+    }
+    if (!force
+        && myCurrentElement != null
+        && (myCurrentElement == element.getSource() || myCurrentElement == element.getTarget())) {
+      return;
+    }
+    clearDiffPanel();
+    if (element.getType() == DType.CHANGED) {
+      myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow());
+      if (myDiffPanelComponent != null) {
+        myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
+        myCurrentElement = element.getSource();
+      } else {
+        myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
+        myDiffPanel.revalidate();
+        myDiffPanel.repaint();
+      }
+    } else {
+      final DiffElement object;
+      if (element.getType() == DType.ERROR) {
+        object = element.getSource() == null ? element.getTarget() : element.getSource();
+      } else {
+        object = element.isSource() ? element.getSource() : element.getTarget();
+      }
+      myViewComponent = object.getViewComponent(project, null);
+
+      if (myViewComponent != null) {
+        myCurrentElement = object;
+        myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
+        DataManager.registerDataProvider(myDiffPanel, myCurrentElement.getDataProvider(project));
+        myDiffPanel.revalidate();
+        myDiffPanel.repaint();
+      } else {
+        myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
+        myDiffPanel.revalidate();
+        myDiffPanel.repaint();
+      }
     }
   }
 
