@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.ScreenUtil;
@@ -38,6 +37,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.Html;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
@@ -473,7 +472,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
     final Ref<Dimension> prefSize = new Ref<Dimension>(null);
-    String htmlBody = getHtmlBody(html);
+    String htmlBody = UIUtil.getHtmlBody(html);
     String text = "<html><head>" +
            UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()) +
            "</head><body>" +
@@ -573,7 +572,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public static String formatHtml(String text, HintHint hintHint) {
-    String htmlBody = getHtmlBody(text);
+    String htmlBody = UIUtil.getHtmlBody(text);
     text = "<html><head>" +
            UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(),
                                         hintHint.getUlImg()) +
@@ -592,36 +591,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   public static void setBorder(JComponent pane) {
     pane.setBorder(
       BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
-  }
-
-  public static String getHtmlBody(String text) {
-    return getHtmlBody(new Html(text));
-  }
-
-  public static String getHtmlBody(Html html) {
-    String text = html.getText();
-    String result = text;
-    if (!text.startsWith("<html>")) {
-      result = text.replaceAll("\n", "<br>");
-    }
-    else {
-      final int bodyIdx = text.indexOf("<body>");
-      final int closedBodyIdx = text.indexOf("</body>");
-      if (bodyIdx != -1 && closedBodyIdx != -1) {
-        result = text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
-      }
-      else {
-        text = StringUtil.trimStart(text, "<html>").trim();
-        text = StringUtil.trimEnd(text, "</html>").trim();
-        text = StringUtil.trimStart(text, "<body>").trim();
-        text = StringUtil.trimEnd(text, "</body>").trim();
-        result = text;
-      }
-    }
-
-
-
-    return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }
 
   @NotNull
