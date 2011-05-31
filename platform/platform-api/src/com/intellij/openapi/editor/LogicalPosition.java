@@ -141,10 +141,12 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
 
   @NonNls
   public String toString() {
-    return "LogicalPosition: line=" + line + " column=" + column + "; visual position aware=" + visualPositionAware
-           + "; soft wrap: lines=" + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine) + " (before=" +
-           softWrapLinesBeforeCurrentLogicalLine + "; current=" + softWrapLinesOnCurrentLogicalLine
-           + ") columns diff=" + softWrapColumnDiff + "; folding: lines = " + foldedLines + " columns diff=" + foldingColumnDiff;
+    return "LogicalPosition: (" + line + ", " + column + ")"
+           + (visualPositionAware ? "; vp aware" : "")
+           + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine == 0 ? "" : "; soft wrap: lines=" + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine) + " (before=" + softWrapLinesBeforeCurrentLogicalLine + "; current=" + softWrapLinesOnCurrentLogicalLine + ")")
+           + (softWrapColumnDiff == 0 ? "" : "columns diff=" + softWrapColumnDiff + ";" )
+           + (foldedLines == 0? "" : " folding: lines = " + foldedLines + ";")
+           + (foldingColumnDiff == 0 ? "" : " columns diff=" + foldingColumnDiff);
   }
 
   public int compareTo(LogicalPosition position) {
