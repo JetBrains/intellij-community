@@ -768,6 +768,28 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(new LogicalPosition(3, 0), myEditor.visualToLogicalPosition(new VisualPosition(4, 0)));
   }
   
+  public void testDeleteThatEndsOnLineWithMultiLineFoldRegion() throws IOException {
+    String text = 
+      "111\n" +
+      "222\n" +
+      "333\n" +
+      "444 55\n" +
+      "666 77";
+    
+    init(100, text);
+
+    int foldStart = text.indexOf("5");
+    int foldEnd = text.indexOf("7");
+    addCollapsedFoldRegion(foldStart, foldEnd, "...");
+
+    int selectionStart = text.indexOf("2");
+    int selectionEnd = text.indexOf("4");
+    getEditor().getSelectionModel().setSelection(selectionStart, selectionEnd);
+    
+    delete();
+    assertEquals(new VisualPosition(1, 8), getEditor().offsetToVisualPosition(getEditor().getDocument().getTextLength() - 1));
+  }
+  
   private void init(final int visibleWidth, String fileText) throws IOException {
     init(fileText);
     myEditor.getSettings().setUseSoftWraps(true);

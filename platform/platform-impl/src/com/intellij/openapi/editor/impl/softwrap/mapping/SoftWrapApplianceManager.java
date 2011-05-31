@@ -132,7 +132,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   }
 
   private void recalculateSoftWraps(IncrementalCacheUpdateEvent event) {
-    event.updateNewOffsetsIfNecessary(myEditor.getDocument());
+    event.updateNewOffsetsIfNecessary(myEditor.getDocument(), myEditor.getFoldingModel());
     
     //CachingSoftWrapDataMapper.log("xxxxxxxxxxxxxx Processing soft wraps for " + event + ". Document length: " + myEditor.getDocument().getTextLength() 
     //                              + ", document: " + System.identityHashCode(myEditor.getDocument()));
