@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -355,21 +354,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    VariantsProcessor processor = new VariantsProcessor(this);
     final List<String> dunderAll = getDunderAll();
-    processor.setAllowedNames(dunderAll);
     final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
-    processDeclarations(processor, ResolveState.initial(), null, this);
-    List<PyElement> result = new ArrayList<PyElement>();
-    for (LookupElement lookupElement : processor.getResultList()) {
-      final Object value = lookupElement.getObject();
-      if (value instanceof PyElement) {
-        result.add((PyElement) value);
+    final List<PyElement> result = new ArrayList<PyElement>();
+    VariantsProcessor processor = new VariantsProcessor(this) {
+      @Override
+      protected void addElement(String name, PsiElement element) {
+        result.add((PyElement) element);
         if (remainingDunderAll != null) {
-          remainingDunderAll.remove(lookupElement.getLookupString());
+          remainingDunderAll.remove(name);
         }
       }
-    }
+    };
+    processor.setAllowedNames(dunderAll);
+    processDeclarations(processor, ResolveState.initial(), null, this);
     if (remainingDunderAll != null) {
       for (String s: remainingDunderAll) {
         result.add(new LightNamedElement(myManager, PythonLanguage.getInstance(), s));

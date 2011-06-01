@@ -14,10 +14,10 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +112,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
 
     if (point == ResolveImportUtil.PointInImport.NONE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when not imported from, add regular attributes
-      final VariantsProcessor processor = new VariantsProcessor(location, new Condition<PsiElement>() {
+      final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
         @Override
         public boolean value(PsiElement psiElement) {
           return !(psiElement instanceof PyImportElement);

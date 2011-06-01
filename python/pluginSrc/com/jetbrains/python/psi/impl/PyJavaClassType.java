@@ -7,9 +7,9 @@ import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public class PyJavaClassType implements PyType {
   }
 
   public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
-    final VariantsProcessor processor = new VariantsProcessor(location);
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location);
     myClass.processDeclarations(processor, ResolveState.initial(), null, location);
     return processor.getResult();
   }
