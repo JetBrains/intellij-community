@@ -29,9 +29,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.FilterComponent;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -83,6 +85,7 @@ public class DirDiffPanel implements Disposable {
     myModel.setPanel(this);
     Disposer.register(this, myModel);
     myTable.setModel(myModel);
+    new TableSpeedSearch(myTable);
 
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
     myTable.setDefaultRenderer(Object.class, renderer);
