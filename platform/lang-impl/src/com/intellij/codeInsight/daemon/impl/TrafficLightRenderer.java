@@ -208,7 +208,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     }
 
     if (status.errorAnalyzingFinished) {
-      if (DumbService.isDumb(myProject)) {
+      if (myProject != null && DumbService.isDumb(myProject)) {
         return new LayeredIcon(NO_ANALYSIS_ICON, icon, STARING_EYE_ICON);
       }
 
