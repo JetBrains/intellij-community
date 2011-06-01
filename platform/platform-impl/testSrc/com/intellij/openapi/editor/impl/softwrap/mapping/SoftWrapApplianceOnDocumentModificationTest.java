@@ -703,6 +703,58 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(new VisualPosition(visLine, 0), caretModel.getVisualPosition());
   }
   
+  public void testFoldRegionsUpdate() throws IOException {
+    String text = 
+      "import java.util.List;\n" +
+      "import java.util.ArrayList;\n" +
+      "\n" +
+      "class Test {\n" +
+      "}";
+    init(300, text);
+    
+    final int foldStartOffset = "import".length() + 1;
+    int foldEndOffset = text.indexOf("class") - 2;
+    addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
+    
+    // Simulate addition of the new import that modifies existing fold region.
+    myEditor.getDocument().insertString(foldEndOffset, "\nimport java.util.Date;\n");
+    final FoldingModel foldingModel = myEditor.getFoldingModel();
+    foldingModel.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        FoldRegion oldFoldRegion = getFoldRegion(foldStartOffset);
+        assertNotNull(oldFoldRegion);
+        foldingModel.removeFoldRegion(oldFoldRegion);
+        
+        int newFoldEndOffset = myEditor.getDocument().getText().indexOf("class") - 2;
+        FoldRegion newFoldRegion = foldingModel.addFoldRegion(foldStartOffset, newFoldEndOffset, "...");
+        assertNotNull(newFoldRegion);
+        newFoldRegion.setExpanded(false);
+      }
+    });
+    CodeFoldingManager.getInstance(getProject()).updateFoldRegions(myEditor);
+    assertEquals(new VisualPosition(2, 0), myEditor.logicalToVisualPosition(new LogicalPosition(5, 0)));
+  }
+
+  public void testModificationOfSoftWrappedFoldRegion() throws IOException {
+    String text =
+      "import java.util.List;import java.util.ArrayList;import java.util.Collection;import java.util.Collections;\n" +
+      "import java.util.LinkedList;\n" +
+      "import java.util.Set;\n" +
+      "\n" +
+      "class Test {\n" +
+      "}";
+    init(300, text);
+
+    final int foldStartOffset = text.indexOf("java.util.Collections");
+    final int foldEndOffset = text.indexOf("class") - 2;
+    addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
+
+    int modificationOffset = text.indexOf("java.util.Set");
+    myEditor.getDocument().insertString(modificationOffset, "import java.util.HashSet;\n");
+    // Used to get StackOverflowError here, hence, no additional checking is performed.
+  }
+  
   private void init(final int visibleWidth, String fileText) throws IOException {
     init(fileText);
     myEditor.getSettings().setUseSoftWraps(true);
