@@ -120,7 +120,13 @@ public class EventLog implements Notifications {
     }
     view.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
 
-    ((StatusBarEx)WindowManager.getInstance().getIdeFrame(project).getStatusBar()).setLogMessage(mainText);
+    final IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+    if (frame != null) {
+      final StatusBar statusBar = frame.getStatusBar();
+      if (statusBar != null) {
+        ((StatusBarEx)statusBar).setLogMessage(mainText);
+      }
+    }
   }
 
   private static int eolIndex(String mainText) {
