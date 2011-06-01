@@ -96,7 +96,7 @@ class StatusPanel extends JPanel {
         @Override
         public void run() {
           String text = myLogMessage;
-          if (myDirty || System.currentTimeMillis() - myLogTime.getTime() >= DateFormatUtil.MINUTE) {
+          if (myLogTime != null && (myDirty || System.currentTimeMillis() - myLogTime.getTime() >= DateFormatUtil.MINUTE)) {
             text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(myLogTime)) + ")";
           }
           myTextPanel.setText(text);
