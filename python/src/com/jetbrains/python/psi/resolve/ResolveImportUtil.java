@@ -771,6 +771,11 @@ public class ResolveImportUtil {
           if (result.size() > 0) {
             result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
           }
+          for (String component : result) {
+            if (!PyNames.isIdentifier(component)) {
+              return true;
+            }
+          }
           myResult = result;
         }
       }
