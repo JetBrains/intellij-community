@@ -221,6 +221,10 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public void doNotSave(boolean value) {
+  }
+
+  @Override
   public boolean isDoNotSave() {
     return false; 
   }

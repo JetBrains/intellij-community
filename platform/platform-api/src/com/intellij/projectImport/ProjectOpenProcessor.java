@@ -43,7 +43,7 @@ public abstract class ProjectOpenProcessor {
   }
 
   @Nullable
-  public abstract Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame);
+  public abstract Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
 
   /**
    * Allow opening a directory directly if the project files are located in that directory.

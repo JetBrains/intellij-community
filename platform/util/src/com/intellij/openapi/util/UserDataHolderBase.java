@@ -90,7 +90,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     return map == null ? null : (T)map.get(key);
   }
 
-  public <T> void putUserData(@NotNull Key<T> key, T value) {
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     while (true) {
       try {
         if (value == null) {

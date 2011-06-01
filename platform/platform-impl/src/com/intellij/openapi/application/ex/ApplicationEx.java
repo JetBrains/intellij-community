@@ -48,7 +48,7 @@ public interface ApplicationEx extends Application {
   void assertReadAccessToDocumentsAllowed();
 
   void doNotSave();
-
+  void doNotSave(boolean value);
   boolean isDoNotSave();
 
   //force exit

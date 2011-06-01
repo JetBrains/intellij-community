@@ -99,7 +99,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private int myInEditorPaintCounter = 0;
   private long myStartTime = 0;
-  private boolean myDoNotSave = false;
+  private boolean myDoNotSave;
   private volatile boolean myDisposeInProgress = false;
 
   private int myRestartCode = 0;
@@ -197,6 +197,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myTestModeFlag = isUnitTestMode;
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
+
+    myDoNotSave = myTestModeFlag || myHeadlessMode;
 
     loadApplicationComponents();
 
@@ -1198,13 +1200,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void saveSettings() {
-    if (!myDoNotSave && !isUnitTestMode() && !isHeadlessEnvironment()) {
-      _saveSettings();
-    }
+    if (myDoNotSave) return;
+    _saveSettings();
   }
 
   public void saveAll() {
-    if (myDoNotSave || isUnitTestMode() || isHeadlessEnvironment()) return;
+    if (myDoNotSave) return;
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -1218,9 +1219,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void doNotSave() {
-    myDoNotSave = true;
+    doNotSave(true);
   }
 
+  public void doNotSave(boolean value) {
+    myDoNotSave = value;
+  }
 
   public boolean isDoNotSave() {
     return myDoNotSave;
