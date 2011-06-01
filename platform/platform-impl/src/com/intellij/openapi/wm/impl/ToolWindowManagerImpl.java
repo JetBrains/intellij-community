@@ -454,6 +454,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
+  @Override
   public void initToolWindow(ToolWindowEP bean) {
     ToolWindowAnchor toolWindowAnchor;
     try {
@@ -471,7 +472,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
     final ToolWindowFactory factory = bean.getToolWindowFactory();
     final ToolWindowImpl toolWindow =
-      (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory), bean.canCloseContents);
+      (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory),
+                                         bean.canCloseContents);
     toolWindow.setContentFactory(factory);
     if (bean.icon != null) {
       Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
