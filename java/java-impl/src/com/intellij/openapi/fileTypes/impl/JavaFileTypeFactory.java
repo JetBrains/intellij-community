@@ -20,16 +20,9 @@ import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
-public class DefaultFileTypeFactory extends FileTypeFactory {
+public class JavaFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(JavaClassFileType.INSTANCE, "class");
     consumer.consume(JavaFileType.INSTANCE, "java");
-
-    consumer.consume(new WorkspaceFileType(), WorkspaceFileType.DEFAULT_EXTENSION);
-    consumer.consume(new ModuleFileType(), ModuleFileType.DEFAULT_EXTENSION);
-    consumer.consume(new ProjectFileType(), ProjectFileType.DEFAULT_EXTENSION);
   }
 }
