@@ -129,7 +129,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.STICKY_BALLOON : displayType);
     }
 
-    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY) {
+    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY &&
+        !LOG_ONLY_GROUP_ID.equals(notification.getGroupId())) {
       myModel.add(notification, project);
     }
 
