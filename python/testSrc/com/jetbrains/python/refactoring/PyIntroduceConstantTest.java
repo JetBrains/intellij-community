@@ -26,6 +26,10 @@ public class PyIntroduceConstantTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testInsertAfterDocstring() { // PY-3657
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("/refactoring/introduceConstant/" + getTestName(true) + ".py");
     ConstantIntroduceHandler handler = new ConstantIntroduceHandler();
