@@ -364,9 +364,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
     }
 
-    final boolean logMode = StringUtil.isEmpty(text) && !hasProgressIndicators();
-    myInfoPanel.updateText(logMode, text);
-    myCurrentRequestor = logMode ? requestor : null;
+    boolean logMode = myInfoPanel.updateText(!hasProgressIndicators(), text);
+    myCurrentRequestor = logMode ? null : requestor;
     return Pair.create(text, requestor);
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
@@ -38,6 +39,7 @@ import java.util.Date;
  * @author peter
  */
 class StatusPanel extends JPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusPanel");
   private static final Icon ourShowLogIcon = IconLoader.getIcon("/general/hideSideUp.png");
   private static final Icon ourHideLogIcon = IconLoader.getIcon("/general/hideSideDown.png");
   private boolean myLogMode;
@@ -52,6 +54,8 @@ class StatusPanel extends JPanel {
     super(new BorderLayout());
     
     setOpaque(isOpaque() && !SystemInfo.isMac);
+
+    myShowLog.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
     myShowLog.addMouseListener(new MouseAdapter() {
       @Override
@@ -89,17 +93,18 @@ class StatusPanel extends JPanel {
     myDirty = false;
   }
 
-  public void updateText(boolean logMode, @Nullable String nonLogText) {
-    myLogMode = logMode;
+  public boolean updateText(boolean logAllowed, @Nullable String nonLogText) {
+    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && myLogMessage != null;
 
-    myShowLog.setVisible(logMode);
+    myShowLog.setVisible(myLogMode);
 
-    if (logMode) {
+    if (myLogMode) {
+      LOG.assertTrue(myLogTime != null);
       new Runnable() {
         @Override
         public void run() {
           String text = myLogMessage;
-          if (myLogTime != null && (myDirty || System.currentTimeMillis() - myLogTime.getTime() >= DateFormatUtil.MINUTE)) {
+          if (myDirty || System.currentTimeMillis() - myLogTime.getTime() >= DateFormatUtil.MINUTE) {
             text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(myLogTime)) + ")";
           }
           myTextPanel.setText(text);
@@ -127,7 +132,7 @@ class StatusPanel extends JPanel {
       myTextPanel.setText(nonLogText);
       myLogAlarm.cancelAllRequests();
     }
-
+    return myLogMode;
   }
 
   public void hideLog() {
