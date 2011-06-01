@@ -20,4 +20,5 @@ public class Base2 extends Base1 {
   public static void m(float f) { }
   public static class F { }
   public interface II extends I1, I2 { }
+  public enum E { }
 }
