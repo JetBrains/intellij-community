@@ -19,6 +19,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
@@ -160,6 +161,45 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return null;
     }
 
+    private static boolean isGuardedByHasattr(@NotNull final PyElement node, @NotNull final String name) {
+      final String nodeName = node.getName();
+      if (nodeName != null) {
+        final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, nodeName);
+        PyElement e = PsiTreeUtil.getParentOfType(node, PyConditionalStatementPart.class, PyConditionalExpression.class);
+        while (e != null && PsiTreeUtil.isAncestor(owner, e, true)) {
+          final ArrayList<PyCallExpression> calls = new ArrayList<PyCallExpression>();
+          PyExpression cond = null;
+          if (e instanceof PyConditionalStatementPart) {
+            cond = ((PyConditionalStatementPart)e).getCondition();
+          }
+          else if (e instanceof PyConditionalExpression && PsiTreeUtil.isAncestor(((PyConditionalExpression)e).getTruePart(), node, true)) {
+            cond = ((PyConditionalExpression)e).getCondition();
+          }
+          if (cond instanceof PyCallExpression) {
+            calls.add((PyCallExpression)cond);
+          }
+          if (cond != null) {
+            final PyCallExpression[] callExprs = PsiTreeUtil.getChildrenOfType(cond, PyCallExpression.class);
+            if (callExprs != null) {
+              calls.addAll(Arrays.asList(callExprs));
+            }
+            for (PyCallExpression call : calls) {
+              final PyExpression callee = call.getCallee();
+              final PyExpression[] args = call.getArguments();
+              // TODO: Search for `node` aliases using aliases analysis
+              if (callee != null && "hasattr".equals(callee.getName()) && args.length == 2 &&
+                  nodeName.equals(args[0].getName()) && args[1] instanceof PyStringLiteralExpression &&
+                  ((PyStringLiteralExpression)args[1]).getStringValue().equals(name)) {
+                return true;
+              }
+            }
+          }
+          e = PsiTreeUtil.getParentOfType(e, PyConditionalStatementPart.class);
+        }
+      }
+      return false;
+    }
+
     @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
@@ -193,6 +233,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
           return;
+        }
+        if (node instanceof PyQualifiedExpression) {
+          final PyQualifiedExpression qExpr = (PyQualifiedExpression)node;
+          final PyExpression qualifier = qExpr.getQualifier();
+          final String name = node.getName();
+          if (qualifier != null && name != null && isGuardedByHasattr(qualifier, name)) {
+            return;
+          }
         }
         boolean unresolved;
         if (reference instanceof PsiPolyVariantReference) {

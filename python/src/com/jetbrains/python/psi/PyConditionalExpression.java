@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyConditionalExpression extends PyExpression {
   PyExpression getTruePart();
+
+  @Nullable
   PyExpression getCondition();
 
   @Nullable
