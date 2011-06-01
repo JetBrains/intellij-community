@@ -378,7 +378,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     final Pair<List<LookupElement>,Iterable<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
 
-    final List<LookupElement> items = matchingItems(snapshot);
+    final LinkedHashSet<LookupElement> items = matchingItems(snapshot);
 
     checkMinPrefixLengthChanges(items);
 
@@ -389,7 +389,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
     model.addAll(getPrefixItems(items, true));
     model.addAll(getPrefixItems(items, false));
+
+    myFrozenItems.retainAll(items);
     model.addAll(myFrozenItems);
+
     addMostRelevantItems(model, snapshot.second);
     if (hasPreselected) {
       model.add(myPreselectedItem);
@@ -431,8 +434,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
-  private List<LookupElement> matchingItems(Pair<List<LookupElement>, Iterable<List<LookupElement>>> snapshot) {
-    final List<LookupElement> items = new ArrayList<LookupElement>();
+  private LinkedHashSet<LookupElement> matchingItems(Pair<List<LookupElement>, Iterable<List<LookupElement>>> snapshot) {
+    final LinkedHashSet<LookupElement> items = new LinkedHashSet<LookupElement>();
     for (LookupElement element : snapshot.first) {
       if (prefixMatches(element)) {
         items.add(element);
