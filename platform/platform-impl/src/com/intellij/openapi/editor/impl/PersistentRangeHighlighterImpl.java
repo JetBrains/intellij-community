@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,19 +42,14 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
 
   @Override
   protected void changedUpdateImpl(DocumentEvent e) {
+    // todo Denis Zhdanov
     DocumentEventImpl event = (DocumentEventImpl)e;
-    if (PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this)) {
-      setLine(event.translateLineViaDiff(getLine()));
-      if (getLine() < 0 || getLine() >= getDocument().getLineCount()) {
-        invalidate(e);
-      }
-      else {
-        DocumentEx document = getDocument();
-        setIntervalStart(document.getLineStartOffset(getLine()));
-        setIntervalEnd(document.getLineEndOffset(getLine()));
-      }
+    final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this);
+    boolean wasTranslatedViaDiff = shouldTranslateViaDiff;
+    if (shouldTranslateViaDiff) {
+      wasTranslatedViaDiff = translatedViaDiff(e, event);
     }
-    else {
+    if (! wasTranslatedViaDiff) {
       super.changedUpdateImpl(e);
       if (isValid()) {
         setLine(getDocument().getLineNumber(getStartOffset()));
@@ -63,6 +59,24 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
         }
       }
     }
+  }
+
+  private boolean translatedViaDiff(DocumentEvent e, DocumentEventImpl event) {
+    try {
+      setLine(event.translateLineViaDiff(getLine()));
+    }
+    catch (FilesTooBigForDiffException e1) {
+      return false;
+    }
+    if (getLine() < 0 || getLine() >= getDocument().getLineCount()) {
+      invalidate(e);
+    }
+    else {
+      DocumentEx document = getDocument();
+      setIntervalStart(document.getLineStartOffset(getLine()));
+      setIntervalEnd(document.getLineEndOffset(getLine()));
+    }
+    return true;
   }
 
   @Override

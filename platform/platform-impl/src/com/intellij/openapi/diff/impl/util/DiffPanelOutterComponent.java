@@ -37,6 +37,7 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
   private ScrollingPanel myScrollingPanel = null;
   private final JPanel myBottomContainer;
   private JComponent myBottomComponent;
+  private JPanel myWrapper;
 
   public DiffPanelOutterComponent(List<TextDiffType> diffTypes, DiffRequest.ToolbarAddons defaultActions) {
     super(new BorderLayout());
@@ -47,6 +48,8 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
     myDefaultActions = defaultActions;
     myToolbar = new DiffToolbarComponent(this);
     disableToolbar(false);
+    myWrapper = new JPanel(new BorderLayout());
+    add(myWrapper, BorderLayout.CENTER);
   }
 
   public DiffToolbar resetToolbar() {
@@ -54,9 +57,18 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
     return myToolbar.getToolbar();
   }
 
+  public void resetDiffComponent(JComponent component, ScrollingPanel scrollingPanel) {
+    myWrapper.removeAll();
+    insertDiffComponent(component, scrollingPanel);
+  }
+
   public void insertDiffComponent(JComponent component, ScrollingPanel scrollingPanel) {
-    add(component, BorderLayout.CENTER);
+    myWrapper.add(component, BorderLayout.CENTER);
     setScrollingPanel(scrollingPanel);
+  }
+
+  public void insertTopComponent(JComponent component) {
+    myWrapper.add(component, BorderLayout.NORTH);
   }
 
   public JComponent getBottomComponent() {
@@ -150,6 +162,10 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
 
   public void cancelScrollEditors() {
     myScrollState = NO_SCROLL_NEEDED;
+  }
+
+  public void removeTopComponent(final JComponent jComponent) {
+    myWrapper.remove(jComponent);
   }
 
   private interface DeferScrollToFirstDiff {

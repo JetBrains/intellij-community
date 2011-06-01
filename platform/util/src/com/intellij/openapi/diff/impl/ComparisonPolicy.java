@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 public abstract class ComparisonPolicy {
   private final String myName;
@@ -34,7 +35,7 @@ public abstract class ComparisonPolicy {
     myName = name;
   }
 
-  public DiffFragment[] buildFragments(String[] strings1, String[] strings2) {
+  public DiffFragment[] buildFragments(String[] strings1, String[] strings2) throws FilesTooBigForDiffException {
     DiffFragmentBuilder builder = new DiffFragmentBuilder(strings1, strings2);
     Object[] wrappers1 = getWrappers(strings1);
     Object[] wrappers2 = getWrappers(strings2);
@@ -42,7 +43,7 @@ public abstract class ComparisonPolicy {
     return builder.buildFragments(Util.concatEquals(change, wrappers1, wrappers2));
   }
 
-  public DiffFragment[] buildDiffFragmentsFromLines(String[] lines1, String[] lines2) {
+  public DiffFragment[] buildDiffFragmentsFromLines(String[] lines1, String[] lines2) throws FilesTooBigForDiffException {
     DiffFragmentBuilder builder = new DiffFragmentBuilder(lines1, lines2);
     Object[] wrappers1 = getLineWrappers(lines1);
     Object[] wrappers2 = getLineWrappers(lines2);
@@ -194,7 +195,7 @@ public abstract class ComparisonPolicy {
       return result;
     }
 
-    public DiffFragment[] buildFragments(String[] strings1, String[] strings2) {
+    public DiffFragment[] buildFragments(String[] strings1, String[] strings2) throws FilesTooBigForDiffException {
       DiffFragment[] fragments = super.buildFragments(strings1, strings2);
       DiffCorrection.FragmentsCollector collector = new DiffCorrection.FragmentsCollector();
       collector.processAll(fragments, this);

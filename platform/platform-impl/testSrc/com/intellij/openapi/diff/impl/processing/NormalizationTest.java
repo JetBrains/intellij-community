@@ -4,6 +4,7 @@ import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentEquality;
 import com.intellij.openapi.diff.impl.highlighting.FragmentStringConvertion;
 import com.intellij.util.Assertion;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import junit.framework.TestCase;
 
 public class NormalizationTest extends TestCase {
@@ -15,7 +16,7 @@ public class NormalizationTest extends TestCase {
     CHECK.setEquality(new FragmentEquality());
   }
 
-  public void testSingleSide() {
+  public void testSingleSide() throws FilesTooBigForDiffException {
     DiffCorrection correction = DiffCorrection.Normalize.INSTANCE;
     DiffFragment[] corrected = correction.correct(
         new DiffFragment[]{new DiffFragment(null, "a"),
@@ -33,7 +34,7 @@ public class NormalizationTest extends TestCase {
                      corrected);
   }
 
-  public void testUnitesEquals() {
+  public void testUnitesEquals() throws FilesTooBigForDiffException {
     DiffCorrection correction = DiffCorrection.Normalize.INSTANCE;
     DiffFragment[] fragments = correction.correct(new DiffFragment[]{new DiffFragment(null, "a"),
                                             new DiffFragment("x", "x"),

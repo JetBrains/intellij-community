@@ -39,6 +39,11 @@ public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateA
     }
 
     final LogicalPosition caretPosition = caretModel.getLogicalPosition();
+    final LogicalPosition nameEndPosition = pair.first.parameterNameEndPosition;
+    if (nameEndPosition.line == caretPosition.line && caretPosition.column <= nameEndPosition.column) {
+      return Result.Continue;
+    }
+    
     final int descriptionStartColumn = pair.first.parameterDescriptionStartPosition.column;
     final LogicalPosition desiredPosition = new LogicalPosition(caretPosition.line, descriptionStartColumn);
     final Document document = editor.getDocument();

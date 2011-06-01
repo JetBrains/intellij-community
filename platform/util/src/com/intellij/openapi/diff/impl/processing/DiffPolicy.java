@@ -18,9 +18,10 @@ package com.intellij.openapi.diff.impl.processing;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 public interface DiffPolicy {
-  DiffFragment[] buildFragments(String text1, String text2);
+  DiffFragment[] buildFragments(String text1, String text2) throws FilesTooBigForDiffException;
 
   DiffPolicy LINES_WO_FORMATTING = new LineBlocks(ComparisonPolicy.IGNORE_SPACE);
   DiffPolicy DEFAULT_LINES = new LineBlocks(ComparisonPolicy.DEFAULT);
@@ -32,7 +33,7 @@ public interface DiffPolicy {
       myComparisonPolicy = comparisonPolicy;
     }
 
-    public DiffFragment[] buildFragments(String text1, String text2) {
+    public DiffFragment[] buildFragments(String text1, String text2) throws FilesTooBigForDiffException {
       String[] strings1 = new LineTokenizer(text1).execute();
       String[] strings2 = new LineTokenizer(text2).execute();
       return myComparisonPolicy.buildDiffFragmentsFromLines(strings1, strings2);
@@ -47,7 +48,7 @@ public interface DiffPolicy {
       myComparisonPolicy = comparisonPolicy;
     }
 
-    public DiffFragment[] buildFragments(String text1, String text2) {
+    public DiffFragment[] buildFragments(String text1, String text2) throws FilesTooBigForDiffException {
       return myComparisonPolicy.buildFragments(splitByChar(text1), splitByChar(text2));
     }
 

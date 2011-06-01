@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,7 +90,7 @@ public class DiffPreviewPanel implements PreviewPanel {
 
   }
 
-  public void setMergeRequest(Project project) {
+  public void setMergeRequest(Project project) throws FilesTooBigForDiffException {
     getMergePanel().setDiffRequest(new SampleMerge(project));
   }
 

@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.SequenceIterator;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,16 +61,15 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     myChanges[1] = new ChangeList(base, right, this);
   }
 
-  public static MergeList create(Project project, Document left, Document base, Document right) {
+  public static MergeList create(Project project, Document left, Document base, Document right) throws FilesTooBigForDiffException {
     MergeList mergeList = new MergeList(project, left, base, right);
     String leftText = left.getText();
     String baseText = base.getText();
     String rightText = right.getText();
-    // todo do not copy
     @NonNls final Object[] data = {
-      "Left\n" + leftText,
-      "\nBase\n" + baseText,
-      "\nRight\n" + rightText
+      "Left\n", leftText,
+      "\nBase\n", baseText,
+      "\nRight\n", rightText
     };
     ContextLogger logger = new ContextLogger(LOG, new ContextLogger.SimpleContext(data));
     List<MergeBuilder.MergeFragment> fragmentList = processText(leftText, baseText, rightText, logger);
@@ -116,7 +116,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
   private static List<MergeBuilder.MergeFragment> processText(String leftText,
                                                               String baseText,
                                                               String rightText,
-                                                              ContextLogger logger) {
+                                                              ContextLogger logger) throws FilesTooBigForDiffException {
     DiffFragment[] leftFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, leftText);
     DiffFragment[] rightFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, rightText);
     int[] leftOffsets = {0, 0};
@@ -160,7 +160,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     return text1 != null ? text1.length() : 0;
   }
 
-  public static MergeList create(DiffRequest data) {
+  public static MergeList create(DiffRequest data) throws FilesTooBigForDiffException {
     DiffContent[] contents = data.getContents();
     return create(data.getProject(), contents[0].getDocument(), contents[1].getDocument(), contents[2].getDocument());
   }

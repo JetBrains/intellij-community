@@ -17,6 +17,7 @@ package com.intellij.diff;
 
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 /**
  * author: lesya
@@ -36,7 +37,7 @@ public class FindBlock {
   }
 
 
-  public Block getBlockInThePrevVersion() {
+  public Block getBlockInThePrevVersion() throws FilesTooBigForDiffException {
 
     Diff.Change change = Diff.buildChanges(myResult.getSource(), myCurrentVersion.getSource());
     while (change != null) {

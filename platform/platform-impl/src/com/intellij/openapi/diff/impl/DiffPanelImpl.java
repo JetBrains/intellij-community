@@ -46,13 +46,16 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.CacheOneStepIterator;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +95,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private boolean myDisposed = false;
   private final GenericDataProvider myDataProvider;
   private Project myProject;
+  private static final Key<CanNotCalculateDiffPanel> PANEL_KEY = new Key<CanNotCalculateDiffPanel>("DiffPanelImpl.CanNotCalculateDiffPanel");
+  private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
 
   public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar) {
     myProject = project;
@@ -159,7 +164,21 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   void rediff() {
-    setLineBlocks(myData.updateEditors());
+    try {
+      if (myNotCalculateDiffPanel != null) {
+        myPanel.removeTopComponent(myNotCalculateDiffPanel);
+      }
+      setLineBlocks(myData.updateEditors());
+    }
+    catch (FilesTooBigForDiffException e) {
+      setTooBigFileErrorContents();
+    }
+  }
+
+  public void setTooBigFileErrorContents() {
+    setLineBlocks(LineBlocks.EMPTY);
+    myNotCalculateDiffPanel = new CanNotCalculateDiffPanel();
+    myPanel.insertTopComponent(myNotCalculateDiffPanel);
   }
 
   public void setTitle1(String title) {
@@ -586,6 +605,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       }
 
       return super.getData(dataId);
+    }
+  }
+
+  public static class CanNotCalculateDiffPanel extends EditorNotificationPanel {
+    public CanNotCalculateDiffPanel() {
+      myLabel.setText("Can not calculate diff. File is too big and there are too many changes.");
     }
   }
 }

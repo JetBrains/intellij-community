@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
 import com.intellij.openapi.editor.EditorFactory;
@@ -59,6 +60,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nls;
@@ -90,6 +92,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private boolean myApplyCompleted = false;
   private boolean myDisposeCompleted = false;
   private final Disposable myDisposable = Disposer.newDisposable();
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.colors.ColorAndFontOptions");
 
   public static ColorAndFontOptions getColorAndFontsInstance() {
     ColorAndFontOptions colorAndFontOptions = null;
@@ -371,22 +374,28 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private class DiffColorsPageFactory implements ColorAndFontPanelFactory {
     public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
-      final DiffPreviewPanel diffPreviewPanel = new DiffPreviewPanel(myDisposable);
-      diffPreviewPanel.setMergeRequest(null);
       final DiffOptionsPanel optionsPanel = new DiffOptionsPanel(options);
-
       SchemesPanel schemesPanel = new SchemesPanel(options);
+      PreviewPanel previewPanel;
+      try {
+        final DiffPreviewPanel diffPreviewPanel = new DiffPreviewPanel(myDisposable);
+        diffPreviewPanel.setMergeRequest(null);
+        schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
+          @Override
+          public void schemeChanged(final Object source) {
+            diffPreviewPanel.setColorScheme(getSelectedScheme());
+            optionsPanel.updateOptionsList();
+            diffPreviewPanel.updateView();
+          }
+        } );
+        previewPanel = diffPreviewPanel;
+      }
+      catch (FilesTooBigForDiffException e) {
+        LOG.info(e);
+        previewPanel = new PreviewPanel.Empty();
+      }
 
-      schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
-        @Override
-        public void schemeChanged(final Object source) {
-          diffPreviewPanel.setColorScheme(getSelectedScheme());
-          optionsPanel.updateOptionsList();
-          diffPreviewPanel.updateView();
-        }
-      } );
-
-      return new NewColorAndFontPanel(schemesPanel, optionsPanel, diffPreviewPanel, DIFF_GROUP, null, null);
+      return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, DIFF_GROUP, null, null);
     }
 
     public String getPanelDisplayName() {

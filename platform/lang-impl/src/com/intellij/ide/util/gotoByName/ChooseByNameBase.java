@@ -59,6 +59,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
@@ -850,7 +851,13 @@ public abstract class ChooseByNameBase {
 
     Object[] oldElements = myListModel.toArray();
     Object[] newElements = elements.toArray();
-    Diff.Change change = Diff.buildChanges(oldElements, newElements);
+    Diff.Change change = null;
+    try {
+      change = Diff.buildChanges(oldElements, newElements);
+    }
+    catch (FilesTooBigForDiffException e) {
+      // should not occur
+    }
 
     if (change == null) return; // Nothing changed
 

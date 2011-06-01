@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -29,45 +30,18 @@ import java.util.List;
 public class RangesBuilder {
   private List<Range> myRanges;
 
-  public RangesBuilder(Document current, Document upToDate) {
+  public RangesBuilder(Document current, Document upToDate) throws FilesTooBigForDiffException {
     this(new DocumentWrapper(current).getLines(), new DocumentWrapper(upToDate).getLines(), 0, 0);
   }
 
-  public RangesBuilder(List<String> current, List<String> upToDate, int shift, int uShift) {
+  public RangesBuilder(List<String> current, List<String> upToDate, int shift, int uShift) throws FilesTooBigForDiffException {
     myRanges = new LinkedList<Range>();
-
-    int shiftBefore = 0;
-
-    int minSize = Math.min(upToDate.size(), current.size());
-
-    for (int i = 0; i < minSize; i++) {
-      if (upToDate.get(0).equals(current.get(0))) {
-        upToDate.remove(0);
-        current.remove(0);
-        shiftBefore += 1;
-      }
-      else {
-        break;
-      }
-    }
-
-    minSize = Math.min(upToDate.size(), current.size());
-
-    for (int i = 0; i < minSize; i++) {
-      if (upToDate.get(upToDate.size() - 1).equals(current.get(current.size() - 1))) {
-        upToDate.remove(upToDate.size() - 1);
-        current.remove(current.size() - 1);
-      }
-      else {
-        break;
-      }
-    }
 
     Diff.Change ch = Diff.buildChanges(ArrayUtil.toStringArray(upToDate), ArrayUtil.toStringArray(current));
 
 
     while (ch != null) {
-      Range range = Range.createOn(ch, shift + shiftBefore, uShift + shiftBefore);
+      Range range = Range.createOn(ch, shift, uShift);
       myRanges.add(range);
       ch = ch.link;
     }

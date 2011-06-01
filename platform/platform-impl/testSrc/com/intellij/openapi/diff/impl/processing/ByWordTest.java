@@ -7,6 +7,7 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentStringConvertion;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Assertion;
 import com.intellij.util.StringConvertion;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
@@ -20,7 +21,7 @@ public class ByWordTest extends TestCase {
     CHECK.setEquality(new FragmentEquality());
   }
 
-  public void test1() {
+  public void test1() throws FilesTooBigForDiffException {
     DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = byWord.buildFragments("abc def, 123", "ab def, 12");
     CHECK.compareAll(new DiffFragment[]{new DiffFragment("abc", "ab"),
@@ -28,7 +29,7 @@ public class ByWordTest extends TestCase {
                                         new DiffFragment("123", "12")}, fragments);
   }
 
-  public void test2() {
+  public void test2() throws FilesTooBigForDiffException {
     DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = byWord.buildFragments(" a[xy]+1", ",a[]+1");
     CHECK.compareAll(new DiffFragment[]{new DiffFragment(" ", null),
@@ -38,13 +39,13 @@ public class ByWordTest extends TestCase {
                                         new DiffFragment("]+1", "]+1")}, fragments);
   }
 
-  public void test3() {
+  public void test3() throws FilesTooBigForDiffException {
     DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = byWord.buildFragments("0987\n  a.g();\n", "yyyy\n");
     CHECK.compareAll(new DiffFragment[]{new DiffFragment("0987\n  a.g();\n", "yyyy\n")}, fragments);
   }
 
-  public void test4() {
+  public void test4() throws FilesTooBigForDiffException {
     DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = byWord.buildFragments("  abc\n2222\n", "    x = abc\nzzzz\n");
     CHECK.compareAll(new DiffFragment[]{
@@ -55,7 +56,7 @@ public class ByWordTest extends TestCase {
       new DiffFragment("\n", "\n")}, fragments);
   }
 
-  public void testIdea58505() {
+  public void testIdea58505() throws FilesTooBigForDiffException {
     DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = byWord.buildFragments("   if (eventMerger!=null && !dataSelection.getValueIsAdjusting()) {",
                                                      "   if (eventMerger!=null && (dataSelection==null || !dataSelection.getValueIsAdjusting())) {");
@@ -71,7 +72,7 @@ public class ByWordTest extends TestCase {
     }, fragments);
   }
 
-  public void testIdea58505Trim() {
+  public void testIdea58505Trim() throws FilesTooBigForDiffException {
     DiffPolicy byWord = new ByWord(ComparisonPolicy.TRIM_SPACE);
     DiffFragment[] fragments = byWord.buildFragments("   if (eventMerger!=null && !dataSelection.getValueIsAdjusting()) {",
                                                      "   if (eventMerger!=null && (dataSelection==null || !dataSelection.getValueIsAdjusting())) {");
@@ -87,7 +88,7 @@ public class ByWordTest extends TestCase {
     }, fragments);
   }
 
-  public void testIdea56428() {
+  public void testIdea56428() throws FilesTooBigForDiffException {
     DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = byWord.buildFragments("messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?)\");\n",
                                                      "messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, CREATION_TIMESTAMP, STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?, ?)\");\n");
@@ -130,7 +131,7 @@ public class ByWordTest extends TestCase {
                                 new Word(text, new TextRange(3, 4))}, words);
   }
 
-  public void testLeadingFormatting() {
+  public void testLeadingFormatting() throws FilesTooBigForDiffException {
     DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = byWord.buildFragments(" abc\n 123", " 123");
     CHECK.compareAll(new DiffFragment[]{new DiffFragment(" abc\n", null),
@@ -138,7 +139,7 @@ public class ByWordTest extends TestCase {
                      UniteSameType.INSTANCE.correct(fragments));
   }
 
-  public void testRestyleNewLines() {
+  public void testRestyleNewLines() throws FilesTooBigForDiffException {
     DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = byWord.buildFragments("f(a, b);", "f(a,\n  b);");
     CHECK.compareAll(new DiffFragment[]{new DiffFragment("f(a,", "f(a,"),
@@ -147,7 +148,7 @@ public class ByWordTest extends TestCase {
                      UniteSameType.INSTANCE.correct(fragments));
   }
 
-  public void testIgnoreSpaces() {
+  public void testIgnoreSpaces() throws FilesTooBigForDiffException {
     ByWord byWord = new ByWord(ComparisonPolicy.IGNORE_SPACE);
     DiffFragment[] fragments = byWord.buildFragments(" o.f(a)", "o. f( b)");
     CHECK.compareAll(new DiffFragment[]{DiffFragment.unchanged(" o.f(", "o. f( "),
@@ -156,7 +157,7 @@ public class ByWordTest extends TestCase {
                      UniteSameType.INSTANCE.correct(fragments));
   }
 
-  public void testIgnoreLeadingAndTrailing() {
+  public void testIgnoreLeadingAndTrailing() throws FilesTooBigForDiffException {
     ByWord byWord = new ByWord(ComparisonPolicy.TRIM_SPACE);
     checkEqual(byWord.buildFragments(" text", "text"));
     checkEqual(byWord.buildFragments("text ", "text"));

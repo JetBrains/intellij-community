@@ -50,8 +50,10 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -200,20 +202,29 @@ public class MergePanel2 implements DiffViewer {
   private void tryInitView() {
     if (!hasAllEditors()) return;
     if (myMergeList != null) return;
-    myMergeList = MergeList.create(myData);
-    myMergeList.addListener(myDividersRepainter);
-    myStatusUpdater = StatusUpdater.install(myMergeList, myPanel);
-    Editor left = getEditor(0);
-    Editor base = getEditor(1);
-    Editor right = getEditor(2);
-    myMergeList.setMarkups(left, base, right);
-    EditingSides[] sides = {new MyEditingSides(FragmentSide.SIDE1), new MyEditingSides(FragmentSide.SIDE2)};
-    myScrollSupport.install(sides);
-    for (int i = 0; i < myDividers.length; i++) {
-      myDividers[i].listenEditors(sides[i]);
+    try {
+      myMergeList = MergeList.create(myData);
+      myMergeList.addListener(myDividersRepainter);
+      myStatusUpdater = StatusUpdater.install(myMergeList, myPanel);
+      Editor left = getEditor(0);
+      Editor base = getEditor(1);
+      Editor right = getEditor(2);
+      myMergeList.setMarkups(left, base, right);
+      EditingSides[] sides = {new MyEditingSides(FragmentSide.SIDE1), new MyEditingSides(FragmentSide.SIDE2)};
+      myScrollSupport.install(sides);
+      for (int i = 0; i < myDividers.length; i++) {
+        myDividers[i].listenEditors(sides[i]);
+      }
+      if (myScrollToFirstDiff) {
+        myPanel.requestScrollEditors();
+      }
     }
-    if (myScrollToFirstDiff) {
-      myPanel.requestScrollEditors();
+    catch (final FilesTooBigForDiffException e) {
+      myPanel.insertTopComponent(new EditorNotificationPanel() {
+        {
+          myLabel.setText(e.getMessage());
+        }
+      });
     }
   }
 
@@ -452,9 +463,11 @@ public class MergePanel2 implements DiffViewer {
 
     public int[] getFragmentStartingLines() {
       TIntHashSet beginnings = new TIntHashSet();
-      for (int i = 0; i < 2; i++) {
-        FragmentSide branchSide = FragmentSide.fromIndex(i);
-        beginnings.addAll(myMergeList.getChanges(branchSide).getLineBlocks().getBegginings(MergeList.BASE_SIDE));
+      if (myMergeList != null) {
+        for (int i = 0; i < 2; i++) {
+          FragmentSide branchSide = FragmentSide.fromIndex(i);
+          beginnings.addAll(myMergeList.getChanges(branchSide).getLineBlocks().getBegginings(MergeList.BASE_SIDE));
+        }
       }
       int[] result = beginnings.toArray();
       Arrays.sort(result);

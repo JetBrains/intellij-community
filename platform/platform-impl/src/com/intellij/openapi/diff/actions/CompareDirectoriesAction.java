@@ -25,7 +25,6 @@ import com.intellij.openapi.diff.DirDiffManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -63,7 +62,7 @@ public class CompareDirectoriesAction extends AnAction {
   public void update(AnActionEvent e) {
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null && files.length > 0 && files.length < 3) {
-      if (files[0].isDirectory() && (files.length == 1 || files[1].isDirectory()) && files[0].getFileSystem() == LocalFileSystem.getInstance()) {
+      if (files[0].isDirectory() && (files.length == 1 || files[1].isDirectory())) {
         e.getPresentation().setEnabled(true);
         e.getPresentation().setVisible(true);
         e.getPresentation().setText(files.length == 1 ? "Compare Directory with..." : "Compare Directories");
