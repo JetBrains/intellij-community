@@ -113,6 +113,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     myUpdating.set(false);
     selectFirstRow();
     myPanel.focusTable();
+    myPanel.update(true);
   }
 
   private void selectFirstRow() {
