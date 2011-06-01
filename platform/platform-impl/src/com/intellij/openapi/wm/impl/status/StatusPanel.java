@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -88,12 +89,20 @@ class StatusPanel extends JPanel {
   }
 
   public void setLogMessage(String text) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     myLogMessage = text;
     myLogTime = new Date();
     myDirty = false;
+
+    if (text == null) {
+      updateText(false, "");
+    }
   }
 
   public boolean updateText(boolean logAllowed, @Nullable String nonLogText) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && myLogMessage != null;
 
     myShowLog.setVisible(myLogMode);
