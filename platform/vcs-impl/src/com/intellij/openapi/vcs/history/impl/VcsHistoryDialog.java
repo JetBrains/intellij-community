@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -240,7 +241,15 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     if (myIsInLoading) return;
     if (myChangesOnlyCheckBox.isSelected()) {
       loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
-      ((ListTableModel)myList.getModel()).setItems(filteredRevisions());
+      try {
+        ((ListTableModel)myList.getModel()).setItems(filteredRevisions());
+      }
+      catch (FilesTooBigForDiffException e) {
+        myChangesOnlyCheckBox.setEnabled(false);
+        myChangesOnlyCheckBox.setSelected(false);
+        setErrorText(e.getMessage());
+        ((ListTableModel)myList.getModel()).setItems(myRevisions);
+      }
       ((ListTableModel)myList.getModel()).fireTableDataChanged();
       updateDiff(0, 0);
 
@@ -252,7 +261,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   }
 
-  private List<VcsFileRevision> filteredRevisions() {
+  private List<VcsFileRevision> filteredRevisions() throws FilesTooBigForDiffException {
     ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     VcsFileRevision nextRevision = myRevisions.get(myRevisions.size() - 1);
     result.add(nextRevision);
@@ -292,8 +301,13 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     }
 
     if (myIsDisposed) return;
-    myDiffPanel.setContents(new SimpleContent(getContentToShow(firstRev), myContentFileType),
-                            new SimpleContent(getContentToShow(secondRev), myContentFileType));
+    try {
+      myDiffPanel.setContents(new SimpleContent(getContentToShow(firstRev), myContentFileType),
+                              new SimpleContent(getContentToShow(secondRev), myContentFileType));
+    }
+    catch (FilesTooBigForDiffException e) {
+      myDiffPanel.setTooBigFileErrorContents();
+    }
     myDiffPanel.setTitle1(VcsBundle.message("diff.content.title.revision.number", firstRev.getRevisionNumber()));
     myDiffPanel.setTitle2(VcsBundle.message("diff.content.title.revision.number", secondRev.getRevisionNumber()));
 
@@ -395,14 +409,14 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return null;
   }
 
-  protected String getContentToShow(VcsFileRevision revision) {
+  protected String getContentToShow(VcsFileRevision revision) throws FilesTooBigForDiffException {
     final Block block = getBlock(revision);
     if (block == null) return "";
     return block.getBlockContent();
   }
 
   @Nullable
-  private Block getBlock(VcsFileRevision revision){
+  private Block getBlock(VcsFileRevision revision) throws FilesTooBigForDiffException {
     if (myRevisionToContentMap.containsKey(revision))
       return myRevisionToContentMap.get(revision);
 

@@ -4,6 +4,7 @@ import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentEquality;
 import com.intellij.openapi.diff.impl.highlighting.FragmentStringConvertion;
 import com.intellij.util.Assertion;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import junit.framework.TestCase;
 
 public class UniteSameTypeTest extends TestCase {
@@ -15,7 +16,7 @@ public class UniteSameTypeTest extends TestCase {
     CHECK.setEquality(new FragmentEquality());
   }
 
-  public void testUnitDifferentOnesides() {
+  public void testUnitDifferentOnesides() throws FilesTooBigForDiffException {
     DiffFragment[] fragments = UniteSameType.INSTANCE.correct(new DiffFragment[]{new DiffFragment("a", "b"),
                                                         new DiffFragment(null, " "),
                                                         new DiffFragment("\n ", null),
@@ -23,7 +24,7 @@ public class UniteSameTypeTest extends TestCase {
     CHECK.compareAll(new DiffFragment[]{new DiffFragment("a\n ", "b "), new DiffFragment("x", "x")}, fragments);
   }
 
-  public void testUniteEqualsUnitesFormattingOnly() {
+  public void testUniteEqualsUnitesFormattingOnly() throws FilesTooBigForDiffException {
     DiffFragment changed = new DiffFragment("abc", "123");
     DiffFragment equal = new DiffFragment("qqq", "qqq");
     DiffFragment[] fragments = DiffCorrection.UnitEquals.INSTANCE.correct(new DiffFragment[]{

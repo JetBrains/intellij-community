@@ -39,6 +39,7 @@ public class Diff {
   }
   
   public static <T> Change buildChanges(T[] objects1, T[] objects2) throws FilesTooBigForDiffException {
+
     // Old variant of enumerator worked incorrectly with null values.
     // This check is to ensure that the corrected version does not introduce bugs.
     for (T anObjects1 : objects1) LOG.assertTrue(anObjects1 != null);
@@ -174,6 +175,10 @@ public class Diff {
     private int myIndex2 = 0;
     private Change myFirstChange;
     private Change myLastChange;
+
+    public ChangeBuilder(final int startShift) {
+      skip(startShift, startShift);
+    }
 
     public void addChange(int first, int second) {
       Change change = new Change(myIndex1, myIndex2, first, second, null);

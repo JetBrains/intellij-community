@@ -263,7 +263,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       if (myLineStatusTrackers.containsKey(document)) return;
       assert ! myPartner.containsKey(document);
 
-      final LineStatusTracker tracker = LineStatusTracker.createOn(document, myProject);
+      final LineStatusTracker tracker = LineStatusTracker.createOn(virtualFile, document, myProject);
       myLineStatusTrackers.put(document, tracker);
 
       startAlarm(document, virtualFile);

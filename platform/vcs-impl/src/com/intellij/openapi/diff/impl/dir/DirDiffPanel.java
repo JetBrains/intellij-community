@@ -33,7 +33,7 @@ import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -271,7 +271,14 @@ public class DirDiffPanel implements Disposable {
     }
     clearDiffPanel();
     if (element.getType() == DType.CHANGED) {
-      myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow());
+      try {
+        myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow());
+      }
+      catch (FilesTooBigForDiffException e) {
+        // todo KB: check
+        myDiffPanelComponent = null;
+        myErrorLabel = new JLabel("Can not build diff for file " + element.getTarget().getPath() + ". File is too big and there are too many changes.");
+      }
       if (myDiffPanelComponent != null) {
         myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
         myCurrentElement = element.getSource();

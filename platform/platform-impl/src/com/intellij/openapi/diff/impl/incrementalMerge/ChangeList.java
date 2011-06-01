@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.*;
 
@@ -77,7 +78,7 @@ public class ChangeList {
     return Collections.unmodifiableList(myChanges);
   }
 
-  public static ChangeList build(Document base, Document version, Parent parent) {
+  public static ChangeList build(Document base, Document version, Parent parent) throws FilesTooBigForDiffException {
     ChangeList result = new ChangeList(base, version, parent);
     ArrayList<Change> changes = result.buildChanges();
     Collections.sort(changes, CHANGE_ORDER);
@@ -102,7 +103,7 @@ public class ChangeList {
     return myDocuments[side.getIndex()];
   }
 
-  private ArrayList<Change> buildChanges() {
+  private ArrayList<Change> buildChanges() throws FilesTooBigForDiffException {
     Document base = getDocument(FragmentSide.SIDE1);
     String[] baseLines = DiffUtil.convertToLines(base.getText());
     Document version = getDocument(FragmentSide.SIDE2);

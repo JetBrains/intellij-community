@@ -22,47 +22,47 @@ import junit.framework.TestCase;
  * @author dyoma
  */
 public class IntLCSTest extends TestCase {
-  public void testDiag() {
+  public void testDiag() throws FilesTooBigForDiffException {
     Diff.Change change = buildChange(new int[]{1, 2, 3}, new int[]{1, 2, 3}, 0);
     assertNull(change);
   }
 
-  public void testOneAtBegging() {
+  public void testOneAtBegging() throws FilesTooBigForDiffException {
     Diff.Change change = buildChange(new int[]{1, 2}, new int[]{1, 3}, 2);
     checkLastChange(change, 1, 1, 1, 1);
   }
 
-  public void testOneAntEnd() {
+  public void testOneAntEnd() throws FilesTooBigForDiffException {
     Diff.Change change = buildChange(new int[]{1, 3}, new int[]{2, 3}, 2);
     checkLastChange(change, 0, 0, 1, 1);
   }
 
-  public void testOneOverAtEnd() {
+  public void testOneOverAtEnd() throws FilesTooBigForDiffException {
     Diff.Change change = buildChange(new int[]{1, 2}, new int[]{1, 2, 3}, 1);
     checkLastChange(change, 2, 2, 1, 0);
   }
 
-  public void testOneOverAtBegging() {
+  public void testOneOverAtBegging() throws FilesTooBigForDiffException {
     Diff.Change change = buildChange(new int[]{1, 2, 3}, new int[]{2, 3}, 1);
     checkLastChange(change, 0, 0, 0, 1);
   }
 
-  public void testOneTail() {
+  public void testOneTail() throws FilesTooBigForDiffException {
     assertEquals(1, new IntLCS(new int[]{1, 2}, new int[]{1, 2, 3}).execute());
   }
 
-  public void testSingleMiddle() {
+  public void testSingleMiddle() throws FilesTooBigForDiffException {
     Diff.Change change = buildChange(new int[]{1, 2, 3}, new int[]{4, 2, 5}, 4);
     checkChange(change, 0, 0, 1, 1);
     checkLastChange(change.link, 2, 2, 1, 1);
   }
 
-  public void testAbsolutelyDifferent() {
+  public void testAbsolutelyDifferent() throws FilesTooBigForDiffException {
     assertEquals(4, new IntLCS(new int[]{1, 2}, new int[]{3, 4}).execute());
     assertEquals(6, new IntLCS(new int[]{1, 2, 3}, new int[]{4, 5, 6}).execute());
   }
 
-  private Diff.Change buildChange(int[] first, int[] second, int expectedNonDiags) {
+  private Diff.Change buildChange(int[] first, int[] second, int expectedNonDiags) throws FilesTooBigForDiffException {
     IntLCS intLCS = new IntLCS(first, second);
     assertEquals(expectedNonDiags, intLCS.execute());
     Reindexer reindexer = new Reindexer();

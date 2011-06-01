@@ -56,7 +56,7 @@ public class DiffTest extends TestCase {
     IntLCSTest.checkLastChange(change, 5, 5, 3, 0); // inserted:           AB2
   }
   
-  public void testEqualUpToOneEnd() throws FilesTooBigFirDiffException {
+  public void testEqualUpToOneEnd() throws FilesTooBigForDiffException {
     Diff.Change change = Diff.buildChanges(DATA_AB, new Object[]{"a", "b", "1"});
     IntLCSTest.checkLastChange(change, 2, 2, 1, 0);
   }

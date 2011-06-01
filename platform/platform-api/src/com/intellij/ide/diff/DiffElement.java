@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +116,7 @@ public abstract class DiffElement<T> implements Disposable {
   }
 
   @Nullable
-  public JComponent getDiffComponent(DiffElement element, Project project, Window parentWindow) {
+  public JComponent getDiffComponent(DiffElement element, Project project, Window parentWindow) throws FilesTooBigForDiffException {
     disposeDiffComponent();
 
     DiffRequest request;

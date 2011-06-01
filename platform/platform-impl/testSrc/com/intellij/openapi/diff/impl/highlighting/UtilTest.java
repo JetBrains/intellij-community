@@ -4,6 +4,7 @@ import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.MultiCheck;
 import com.intellij.util.Assertion;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import junit.framework.TestCase;
 
 public class UtilTest extends TestCase {
@@ -80,7 +81,7 @@ public class UtilTest extends TestCase {
     assertTrue(line[0].isEqual());
   }
 
-  public void testConcatEquals() {
+  public void testConcatEquals() throws FilesTooBigForDiffException {
     Object[] left = new String[]{"a", "x", "a", "b"};
     Object[] right = new String[]{"a", "b"};
     Diff.Change change = Diff.buildChanges(left, right);
@@ -133,7 +134,7 @@ public class UtilTest extends TestCase {
     multiCheck.flush();
   }
 
-  public void testConcatEqualsConcatenatesChanged() {
+  public void testConcatEqualsConcatenatesChanged() throws FilesTooBigForDiffException {
     String[] left = new String[]{"i1", "a", "i2", "a", "b"};
     String[] right = new String[]{"a", "b"};
     Diff.Change change = Diff.buildChanges(left, right);

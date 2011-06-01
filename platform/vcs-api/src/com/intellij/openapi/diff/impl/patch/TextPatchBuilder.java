@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,8 +117,15 @@ public class TextPatchBuilder {
       String[] beforeLines = new LineTokenizer(beforeContent).execute();
       String[] afterLines = new LineTokenizer(afterContent).execute();
 
-      DiffFragment[] woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
-      DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT).correctAndNormalize(woFormattingBlocks);
+      DiffFragment[] woFormattingBlocks;
+      DiffFragment[] step1lineFragments;
+      try {
+        woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
+        step1lineFragments = new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT).correctAndNormalize(woFormattingBlocks);
+      }
+      catch (FilesTooBigForDiffException e) {
+        throw new VcsException("File '" + myBasePath + "' is too big and there are too many changes to build diff", e);
+      }
       ArrayList<LineFragment> fragments = new DiffFragmentsProcessor().process(step1lineFragments);
 
       if (fragments.size() > 1 || (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffTypeEnum.NONE)) {

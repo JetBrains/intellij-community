@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -29,11 +30,11 @@ import java.util.List;
 public class RangesBuilder {
   private List<Range> myRanges;
 
-  public RangesBuilder(Document current, Document upToDate) {
+  public RangesBuilder(Document current, Document upToDate) throws FilesTooBigForDiffException {
     this(new DocumentWrapper(current).getLines(), new DocumentWrapper(upToDate).getLines(), 0, 0);
   }
 
-  public RangesBuilder(List<String> current, List<String> upToDate, int shift, int uShift) {
+  public RangesBuilder(List<String> current, List<String> upToDate, int shift, int uShift) throws FilesTooBigForDiffException {
     myRanges = new LinkedList<Range>();
 
     Diff.Change ch = Diff.buildChanges(ArrayUtil.toStringArray(upToDate), ArrayUtil.toStringArray(current));

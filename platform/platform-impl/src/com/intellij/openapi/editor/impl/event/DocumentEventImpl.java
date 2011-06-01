@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 public class DocumentEventImpl extends DocumentEvent {
@@ -139,7 +140,7 @@ public class DocumentEventImpl extends DocumentEvent {
     return myIsWholeDocReplaced;
   }
 
-  public int translateLineViaDiff(int line) {
+  public int translateLineViaDiff(int line) throws FilesTooBigForDiffException {
     if (myChange == null) buildDiff();
     if (myChange == null) return line;
 
@@ -163,14 +164,14 @@ public class DocumentEventImpl extends DocumentEvent {
     return newLine;
   }
 
-  public int translateLineViaDiffStrict(int line) {
+  public int translateLineViaDiffStrict(int line) throws FilesTooBigForDiffException {
     if (myChange == null) buildDiff();
     Diff.Change change = myChange;
     if (change == null) return line;
     return Diff.translateLine(change, line);
   }
 
-  private void buildDiff() {
+  private void buildDiff() throws FilesTooBigForDiffException {
     //Diff diff = new Diff(strings1, strings2);
     //myChange = diff.diff_2(false);
     myChange = Diff.buildChanges(myOldString, myNewString);

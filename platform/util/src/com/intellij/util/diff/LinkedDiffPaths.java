@@ -19,6 +19,8 @@ package com.intellij.util.diff;
  * @author dyoma
  */
 final class LinkedDiffPaths {
+  private static final int MAX_LEN = 10000000;
+
   private int[] mySteps = new int[10];
   private int[] myPrevSteps = new int[10];
   private int myPosition = 0;
@@ -53,7 +55,7 @@ final class LinkedDiffPaths {
     return myMaxY + 1;
   }
 
-  public int encodeStep(int x, int y, int diagLength, boolean afterVertical, int prevIndex) {
+  public int encodeStep(int x, int y, int diagLength, boolean afterVertical, int prevIndex) throws FilesTooBigForDiffException {
     int encodedPath = diagLength;
     if (afterVertical) encodedPath |= VERTICAL_DIRECTION_FLAG;
     int position = incPosition();
@@ -64,7 +66,7 @@ final class LinkedDiffPaths {
     return position;
   }
 
-  private int incPosition() {
+  private int incPosition() throws FilesTooBigForDiffException {
     int length = myPrevSteps.length;
     if (myPosition == length - 1) {
       myPrevSteps = copy(length, myPrevSteps);
@@ -74,7 +76,10 @@ final class LinkedDiffPaths {
     return myPosition;
   }
 
-  private int[] copy(int length, int[] prevArray) {
+  private int[] copy(int length, int[] prevArray) throws FilesTooBigForDiffException {
+    if (length * 2 >= MAX_LEN) {
+      throw new FilesTooBigForDiffException(MAX_LEN);
+    }
     int[] array = new int[length * 2];
     System.arraycopy(prevArray, 0, array, 0, length);
     return array;

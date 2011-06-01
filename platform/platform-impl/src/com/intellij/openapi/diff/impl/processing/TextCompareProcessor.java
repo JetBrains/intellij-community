@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.LineBlockDivider;
 import com.intellij.openapi.diff.impl.highlighting.Util;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.ArrayList;
 
@@ -34,7 +35,7 @@ public class TextCompareProcessor {
     myComparisonPolicy = comparisonPolicy;
   }
 
-  public ArrayList<LineFragment> process(String text1, String text2) {
+  public ArrayList<LineFragment> process(String text1, String text2) throws FilesTooBigForDiffException {
     DiffFragment[] woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(text1, text2);
     DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(myComparisonPolicy).
         correctAndNormalize(woFormattingBlocks);
@@ -49,7 +50,7 @@ public class TextCompareProcessor {
     return lineBlocks;
   }
 
-  private ArrayList<LineFragment> findSubFragments(String text1, String text2) {
+  private ArrayList<LineFragment> findSubFragments(String text1, String text2) throws FilesTooBigForDiffException {
     DiffFragment[] fragments = new ByWord(myComparisonPolicy).buildFragments(text1, text2);
     fragments = DiffCorrection.ConnectSingleSideToChange.INSTANCE.correct(fragments);
     fragments = UniteSameType.INSTANCE.correct(fragments);

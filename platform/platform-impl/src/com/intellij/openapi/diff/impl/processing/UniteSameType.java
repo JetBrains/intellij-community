@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 class UniteSameType implements DiffCorrection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.UniteSameType");
@@ -70,7 +71,7 @@ class UniteSameType implements DiffCorrection {
     return collector.toArray();
   }
 
-  public static DiffFragment uniteAll(DiffFragment[] fragments) {
+  public static DiffFragment uniteAll(DiffFragment[] fragments) throws FilesTooBigForDiffException {
     fragments = INSTANCE.correct(fragments);
     LOG.assertTrue(fragments.length == 1);
     return fragments[0];

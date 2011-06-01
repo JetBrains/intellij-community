@@ -26,7 +26,7 @@ public class LinkedDiffPathsTest extends TestCase {
     return new LinkedDiffPaths(maxX, maxY);
   }
 
-  public void testOneDeleteAtferEnd() {
+  public void testOneDeleteAtferEnd() throws FilesTooBigForDiffException {
     LinkedDiffPaths paths = createPaths(2, 3);
     int key = paths.encodeStep(1, 1, 2, false, -1);
     paths.encodeStep(1, 2, 0, true, key);
@@ -34,14 +34,14 @@ public class LinkedDiffPathsTest extends TestCase {
     IntLCSTest.checkLastChange(change, 2, 2, 1, 0);
   }
 
-  public void testOneInsertedAtBegging() {
+  public void testOneInsertedAtBegging() throws FilesTooBigForDiffException {
     LinkedDiffPaths paths = createPaths(3, 2);
     paths.encodeStep(2, 1, 2, false, -1);
     Diff.Change change = decode(paths);
     IntLCSTest.checkLastChange(change, 0, 0, 0, 1);
   }
 
-  public void testSingleMiddleChange() {
+  public void testSingleMiddleChange() throws FilesTooBigForDiffException {
     LinkedDiffPaths paths = createPaths(3, 3);
     int key = paths.encodeStep(0, 0, 1, true, -1);
     key = paths.encodeStep(1, 0, 0, false, key);
@@ -49,7 +49,7 @@ public class LinkedDiffPathsTest extends TestCase {
     IntLCSTest.checkLastChange(decode(paths), 1, 1, 1, 1);
   }
 
-  public void testSingleChangeAtEnd() {
+  public void testSingleChangeAtEnd() throws FilesTooBigForDiffException {
     LinkedDiffPaths paths = createPaths(2, 2);
     int key = paths.encodeStep(0, 0, 1, false, -1);
     key = paths.encodeStep(0, 1, 0, true, key);
@@ -57,7 +57,7 @@ public class LinkedDiffPathsTest extends TestCase {
     IntLCSTest.checkLastChange(decode(paths), 1, 1, 1, 1);
   }
 
-  public void testNotSquareChangeAtEnd() {
+  public void testNotSquareChangeAtEnd() throws FilesTooBigForDiffException {
     LinkedDiffPaths paths = createPaths(2, 3);
     int key = paths.encodeStep(0, 0, 1, false, -1);
     key = paths.encodeStep(0, 1, 0, true, key);

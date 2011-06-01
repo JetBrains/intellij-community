@@ -24,6 +24,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +197,13 @@ public class CustomizationUtil {
   private static void computeDiff(final ActionUrl[] defaultUserObjects,
                                   final ActionUrl[] currentUserObjects,
                                   final ArrayList<ActionUrl> actions) {
-    Diff.Change change = Diff.buildChanges(defaultUserObjects, currentUserObjects);
+    Diff.Change change = null;
+    try {
+      change = Diff.buildChanges(defaultUserObjects, currentUserObjects);
+    }
+    catch (FilesTooBigForDiffException e) {
+      LOG.info(e);
+    }
     while (change != null) {
       for (int i = 0; i < change.deleted; i++) {
         final int idx = change.line0 + i;

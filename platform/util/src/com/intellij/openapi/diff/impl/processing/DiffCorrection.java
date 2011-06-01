@@ -22,11 +22,12 @@ import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.ArrayList;
 
 public interface DiffCorrection {
-  DiffFragment[] correct(DiffFragment[] fragments);
+  DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException;
 
   class TrueLineBlocks implements DiffCorrection, FragmentProcessor<FragmentsCollector> {
     private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.DiffCorrection.TrueLineBlocks");
@@ -38,13 +39,13 @@ public interface DiffCorrection {
       myComparisonPolicy = comparisonPolicy;
     }
 
-    public DiffFragment[] correct(DiffFragment[] fragments) {
+    public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentsCollector collector = new FragmentsCollector();
       collector.processAll(fragments, this);
       return collector.toArray();
     }
 
-    public void process(DiffFragment fragment, FragmentsCollector collector) {
+    public void process(DiffFragment fragment, FragmentsCollector collector) throws FilesTooBigForDiffException {
       if (!fragment.isEqual()) {
         if (myComparisonPolicy.isEqual(fragment))
           fragment = myComparisonPolicy.createFragment(fragment.getText1(), fragment.getText2());
@@ -58,7 +59,7 @@ public interface DiffCorrection {
       }
     }
 
-    public DiffFragment[] correctAndNormalize(DiffFragment[] fragments) {
+    public DiffFragment[] correctAndNormalize(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       return Normalize.INSTANCE.correct(correct(fragments));
     }
   }
@@ -72,7 +73,7 @@ public interface DiffCorrection {
       myDiffPolicy = new DiffPolicy.ByChar(myComparisonPolicy);
     }
 
-    public void process(DiffFragment fragment, FragmentsCollector collector) {
+    public void process(DiffFragment fragment, FragmentsCollector collector) throws FilesTooBigForDiffException {
       if (!fragment.isChange()) {
         collector.add(fragment);
         return;
@@ -111,7 +112,7 @@ public interface DiffCorrection {
       return text.substring(0, i);
     }
 
-    public DiffFragment[] correct(DiffFragment[] fragments) {
+    public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentsCollector collector = new FragmentsCollector();
       collector.processAll(fragments, this);
       return collector.toArray();
@@ -119,7 +120,7 @@ public interface DiffCorrection {
   }
 
   interface FragmentProcessor<Collector> {
-    void process(DiffFragment fragment, Collector collector);
+    void process(DiffFragment fragment, Collector collector) throws FilesTooBigForDiffException;
   }
 
   class BaseFragmentRunner<ActualRunner extends BaseFragmentRunner> {
@@ -144,7 +145,7 @@ public interface DiffCorrection {
 
     public DiffFragment[] getFragments() { return myFragments; }
 
-    public void processAll(DiffFragment[] fragments, FragmentProcessor<ActualRunner> processor) {
+    public void processAll(DiffFragment[] fragments, FragmentProcessor<ActualRunner> processor) throws FilesTooBigForDiffException {
       myFragments = fragments;
       for (;myIndex < myFragments.length; myIndex++) {
         DiffFragment fragment = myFragments[myIndex];
@@ -198,7 +199,7 @@ public interface DiffCorrection {
       }
     }
 
-    public void processAll(DiffFragment[] fragments, FragmentProcessor<FragmentBuffer> processor) {
+    public void processAll(DiffFragment[] fragments, FragmentProcessor<FragmentBuffer> processor) throws FilesTooBigForDiffException {
       super.processAll(fragments, processor);
       flushMarked();
     }
@@ -208,7 +209,7 @@ public interface DiffCorrection {
     public static final DiffCorrection INSTANCE = new ConcatenateSingleSide();
     private static final int DEFAULT_MODE = 1;
 
-    public DiffFragment[] correct(DiffFragment[] fragments) {
+    public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentBuffer buffer = new FragmentBuffer();
       buffer.processAll(fragments, this);
       return buffer.toArray();
@@ -225,7 +226,7 @@ public interface DiffCorrection {
     private static final int EQUAL_MODE = 1;
     private static final int FORMATTING_MODE = 2;
 
-    public DiffFragment[] correct(DiffFragment[] fragments) {
+    public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentBuffer buffer = new FragmentBuffer();
       buffer.processAll(fragments, this);
       return buffer.toArray();
@@ -243,7 +244,7 @@ public interface DiffCorrection {
 
     private Normalize() {}
 
-    public DiffFragment[] correct(DiffFragment[] fragments) {
+    public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       return UnitEquals.INSTANCE.correct(ConcatenateSingleSide.INSTANCE.correct(fragments));
     }
   }
@@ -252,7 +253,7 @@ public interface DiffCorrection {
     public static final ConnectSingleSideToChange INSTANCE = new ConnectSingleSideToChange();
     private static final int CHANGE = 1;
 
-    public DiffFragment[] correct(DiffFragment[] fragments) {
+    public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentBuffer buffer = new FragmentBuffer();
       buffer.processAll(fragments, this);
       return buffer.toArray();

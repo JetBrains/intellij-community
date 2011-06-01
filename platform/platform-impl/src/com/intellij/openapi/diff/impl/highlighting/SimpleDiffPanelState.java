@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -56,7 +57,6 @@ public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements 
   }
 
   private LineBlocks addMarkup(final ArrayList<LineFragment> lines) {
-    resetMarkup();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
@@ -80,9 +80,9 @@ public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements 
   ApplicationManager.getApplication().runWriteAction(new ResetMarkupRunnable(this));
   }
 
-  public LineBlocks updateEditors() {
+  public LineBlocks updateEditors() throws FilesTooBigForDiffException {
+    resetMarkup();
     if (myAppender1.getEditor() == null || myAppender2.getEditor() == null) {
-      resetMarkup();
       return LineBlocks.EMPTY;
     }
 

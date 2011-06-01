@@ -5,6 +5,7 @@ import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.highlighting.FragmentEquality;
 import com.intellij.openapi.diff.impl.highlighting.FragmentStringConvertion;
 import com.intellij.util.Assertion;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import junit.framework.TestCase;
 
 public class CorrectionTest extends TestCase {
@@ -16,7 +17,7 @@ public class CorrectionTest extends TestCase {
     CHECK.setEquality(new FragmentEquality());
   }
 
-  public void testTrueLineBlock() {
+  public void testTrueLineBlock() throws FilesTooBigForDiffException {
     DiffCorrection.TrueLineBlocks correction = new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = correction.correctAndNormalize(new DiffFragment[]{
       DiffFragment.unchanged(" 1\n  ab\n x\n", "  2\n ab\n x\n"),
@@ -30,7 +31,7 @@ public class CorrectionTest extends TestCase {
                      fragments);
   }
 
-  public void testTrueLineBlocksWithSameLines() {
+  public void testTrueLineBlocksWithSameLines() throws FilesTooBigForDiffException {
     DiffCorrection.TrueLineBlocks correction = new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = correction.correctAndNormalize(new DiffFragment[]{
       DiffFragment.unchanged(" X\n  X\n  X", "  X\n X\n  X")});
@@ -39,7 +40,7 @@ public class CorrectionTest extends TestCase {
                      fragments);
   }
 
-  public void testChangedSpaceCorrection() {
+  public void testChangedSpaceCorrection() throws FilesTooBigForDiffException {
     DiffCorrection correction = new DiffCorrection.ChangedSpace(ComparisonPolicy.DEFAULT);
     DiffFragment[] fragments = correction.correct(new DiffFragment[]{
         new DiffFragment("x", "y"),
@@ -63,7 +64,7 @@ public class CorrectionTest extends TestCase {
     CHECK.compareAll(new DiffFragment[]{new DiffFragment("\n", "\n"), new DiffFragment(null, "\n")}, fragments);
   }
 
-  public void testConcatinateSingleSide() {
+  public void testConcatinateSingleSide() throws FilesTooBigForDiffException {
     DiffCorrection correction = new DiffCorrection.ConcatenateSingleSide();
     DiffFragment[] corrected = correction.correct(
         new DiffFragment[]{new DiffFragment(null, "a"),
@@ -81,7 +82,7 @@ public class CorrectionTest extends TestCase {
                      corrected);
   }
 
-  public void testConnectSingleSideToChange() {
+  public void testConnectSingleSideToChange() throws FilesTooBigForDiffException {
     DiffFragment first = DiffFragment.unchanged("a", "A");
     DiffFragment oneSide = new DiffFragment(null, "b");
     DiffFragment equal = new DiffFragment("c", "c");
