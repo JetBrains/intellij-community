@@ -95,9 +95,7 @@ class StatusPanel extends JPanel {
     myLogTime = new Date();
     myDirty = false;
 
-    if (text == null) {
-      updateText(false, "");
-    }
+    updateText(StringUtil.isNotEmpty(text), "");
   }
 
   public boolean updateText(boolean logAllowed, @Nullable String nonLogText) {
