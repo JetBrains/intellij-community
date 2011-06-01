@@ -1,5 +1,7 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +12,11 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
  * @author nik
  */
 public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
+  @Override
+  protected void setUpProject() throws Exception {
+    super.setUpProject();
+    CompilerTestUtil.setupJavacForTests(getProject());
+  }
 
   public void testChangeFile() throws Exception {
     final VirtualFile file = createFile("file.txt");
@@ -65,6 +72,21 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     compileProject().assertRecompiled("a/a.txt");
   }
 
+
+  public void testBuildArtifactAfterRebuild() {
+    Module module = addModule("mod", createFile("src/A.java", "public class A {}").getParent());
+    CompilerTestUtil.scanSourceRootsToRecompile(getProject());
+    VirtualFile file = createFile("a.txt");
+    Artifact a = addArtifact(root().file(file).module(module));
+    compile(module);
+    compile(a);
+
+    renameFile(file, "b.txt");
+    rebuild();
+    compile(a);
+    assertOutput(a, fs().file("b.txt").file("A.class"));
+  }
+  
   public void testRenameFile() throws Exception {
     final VirtualFile file = createFile("a/a.txt");
     final Artifact a = addArtifact(root().dirCopy(file.getParent()));

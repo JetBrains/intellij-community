@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -69,6 +70,31 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
 
   protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter, final boolean forceCompile,
                                    final boolean errorsExpected) {
+    return compile(errorsExpected, new ParameterizedRunnable<CompileStatusNotification>() {
+      @Override
+      public void run(CompileStatusNotification callback) {
+        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+        if (forceCompile) {
+          assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
+          compilerManager.compile(scope, callback);
+        }
+        else {
+          compilerManager.make(scope, filter, callback);
+        }
+      }
+    });
+  }
+
+  protected void rebuild() {
+    compile(false, new ParameterizedRunnable<CompileStatusNotification>() {
+      @Override
+      public void run(CompileStatusNotification compileStatusNotification) {
+        CompilerManager.getInstance(myProject).rebuild(compileStatusNotification);
+      }
+    });
+  }
+
+  protected CompilationLog compile(final boolean errorsExpected, final ParameterizedRunnable<CompileStatusNotification> action) {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -98,14 +124,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
           }
         };
 
-        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-        if (forceCompile) {
-          assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
-          compilerManager.compile(scope, callback);
-        }
-        else {
-          compilerManager.make(scope, filter, callback);
-        }
+        action.run(callback);
       }
     });
 
