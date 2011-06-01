@@ -204,6 +204,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     for (int i = 0; i < size; i++) {
       if (svnFileAnnotation.getAnnotationSourceSwitcher().mergeSourceAvailable(i)) {
         final VcsRevisionNumber number = svnFileAnnotation.getLineRevisionNumber(i);
+        if (number == null) continue;
         merged.put(i, number);
         addMap.put(number, svnFileAnnotation.getRevision(((SvnRevisionNumber) number).getRevision().getNumber()));
       }
