@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.imports;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +33,7 @@ import java.util.List;
  *
  * @author dcheryasov
  */
-public class AutoImportQuickFix implements LocalQuickFix {
+public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
 
   private final PyElement myNode;
   private final PsiReference myReference;

@@ -146,8 +146,8 @@ def restore_pm_excepthook():
 
 
 def update_exception_hook(dbg):
-    if len(dbg.exception_set) >0:
-        set_pm_excepthook(tuple(dbg.exception_set))
+    if dbg.exception_set:
+        set_pm_excepthook(dict(dbg.exception_set))
     else:
         restore_pm_excepthook()
 

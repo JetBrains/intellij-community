@@ -5,7 +5,6 @@ import pickle
 from django_frame import DjangoTemplateFrame
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
-from console import pydevconsole
 from code import compile_command
 from code import InteractiveInterpreter
 
