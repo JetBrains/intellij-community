@@ -45,7 +45,8 @@ public class TempFileSystem extends NewVirtualFileSystem {
   }
 
   protected String extractRootPath(@NotNull final String path) {
-    return path.startsWith("/") ? "/" : "";
+    //return path.startsWith("/") ? "/" : "";
+    return "/";
   }
 
   public int getRank() {
