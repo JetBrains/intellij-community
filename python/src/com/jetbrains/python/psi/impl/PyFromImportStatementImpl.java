@@ -148,7 +148,8 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     else {
       PyImportElement[] importElements = getImportElements();
       for(PyImportElement element: importElements) {
-        if (!element.processDeclarations(processor, state, lastParent, place)) {
+        final PsiElement resolved = ResolveImportUtil.resolveImportElement(element);
+        if (resolved != null && !processor.execute(resolved, state)) {
           return false;
         }
       }

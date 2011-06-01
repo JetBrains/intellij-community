@@ -8,6 +8,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -70,11 +71,11 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
       boolean handled_as_imported = false;
       if (element instanceof PyImportElement) {
         final PyImportElement importElement = (PyImportElement)element;
-        PyReferenceExpression ref = importElement.getImportReference();
-        if (ref != null && ref.getQualifier() == null) {
-          String name = importElement.getAsName() != null ? importElement.getAsName() : ref.getName();
+        final PyQualifiedName qName = importElement.getImportedQName();
+        if (qName != null && qName.getComponentCount() == 1) {
+          String name = importElement.getAsName() != null ? importElement.getAsName() : qName.getLastComponent();
           if (name != null && nameIsAcceptable(name)) {
-            PsiElement resolved = ref.getReference().resolve();
+            final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement);
             if (resolved instanceof PsiNamedElement) {
               handled_as_imported = true;
               addElement(name, resolved);
