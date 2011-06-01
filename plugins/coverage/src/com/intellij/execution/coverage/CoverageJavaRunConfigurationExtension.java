@@ -14,6 +14,9 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -76,12 +79,17 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     final JavaCoverageEnabledConfiguration coverageConfig = JavaCoverageEnabledConfiguration.getFrom(configuration);
     //noinspection ConstantConditions
     coverageConfig.setCurrentCoverageSuite(null);
-    if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) || coverageConfig.getCoverageRunner() instanceof IDEACoverageRunner)
+    final CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
+    if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) || coverageRunner instanceof IDEACoverageRunner)
         && coverageConfig.isCoverageEnabled()
-        && coverageConfig.getCoverageRunner() != null) {
+        && coverageRunner != null) {
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
       coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
       coverageConfig.appendCoverageArgument(params);
+    } else if (runnerSettings.getData() instanceof DebuggingRunnerData && !(coverageRunner instanceof IDEACoverageRunner) && coverageRunner != null){
+      Notifications.Bus.notify(new Notification("Coverage", "Coverage was not enabled",
+                                                coverageRunner.getPresentableName() + " coverage is disabled in the debug mode",
+                                                NotificationType.WARNING));
     }
   }
 
