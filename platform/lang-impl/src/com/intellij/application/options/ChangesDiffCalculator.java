@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.actions.MergeOperations;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
@@ -30,6 +31,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -47,13 +49,21 @@ public class ChangesDiffCalculator {
   private final BaseMarkup myOldMarkup = new BaseMarkup(FragmentSide.SIDE1);
   private final ChangesCollector myNewMarkup = new ChangesCollector();
   private final TextCompareProcessor myCompareProcessor = new TextCompareProcessor(ComparisonPolicy.DEFAULT);
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.ChangesDiffCalculator");
 
   public Collection<TextRange> calculateDiff(@NotNull final Document beforeDocument, @NotNull final Document currentDocument) {
     myNewMarkup.ranges.clear();
     myOldMarkup.document = beforeDocument;
     myNewMarkup.document = currentDocument;
 
-    List<LineFragment> lineFragments = myCompareProcessor.process(beforeDocument.getText(), currentDocument.getText());
+    List<LineFragment> lineFragments = null;
+    try {
+      lineFragments = myCompareProcessor.process(beforeDocument.getText(), currentDocument.getText());
+    }
+    catch (FilesTooBigForDiffException e) {
+      LOG.info(e);
+      return Collections.emptyList();
+    }
 
     for (Iterator<LineFragment> iterator = lineFragments.iterator(); iterator.hasNext();) {
       LineFragment fragment = iterator.next();
