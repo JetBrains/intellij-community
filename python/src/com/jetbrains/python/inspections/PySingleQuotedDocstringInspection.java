@@ -8,6 +8,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.ConvertDocstringQuickFix;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +42,9 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
     @Override
     public void visitPyStringLiteralExpression(final PyStringLiteralExpression string) {
       String stringText = string.getText();
-      stringText = stringText.substring(getLiteralStartOffset(stringText));
+      myLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      myModificator = stringText.substring(0, myLength);
+      stringText = stringText.substring(myLength);
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(string, PyDocStringOwner.class);
       if (docStringOwner != null) {
         if (docStringOwner.getDocStringExpression() == string)  {
@@ -63,22 +66,6 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
           }
         }
       }
-    }
-
-    private int getLiteralStartOffset(String text) {
-      int start = 0;
-      char c = Character.toUpperCase(text.charAt(start));
-      if (c == 'U' || c == 'B') {
-        myModificator += text.charAt(start);
-        start++;
-        c = Character.toUpperCase(text.charAt(start));
-      }
-      if (c == 'R') {
-        myModificator += text.charAt(start);
-        start++;
-      }
-      myLength = myModificator.length();
-      return start;
     }
   }
 }
