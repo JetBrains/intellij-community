@@ -34,6 +34,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -94,14 +95,16 @@ public class DirDiffPanel implements Disposable {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        final DirDiffElement last = myModel.getElementAt(e.getLastIndex());
-        final DirDiffElement first = myModel.getElementAt(e.getFirstIndex());
+        final int lastIndex = e.getLastIndex();
+        final int firstIndex = e.getFirstIndex();
+        final DirDiffElement last = myModel.getElementAt(lastIndex);
+        final DirDiffElement first = myModel.getElementAt(firstIndex);
         if (last == null || first == null) return;
         if (last.isSeparator()) {
-          myTable.getSelectionModel().setLeadSelectionIndex(e.getFirstIndex());
+          myTable.getSelectionModel().setLeadSelectionIndex(lastIndex + ((lastIndex < firstIndex) ? 1 : -1));
         }
         else if (first.isSeparator()) {
-          myTable.getSelectionModel().setLeadSelectionIndex(e.getLastIndex());
+          myTable.getSelectionModel().setLeadSelectionIndex(firstIndex + ((firstIndex < lastIndex) ? 1 : -1));
         }
         else {
           update(false);
@@ -284,8 +287,6 @@ public class DirDiffPanel implements Disposable {
         myCurrentElement = element.getSource();
       } else {
         myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
-        myDiffPanel.revalidate();
-        myDiffPanel.repaint();
       }
     } else {
       final DiffElement object;
@@ -300,14 +301,12 @@ public class DirDiffPanel implements Disposable {
         myCurrentElement = object;
         myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
         DataManager.registerDataProvider(myDiffPanel, myCurrentElement.getDataProvider(project));
-        myDiffPanel.revalidate();
-        myDiffPanel.repaint();
       } else {
         myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
-        myDiffPanel.revalidate();
-        myDiffPanel.repaint();
       }
     }
+    myDiffPanel.revalidate();
+    myDiffPanel.repaint();
   }
 
   private void registerCustomShortcuts(DirDiffToolbarActions actions, JPanel rootPanel) {

@@ -2,6 +2,7 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.javadoc.JavadocHelper;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Pair;
@@ -44,7 +45,33 @@ public class JavadocFixer {
 
     final JavadocHelper.JavadocParameterInfo next = findNext(pair.second, pair.first);
     if (next == null) {
-      return false;
+      final int line = pair.first.lastLine + 1;
+      final Document document = editor.getDocument();
+      if (line < document.getLineCount()) {
+        StringBuilder indent = new StringBuilder();
+        boolean insertIndent = true;
+        final CharSequence text = document.getCharsSequence();
+        for (int i = document.getLineStartOffset(line), max = document.getLineEndOffset(line); i < max; i++) {
+          final char c = text.charAt(i);
+          if (c == ' ' || c == '\t') {
+            indent.append(c);
+            continue;
+          }
+          else if (c == '*') {
+            indent.append("* ");
+            if (i < max - 1 && text.charAt(i + 1) != '/') {
+              insertIndent = false;
+            }
+          }
+          indent.append("\n");
+          break;
+        }
+        if (insertIndent) {
+          document.insertString(document.getLineStartOffset(line), indent);
+        }
+      }
+      moveCaretToTheLineEndIfPossible(editor, line);
+      return true;
     }
 
     if (next.parameterDescriptionStartPosition != null) {
@@ -57,6 +84,19 @@ public class JavadocFixer {
     return true;
   }
 
+  private static void moveCaretToTheLineEndIfPossible(@NotNull Editor editor, int line) {
+    final Document document = editor.getDocument();
+    final CaretModel caretModel = editor.getCaretModel();
+    int offset;
+    if (line >= document.getLineCount()) {
+      offset = document.getTextLength();
+    }
+    else {
+      offset = document.getLineEndOffset(line);
+    }
+    caretModel.moveToOffset(offset);
+  }
+  
   @Nullable
   private static JavadocHelper.JavadocParameterInfo findNext(@NotNull Collection<JavadocHelper.JavadocParameterInfo> data,
                                                              @NotNull JavadocHelper.JavadocParameterInfo anchor)

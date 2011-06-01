@@ -17,7 +17,8 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ImmutableUserMap;
-import com.intellij.util.containers.Queue;
+
+import java.util.LinkedList;
 
 /**
  * @author peter
@@ -28,8 +29,8 @@ public abstract class LookAheadLexer extends LexerBase{
 
   private final Lexer myBaseLexer;
   private int myTokenStart;
-  private final Queue<IElementType> myTypeCache = new Queue<IElementType>(50);
-  private final Queue<Integer> myEndOffsetCache = new Queue<Integer>(50);
+  private final LinkedList<IElementType> myTypeCache = new LinkedList<IElementType>();
+  private final LinkedList<Integer> myEndOffsetCache = new LinkedList<Integer>();
 
   public LookAheadLexer(final Lexer baseLexer) {
     myBaseLexer = baseLexer;
@@ -40,8 +41,8 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   protected void addToken(int endOffset, IElementType type) {
-    myTypeCache.addLast(type);
-    myEndOffsetCache.addLast(endOffset);
+    myTypeCache.add(type);
+    myEndOffsetCache.add(endOffset);
   }
 
   protected void lookAhead(Lexer baseLexer) {
@@ -50,8 +51,8 @@ public abstract class LookAheadLexer extends LexerBase{
 
   public void advance() {
     if (!myTypeCache.isEmpty()) {
-      myTypeCache.pullFirst();
-      myTokenStart = myEndOffsetCache.pullFirst();
+      myTypeCache.removeFirst();
+      myTokenStart = myEndOffsetCache.removeFirst();
     }
     if (myTypeCache.isEmpty()) {
       doLookAhead();
@@ -80,8 +81,8 @@ public abstract class LookAheadLexer extends LexerBase{
 
   protected void resetCacheSize(int size) {
     while (myTypeCache.size() > size) {
-      myTypeCache.pullFirst();
-      myEndOffsetCache.pullFirst();
+      myTypeCache.removeLast();
+      myEndOffsetCache.removeLast();
     }
   }
 
@@ -91,7 +92,7 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   public int getTokenEnd() {
-    return myEndOffsetCache.peekFirst();
+    return myEndOffsetCache.getFirst();
   }
 
   public int getTokenStart() {
@@ -114,7 +115,7 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   public IElementType getTokenType() {
-    return myTypeCache.peekFirst();
+    return myTypeCache.getFirst();
   }
 
   @Override

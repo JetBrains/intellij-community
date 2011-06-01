@@ -18,21 +18,13 @@ package org.jetbrains.android.logcat;
 
 import com.intellij.CommonBundle;
 import com.intellij.facet.ProjectFacetManager;
-import com.intellij.facet.ProjectWideFacetAdapter;
-import com.intellij.facet.ProjectWideFacetListenersRegistry;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -46,10 +38,11 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidLogcatToolWindowFactory implements ToolWindowFactory, Condition<Project> {
+public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
   public static final String TOOL_WINDOW_ID = AndroidBundle.message("android.logcat.title");
 
   public void createToolWindowContent(final Project project, final ToolWindow toolWindow) {
+    toolWindow.setSplitMode(true, null);
     toolWindow.setIcon(AndroidUtils.ANDROID_ICON);
     toolWindow.setAvailable(true, null);
     toolWindow.setToHideOnEmptyContent(true);
@@ -107,40 +100,5 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory, Condit
     if (platform == null) {
       Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
     }
-  }
-
-  public boolean value(Project project) {
-    ModuleManager manager = ModuleManager.getInstance(project);
-    for (Module module : manager.getModules()) {
-      AndroidFacet facet = AndroidFacet.getInstance(module);
-      if (facet != null) return true;
-    }
-    return false;
-  }
-
-  public void configureToolWindow(final Project project) {
-    ProjectWideFacetListenersRegistry.getInstance(project)
-      .registerListener(AndroidFacet.ID, new ProjectWideFacetAdapter<AndroidFacet>() {
-        @Override
-        public void firstFacetAdded() {
-          final ToolWindowManager manager = ToolWindowManager.getInstance(project);
-          final ToolWindow toolWindow = manager.getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
-          if (toolWindow == null) {
-            final ToolWindow window =
-              manager.registerToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID, false, ToolWindowAnchor.BOTTOM, project);
-            window.setSplitMode(true, null);
-            createToolWindowContent(project, window);
-          }
-        }
-
-        @Override
-        public void allFacetsRemoved() {
-          final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
-          if (toolWindow != null) {
-            ToolWindowManager.getInstance(project).unregisterToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
-            Disposer.dispose(toolWindow.getContentManager());
-          }
-        }
-      });
   }
 }

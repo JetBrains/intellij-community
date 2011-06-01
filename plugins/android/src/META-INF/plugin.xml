@@ -128,11 +128,11 @@
     <annotator language="XML" implementationClass="org.jetbrains.android.AndroidColorAnnotator" order="first"/>
     <xml.elementDescriptorProvider implementation="org.jetbrains.android.dom.AndroidDomElementDescriptorProvider" order="first"/>
 
-    <toolWindow id="Android Logcat"
-                anchor="bottom"
-                icon="/icons/android.png"
-                factoryClass="org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory"
-                conditionClass="org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory"/>
+    <facet.toolWindow id="Android Logcat"
+                      facetIdList="android"
+                      anchor="bottom"
+                      icon="/icons/android.png"
+                      factoryClass="org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory"/>
     <projectService serviceInterface="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"
                     serviceImplementation="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"/>
     <xml.xmlExtension implementation="org.jetbrains.android.dom.AndroidXmlExtension" order="first"/>
