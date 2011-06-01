@@ -32,6 +32,8 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
+    String myModificator = "";
+    int myLength = 0;
     public Visitor(final ProblemsHolder holder) {
       super(holder);
     }
@@ -39,6 +41,7 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
     @Override
     public void visitPyStringLiteralExpression(final PyStringLiteralExpression string) {
       String stringText = string.getText();
+      stringText = stringText.substring(getLiteralStartOffset(stringText));
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(string, PyDocStringOwner.class);
       if (docStringOwner != null) {
         if (docStringOwner.getDocStringExpression() == string)  {
@@ -49,16 +52,33 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
               if (stringText.startsWith("'''") && stringText.endsWith("'''")) {
                 quoteCount = 3;
               }
-              TextRange trStart = new TextRange(0, quoteCount);
-              TextRange trEnd = new TextRange(stringText.length()-quoteCount, stringText.length());
+              TextRange trStart = new TextRange(myLength, myLength+quoteCount);
+              TextRange trEnd = new TextRange(stringText.length()+myLength-quoteCount,
+                                              stringText.length()+myLength);
               holder.registerProblem(string, trStart,
-                                     PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix());
+                                     PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix(myModificator));
               holder.registerProblem(string, trEnd,
-                                     PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix());
+                                     PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix(myModificator));
             }
           }
         }
       }
+    }
+
+    private int getLiteralStartOffset(String text) {
+      int start = 0;
+      char c = Character.toUpperCase(text.charAt(start));
+      if (c == 'U' || c == 'B') {
+        myModificator += text.charAt(start);
+        start++;
+        c = Character.toUpperCase(text.charAt(start));
+      }
+      if (c == 'R') {
+        myModificator += text.charAt(start);
+        start++;
+      }
+      myLength = myModificator.length();
+      return start;
     }
   }
 }

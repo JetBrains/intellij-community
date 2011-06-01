@@ -5,10 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyExpressionStatement;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,8 +15,9 @@ import org.jetbrains.annotations.NotNull;
  * For consistency, always use """triple double quotes""" around docstrings.
  */
 public class ConvertDocstringQuickFix implements LocalQuickFix {
-
-  public ConvertDocstringQuickFix() {
+  String myModificator = "";
+  public ConvertDocstringQuickFix(String modificator) {
+    myModificator = modificator;
   }
 
   @NotNull
@@ -37,15 +35,15 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
     if (expression instanceof PyStringLiteralExpression) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-      String content = expression.getText();
+      String content = expression.getText().substring(myModificator.length());
       if (content.startsWith("'''") ) {
         content = content.substring(3, content.length()-3);
       } else {
         content = content.length() == 1 ? "" : content.substring(1, content.length()-1);
       }
 
-      PyStringLiteralExpression newString = (PyStringLiteralExpression)elementGenerator.createFromText(LanguageLevel.forElement(expression),
-                                PyExpressionStatement.class,"\"\"\"" + content + "\"\"\"").getExpression();
+      PyExpression newString = elementGenerator.createFromText(LanguageLevel.forElement(expression),
+                                PyExpressionStatement.class, myModificator+"\"\"\"" + content + "\"\"\"").getExpression();
       expression.replace(newString);
     }
   }
