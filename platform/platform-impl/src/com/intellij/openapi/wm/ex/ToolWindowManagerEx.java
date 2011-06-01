@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,8 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class ToolWindowManagerEx extends ToolWindowManager {
+  public abstract void initToolWindow(ToolWindowEP bean);
+
   public static ToolWindowManagerEx getInstanceEx(final Project project){
     return (ToolWindowManagerEx)getInstance(project);
   }

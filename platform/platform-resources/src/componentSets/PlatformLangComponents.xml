@@ -51,10 +51,5 @@
       <implementation-class>com.intellij.platform.PlatformVcsDetector</implementation-class>
     </component>
 
-    <component>
-      <implementation-class>com.intellij.facet.impl.ui.FacetDependentToolWindowManager</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-
   </project-components>
 </components>

@@ -31,35 +31,40 @@ public class TestAllInPackage2 extends TestSuite {
       String classMethodName = classMethodNames[i];
       Test suite = TestRunnerUtil.createClassOrMethodSuite(runner, classMethodName);
       if (suite != null) {
-        if (skipSuite(allNames, suite)) continue;
-        if (suite instanceof TestSuite && ((TestSuite)suite).getName() == null) {
-          attachSuiteInfo(suite, classMethodName);
+        skipSuiteComponents(allNames, suite);
+      }
+    }
+    for (int i = 0; i < classMethodNames.length; i++) {
+      String classMethodName = classMethodNames[i];
+      Test suite = TestRunnerUtil.createClassOrMethodSuite(runner, classMethodName);
+      if (suite != null) {
+        final boolean isTestSuite = suite instanceof TestSuite;
+        if (!isTestSuite || allNames.contains(((TestSuite)suite).getName())) {
+          if (isTestSuite && ((TestSuite)suite).getName() == null) {
+            attachSuiteInfo(suite, classMethodName);
+          }
+          addTest(suite);
+          testClassCount++;
         }
-        addTest(suite);
-        testClassCount++;
       }
     }
     String message = TestRunnerUtil.testsFoundInPackageMesage(testClassCount, name);
     System.out.println(message);
   }
 
-  private static boolean skipSuite(Set allNames, Test suite) {
+  private static void skipSuiteComponents(Set allNames, Test suite) {
     if (suite instanceof TestRunnerUtil.SuiteMethodWrapper) {
       final Test test = ((TestRunnerUtil.SuiteMethodWrapper)suite).getSuite();
       final String currentSuiteName =  ((TestRunnerUtil.SuiteMethodWrapper)suite).getClassName();
       if (test instanceof TestSuite) {
-        boolean hasAllComponents = true;
         for (int idx = 0; idx < ((TestSuite)test).testCount(); idx++) {
           final String testName = ((TestSuite)test).testAt(idx).toString();
-          if (!allNames.contains(testName) || currentSuiteName.equals(testName)) {
-            hasAllComponents = false;
-            break;
+          if (!currentSuiteName.equals(testName)) {
+            allNames.remove(testName);
           }
         }
-        if (hasAllComponents) return true;
       }
     }
-    return false;
   }
 
   private static void attachSuiteInfo(Test test, String name) {

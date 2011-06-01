@@ -348,6 +348,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return null;
   }
 
+  @Override
+  public void initToolWindow(ToolWindowEP bean) {
+
+  }
+
   public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
 
   }

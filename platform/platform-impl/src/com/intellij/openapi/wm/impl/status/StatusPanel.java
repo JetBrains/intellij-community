@@ -19,6 +19,7 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -49,6 +50,8 @@ class StatusPanel extends JPanel {
 
   StatusPanel() {
     super(new BorderLayout());
+    
+    setOpaque(isOpaque() && !SystemInfo.isMac);
 
     myShowLog.addMouseListener(new MouseAdapter() {
       @Override
