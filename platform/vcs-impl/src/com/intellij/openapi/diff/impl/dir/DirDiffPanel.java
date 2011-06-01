@@ -93,14 +93,16 @@ public class DirDiffPanel implements Disposable {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        final DirDiffElement last = myModel.getElementAt(e.getLastIndex());
-        final DirDiffElement first = myModel.getElementAt(e.getFirstIndex());
+        final int lastIndex = e.getLastIndex();
+        final int firstIndex = e.getFirstIndex();
+        final DirDiffElement last = myModel.getElementAt(lastIndex);
+        final DirDiffElement first = myModel.getElementAt(firstIndex);
         if (last == null || first == null) return;
         if (last.isSeparator()) {
-          myTable.getSelectionModel().setLeadSelectionIndex(e.getFirstIndex());
+          myTable.getSelectionModel().setLeadSelectionIndex(lastIndex + ((lastIndex < firstIndex) ? 1 : -1));
         }
         else if (first.isSeparator()) {
-          myTable.getSelectionModel().setLeadSelectionIndex(e.getLastIndex());
+          myTable.getSelectionModel().setLeadSelectionIndex(firstIndex + ((firstIndex < lastIndex) ? 1 : -1));
         }
         else {
           update(false);
