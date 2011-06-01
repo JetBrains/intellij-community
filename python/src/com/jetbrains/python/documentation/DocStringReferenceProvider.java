@@ -75,6 +75,8 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
             docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).equals(":rtype")) {
           pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, endPos+1);
           endPos = CharMatcher.anyOf("\n\r").indexIn(docString, pos+1);
+          if (endPos == -1)
+            endPos  = pos;
           Map<TextRange, PyType> map =  PyTypeParser.parseDocstring(element, docString.substring(pos, endPos), pos);
           for (Map.Entry<TextRange, PyType> pair : map.entrySet())
             result.add(new DocStringTypeReference(element, pair.getKey(), pair.getValue()));
