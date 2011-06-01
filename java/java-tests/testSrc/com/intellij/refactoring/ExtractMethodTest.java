@@ -4,8 +4,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -303,6 +301,11 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testStopFolding() throws Exception {
     doTest();
   }
+
+  public void testStopFoldingPostfixInside() throws Exception {
+    doTest();
+  }
+
 
   public void testIDEADEV11748() throws Exception {
     doTest();

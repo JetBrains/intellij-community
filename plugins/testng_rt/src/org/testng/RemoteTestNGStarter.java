@@ -101,7 +101,7 @@ public class RemoteTestNGStarter {
       testNG.run();
       return;
     }
-    catch (Exception ignore) {}
+    catch (Throwable ignore) {}
 
     RemoteTestNG.main((String[])resultArgs.toArray(new String[resultArgs.size()]));
   }
