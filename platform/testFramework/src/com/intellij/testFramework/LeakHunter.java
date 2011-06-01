@@ -194,7 +194,14 @@ public class LeakHunter {
             String place = leaked instanceof Project ? PlatformTestCase.getCreationPlace((Project)leaked) : "";
             System.out.println("LEAK: hash: "+System.identityHashCode(leaked) + "; place: "+ place);
             while (backLink != null) {
-              System.out.println("-->"+backLink.field+"; Value: "+backLink.value+"; "+backLink.aClass);
+              String valueStr;
+              try {
+                valueStr = String.valueOf(leaked);
+              }
+              catch (Exception e) {
+                valueStr = "("+e.getMessage()+" while computing .toString())";
+              }
+              System.out.println("-->"+backLink.field+"; Value: "+ valueStr +"; "+backLink.aClass);
               backLink = backLink.backLink;
             }
             System.out.println(";-----");
