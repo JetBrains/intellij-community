@@ -57,6 +57,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     };
   }
 
+  public void testEnumSyntheticMethods() throws Exception {
+    doTest(false, false);
+  }
+
   public void testDuplicateAnnotations() throws Exception {
     doTest(false, false);
   }

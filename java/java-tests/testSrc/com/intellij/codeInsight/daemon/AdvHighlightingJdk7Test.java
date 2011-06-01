@@ -24,8 +24,8 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run
- * For "lightweight" tests use LightAdvHighlightingTest
+ * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run.
+ * For "lightweight" tests please use {@linkplain LightAdvHighlightingJdk7Test}.
  */
 public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7/";
@@ -43,10 +43,6 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
 
   public void testStaticImports() throws Exception {
     doTest(BASE_PATH + "staticImports/staticImports.java", BASE_PATH + "/staticImports", false, false);
-  }
-
-  public void testEnumSyntheticMethods() throws Exception {
-    doTest(BASE_PATH + getTestName(true) + ".java", false, false);
   }
 
   public void testStaticImportConflict() throws Exception {
