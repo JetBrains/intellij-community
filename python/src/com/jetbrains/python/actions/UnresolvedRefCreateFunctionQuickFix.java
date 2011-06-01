@@ -39,7 +39,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(myElement)) return;
+    if (!myElement.isValid() || !CodeInsightUtilBase.preparePsiElementForWrite(myElement)) return;
 
     PyFunctionBuilder functionBuilder = new PyFunctionBuilder(myReference.getText());
 
