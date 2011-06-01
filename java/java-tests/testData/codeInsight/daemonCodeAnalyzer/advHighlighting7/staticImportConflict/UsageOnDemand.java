@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import x.Base1;
-import static x.Base2.F;
-import static x.Base1.m;
-import static x.Base2.m;
-import static <error descr="Field 'IF' is ambiguous in a single static import">x.Base2.II.IF</error>;
+import static x.Base1.*;
+import static x.Base2.*;
 
-class Usage {
+class UsageOnDemand {
   void use() {
-    m(Base1.F); //Base1.m(int)
-    m(F); //Base2.m(float)
-    F.class.getName(); // Base2.F
-    m(<error descr="Reference to 'IF' is ambiguous, both 'field I1.IF' and 'field I2.IF' match">IF</error>);
+    m(1); //Base1.m(int)
+    m(1.0f); //Base2.m(float)
   }
 }

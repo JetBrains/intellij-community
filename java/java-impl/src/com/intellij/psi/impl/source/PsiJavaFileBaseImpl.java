@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -187,13 +188,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     private String myNameToFilter;
     private boolean myIsProcessingOnDemand;
     private final Collection<String> myHiddenNames = new HashSet<String>();
+    private final Collection<PsiElement> myCollectedElements = new HashSet<PsiElement>();
 
     private StaticImportFilteringProcessor(PsiScopeProcessor delegate, String nameToFilter) {
       myDelegate = delegate;
       myNameToFilter = nameToFilter;
     }
 
-    public void setNameToFilter(String nameToFilter) {
+    public void setNameToFilter(@Nullable String nameToFilter) {
       myNameToFilter = nameToFilter;
     }
 
@@ -224,18 +226,18 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     public boolean execute(PsiElement element, ResolveState state) {
       if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
         if (myNameToFilter != null &&
-            (!(element instanceof PsiNamedElement) || !myNameToFilter.equals(((PsiNamedElement)element).getName()))) {
-            return true;
+            !(element instanceof PsiNamedElement && myNameToFilter.equals(((PsiNamedElement)element).getName()))) {
+          return true;
         }
         if (element instanceof PsiNamedElement && myIsProcessingOnDemand) {
           final String name = ((PsiNamedElement)element).getName();
           if (myHiddenNames.contains(name)) return true;
         }
-        return myDelegate.execute(element, state);
+        if (myCollectedElements.add(element)) {
+          return myDelegate.execute(element, state);
+        }
       }
-      else {
-        return true;
-      }
+      return true;
     }
   }
 
