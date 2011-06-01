@@ -205,14 +205,19 @@ public class JavadocHelper {
       if (elementType == JavaDocTokenType.DOC_COMMENT_DATA) {
         return new JavadocParameterInfo(
           editor.offsetToLogicalPosition(paramRef.getTextRange().getEndOffset()),
-          editor.offsetToLogicalPosition(e.getTextRange().getStartOffset())
+          editor.offsetToLogicalPosition(e.getTextRange().getStartOffset()),
+          editor.getDocument().getLineNumber(e.getTextRange().getEndOffset())
         );
       }
       else if (elementType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
         break;
       }
     }
-    return new JavadocParameterInfo(editor.offsetToLogicalPosition(paramRef.getTextRange().getEndOffset()), null);
+    return new JavadocParameterInfo(
+      editor.offsetToLogicalPosition(paramRef.getTextRange().getEndOffset()),
+      null,
+      editor.getDocument().getLineNumber(paramRef.getTextRange().getEndOffset())
+    );
   }
   
   /**
@@ -232,10 +237,16 @@ public class JavadocHelper {
      */
     @NotNull public final  LogicalPosition parameterNameEndPosition;
     @Nullable public final LogicalPosition parameterDescriptionStartPosition;
+    /** Last logical line occupied by the current javadoc parameter. */
+    public final int lastLine;
 
-    public JavadocParameterInfo(@NotNull LogicalPosition parameterNameEndPosition, LogicalPosition parameterDescriptionStartPosition) {
+    public JavadocParameterInfo(@NotNull LogicalPosition parameterNameEndPosition,
+                                LogicalPosition parameterDescriptionStartPosition,
+                                int lastLine)
+    {
       this.parameterNameEndPosition = parameterNameEndPosition;
       this.parameterDescriptionStartPosition = parameterDescriptionStartPosition;
+      this.lastLine = lastLine;
     }
 
     @Override

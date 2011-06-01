@@ -223,6 +223,10 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testFromJavadocParameterDescriptionEndToNextParameter() throws Exception { doTest(); }
 
   public void testFromJavadocParameterDescriptionMiddleToNextParameter() throws Exception { doTest(); }
+
+  public void testLastJavadocParameterDescription() throws Exception { doTest(); }
+  
+  public void testLastJavadocParameterDescriptionToReturn() throws Exception { doTest(); }
   
   private void doTestBracesNextLineStyle() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
