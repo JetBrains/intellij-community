@@ -49,6 +49,11 @@ public class PyNames {
 
   @NonNls public static final String DOCFORMAT = "__docformat__";
 
+  @NonNls public static final String DIRNAME = "dirname";
+  @NonNls public static final String JOIN = "join";
+  @NonNls public static final String REPLACE = "replace";
+  @NonNls public static final String FILE = "__file__";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */
