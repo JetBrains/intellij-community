@@ -68,7 +68,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   @Override
-  public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
   }
 
   @Override

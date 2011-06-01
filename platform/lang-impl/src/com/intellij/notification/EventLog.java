@@ -145,7 +145,7 @@ public class EventLog implements Notifications {
   }
 
   @Override
-  public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
   }
 
   public static class ProjectTracker extends AbstractProjectComponent {
@@ -164,7 +164,7 @@ public class EventLog implements Notifications {
         }
 
         @Override
-        public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+        public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
         }
       });
     }
