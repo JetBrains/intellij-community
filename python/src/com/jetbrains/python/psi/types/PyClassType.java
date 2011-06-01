@@ -228,7 +228,7 @@ public class PyClassType extends UserDataHolderBase implements PyType {
     }
     boolean withinOurClass = containingClass == getPyClass();
 
-    final VariantsProcessor processor = new VariantsProcessor(
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(
       expressionHook, new PyResolveUtil.FilterNotInstance(myClass), null
     );
     processor.setNotice(myClass.getName());

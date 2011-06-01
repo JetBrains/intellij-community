@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -11,8 +10,6 @@ import com.jetbrains.python.psi.stubs.PyFileStub;
 
 import java.util.BitSet;
 import java.util.List;
-
-import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 
 /**
  * @author yole

@@ -48,10 +48,7 @@ class PyDBFrame:
                 can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
                 or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
 
-            if mainDebugger.always_exception_set:
-                can_skip = False
-
-            if mainDebugger.django_breakpoints:
+            if mainDebugger.always_exception_set or mainDebugger.django_breakpoints or mainDebugger.django_exception_break:
                 can_skip = False
 
             # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
@@ -97,7 +94,7 @@ class PyDBFrame:
                     self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
                     thread.additionalInfo.message = exception_breakpoint.qname
                 else:
-                    if len(mainDebugger.django_exception_break) and get_exception_name(exception) in ['django.template.base.VariableDoesNotExist', 'django.template.base.TemplateDoesNotExist', 'django.template.base.TemplateSyntaxError'] and just_raised(frame):
+                    if mainDebugger.django_exception_break and get_exception_name(exception) in ['django.template.base.VariableDoesNotExist', 'django.template.base.TemplateDoesNotExist', 'django.template.base.TemplateSyntaxError'] and just_raised(frame):
                         render_frame = find_django_render_frame(frame)
                         if render_frame:
                             suspend_frame = suspend_django(self, mainDebugger, thread, render_frame)

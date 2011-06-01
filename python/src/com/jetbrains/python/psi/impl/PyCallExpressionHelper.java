@@ -273,7 +273,7 @@ public class PyCallExpressionHelper {
     PyType qtype = context.getType(qualifier);
     if (qtype instanceof PyClassType) {
       if (((PyClassType)qtype).isDefinition()) {
-        PyClass resolvedParent = PsiTreeUtil.getParentOfType(resolved, PyClass.class);
+        PyClass resolvedParent = PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyClass.class);
         if (resolvedParent != null) {
           final PyClass qualifierClass = ((PyClassType)qtype).getPyClass();
           if (qualifierClass != null && (qualifierClass.isSubclass(resolvedParent) || resolvedParent.isSubclass(qualifierClass))) {
