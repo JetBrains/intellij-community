@@ -81,10 +81,11 @@ public class GroovyStatementMover extends StatementUpDownMover {
     LineRange prev = null;
     LineRange next = null;
 
-    for (int i = 0; i < allRanges.size(); i++) {
-      LineRange each = allRanges.get(i);
+    for (LineRange each : allRanges) {
+      if (each.endLine <= range.startLine) {
+        prev = each;
+      }
       if (each.containsLine(range.startLine)) {
-        prev = i > 0 ? allRanges.get(i - 1) : null;
         range = new LineRange(each.startLine, range.endLine);
       }
       if (each.startLine < range.endLine && each.endLine > range.endLine) {
