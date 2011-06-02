@@ -114,7 +114,7 @@ public class StatementMover extends LineMover {
   }
 
   @Nullable
-  private static LineRange expandLineRangeToCoverPsiElements(final LineRange range, Editor editor, final PsiFile file) {
+  static LineRange expandLineRangeToCoverPsiElements(final LineRange range, Editor editor, final PsiFile file) {
     Pair<PsiElement, PsiElement> psiRange = getElementRange(editor, file, range);
     if (psiRange == null) return null;
     final PsiElement parent = PsiTreeUtil.findCommonParent(psiRange.getFirst(), psiRange.getSecond());

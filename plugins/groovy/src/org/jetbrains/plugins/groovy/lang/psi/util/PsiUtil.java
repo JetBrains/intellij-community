@@ -66,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
@@ -1161,6 +1162,7 @@ public class PsiUtil {
         parent instanceof GrAssertStatement ||
         parent instanceof GrThrowStatement ||
         parent instanceof GrSwitchStatement ||
+        parent instanceof GrTypeDefinitionBody ||
         parent instanceof GrVariable) {
       return false;
     }

@@ -14,8 +14,8 @@ class Goo {
     }
 
     /**
- * Example
- */
+     * Example
+     */
     public void ex<caret>ample() {
     }
 }

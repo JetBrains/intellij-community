@@ -147,6 +147,8 @@
     
     <nameSuggestionProvider implementation="org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionProvider"/>
 
+    <statementUpDownMover implementation="org.jetbrains.plugins.groovy.lang.editor.actions.moveUpDown.GroovyStatementMover"/>
+
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
 

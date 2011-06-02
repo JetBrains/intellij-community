@@ -15,17 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.actions.updown;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
@@ -99,14 +95,17 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
 
   private void bothTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
-    final String lower = data.get(0);
-    final String upper = data.get(1);
+    String lower = data.get(0);
+    String upper = data.get(1);
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, lower);
 
     performAction(GroovyEditorActionsManager.MOVE_STATEMENT_UP_ACTION);
+    if (!upper.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) upper += "\n";
+
     myFixture.checkResult(upper);
 
     performAction(GroovyEditorActionsManager.MOVE_STATEMENT_DOWN_ACTION);
+    if (!lower.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) lower += "\n";
     myFixture.checkResult(lower);
   }
 
@@ -116,17 +115,17 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
 
     performAction(actionId);
-    myFixture.checkResult(data.get(1).trim());
+    String expected = data.get(1);
+    if (!expected.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) expected += "\n";
+    myFixture.checkResult(expected);
   }
 
   private void performAction(String actionId) {
-    final EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(actionId);
+    myFixture.performEditorAction(actionId);
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
-        final Editor editor = myFixture.getEditor();
-        handler.execute(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()));
-        ((DocumentEx)editor.getDocument()).stripTrailingSpaces(false);
+        ((DocumentEx)myFixture.getEditor().getDocument()).stripTrailingSpaces(false);
       }
     }.execute();
   }
