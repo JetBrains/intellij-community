@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -123,32 +124,41 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
   }
 
+  private final Key<Set<PyFile>> PROCESSED_FILES = Key.create("PyFileImpl.processDeclarations.processedFiles");
+
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
+                                     @NotNull ResolveState resolveState,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    Set<PyFile> pyFiles = resolveState.get(PROCESSED_FILES);
+    if (pyFiles == null) {
+      pyFiles = new HashSet<PyFile>();
+      resolveState = resolveState.put(PROCESSED_FILES, pyFiles);
+    }
+    if (pyFiles.contains(this)) return true;
+    pyFiles.add(this);
     for(PyClass c: getTopLevelClasses()) {
       if (c == lastParent) continue;
-      if (!processor.execute(c, substitutor)) return false;
+      if (!processor.execute(c, resolveState)) return false;
     }
     for(PyFunction f: getTopLevelFunctions()) {
       if (f == lastParent) continue;
-      if (!processor.execute(f, substitutor)) return false;
+      if (!processor.execute(f, resolveState)) return false;
     }
     for(PyTargetExpression e: getTopLevelAttributes()) {
       if (e == lastParent) continue;
-      if (!processor.execute(e, substitutor)) return false;
+      if (!processor.execute(e, resolveState)) return false;
     }
 
     for(PyImportElement e: getImportTargets()) {
       if (e == lastParent) continue;
-      if (!processor.execute(e, substitutor)) return false;
+      if (!processor.execute(e, resolveState)) return false;
     }
 
     for(PyFromImportStatement e: getFromImports()) {
       if (e == lastParent) continue;
-      if (!e.processDeclarations(processor, substitutor, null, this)) return false;
+      if (!e.processDeclarations(processor, resolveState, null, this)) return false;
     }
 
     return true;
