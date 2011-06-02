@@ -434,7 +434,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkName(variable);
     if (variable instanceof GrMember) {
       highlightMember(myHolder, ((GrMember)variable));
-      checkStaticDeclarationsInInnerClass((GrMember)variable, myHolder);
     }
 
     PsiNamedElement duplicate = ResolveUtil
@@ -881,36 +880,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkStaticDeclarationsInInnerClass(GrMember classMember, AnnotationHolder holder) {
-    final PsiClass containingClass = classMember.getContainingClass();
-    if (containingClass == null) return;
-    if (com.intellij.psi.util.PsiUtil.isInnerClass(containingClass)) {
-      if (classMember.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiElement modifier = findModifierStatic(classMember);
-        if (modifier != null) {
-          final Annotation annotation = holder.createErrorAnnotation(modifier, GroovyBundle.message("cannot.have.static.declarations"));
-          //noinspection ConstantConditions
-          annotation.registerFix(new GrModifierFix(classMember, classMember.getModifierList(), PsiModifier.STATIC, true, false));
-        }
-      }
-    }
-  }
-
-  @Nullable
-  private static PsiElement findModifierStatic(GrMember grMember) {
-    final GrModifierList list = grMember.getModifierList();
-    if (list == null) {
-      return null;
-    }
-
-    for (PsiElement modifier : list.getModifiers()) {
-      if (PsiModifier.STATIC.equals(modifier.getText())) {
-        return modifier;
-      }
-    }
-    return null;
-  }
-
   private static void checkGrDocReferenceElement(AnnotationHolder holder, PsiElement element) {
     ASTNode node = element.getNode();
     if (node != null && TokenSets.BUILT_IN_TYPE.contains(node.getElementType())) {
@@ -1067,9 +1036,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
             }
           }
-          if (isMethodStatic) {
-            checkStaticDeclarationsInInnerClass(method, holder);
-          }
         }
       }
   }
@@ -1144,7 +1110,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    checkStaticDeclarationsInInnerClass(typeDefinition, holder);
   }
 
   private static void checkDuplicateModifiers(AnnotationHolder holder, @NotNull GrModifierList list, PsiMember member) {
