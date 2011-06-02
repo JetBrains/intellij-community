@@ -120,6 +120,10 @@ public class EventLog implements Notifications {
     }
     view.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
 
+    notifyStatusBar(project, mainText);
+  }
+
+  private static void notifyStatusBar(Project project, @Nullable String mainText) {
     final IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
     if (frame != null) {
       final StatusBar statusBar = frame.getStatusBar();
@@ -141,7 +145,7 @@ public class EventLog implements Notifications {
   }
 
   @Override
-  public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
   }
 
   public static class ProjectTracker extends AbstractProjectComponent {
@@ -160,7 +164,7 @@ public class EventLog implements Notifications {
         }
 
         @Override
-        public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+        public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
         }
       });
     }
@@ -171,6 +175,11 @@ public class EventLog implements Notifications {
         logNotification(myProject, globalNotification);
       }
       myGlobalNotifications.clear();
+    }
+
+    @Override
+    public void projectClosed() {
+      notifyStatusBar(myProject, null);
     }
   }
 

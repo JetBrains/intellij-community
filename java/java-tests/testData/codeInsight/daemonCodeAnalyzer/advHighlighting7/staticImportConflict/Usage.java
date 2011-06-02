@@ -22,8 +22,8 @@ import static <error descr="Field 'IF' is ambiguous in a single static import">x
 class Usage {
   void use() {
     m(Base1.F); //Base1.m(int)
-    m(F); //Base2.m(float)
-    F.class.getName(); // Base2.F
-    m(<error descr="Reference to 'IF' is ambiguous, both 'field I1.IF' and 'field I2.IF' match">IF</error>);
+    m(F); //Base2.m(float), float Base2.F
+    F.class.getName(); // class Base2.F
+    m(<error descr="Reference to 'IF' is ambiguous, both 'I1.IF' and 'I2.IF' match">IF</error>);
   }
 }

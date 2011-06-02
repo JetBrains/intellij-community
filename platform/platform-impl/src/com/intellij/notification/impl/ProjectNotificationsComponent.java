@@ -57,7 +57,7 @@ public class ProjectNotificationsComponent implements Notifications, ProjectComp
   }
 
   @Override
-  public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
   }
 
   public void notify(@NotNull Notification notification, @NotNull NotificationDisplayType defaultDisplayType) {

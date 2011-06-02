@@ -55,9 +55,9 @@ public class ClassGenerator {
                                            classItemGenerator.generateAnnotations());
       text.append("package ");
       text.append(packageDefinition.getPackageName());
-      text.append(";");
-      text.append("\n");
-      text.append("\n");
+      text.append(';');
+      text.append('\n');
+      text.append('\n');
     }
   }
 
@@ -90,11 +90,11 @@ public class ClassGenerator {
       text.append("class");
     }
 
-    text.append(" ").append(typeDefinition.getName());
+    text.append(' ').append(typeDefinition.getName());
 
     GenerationUtil.writeTypeParameters(text, typeDefinition, classNameProvider);
 
-    text.append(" ");
+    text.append(' ');
 
     if (isScript) {
       text.append("extends ").append(GroovyCommonClassNames.GROOVY_LANG_SCRIPT).append(' ');
@@ -107,7 +107,7 @@ public class ClassGenerator {
     text.append("{\n");
 
     writeMembers(text, typeDefinition, isClassDef);
-    text.append("}");
+    text.append('}');
   }
 
   public void writeMembers(StringBuilder text, PsiClass typeDefinition, boolean isClassDef) {
@@ -118,7 +118,8 @@ public class ClassGenerator {
         text.append(',');
       }
       if (enumConstants.length > 0) {
-        text.replace(text.length() - 1, text.length(), ";\n");
+        //text.removeFromTheEnd(1).append(";\n");
+        text.delete(text.length()-1, text.length()).append(";\n");
       }
     }
 
@@ -132,7 +133,7 @@ public class ClassGenerator {
       }
       for (PsiClass inner : typeDefinition.getInnerClasses()) {
         writeTypeDefinition(text, inner, false, false);
-        text.append("\n");
+        text.append('\n');
       }
     }
 
@@ -157,8 +158,9 @@ public class ClassGenerator {
       writeType(text, implementsType, typeDefinition, classNameProvider);
       text.append(", ");
     }
-    if (implementsTypes.size() > 0) text.delete(text.length() - 2, text.length());
-    text.append(" ");
+    if (implementsTypes.size() > 0) text.delete(text.length()-2, text.length());
+    //if (implementsTypes.size() > 0) text.removeFromTheEnd(2);
+    text.append(' ');
   }
 
   private void writeExtendsList(StringBuilder text, PsiClass typeDefinition) {
@@ -168,7 +170,7 @@ public class ClassGenerator {
 
       text.append("extends ");
       writeType(text, extendsClassesTypes[0], typeDefinition, classNameProvider);
-      text.append(" ");
+      text.append(' ');
     }
   }
 

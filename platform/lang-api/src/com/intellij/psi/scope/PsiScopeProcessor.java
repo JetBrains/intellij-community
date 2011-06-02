@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,18 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PsiScopeProcessor {
   interface Event {
-    Event SET_DECLARATION_HOLDER = new Event() {
-    };
+    Event SET_DECLARATION_HOLDER = new Event() { };
   }
 
   /**
+   * @param element  candidate element.
+   * @param state    current state of resolver.
    * @return false to stop processing.
    */
   boolean execute(PsiElement element, ResolveState state);
 
   @Nullable
   <T> T getHint(Key<T> hintKey);
-  void handleEvent(Event event, Object associated);
+
+  void handleEvent(Event event, @Nullable Object associated);
 }

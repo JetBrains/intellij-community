@@ -62,7 +62,7 @@ public class ClosureGenerator {
     generateClosureMainMethod(closure);
     final GrMethod method = generateClosureMethod(closure);
     ClassGenerator.writeAllSignaturesOfMethod(builder, method, new ClassItemGeneratorImpl(context), false);
-    builder.append("}");
+    builder.append('}');
   }
 
   private void generateClosureMainMethod(GrClosableBlock block) {

@@ -90,7 +90,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
 
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
       LOG.assertTrue(document != null);
-      document.setText(builder);
+      document.setText(builder.toString());
       PsiDocumentManager.getInstance(myProject).commitDocument(document);
       String fileName = getNewFileName(file);
       PsiElement newFile = file.setName(fileName);

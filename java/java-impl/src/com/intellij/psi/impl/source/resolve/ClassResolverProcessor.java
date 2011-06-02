@@ -93,17 +93,18 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   private static boolean isImported(PsiElement fileContext) {
-    return fileContext instanceof PsiImportStatement;
+    return fileContext instanceof PsiImportStatementBase;
   }
 
   private boolean isOnDemand(PsiElement fileContext, PsiClass psiClass) {
     if (isImported(fileContext)) {
       return ((PsiImportStatementBase)fileContext).isOnDemand();
     }
+
     String fqn = psiClass.getQualifiedName();
     if (fqn == null) return false;
     String packageName = StringUtil.getPackageName(fqn);
-    if ("java.lang".equals(packageName)) return true;
+    if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName)) return true;
 
     // class from my package imported implicitly
     PsiFile file = myPlace == null ? null : FileContextUtil.getContextFile(myPlace);
@@ -138,7 +139,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     // everything wins over class from default package
     boolean isDefault = StringUtil.getPackageName(fqName).length() == 0;
     boolean otherDefault = otherQName != null && StringUtil.getPackageName(otherQName).length() == 0;
-    if (isDefault && !otherDefault) return Domination.DOMINATED_BY;
+    if (isDefault && !otherDefault) {
+      return Domination.DOMINATED_BY;
+    }
     if (!isDefault && otherDefault) {
       return Domination.DOMINATES;
     }
@@ -146,7 +149,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     // single import wins over on-demand
     boolean myOnDemand = isOnDemand(myCurrentFileContext, aClass);
     boolean otherOnDemand = isOnDemand(info.getCurrentFileResolveScope(), otherClass);
-    if (myOnDemand && !otherOnDemand) return Domination.DOMINATED_BY;
+    if (myOnDemand && !otherOnDemand) {
+      return Domination.DOMINATED_BY;
+    }
     if (!myOnDemand && otherOnDemand) {
       return Domination.DOMINATES;
     }

@@ -858,6 +858,11 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
         continue;
       }
 
+      final String useShortcutOf = myKeymapManager.getActionBinding(id);
+      if (useShortcutOf != null && useShortcutOf.equals(actionId)) {
+        continue;
+      }
+
       Shortcut[] shortcuts = getShortcuts(id);
       for (Shortcut shortcut1 : shortcuts) {
         if (!(shortcut1 instanceof KeyboardShortcut)) {

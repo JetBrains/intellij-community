@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.scope;
 
 import com.intellij.openapi.util.Key;
 
-public abstract class BaseScopeProcessor implements PsiScopeProcessor{
-
+public abstract class BaseScopeProcessor implements PsiScopeProcessor {
   public <T> T getHint(Key<T> hintKey) {
     return null;
   }
 
-  public void handleEvent(Event event, Object associated){}
+  public void handleEvent(Event event, Object associated) {
+  }
 }

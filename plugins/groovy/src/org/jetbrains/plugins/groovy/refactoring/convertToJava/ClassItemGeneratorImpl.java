@@ -111,14 +111,14 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
     if (method.hasTypeParameters()) {
       writeTypeParameters(builder, method, classNameProvider);
-      builder.append(" ");
+      builder.append(' ');
     }
 
     //append return type
     if (!method.isConstructor()) {
       PsiType retType = context.typeProvider.getReturnType(method);
       writeType(builder, retType, method, classNameProvider);
-      builder.append(" ");
+      builder.append(' ');
     }
     builder.append(name);
 
@@ -176,7 +176,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       }
     }
     else {
-      builder.append(";");
+      builder.append(';');
     }
   }
 
@@ -192,7 +192,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       }
       builder.append(method.getName());
     }
-    builder.append("(");
+    builder.append('(');
     for (GrParameter parameter : parameters) {
       if (actualParams.contains(parameter)) {
         builder.append(parameter.getName());
@@ -205,8 +205,9 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       }
       builder.append(", ");
     }
-    builder.delete(builder.length() - 2, builder.length());
-    builder.append(")");
+    builder.delete(builder.length()-2, builder.length());
+    //builder.removeFromTheEnd(2);
+    builder.append(')');
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
     final GrStatement delegateCall;
 
@@ -289,13 +290,14 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     GrVariable[] variables = variableDeclaration.getVariables();
 
     StringBuilder builder = new StringBuilder();
-    StringBuilder initBuilder = new StringBuilder("{\n");
+    StringBuilder initBuilder = new StringBuilder();
+    initBuilder.append("{\n");
     for (GrVariable variable : variables) {
       PsiType type = extended.typeProvider.getVarType(variable);
       ModifierListGenerator.writeModifiers(builder, variable.getModifierList());
 
       writeType(builder, type, variable);
-      builder.append(" ");
+      builder.append(' ');
 
       builder.append(variable.getName());
       final GrExpression initializer = variable.getInitializerGroovy();
@@ -309,7 +311,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
           builder.append(" = ").append(initializerBuilder);
         }
         else {
-          StringBuilder assignment = new StringBuilder(variable.getName()).append(" = ").append(initializerBuilder).append(';');
+          StringBuilder assignment = new StringBuilder().append(variable.getName()).append(" = ").append(initializerBuilder).append(';');
           GenerationUtil.writeStatement(initBuilder, assignment, null, extended);
         }
       }
@@ -380,7 +382,8 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       }
       else {
         if (setter.hasTypeParameters()) {
-          builder.delete(builder.length() - 1, builder.length());
+          builder.delete(builder.length()-1, builder.length());
+          //builder.removeFromTheEnd(1);
           builder.append(", ");
         }
         else {

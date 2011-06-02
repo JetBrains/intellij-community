@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import x.E;
 import static x.Base1.*;
 import static x.Base2.*;
 
@@ -20,5 +21,6 @@ class UsageOnDemand {
   void use() {
     m(1); //Base1.m(int)
     m(1.0f); //Base2.m(float)
+    E.class.getName();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Key;
@@ -28,16 +24,21 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.util.containers.MostlySingularMultiMap;
 
-public class ClassCollectingProcessor extends BaseScopeProcessor implements ElementClassHint {
+/**
+ * @author max
+ */
+public class SymbolCollectingProcessor extends BaseScopeProcessor implements ElementClassHint {
   private final MostlySingularMultiMap<String, ResultWithContext> myResult = new MostlySingularMultiMap<String, ResultWithContext>();
   private PsiElement myCurrentFileContext = null;
 
   @Override
   public <T> T getHint(Key<T> hintKey) {
-    if (hintKey == KEY) return (T)this;
+    if (hintKey == KEY) {
+      //noinspection unchecked
+      return (T)this;
+    }
     return null;
   }
-
 
   @Override
   public void handleEvent(Event event, Object associated) {

@@ -89,7 +89,7 @@ public class TypeWriter extends PsiTypeVisitor<Object> {
 
   @Override
   public Object visitWildcardType(PsiWildcardType wildcardType) {
-    builder.append("?");
+    builder.append('?');
     PsiType bound = wildcardType.getBound();
     if (bound == null) return this;
     if (wildcardType.isExtends()) {
@@ -104,13 +104,12 @@ public class TypeWriter extends PsiTypeVisitor<Object> {
 
   @Override
   public Object visitDisjunctionType(PsiDisjunctionType disjunctionType) {
-    //todo
+    //it is not available in groovy source code
     throw new UnsupportedOperationException();
   }
 
   @Override
   public Object visitType(PsiType type) {
-    //todo
     throw new UnsupportedOperationException();
   }
 }
