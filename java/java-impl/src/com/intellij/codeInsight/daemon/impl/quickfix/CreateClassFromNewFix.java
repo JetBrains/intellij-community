@@ -142,6 +142,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
         PsiMethodCallExpression call = (PsiMethodCallExpression)statement.getExpression();
         PsiExpressionList argumentList = call.getArgumentList();
         templateBuilder.setEndVariableAfter(argumentList.getFirstChild());
+        return supConstructor;
       }
     }
 
