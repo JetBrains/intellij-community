@@ -84,13 +84,6 @@ public class JUnitUtil {
     if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return true;
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && BaseTestRunner.SUITE_METHODNAME.equals(psiMethod.getName())) return false;
-
-    for (JUnitRecognizer jUnitRecognizer : JUnitRecognizer.EP_NAME.getExtensions()) {
-      if (jUnitRecognizer.isTestMethod(psiMethod)) {
-        return true;
-      }
-    }
-
     if (!psiMethod.getName().startsWith("test")) return false;
     PsiClass testCaseClass = getTestCaseClassOrNull(location);
     return testCaseClass != null && psiMethod.getContainingClass().isInheritor(testCaseClass, true);
@@ -129,12 +122,6 @@ public class JUnitUtil {
       if (isTestAnnotated(method)) return true;
     }
 
-    for (JUnitRecognizer jUnitRecognizer : JUnitRecognizer.EP_NAME.getExtensions()) {
-      if (jUnitRecognizer.isTestClass(psiClass)) {
-        return true;
-      }
-    }
-
     return false;
   }
 
@@ -161,7 +148,7 @@ public class JUnitUtil {
   }
 
   public static boolean isTestAnnotated(final PsiMethod method) {
-    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, false)) {
+    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, false) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(method.getContainingClass(), Collections.singleton(RUN_WITH));
       if (annotation != null) {
         final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
