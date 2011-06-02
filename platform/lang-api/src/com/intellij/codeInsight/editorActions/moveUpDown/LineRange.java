@@ -42,8 +42,21 @@ public class LineRange {
          document.getLineNumber(endElement.getTextRange().getEndOffset()) + 1);
   }
 
+  public LineRange(@NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    this(startElement, endElement, startElement.getContainingFile().getViewProvider().getDocument());
+  }
+
+  public LineRange(@NotNull PsiElement element) {
+    this(element, element);
+  }
+
   @NonNls
   public String toString() {
     return "line range: ["+startLine+"-"+endLine+"]";
   }
+
+  public boolean containsLine(int lineNumber) {
+    return startLine <= lineNumber && endLine > lineNumber;
+  }
+
 }
