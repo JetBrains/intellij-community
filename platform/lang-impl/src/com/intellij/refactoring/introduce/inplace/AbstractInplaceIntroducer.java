@@ -222,7 +222,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
         final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
         for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
           RangeMarker marker = occurrenceMarkers.get(i);
-          if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset()) {
+          if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset() && myExpr != null) {
             myOccurrences[i] = myExpr;
             continue;
           }
