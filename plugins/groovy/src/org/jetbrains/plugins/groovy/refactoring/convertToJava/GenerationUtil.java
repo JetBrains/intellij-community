@@ -273,10 +273,14 @@ public class GenerationUtil {
 
   @Nullable
   static PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
+    Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
     PsiClass curClass = initialClass;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
+
     while (curClass != null && !resolveHelper.isAccessible(curClass, context, null)) {
       curClass = curClass.getSuperClass();
+      if (visitedClasses.contains(curClass)) return null;
+      visitedClasses.add(curClass);
     }
     return curClass;
   }
