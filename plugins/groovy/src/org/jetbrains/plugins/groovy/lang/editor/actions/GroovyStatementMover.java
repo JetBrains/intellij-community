@@ -72,7 +72,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
     final GroovyPsiElement pivot = getElementToMove((GroovyFileBase)file, offset);
     if (pivot == null) return false;
 
-    range = pivotRange(pivot);
+    range = getLineRange(pivot);
 
     final GroovyPsiElement scope = PsiTreeUtil.getParentOfType(pivot, GrMethod.class, GrTypeDefinitionBody.class, GroovyFileBase.class);
 
@@ -141,20 +141,20 @@ public class GroovyStatementMover extends StatementUpDownMover {
             assert lBrace != null;
             addRange(new LineRange(lBrace).endLine);
           }
-          addStatementRanges(((GrCodeBlock)element).getStatements());
+          addChildRanges(((GrCodeBlock)element).getStatements());
         }
         else if (stmtLevel && element instanceof GrCaseSection) {
           final GrCaseLabel label = ((GrCaseSection)element).getCaseLabel();
           if (nlsAfter(label)) {
             addRange(new LineRange(label).endLine);
           }
-          addStatementRanges(((GrCaseSection)element).getStatements());
+          addChildRanges(((GrCaseSection)element).getStatements());
         }
         else if (element instanceof GroovyFileBase) {
-          addStatementRanges(((GroovyFileBase)element).getTopStatements());
+          addChildRanges(((GroovyFileBase)element).getTopStatements());
         }
         else if (!stmtLevel && element instanceof GrTypeDefinitionBody) {
-          addStatementRanges(((GrTypeDefinitionBody)element).getMemberDeclarations());
+          addChildRanges(((GrTypeDefinitionBody)element).getMemberDeclarations());
         }
         else {
           super.visitElement(element);
@@ -171,10 +171,10 @@ public class GroovyStatementMover extends StatementUpDownMover {
         return true;
       }
 
-      private void addStatementRanges(GrTopStatement[] statements) {
+      private void addChildRanges(GrTopStatement[] statements) {
         for (GrTopStatement statement : statements) {
           if (nlsAfter(statement)) {
-            final LineRange range = new LineRange(statement, statement);
+            final LineRange range = getLineRange(statement);
             lastStart = range.startLine;
             if (shouldDigInside(statement)) {
               statement.accept(this);
@@ -221,7 +221,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
     return element instanceof GrStatement && PsiUtil.isExpressionStatement(element);
   }
 
-  private static LineRange pivotRange(GroovyPsiElement pivot) {
+  private static LineRange getLineRange(GroovyPsiElement pivot) {
     if (pivot instanceof GrDocCommentOwner) {
       final GrDocComment comment = ((GrDocCommentOwner)pivot).getDocComment();
       if (comment != null) {

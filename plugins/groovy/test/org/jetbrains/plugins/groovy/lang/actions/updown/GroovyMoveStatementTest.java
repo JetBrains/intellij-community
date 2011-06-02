@@ -58,6 +58,7 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   public void testStatementInsideClosure() throws Throwable { bothTest(); }
 
   public void testMoveGroovydocWithMethod() throws Throwable { bothTest(); }
+  public void testLeaveGroovydocWithMethod() throws Throwable { bothTest(); }
   public void testMoveMethodWithGroovydoc() throws Throwable { bothTest(); }
   
   public void testMoveSecondFieldUp() throws Throwable { bothTest(); }
