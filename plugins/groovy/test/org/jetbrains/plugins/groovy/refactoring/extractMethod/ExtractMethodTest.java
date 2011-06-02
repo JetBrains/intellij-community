@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
@@ -46,7 +47,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
     GroovyExtractMethodHandler handler = configureFromText(data.get(0));
     assertTrue(handler.invokeOnEditor(getProject(), myFixture.getEditor(), myFixture.getFile()));
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-    myFixture.checkResult(data.get(1));
+    myFixture.checkResult(StringUtil.trimEnd(data.get(1), "\n"));
   }
 
   private GroovyExtractMethodHandler configureFromText(String fileText) {

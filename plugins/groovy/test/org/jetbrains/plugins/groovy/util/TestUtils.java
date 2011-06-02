@@ -105,7 +105,7 @@ public abstract class TestUtils {
   public static List<String> readInput(String filePath) {
     String content;
     try {
-      content = FileUtil.loadFile(new File(filePath));
+      content = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(filePath)));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -127,10 +127,6 @@ public abstract class TestUtils {
       if (StringUtil.startsWithChar(content, '\n')) {
         content = content.substring(1);
       }
-    }
-    // Result - after -----
-    if (content.endsWith("\n")) {
-      content = content.substring(0, content.length() - 1);
     }
     input.add(content);
 

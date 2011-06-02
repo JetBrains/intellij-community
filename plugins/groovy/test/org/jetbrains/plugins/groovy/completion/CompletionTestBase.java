@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMember;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,7 +77,7 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
       CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = old;
       CompositeCompletionData.restrictCompletion(true, true);
     }
-    assertEquals(stringList.get(1), result);
+    assertEquals(StringUtil.trimEnd(stringList.get(1), "\n"), result);
   }
 
   protected String getExtension() {

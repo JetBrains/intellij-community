@@ -95,14 +95,12 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   private void bothTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     final String initial = data.get(0);
-    String upper = data.get(1);
+    final String upper = data.get(1);
     String lower = data.size() == 2 ? data.get(0) : data.get(2);
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, initial);
 
     performAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION);
-    if (!upper.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) upper += "\n";
-
     myFixture.checkResult(upper);
 
     performAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
