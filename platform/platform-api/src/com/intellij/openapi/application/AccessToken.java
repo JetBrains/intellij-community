@@ -1,7 +1,6 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.xml.internal.fastinfoset.util.CharArray;
 
 public abstract class AccessToken {
   protected void acquired() {
