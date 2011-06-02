@@ -21,8 +21,10 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -55,18 +57,23 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        final PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
-        new WriteCommandAction(newExpression.getProject()){
+        final PsiClass[] psiClass = new PsiClass[1];
+        CommandProcessor.getInstance().executeCommand(newExpression.getProject(), new Runnable() {
+          public void run() {
+            psiClass[0] = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
+          }
+        }, getText(), getText());
+        new WriteCommandAction(newExpression.getProject(), getText(), getText()) {
           @Override
           protected void run(Result result) throws Throwable {
-            setupClassFromNewExpression(psiClass, newExpression);
+            setupClassFromNewExpression(psiClass[0], newExpression);
           }
         }.execute();
       }
     });
   }
 
-  protected static void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
+  protected void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
@@ -99,7 +106,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       TextRange textRange = aClass.getTextRange();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
 
-      startTemplate(editor, template, project);
+      startTemplate(editor, template, project, null, getText());
     }
     else {
       positionCursor(project, aClass.getContainingFile(), aClass);
@@ -135,6 +142,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
         PsiMethodCallExpression call = (PsiMethodCallExpression)statement.getExpression();
         PsiExpressionList argumentList = call.getArgumentList();
         templateBuilder.setEndVariableAfter(argumentList.getFirstChild());
+        return supConstructor;
       }
     }
 
