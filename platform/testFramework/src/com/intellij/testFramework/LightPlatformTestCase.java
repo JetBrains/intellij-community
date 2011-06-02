@@ -622,7 +622,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * @return dummy psi file.
    * @throws com.intellij.util.IncorrectOperationException
    */
-  protected static PsiFile createFile(@NonNls String fileName, String text) throws IncorrectOperationException {
+  protected static PsiFile createFile(@NonNls String fileName, @NonNls String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
   }

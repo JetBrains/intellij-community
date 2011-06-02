@@ -99,10 +99,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class DebugProcessImpl implements DebugProcess {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessImpl");
 
-  static final @NonNls String  SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
-  static final @NonNls String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
-  static final @NonNls String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
-  static final @NonNls String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
+  @NonNls private static final String SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
+  @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
+  @NonNls private static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
+  @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -145,7 +145,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private final AtomicBoolean myBreakpointsMuted = new AtomicBoolean(false);
   private boolean myIsFailed = false;
   protected DebuggerSession mySession;
-  protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
+  @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
   private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private volatile boolean myDebugProcessStarted = false;
 
@@ -235,7 +235,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public final NodeRenderer getDefaultRenderer(Value value) {
-    return getDefaultRenderer((value != null) ? value.type() : (Type)null);
+    return getDefaultRenderer(value != null ? value.type() : null);
   }
 
   public final NodeRenderer getDefaultRenderer(Type type) {
@@ -421,7 +421,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   void deleteStepRequests(@Nullable final ThreadReference stepThread) {
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
     List<StepRequest> stepRequests = requestManager.stepRequests();
-    if (stepRequests.size() > 0) {
+    if (!stepRequests.isEmpty()) {
       final List<StepRequest> toDelete = new ArrayList<StepRequest>(stepRequests.size());
       for (final StepRequest request : stepRequests) {
         ThreadReference threadReference = request.thread();
@@ -446,7 +446,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }
       }
     }
-    catch (EvaluateException e) {
+    catch (EvaluateException ignored) {
     }
     return null;
   }
@@ -513,7 +513,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         myArguments = connector.defaultArguments();
         if (myConnection.isUseSockets()) {
           //noinspection HardCodedStringLiteral
-          final Connector.Argument hostnameArg = (Connector.Argument)myArguments.get("hostname");
+          final Connector.Argument hostnameArg = myArguments.get("hostname");
           if (hostnameArg != null && myConnection.getHostName() != null) {
             hostnameArg.setValue(myConnection.getHostName());
           }
@@ -521,7 +521,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
             throw new CantRunException(DebuggerBundle.message("error.no.debug.attach.port"));
           }
           //noinspection HardCodedStringLiteral
-          final Connector.Argument portArg = (Connector.Argument)myArguments.get("port");
+          final Connector.Argument portArg = myArguments.get("port");
           if (portArg != null) {
             portArg.setValue(address);
           }
@@ -552,7 +552,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
               //noinspection HardCodedStringLiteral
               hostString = "localhost";
             }
-            hostString = hostString + ":";
+            hostString += ":";
 
             final TransportServiceWrapper transportServiceWrapper = TransportServiceWrapper.getTransportService(connector.transport());
             myConnectionService = transportServiceWrapper.attach(hostString + portString);
@@ -592,7 +592,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   static Connector findConnector(String connectorName) throws ExecutionException {
-    VirtualMachineManager virtualMachineManager = null;
+    VirtualMachineManager virtualMachineManager;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();
     }
@@ -610,8 +610,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     else {
       return null;
     }
-    for (Iterator it = connectors.iterator(); it.hasNext();) {
-      Connector connector = (Connector)it.next();
+    for (Object connector1 : connectors) {
+      Connector connector = (Connector)connector1;
       if (connectorName.equals(connector.name())) {
         return connector;
       }
@@ -775,7 +775,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private static String formatMessage(String message) {
     final int lineLength = 90;
-    StringBuffer buf = new StringBuffer(message.length());
+    StringBuilder buf = new StringBuilder(message.length());
     int index = 0;
     while (index < message.length()) {
       buf.append(message.substring(index, Math.min(index + lineLength, message.length()))).append('\n');
@@ -813,7 +813,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       final StringBuilder buf = StringBuilderSpinAllocator.alloc();
       try {
         buf.append(DebuggerBundle.message("error.cannot.open.debugger.port")).append(" : ");
-        buf.append(e1.getClass().getName() + " ");
+        buf.append(e1.getClass().getName()).append(" ");
         final String localizedMessage = e1.getLocalizedMessage();
         if (localizedMessage != null && localizedMessage.length() > 0) {
           buf.append('"');
@@ -859,7 +859,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private static int getInvokePolicy(SuspendContext suspendContext) {
     //return ThreadReference.INVOKE_SINGLE_THREADED;
-    return suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? ThreadReference.INVOKE_SINGLE_THREADED : 0;
+    return suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? ObjectReference.INVOKE_SINGLE_THREADED : 0;
   }
 
   public void waitFor() {
@@ -876,7 +876,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     private final List myArgs;
 
     protected InvokeCommand(List args) {
-      if (args.size() > 0) {
+      if (!args.isEmpty()) {
         myArgs = new ArrayList(args);
       }
       else {
@@ -933,7 +933,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
             return invokeMethodAndFork(suspendContext);
             }
           catch (ClassNotLoadedException e) {
-            ReferenceType loadedClass = null;
+            ReferenceType loadedClass;
             try {
               loadedClass = evaluationContext.isAutoLoadClasses()? loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader()) : null;
             }
@@ -1179,11 +1179,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
-      ReferenceType result = null;
       final VirtualMachineProxyImpl vmProxy = getVirtualMachineProxy();
       if (vmProxy == null) {
         throw new VMDisconnectedException();
       }
+      ReferenceType result = null;
       for (final ReferenceType refType : vmProxy.classesByName(className)) {
         if (refType.isPrepared() && isVisibleFromClassLoader(classLoader, refType)) {
           result = refType;
@@ -1220,7 +1220,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         return true;
       }
     }
-    return fromLoader != null? fromLoader.visibleClasses().contains(refType) : false;
+    return fromLoader != null && fromLoader.visibleClasses().contains(refType);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -1228,12 +1228,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
     final ReferenceType refType = fromLoader.referenceType();
     Field field = refType.fieldByName("parent");
     if (field == null) {
-      final List allFields = refType.allFields();
-      for (Iterator it = allFields.iterator(); it.hasNext();) {
-        final Field candidateField = (Field)it.next();
+      final List<Field> allFields = refType.allFields();
+      for (Field candidateField : allFields) {
         try {
           final Type checkedType = candidateField.type();
-          if (checkedType instanceof ReferenceType && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", (ReferenceType)checkedType)) {
+          if (checkedType instanceof ReferenceType &&
+              DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", (ReferenceType)checkedType)) {
             field = candidateField;
             break;
           }
@@ -1247,7 +1247,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return field != null? (ClassLoaderReference)fromLoader.getValue(field) : null;
   }
 
-  private String reformatArrayName(String className) {
+  private static String reformatArrayName(String className) {
     if (className.indexOf('[') == -1) return className;
 
     int dims = 0;
@@ -1286,7 +1286,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     ReferenceType refType = null;
     VirtualMachineProxyImpl virtualMachine = getVirtualMachineProxy();
     final List classClasses = virtualMachine.classesByName("java.lang.Class");
-    if (classClasses.size() > 0) {
+    if (!classClasses.isEmpty()) {
       ClassType classClassType = (ClassType)classClasses.get(0);
       final Method forNameMethod;
       if (classLoader != null) {
@@ -1396,7 +1396,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     private final boolean myForcedIgnoreFilters;
     private final RequestHint.SmartStepFilter mySmartStepFilter;
 
-    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final @Nullable RequestHint.SmartStepFilter smartStepFilter) {
+    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final RequestHint.SmartStepFilter smartStepFilter) {
       super(suspendContext);
       myForcedIgnoreFilters = ignoreFilters || smartStepFilter != null;
       mySmartStepFilter = smartStepFilter;
@@ -1531,8 +1531,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
 
       final Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), myThread);
-      for (Iterator<SuspendContextImpl> iterator = suspendingContexts.iterator(); iterator.hasNext();) {
-        SuspendContextImpl suspendContext = iterator.next();
+      for (SuspendContextImpl suspendContext : suspendingContexts) {
         if (suspendContext.getThread() == myThread) {
           DebugProcessImpl.this.getManagerThread().invoke(createResumeCommand(suspendContext));
         }
@@ -1617,7 +1616,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return mySession.getSearchScope();
   }
 
-  public @Nullable ExecutionResult attachVirtualMachine(final Executor executor,
+  @Nullable
+  public ExecutionResult attachVirtualMachine(final Executor executor,
                                                         final ProgramRunner runner,
                                                         final DebuggerSession session,
                                                         final RunProfileState state,
