@@ -1,8 +1,14 @@
 package com.intellij.facet.ui;
 
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.wm.ToolWindowEP;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -14,4 +20,17 @@ public class FacetDependentToolWindow extends ToolWindowEP {
   /** comma-delimited list of facet ids */
   @Attribute("facetIdList")
   public String facetIdList;
+
+  public String[] getFacetIds() {
+    return facetIdList.split(",");
+  }
+
+  public List<FacetType> getFacetTypes() {
+    return ContainerUtil.map(getFacetIds(), new Function<String, FacetType>() {
+      @Override
+      public FacetType fun(String facetId) {
+        return FacetTypeRegistry.getInstance().findFacetType(facetId);
+      }
+    });
+  }
 }

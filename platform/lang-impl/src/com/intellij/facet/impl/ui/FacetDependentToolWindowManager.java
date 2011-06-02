@@ -31,32 +31,26 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
     myToolWindowManager = toolWindowManager;
   }
 
-  public void initComponent() {
+  @Override
+  public void projectOpened() {
     myFacetListenersRegistry.registerListener(new ProjectWideFacetAdapter<Facet>() {
       @Override
       public void facetAdded(Facet facet) {
-        if (myFacetManager.getFacets(facet.getTypeId()).size() == 1) {
-          for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
-            ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
-            if (toolWindow == null) {
-              myToolWindowManager.initToolWindow(extension);
-            }
-          }
+        for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
+          checkFacets(extension);
         }
       }
 
       @Override
       public void facetRemoved(Facet facet) {
-        if (myFacetManager.getFacets(facet.getTypeId()).isEmpty()) {
+        if (!myFacetManager.hasFacets(facet.getTypeId())) {
           for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
             ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
             if (toolWindow != null) {
-              String[] ids = extension.facetIdList.split(",");
-              if (ids.length > 1) {
-                for (String id : ids) {
-                  FacetType facetType = FacetTypeRegistry.getInstance().findFacetType(id);
-                  if (myFacetManager.hasFacets(facetType.getId())) return;
-                }
+              // check for other facets
+              List<FacetType> facetTypes = extension.getFacetTypes();
+              for (FacetType facetType : facetTypes) {
+                if (myFacetManager.hasFacets(facetType.getId())) return;
               }
               myToolWindowManager.unregisterToolWindow(extension.id);
             }
@@ -64,6 +58,24 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
         }
       }
     });
+
+    FacetDependentToolWindow[] extensions = Extensions.getExtensions(FacetDependentToolWindow.EXTENSION_POINT_NAME);
+    for (FacetDependentToolWindow extension : extensions) {
+      checkFacets(extension);
+    }
+  }
+
+  private void checkFacets(FacetDependentToolWindow extension) {
+    ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
+    if (toolWindow == null) {
+      List<FacetType> facetTypes = extension.getFacetTypes();
+      for (FacetType facetType : facetTypes) {
+        if (myFacetManager.hasFacets(facetType.getId())) {
+          myToolWindowManager.initToolWindow(extension);
+          return;
+        }
+      }
+    }
   }
 
   private static List<FacetDependentToolWindow> getDependentExtensions(final Facet facet) {
@@ -71,8 +83,7 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
     return ContainerUtil.filter(extensions, new Condition<FacetDependentToolWindow>() {
       @Override
       public boolean value(FacetDependentToolWindow toolWindowEP) {
-        String[] ids = toolWindowEP.facetIdList.split(",");
-        for (String id : ids) {
+        for (String id : toolWindowEP.getFacetIds()) {
           if (facet.getType().getStringId().equals(id)) return true;
         }
         return false;
