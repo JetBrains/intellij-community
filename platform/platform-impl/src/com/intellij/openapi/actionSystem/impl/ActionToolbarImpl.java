@@ -142,7 +142,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     mySecondaryActions.getTemplatePresentation().setIcon(mySecondaryGroupIcon);
     mySecondaryActions.setPopup(true);
 
-    updateActions(updateActionsNow, false);
+    updateActions(updateActionsNow, false, false);
 
     //
     keymapManager.addKeymapManagerListener(new WeakKeymapManagerListener(keymapManager, myKeymapManagerListener));
@@ -742,7 +742,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       }
 
-      updateActions(false, myActionManager.isTransparrentOnlyActionsUpdateNow());
+      updateActions(false, myActionManager.isTransparrentOnlyActionsUpdateNow(), false);
     }
   }
 
@@ -775,10 +775,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void updateActionsImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    updateActions(true, false);
+    updateActions(true, false, false);
   }
 
-  private void updateActions(boolean now, final boolean transparrentOnly) {
+  private void updateActions(boolean now, final boolean transparrentOnly, final boolean forced) {
     final Runnable updateRunnable = new Runnable() {
       public void run() {
         myNewVisibleActions.clear();
@@ -786,7 +786,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
         Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager, transparrentOnly);
 
-        if (!myNewVisibleActions.equals(myVisibleActions)) {
+        if (forced || !myNewVisibleActions.equals(myVisibleActions)) {
           // should rebuild UI
 
           final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
@@ -848,7 +848,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (myTargetComponent != null && myTargetComponent.isVisible()) {
       ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
         public void run() {
-          updateActions(false, false);
+          updateActions(false, false, false);
         }
       }, ModalityState.stateForComponent(myTargetComponent));
     }
@@ -921,8 +921,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       .setCancelOnOtherWindowOpen(true)
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
-
-          return myActionManager.isActionPopupStackEmpty();
+          final boolean toClose = myActionManager.isActionPopupStackEmpty();
+          if (toClose) {
+            updateActions(false, false, true);
+          }
+          return toClose;
         }
       })
       .setCancelOnMouseOutCallback(new MouseChecker() {
@@ -1009,7 +1012,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     Disposer.dispose(myPopup);
     myPopup = null;
 
-    updateActions(false, false);
+    updateActions(false, false, false);
   }
 
   abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
