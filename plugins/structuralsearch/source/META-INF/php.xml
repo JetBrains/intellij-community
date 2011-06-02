@@ -3,5 +3,6 @@
   <extensions xmlns="com.intellij">
     <structuralsearch.profile implementation="com.intellij.structuralsearch.extenders.PhpStructuralSearchProfile"/>
     <duplicates.profile implementation="com.intellij.structuralsearch.duplicates.PhpDuplicatesProfile"/>
+    <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.equivalence.PhpEquivalenceDescriptorProvider"/>
   </extensions>
 </idea-plugin>
