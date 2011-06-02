@@ -22,6 +22,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -35,6 +36,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -55,10 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Disposable {
   private Project myProject;
@@ -375,6 +374,17 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         }
       });
     }
+
+    if (dataContext != null) {
+      final List<VirtualFile> openFiles = Arrays.asList(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+      result.add(new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, openFiles)){
+        @Override
+        public String getDisplayName() {
+          return "Selected files";
+        }
+      });
+    }
+
     return result;
   }
 
