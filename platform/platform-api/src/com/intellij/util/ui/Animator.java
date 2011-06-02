@@ -126,7 +126,7 @@ public abstract class Animator implements Disposable {
       }
     };
 
-    if (myTimer == null) {
+    if (application == null) {
       try {
         cycleEnd();
       }
