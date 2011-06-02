@@ -39,7 +39,15 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   public void testClos2() throws Throwable { bothTest(); }
 
   public void testMeth1() throws Throwable { bothTest(); }
-  public void testMeth2() throws Throwable { downTest(); }
+
+  public void testMeth2() throws Throwable {
+    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
+
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
+    performAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
+    myFixture.checkResult(data.get(1));
+  }
+
   public void testMeth3() throws Throwable { bothTest(); }
   public void testMeth4() throws Throwable { bothTest(); }
 
@@ -84,10 +92,6 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   public void testInSwitchCaseUp4() throws Throwable { bothTest(); }
   public void testInSwitchCaseUp5() throws Throwable { bothTest(); }
 
-  private void downTest() throws Exception {
-    doTest(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
-  }
-
   private void bothTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     final String initial = data.get(0);
@@ -104,17 +108,6 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
     performAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
     if (!lower.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) lower += "\n";
     myFixture.checkResult(lower);
-  }
-
-  public void doTest(final String actionId) throws Exception {
-    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
-
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
-
-    performAction(actionId);
-    String expected = data.get(1);
-    if (!expected.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) expected += "\n";
-    myFixture.checkResult(expected);
   }
 
   private void performAction(String actionId) {
