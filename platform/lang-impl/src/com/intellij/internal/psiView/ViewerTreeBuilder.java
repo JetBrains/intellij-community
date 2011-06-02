@@ -39,19 +39,6 @@ public class ViewerTreeBuilder extends AbstractTreeBuilder {
     initRootNode();
   }
 
-  protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return false;
-  }
-
-  protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-    Object element = nodeDescriptor.getElement();
-    Object rootElement = getTreeStructure().getRootElement();
-    if (rootElement.equals(element)) return true;
-    NodeDescriptor parent = nodeDescriptor.getParentDescriptor();
-    if (parent != null && rootElement.equals(parent.getElement())) return true;
-    return false;
-  }
-
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();

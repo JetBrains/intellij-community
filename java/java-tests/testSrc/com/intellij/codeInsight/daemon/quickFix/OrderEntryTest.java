@@ -95,11 +95,6 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     return LightQuickFixTestCase.findActionWithText(actions, actionText);
   }
 
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
-
   public void testAddDependency() throws Exception { doTest("B/src/y/AddDependency.java"); }
   public void testAddLibrary() throws Exception { doTest("B/src/y/AddLibrary.java"); }
   public void testAddCircularDependency() throws Exception {

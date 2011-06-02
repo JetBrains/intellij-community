@@ -48,25 +48,7 @@ public class LightClassReferenceExpression extends LightClassReference implement
     return getManager().areElementsEquivalent(resolve(), element);
   }
 
-  @NotNull
-  public Object[] getVariants() {
-    throw new RuntimeException("Variants are not available for light references");
-  }
-
-  public void processVariants(PsiScopeProcessor processor){
-    throw new RuntimeException("Variants are not available for light references");
-  }
-
-  public TextRange getRangeInElement() {
-    return new TextRange(0, getTextLength());
-  }
-
   public PsiReferenceParameterList getParameterList() {
     return null;
-  }
-
-  @NotNull
-  public PsiType[] getTypeParameters() {
-    return PsiType.EMPTY_ARRAY;
   }
 }

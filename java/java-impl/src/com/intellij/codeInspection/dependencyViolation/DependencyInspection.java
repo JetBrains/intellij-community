@@ -113,10 +113,6 @@ public class DependencyInspection extends BaseLocalInspectionTool {
     return HighlightDisplayLevel.ERROR;
   }
 
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   private static class EditDependencyRulesAction implements LocalQuickFix {
     private final DependencyRule myRule;
     public EditDependencyRulesAction(DependencyRule rule) {

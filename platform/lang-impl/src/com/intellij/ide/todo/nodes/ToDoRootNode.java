@@ -36,10 +36,6 @@ public final class ToDoRootNode extends BaseToDoNode{
     mySummaryNode = new SummaryNode(getProject(), summary, myBuilder);
   }
 
-  public boolean contains(VirtualFile file) {
-    return false;
-  }
-
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return new ArrayList<AbstractTreeNode>(Collections.singleton(mySummaryNode));

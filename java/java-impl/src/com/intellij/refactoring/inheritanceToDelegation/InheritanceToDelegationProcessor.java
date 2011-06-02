@@ -352,9 +352,6 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected void refreshElements(PsiElement[] elements) {
-  }
-
   protected void performRefactoring(UsageInfo[] usages) {
     try {
       for (UsageInfo aUsage : usages) {

@@ -109,9 +109,6 @@ public class MethodParameterInjection extends BaseInjection {
     myParameterMap.put(methodSignature, new MethodInfo(methodSignature, selection, false));
   }
 
-  protected void writeExternalImpl(Element e) {
-  }
-
 
   @Override
   public MethodParameterInjection copy() {

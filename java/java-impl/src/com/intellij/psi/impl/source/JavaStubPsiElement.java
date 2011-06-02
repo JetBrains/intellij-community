@@ -117,10 +117,6 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     ((CompositeElement)treeElement.getTreeParent()).deleteChildInternal(treeElement);
   }
 
-  public void checkDelete() throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
-  }
-
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     if (first == null) {

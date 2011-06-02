@@ -221,15 +221,6 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return getText().equals(element.getText());
   }
 
-  @NotNull
-  public PsiElement getNavigationElement() {
-    return this;
-  }
-
-  public PsiElement getOriginalElement() {
-    return this;
-  }
-
   public ASTNode getNode() {
     return null;
   }

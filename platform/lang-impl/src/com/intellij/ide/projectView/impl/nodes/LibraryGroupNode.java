@@ -122,10 +122,6 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     return ProjectSettingsService.getInstance(myProject).canOpenModuleLibrarySettings();
   }
 
-  public boolean canNavigateToSource() {
-    return false;
-  }
-
   public void navigate(final boolean requestFocus) {
     Module module = getValue().getModule();
     ProjectSettingsService.getInstance(myProject).openModuleLibrarySettings(module);

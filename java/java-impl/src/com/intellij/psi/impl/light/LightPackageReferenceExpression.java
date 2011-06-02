@@ -45,8 +45,4 @@ public class LightPackageReferenceExpression extends LightPackageReference imple
   public boolean isReferenceTo(PsiElement element) {
     return getManager().areElementsEquivalent(resolve(), element);
   }
-
-  public TextRange getRangeInElement() {
-    return new TextRange(0, getTextLength());
-  }
 }

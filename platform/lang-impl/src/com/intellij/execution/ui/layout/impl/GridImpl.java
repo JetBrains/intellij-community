@@ -215,10 +215,6 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
     private JComponent myContent;
 
-    public boolean isNull() {
-      return getComponentCount() == 0;
-    }
-
     public CellTransform.Restore detach() {
       if (getComponentCount() == 1) {
         myContent = (JComponent)getComponent(0);

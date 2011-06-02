@@ -44,9 +44,4 @@ public class StaticTextWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFo
 
     return start;
   }
-
-  @Override
-  public boolean replaceDefaultStrategy() {
-    return false;
-  }
 }

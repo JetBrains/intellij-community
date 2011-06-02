@@ -170,8 +170,4 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     }
     return list;
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

@@ -128,18 +128,8 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return null;
   }
 
-  @NotNull
-  public PsiClassType[] getSuperTypes() {
-    return PsiClassImplUtil.getSuperTypes(this);
-  }
-
   public PsiClass getContainingClass() {
     return null;
-  }
-
-  @NotNull
-  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
-    return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
   public boolean isInterface() {

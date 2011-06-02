@@ -445,10 +445,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
             return NavBarPresentation.getPresentableText(value, null);
           }
 
-          public boolean isSelectable(Object value) {
-            return true;
-          }
-
           public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
             return doFinalStep(new Runnable() {
               public void run() {

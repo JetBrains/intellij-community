@@ -103,9 +103,4 @@ public class MethodThrowsFix extends LocalQuickFixAndIntentionActionOnPsiElement
       LOG.error(e);
     }
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

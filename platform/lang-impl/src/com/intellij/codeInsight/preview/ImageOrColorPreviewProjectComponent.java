@@ -47,12 +47,6 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
     return "ImageOrColorPreviewComponent";
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
   private static class MyFileEditorManagerListener implements FileEditorManagerListener {
     public void fileOpened(final FileEditorManager source, final VirtualFile file) {
       if (isSuitable(source.getProject(), file)) {

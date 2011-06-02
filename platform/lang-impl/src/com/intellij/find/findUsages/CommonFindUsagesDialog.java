@@ -58,10 +58,6 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
     return null;
   }
 
-  protected JComponent getPreferredFocusedControl() {
-    return null;
-  }
-
   public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
     coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
     coloredComponent.append(" ");

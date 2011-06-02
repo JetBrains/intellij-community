@@ -66,9 +66,6 @@ public class UnknownSdkType extends SdkType{
     return currentSdkName;
   }
 
-  public void setupSdkPaths(Sdk sdk) {
-  }
-
   public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
     return null;
   }
@@ -86,10 +83,6 @@ public class UnknownSdkType extends SdkType{
   }
 
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
-  }
-
-  public SdkAdditionalData loadAdditionalData(Element additional) {
-    return null;
   }
 
   public String getPresentableName() {

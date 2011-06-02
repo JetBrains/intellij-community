@@ -95,10 +95,6 @@ public class JavaSdkImpl extends JavaSdk {
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
   }
 
-  public SdkAdditionalData loadAdditionalData(Element additional) {
-    return null;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String getBinPath(Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";

@@ -101,9 +101,6 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   protected class MyValidator extends MyInputValidator {
-    public boolean checkInput(String inputString) {
-      return true;
-    }
 
     public boolean canClose(String inputString) {
       if (inputString.length() == 0) {

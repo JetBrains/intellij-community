@@ -36,11 +36,6 @@ public class ExcludeDeclaredFilter extends PositionElementFilter{
     setFilter(filter);
   }
 
-  public boolean isClassAcceptable(Class hintClass){
-    return true;
-    //return PsiVariable.class.isAssignableFrom(hintClass);
-  }
-
   SoftReference<PsiElement> myCachedVar = new SoftReference<PsiElement>(null);
   SoftReference<PsiElement> myCurrentContext = new SoftReference<PsiElement>(null);
 

@@ -55,10 +55,6 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
   }
 
-  public SdkAdditionalData loadAdditionalData(Element additional) {
-    return null;
-  }
-
   public String getBinPath(Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
   }
@@ -94,9 +90,6 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return currentSdkName;
   }
 
-
-  public void setupSdkPaths(Sdk sdk) {
-  }
 
   public final String getVersionString(final String sdkHome) {
     return SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] {sdkHome + File.separator + "bin" + File.separator + "java",  "-version"}, "version");

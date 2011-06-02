@@ -63,10 +63,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return this;
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return true;
-  }
-
   protected boolean isValidForLookup() {
     return true;
   }

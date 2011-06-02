@@ -80,11 +80,6 @@ public class AddAnnotationFix extends LocalQuickFixAndIntentionActionOnPsiElemen
     return CodeInsightBundle.message("intention.add.annotation.family");
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   @Nullable
   public static PsiModifierListOwner getContainer(final PsiElement element) {
     PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);

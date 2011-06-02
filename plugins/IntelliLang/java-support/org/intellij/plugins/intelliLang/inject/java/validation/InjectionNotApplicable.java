@@ -53,9 +53,6 @@ public class InjectionNotApplicable extends LocalInspectionTool {
     return new JavaElementVisitor() {
       final String annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getLanguageAnnotationClass();
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
-
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {
         final String name = annotation.getQualifiedName();

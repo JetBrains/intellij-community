@@ -63,10 +63,6 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
     return "Value: "+ text;
   }
 
-  public boolean isValid() {
-    return getValue().isValid();
-  }
-
   public void customizeCellRenderer(SliceUsageCellRenderer renderer,
                                     JTree tree,
                                     Object value,
