@@ -117,15 +117,18 @@ public class UsageInfo {
     PsiElement element = getElement();
     if (element == null) return null;
     TextRange elementRange = element.getTextRange();
+    ProperTextRange result;
     if (myPsiFileRange == null) {
       int startOffset = element.getTextOffset();
-      return ProperTextRange.create(startOffset, elementRange.getEndOffset()).shiftRight(-elementRange.getStartOffset());
+      result = ProperTextRange.create(startOffset, elementRange.getEndOffset());
     }
     else {
       Segment rangeInFile = myPsiFileRange.getRange();
       if (rangeInFile == null) return null;
-      return ProperTextRange.create(rangeInFile).shiftRight(-elementRange.getStartOffset());
+      result = ProperTextRange.create(rangeInFile);
     }
+    int delta = elementRange.getStartOffset();
+    return result.getStartOffset() < delta ? null : result.shiftRight(-delta);
   }
 
   /**
