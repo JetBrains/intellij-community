@@ -651,6 +651,11 @@ public class HighlightUtil {
   }
 
   @NotNull
+  public static String formatField(@NotNull PsiField field) {
+    return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+  }
+
+  @NotNull
   public static String formatType(@Nullable PsiType type) {
     if (type == null) return PsiKeyword.NULL;
     String text = type.getInternalCanonicalText();
@@ -2150,6 +2155,7 @@ public class HighlightUtil {
   private static String format(PsiElement element) {
     if (element instanceof PsiClass) return formatClass((PsiClass)element);
     if (element instanceof PsiMethod) return formatMethod((PsiMethod)element);
+    if (element instanceof PsiField) return formatField((PsiField)element);
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
 
