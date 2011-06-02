@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.editor.actions.moveUpDown;
+package org.jetbrains.plugins.groovy.lang.editor.actions;
 
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange;
 import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover;
