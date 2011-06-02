@@ -18,6 +18,8 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.util.ArrayUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class Logger {
   public interface Factory {
@@ -45,8 +47,8 @@ public abstract class Logger {
   public abstract boolean isDebugEnabled();
 
   public abstract void debug(@NonNls String message);
-  public abstract void debug(Throwable t);
-  public abstract void debug(@NonNls String message, Throwable t);
+  public abstract void debug(@Nullable Throwable t);
+  public abstract void debug(@NonNls String message, @Nullable Throwable t);
 
   public void error(@NonNls String message) {
     error(message, new Throwable(), ArrayUtil.EMPTY_STRING_ARRAY);
@@ -59,11 +61,11 @@ public abstract class Logger {
     error(message, new Throwable(), details);
   }
 
-  public void error(@NonNls String message, Throwable e) {
+  public void error(@NonNls String message, @Nullable Throwable e) {
     error(message, e, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  public void error(Throwable t) {
+  public void error(@NotNull Throwable t) {
     error(t.getMessage(), t, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
@@ -71,20 +73,20 @@ public abstract class Logger {
     warn(message, null);
   }
 
-  public void warn(Throwable t) {
+  public void warn(@NotNull Throwable t) {
     warn(t.getMessage(), t);
   }
 
 
-  public abstract void error(@NonNls String message, Throwable t, @NonNls String... details);
+  public abstract void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details);
 
   public abstract void info(@NonNls String message);
 
-  public abstract void info(@NonNls String message, Throwable t);
+  public abstract void info(@NonNls String message, @Nullable Throwable t);
 
-  public abstract void warn(@NonNls String message, Throwable t);
+  public abstract void warn(@NonNls String message, @Nullable Throwable t);
 
-  public void info(Throwable t) {
+  public void info(@NotNull Throwable t) {
     info(t.getMessage(), t);
   }
 
