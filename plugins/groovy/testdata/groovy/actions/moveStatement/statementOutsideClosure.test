@@ -1,11 +1,11 @@
 for (path in list) {
     list.each {
-        print<caret>ln path
     }
+    print<caret>ln path
 }
 -----
 for (path in list) {
     list.each {
+        print<caret>ln path
     }
-    print<caret>ln path
 }

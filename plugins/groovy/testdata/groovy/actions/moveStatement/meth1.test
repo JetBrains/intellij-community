@@ -1,11 +1,11 @@
 class CCC1 {
 
-    def <caret>foo() {
-        42
-    }
-
     def bar() {
         45
+    }
+
+    def <caret>foo() {
+        42
     }
 
     def zoom() {
@@ -16,12 +16,12 @@ class CCC1 {
 -----
 class CCC1 {
 
-    def bar() {
-        45
-    }
-
     def <caret>foo() {
         42
+    }
+
+    def bar() {
+        45
     }
 
     def zoom() {

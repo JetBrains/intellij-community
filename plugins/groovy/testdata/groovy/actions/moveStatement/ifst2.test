@@ -17,3 +17,13 @@ def boo() {
     aaaaa
 bbbbb
 }
+-----
+def boo() {
+    aaaaa
+    if <caret>(true){
+        boo
+    } else {
+        baa
+    }
+    bbbbb
+}

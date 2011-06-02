@@ -29,3 +29,19 @@ class CCC1 {
         }
 
 }
+-----
+class CCC1 {
+
+        def bar() {
+                45
+        }
+
+    def <caret>foo() {
+        42
+    }
+
+        def zoom() {
+                239
+        }
+
+}

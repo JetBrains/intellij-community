@@ -1,11 +1,11 @@
+println 'a'
 ou<caret>ter = {
     println 'a'
     println 'b' //aa
 }
-println 'a'
 -----
-println 'a'
 ou<caret>ter = {
     println 'a'
     println 'b' //aa
 }
+println 'a'
