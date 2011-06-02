@@ -33,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -44,7 +45,7 @@ public abstract class GotoActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoActionBase");
 
   protected static Class myInAction = null;
-  private static Map<Class, Pair<String, Integer>> ourLastStrings = CollectionFactory.hashMap();
+  private static final Map<Class, Pair<String, Integer>> ourLastStrings = CollectionFactory.hashMap();
 
 
   public final void actionPerformed(AnActionEvent e) {
@@ -90,9 +91,9 @@ public abstract class GotoActionBase extends AnAction {
     return PsiDocumentManager.getInstance(project).getPsiFile(document);
   }
 
-  protected static abstract class GotoActionCallback<T> {
+  protected abstract static class GotoActionCallback<T> {
     @Nullable
-    protected ChooseByNameFilter<T> createFilter(ChooseByNamePopup popup) {
+    protected ChooseByNameFilter<T> createFilter(@NotNull ChooseByNamePopup popup) {
       return null;
     }
 
@@ -102,7 +103,7 @@ public abstract class GotoActionBase extends AnAction {
   private static Pair<String, Integer> getInitialText(Editor editor) {
     if (editor != null) {
       final String selectedText = editor.getSelectionModel().getSelectedText();
-      if (selectedText != null && selectedText.indexOf("\n") < 0) {
+      if (selectedText != null && !selectedText.contains("\n")) {
         return Pair.create(selectedText, 0);
       }
     }

@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     final GotoFileModel gotoFileModel = new GotoFileModel(project);
     showNavigationPopup(e, gotoFileModel, new GotoActionCallback<FileType>() {
       @Override
-      protected ChooseByNameFilter<FileType> createFilter(ChooseByNamePopup popup) {
+      protected ChooseByNameFilter<FileType> createFilter(@NotNull ChooseByNamePopup popup) {
         return new GotoFileFilter(popup, gotoFileModel, project);
       }
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   public void gotoActionPerformed(AnActionEvent e) {
@@ -50,7 +51,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     final GotoClassModel2 model = new GotoClassModel2(project);
     showNavigationPopup(e, model, new GotoActionCallback<Language>() {
       @Override
-      protected ChooseByNameFilter<Language> createFilter(ChooseByNamePopup popup) {
+      protected ChooseByNameFilter<Language> createFilter(@NotNull ChooseByNamePopup popup) {
         return new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project);
       }
 

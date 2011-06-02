@@ -47,27 +47,27 @@ public abstract class ChooseByNameFilter<T> {
   /**
    * a parent popup
    */
-  final ChooseByNamePopup myParentPopup;
+  private final ChooseByNamePopup myParentPopup;
   /**
    * action toolbar
    */
-  final ActionToolbar myToolbar;
+  private final ActionToolbar myToolbar;
   /**
    * a file type chooser, only one instance is used
    */
-  final ElementsChooser<T> myChooser;
+  private final ElementsChooser<T> myChooser;
   /**
    * A panel that contains chooser
    */
-  final JPanel myChooserPanel;
+  private final JPanel myChooserPanel;
   /**
    * a file type popup, the value is non-null if popup is active
    */
-  JBPopup myPopup;
+  private JBPopup myPopup;
   /**
    * a project to use. The project is used for dimension service.
    */
-  final Project myProject;
+  private final Project myProject;
 
   /**
    * A constuctor
@@ -77,8 +77,10 @@ public abstract class ChooseByNameFilter<T> {
    * @param filterConfiguration storage for selected filter values
    * @param project             a context project
    */
-  public ChooseByNameFilter(final ChooseByNamePopup popup, FilteringGotoByModel<T> model, ChooseByNameFilterConfiguration<T> filterConfiguration,
-                     final Project project) {
+  public ChooseByNameFilter(@NotNull ChooseByNamePopup popup,
+                            @NotNull FilteringGotoByModel<T> model,
+                            @NotNull ChooseByNameFilterConfiguration<T> filterConfiguration,
+                            @NotNull Project project) {
     myParentPopup = popup;
     DefaultActionGroup actionGroup = new DefaultActionGroup("go.to.file.filter", false);
     ToggleAction action = new ToggleAction("Filter", "Filter files by type", FILTER_ICON) {
