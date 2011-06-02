@@ -58,12 +58,18 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
     final int offset = caretOffset.get();
     final PsiElement element = file.findElementAt(offset);
-    if (element == null) {
-      return Result.Continue;
-    }
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    if (codeInsightSettings.JAVADOC_STUB_ON_ENTER && PythonDocCommentUtil.inDocComment(element)) {
-      insertDocStringStub(editor, element);
+    if (codeInsightSettings.JAVADOC_STUB_ON_ENTER) {
+      PsiElement comment = element;
+      if (comment == null && offset != 0)
+        comment = file.findElementAt(offset-1);
+      if (PythonDocCommentUtil.inDocComment(comment)) {
+        insertDocStringStub(editor, comment);
+        return Result.Continue;
+      }
+    }
+
+    if (element == null) {
       return Result.Continue;
     }
 
