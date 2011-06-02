@@ -26,7 +26,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
 
   public void testEmptySuite() throws ExecutionException {
     String[] result = runUTRunner(PathManager.getHomePath(), "true");
-    assertEquals("##teamcity[testCount count='0']", result [0]);
+    assertEquals("##teamcity[testCount count='0']", result [1]);
   }
 
   public void testFile() throws ExecutionException {
@@ -34,8 +34,8 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     File testFile = new File(testDir, "test1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath(), "true");
     assertEquals(StringUtil.join(result, "\n"), 11, result.length);
-    assertEquals("##teamcity[testCount count='2']", result [0]);
-    assertEquals("##teamcity[enteredTheMatrix]", result [1]);
+    assertEquals("##teamcity[enteredTheMatrix]", result [0]);
+    assertEquals("##teamcity[testCount count='2']", result [1]);
     assertEquals("##teamcity[testSuiteStarted locationHint='python_uttestid://test1.BadTest' name='test1.BadTest']", result [2]);
     assertEquals("##teamcity[testStarted locationHint='python_uttestid://test1.BadTest.test_fails' name='test_fails']", result[3]);
     assertTrue(result [4], result[4].startsWith("##teamcity[testFailed") && result [4].contains("name='test_fails'"));
