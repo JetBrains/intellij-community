@@ -246,4 +246,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_DUPLICATE = "EditorDuplicate";
 
   @NonNls String GROUP_EDITOR_GUTTER = "EditorGutterPopupMenu";
+
+  String ACTION_MOVE_STATEMENT_UP_ACTION = "MoveStatementUp";
+  String ACTION_MOVE_STATEMENT_DOWN_ACTION = "MoveStatementDown";
 }

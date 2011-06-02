@@ -71,8 +71,8 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     registerKeyboardAction(new MoveComponentAction(0, -1, 0, 0), "EditorPreviousWord");
     registerKeyboardAction(new MoveComponentAction(0, 1, 0, 0), "EditorNextWord");
 
-    registerKeyboardAction(new MoveComponentAction(0, 0, -1, 0), "MoveStatementUp");
-    registerKeyboardAction(new MoveComponentAction(0, 0, 1, 0), "MoveStatementDown");
+    registerKeyboardAction(new MoveComponentAction(0, 0, -1, 0), IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION);
+    registerKeyboardAction(new MoveComponentAction(0, 0, 1, 0), IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
     registerKeyboardAction(new MoveComponentAction(0, 0, 0, -1), "EditorPreviousWordWithSelection");
     registerKeyboardAction(new MoveComponentAction(0, 0, 0, 1), "EditorNextWordWithSelection");
 

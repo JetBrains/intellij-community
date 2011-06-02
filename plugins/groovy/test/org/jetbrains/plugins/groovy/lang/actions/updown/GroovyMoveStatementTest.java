@@ -15,12 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.actions.updown;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -86,11 +86,11 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   public void testInSwitchCaseUp5() throws Throwable { bothTest(); }
 
   private void downTest() throws Exception {
-    doTest(GroovyEditorActionsManager.MOVE_STATEMENT_DOWN_ACTION);
+    doTest(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
   }
 
   private void upTest() throws Exception {
-    doTest(GroovyEditorActionsManager.MOVE_STATEMENT_UP_ACTION);
+    doTest(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION);
   }
 
   private void bothTest() {
@@ -99,12 +99,12 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
     String upper = data.get(1);
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, lower);
 
-    performAction(GroovyEditorActionsManager.MOVE_STATEMENT_UP_ACTION);
+    performAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION);
     if (!upper.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) upper += "\n";
 
     myFixture.checkResult(upper);
 
-    performAction(GroovyEditorActionsManager.MOVE_STATEMENT_DOWN_ACTION);
+    performAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
     if (!lower.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) lower += "\n";
     myFixture.checkResult(lower);
   }
