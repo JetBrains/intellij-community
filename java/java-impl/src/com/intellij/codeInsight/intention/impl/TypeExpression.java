@@ -73,4 +73,8 @@ public class TypeExpression extends Expression {
     return result.toArray(new LookupElement[result.size()]);
   }
 
+  public boolean hasSuggestions() {
+    return myItems.size() > 1;
+  }
+
 }

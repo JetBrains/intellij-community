@@ -122,16 +122,32 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   public PsiFile getInjectedFile() {
     return myInjectedFile;
   }
-  public LogicalPosition hostToInjected(@NotNull LogicalPosition pos) {
+
+  @NotNull
+  public LogicalPosition hostToInjected(@NotNull LogicalPosition hPos) {
     assert isValid();
-    int offsetInInjected = myDocumentWindow.hostToInjected(myDelegate.logicalPositionToOffset(pos));
-    return offsetToLogicalPosition(offsetInInjected);
+    int hLineEndOffset = myDelegate.getDocument().getLineEndOffset(hPos.line);
+    LogicalPosition hLineEndPos = myDelegate.offsetToLogicalPosition(hLineEndOffset);
+    if (hLineEndPos.column < hPos.column) {
+      // in virtual space
+      LogicalPosition iPos = myDocumentWindow.hostToInjectedInVirtualSpace(hPos);
+      if (iPos != null) {
+        return iPos;
+      }
+    }
+
+    int hOffset = myDelegate.logicalPositionToOffset(hPos);
+    int iOffset = myDocumentWindow.hostToInjected(hOffset);
+    return offsetToLogicalPosition(iOffset);
   }
 
   public LogicalPosition injectedToHost(LogicalPosition pos) {
     assert isValid();
-    int offsetInHost = myDocumentWindow.injectedToHost(logicalPositionToOffset(pos));
-    return myDelegate.offsetToLogicalPosition(offsetInHost);
+    // beware the virtual space
+    int lineStartOffset = myDocumentWindow.getLineStartOffset(pos.line);
+    int lineStartInHost = myDocumentWindow.injectedToHost(lineStartOffset);
+    LogicalPosition lineStartPosInHost = myDelegate.offsetToLogicalPosition(lineStartInHost);
+    return new LogicalPosition(lineStartPosInHost.line, lineStartPosInHost.column + pos.column);
   }
 
   private void dispose() {
@@ -228,7 +244,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     myDelegate.setFontSize(fontSize);
   }
 
-  public void setHighlighter(final EditorHighlighter highlighter) {
+  public void setHighlighter(@NotNull final EditorHighlighter highlighter) {
     myDelegate.setHighlighter(highlighter);
   }
 
@@ -248,11 +264,11 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.getGutterComponentEx();
   }
 
-  public void addPropertyChangeListener(final PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myDelegate.addPropertyChangeListener(listener);
   }
 
-  public void removePropertyChangeListener(final PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myDelegate.removePropertyChangeListener(listener);
   }
 
@@ -511,7 +527,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.setCaretEnabled(enabled);
   }
 
-  public void addFocusListener(final FocusChangeListener listener) {
+  public void addFocusListener(@NotNull final FocusChangeListener listener) {
     myDelegate.addFocusListener(listener);
   }
 
@@ -580,7 +596,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     myDelegate.setHorizontalScrollbarVisible(b);
   }
 
-  public boolean processKeyTyped(final KeyEvent e) {
+  public boolean processKeyTyped(@NotNull final KeyEvent e) {
     return myDelegate.processKeyTyped(e);
   }
 
@@ -607,7 +623,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate;
   }
 
-  public int calcColumnNumber(final CharSequence text, final int start, final int offset, final int tabSize) {
+  public int calcColumnNumber(@NotNull final CharSequence text, final int start, final int offset, final int tabSize) {
     int hostStart = myDocumentWindow.injectedToHost(start);
     int hostOffset = myDocumentWindow.injectedToHost(offset);
     return myDelegate.calcColumnNumber(myDelegate.getDocument().getText(), hostStart, hostOffset, tabSize);

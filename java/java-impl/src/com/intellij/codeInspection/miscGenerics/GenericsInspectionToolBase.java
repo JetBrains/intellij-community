@@ -48,6 +48,9 @@ public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool
     if (initializer != null) {
       return getDescriptions(initializer, manager, isOnTheFly);
     }
+    if (field instanceof PsiEnumConstant) {
+      return getDescriptions(field, manager, isOnTheFly);
+    }
     return null;
   }
 

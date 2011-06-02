@@ -20,14 +20,15 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = stackDescriptor.getIcon();
     }
     else if (descriptor instanceof ValueDescriptorImpl) {
-      ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
+      final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
       if (valueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)valueDescriptor).isStatic()) {
         nodeIcon = myStaticFieldIcon;
       }
@@ -85,9 +86,17 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       else {
         if (valueDescriptor instanceof WatchItemDescriptor) {
           nodeIcon = DebuggerIcons.WATCHED_VALUE_ICON;
-        } else {
+        }
+        else {
           nodeIcon = DebuggerIcons.VALUE_ICON;
         }
+      }
+      final Icon valueIcon = valueDescriptor.getValueIcon();
+      if (nodeIcon != null && valueIcon != null) {
+        final RowIcon composite = new RowIcon(2);
+        composite.setIcon(nodeIcon, 0);
+        composite.setIcon(valueIcon, 1);
+        nodeIcon = composite;
       }
     }
     else if (descriptor instanceof MessageDescriptor) {

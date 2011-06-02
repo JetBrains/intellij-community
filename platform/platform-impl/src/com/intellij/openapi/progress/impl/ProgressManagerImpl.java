@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +52,6 @@ public class ProgressManagerImpl extends ProgressManager {
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
   private static volatile int ourLockedCheckCounter = 0;
-  private final List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
   @NonNls private static final String NAME = "Progress Cancel Checker";
   private static final boolean DISABLED = Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled");
 
@@ -146,19 +143,6 @@ public class ProgressManagerImpl extends ProgressManager {
     }
   }
 
-  public JComponent getProvidedFunComponent(Project project, @NotNull String processId) {
-    for(ProgressFunComponentProvider provider: Extensions.getExtensions(ProgressFunComponentProvider.EP_NAME)) {
-      JComponent cmp = provider.getProgressFunComponent(project, processId);
-      if (cmp != null) return cmp;
-    }
-    
-    for (ProgressFunComponentProvider provider : myFunComponentProviders) {
-      JComponent cmp = provider.getProgressFunComponent(project, processId);
-      if (cmp != null) return cmp;
-    }
-    return null;
-  }
-
   public void setCancelButtonText(String cancelButtonText) {
     ProgressIndicator progressIndicator = getProgressIndicator();
     if (progressIndicator != null) {
@@ -170,14 +154,6 @@ public class ProgressManagerImpl extends ProgressManager {
       }
     }
 
-  }
-
-  public void registerFunComponentProvider(@NotNull ProgressFunComponentProvider provider) {
-    myFunComponentProviders.add(provider);
-  }
-
-  public void removeFunComponentProvider(@NotNull ProgressFunComponentProvider provider) {
-    myFunComponentProviders.remove(provider);
   }
 
   public boolean hasProgressIndicator() {
@@ -275,7 +251,7 @@ public class ProgressManagerImpl extends ProgressManager {
         }, task.getTitle(), task.isCancellable(), task.getProject(), parentComponent, task.getCancelText());
     if (result) {
       final long end = System.currentTimeMillis();
-      final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
+      final Task.NotificationInfo notificationInfo = task.notifyFinished();
       time = end - start;
       if (notificationInfo != null && time > 5000) { // show notification only if process took more than 5 secs
         final JFrame frame = WindowManager.getInstance().getFrame(task.getProject());
@@ -381,7 +357,7 @@ public class ProgressManagerImpl extends ProgressManager {
           }, ModalityState.NON_MODAL);
         }
         else if (!canceled) {
-          final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
+          final Task.NotificationInfo notificationInfo = task.notifyFinished();
           if (notificationInfo != null && time > 5000) { // snow notification if process took more than 5 secs
             final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
             if (window == null || notificationInfo.isShowWhenFocused()) {

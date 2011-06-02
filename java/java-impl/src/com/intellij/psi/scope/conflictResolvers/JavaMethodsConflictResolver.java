@@ -312,10 +312,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     NEITHER
   }
 
-  private static Specifics checkSubtyping(PsiType type1, PsiType type2) {
+  private static Specifics checkSubtyping(PsiType type1, PsiType type2, PsiMethod method1, PsiMethod method2) {
     boolean noBoxing = type1 instanceof PsiPrimitiveType == type2 instanceof PsiPrimitiveType;
-    final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, false);
-    final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, false);
+    final boolean allowUncheckedConversion =
+      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC);
+    final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, allowUncheckedConversion);
+    final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, allowUncheckedConversion);
     if (assignable1From2 || assignable2From1) {
       if (assignable1From2 && assignable2From1) {
         return null;
@@ -407,7 +409,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiType type1 = classSubstitutor1.substitute(methodSubstitutor1.substitute(types1[i]));
       PsiType type2 = classSubstitutor2.substitute(methodSubstitutor2.substitute(types2[i]));
 
-      final Specifics specifics = type1 == null || type2 == null ? null : checkSubtyping(type1, type2);
+      final Specifics specifics = type1 == null || type2 == null ? null : checkSubtyping(type1, type2, method1, method2);
       if (specifics == null) continue;
       switch (specifics) {
         case FIRST:

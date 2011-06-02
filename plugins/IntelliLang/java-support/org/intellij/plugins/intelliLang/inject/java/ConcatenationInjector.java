@@ -73,9 +73,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           }
         }
         final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
-        final Result<Collection<String>> r = new Result<Collection<String>>(stringSet, myConfiguration);
-        r.setLockValue(true);
-        return r;
+        return new Result<Collection<String>>(stringSet, myConfiguration);
       }
     }, false);
     myAnnoIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {

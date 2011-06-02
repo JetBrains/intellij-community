@@ -16,13 +16,14 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.text.Matcher;
 
 import java.awt.event.KeyEvent;
 
 public class SpeedSearch {
   private String myString = "";
   private boolean myEnabled;
-  private NameUtil.Matcher myMatcher;
+  private Matcher myMatcher;
 
   public void type(String letter) {
     updatePattern(myString + letter);

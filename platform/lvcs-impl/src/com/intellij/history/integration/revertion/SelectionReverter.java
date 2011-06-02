@@ -26,6 +26,7 @@ import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -65,7 +66,7 @@ public class SelectionReverter extends Reverter {
     return Collections.singletonList(file);
   }
 
-  protected void doRevert() throws IOException {
+  protected void doRevert() throws IOException, FilesTooBigForDiffException {
     Block b = myCalculator.getSelectionFor(myLeftRevision, new Progress() {
       public void processed(int percentage) {
         // should be already processed.

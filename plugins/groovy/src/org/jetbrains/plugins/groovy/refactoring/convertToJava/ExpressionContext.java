@@ -16,14 +16,17 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.suggestMethodName;
 
 class ExpressionContext implements Cloneable {
   List<String> myStatements = new ArrayList<String>();
@@ -35,15 +38,24 @@ class ExpressionContext implements Cloneable {
   private Map<String, Boolean> myProps = new HashMap<String, Boolean>();
   private static final String myShouldInsertCurlyBrackets = "shouldInsertCurly";
   private static final String myInAnonymousContext = "inAnonymousContext";
+  private Ref<String> myRefSetterName = new Ref<String>(null);
 
-  private ExpressionContext(Project project, Set<String> usedVarNames) {
+  private Map<PsiMethod, String> setters;
+  private Set<PsiClass> myClasses;
+
+  private ExpressionContext(Project project, Set<String> usedVarNames, Map<PsiMethod, String> setters, Set<PsiClass> myClasses) {
     this.project = project;
     myUsedVarNames = usedVarNames;
+    this.setters = setters;
+    this.myClasses = myClasses;
   }
 
-  ExpressionContext(Project project) {
-    this(project, new HashSet<String>());
+  ExpressionContext(Project project, GroovyFile[] filesToConvert) {
+    this(project, new HashSet<String>(), new HashMap<PsiMethod, String>(), new HashSet<PsiClass>());
     typeProvider = new TypeProvider();
+    for (GroovyFile groovyFile : filesToConvert) {
+      myClasses.addAll(Arrays.asList(groovyFile.getClasses()));
+    }
   }
 
   @Override
@@ -52,20 +64,22 @@ class ExpressionContext implements Cloneable {
   }
 
   ExpressionContext copy() {
-    final ExpressionContext expressionContext = new ExpressionContext(project, myUsedVarNames);
+    final ExpressionContext expressionContext = new ExpressionContext(project, myUsedVarNames, setters, myClasses);
     expressionContext.myProps.putAll(myProps);
     expressionContext.analyzedVars = analyzedVars;
     expressionContext.typeProvider = typeProvider;
+    expressionContext.myRefSetterName = myRefSetterName;
     return expressionContext;
   }
 
   ExpressionContext extend() {
     final HashSet<String> usedVarNames = new HashSet<String>();
     usedVarNames.addAll(myUsedVarNames);
-    final ExpressionContext expressionContext = new ExpressionContext(project, usedVarNames);
+    final ExpressionContext expressionContext = new ExpressionContext(project, usedVarNames, setters, myClasses);
     expressionContext.myProps.putAll(myProps);
     expressionContext.analyzedVars = analyzedVars;
     expressionContext.typeProvider = typeProvider;
+    expressionContext.myRefSetterName = myRefSetterName;
     return expressionContext;
   }
 
@@ -93,4 +107,34 @@ class ExpressionContext implements Cloneable {
   public void searchForLocalVarsToWrap(GroovyPsiElement root) {
     analyzedVars = LocalVarAnalyzer.searchForVarsToWrap(root, analyzedVars, this);
   }
+
+  public String getRefSetterName() {
+    return myRefSetterName.get();
+  }
+
+  public String getRefSetterName(GroovyPsiElement context) {
+    if (myRefSetterName.isNull()) {
+      myRefSetterName.set(suggestMethodName(context, "setGroovyRef", this));
+    }
+    return myRefSetterName.get();
+  }
+
+  public String getSetterName(PsiMethod setter, GroovyPsiElement place) {
+    String name = setters.get(setter);
+    if (name != null) return name;
+
+    name = GenerationUtil.suggestMethodName(place, setter.getName(), this);
+    setters.put(setter, name);
+    return name;
+  }
+
+  public Map<PsiMethod, String> getSetters() {
+    return Collections.unmodifiableMap(setters);
+  }
+
+  public boolean isClassConverted(PsiClass aClass) {
+    if (aClass == null) return false;
+    return myClasses.contains(aClass);
+  }
+
 }

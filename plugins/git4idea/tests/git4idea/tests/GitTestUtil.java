@@ -54,7 +54,7 @@ public class GitTestUtil {
       }
 
       String lastElement = pathElements[pathElements.length-1];
-      currentParent = lastIsDir ? createDir(project, currentParent, lastElement) : createFile(project, currentParent, lastElement, "initial content");
+      currentParent = lastIsDir ? createDir(project, currentParent, lastElement) : createFile(project, currentParent, lastElement, "content" + Math.random());
       result.put(path, currentParent);
     }
     return result;

@@ -27,9 +27,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        DocumentationManager.getInstance(project).showJavaDocInfo(editor, file, true);
+        DocumentationManager.getInstance(project).showJavaDocInfo(editor, file, LookupManager.getActiveLookup(editor) == null);
       }
 
       public boolean startInWriteAction() {

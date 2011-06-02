@@ -18,6 +18,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -152,5 +153,15 @@ public class LookupModel {
     }
     myRelevanceClassifier.describeItems(map);
     return map;
+  }
+
+  public List<LookupElement> classifyByRelevance(List<LookupElement> list) {
+    synchronized (lock) {
+      final Classifier<LookupElement> classifier = myArranger.createRelevanceClassifier();
+      for (LookupElement element : list) {
+        classifier.addElement(element);
+      }
+      return ContainerUtil.flatten(classifier.classify(list));
+    }
   }
 }

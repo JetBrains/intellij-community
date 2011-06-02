@@ -30,13 +30,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.Html;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -166,10 +167,16 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     String tooltipText = comp.getToolTipText(me);
     if (tooltipText == null || tooltipText.trim().length() == 0) return;
 
-    queueShow(comp, me, Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP)));
+
+
+    boolean centerDefault = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT));
+    boolean centerStrict = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT));
+    int shift = centerStrict ? 0 : (centerDefault ? -4 : 0);
+
+    queueShow(comp, me, centerStrict || centerDefault, shift, -shift, -shift);
   }
 
-  private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter) {
+  private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter, int shift, int posChangeX, int posChangeY) {
     final IdeTooltip tooltip = new IdeTooltip(c, me.getPoint(), null, new Object()) {
       @Override
       protected boolean beforeShow() {
@@ -182,15 +189,21 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
         JLayeredPane layeredPane = IJSwingUtilities.findParentOfType(c, JLayeredPane.class);
 
-        setTipComponent(initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane));
+        final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
+        final Wrapper wrapper = new Wrapper(pane);
+        setTipComponent(wrapper);
         return true;
       }
-    }.setToCenter(toCenter);
+    }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY);
 
     show(tooltip, false);
   }
 
   public IdeTooltip show(final IdeTooltip tooltip, boolean now) {
+    return show(tooltip, now, true);
+  }
+
+  public IdeTooltip show(final IdeTooltip tooltip, boolean now, final boolean animationEnabled) {
     myAlarm.cancelAllRequests();
 
     hideCurrent(null, null, null);
@@ -206,15 +219,15 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         }
 
         if (myQueuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
-          hideCurrent(null, null, null);
+          hideCurrent(null, null, null, animationEnabled);
           return;
         }
 
         if (tooltip.beforeShow()) {
-          show(tooltip, null);
+          show(tooltip, null, animationEnabled);
         }
         else {
-          hideCurrent(null, null, null);
+          hideCurrent(null, null, null, animationEnabled);
         }
       }
     };
@@ -228,16 +241,18 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return tooltip;
   }
 
-  private void show(final IdeTooltip tooltip, Runnable beforeShow) {
+  private void show(final IdeTooltip tooltip, Runnable beforeShow, boolean animationEnabled) {
     boolean toCenterX;
     boolean toCenterY;
 
     boolean toCenter = tooltip.isToCenter();
+    boolean small = false;
     if (!toCenter && tooltip.isToCenterIfSmall()) {
       Dimension size = tooltip.getComponent().getSize();
       toCenterX = size.width < 64;
       toCenterY = size.height < 64;
       toCenter = toCenterX || toCenterY;
+      small = true;
     } else {
       toCenterX = true;
       toCenterY = true;
@@ -263,9 +278,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setPreferredPosition(tooltip.getPreferredPosition())
       .setFillColor(bg)
       .setBorderColor(border)
-      .setAnimationCycle(Registry.intValue("ide.tooltip.animationCycle"))
+      .setAnimationCycle(animationEnabled ? Registry.intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
-      .setCalloutShift(tooltip.getCalloutShift())
+      .setCalloutShift((small && tooltip.getCalloutShift() == 0) ? -2 : tooltip.getCalloutShift())
       .setPositionChangeXShift(tooltip.getPositionChangeX())
       .setPositionChangeYShift(tooltip.getPositionChangeY())
       .setHideOnKeyOutside(!tooltip.isExplicitClose())
@@ -350,6 +365,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event) {
+    return hideCurrent(me, action, event, true);
+  }
+
+  public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event, final boolean animationEnabled) {
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
@@ -373,7 +392,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       @Override
       public void run() {
         if (myHideRunnable != null) {
-          hideCurrentNow();
+          hideCurrentNow(animationEnabled);
           myHideRunnable = null;
         }
       }
@@ -389,8 +408,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return true;
   }
 
-  private void hideCurrentNow() {
+  private void hideCurrentNow(boolean animationEnabled) {
     if (myCurrentTipUi != null) {
+      myCurrentTipUi.setAnimationEnabled(animationEnabled);
       myCurrentTipUi.hide();
       myCurrentTooltip.onHidden();
       myShowDelay = false;
@@ -452,7 +472,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
     final Ref<Dimension> prefSize = new Ref<Dimension>(null);
-    String htmlBody = getHtmlBody(html);
+    String htmlBody = UIUtil.getHtmlBody(html);
     String text = "<html><head>" +
            UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()) +
            "</head><body>" +
@@ -552,7 +572,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public static String formatHtml(String text, HintHint hintHint) {
-    String htmlBody = getHtmlBody(text);
+    String htmlBody = UIUtil.getHtmlBody(text);
     text = "<html><head>" +
            UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(),
                                         hintHint.getUlImg()) +
@@ -571,36 +591,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   public static void setBorder(JComponent pane) {
     pane.setBorder(
       BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
-  }
-
-  public static String getHtmlBody(String text) {
-    return getHtmlBody(new Html(text));
-  }
-
-  public static String getHtmlBody(Html html) {
-    String text = html.getText();
-    String result = text;
-    if (!text.startsWith("<html>")) {
-      result = text.replaceAll("\n", "<br>");
-    }
-    else {
-      final int bodyIdx = text.indexOf("<body>");
-      final int closedBodyIdx = text.indexOf("</body>");
-      if (bodyIdx != -1 && closedBodyIdx != -1) {
-        result = text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
-      }
-      else {
-        text = StringUtil.trimStart(text, "<html>").trim();
-        text = StringUtil.trimEnd(text, "</html>").trim();
-        text = StringUtil.trimStart(text, "<body>").trim();
-        text = StringUtil.trimEnd(text, "</body>").trim();
-        result = text;
-      }
-    }
-
-
-
-    return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }
 
   @NotNull

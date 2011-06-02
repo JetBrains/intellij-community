@@ -48,6 +48,7 @@ import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.*;
 
@@ -186,7 +187,7 @@ public class TodoCheckinHandlerWorker {
           myAcceptor.skipped(new Pair<FilePath, String>(myAfterFile, ourCannotLoadPreviousRevision));
           return;
         }
-        ArrayList<LineFragment> lineFragments = getLineFragments(myBeforeContent, myAfterContent);
+        ArrayList<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
         for (Iterator<LineFragment> iterator = lineFragments.iterator(); iterator.hasNext(); ) {
           ProgressManager.checkCanceled();
           final LineFragment next = iterator.next();
@@ -287,11 +288,15 @@ public class TodoCheckinHandlerWorker {
     return StringUtil.join(fragment.split("\\s"), " ");
   }
 
-  private static ArrayList<LineFragment> getLineFragments(String beforeContent, String afterContent) {
-    DiffFragment[] woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
-    DiffFragment[] step1lineFragments =
-      new DiffCorrection.TrueLineBlocks(ComparisonPolicy.IGNORE_SPACE).correctAndNormalize(woFormattingBlocks);
-    return new DiffFragmentsProcessor().process(step1lineFragments);
+  private static ArrayList<LineFragment> getLineFragments(final String fileName, String beforeContent, String afterContent) throws VcsException {
+    try {
+      DiffFragment[] woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
+      DiffFragment[] step1lineFragments =
+        new DiffCorrection.TrueLineBlocks(ComparisonPolicy.IGNORE_SPACE).correctAndNormalize(woFormattingBlocks);
+      return new DiffFragmentsProcessor().process(step1lineFragments);
+    } catch (FilesTooBigForDiffException e) {
+      throw new VcsException("File " + fileName + " is too big and there are too many changes to build a diff", e);
+    }
   }
 
   private final static String ourInvalidFile = "Invalid file (s)";

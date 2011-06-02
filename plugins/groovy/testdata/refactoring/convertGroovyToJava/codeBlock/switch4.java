@@ -6,5 +6,6 @@ print("bbb");
 else if (org.codehaus.groovy.runtime.DefaultGroovyMethods.isCase(new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1)), date)) {
 print("bbb");
 }
-else print("ccc");
-
+else {
+print("ccc");
+}

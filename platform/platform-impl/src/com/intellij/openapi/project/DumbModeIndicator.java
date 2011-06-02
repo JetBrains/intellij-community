@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DumbModeIndicator extends AbstractProjectComponent {
+  private static final String DUMB_MODE_MESSAGE = "Updating project indices...<br>\n" +
+                                                  "Refactorings, usage search and some other features will become available after indexing is complete";
   private final Alarm myAlarm;
 
   public DumbModeIndicator(Project project) {
@@ -42,9 +44,7 @@ public class DumbModeIndicator extends AbstractProjectComponent {
         myFirstNotification = false;
         myAlarm.addRequest(new Runnable() {
           public void run() {
-            myHandler = DumbService.getInstance(myProject).showDumbModeNotification(
-              "Updating project indices...<br>" +
-              "Refactorings, usage search and some other features will become available after indexing is complete");
+            myHandler = DumbService.getInstance(myProject).showDumbModeNotification(DUMB_MODE_MESSAGE);
           }
         }, first? 10000 : 1000);
       }

@@ -62,7 +62,7 @@ public class VisualPosition {
   
   @NonNls
   public String toString() {
-    return "VisualPosition: line = " + line + " column = " + column;
+    return "VisualPosition: (" + line + ", " + column+")";
   }
 
   @Override

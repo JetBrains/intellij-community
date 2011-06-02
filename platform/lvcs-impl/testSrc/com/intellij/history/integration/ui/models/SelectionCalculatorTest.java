@@ -20,25 +20,22 @@ import com.intellij.diff.Block;
 import com.intellij.history.core.InMemoryLocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryTestCase;
-import com.intellij.history.core.revisions.CurrentRevision;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
-
-import static org.easymock.classextension.EasyMock.*;
-
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.List;
+
+import static org.easymock.classextension.EasyMock.*;
 
 public class SelectionCalculatorTest extends LocalHistoryTestCase {
   IdeaGateway gw = new MyIdeaGateway();
   LocalHistoryFacade vcs = new InMemoryLocalHistoryFacade();
 
   @Test
-  public void testSelectionWasNotChanged() {
+  public void testSelectionWasNotChanged() throws FilesTooBigForDiffException {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc1\ndef1\nghi1");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 2);
 
@@ -50,7 +47,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testSelectionWasMoved() {
+  public void testSelectionWasMoved() throws FilesTooBigForDiffException {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "def\nghi");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
@@ -62,7 +59,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testSelectionForVeryOldRevisionTakenBackward() {
+  public void testSelectionForVeryOldRevisionTakenBackward() throws FilesTooBigForDiffException {
     List<Revision> rr = createRevisions("ghi\nabc\ndef", "abc\nghi\ndef", "abc\ndef\nghi");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
@@ -76,7 +73,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testNormalizingLineEnds() {
+  public void testNormalizingLineEnds() throws FilesTooBigForDiffException {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\r\ndef\r\nghi");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
@@ -88,7 +85,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testProgressOnGetSelection() {
+  public void testProgressOnGetSelection() throws FilesTooBigForDiffException {
     List<Revision> rr = createRevisions("one", "two", "three", "four");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
 
@@ -105,7 +102,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testProgressOnCanCalculate() {
+  public void testProgressOnCanCalculate() throws FilesTooBigForDiffException {
     List<Revision> rr = createRevisions("one", "two");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
 

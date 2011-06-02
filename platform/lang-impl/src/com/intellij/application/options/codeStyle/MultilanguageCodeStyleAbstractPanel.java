@@ -34,7 +34,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,6 +71,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   protected void init() {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+      resetDefaultNames();
       provider.customizeSettings(this, getSettingsType());
     }
   }
@@ -81,6 +81,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     boolean languageProviderFound = false;
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
       if (provider.getLanguage().is(language)) {
+        resetDefaultNames();
         provider.customizeSettings(this, getSettingsType());
         languageProviderFound = true;
         break;
@@ -108,6 +109,9 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   protected abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();
 
   protected void onLanguageChange(Language language) {
+  }
+
+  protected void resetDefaultNames() {
   }
 
   @Override
@@ -193,7 +197,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   protected static JPanel createPreviewPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
     panel.setPreferredSize(new Dimension(200, 0));
     return panel;
   }

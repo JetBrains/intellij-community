@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.editor.actions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -49,13 +49,13 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 /**
  * @author ilyas
  */
-public class GroovyEnterHandler implements EnterHandlerDelegate {
+public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
-  public Result preprocessEnter(PsiFile file,
-                                Editor editor,
-                                Ref<Integer> caretOffset,
-                                Ref<Integer> caretAdvance,
-                                DataContext dataContext,
+  public Result preprocessEnter(@NotNull PsiFile file,
+                                @NotNull Editor editor,
+                                @NotNull Ref<Integer> caretOffset,
+                                @NotNull Ref<Integer> caretAdvance,
+                                @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
     String text = editor.getDocument().getText();
     if (StringUtil.isEmpty(text)) {

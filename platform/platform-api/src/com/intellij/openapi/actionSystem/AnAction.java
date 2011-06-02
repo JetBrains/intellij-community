@@ -104,7 +104,7 @@ public abstract class AnAction {
    *
    * @param icon Action's icon
    */
-  public AnAction(String text, String description, Icon icon){
+  public AnAction(String text, String description, @Nullable Icon icon){
     myShortcutSet = ourEmptyShortcutSet;
     myEnabledInModalContext = false;
     Presentation presentation = getTemplatePresentation();

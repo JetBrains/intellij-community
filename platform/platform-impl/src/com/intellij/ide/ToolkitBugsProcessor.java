@@ -188,4 +188,24 @@ public class ToolkitBugsProcessor {
       return "http://www.jetbrains.net/devnet/thread/278896";
     }
   }
+
+  static class Apple_CAccessible_NPE extends Handler {
+
+    Apple_CAccessible_NPE() {
+      super("apple.awt.CAccessible.getAccessibleContext(CAccessible.java:74)");
+    }
+
+    @Override
+    boolean isActual() {
+      return SystemInfo.isMac;
+    }
+
+    @Override
+    boolean process(Throwable e, StackTraceElement[] stack) {
+      if (e instanceof NullPointerException && stack.length > 1) {
+        return stack[0].getClassName().equals("apple.awt.CAccessible") && stack[0].getMethodName().equals("getAccessibleContext");
+      }
+      return false;
+    }
+  }
 }

@@ -166,7 +166,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     TextRange textRange = getTextRange();
     if (textRange == null) return null;
     PsiElement element = getPsiElement();
-    return InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, element.getTextRange());
+    return InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, textRange);
   }
 
   public TextRange getTextRange() {

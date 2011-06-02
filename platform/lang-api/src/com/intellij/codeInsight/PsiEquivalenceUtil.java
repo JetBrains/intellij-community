@@ -19,6 +19,7 @@ package com.intellij.codeInsight;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -44,13 +45,14 @@ public class PsiEquivalenceUtil {
                                               @NotNull PsiElement element2,
                                               @Nullable Comparator<PsiElement> resolvedElementsComparator,
                                               boolean areCommentsSignificant) {
-    return areElementsEquivalent(element1, element2, resolvedElementsComparator, null, areCommentsSignificant);
+    return areElementsEquivalent(element1, element2, resolvedElementsComparator, null, null, areCommentsSignificant);
   }
 
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,
                                               @Nullable Comparator<PsiElement> resolvedElementsComparator,
                                               @Nullable Comparator<PsiElement> leafElementsComparator,
+                                              @Nullable Condition<PsiElement> isElementSignificantCondition,
                                               boolean areCommentsSignificant) {
     if(element1 == element2) return true;
     ASTNode node1 = element1.getNode();
@@ -58,14 +60,15 @@ public class PsiEquivalenceUtil {
     if (node1 == null || node2 == null) return false;
     if (node1.getElementType() != node2.getElementType()) return false;
 
-    PsiElement[] children1 = getFilteredChildren(element1, areCommentsSignificant);
-    PsiElement[] children2 = getFilteredChildren(element2, areCommentsSignificant);
+    PsiElement[] children1 = getFilteredChildren(element1, isElementSignificantCondition, areCommentsSignificant);
+    PsiElement[] children2 = getFilteredChildren(element2, isElementSignificantCondition, areCommentsSignificant);
     if (children1.length != children2.length) return false;
 
     for (int i = 0; i < children1.length; i++) {
       PsiElement child1 = children1[i];
       PsiElement child2 = children2[i];
-      if (!areElementsEquivalent(child1, child2, resolvedElementsComparator, leafElementsComparator, areCommentsSignificant)) return false;
+      if (!areElementsEquivalent(child1, child2, resolvedElementsComparator,
+                                 leafElementsComparator, isElementSignificantCondition, areCommentsSignificant)) return false;
     }
 
     if (children1.length == 0) {
@@ -90,12 +93,15 @@ public class PsiEquivalenceUtil {
     return areElementsEquivalent(element1, element2, null, false);
   }
 
-  private static PsiElement[] getFilteredChildren(PsiElement element1, boolean areCommentsSignificant) {
+  private static PsiElement[] getFilteredChildren(PsiElement element1,
+                                                  @Nullable Condition<PsiElement> isElementSignificantCondition,
+                                                  boolean areCommentsSignificant) {
     ASTNode[] children1 = element1.getNode().getChildren(null);
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     for (ASTNode node : children1) {
       final PsiElement child = node.getPsi();
-      if (!(child instanceof PsiWhiteSpace) && (areCommentsSignificant || !(child instanceof PsiComment))) {
+      if (!(child instanceof PsiWhiteSpace) && (areCommentsSignificant || !(child instanceof PsiComment)) &&
+          (isElementSignificantCondition == null || isElementSignificantCondition.value(child))) {
         array.add(child);
       }
     }
@@ -123,7 +129,7 @@ public class PsiEquivalenceUtil {
                                          final PsiElement first,
                                          final PsiElement last,
                                          final PairConsumer<PsiElement, PsiElement> result) {
-    final PsiElement[] children = getFilteredChildren(scope, true);
+    final PsiElement[] children = getFilteredChildren(scope, null, true);
     NextChild:
     for (int i = 0; i < children.length;) {
       PsiElement child = children[i];

@@ -17,7 +17,10 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -60,12 +63,7 @@ public class XPath2TypeElementImpl extends XPath2ElementImpl implements XPath2Ty
         return new PrefixedNameImpl(null, node);
       }
     } else if (nodes.length == 1) {
-      final ASTNode node = getNode().findChildByType(XPathTokenTypes.STAR);
-      if (node != null) {
-        return new PrefixedNameImpl(nodes[0], node);
-      } else {
-        return new PrefixedNameImpl(nodes[0]);
-      }
+      return new PrefixedNameImpl(nodes[0]);
     } else if (nodes.length == 2) {
       return new PrefixedNameImpl(nodes[0], nodes[1]);
     }
@@ -76,7 +74,11 @@ public class XPath2TypeElementImpl extends XPath2ElementImpl implements XPath2Ty
   public PsiReference[] getReferences() {
     final PrefixedName prefixedName = getQName();
     if (prefixedName != null && prefixedName.getPrefix() != null) {
-      return new PsiReference[]{ new PrefixReferenceImpl(this, ((PrefixedNameImpl)prefixedName).getPrefixNode() )};
+      final PsiReference[] references =
+        ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
+
+      final PrefixReferenceImpl reference = new PrefixReferenceImpl(this, ((PrefixedNameImpl)prefixedName).getPrefixNode());
+      return references.length > 0 ? ArrayUtil.append(references, reference) : new PsiReference[]{ reference };
     }
     return super.getReferences();
   }

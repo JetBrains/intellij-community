@@ -30,7 +30,6 @@ import java.net.URI;
 /**
  * @author cdr
  */
-@SuppressWarnings({"Since15"})
 abstract class CompilationEvent {
   protected abstract void process(OutputParser.Callback callback);
   static CompilationEvent progress(final String title, final JavaFileObject fileObject) {
@@ -111,16 +110,18 @@ abstract class CompilationEvent {
   }
 
   public static CompilationEvent fileProcessed() {
-    return new CompilationEvent() {
-      @Override
-      protected void process(OutputParser.Callback callback) {
-        callback.fileProcessed(null);
-      }
-      @NonNls
-      @Override
-      public String toString() {
-        return "Processed";
-      }
-    };
+    return FILE_PROCESSED;
   }
+  private static final CompilationEvent FILE_PROCESSED = new CompilationEvent() {
+    @Override
+    protected void process(OutputParser.Callback callback) {
+      callback.fileProcessed(null);
+    }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "Processed";
+    }
+  };
 }

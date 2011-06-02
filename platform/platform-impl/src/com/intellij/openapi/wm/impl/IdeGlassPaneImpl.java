@@ -61,8 +61,20 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     myFocusProxy.setPreferredSize(new Dimension(0, 0));
     myFocusProxy.setFocusable(true);
     UIUtil.setFocusProxy(myFocusProxy, true);
-    add(myFocusProxy);
-    myFocusProxy.setBounds(0, 0, 0, 0);
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+
+    if (myFocusProxy.getParent() != null) {
+      myFocusProxy.getParent().remove(myFocusProxy);
+    }
+
+    if (myFocusProxy.getParent() != getParent()) {
+      getParent().add(myFocusProxy);
+      myFocusProxy.setBounds(0, 0, 0, 0);
+    }
   }
 
   public boolean dispatch(final AWTEvent e) {

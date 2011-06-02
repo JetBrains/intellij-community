@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.popup.list;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -377,6 +378,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     @Override
     public void mousePressed(MouseEvent e) {
       if (!isActionClick(e)) return;
+      IdeEventQueue.getInstance().blockNextEvents(e); // sometimes, after popup close, MOUSE_RELEASE event delivers to other components
       final Object selectedValue = myList.getSelectedValue();
       final ListPopupStep<Object> listStep = getListStep();
       handleSelect(handleFinalChoices(e, selectedValue, listStep), e);

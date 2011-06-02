@@ -30,12 +30,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-public class EnterBetweenBracesHandler implements EnterHandlerDelegate {
+public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler");
 
-  public Result preprocessEnter(final PsiFile file, final Editor editor, final Ref<Integer> caretOffsetRef, final Ref<Integer> caretAdvance,
-                                final DataContext dataContext, final EditorActionHandler originalHandler) {
+  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
+                                @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
     int caretOffset = caretOffsetRef.get().intValue();

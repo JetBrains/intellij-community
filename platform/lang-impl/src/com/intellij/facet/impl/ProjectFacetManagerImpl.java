@@ -64,6 +64,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
     myState = state;
   }
 
+  @NotNull
   @Override
   public <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId) {
     return getFacets(typeId, ModuleManager.getInstance(myProject).getModules());

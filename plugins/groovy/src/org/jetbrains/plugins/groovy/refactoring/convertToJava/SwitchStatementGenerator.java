@@ -92,8 +92,9 @@ public class SwitchStatementGenerator {
             new ExpressionGenerator(builder, context),
             section
           );
-          builder.append(") {\n");
+          builder.append(") ");
         }
+        builder.append("{\n");
         final ExpressionContext extended = context.extend();
         CodeBlockGenerator generator = new CodeBlockGenerator(builder, extended);
 
@@ -110,8 +111,9 @@ public class SwitchStatementGenerator {
           }
         }
 
+        builder.append("}");
         if (isCase && i + 1 < caseSections.length) {
-          builder.append("}\nelse ");
+          builder.append("\nelse ");
           StringBuilder elseBuilder = new StringBuilder();
           final ExpressionContext elseContext = context.extend();
 
@@ -119,7 +121,9 @@ public class SwitchStatementGenerator {
           GenerationUtil.insertStatementFromContextBefore(builder, elseContext);
           builder.append(elseBuilder);
         }
-        if (context.myStatements.size() > 0) context.setInsertCurlyBrackets();
+        if (context.myStatements.size() > 0) {
+          context.setInsertCurlyBrackets();
+        }
       }
     });
   }

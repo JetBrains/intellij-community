@@ -30,7 +30,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
 
@@ -133,6 +135,8 @@ public class ClassGenerator {
         text.append("\n");
       }
     }
+
+    classItemGenerator.writePostponed(text, typeDefinition);
   }
 
   private void writeImplementsList(StringBuilder text, PsiClass typeDefinition, boolean isInterface) {
@@ -177,7 +181,7 @@ public class ClassGenerator {
         writeAllSignaturesOfConstructor(text, (GrConstructor)method, classItemGenerator, aClass.isEnum());
       }
       else {
-        writeAllSignaturesOfMethod(text, method, classItemGenerator);
+        writeAllSignaturesOfMethod(text, method, classItemGenerator, true);
       }
     }
   }
@@ -197,7 +201,10 @@ public class ClassGenerator {
   }
 
 
-  public static void writeAllSignaturesOfMethod(StringBuilder builder, PsiMethod method, ClassItemGenerator generator) {
+  public static void writeAllSignaturesOfMethod(StringBuilder builder,
+                                                PsiMethod method,
+                                                ClassItemGenerator generator,
+                                                boolean genMainMethod) {
     if (!(method instanceof GrMethod)) {
       generator.writeMethod(builder, method, 0);
       builder.append('\n');
@@ -206,7 +213,8 @@ public class ClassGenerator {
 
     int count = getOptionalParameterCount((GrMethod)method);
 
-    for (int i = 0; i <= count; i++) {
+    final int start = genMainMethod ? 0 : 1;
+    for (int i = start; i <= count; i++) {
       generator.writeMethod(builder, method, i);
       builder.append('\n');
     }

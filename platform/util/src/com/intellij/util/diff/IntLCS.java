@@ -44,7 +44,7 @@ class IntLCS {
     myCurrentEnds = new int[myMaxX + myMaxY + 1];
   }
 
-  public int execute() {
+  public int execute() throws FilesTooBigForDiffException {
     for (int d =0; d <= myMaxX + myMaxY; d++) {
       int minDiag = -calcBound(myMaxY, d);
       int maxDiag = calcBound(myMaxX, d);
@@ -103,7 +103,7 @@ class IntLCS {
     return skipEquals(x, y);
   }
 
-  private int encodeStep(int prevEnd, int diagLength, int tDiagonal, boolean afterVertical) {
+  private int encodeStep(int prevEnd, int diagLength, int tDiagonal, boolean afterVertical) throws FilesTooBigForDiffException {
     int end = prevEnd + diagLength;
     int prevDiagonal = tDiagonal + myMaxY;
     if (!afterVertical) end++;

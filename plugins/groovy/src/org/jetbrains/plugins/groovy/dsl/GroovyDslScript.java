@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author peter
  */
 public class GroovyDslScript {
+  public static final Key<GroovyClassDescriptor> INITIAL_CONTEXT = Key.create("gdsl.initialContext");
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslScript");
   private final Project project;
   @Nullable private final VirtualFile file;
@@ -76,14 +78,13 @@ public class GroovyDslScript {
   private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, String qname, final PsiType psiType) {
     final ProcessingContext ctx = new ProcessingContext();
     ctx.put(ClassContextFilter.getClassKey(qname), psiType);
+    ctx.put(INITIAL_CONTEXT, descriptor);
     try {
       if (!isApplicable(executor, descriptor, ctx)) {
         return CustomMembersHolder.EMPTY;
       }
 
-      final ExtensibleCustomMembersGenerator generator = new ExtensibleCustomMembersGenerator(descriptor, psiType);
-      executor.processVariants(descriptor, generator, ctx);
-      return generator.getMembersHolder();
+      return executor.processVariants(descriptor, ctx, psiType);
     }
     catch (InvokerInvocationException e) {
       Throwable cause = e.getCause();

@@ -1,12 +1,17 @@
 <html>
 <body>
 <font face="verdana" size="-1">
-  This inspection warns you of characters that current encoding is incapable to represent.<br>
-  E.g. when you are trying to type international characters in an <b>US-ASCII</b>-encoded file.<br>
-  Typically, you would fix this by changing the file encoding,
+  This inspection warns you of characters that the current document encoding is incapable to represent.<br>
+
+  For example, when you are<br>
+  <ul>
+    <li>typing international characters in a document configured to <b>US-ASCII</b> charset. Some characters will be lost on save.</li>
+    <li>or loading <b>UTF-8</b>-encoded file using <b>ISO-8859-1</b> one-byte charset. Some characters will be displayed incorrectly.</li>
+  </ul>
+
+  You fix this by changing the file encoding,
   either by specifying the encoding directly in the file, e.g. by editing <b>encoding=</b> attribute in the XML prolog of XML file,
-  or configuring the <b>Settings|General|File Encoding|Default encoding</b> setting,
-  or by setting up the file/directory encoding in the <b>Settings|File/Directory Options|File Encodings</b>.
+  or configuring the <b>Settings|Project Settings|File Encodings</b>.
 </font>
 
 </body>

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -94,7 +95,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     PsiReference reference = context.getFile().findReferenceAt(context.getStartOffset());
     if (reference instanceof PsiReferenceExpression && !((PsiReferenceExpression) reference).isQualified()) {
       final PsiVariable target = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().resolveReferencedVariable(field.getName(), (PsiElement)reference);
-      return !field.getManager().areElementsEquivalent(target, JavaCompletionUtil.getOriginalElement(field));
+      return !field.getManager().areElementsEquivalent(target, CompletionUtil.getOriginalOrSelf(field));
     }
     return false;
   }

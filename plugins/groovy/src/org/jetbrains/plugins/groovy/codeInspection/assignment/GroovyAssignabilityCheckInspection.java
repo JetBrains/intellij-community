@@ -39,9 +39,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -162,6 +164,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           ((GrReferenceExpression)lValue).resolve() instanceof GrReferenceExpression) { //lvalue is not-declared variable
         return;
       }
+      if (lValue instanceof GrIndexProperty) return;
       if (lType != null && rType != null) {
         checkAssignability(lType, rValue, rValue);
       }
@@ -328,7 +331,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                                                   PsiElement place,
                                                   PsiMethod method,
                                                   PsiType[] argumentTypes) {
-      final PsiClass containingClass = method.getContainingClass();
+      final PsiClass containingClass =
+        method instanceof GrGdkMethod ? ((GrGdkMethod)method).getStaticMethod().getContainingClass() : method.getContainingClass();
+
       if (containingClass == null) {
         registerCannotApplyError(place, argumentTypes, method.getName());
         return;

@@ -323,7 +323,6 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   private boolean isValidCoordinateSelected() {
     final String text = getCoordinateText();
-    if (myCombobox.getModel().getSelectedItem() == null) return false;
     return text.split(":").length == 3;
   }
 

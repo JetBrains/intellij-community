@@ -43,12 +43,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
-public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
+public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler");
 
-  public Result preprocessEnter(final PsiFile file, final Editor editor, final Ref<Integer> caretOffsetRef, final Ref<Integer> caretAdvance,
-                                final DataContext dataContext, final EditorActionHandler originalHandler) {
+  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
+                                @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
     Project project = file.getProject();

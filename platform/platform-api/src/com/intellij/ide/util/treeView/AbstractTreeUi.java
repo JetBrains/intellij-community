@@ -1136,6 +1136,9 @@ public class AbstractTreeUi {
             }
             else {
               notRequiredToUpdateChildren = alwaysPlus;
+              if (notRequiredToUpdateChildren && !wasExpanded && !myUnbuiltNodes.contains(node)) {
+                removeChildren(node);
+              }
             }
           }
 
@@ -3921,7 +3924,9 @@ public class AbstractTreeUi {
       return;
     }
 
-    final int row = myTree.getRowForPath(new TreePath(toSelect.getPath()));
+    int preselectedRow = getRowIfUnderSelection(element);
+
+    final int row = preselectedRow == -1 ? myTree.getRowForPath(new TreePath(toSelect.getPath())) : preselectedRow;
 
     if (myUpdaterState != null) {
       myUpdaterState.addSelection(element);
@@ -3947,6 +3952,51 @@ public class AbstractTreeUi {
         }
       });
     }
+  }
+
+  private int getRowIfUnderSelection(Object element) {
+    int preselectedRow = -1;
+
+    final Set<Object> selection = getSelectedElements();
+
+    if (selection.contains(element)) {
+      final TreePath[] paths = getTree().getSelectionPaths();
+      for (TreePath each : paths) {
+        if (element.equals(getElementFor(each.getLastPathComponent()))) {
+          preselectedRow = getTree().getRowForPath(each);
+          break;
+        }
+      }
+    } else if (myElementToNodeMap.get(element) instanceof ArrayList) {
+      final TreePath[] paths = getTree().getSelectionPaths();
+      if (paths != null && paths.length > 0) {
+        Set<DefaultMutableTreeNode> selectedNodes = new HashSet<DefaultMutableTreeNode>();
+        for (TreePath eachPAth : paths) {
+          if (eachPAth.getLastPathComponent() instanceof DefaultMutableTreeNode) {
+            selectedNodes.add((DefaultMutableTreeNode)eachPAth.getLastPathComponent());
+          }
+        }
+
+
+        final ArrayList nodes = (ArrayList)myElementToNodeMap.get(element);
+        for (Object each : nodes) {
+          DefaultMutableTreeNode eachNode = (DefaultMutableTreeNode)each;
+          while (eachNode != null) {
+            if (selectedNodes.contains(eachNode)) {
+              preselectedRow = getTree().getRowForPath(getPathFor(eachNode));
+              break;
+            }
+            eachNode = (DefaultMutableTreeNode)eachNode.getParent();
+          }
+
+          if (preselectedRow >= 0) break;
+        }
+      }
+
+    }
+
+
+    return preselectedRow;
   }
 
   public void expandAll(@Nullable final Runnable onDone) {
@@ -4145,14 +4195,15 @@ public class AbstractTreeUi {
       while (true) {
         if (!isValid(eachElement)) break;
 
-        firstVisible = getNodeForElement(eachElement, true);
+        final int preselected = getRowIfUnderSelection(eachElement);
+        if (preselected >= 0) {
+          firstVisible = (DefaultMutableTreeNode)getTree().getPathForRow(preselected).getLastPathComponent();
+        } else {
+          firstVisible = getNodeForElement(eachElement, true);
+        }
+
+
         if (eachElement != element || !parentsOnly) {
-          assert !kidsToExpand.contains(eachElement) :
-            "Not a valid tree structure, walking up the structure gives many entries for element=" +
-            eachElement +
-            ", root=" +
-            getTreeStructure().getRootElement() +
-            ", structure=" + getTreeStructure();
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;
@@ -4160,6 +4211,16 @@ public class AbstractTreeUi {
         if (eachElement == null) {
           firstVisible = null;
           break;
+        }
+
+        if (kidsToExpand.contains(eachElement)) {
+          try {
+            LOG.error("Tree path contains equal elements at different levels: element=" + eachElement + " path=" + kidsToExpand);
+          }
+          catch (AssertionError e) {
+          }
+          runDone(onDone);
+          throw new ProcessCanceledException();
         }
       }
 
@@ -4622,14 +4683,15 @@ public class AbstractTreeUi {
       }
     }
 
-    private void removeChildren(DefaultMutableTreeNode node) {
-      EnumerationCopy copy = new EnumerationCopy(node.children());
-      while (copy.hasMoreElements()) {
-        disposeNode((DefaultMutableTreeNode)copy.nextElement());
-      }
-      node.removeAllChildren();
-      myTreeModel.nodeStructureChanged(node);
+  }
+
+  private void removeChildren(DefaultMutableTreeNode node) {
+    EnumerationCopy copy = new EnumerationCopy(node.children());
+    while (copy.hasMoreElements()) {
+      disposeNode((DefaultMutableTreeNode)copy.nextElement());
     }
+    node.removeAllChildren();
+    myTreeModel.nodeStructureChanged(node);
   }
 
   private void maybeUpdateSubtreeToUpdate(final DefaultMutableTreeNode subtreeRoot) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
@@ -92,4 +93,14 @@ public class Timings {
    * Measured on dual core p4 3HZ 1gig ram
    */
   public static final long ETALON_TIMING = 438;
+
+  /**
+   * @param value
+   * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
+   */
+  public static int adjustAccordingToMySpeed(int value) {
+    //System.out.println("ETALON_TIMING = " + ETALON_TIMING);
+    //System.out.println("MACHINE_TIMING = " + MACHINE_TIMING);
+    return Math.max(1, (int)(1.0 * value * ETALON_TIMING / MACHINE_TIMING) / 8 * JobSchedulerImpl.CORES_COUNT);
+  }
 }

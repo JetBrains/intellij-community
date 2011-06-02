@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -23,7 +24,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -32,6 +32,8 @@ import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+
+import javax.swing.*;
 
 /**
  * User: lex
@@ -60,13 +62,18 @@ public class LabelRenderer extends com.intellij.debugger.ui.tree.render.Referenc
     return (LabelRenderer)super.clone();
   }
 
+  public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+    return null;
+  }
+
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
     throws EvaluateException {
-    String result;
-    LOG.assertTrue(!(descriptor instanceof PrimitiveValue));
 
-    final DebugProcess debugProcess = evaluationContext.getDebugProcess();
     final Value value = descriptor.getValue();
+    LOG.assertTrue(!(value instanceof PrimitiveValue));
+
+    String result;
+    final DebugProcess debugProcess = evaluationContext.getDebugProcess();
     if (value != null) {
       try {
         final ExpressionEvaluator evaluator = myLabelExpression.getEvaluator(debugProcess.getProject());
@@ -76,7 +83,7 @@ public class LabelRenderer extends com.intellij.debugger.ui.tree.render.Referenc
         }
         EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(value);
         Value labelValue = evaluator.evaluate(thisEvaluationContext);
-        result = DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue);
+        result = DebuggerUtils.convertToPresentationString(DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue));
       }
       catch (final EvaluateException ex) {
         throw new EvaluateException(DebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex);

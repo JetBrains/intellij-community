@@ -1,0 +1,1 @@
+current-time() - xs:dayTimeDuration($j)

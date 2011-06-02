@@ -5,9 +5,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
+import com.intellij.ui.LoadingNode;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.AssertionFailedError;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 
@@ -529,6 +531,98 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   }
 
+
+  public void testExpandEqualElements() throws Exception {
+    buildStructure(myRoot, false);
+    myRoot.getChildNode("org").addChild("jetbrains").addChild("commuinity").addChild("ide");
+
+    activate();
+    expand(getPath("/"));
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.expandPath(getPath("org"));
+        myTree.setSelectionPath(myTree.getPathForRow(5));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  +[jetbrains]\n"
+               + " +xunit\n");
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.expandPath(myTree.getPathForRow(5));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  -[jetbrains]\n"
+               + "   +commuinity\n"
+               + " +xunit\n");
+
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.expandPath(myTree.getPathForRow(6));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  -[jetbrains]\n"
+               + "   -commuinity\n"
+               + "    ide\n"
+               + " +xunit\n");
+
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.collapsePath(myTree.getPathForRow(5));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  +[jetbrains]\n"
+               + " +xunit\n");
+
+
+    doAndWaitForBuilder(new Runnable() {
+      @Override
+      public void run() {
+        myTree.expandPath(myTree.getPathForRow(5));
+      }
+    });
+
+    assertTree("-/\n"
+               + " +com\n"
+               + " +jetbrains\n"
+               + " -org\n"
+               + "  +eclipse\n"
+               + "  -[jetbrains]\n"
+               + "   +commuinity\n"
+               + " +xunit\n");
+
+  }
 
   public void testAutoExpandInNonVisibleNode() throws Exception {
     myAutoExpand.add(new NodeElement("fabrique"));
@@ -2258,6 +2352,56 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTree("-/\n" + " +com\n" + " -[jetbrains]\n" + "  -fabrique\n" + "   ide\n" + " +org\n" + " +xunit\n");
   }
 
+
+  public void testUpdateCollapsedBuiltNode() throws Exception {
+    buildStructure(myRoot, false);
+
+    myCom.removeAll();
+    myAlwaysShowPlus.add(new NodeElement("com"));
+
+    activate();
+
+    buildNode("/", false);
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    final DefaultMutableTreeNode com = findNode("com", false);
+    assertEquals(1, com.getChildCount());
+    assertEquals(LoadingNode.getText(), com.getChildAt(0).toString());
+
+    expand(getPath("com"));
+    assertTree("-/\n" +
+               " com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+
+    myCom.addChild(myIntellij);
+    updateFrom(new NodeElement("com"));
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+    assertEquals(1, com.getChildCount());
+    assertEquals("intellij", com.getChildAt(0).toString());
+
+
+    myCom.removeAll();
+    updateFrom(new NodeElement("com"));
+
+    expand(getPath("com"));
+    assertTree("-/\n" +
+               " com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+  }
+
   public void testReleaseBuilderDuringGetChildren() throws Exception {
     assertReleaseDuringBuilding("getChildren", "fabrique", new Runnable() {
       @Override
@@ -2270,6 +2414,30 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
         }
       }
     });
+  }
+
+
+  public void testAssertionOnInfiniteTree() throws Exception {
+    final Node com = myRoot.addChild("com");
+    final Node intellij = com.addChild("intellij");
+    final Node com2 = intellij.addChild("com");
+    final Node idea = com2.addChild("idea");
+
+    idea.myElement.setForcedParent(com2.myElement);
+    com2.myElement.setForcedParent(intellij.myElement);
+    intellij.myElement.setForcedParent(com.myElement);
+    com.myElement.setForcedParent(myRoot.myElement);
+
+    activate();
+
+    try {
+      System.err.println("The following error is part of the test, no need to fix it");
+      buildNode("idea", true);
+    }
+    catch (AssertionFailedError e) {
+    }
+
+    assertTrue(getBuilder().getUi().isReady());
   }
 
   private void assertReleaseDuringBuilding(final String actionAction, final Object actionElement, Runnable buildAction) throws Exception {
@@ -2313,11 +2481,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class SyncUpdate extends TreeUiTest {
     public SyncUpdate() {
       super(false, false);
-    }
-
-    @Override
-    public void testQueueUpdate() throws Exception {
-      super.testQueueUpdate();
     }
   }
 
@@ -2370,8 +2533,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testBatchUpdate() throws Exception {
-      super.testBatchUpdate();
+    public void testExpandEqualElements() throws Exception {
+      super.testExpandEqualElements();
     }
   }
 

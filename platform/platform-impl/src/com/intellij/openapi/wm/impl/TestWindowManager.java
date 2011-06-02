@@ -109,6 +109,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
       return null;
     }
 
+    @Override
+    public void setLogMessage(String text) {
+    }
+
     public boolean isVisible() {
       return false;
     }

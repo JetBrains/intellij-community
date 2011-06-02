@@ -191,7 +191,10 @@ public class XFramesView extends XDebugViewBase {
     private StackFramesListBuilder(final XExecutionStack executionStack) {
       myExecutionStack = executionStack;
       myStackFrames = new ArrayList<XStackFrame>();
-      myStackFrames.add(executionStack.getTopFrame());
+      XStackFrame topFrame = executionStack.getTopFrame();
+      if (topFrame != null) {
+        myStackFrames.add(topFrame);
+      }
       myNextFrameIndex = 1;
     }
 

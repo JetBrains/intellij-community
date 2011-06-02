@@ -67,17 +67,7 @@ public class JBLabel extends JLabel {
       putClientProperty("JComponent.sizeVariant", style == Style.REGULAR ? "regular" : "small");
     }
     else {
-      Font defFont = UIUtil.getLabelFont();
-      Font font = getFont();
-      if (style == JBLabel.Style.REGULAR) {
-        if (font != null) {
-          setFont(font.deriveFont(defFont.getSize()));
-        }
-      }
-      else {
-        if (font == null) font = defFont;
-        setFont(font.deriveFont(defFont.getSize() * 0.8f));
-      }
+      setFont(UIUtil.getFont(style == Style.SMALL ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, getFont()));
     }
     Container p = getParent();
     if (p != null) {

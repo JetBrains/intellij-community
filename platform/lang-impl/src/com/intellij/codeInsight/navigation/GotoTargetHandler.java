@@ -29,11 +29,12 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Computable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -129,7 +130,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     Collections.addAll(allElements, targets);
     allElements.addAll(additionalActions);
 
-    final JList list = new JBList(allElements);
+    final JBListWithHintProvider list = new JBListWithHintProvider(allElements) {
+      @Override
+      protected PsiElement getPsiElementForHint(final Object selectedValue) {
+        return selectedValue instanceof PsiElement ? (PsiElement) selectedValue : null;
+      }
+    };
+    
     list.setCellRenderer(new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -175,6 +182,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setTitle(title).
       setItemChoosenCallback(runnable).
       setMovable(true).
+      setCancelCallback(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          list.hideHint();
+          return true;
+        }
+      }).
       createPopup().showInBestPositionFor(editor);
   }
 

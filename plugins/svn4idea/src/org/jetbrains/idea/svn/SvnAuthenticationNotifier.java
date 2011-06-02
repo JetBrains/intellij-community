@@ -19,14 +19,18 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +44,11 @@ import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
+import java.util.Timer;
 
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationNotifier");
@@ -49,12 +57,14 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final Map<SVNURL, Boolean> myCopiesPassiveResults;
   private Timer myTimer;
+  private volatile boolean myVerificationInProgress;
 
   public SvnAuthenticationNotifier(final SvnVcs svnVcs) {
     super(svnVcs.getProject(), svnVcs.getDisplayName(), "Not Logged In to Subversion", NotificationType.ERROR);
     myVcs = svnVcs;
     myRootsToWorkingCopies = myVcs.getRootsToWorkingCopies();
     myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<SVNURL, Boolean>());
+    myVerificationInProgress = false;
   }
 
   public void init() {
@@ -78,18 +88,42 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   @Override
   protected boolean ask(final AuthenticationRequest obj, String description) {
+    if (myVerificationInProgress) {
+      return showAlreadyChecking();
+    }
+    myVerificationInProgress = true;
+
     final Ref<Boolean> resultRef = new Ref<Boolean>();
-    final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
-        final boolean result = interactiveValidation(obj.myProject, obj.getUrl(), obj.getRealm(), obj.getKind());
-        log("ask result for: " + obj.getUrl() + " is: " + result);
-        resultRef.set(result);
-        if (result) {
-          onStateChangedToSuccess(obj);
+        try {
+          final boolean result =
+            interactiveValidation(obj.myProject, obj.getUrl(), obj.getRealm(), obj.getKind());
+          log("ask result for: " + obj.getUrl() + " is: " + result);
+          resultRef.set(result);
+          if (result) {
+            onStateChangedToSuccess(obj);
+          }
+        } finally {
+          myVerificationInProgress = false;
         }
       }
-    }, "Checking authorization state", true, myVcs.getProject());
-    return done && Boolean.TRUE.equals(resultRef.get());
+    });
+    return false;
+  }
+
+  private boolean showAlreadyChecking() {
+    final IdeFrame frameFor = WindowManagerEx.getInstanceEx().findFrameFor(myProject);
+    if (frameFor != null) {
+      final JComponent component = frameFor.getComponent();
+      final Point point = component.getMousePosition();
+      SwingUtilities.convertPointToScreen(point, component);
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Already checking...", MessageType.WARNING, null).
+        createBalloon().show(new RelativePoint(point), Balloon.Position.below);
+    }
+    return false;
   }
 
   private void onStateChangedToSuccess(final AuthenticationRequest obj) {

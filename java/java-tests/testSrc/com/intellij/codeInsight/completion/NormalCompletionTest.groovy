@@ -919,6 +919,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest '\n'
   }
 
+  public void testPrimitiveArrayWithRBrace() throws Throwable { doTest '[' }
+
   public void testSuggestMembersOfStaticallyImportedClasses() throws Exception {
     myFixture.addClass("""package foo;
     public class Foo {
@@ -955,6 +957,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testNoDotOverwrite() throws Exception { doTest('.') }
 
   public void testStaticInnerExtendingOuter() throws Exception { doTest() }
+
+  public void testSaxParserCommonPrefix() throws Exception {
+    myFixture.addClass("package foo.bar; public class SAXParser {}")
+    myFixture.addClass("package foo.bar.goo; public class SAXParseException {}")
+    doTest()
+  }
 
   public void testNewClassAngleBracket() throws Exception { doTest('<') }
   public void testNewClassSquareBracket() throws Exception { doTest('[') }

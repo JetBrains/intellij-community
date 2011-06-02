@@ -22,11 +22,11 @@ package com.intellij.execution.junit2.inspection;
 
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 
-public class JUnitCantBeStaticExtension implements Condition<PsiMember> {
-  public boolean value(PsiMember member) {
+public class JUnitCantBeStaticExtension implements Condition<PsiElement> {
+  public boolean value(PsiElement member) {
     if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
       if (JUnitUtil.isTestMethodOrConfig(method)){

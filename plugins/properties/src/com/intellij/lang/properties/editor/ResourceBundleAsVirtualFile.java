@@ -110,7 +110,7 @@ public class ResourceBundleAsVirtualFile extends DeprecatedVirtualFile {
     //todo
   }
 
-  public void move(Object requestor, VirtualFile newParent) throws IOException {
+  public void move(Object requestor, @NotNull VirtualFile newParent) throws IOException {
     //todo
   }
 

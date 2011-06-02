@@ -23,6 +23,7 @@ public interface ModificationTracker {
 
   ModificationTracker EVER_CHANGED = new ModificationTracker() {
     private long myCounter = 0;
+
     public long getModificationCount() {
       return myCounter++;
     }

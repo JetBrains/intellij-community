@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.Html;
+import com.intellij.util.ui.Html;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -299,11 +299,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   public void addBelow(String text) {
     @NonNls String newBody;
     if (myText == null) {
-      newBody = IdeTooltipManager.getHtmlBody(text);
+      newBody = UIUtil.getHtmlBody(text);
     }
     else {
-      String html1 = IdeTooltipManager.getHtmlBody(myText);
-      String html2 = IdeTooltipManager.getHtmlBody(text);
+      String html1 = UIUtil.getHtmlBody(myText);
+      String html2 = UIUtil.getHtmlBody(text);
       newBody = html1 + BORDER_LINE + html2;
     }
     myText = "<html><body>" + newBody + "</body></html>";

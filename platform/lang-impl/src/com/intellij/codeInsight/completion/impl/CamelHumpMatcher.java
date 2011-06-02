@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -16,13 +17,13 @@ import java.util.Map;
 */
 public class CamelHumpMatcher extends PrefixMatcher {
   private static int ourLastCompletionCaseSetting = -1;
-  private static final Map<String, NameUtil.Matcher> ourPatternCache = new LinkedHashMap<String, NameUtil.Matcher>() {
+  private static final Map<String, Matcher> ourPatternCache = new LinkedHashMap<String, Matcher>() {
     @Override
-    protected boolean removeEldestEntry(Map.Entry<String, NameUtil.Matcher> eldest) {
+    protected boolean removeEldestEntry(Map.Entry<String, Matcher> eldest) {
       return size() > 10;
     }
   };
-  private NameUtil.Matcher myMatcher;
+  private Matcher myMatcher;
   private final boolean myCaseSensitive;
   private final int currentSetting;
   private final boolean myRelaxedMatching;
@@ -59,9 +60,9 @@ public class CamelHumpMatcher extends PrefixMatcher {
     }
   }
 
-  private NameUtil.Matcher obtainMatcher(final boolean relax, final boolean caseSensitive) {
+  private Matcher obtainMatcher(final boolean relax, final boolean caseSensitive) {
     String key = relax + myPrefix + caseSensitive;
-    NameUtil.Matcher pattern = ourPatternCache.get(key);
+    Matcher pattern = ourPatternCache.get(key);
     if (pattern == null) {
       pattern = createCamelHumpsMatcher(relax, caseSensitive);
       ourPatternCache.put(key, pattern);
@@ -97,7 +98,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return new CamelHumpMatcher(prefix, myCaseSensitive, myRelaxedMatching);
   }
 
-  private NameUtil.Matcher createCamelHumpsMatcher(final boolean relaxedMatching, final boolean caseSensitive) {
+  private Matcher createCamelHumpsMatcher(final boolean relaxedMatching, final boolean caseSensitive) {
     if (!caseSensitive) {
       return NameUtil.buildCompletionMatcher(myPrefix, 0, true, true);
     }

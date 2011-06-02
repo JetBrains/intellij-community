@@ -104,7 +104,7 @@ class C {
   void m15() {
     try { f(); }
     catch (RuntimeException e) { }
-    <warning descr="Unreachable section: exception 'java.lang.RuntimeException' has already been caught">catch (Exception e) { }</warning>
+    catch (Exception e) { }
   }
 
   void m16() {
@@ -116,34 +116,34 @@ class C {
   void m17() {
     try { h(); }
     catch (RuntimeException e) { }
-    <warning descr="Unreachable section: exception 'java.lang.RuntimeException' has already been caught">catch (Exception e) { }</warning>
+    catch (Exception e) { }
   }
 
   void m18() {
     try { f(); }
     catch (RuntimeException e) { }
     catch (<error descr="Exception 'C.E' is never thrown in the corresponding try block">E e</error>) { }
-    <warning descr="Unreachable section: exception 'java.lang.RuntimeException' has already been caught">catch (Exception e) { }</warning>
+    catch (Exception e) { }
   }
 
   void m19() {
     try { g(); }
     catch (RuntimeException e) { }
     catch (E e) { }
-    <warning descr="Unreachable section: exceptions 'C.E, java.lang.RuntimeException' have already been caught">catch (Exception e) { }</warning>
+    catch (Exception e) { }
   }
 
   void m20() {
     try { h(); }
     catch (RuntimeException e) { }
     catch (<error descr="Exception 'C.E' is never thrown in the corresponding try block">E e</error>) { }
-    <warning descr="Unreachable section: exception 'java.lang.RuntimeException' has already been caught">catch (Exception e) { }</warning>
+    catch (Exception e) { }
   }
 
   void m21() {
     try { f(); }
     catch (RuntimeException e) { }
-    <warning descr="Unreachable section: exception 'java.lang.RuntimeException' has already been caught">catch (Exception e) { }</warning>
+    catch (Exception e) { }
   }
 
   void m22() {
@@ -155,14 +155,14 @@ class C {
   void m23() {
     try { h(); }
     catch (RuntimeException e) { }
-    <warning descr="Unreachable section: exception 'java.lang.RuntimeException' has already been caught">catch (Exception e) { }</warning>
+    catch (Exception e) { }
   }
 
   void m24() {
     try { f(); }
     catch (RuntimeException e) { }
     catch (Error e) { }
-    <warning descr="Unreachable section: exceptions 'java.lang.RuntimeException, java.lang.Error' have already been caught">catch (Throwable t) { }</warning>
+    catch (Throwable t) { }
   }
 
   void m25() {
@@ -176,7 +176,7 @@ class C {
     try { h(); }
     catch (RuntimeException e) { }
     catch (Error e) { }
-    <warning descr="Unreachable section: exceptions 'java.lang.RuntimeException, java.lang.Error' have already been caught">catch (Throwable t) { }</warning>
+    catch (Throwable t) { }
   }
 
   void m27() {
@@ -184,7 +184,7 @@ class C {
     catch (RuntimeException e) { }
     catch (Error e) { }
     catch (<error descr="Exception 'C.E' is never thrown in the corresponding try block">E e</error>) { }
-    <warning descr="Unreachable section: exceptions 'java.lang.RuntimeException, java.lang.Error' have already been caught">catch (Throwable t) { }</warning>
+    catch (Throwable t) { }
   }
 
   void m28() {
@@ -192,7 +192,7 @@ class C {
     catch (RuntimeException e) { }
     catch (Error e) { }
     catch (E e) { }
-    <warning descr="Unreachable section: exceptions 'C.E, java.lang.RuntimeException, java.lang.Error' have already been caught">catch (Throwable t) { }</warning>
+    catch (Throwable t) { }
   }
 
   void m29() {
@@ -200,14 +200,14 @@ class C {
     catch (RuntimeException e) { }
     catch (Error e) { }
     catch (<error descr="Exception 'C.E' is never thrown in the corresponding try block">E e</error>) { }
-    <warning descr="Unreachable section: exceptions 'java.lang.RuntimeException, java.lang.Error' have already been caught">catch (Throwable t) { }</warning>
+    catch (Throwable t) { }
   }
 
   void m30() {
     try { f(); }
     catch (RuntimeException e) { }
     catch (Error e) { }
-    <warning descr="Unreachable section: exceptions 'java.lang.RuntimeException, java.lang.Error' have already been caught">catch (Throwable t) { }</warning>
+    catch (Throwable t) { }
   }
 
   void m31() {
@@ -221,7 +221,7 @@ class C {
     try { h(); }
     catch (RuntimeException e) { }
     catch (Error e) { }
-    <warning descr="Unreachable section: exceptions 'java.lang.RuntimeException, java.lang.Error' have already been caught">catch (Throwable t) { }</warning>
+    catch (Throwable t) { }
   }
 
   void m33() {

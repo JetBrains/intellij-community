@@ -30,6 +30,12 @@ public class ToggleRegex extends EditorHeaderToggleAction {
   }
 
   @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setVisible(!getEditorSearchComponent().getFindModel().isMultiline());
+  }
+
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     final FindModel findModel = getEditorSearchComponent().getFindModel();
     findModel.setRegularExpressions(state);

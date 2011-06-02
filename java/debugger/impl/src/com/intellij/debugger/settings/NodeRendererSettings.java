@@ -15,24 +15,34 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
+import com.intellij.util.ui.ColorIcon;
+import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,6 +74,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private final ClassRenderer myClassRenderer = new ClassRenderer();
   private final HexRenderer myHexRenderer = new HexRenderer();
   private final ToStringRenderer myToStringRenderer = new ToStringRenderer();
+  private final CompoundReferenceRenderer myColorRenderer;
   // alternate collections
   private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
     createCompoundReferenceRenderer(
@@ -73,7 +84,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     ),
     createCompoundReferenceRenderer(
       "Map.Entry", "java.util.Map$Entry",
-      createLabelRenderer(null, "\" \" + getKey() + \" -> \" + getValue()", null),
+      new MapEntryLabelRenderer()/*createLabelRenderer(null, "\" \" + getKey() + \" -> \" + getValue()", null)*/,
       createEnumerationChildrenRenderer(new String[][]{{"key", "getKey()"}, {"value", "getValue()"}})
     ),
     createCompoundReferenceRenderer(
@@ -87,10 +98,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
   
   public NodeRendererSettings() {
+    myColorRenderer = new ColorObjectRenderer(this);
     // default configuration
     myHexRenderer.setEnabled(false);
     myToStringRenderer.setEnabled(true);
     setAlternateCollectionViewsEnabled(true);
+    myColorRenderer.setEnabled(true);
   }
   
   public static NodeRendererSettings getInstance() {
@@ -251,6 +264,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     for (NodeRenderer myAlternateCollectionRenderer : myAlternateCollectionRenderers) {
       allRenderers.add(myAlternateCollectionRenderer);
     }
+    allRenderers.add(myColorRenderer);
     allRenderers.add(myToStringRenderer);
     allRenderers.add(myArrayRenderer);
     allRenderers.add(myClassRenderer);
@@ -326,7 +340,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   private CompoundReferenceRenderer createCompoundReferenceRenderer(
-    @NonNls final String rendererName, @NonNls final String className, final LabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
+    @NonNls final String rendererName, @NonNls final String className, final ValueLabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
     ) {
     CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);
     renderer.setClassName(className);
@@ -374,4 +388,160 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return labelRenderer;
   }
 
+  private static class MapEntryLabelRenderer extends ReferenceRenderer implements ValueLabelRenderer{
+    private static final Computable<String> NULL_LABEL_COMPUTABLE = new Computable<String>() {
+      public String compute() {
+        return "null";
+      }
+    };
+
+    private final MyCachedEvaluator myKeyExpression = new MyCachedEvaluator();
+    private final MyCachedEvaluator myValueExpression = new MyCachedEvaluator();
+
+    private MapEntryLabelRenderer() {
+      super("java.util.Map$Entry");
+      myKeyExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()"));
+      myValueExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()"));
+    }
+
+    public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+      return null;
+    }
+
+    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+      final DescriptorUpdater descriptorUpdater = new DescriptorUpdater(descriptor, listener);
+
+      final Value originalValue = descriptor.getValue();
+      final Pair<Computable<String>, ValueDescriptorImpl> keyPair = createValueComputable(evaluationContext, originalValue, myKeyExpression, descriptorUpdater);
+      final Pair<Computable<String>, ValueDescriptorImpl> valuePair = createValueComputable(evaluationContext, originalValue, myValueExpression, descriptorUpdater);
+
+      descriptorUpdater.setKeyDescriptor(keyPair.second);
+      descriptorUpdater.setValueDescriptor(valuePair.second);
+
+      return DescriptorUpdater.constructLabelText(keyPair.first.compute(), valuePair.first.compute());
+    }
+
+    private Pair<Computable<String>, ValueDescriptorImpl> createValueComputable(final EvaluationContext evaluationContext,
+                                                                                Value originalValue,
+                                                                                final MyCachedEvaluator evaluator,
+                                                                                final DescriptorLabelListener listener) throws EvaluateException {
+      final Value eval = doEval(evaluationContext, originalValue, evaluator);
+      if (eval != null) {
+        final WatchItemDescriptor evalDescriptor = new WatchItemDescriptor(evaluationContext.getProject(), evaluator.getReferenceExpression(), eval);
+        evalDescriptor.setShowIdLabel(false);
+        return new Pair<Computable<String>, ValueDescriptorImpl>(new Computable<String>() {
+          public String compute() {
+            evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
+            return evalDescriptor.getValueLabel();
+          }
+        }, evalDescriptor);
+      }
+      return new Pair<Computable<String>, ValueDescriptorImpl>(NULL_LABEL_COMPUTABLE, null);
+    }
+
+    public String getUniqueId() {
+      return "MapEntry renderer";
+    }
+
+    private Value doEval(EvaluationContext evaluationContext, Value originalValue, MyCachedEvaluator cachedEvaluator)
+      throws EvaluateException {
+      final DebugProcess debugProcess = evaluationContext.getDebugProcess();
+      if (originalValue == null) {
+        return null;
+      }
+      try {
+        final ExpressionEvaluator evaluator = cachedEvaluator.getEvaluator(debugProcess.getProject());
+        if(!debugProcess.isAttached()) {
+          throw EvaluateExceptionUtil.PROCESS_EXITED;
+        }
+        final EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(originalValue);
+        return evaluator.evaluate(thisEvaluationContext);
+      }
+      catch (final EvaluateException ex) {
+        throw new EvaluateException(DebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex);
+      }
+    }
+
+    private class MyCachedEvaluator extends CachedEvaluator {
+      protected String getClassName() {
+        return MapEntryLabelRenderer.this.getClassName();
+      }
+
+      public ExpressionEvaluator getEvaluator(Project project) throws EvaluateException {
+        return super.getEvaluator(project);
+      }
+    }
+  }
+
+  private static class DescriptorUpdater implements DescriptorLabelListener {
+    private final ValueDescriptor myTargetDescriptor;
+    @Nullable
+    private ValueDescriptorImpl myKeyDescriptor;
+    @Nullable
+    private ValueDescriptorImpl myValueDescriptor;
+    private final DescriptorLabelListener myDelegate;
+
+    private DescriptorUpdater(ValueDescriptor descriptor, DescriptorLabelListener delegate) {
+      myTargetDescriptor = descriptor;
+      myDelegate = delegate;
+    }
+
+    public void setKeyDescriptor(@Nullable ValueDescriptorImpl keyDescriptor) {
+      myKeyDescriptor = keyDescriptor;
+    }
+
+    public void setValueDescriptor(@Nullable ValueDescriptorImpl valueDescriptor) {
+      myValueDescriptor = valueDescriptor;
+    }
+
+    public void labelChanged() {
+      myTargetDescriptor.setValueLabel(constructLabelText(getDescriptorLabel(myKeyDescriptor), getDescriptorLabel(myValueDescriptor)));
+      myDelegate.labelChanged();
+    }
+
+    static String constructLabelText(final String keylabel, final String valueLabel) {
+      return keylabel + " -> " + valueLabel;
+    }
+
+    private static String getDescriptorLabel(final ValueDescriptorImpl keyDescriptor) {
+      return keyDescriptor == null? "null" : keyDescriptor.getValueLabel();
+    }
+  }
+
+  private static class ColorObjectRenderer extends CompoundReferenceRenderer {
+
+    public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
+      super(rendererSettings, "Color", null, null);
+      setClassName("java.awt.Color");
+    }
+
+    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+      final ToStringRenderer toStringRenderer = myRendererSettings.getToStringRenderer();
+      if (toStringRenderer.isEnabled() && DebuggerManagerEx.getInstanceEx(evaluationContext.getProject()).getContext().isEvaluationPossible()) {
+        return toStringRenderer.calcLabel(descriptor, evaluationContext, listener);
+      }
+      return super.calcLabel(descriptor, evaluationContext, listener);
+    }
+
+    public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+      final Value value = descriptor.getValue();
+      if (value instanceof ObjectReference) {
+        try {
+          final ObjectReference objRef = (ObjectReference)value;
+          final ReferenceType refType = objRef.referenceType();
+          final Field valueField = refType.fieldByName("value");
+          if (valueField != null) {
+            final Value rgbValue = objRef.getValue(valueField);
+            if (rgbValue instanceof IntegerValue) {
+              return new ColorIcon(16, 12, new Color(((IntegerValue)rgbValue).value()), true);
+            }
+          }
+        }
+        catch (Exception e) {
+          throw new EvaluateException(e.getMessage(), e);
+        }
+      }
+      return null;
+    }
+  }
 }

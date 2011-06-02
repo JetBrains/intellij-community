@@ -18,6 +18,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -75,7 +76,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
       StringBuilder buf = new StringBuilder(16);
       if (value instanceof CharValue) {
         buf.append("'");
-        buf.append(value.toString());
+        buf.append(DebuggerUtils.translateStringValue(value.toString()));
         buf.append("' ");
         long longValue = ((PrimitiveValue)value).longValue();
         buf.append(Long.toString(longValue));

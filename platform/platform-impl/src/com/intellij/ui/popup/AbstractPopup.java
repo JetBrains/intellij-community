@@ -16,9 +16,9 @@
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.JBAwtEventQueue;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.Processor;
@@ -49,9 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -225,7 +222,7 @@ public class AbstractPopup implements JBPopup {
 
     if (caption != null) {
       if (caption.length() > 0) {
-        myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
+        myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive(), myComponent);
         ((TitlePanel)myCaption).setText(caption);
       }
       else {
@@ -525,7 +522,7 @@ public class AbstractPopup implements JBPopup {
       }
 
       if (e instanceof MouseEvent) {
-        JBAwtEventQueue.getInstance().blockNextEvents(((MouseEvent)e));
+        IdeEventQueue.getInstance().blockNextEvents(((MouseEvent)e));
       }
 
       myPopup.hide(false);
@@ -575,7 +572,7 @@ public class AbstractPopup implements JBPopup {
     show(owner, -1, -1, true);
   }
 
-  public void show(final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+  public void show(Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
     if (ApplicationManagerEx.getApplicationEx() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
@@ -594,18 +591,9 @@ public class AbstractPopup implements JBPopup {
     if (myInStack) {
       myFocusTrackback = new FocusTrackback(this, owner, true);
       myFocusTrackback.setMustBeShown(true);
-      getFocusManager().doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          _show(owner, aScreenX, aScreenY, considerForcedXY);
-        }
-      });
-    } else {
-      _show(owner, aScreenX, aScreenY, considerForcedXY);
     }
-  }
 
-  private void _show(Component owner, int aScreenX, int aScreenY, boolean considerForcedXY) {
+
     Dimension sizeToSet = null;
 
     if (myDimensionServiceKey != null) {
@@ -737,9 +725,6 @@ public class AbstractPopup implements JBPopup {
     if (myFocusable) {
       window.setFocusableWindowState(true);
       window.setFocusable(true);
-      if (myRequestFocus) {
-        window.requestFocusInWindow();
-      }
     }
 
     myWindow = updateMaskAndAlpha(window);
@@ -772,20 +757,7 @@ public class AbstractPopup implements JBPopup {
 
         afterShow();
 
-        final ActionCallback result = new ActionCallback();
-
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myFocusable && myRequestFocus && myFocusTrackback != null) {
-              myFocusTrackback.cleanParentWindow();
-            }
-
-            result.setDone();
-          }
-        });
-
-        return result;
+        return new ActionCallback.Done();
       }
     }, true);
   }

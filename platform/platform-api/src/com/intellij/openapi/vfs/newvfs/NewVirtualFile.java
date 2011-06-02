@@ -127,7 +127,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
   public abstract void markClean();
 
-  public void move(final Object requestor, final VirtualFile newParent) throws IOException {
+  public void move(final Object requestor, @NotNull final VirtualFile newParent) throws IOException {
     if (!exists()) {
       throw new IOException("File to move does not exist: " + getPath());
     }

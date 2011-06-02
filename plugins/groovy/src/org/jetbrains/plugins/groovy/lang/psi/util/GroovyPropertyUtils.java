@@ -218,7 +218,7 @@ public class GroovyPropertyUtils {
   }
 
   public static boolean isSimplePropertyGetter(PsiMethod method,
-                                               String propertyName,
+                                               @Nullable String propertyName,
                                                boolean isUsedInCategory) {
     if (method == null || method.isConstructor()) return false;
     if (isUsedInCategory) {
@@ -242,7 +242,7 @@ public class GroovyPropertyUtils {
   }
 
   public static boolean isSimplePropertySetter(PsiMethod method,
-                                               String propertyName,
+                                               @Nullable String propertyName,
                                                boolean isUsedInCategory) {
     if (method == null || method.isConstructor()) return false;
     if (isUsedInCategory) {

@@ -80,8 +80,7 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   private T getUpToDateOrNull(boolean dispose) {
-    final SoftReference<Data<T>> ref = myData;
-    final Data<T> data = ref == null ? null : ref.get();
+    final Data<T> data = getData();
 
     if (data != null) {
       T value = data.myValue;
@@ -93,6 +92,12 @@ public abstract class CachedValueBase<T> {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private Data<T> getData() {
+    final SoftReference<Data<T>> ref = myData;
+    return ref == null ? null : ref.get();
   }
 
   protected boolean isUpToDate(@NotNull Data data) {
@@ -108,11 +113,14 @@ public abstract class CachedValueBase<T> {
   }
 
   protected boolean isDependencyOutOfDate(Object dependency, long oldTimeStamp) {
+    if (dependency instanceof CachedValueBase) {
+      return !((CachedValueBase)dependency).hasUpToDateValue();
+    }
     final long timeStamp = getTimeStamp(dependency);
     return timeStamp < 0 || timeStamp != oldTimeStamp;
   }
 
-  protected void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {
+  private void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {
     for (Object dependency : dependencies) {
       if (dependency == null || dependency == ObjectUtils.NULL) continue;
       if (dependency instanceof Object[]) {
@@ -141,6 +149,10 @@ public abstract class CachedValueBase<T> {
     }
     else if (dependency instanceof Document) {
       return ((Document)dependency).getModificationStamp();
+    }
+    else if (dependency instanceof CachedValueBase) {
+      // to check for up to date for a cached value dependency we use .isUpToDate() method, not the timestamp
+      return 0;
     }
     else {
       LOG.error("Wrong dependency type: " + dependency.getClass());

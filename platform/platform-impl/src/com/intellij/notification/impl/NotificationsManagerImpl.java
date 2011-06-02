@@ -15,26 +15,18 @@
  */
 package com.intellij.notification.impl;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.notification.NotificationsManager;
+import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.SystemNotifications;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
@@ -42,18 +34,10 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JEditorPane;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkListener;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GridBagLayout;
-import java.awt.Window;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -62,6 +46,8 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
+  public static final String LOG_TOOL_WINDOW_ID = "Event log";
+
   private final NotificationModel myModel = new NotificationModel();
 
   @NotNull
@@ -82,7 +68,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   @Override
-  public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
   }
 
   @Override
@@ -143,7 +129,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.STICKY_BALLOON : displayType);
     }
 
-    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY) {
+    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY &&
+        !LOG_ONLY_GROUP_ID.equals(notification.getGroupId())) {
       myModel.add(notification, project);
     }
 
@@ -151,6 +138,10 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public static void showNotification(final Notification notification, @Nullable final Project project) {
+    if (isEventLogVisible(project)) {
+      return;
+    }
+
     final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
     switch (settings.getDisplayType()) {
       case NONE:
@@ -167,7 +158,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
   }
 
-  private static void notifyByBalloon(final Notification notification,
+  public static void notifyByBalloon(final Notification notification,
                                       final NotificationDisplayType displayType,
                                       @Nullable final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -253,11 +244,13 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     });
   }
 
-  private static void notifyByExternal(final Notification notification) {
-    final SystemNotifications service = ServiceManager.getService(SystemNotifications.class);
-    if (service != null) {
-      service.notify(notification.getGroupId(), notification.getTitle(), notification.getContent());
+  public static boolean isEventLogVisible(Project project) {
+    if (project == null) {
+      return false;
     }
+
+    final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
+    return window != null && window.isVisible();
   }
 
   private static PairFunction<Notification, Project, Boolean> createFilter(@Nullable final Project project, final boolean strict) {

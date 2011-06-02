@@ -131,7 +131,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
   }
 
   private void recalculateSoftWraps(IncrementalCacheUpdateEvent event) {
-    event.updateNewOffsetsIfNecessary(myEditor.getDocument());
+    event.updateNewOffsetsIfNecessary(myEditor.getDocument(), myEditor.getFoldingModel());
     
     //CachingSoftWrapDataMapper.log("xxxxxxxxxxxxxx Processing soft wraps for " + event + ". Document length: " + myEditor.getDocument().getTextLength() 
     //                              + ", document: " + System.identityHashCode(myEditor.getDocument()));
@@ -166,13 +166,12 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     // Define start of the visual line that holds target range start.
     int start = event.getNewStartOffset();
     LogicalPosition logical = myDataMapper.offsetToLogicalPosition(start);
-    VisualPosition visual
-      = new VisualPosition(myDataMapper.logicalToVisualPosition(logical, myEditor.logicalToVisualPosition(logical, false)).line, 0);
+    VisualPosition visual = new VisualPosition(myDataMapper.logicalToVisualPosition(logical, myEditor.logicalToVisualPosition(logical, false)).line, 0);
     start = myEditor.logicalPositionToOffset(logical);
     Document document = myEditor.getDocument();
     myContext.text = document.getCharsSequence();
     myContext.tokenStartOffset = start;
-    IterationState iterationState = new IterationState(myEditor, start, false);
+    IterationState iterationState = new IterationState(myEditor, start, document.getTextLength(), false);
     TextAttributes attributes = iterationState.getMergedAttributes();
     myContext.fontType = attributes.getFontType();
     myContext.rangeEndOffset = event.getNewEndOffset();
@@ -358,7 +357,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
 
       char c = myContext.text.charAt(offset);
       if (c == '\n') {
-        notifyListenersOnVisualLineEnd();
         myContext.onNewLine();
         continue;
       }
@@ -1023,6 +1021,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
      * Asks current context to update its state assuming that it begins to point to the line next to its current position.
      */
     public void onNewLine() {
+      notifyListenersOnVisualLineEnd();
       currentPosition.onNewLine();
       softWrapStartOffset = currentPosition.offset;
       lineStartPosition.from(currentPosition);

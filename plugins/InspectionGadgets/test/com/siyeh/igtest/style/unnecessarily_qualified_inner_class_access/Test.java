@@ -1,6 +1,6 @@
 package com.siyeh.igtest.style.unnecessarily_qualified_inner_class_access;
-
 import java.util.Map;
+@Y(Test.X.class)
 public class Test<T> {
 
     public Test(int i) {
@@ -26,4 +26,7 @@ public class Test<T> {
     static class Y<T> {
         T t;
     }
+}
+@interface Y {
+    Class value();
 }

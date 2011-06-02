@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -11,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentHashMap;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -29,18 +28,19 @@ public class ClassContextFilter implements ContextFilter {
 
   public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
     final PsiFile place = descriptor.getPlaceFile();
-    return myPattern.value(Pair.create(findPsiType(descriptor.getProject(), descriptor.getTypeText(), place, ctx), place));
+    return myPattern.value(Pair.create(findPsiType(descriptor, ctx), place));
   }
 
-  @Nullable
-  private static PsiType findPsiType(Project project, String typeText, PsiFile place, ProcessingContext ctx) {
+  @NotNull
+  public static PsiType findPsiType(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
+    String typeText = descriptor.getTypeText();
     final String key = getClassKey(typeText);
     final Object cached = ctx.get(key);
     if (cached instanceof PsiType) {
       return (PsiType)cached;
     }
 
-    final PsiType found = JavaPsiFacade.getElementFactory(project).createTypeFromText(typeText, place);
+    final PsiType found = JavaPsiFacade.getElementFactory(descriptor.getProject()).createTypeFromText(typeText, descriptor.getPlaceFile());
     ctx.put(key, found);
     return found;
   }
@@ -63,18 +63,20 @@ public class ClassContextFilter implements ContextFilter {
     return new ClassContextFilter(new Condition<Pair<PsiType, PsiFile>>() {
       @Override
       public boolean value(Pair<PsiType, PsiFile> p) {
-        PsiFile place = p.second;
-        //PsiType myType = JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(typeText, place);
-        PsiType myType = getCachedType(typeText, place);
-        if (p.first == PsiType.NULL) return myType == PsiType.NULL;
-        return TypesUtil.isAssignable(myType, p.first, place.getManager(), place.getResolveScope(), false);
+        return isSubtype(p.first, p.second, typeText);
       }
     });
   }
 
+  public static boolean isSubtype(PsiType checked, PsiFile placeFile, String typeText) {
+    PsiType myType = getCachedType(typeText, placeFile);
+    if (checked == PsiType.NULL) return myType == PsiType.NULL;
+    return TypesUtil.isAssignable(myType, checked, placeFile.getManager(), placeFile.getResolveScope(), false);
+  }
+
   private static final Key<Map<String, PsiType>> CACHED_TYPES = Key.create("Cached types");
 
-  private static PsiType getCachedType(String typeText, PsiFile context) {
+  public static PsiType getCachedType(String typeText, PsiFile context) {
     Map<String, PsiType> map = context.getUserData(CACHED_TYPES);
     if (map == null) {
       map = new ConcurrentHashMap<String, PsiType>();

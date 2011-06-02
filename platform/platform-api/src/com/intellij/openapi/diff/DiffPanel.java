@@ -26,4 +26,5 @@ public interface DiffPanel extends DiffViewer, Disposable {
   void setContents(DiffContent content1, DiffContent content2);
   void setRequestFocus(boolean requestFocus);
   boolean hasDifferences();
+  void setTooBigFileErrorContents();
 }

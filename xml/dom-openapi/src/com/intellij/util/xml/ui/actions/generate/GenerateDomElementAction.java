@@ -86,4 +86,8 @@ public class GenerateDomElementAction extends CodeInsightAction {
     final DomElement element = DomUtil.getContextElement(editor);
     return element != null && myProvider.isAvailableForElement(element);
   }
+
+  public GenerateDomElementProvider getProvider() {
+    return myProvider;
+  }
 }

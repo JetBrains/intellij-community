@@ -112,13 +112,15 @@ public class EnterHandler extends BaseEnterHandler {
       }
     }
 
-    PsiDocumentManager.getInstance(project).commitDocument(document);
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitDocument(document);
 
     boolean forceIndent = false;
     Ref<Integer> caretOffsetRef = new Ref<Integer>(caretOffset);
     Ref<Integer> caretAdvanceRef = new Ref<Integer>(0);
 
-    for(EnterHandlerDelegate delegate: Extensions.getExtensions(EnterHandlerDelegate.EP_NAME)) {
+    final EnterHandlerDelegate[] delegates = Extensions.getExtensions(EnterHandlerDelegate.EP_NAME);
+    for(EnterHandlerDelegate delegate: delegates) {
       EnterHandlerDelegate.Result result = delegate.preprocessEnter(file, editor, caretOffsetRef, caretAdvanceRef, dataContext, myOriginalHandler);
       if (caretOffsetRef.get() > document.getTextLength()) {
         throw new AssertionError("Wrong caret offset change by " + delegate);
@@ -149,16 +151,22 @@ public class EnterHandler extends BaseEnterHandler {
       caretOffset = editor.getCaretModel().getOffset();
     }
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    documentManager.commitAllDocuments();
     final DoEnterAction action = new DoEnterAction(
       file, editor, document, dataContext, caretOffset, !insertSpace, caretAdvanceRef.get(), project
     );
     action.setForceIndent(forceIndent);
     action.run();
-    PsiDocumentManager.getInstance(project).commitDocument(document);
+    documentManager.commitDocument(document);
+    for (EnterHandlerDelegate delegate : delegates) {
+      if (delegate.postProcessEnter(file, editor, dataContext) == EnterHandlerDelegate.Result.Stop) {
+        break;
+      }
+    }
+    documentManager.commitDocument(document);
   }
 
-  private static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter) {
+  private static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter, Editor editor) {
     for (CommentCompleteHandler handler : Extensions.getExtensions(CommentCompleteHandler.EP_NAME)) {
       if (handler.isApplicable(comment, commenter)) {
         return handler.isCommentComplete(comment, commenter);
@@ -175,7 +183,7 @@ public class EnterHandler extends BaseEnterHandler {
     Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(containingFile.getProject());
     final String commentPrefix = docComment? commenter.getDocumentationCommentPrefix() : commenter.getBlockCommentPrefix();
     lexer.start(commentText, commentPrefix == null? 0 : commentPrefix.length(), commentText.length());
-    QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile);
+    QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile, editor);
     JavaLikeQuoteHandler javaLikeQuoteHandler = fileTypeHandler instanceof JavaLikeQuoteHandler ?
                                                              (JavaLikeQuoteHandler)fileTypeHandler:null;
 
@@ -320,7 +328,7 @@ public class EnterHandler extends BaseEnterHandler {
               commentContext.docStart = false;
             }
             else {
-              if (isCommentComplete(comment, commentContext.commenter)) {
+              if (isCommentComplete(comment, commentContext.commenter, myEditor)) {
                 if (myOffset >= commentEnd) {
                   commentContext.docAsterisk = false;
                   commentContext.docStart = false;
@@ -348,7 +356,7 @@ public class EnterHandler extends BaseEnterHandler {
               commentContext.docStart = false;
             }
             else {
-              if (isCommentComplete(comment, commentContext.commenter)) {
+              if (isCommentComplete(comment, commentContext.commenter, myEditor)) {
                 if (myOffset >= commentEnd) {
                   commentContext.docAsterisk = false;
                   commentContext.docStart = false;

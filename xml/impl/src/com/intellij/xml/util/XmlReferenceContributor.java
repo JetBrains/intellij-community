@@ -2,10 +2,8 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
 import com.intellij.patterns.PlatformPatterns;
-import static com.intellij.patterns.StandardPatterns.string;
-import static com.intellij.patterns.XmlPatterns.*;
+import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiReferenceContributor;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
@@ -15,6 +13,9 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.xml.*;
+
+import static com.intellij.patterns.StandardPatterns.string;
+import static com.intellij.patterns.XmlPatterns.*;
 
 /**
  * @author peter
@@ -79,5 +80,7 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[] {"encoding"}, new ScopeFilter(new ParentElementFilter(new ClassFilter(XmlProcessingInstruction.class))), true,
                                                        new XmlEncodingReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue(), new XmlPrefixReferenceProvider());
   }
 }

@@ -23,7 +23,11 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -43,22 +47,24 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private static final byte DIRTY_FLAG = 0x01;
   private static final String EMPTY = "";
 
-  private volatile Object myName;
+  private volatile Object myName;  // either a String or byte[]. Possibly should be concated with one of the entries in the {@link #wellKnownSuffixes}
   private volatile VirtualDirectoryImpl myParent;
-  private volatile byte myFlags = 0;
+  private volatile byte myFlags = 0;       /** also, high three bits are used as an index into the {@link #wellKnownSuffixes} array */
   private volatile int myId;
 
-  public VirtualFileSystemEntry(final String name, final VirtualDirectoryImpl parent, int id) {
-    myName = encodeName(name.replace('\\', '/'));  // note: on Unix-style FS names may contain backslashes
+  public VirtualFileSystemEntry(@NotNull String name, final VirtualDirectoryImpl parent, int id) {
+    storeName(name);
     myParent = parent;
     myId = id;
   }
 
-  protected static Object encodeName(String name) {
+  private static Object encodeName(@NotNull String name) {
     int length = name.length();
     if (length == 0) return EMPTY;
 
-    if (!IOUtil.isAscii(name)) return name;
+    if (!IOUtil.isAscii(name)) {
+      return name;
+    }
 
     byte[] bytes = new byte[length];
     for (int i = 0; i < length; i++) {
@@ -67,70 +73,73 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return bytes;
   }
 
+  @NonNls private static final String[] wellKnownSuffixes = { "$1.class", "$2.class", ".class", ".java", ".html", ".txt", ".xml",};
+  private void storeName(@NotNull String name) {
+    myFlags &= 0x1f;
+    for (int i = 0; i < wellKnownSuffixes.length; i++) {
+      String suffix = wellKnownSuffixes[i];
+      if (name.endsWith(suffix)) {
+        name = StringUtil.trimEnd(name, suffix);
+        int mask = (i+1) << 5;
+        myFlags |= mask;
+        break;
+      }
+    }
+
+    myName = encodeName(name.replace('\\', '/'));  // note: on Unix-style FS names may contain backslashes
+  }
+
+  @NotNull
+  private String getEncodedSuffix() {
+    int index = (myFlags >> 5) & 0x07;
+    if (index == 0) return EMPTY;
+    return wellKnownSuffixes[index-1];
+  }
+
   @NotNull
   public String getName() {
     Object name = rawName();
+    String suffix = getEncodedSuffix();
     if (name instanceof String) {
-      return (String)name;
+      //noinspection StringEquality
+      return suffix == EMPTY ? (String)name : name + suffix;
     }
 
     byte[] bytes = (byte[])name;
     int length = bytes.length;
-    char[] chars = new char[length];
+    char[] chars = new char[length + suffix.length()];
     for (int i = 0; i < length; i++) {
       chars[i] = (char)bytes[i];
     }
+    copyString(chars, length, suffix);
     return new String(chars);
   }
 
-  boolean nameMatches(String pattern, boolean ignoreCase) {
+  boolean nameMatches(@NotNull String pattern, boolean ignoreCase) {
     Object name = rawName();
+    String suffix = getEncodedSuffix();
     if (name instanceof String) {
-      return ignoreCase ? pattern.equals(name) : pattern.equalsIgnoreCase((String)name);
+      final String nameStr = (String)name;
+      return pattern.regionMatches(ignoreCase, 0, nameStr, 0, nameStr.length()) &&
+             pattern.regionMatches(ignoreCase, nameStr.length(), suffix, 0, suffix.length());
     }
 
     byte[] bytes = (byte[])name;
     int length = bytes.length;
-    if (length != pattern.length()) {
+    if (length + suffix.length() != pattern.length()) {
       return false;
     }
 
     for (int i = 0; i < length; i++) {
-      if (!charsMatch(ignoreCase, (char)bytes[i], pattern.charAt(i))) {
+      if (!StringUtil.charsMatch((char)bytes[i], pattern.charAt(i), ignoreCase)) {
         return false;
       }
     }
 
-    return true;
+    return pattern.regionMatches(ignoreCase, length, suffix, 0, suffix.length());
   }
 
-  private static boolean charsMatch(boolean ignoreCase, char c1, char c2) {
-    // duplicating String.equalsIgnoreCase logic
-    if (c1 == c2) {
-      return true;
-    }
-    if (ignoreCase) {
-      // If characters don't match but case may be ignored,
-      // try converting both characters to uppercase.
-      // If the results match, then the comparison scan should
-      // continue.
-      char u1 = Character.toUpperCase(c1);
-      char u2 = Character.toUpperCase(c2);
-      if (u1 == u2) {
-        return true;
-      }
-      // Unfortunately, conversion to uppercase does not work properly
-      // for the Georgian alphabet, which has strange rules about case
-      // conversion.  So we need to make one last check before
-      // exiting.
-      if (Character.toLowerCase(u1) == Character.toLowerCase(u2)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  protected final Object rawName() {
+  private Object rawName() {
     return myName;
   }
 
@@ -143,6 +152,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void setFlag(int flag_mask, boolean value) {
+    assert (flag_mask & 0xe0) == 0 : "Mask '"+ Integer.toBinaryString(flag_mask)+"' is not supported. High three bits are reserved.";
     if (value) {
       myFlags |= flag_mask;
     }
@@ -152,6 +162,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public boolean getFlag(int flag_mask) {
+    assert (flag_mask & 0xe0) == 0 : "Mask '"+ Integer.toBinaryString(flag_mask)+"' is not supported. High three bits are reserved.";
     return (myFlags & flag_mask) != 0;
   }
 
@@ -176,35 +187,39 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   protected int getPathLength() {
     Object o = rawName();
     int length = o instanceof String ? ((String)o).length() : ((byte[]) o).length;
+    length += getEncodedSuffix().length();
     return myParent == null ? length : myParent.getPathLength() + length + 1;
   }
 
-  protected int appendPathOnFileSystem(char[] chars, int pos) {
+  int appendPathOnFileSystem(@NotNull char[] chars, int pos) {
     if (myParent != null) {
       pos = myParent.appendPathOnFileSystem(chars, pos);
     }
 
     Object o = rawName();
-    if (o == EMPTY) return pos;
+    String suffix = getEncodedSuffix();
+    //noinspection StringEquality
+    if (o == EMPTY && suffix == EMPTY) {
+      return pos;
+    }
 
     if (pos > 0 && chars[pos - 1] != '/') {
       chars[pos++] = '/';
     }
 
     if (o instanceof String) {
-      return copyString(chars, pos, (String)o);
+      pos = copyString(chars, pos, (String)o);
+      return copyString(chars, pos, suffix);
     }
-    else {
-      byte[] bytes = (byte[]) o;
-      int len = bytes.length;
-      for (int i = 0; i < len; i++) {
-        chars[pos++] = (char)bytes[i];
-      }
+    byte[] bytes = (byte[]) o;
+    int len = bytes.length;
+    for (int i = 0; i < len; i++) {
+      chars[pos++] = (char)bytes[i];
     }
-    return pos;
+    return copyString(chars, pos, suffix);
   }
 
-  private static int copyString(char[] chars, int pos, String s) {
+  private static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
     int length = s.length();
     s.getChars(0, length, chars, pos);
     return pos + length;
@@ -226,7 +241,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getPathImpl(chars, 0);
   }
 
-  private String getPathImpl(char[] chars, int pos) {
+  private String getPathImpl(@NotNull char[] chars, int pos) {
     int count = appendPathOnFileSystem(chars, pos);
     return new String(chars, 0, count);
   }
@@ -270,7 +285,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return ourPersistence.getLength(this);
   }
 
-  public VirtualFile copy(final Object requestor, final VirtualFile newParent, final String copyName) throws IOException {
+  public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
     }
@@ -286,7 +301,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     });
   }
 
-  public void move(final Object requestor, final VirtualFile newParent) throws IOException {
+  public void move(final Object requestor, @NotNull final VirtualFile newParent) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
@@ -342,7 +357,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
 
     myParent.removeChild(this);
-    myName = encodeName(newName.replace('\\', '/'));
+    storeName(newName);
     myParent.addChild(this);
   }
 

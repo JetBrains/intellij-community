@@ -127,6 +127,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private static boolean commit(final Project project, final List<Change> changes, final LocalChangeList initialSelection,
                              final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {
+    final AbstractVcs[] allActiveVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+    final List<VcsCheckinHandlerFactory> factoryList =
+      CheckinHandlersManager.getInstance(project).getMatchingVcsFactories(Arrays.<AbstractVcs>asList(allActiveVcss));
+    for (BaseCheckinHandlerFactory factory : factoryList) {
+      final BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
+      if (handler != null) {
+        if (! handler.beforeCommitDialogShownCallback()) return false;
+      }
+    }
+
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final LocalChangeList defaultList = manager.getDefaultChangeList();
     final ArrayList<LocalChangeList> changeLists = new ArrayList<LocalChangeList>(manager.getChangeListsCopy());

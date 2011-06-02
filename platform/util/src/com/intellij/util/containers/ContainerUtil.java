@@ -608,6 +608,11 @@ public class ContainerUtil {
     return false;
   }
 
+  @Nullable
+  public static <T> T getFirstItem(final Collection<T> items) {
+    return getFirstItem(items, null);
+  }
+
   public static <T> T getFirstItem(final Collection<T> items, @Nullable final T def) {
     return items == null || items.isEmpty() ? def : items.iterator().next();
   }
@@ -1252,5 +1257,16 @@ public class ContainerUtil {
       if (!processor.process(o, list)) return false;
     }
     return true;
+  }
+
+  public static <T> List<T> trimToSize(List<T> list) {
+    if (list == null) return null;
+    if (list.isEmpty()) return Collections.emptyList();
+
+    if (list instanceof ArrayList) {
+      ((ArrayList)list).trimToSize();
+    }
+
+    return list;
   }
 }

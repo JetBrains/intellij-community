@@ -18,6 +18,12 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -27,13 +33,18 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,6 +127,30 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         if (evt.getPropertyName().equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {
           update();
         }
+      }
+    }, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
+      @Override
+      public void propertyChanged(VirtualFilePropertyEvent event) {
+        if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
+          update();
+        }
+      }
+    }));
+    final Alarm update = new Alarm();
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        Document document = e.getDocument();
+        Editor selectedEditor = getEditor();
+        if (selectedEditor == null || selectedEditor.getDocument() != document) return;
+        update.cancelAllRequests();
+        update.addRequest(new Runnable() {
+                              @Override
+                              public void run() {
+                                if (!isDisposed()) update();
+                              }
+                            }, 200);
       }
     }, this);
   }

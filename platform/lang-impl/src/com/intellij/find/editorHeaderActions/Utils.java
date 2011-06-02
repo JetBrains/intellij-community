@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public class Utils {
@@ -20,7 +21,7 @@ public class Utils {
   public static void showCompletionPopup(JComponent toolbarComponent,
                                           final JList list,
                                           String title,
-                                          final JTextField textField) {
+                                          final JTextComponent textField) {
 
     final Runnable callback = new Runnable() {
       public void run() {

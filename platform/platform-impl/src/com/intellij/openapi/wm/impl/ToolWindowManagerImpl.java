@@ -16,8 +16,14 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.Patches;
+import com.intellij.facet.ProjectFacetManager;
+import com.intellij.facet.ProjectWideFacetListenersRegistry;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.Notifications;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -66,6 +72,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -116,6 +123,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private final Set<String> myRestoredToolWindowIds = new HashSet<String>();
   private final FileEditorManager myFileEditorManager;
+  private final ProjectWideFacetListenersRegistry myFacetListenersRegistry;
+  private final ProjectFacetManager myFacetManager;
 
   private final Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
 
@@ -148,10 +157,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindowManagerImpl(final Project project,
                                WindowManagerEx windowManagerEx,
                                final FileEditorManager fem,
-                               ActionManager actionManager) {
+                               ActionManager actionManager,
+                               ProjectWideFacetListenersRegistry facetListenersRegistry,
+                               ProjectFacetManager facetManager) {
     myProject = project;
     myWindowManager = windowManagerEx;
     myFileEditorManager = fem;
+    myFacetListenersRegistry = facetListenersRegistry;
+    myFacetManager = facetManager;
     myListenerList = new EventListenerList();
 
     if (!project.isDefault()) {
@@ -435,58 +448,63 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (final ToolWindowEP bean : beans) {
       final Condition<Project> condition = bean.getCondition();
-      if (condition != null && !condition.value(myProject)) {
-        continue;
+      if (condition == null || condition.value(myProject)) {
+        initToolWindow(bean);
       }
-      ToolWindowAnchor toolWindowAnchor;
-      try {
-        toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        continue;
-      }
-      JLabel label = new JLabel("Initializing...", JLabel.CENTER);
-      label.setOpaque(true);
-      final Color treeBg = UIManager.getColor("Tree.background");
-      label.setBackground(new Color(treeBg.getRed(), treeBg.getGreen(), treeBg.getBlue(), 180));
-      final Color treeFg = UIUtil.getTreeForeground();
-      label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
-      final ToolWindowFactory factory = bean.getToolWindowFactory();
-      final ToolWindowImpl toolWindow =
-        (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory), bean.canCloseContents);
-      toolWindow.setContentFactory(factory);
-      if (bean.icon != null) {
-        Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
-        if (icon == null) {
-          try {
-            icon = IconLoader.getIcon(bean.icon);
-          }
-          catch (Exception ignored) {
-          }
-        }
-        toolWindow.setIcon(icon);
-      }
-
-      if (!getInfo(bean.id).isSplit() && bean.secondary && !myRestoredToolWindowIds.contains(bean.id)) {
-        toolWindow.setSplitMode(bean.secondary, null);
-      }
-
-      final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
-
-      UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-            public void run() {
-              if (toolWindow.isDisposed()) return;
-
-              toolWindow.ensureContentInitialized();
-              activation.setDone();
-            }
-          });
-        }
-      });
     }
+  }
+
+  @Override
+  public void initToolWindow(ToolWindowEP bean) {
+    ToolWindowAnchor toolWindowAnchor;
+    try {
+      toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return;
+    }
+    JLabel label = new JLabel("Initializing...", JLabel.CENTER);
+    label.setOpaque(true);
+    final Color treeBg = UIManager.getColor("Tree.background");
+    label.setBackground(new Color(treeBg.getRed(), treeBg.getGreen(), treeBg.getBlue(), 180));
+    final Color treeFg = UIUtil.getTreeForeground();
+    label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
+    final ToolWindowFactory factory = bean.getToolWindowFactory();
+    final ToolWindowImpl toolWindow =
+      (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory),
+                                         bean.canCloseContents);
+    toolWindow.setContentFactory(factory);
+    if (bean.icon != null) {
+      Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
+      if (icon == null) {
+        try {
+          icon = IconLoader.getIcon(bean.icon);
+        }
+        catch (Exception ignored) {
+        }
+      }
+      toolWindow.setIcon(icon);
+    }
+
+    if (!getInfo(bean.id).isSplit() && bean.secondary && !myRestoredToolWindowIds.contains(bean.id)) {
+      toolWindow.setSplitMode(bean.secondary, null);
+    }
+
+    final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
+
+    UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+          public void run() {
+            if (toolWindow.isDisposed()) return;
+
+            toolWindow.ensureContentInitialized();
+            activation.setDone();
+          }
+        });
+      }
+    });
   }
 
   public void projectClosed() {
@@ -1254,13 +1272,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                               @NotNull final MessageType type,
                               @NotNull final String text,
                               @Nullable final Icon icon,
-                              @Nullable HyperlinkListener listener) {
+                              @Nullable final HyperlinkListener listener) {
     checkId(toolWindowId);
 
 
     Balloon existing = myWindow2Balloon.get(toolWindowId);
     if (existing != null) {
       existing.hide();
+    }
+    Notifications.Bus.notify(createNotification(type, text, listener), myProject);
+
+    if (NotificationsManagerImpl.isEventLogVisible(myProject)) {
+      return;
     }
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
@@ -1364,6 +1387,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       show.run();
     }
 
+  }
+
+  public static Notification createNotification(MessageType type, String text, @Nullable final HyperlinkListener listener) {
+    final NotificationListener notificationListener = listener == null ? null : new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        listener.hyperlinkUpdate(event);
+      }
+    };
+    return new Notification(Notifications.LOG_ONLY_GROUP_ID, "", text, type.toNotificationType(), notificationListener);
   }
 
   @Override

@@ -22,8 +22,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.NavigationItemListCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -54,12 +52,16 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupOwner;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.text.Matcher;
+import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +89,7 @@ public abstract class ChooseByNameBase {
   private boolean myPreselectInitialText;
   private final Reference<PsiElement> myContext;
   private boolean mySearchInAnyPlace = false;
-  private NameUtil.Matcher myLastMatcher;
+  private Matcher myLastMatcher;
 
   protected Component myPreviouslyFocusedComponent;
 
@@ -300,9 +302,13 @@ public abstract class ChooseByNameBase {
       if (myHint == null || !myHint.isVisible()) return;
       final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
       if (updateProcessor != null) {
-        myHint.cancel();
         updateProcessor.updatePopup(element);
       }
+    }
+    
+    public void repositionHint() {
+      if (myHint == null || !myHint.isVisible()) return;
+      PopupPositionManager.positionPopupInBestPosition(myHint, null, true);
     }
   }
 
@@ -583,6 +589,18 @@ public abstract class ChooseByNameBase {
     rebuildList(initial ? myInitialIndex : 0, REBUILD_DELAY, null, ModalityState.current(), null);
   }
 
+  private void updateDocPosition() {
+    final JBPopup hint = myTextFieldPanel.getHint();
+    if (hint != null) {
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (myTextFieldPanel != null) myTextFieldPanel.repositionHint();
+        }
+      });
+    }
+  }
+  
   private void updateDocumentation() {
     final JBPopup hint = myTextFieldPanel.getHint();
     final Object element = getChosenElement();
@@ -751,6 +769,7 @@ public abstract class ChooseByNameBase {
             (text == null || text.trim().length() == 0)) {
           myListModel.clear();
           hideList();
+          if (myTextFieldPanel != null) myTextFieldPanel.hideHint();
           myCard.show(myCardContainer, CHECK_BOX_CARD);
           return;
         }
@@ -765,10 +784,13 @@ public abstract class ChooseByNameBase {
                   }
 
                   setElementsToList(pos, elements);
-
                   myListIsUpToDate = true;
                   choosenElementMightChange();
 
+                  if (elements.size() == 0 && myTextFieldPanel != null) {
+                    myTextFieldPanel.hideHint();
+                  }
+                  
                   if (postRunnable != null) {
                     postRunnable.run();
                   }
@@ -779,12 +801,10 @@ public abstract class ChooseByNameBase {
             cancelCalcElementsThread();
 
             final ListCellRenderer cellRenderer = myList.getCellRenderer();
-            if (cellRenderer instanceof PsiElementListCellRenderer) {
-              final String namePattern = getNamePattern(text);
-              ((PsiElementListCellRenderer)cellRenderer).setPatternMatcher(buildPatternMatcher(isSearchInAnyPlace() ? "*" + namePattern + "*" : namePattern));
-            } else if (cellRenderer instanceof NavigationItemListCellRenderer) {
-              final String namePattern = getNamePattern(text);
-              ((NavigationItemListCellRenderer)cellRenderer).setPatternMatcher(buildPatternMatcher(isSearchInAnyPlace() ? "*" + namePattern + "*" : namePattern));
+            if (cellRenderer instanceof MatcherHolder) {
+              final String pattern = getNamePattern(text);
+              final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern + "*" : pattern);
+              ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
             }
 
             myCalcElementsThread = new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState, postRunnable == null);
@@ -831,7 +851,13 @@ public abstract class ChooseByNameBase {
 
     Object[] oldElements = myListModel.toArray();
     Object[] newElements = elements.toArray();
-    Diff.Change change = Diff.buildChanges(oldElements, newElements);
+    Diff.Change change = null;
+    try {
+      change = Diff.buildChanges(oldElements, newElements);
+    }
+    catch (FilesTooBigForDiffException e) {
+      // should not occur
+    }
 
     if (change == null) return; // Nothing changed
 
@@ -868,6 +894,7 @@ public abstract class ChooseByNameBase {
       ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
       showList();
+      updateDocPosition();
     }
   }
 
@@ -877,7 +904,7 @@ public abstract class ChooseByNameBase {
     int bestMatch = Integer.MIN_VALUE;
     final int count = myListModel.getSize();
 
-    NameUtil.Matcher matcher = buildPatternMatcher(getNamePattern(myTextField.getText()));
+    Matcher matcher = buildPatternMatcher(getNamePattern(myTextField.getText()));
 
     final String statContext = statisticsContext();
     for (int i = 0; i < count; i++) {
@@ -1001,6 +1028,7 @@ public abstract class ChooseByNameBase {
           }
           if (!myDisposedFlag) {
             showList();
+            updateDocPosition();
           }
         }
       }, DELAY);
@@ -1071,7 +1099,7 @@ public abstract class ChooseByNameBase {
   protected void choosenElementMightChange() {
   }
 
-  protected final class MyTextField extends JTextField implements PopupOwner {
+  protected final class MyTextField extends JTextField implements PopupOwner, TypeSafeDataProvider {
     private final KeyStroke myCompletionKeyStroke;
     private final KeyStroke forwardStroke;
     private final KeyStroke backStroke;
@@ -1095,6 +1123,19 @@ public abstract class ChooseByNameBase {
         }
       }
       return null;
+    }
+
+    @Override
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (LangDataKeys.CHOOSE_BY_NAME_DROPDOWN.equals(key)) {
+        if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
+          sink.put(key, myDropdownPopup);
+        }
+      } else if (LangDataKeys.CHOOSE_BY_NAME_POPUP.equals(key)) {
+        if (myTextPopup != null && myTextPopup.isVisible()) {
+          sink.put(key, myTextPopup);
+        }
+      }
     }
 
     protected void processKeyEvent(KeyEvent e) {
@@ -1388,13 +1429,13 @@ public abstract class ChooseByNameBase {
     if (name == null) return false;
 
     final List<String> suspects = split(name);
-    final List<Pair<String, NameUtil.Matcher>> patternsAndMatchers =
-      ContainerUtil.map2List(split(qualifierPattern), new Function<String, Pair<String, NameUtil.Matcher>>() {
-        public Pair<String, NameUtil.Matcher> fun(String s) {
+    final List<Pair<String, Matcher>> patternsAndMatchers =
+      ContainerUtil.map2List(split(qualifierPattern), new Function<String, Pair<String, Matcher>>() {
+        public Pair<String, Matcher> fun(String s) {
           final String pattern = getNamePattern(s);
-          final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
+          final Matcher matcher = buildPatternMatcher(pattern);
 
-          return new Pair<String, NameUtil.Matcher>(pattern, matcher);
+          return new Pair<String, Matcher>(pattern, matcher);
         }
       });
 
@@ -1402,9 +1443,9 @@ public abstract class ChooseByNameBase {
 
     try {
       patterns:
-      for (Pair<String, NameUtil.Matcher> patternAndMatcher : patternsAndMatchers) {
+      for (Pair<String, Matcher> patternAndMatcher : patternsAndMatchers) {
         final String pattern = patternAndMatcher.first;
-        final NameUtil.Matcher matcher = patternAndMatcher.second;
+        final Matcher matcher = patternAndMatcher.second;
         if (pattern.length() > 0) {
           for (int j = matchPosition; j < suspects.size() - 1; j++) {
             String suspect = suspects.get(j);
@@ -1439,7 +1480,7 @@ public abstract class ChooseByNameBase {
     }
 
     final String[] names = checkboxState ? myNames[1] : myNames[0];
-    final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
+    final Matcher matcher = buildPatternMatcher(pattern);
 
     try {
       for (String name : names) {
@@ -1464,7 +1505,7 @@ public abstract class ChooseByNameBase {
      return myTextField.isCompletionKeyStroke();
   }
 
-  private boolean matches(String pattern, NameUtil.Matcher matcher, String name) {
+  private boolean matches(String pattern, Matcher matcher, String name) {
     boolean matches = false;
     if (name != null) {
       if (myModel instanceof CustomMatcherModel) {
@@ -1479,7 +1520,7 @@ public abstract class ChooseByNameBase {
     return matches;
   }
 
-  private static NameUtil.Matcher buildPatternMatcher(String pattern) {
+  private static Matcher buildPatternMatcher(String pattern) {
     return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
   }
 

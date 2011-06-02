@@ -29,7 +29,7 @@ public abstract class MutablyNamedIntention extends Intention{
     @Override
     @NotNull
     public final String getText(){
-      return m_text;
+      return m_text == null ? "" : m_text;
     }
 
     @Override

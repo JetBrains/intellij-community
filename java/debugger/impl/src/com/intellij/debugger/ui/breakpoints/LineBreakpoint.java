@@ -68,7 +68,6 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   public static final Icon MUTED_ICON = DebuggerIcons.MUTED_BREAKPOINT_ICON;
   public static final Icon DISABLED_ICON = DebuggerIcons.DISABLED_BREAKPOINT_ICON;
   public static final Icon MUTED_DISABLED_ICON = DebuggerIcons.MUTED_DISABLED_BREAKPOINT_ICON;
-  private static final Icon ourVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png");
   private static final Icon ourMutedVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_muted_verified_warning_breakpoint.png");
 
   private String myMethodName;
@@ -105,7 +104,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return isMuted? ourMutedVerifiedWarningsIcon : ourVerifiedWarningsIcon;
+    return isMuted? ourMutedVerifiedWarningsIcon : DebuggerIcons.VERIFIED_WARNING_BREAKPOINT_ICON;
   }
 
   public Key<LineBreakpoint> getCategory() {

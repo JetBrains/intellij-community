@@ -19,14 +19,17 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +47,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     myProject = project;
   }
 
-  public static void fastenBelts(PsiFile file, int offset) {
+  public static void fastenBelts(@NotNull PsiFile file, int offset) {
     synchronized (file) {
       if (areBeltsFastened(file)) return;
 
@@ -52,6 +55,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
       List<WeakReference<SmartPointerEx>> pointers = getPointers(file);
       if (pointers == null) return;
+      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+      Document document = psiDocumentManager.getDocument(file);
+      if (document instanceof DocumentImpl) {
+        ((DocumentImpl)document).normalizeRangeMarkers();
+      }
 
       int index = 0;
       for (int i = 0; i < pointers.size(); i++) {
@@ -63,11 +71,10 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         }
       }
 
-      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
-      for(Document document:InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
-        PsiFile injectedfile = psiDocumentManager.getPsiFile(document);
-        if (injectedfile == null) continue;
-        fastenBelts(injectedfile, 0);
+      for (Document injectedDoc : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+        PsiFile injectedFile = psiDocumentManager.getPsiFile(injectedDoc);
+        if (injectedFile == null) continue;
+        fastenBelts(injectedFile, 0);
       }
 
       int size = pointers.size();
@@ -77,14 +84,18 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
-  public static void unfastenBelts(PsiFile file, int offset) {
-    final Set<Language> languages = file.getViewProvider().getLanguages();
-    for (Language language : languages) {
-      final PsiFile f = file.getViewProvider().getPsi(language);
-      f.putUserData(BELTS_ARE_FASTEN_KEY, null);
+  public static void unfastenBelts(@NotNull PsiFile file, int offset) {
+    synchronized (file) {
+      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+      file.putUserData(BELTS_ARE_FASTEN_KEY, null);
 
       List<WeakReference<SmartPointerEx>> pointers = getPointers(file);
       if (pointers == null) return;
+
+      Document document = psiDocumentManager.getDocument(file);
+      if (document instanceof DocumentImpl) {
+        ((DocumentImpl)document).normalizeRangeMarkers();
+      }
 
       int index = 0;
       for (int i = 0; i < pointers.size(); i++) {
@@ -96,11 +107,10 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         }
       }
 
-      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
-      for(Document document:InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
-        PsiFile injectedfile = psiDocumentManager.getPsiFile(document);
-        if (injectedfile == null) continue;
-        unfastenBelts(injectedfile, 0);
+      for (Document injectedDoc : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+        PsiFile injectedFile = psiDocumentManager.getPsiFile(injectedDoc);
+        if (injectedFile == null) continue;
+        unfastenBelts(injectedFile, 0);
       }
 
       int size = pointers.size();
@@ -147,21 +157,22 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
-  //private static final Key<SmartPsiElementPointer> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
+  private static final Key<Reference<SmartPsiElementPointer>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
     if (!element.isValid()) {
       LOG.error("Invalid element:" + element);
     }
-    //final SmartPsiElementPointer cachedPointer = element.getUserData(CACHED_SMART_POINTER_KEY);
-    //if (cachedPointer != null) {
-    //  return cachedPointer;
-    //}
+    Reference<SmartPsiElementPointer> data = element.getUserData(CACHED_SMART_POINTER_KEY);
+    SmartPsiElementPointer cachedPointer = data == null ? null : data.get();
+    if (cachedPointer != null) {
+      return cachedPointer;
+    }
 
     PsiFile containingFile = element.getContainingFile();
     SmartPointerEx<E> pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile);
     initPointer(pointer, containingFile);
-    //element.putUserData(CACHED_SMART_POINTER_KEY, pointer);
+    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<SmartPsiElementPointer>(pointer));
     return pointer;
   }
 

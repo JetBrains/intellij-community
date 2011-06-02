@@ -32,11 +32,11 @@ public class ServiceManager {
   private ServiceManager() {
   }
 
-  public static <T> T getService(Class<T> serviceClass) {
+  public static <T> T getService(@NotNull Class<T> serviceClass) {
     return (T)ApplicationManager.getApplication().getPicoContainer().getComponentInstance(serviceClass.getName());
   }
 
-  public static <T> T getService(Project project, Class<T> serviceClass) {
+  public static <T> T getService(@NotNull Project project, @NotNull Class<T> serviceClass) {
     return (T)project.getPicoContainer().getComponentInstance(serviceClass.getName());
   }
 
@@ -47,7 +47,7 @@ public class ServiceManager {
    * @param <T>          Service class type.
    * @return Key instance.
    */
-  public static <T> NotNullLazyKey<T, Project> createLazyKey(final Class<T> serviceClass) {
+  public static <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull final Class<T> serviceClass) {
     return NotNullLazyKey.create("Service: " + serviceClass.getName(), new NotNullFunction<Project, T>() {
       @NotNull
       public T fun(Project project) {

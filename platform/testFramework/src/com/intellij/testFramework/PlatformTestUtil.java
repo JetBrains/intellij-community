@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -47,6 +48,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
 import org.junit.Assert;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NonNls;
@@ -62,6 +64,7 @@ import java.awt.event.InvocationEvent;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -526,6 +529,18 @@ public class PlatformTestUtil {
       }
     });
     assertDirectoriesEqual(dirAfter, dirBefore, CVS_FILE_FILTER);
+  }
+
+  public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
+    if (!JDOMUtil.areElementsEqual(expected, actual)) {
+      junit.framework.Assert.assertEquals(printElement(expected), printElement(actual));
+    }
+  }
+
+  public static String printElement(final Element element) throws IOException {
+    final StringWriter writer = new StringWriter();
+    JDOMUtil.writeElement(element, writer, "\n");
+    return writer.getBuffer().toString();
   }
 
   public static class CvsVirtualFileFilter implements VirtualFileFilter, FilenameFilter {

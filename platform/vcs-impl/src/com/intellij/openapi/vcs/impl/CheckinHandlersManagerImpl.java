@@ -25,7 +25,9 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,14 +41,14 @@ import java.util.List;
  */
 public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
   private final List<BaseCheckinHandlerFactory> myRegisteredBeforeCheckinHandlers;
-  private final MultiMap<VcsKey, BaseCheckinHandlerFactory> myVcsMap;
+  private final MultiMap<VcsKey, VcsCheckinHandlerFactory> myVcsMap;
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
 
   public CheckinHandlersManagerImpl(final Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
-    myVcsMap = new MultiMap<VcsKey, BaseCheckinHandlerFactory>();
+    myVcsMap = new MultiMap<VcsKey, VcsCheckinHandlerFactory>();
     myRegisteredBeforeCheckinHandlers = new ArrayList<BaseCheckinHandlerFactory>();
 
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -69,12 +71,24 @@ public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
       new ArrayList<BaseCheckinHandlerFactory>(myRegisteredBeforeCheckinHandlers.size() + allActiveVcss.length);
     list.addAll(myRegisteredBeforeCheckinHandlers);
     for (AbstractVcs vcs : allActiveVcss) {
-      final Collection<BaseCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
+      final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
       if (factories != null && ! factories.isEmpty()) {
         list.addAll(factories);
       }
     }
     return list;
+  }
+
+  @Override
+  public List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull List<AbstractVcs> vcsList) {
+    final SmartList<VcsCheckinHandlerFactory> result = new SmartList<VcsCheckinHandlerFactory>();
+    for (AbstractVcs vcs : vcsList) {
+      final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
+      if (factories != null && ! factories.isEmpty()) {
+        result.addAll(factories);
+      }
+    }
+    return result;
   }
 
   @Override

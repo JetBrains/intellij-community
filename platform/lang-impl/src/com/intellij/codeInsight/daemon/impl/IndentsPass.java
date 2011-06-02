@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -324,6 +325,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
     int prevColumn = -1;
     final EditorHighlighter highlighter = myEditor.getHighlighter();
+    final FileType fileType = myFile.getFileType();
+
     for (int line = 0; line < lineIndents.length; line++) {
       int lineStart = doc.getLineStartOffset(line);
       int lineEnd = doc.getLineEndOffset(line);
@@ -354,7 +357,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
       else {
         int startLine = line;
-        while (line < lineIndents.length && lineIndents[line] == -1) {
+        while (line < lineIndents.length && lineIndents[line] < 0) {
           //noinspection AssignmentToForLoopParameter
           line++;
         }
@@ -365,7 +368,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         if (bottomIndent < topIndent) {
           int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, doc.getLineStartOffset(line), " \t");
           HighlighterIterator iterator = highlighter.createIterator(nonWhitespaceOffset);
-          if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFile.getFileType())) {
+          if (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType)) {
             indent = topIndent;
           }
         }

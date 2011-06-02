@@ -79,8 +79,8 @@ public class ClassPresentationUtil {
     }
   }
 
+  @NotNull
   public static ItemPresentation getPresentation(@NotNull final PsiClass psiClass) {
-    if (psiClass instanceof PsiAnonymousClass) return null;
     return new ItemPresentation() {
       public String getPresentableText() {
         return getNameForClass(psiClass, false);

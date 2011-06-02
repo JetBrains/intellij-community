@@ -70,7 +70,7 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
         ((GroovyFileBase)file).addImportForClass(psiClass);
         return;
       }
-      else if (aClass == JavaCompletionUtil.getOriginalElement(psiClass)) {
+      else if (aClass == CompletionUtil.getOriginalOrSelf(psiClass)) {
         return;
       }
     }

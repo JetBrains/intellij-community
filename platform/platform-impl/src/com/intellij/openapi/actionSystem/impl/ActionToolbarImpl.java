@@ -88,19 +88,24 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private static final Icon myAutoPopupIcon = IconLoader.getIcon("/ide/link.png");
   private static final Icon mySecondaryGroupIcon = IconLoader.getIcon("/general/secondaryGroup.png");
+
   private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
+
+  public ActionButton getSecondaryActionsButton() {
+    return mySecondaryActionsButton;
+  }
+
   private ActionButton mySecondaryActionsButton;
-
   private final KeymapManagerEx myKeymapManager;
+
   private int myFirstOusideIndex = -1;
-
   private JBPopup myPopup;
-  private JComponent myTargetComponent;
 
+  private JComponent myTargetComponent;
   private boolean myReservePlaceAutoPopupIcon = true;
+
   private WeakTimerListener myWeakTimerListener;
   @SuppressWarnings({"FieldCanBeLocal"}) private ActionToolbarImpl.MyTimerListener myTimerListener;
-
   public ActionToolbarImpl(final String place,
                            @NotNull final ActionGroup actionGroup,
                            final boolean horizontal,
@@ -155,7 +160,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myActionManager.addTimerListener(500, myWeakTimerListener);
     myActionManager.addTransparrentTimerListener(500, myWeakTimerListener);
   }
-  
+
   private boolean doMacEnhancementsForMainToolbar() {
     return UIUtil.isUnderAquaLookAndFeel() && ActionPlaces.MAIN_TOOLBAR.equals(myPlace);
   }

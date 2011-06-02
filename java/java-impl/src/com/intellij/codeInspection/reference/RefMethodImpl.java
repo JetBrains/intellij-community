@@ -13,15 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Oct 21, 2001
- * Time: 4:29:30 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -39,6 +30,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * @author max
+ * Date: Oct 21, 2001
+ */
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final List<RefMethod> EMPTY_METHOD_LIST = Collections.emptyList();
   private static final RefParameter[] EMPTY_PARAMS_ARRAY = new RefParameter[0];
@@ -64,16 +59,24 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private String myReturnValueTemplate;
   protected final RefClass myOwnerClass;
 
-  RefMethodImpl(PsiMethod method, RefManager manager) {
-    this((RefClass)((RefManagerImpl)manager).getReference(method.getContainingClass(), true), method, manager);
-  }
-
-  RefMethodImpl(RefClass ownerClass, PsiMethod method, RefManager manager) {
+  RefMethodImpl(@NotNull RefClass ownerClass, PsiMethod method, RefManager manager) {
     super(method, manager);
 
     ((RefClassImpl)ownerClass).add(this);
 
     myOwnerClass = ownerClass;
+  }
+
+  // To be used only from RefImplicitConstructor.
+  protected RefMethodImpl(String name, RefClass ownerClass) {
+    super(name, ownerClass);
+    myOwnerClass = ownerClass;
+    ((RefClassImpl)ownerClass).add(this);
+
+    addOutReference(getOwnerClass());
+    ((RefClassImpl)getOwnerClass()).addInReference(this);
+
+    setConstructor(true);
   }
 
   protected void initialize() {
@@ -173,22 +176,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
-  // To be used only from RefImplicitConstructor.
-  protected RefMethodImpl(String name, RefClass ownerClass) {
-    super(name, ownerClass);
-    myOwnerClass = ownerClass;
-    ((RefClassImpl)ownerClass).add(this);
-
-    addOutReference(getOwnerClass());
-    ((RefClassImpl)getOwnerClass()).addInReference(this);
-
-    setConstructor(true);
-
-  }
-
   @NotNull
   public Collection<RefMethod> getSuperMethods() {
     if (mySuperMethods == null) return EMPTY_METHOD_LIST;
+    if (mySuperMethods.size() > 10) {
+      LOG.info("method: " + getName() + " owner:" + getOwnerClass().getQualifiedName());
+    }
     return mySuperMethods;
   }
 
@@ -226,7 +219,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public void addSuperMethod(RefMethodImpl refSuperMethod) {
-    if (!getSuperMethods().contains(refSuperMethod)) {
+    if (!getSuperMethods().contains(refSuperMethod) && !refSuperMethod.getSuperMethods().contains(this)) {
       if (mySuperMethods == null){
         mySuperMethods = new ArrayList<RefMethod>(1);
       }
@@ -235,7 +228,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public void markExtended(RefMethodImpl method) {
-    if (!getDerivedMethods().contains(method)) {
+    if (!getDerivedMethods().contains(method) && !method.getDerivedMethods().contains(this)) {
       if (myDerivedMethods == null) {
         myDerivedMethods = new ArrayList<RefMethod>(1);
       }

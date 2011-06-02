@@ -51,6 +51,11 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
 public class CopyReferenceAction extends AnAction {
+  public CopyReferenceAction() {
+    super();
+    setInjectedContext(true);
+  }
+
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     boolean enabled = isEnabled(dataContext);

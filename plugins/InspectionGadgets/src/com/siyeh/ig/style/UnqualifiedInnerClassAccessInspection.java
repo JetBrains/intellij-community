@@ -157,7 +157,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             if (referenceImportStatement != null) {
                 referenceImportStatement.delete();
             }
-            ImportUtils.addImportIfNeeded(javaFile, containingClass);
+            ImportUtils.addImportIfNeeded(containingClass, referenceElement);
             final PsiDocumentManager documentManager =
                     PsiDocumentManager.getInstance(project);
             final Document document =

@@ -51,7 +51,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -74,7 +74,7 @@ public class FileManagerImpl implements FileManager {
   private final ProjectRootManager myProjectRootManager;
   private ProjectFileIndex myProjectFileIndex = null;
 
-  private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>();
+  private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentSoftValueHashMap<VirtualFile, PsiDirectory>();
   private final ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
 
   private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache = new ConcurrentFactoryMap<VirtualFile, GlobalSearchScope>() {

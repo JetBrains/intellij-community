@@ -39,8 +39,12 @@ import org.jetbrains.annotations.Nullable;
 public class PsiClassConverter extends Converter<PsiClass> implements CustomReferenceConverter<PsiClass> {
 
   public PsiClass fromString(final String s, final ConvertContext context) {
+    return findClass(s, context);
+  }
+
+  public static PsiClass findClass(String s, ConvertContext context) {
     final DomElement element = context.getInvocationElement();
-    final GlobalSearchScope scope = element instanceof GenericDomValue ? getScope((GenericDomValue)element) : null;
+    final GlobalSearchScope scope = element instanceof GenericDomValue ? getSearchScope((GenericDomValue)element) : null;
     return DomJavaUtil.findClass(s, context.getFile(), context.getModule(), scope);
   }
 
@@ -63,12 +67,17 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
 
   protected JavaClassReferenceProvider createClassReferenceProvider(final GenericDomValue<PsiClass> genericDomValue, ConvertContext context,
                                                                     ExtendClass extendClass) {
+    return createJavaClassReferenceProvider(genericDomValue, extendClass);
+  }
+
+  public static JavaClassReferenceProvider createJavaClassReferenceProvider(final GenericDomValue genericDomValue,
+                                                                            ExtendClass extendClass) {
     final JavaClassReferenceProvider provider =
       new JavaClassReferenceProvider() {
 
         @Override
         public GlobalSearchScope getScope(Project project) {
-          return PsiClassConverter.this.getScope(genericDomValue);
+          return PsiClassConverter.getSearchScope(genericDomValue);
         }
       };
 
@@ -107,8 +116,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     return provider;
   }
 
-  @Nullable
-  protected GlobalSearchScope getScope(final GenericDomValue domValue) {
+  protected static GlobalSearchScope getSearchScope(GenericDomValue domValue) {
     final Module module = domValue.getModule();
     if (module == null) return null;
     XmlElement element = domValue.getXmlElement();
@@ -121,6 +129,12 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
     boolean tests = fileIndex.isInTestSourceContent(virtualFile);
     return module.getModuleRuntimeScope(tests);
+
+  }
+
+  @Nullable
+  protected  GlobalSearchScope getScope(final GenericDomValue domValue) {
+    return getSearchScope(domValue);
   }
 
   public static class AnnotationType extends PsiClassConverter {

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.Timings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
@@ -435,9 +436,9 @@ public class VirtualFilePointerTest extends IdeaTestCase {
     };
     VirtualFileManager.getInstance().addVirtualFileListener(listener, getTestRootDisposable());
 
-    System.out.println("------------------");
-
-    for (int i=0;i<1000;i++) {
+    int N = Timings.adjustAccordingToMySpeed(1000);
+    System.out.println("N = " + N);
+    for (int i=0;i< N;i++) {
       assertNotNull(pointer.getFile());
       FileUtil.delete(ioPtrBase);
       doVfsRefresh();

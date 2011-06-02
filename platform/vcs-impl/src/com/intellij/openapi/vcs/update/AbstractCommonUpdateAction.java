@@ -19,6 +19,8 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,7 +56,6 @@ import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -91,16 +92,16 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles = createVcsToFilesMap(roots, project);
 
-        if (showUpdateOptions || OptionsDialog.shiftIsPressed(context.getModifiers())) {
-          showOptionsDialog(vcsToVirtualFiles, project, context);
-        }
-
         for (AbstractVcs vcs : vcsToVirtualFiles.keySet()) {
           final UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
           if ((updateEnvironment != null) && (! updateEnvironment.validateOptions(vcsToVirtualFiles.get(vcs)))) {
             // messages already shown
             return;
           }
+        }
+
+        if (showUpdateOptions || OptionsDialog.shiftIsPressed(context.getModifiers())) {
+          showOptionsDialog(vcsToVirtualFiles, project, context);
         }
 
         if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -257,6 +258,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       if (supportingVcsesAreEmpty(vcsManager, myActionInfo)) {
         presentation.setVisible(myAlwaysVisible);
         presentation.setEnabled(false);
+        return;
       }
 
       if (filterRootsBeforeAction()) {
@@ -264,6 +266,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         if (roots.length == 0) {
           presentation.setVisible(myAlwaysVisible);
           presentation.setEnabled(false);
+          return;
         }
       }
 
@@ -445,15 +448,22 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
-    @Nullable
-    public NotificationInfo getNotificationInfo() {
+    @Override
+    public NotificationInfo notifyFinished() {
       StringBuffer text = new StringBuffer();
       final List<FileGroup> groups = myUpdatedFiles.getTopLevelGroups();
       for (FileGroup group : groups) {
         appendGroup(text, group);
       }
 
-      return new NotificationInfo("VCS Update", "VCS Update Finished", text.toString(), true);
+      final String title = "VCS Update Finished";
+
+      String log = title;
+      if (text.length() > 0) {
+        log += ": " + text.toString();
+      }
+      Notifications.Bus.logEvent(log, NotificationType.INFORMATION, myProject);
+      return new NotificationInfo("VCS Update", title, log, true);
     }
 
     private void appendGroup(final StringBuffer text, final FileGroup group) {

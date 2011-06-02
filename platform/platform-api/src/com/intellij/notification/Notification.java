@@ -29,24 +29,26 @@ import java.lang.ref.WeakReference;
 public class Notification {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.Notification");
 
-  private String myGroupId;
-  private String myContent;
-  private NotificationType myType;
-  private NotificationListener myListener;
-  private String myTitle;
+  private final String myGroupId;
+  private final String myContent;
+  private final NotificationType myType;
+  private final NotificationListener myListener;
+  private final String myTitle;
   private boolean myExpired;
   private WeakReference<Balloon> myBalloonRef;
 
   public Notification(@NotNull final String groupId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type) {
+    this(groupId, title, content, type, null);
+  }
+
+  public Notification(@NotNull final String groupId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type, @Nullable NotificationListener listener) {
     myGroupId = groupId;
     myTitle = title;
     myContent = content;
     myType = type;
-  }
-
-  public Notification(@NotNull final String groupId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type, @Nullable NotificationListener listener) {
-    this(groupId, title, content, type);
     myListener = listener;
+
+    LOG.assertTrue(myContent.trim().length() > 0, "Notification should have content, groupId: " + myGroupId);
   }
 
   @Nullable
@@ -59,13 +61,13 @@ public class Notification {
     return myGroupId;
   }
 
+  @NotNull
   public String getTitle() {
     return myTitle;
   }
 
   @NotNull
   public String getContent() {
-    LOG.assertTrue(myContent.trim().length() > 0, "Notification should have content, groupId: " + myGroupId);
     return myContent;
   }
 

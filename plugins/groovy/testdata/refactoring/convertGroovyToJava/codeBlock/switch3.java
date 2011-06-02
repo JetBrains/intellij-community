@@ -6,5 +6,6 @@ print("bbb");
 else if (org.codehaus.groovy.runtime.DefaultGroovyMethods.isCase(new java.util.Date(45, 1, 2), date)) {
 print("bbb");
 }
-else print("ccc");
-
+else {
+print("ccc");
+}

@@ -307,6 +307,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void clear() {
+    if (myEditor == null) return;
     synchronized (LOCK) {
       // let's decrease myContentSize by size of deferred output text
       // then in EDT we will clear already flushed output (editor content)
@@ -325,6 +326,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void scrollTo(final int offset) {
+    if (myEditor == null) return;
     final Runnable scrollRunnable = new Runnable() {
       public void run() {
         flushDeferredText(false);

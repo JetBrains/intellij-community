@@ -17,9 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -39,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -80,7 +77,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       setReturnType(PsiType.getJavaLangObject(getManager(), getResolveScope())).
       addModifier(PsiModifier.PUBLIC);
 
-    myModifierList = new LightModifierList(myManager, Collections.singleton(GrModifier.PUBLIC));
+    myModifierList = new LightModifierList(myManager, Collections.singleton(PsiModifier.PUBLIC));
   }
 
 
@@ -102,7 +99,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return new GroovyScriptClass(myFile);
   }
 
-  public PsiFile getContainingFile() {
+  public GroovyFile getContainingFile() {
     return myFile;
   }
 
@@ -355,20 +352,29 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<List<GrVariable>>() {
       @Override
       public Result<List<GrVariable>> compute() {
-        final List<GrVariable> result = new ArrayList<GrVariable>();
-        myFile.accept(new PsiRecursiveElementWalkingVisitor() {
+        List<GrVariable> result = RecursionManager.createGuard("groovy.scriptFields").doPreventingRecursion(GroovyScriptClass.this, new Computable<List<GrVariable>>() {
           @Override
-          public void visitElement(PsiElement element) {
-            if (element instanceof GrVariableDeclaration &&
-                ((GrVariableDeclaration)element).getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
-              Collections.addAll(result, ((GrVariableDeclaration)element).getVariables());
-            }
+          public List<GrVariable> compute() {
+            final List<GrVariable> result = new ArrayList<GrVariable>();
+            myFile.accept(new PsiRecursiveElementWalkingVisitor() {
+              @Override
+              public void visitElement(PsiElement element) {
+                if (element instanceof GrVariableDeclaration &&
+                    ((GrVariableDeclaration)element).getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
+                  Collections.addAll(result, ((GrVariableDeclaration)element).getVariables());
+                }
 
-            super.visitElement(element);
+                super.visitElement(element);
+              }
+            });
+            return result;
           }
         });
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, myFile);
 
+        if (result == null) {
+          result = Collections.emptyList();
+        }
+        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, myFile);
       }
     });
   }

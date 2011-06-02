@@ -15,18 +15,17 @@
  */
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.codeInsight.TestUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.TypeSelectorManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -41,7 +40,7 @@ import java.awt.event.ItemListener;
 public abstract class IntroduceFieldCentralPanel {
    protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
 
-  protected static boolean ourLastCbFinalState = false;
+  public static boolean ourLastCbFinalState = false;
 
   protected final PsiClass myParentClass;
   protected final PsiExpression myInitializerExpression;
@@ -244,8 +243,10 @@ public abstract class IntroduceFieldCentralPanel {
     }
   }
 
+  @TestOnly
   public void setCreateFinal(boolean createFinal) {
     myCbFinal.setSelected(createFinal);
+    myCbFinal.setEnabled(true);
   }
 
   protected void enableFinal(boolean enable){

@@ -325,8 +325,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
           result.add(new Pair<Element, String>(element, name));
         }
       }
-      result.add(new Pair<Element, String>(e, generator.generateUniqueName("scope_settings") + ".xml"));
-      return result;
+       if (e.getChildren().size() > 0) {
+         result.add(new Pair<Element, String>(e, generator.generateUniqueName("scope_settings") + ".xml"));
+       }
+       return result;
     }
 
     public void mergeStatesInto(Element target, Element[] elements) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
+import com.intellij.psi.impl.source.xml.PossiblePrefixReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -34,7 +35,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,6 +159,15 @@ public class XmlRefCountHolder {
 
     private void visitOuterLanguageElement(@NotNull final PsiElement element) {
       myHolder.registerOuterLanguageElement(element);
+      PsiReference[] references = element.getReferences();
+      for (PsiReference reference : references) {
+        if (reference instanceof PossiblePrefixReference && ((PossiblePrefixReference)reference).isPrefixReference()) {
+          PsiElement resolve = reference.resolve();
+          if (resolve instanceof SchemaPrefix) {
+            myHolder.addUsedPrefix(((SchemaPrefix)resolve).getName());
+          }
+        }
+      }
     }
 
     @Override
@@ -224,12 +233,6 @@ public class XmlRefCountHolder {
             if (prefix != null) {
               myHolder.addUsedPrefix(prefix.getName());
             }
-          }
-        }
-        String[] prefixes = XmlExtension.getExtension(tag.getContainingFile()).getUsedPrefixes(value);
-        if (prefixes != null) {
-          for (String prefix : prefixes) {
-            myHolder.addUsedPrefix(prefix);
           }
         }
       }

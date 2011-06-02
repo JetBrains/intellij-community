@@ -34,7 +34,6 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressFunComponentProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -108,7 +107,7 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   public String getProcessId() {
-    return ProgressFunComponentProvider.COMPILATION_ID;
+    return "compilation";
   }
 
   @Override
@@ -654,3 +653,4 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 }
+                                      

@@ -20,11 +20,11 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
@@ -146,8 +146,12 @@ public class TargetElementUtilBase {
 
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null && (flags & LOOKUP_ITEM_ACCEPTED) != 0) {
-      final PsiElement lookupItem = getLookupItem(activeLookup);
-      return lookupItem != null && lookupItem.isValid() ? lookupItem : null;
+      LookupElement item = activeLookup.getCurrentItem();
+      final PsiElement psi = item == null ? null : CompletionUtil.getTargetElement(item);
+      if (psi != null && !psi.isValid()) {
+        throw new AssertionError("Invalid element in lookup: item=" + item);
+      }
+      return psi;
     }
 
     Document document = editor.getDocument();
@@ -244,33 +248,6 @@ public class TargetElementUtilBase {
       }
     }
     return null;
-  }
-
-  @Nullable
-  private static PsiElement getLookupItem(Lookup activeLookup) {
-    LookupElement item = activeLookup.getCurrentItem();
-    if (item == null) return null;
-    Object o = item.getObject();
-
-    if (o instanceof PsiElement) {
-      PsiElement element = (PsiElement)o;
-      if (!(element instanceof PsiDirectoryContainer)) {
-        if (!isValidElement(element)) return null;
-      }
-      return element;
-    }
-    else if (o instanceof LookupValueWithPsiElement) {
-      final PsiElement element = ((LookupValueWithPsiElement)o).getElement();
-      if (element != null && isValidElement(element)) return element;
-    }
-    return null;
-  }
-
-  private static boolean isValidElement(@NotNull PsiElement element) {
-    if (!element.isValid()) return false;
-    PsiFile file = element.getContainingFile();
-    if (file == null) return false;
-    return file.getOriginalFile().getVirtualFile() != null;
   }
 
   @Nullable

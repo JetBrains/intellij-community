@@ -34,20 +34,34 @@ public class ImportUtils {
 
     private ImportUtils() {}
 
-    public static void addImportIfNeeded(PsiJavaFile file, PsiClass aClass) {
-        final PsiFile containingFile = aClass.getContainingFile();
-        if (file.equals(containingFile)) {
+    public static void addImportIfNeeded(@NotNull PsiClass aClass,
+                                         @NotNull PsiElement context) {
+        final PsiFile file = context.getContainingFile();
+        if (!(file instanceof PsiJavaFile)) {
             return;
+        }
+        final PsiJavaFile javaFile = (PsiJavaFile) file;
+        final PsiClass outerClass = aClass.getContainingClass();
+        if (outerClass == null) {
+            if (PsiTreeUtil.isAncestor(javaFile, aClass, true)) {
+                return;
+            }
+        } else {
+            if (PsiTreeUtil.isAncestor(outerClass, context, true) &&
+                    !PsiTreeUtil.isAncestor(outerClass.getModifierList(),
+                            context, true)) {
+                return;
+            }
         }
         final String qualifiedName = aClass.getQualifiedName();
         if (qualifiedName == null) {
             return;
         }
-        final PsiImportList importList = file.getImportList();
+        final PsiImportList importList = javaFile.getImportList();
         if (importList == null) {
             return;
         }
-        final String containingPackageName = file.getPackageName();
+        final String containingPackageName = javaFile.getPackageName();
         @NonNls final String packageName =
                 ClassUtil.extractPackageName(qualifiedName);
         if (containingPackageName.equals(packageName) ||
@@ -56,8 +70,8 @@ public class ImportUtils {
             return;
         }
         if (importList.findOnDemandImportStatement(packageName) != null &&
-                !hasDefaultImportConflict(qualifiedName, file) &&
-                !hasOnDemandImportConflict(qualifiedName, file)) {
+                !hasDefaultImportConflict(qualifiedName, javaFile) &&
+                !hasOnDemandImportConflict(qualifiedName, javaFile)) {
             return;
         }
         final Project project = importList.getProject();

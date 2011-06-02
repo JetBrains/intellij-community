@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,26 +93,23 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   private static boolean isImported(PsiElement fileContext) {
-    return fileContext instanceof PsiImportStatement;
+    return fileContext instanceof PsiImportStatementBase;
   }
 
   private boolean isOnDemand(PsiElement fileContext, PsiClass psiClass) {
     if (isImported(fileContext)) {
       return ((PsiImportStatementBase)fileContext).isOnDemand();
     }
+
     String fqn = psiClass.getQualifiedName();
     if (fqn == null) return false;
     String packageName = StringUtil.getPackageName(fqn);
-    if ("java.lang".equals(packageName)) return true;
+    if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName)) return true;
 
     // class from my package imported implicitly
     PsiFile file = myPlace == null ? null : FileContextUtil.getContextFile(myPlace);
     
     return file instanceof PsiJavaFile && ((PsiJavaFile)file).getPackageName().equals(packageName);
-  }
-
-  private static enum Domination {
-    DOMINATES, DOMINATED_BY, EQUAL
   }
 
   private Domination dominates(PsiClass aClass, boolean accessible, String fqName, ClassCandidateInfo info) {
@@ -142,7 +139,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     // everything wins over class from default package
     boolean isDefault = StringUtil.getPackageName(fqName).length() == 0;
     boolean otherDefault = otherQName != null && StringUtil.getPackageName(otherQName).length() == 0;
-    if (isDefault && !otherDefault) return Domination.DOMINATED_BY;
+    if (isDefault && !otherDefault) {
+      return Domination.DOMINATED_BY;
+    }
     if (!isDefault && otherDefault) {
       return Domination.DOMINATES;
     }
@@ -150,7 +149,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     // single import wins over on-demand
     boolean myOnDemand = isOnDemand(myCurrentFileContext, aClass);
     boolean otherOnDemand = isOnDemand(info.getCurrentFileResolveScope(), otherClass);
-    if (myOnDemand && !otherOnDemand) return Domination.DOMINATED_BY;
+    if (myOnDemand && !otherOnDemand) {
+      return Domination.DOMINATED_BY;
+    }
     if (!myOnDemand && otherOnDemand) {
       return Domination.DOMINATES;
     }
@@ -195,8 +196,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   private boolean checkAccessibility(final PsiClass aClass) {
-    //We don't care about accessibility in javadocs
-
+    //We don't care about accessibility in javadoc
     if (JavaResolveUtil.isInJavaDoc(myPlace)) {
       return true;
     }
@@ -233,17 +233,17 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
       accessible = false;
-      if (facade.arePackagesTheSame(aClass, myPlace)) {
+      if (myPlace != null && facade.arePackagesTheSame(aClass, myPlace)) {
         accessible = true;
       }
       else {
         if (aClass.getContainingClass() != null) {
-          accessible = myAccessClass == null || facade.getResolveHelper().isAccessible(aClass, myPlace, myAccessClass);
+          accessible = myAccessClass == null || myPlace != null && facade.getResolveHelper().isAccessible(aClass, myPlace, myAccessClass);
         }
       }
     }
     if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      if (!facade.arePackagesTheSame(aClass, myPlace)) {
+      if (myPlace == null || !facade.arePackagesTheSame(aClass, myPlace)) {
         accessible = false;
       }
     }
@@ -253,9 +253,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   @Override
   public <T> T getHint(Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY || hintKey == NameHint.KEY) {
+      //noinspection unchecked
       return (T)this;
     }
-
     return super.getHint(hintKey);
   }
 }

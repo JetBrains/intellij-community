@@ -23,14 +23,18 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public interface ValueDescriptor extends NodeDescriptor{
   PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   Value getValue();
 
-  String setValueLabel(String customLabel);
+  String setValueLabel(String label);
 
   String setValueLabelFailed(EvaluateException e);
+
+  Icon setValueIcon(Icon icon);
 
   boolean isArray();
   boolean isLvalue();

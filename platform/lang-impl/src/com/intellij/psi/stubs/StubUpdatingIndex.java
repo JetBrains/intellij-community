@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,11 +84,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
                    IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
       if (b) {
         String extension = file.getExtension();
-        LOG.assertTrue(!"xml".equalsIgnoreCase(extension) && !"tld".equalsIgnoreCase(extension), "File: " + file +
-                                                                                                 " language: " + l +
-        " filetype: " + fileType +
-        " element type: " + elementType
-        );
+        LOG.assertTrue(!"xml".equalsIgnoreCase(extension) && !"tld".equalsIgnoreCase(extension),
+                       "File: " + file + " language: " + l + " file type: " + fileType + " element type: " + elementType);
       }
       return b;
     }
@@ -368,14 +365,23 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           indexStorage = memIndexStorage.getBackendStorage();
         }
       }
-      final ValueContainer<SerializedStubTree> valueContainer = indexStorage.read(key);
-      if (valueContainer.size() != 1) {
-        LOG.assertTrue(valueContainer.size() == 0);
+      try {
+        final ValueContainer<SerializedStubTree> valueContainer = indexStorage.read(key);
+        if (valueContainer.size() != 1) {
+          LOG.assertTrue(valueContainer.size() == 0);
+          return result;
+        }
+
+        result.put(key, valueContainer.getValueIterator().next());
         return result;
       }
-
-      result.put(key, valueContainer.getValueIterator().next());
-      return result;
+      catch (RuntimeException e) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof IOException) {
+          throw new StorageException(cause);
+        }
+        throw e;
+      }
     }
 
     public void clear() throws StorageException {

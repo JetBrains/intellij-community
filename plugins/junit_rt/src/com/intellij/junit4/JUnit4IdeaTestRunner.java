@@ -34,7 +34,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
   public int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree) {
 
-    final Request request = JUnit4TestRunnerUtil.buildRequest(args);
+    final Request request = JUnit4TestRunnerUtil.buildRequest(args, sendTree);
     final Runner testRunner = request.getRunner();
     try {
       Description description = testRunner.getDescription();
@@ -132,7 +132,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   }
 
   public Object getTestToStart(String[] args) {
-    final Request request = JUnit4TestRunnerUtil.buildRequest(args);
+    final Request request = JUnit4TestRunnerUtil.buildRequest(args, false);
     final Runner testRunner = request.getRunner();
     Description description = null;
     try {

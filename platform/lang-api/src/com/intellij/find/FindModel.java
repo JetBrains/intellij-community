@@ -34,6 +34,17 @@ import java.util.regex.PatternSyntaxException;
 public class FindModel extends UserDataHolderBase implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.FindModel");
 
+  public static void initStringToFindNoMultiline(FindModel findModel, String s) {
+    if (!StringUtil.isEmpty(s)) {
+      if (!s.contains("\r") && !s.contains("\n")) {
+        findModel.setStringToFind(s);
+      } else {
+        findModel.setStringToFind(StringUtil.escapeToRegexp(s));
+        findModel.setRegularExpressions(true);
+      }
+    }
+  }
+
   public interface FindModelObserver {
     void findModelChanged(FindModel findModel);
   }
@@ -82,6 +93,23 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   private String customScopeName;
   private SearchScope customScope;
   private boolean isCustomScope = false;
+  private boolean isMultiline = false;
+
+  public boolean isMultiline() {
+    return isMultiline;
+  }
+
+  public void setMultiline(boolean multiline) {
+    if (multiline != isMultiline) {
+      if (!multiline) {
+        initStringToFindNoMultiline(this, getStringToFind());
+      } else {
+        setRegularExpressions(false);
+      }
+      isMultiline = multiline;
+      notifyObservers();
+    }
+  }
 
   /**
    * Gets the Preserve Case flag.
@@ -141,6 +169,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
     isInCommentsOnly = model.isInCommentsOnly;
     isInStringLiteralsOnly = model.isInStringLiteralsOnly;
+
+    isMultiline = model.isMultiline;
   }
 
   /**

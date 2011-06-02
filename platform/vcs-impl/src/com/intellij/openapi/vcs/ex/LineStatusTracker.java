@@ -24,14 +24,18 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +50,8 @@ import java.util.ListIterator;
  */
 public class LineStatusTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
+  private static final Key<CanNotCalculateDiffPanel> PANEL_KEY = new Key<CanNotCalculateDiffPanel>("LineStatusTracker.CanNotCalculateDiffPanel");
+
   private final Object myLock = new Object();
   // true -> have contents
   private BaseLoadState myBaseLoaded;
@@ -64,8 +70,12 @@ public class LineStatusTracker {
   @Nullable
   private RevisionPack myBaseRevisionNumber;
   private String myPreviousBaseRevision;
+  private boolean myAnathemaThrown;
+  private FileEditorManager myFileEditorManager;
+  private final VirtualFile myVirtualFile;
 
-  private LineStatusTracker(final Document document, final Document upToDateDocument, final Project project) {
+  private LineStatusTracker(final Document document, final Document upToDateDocument, final Project project, final VirtualFile virtualFile) {
+    myVirtualFile = virtualFile;
     myApplication = ApplicationManager.getApplication();
     myDocument = document;
     myUpToDateDocument = upToDateDocument;
@@ -73,6 +83,8 @@ public class LineStatusTracker {
     myProject = project;
     myBaseLoaded = BaseLoadState.LOADING;
     myRanges = new ArrayList<Range>();
+    myAnathemaThrown = false;
+    myFileEditorManager = FileEditorManager.getInstance(myProject);
   }
 
   public void initialize(@NotNull final String upToDateContent, @NotNull RevisionPack baseRevisionNumber) {
@@ -119,10 +131,30 @@ public class LineStatusTracker {
     myApplication.assertReadAccessAllowed();
 
     synchronized (myLock) {
+      removeAnathema();
       removeHighlightersFromMarkupModel();
-      myRanges = new RangesBuilder(myDocument, myUpToDateDocument).getRanges();
+      try {
+        myRanges = new RangesBuilder(myDocument, myUpToDateDocument).getRanges();
+      }
+      catch (FilesTooBigForDiffException e) {
+        installAnathema();
+        return;
+      }
       for (final Range range : myRanges) {
         range.setHighlighter(createHighlighter(range));
+      }
+    }
+  }
+
+  private void removeAnathema() {
+    if (! myAnathemaThrown) return;
+    myAnathemaThrown = false;
+    final FileEditor[] editors = myFileEditorManager.getEditors(myVirtualFile);
+    for (FileEditor editor : editors) {
+      final CanNotCalculateDiffPanel panel = editor.getUserData(PANEL_KEY);
+      if (panel != null) {
+        myFileEditorManager.removeTopComponent(editor, panel);
+        editor.putUserData(PANEL_KEY, null);
       }
     }
   }
@@ -163,6 +195,7 @@ public class LineStatusTracker {
       if (myDocumentListener != null) {
         myDocument.removeDocumentListener(myDocumentListener);
       }
+      removeAnathema();
       removeHighlightersFromMarkupModel();
       myRanges.clear();
     }
@@ -173,7 +206,7 @@ public class LineStatusTracker {
   }
 
   public VirtualFile getVirtualFile() {
-    return FileDocumentManager.getInstance().getFile(getDocument());
+    return myVirtualFile;
   }
 
   public List<Range> getRanges() {
@@ -192,6 +225,7 @@ public class LineStatusTracker {
   public void startBulkUpdate() {
     synchronized (myLock) {
       myBulkUpdate = true;
+      removeAnathema();
       removeHighlightersFromMarkupModel();
       myRanges.clear();
     }
@@ -228,6 +262,7 @@ public class LineStatusTracker {
       myUpToDateDocument.setReadOnly(false);
       myUpToDateDocument.setText("");
       myUpToDateDocument.setReadOnly(true);
+      removeAnathema();
       removeHighlightersFromMarkupModel();
       myRanges.clear();
       myBaseLoaded = BaseLoadState.LOADING;
@@ -246,7 +281,7 @@ public class LineStatusTracker {
       myApplication.assertWriteAccessAllowed();
 
       synchronized (myLock) {
-        if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
+        if (myBulkUpdate || myAnathemaThrown || (BaseLoadState.LOADED != myBaseLoaded)) return;
         try {
           myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
           myLastChangedLine = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
@@ -298,7 +333,7 @@ public class LineStatusTracker {
       myApplication.assertWriteAccessAllowed();
 
       synchronized (myLock) {
-        if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
+        if (myBulkUpdate || myAnathemaThrown || (BaseLoadState.LOADED != myBaseLoaded)) return;
         try {
 
           int line = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
@@ -340,11 +375,15 @@ public class LineStatusTracker {
             }
           }
         } catch (ProcessCanceledException ignore) {
+        } catch (FilesTooBigForDiffException e1) {
+          installAnathema();
+          removeHighlightersFromMarkupModel();
+          myRanges.clear();
         }
       }
     }
 
-    private List<Range> getNewChangedRanges() {
+    private List<Range> getNewChangedRanges() throws FilesTooBigForDiffException {
       List<String> lines = new DocumentWrapper(myDocument).getLines(myFirstChangedLine, myLastChangedLine);
       List<String> uLines = new DocumentWrapper(myUpToDateDocument)
         .getLines(myUpToDateFirstLine, myUpToDateLastLine);
@@ -567,9 +606,9 @@ public class LineStatusTracker {
     }
   }
 
-  public static LineStatusTracker createOn(final Document doc, final Project project) {
+  public static LineStatusTracker createOn(@Nullable VirtualFile virtualFile, final Document doc, final Project project) {
     final Document document = new DocumentImpl(true);
-    return new LineStatusTracker(doc, document, project);
+    return new LineStatusTracker(doc, document, project, virtualFile);
   }
 
   public void baseRevisionLoadFailed() {
@@ -619,6 +658,25 @@ public class LineStatusTracker {
     @Override
     public int hashCode() {
       return myRevision.hashCode();
+    }
+  }
+
+  private void installAnathema() {
+    myAnathemaThrown = true;
+    final FileEditor[] editors = myFileEditorManager.getAllEditors(myVirtualFile);
+    for (FileEditor editor : editors) {
+      CanNotCalculateDiffPanel panel = editor.getUserData(PANEL_KEY);
+      if (panel == null) {
+        final CanNotCalculateDiffPanel newPanel = new CanNotCalculateDiffPanel();
+        editor.putUserData(PANEL_KEY, newPanel);
+        myFileEditorManager.addTopComponent(editor, newPanel);
+      }
+    }
+  }
+
+  public static class CanNotCalculateDiffPanel extends EditorNotificationPanel {
+    public CanNotCalculateDiffPanel() {
+      myLabel.setText("Can not highlight changed lines. File is too big and there are too many changes.");
     }
   }
 }

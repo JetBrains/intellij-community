@@ -42,10 +42,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -381,7 +378,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     final Pair<List<LookupElement>,Iterable<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
 
-    final List<LookupElement> items = matchingItems(snapshot);
+    final LinkedHashSet<LookupElement> items = matchingItems(snapshot);
 
     checkMinPrefixLengthChanges(items);
 
@@ -390,8 +387,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     String oldInvariant = mySelectionInvariant;
 
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
-    model.addAll(getPrefixItems(items));
+    model.addAll(getPrefixItems(items, true));
+    model.addAll(getPrefixItems(items, false));
+
+    myFrozenItems.retainAll(items);
     model.addAll(myFrozenItems);
+
     addMostRelevantItems(model, snapshot.second);
     if (hasPreselected) {
       model.add(myPreselectedItem);
@@ -424,7 +425,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!model.isEmpty()) {
       myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getAdComponent().getPreferredSize().width));
 
-      if (isFocused() && (!isExactPrefixItem(model.iterator().next()) || mySelectionTouched)) {
+      if (isFocused() && (!isExactPrefixItem(model.iterator().next(), true) || mySelectionTouched)) {
         restoreSelection(oldSelected, hasPreselected, oldInvariant);
       }
       else {
@@ -433,8 +434,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
-  private List<LookupElement> matchingItems(Pair<List<LookupElement>, Iterable<List<LookupElement>>> snapshot) {
-    final List<LookupElement> items = new ArrayList<LookupElement>();
+  private LinkedHashSet<LookupElement> matchingItems(Pair<List<LookupElement>, Iterable<List<LookupElement>>> snapshot) {
+    final LinkedHashSet<LookupElement> items = new LinkedHashSet<LookupElement>();
     for (LookupElement element : snapshot.first) {
       if (prefixMatches(element)) {
         items.add(element);
@@ -552,10 +553,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myFrozenItems.contains(element);
   }
 
-  private List<LookupElement> getPrefixItems(final Collection<LookupElement> elements) {
+  private List<LookupElement> getPrefixItems(final Collection<LookupElement> elements, final boolean caseSensitive) {
     List<LookupElement> better = new ArrayList<LookupElement>();
     for (LookupElement element : elements) {
-      if (isExactPrefixItem(element)) {
+      if (isExactPrefixItem(element, caseSensitive)) {
         better.add(element);
       }
     }
@@ -566,11 +567,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       Collections.sort(better, itemComparator);
     }
 
-    final Classifier<LookupElement> classifier = arranger.createRelevanceClassifier();
-    for (LookupElement element : better) {
-      classifier.addElement(element);
-    }
-    return ContainerUtil.flatten(classifier.classify(better));
+    return myModel.classifyByRelevance(better);
+
+
   }
 
   @NotNull
@@ -586,8 +585,23 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myCustomArranger;
   }
 
-  private boolean isExactPrefixItem(LookupElement item) {
-    return item.getAllLookupStrings().contains(itemPattern(item));
+  private boolean isExactPrefixItem(LookupElement item, final boolean caseSensitive) {
+    final String pattern = itemPattern(item);
+    final Set<String> strings = item.getAllLookupStrings();
+    if (strings.contains(pattern)) {
+      return caseSensitive; //to not add the same elements twice to the model, as sensitive and then as insensitive
+    }
+
+    if (caseSensitive) {
+      return false;
+    }
+
+    for (String s : strings) {
+      if (s.equalsIgnoreCase(pattern)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean prefixMatches(final LookupElement item) {
@@ -893,6 +907,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void updateHint(@NotNull final LookupElement item) {
+    checkValid();
     if (myElementHint != null) {
       final JRootPane rootPane = getComponent().getRootPane();
       if (rootPane != null) {
@@ -1017,15 +1032,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
-  private static int divideString(String lookupString, PrefixMatcher matcher) {
-    for (int i = matcher.getPrefix().length(); i <= lookupString.length(); i++) {
-      if (matcher.prefixMatches(lookupString.substring(0, i))) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
   public boolean fillInCommonPrefix(boolean explicitlyInvoked) {
     if (explicitlyInvoked) {
       setFocused(true);
@@ -1045,37 +1051,39 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     final PrefixMatcher firstItemMatcher = itemMatcher(firstItem);
     final String oldPrefix = firstItemMatcher.getPrefix();
     final String presentPrefix = oldPrefix + myAdditionalPrefix;
-    final PrefixMatcher matcher = firstItemMatcher.cloneWithPrefix(presentPrefix);
-    String lookupString = firstItem.getLookupString();
-    int div = divideString(lookupString, matcher);
-    if (div < 0) return false;
-
-    String beforeCaret = lookupString.substring(0, div);
-    String afterCaret = lookupString.substring(div);
-
+    String commonPrefix = firstItem.getLookupString();
 
     for (int i = 1; i < listModel.getSize(); i++) {
       LookupElement item = (LookupElement)listModel.getElementAt(i);
       if (!oldPrefix.equals(itemMatcher(item).getPrefix())) return false;
 
-      lookupString = item.getLookupString();
-      div = divideString(lookupString, itemMatcher(item).cloneWithPrefix(presentPrefix));
-      if (div < 0) return false;
-
-      String _afterCaret = lookupString.substring(div);
-      if (beforeCaret != null) {
-        if (div != beforeCaret.length() || !lookupString.startsWith(beforeCaret)) {
-          beforeCaret = null;
-        }
+      final String lookupString = item.getLookupString();
+      final int length = Math.min(commonPrefix.length(), lookupString.length());
+      if (length < commonPrefix.length()) {
+        commonPrefix = commonPrefix.substring(0, length);
       }
 
-      while (afterCaret.length() > 0) {
-        if (_afterCaret.startsWith(afterCaret)) {
+      for (int j = 0; j < length; j++) {
+        if (commonPrefix.charAt(j) != lookupString.charAt(j)) {
+          commonPrefix = lookupString.substring(0, j);
           break;
         }
-        afterCaret = afterCaret.substring(0, afterCaret.length() - 1);
       }
-      if (afterCaret.length() == 0) return false;
+
+      if (commonPrefix.length() == 0 || commonPrefix.length() < presentPrefix.length()) {
+        return false;
+      }
+    }
+
+    if (commonPrefix.equals(presentPrefix)) {
+      return false;
+    }
+
+    for (int i = 0; i < listModel.getSize(); i++) {
+      LookupElement item = (LookupElement)listModel.getElementAt(i);
+      if (!itemMatcher(item).cloneWithPrefix(commonPrefix).prefixMatches(item)) {
+        return false;
+      }
     }
 
     if (myAdditionalPrefix.length() == 0 && myInitialPrefix == null && !explicitlyInvoked) {
@@ -1085,31 +1093,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myInitialPrefix = null;
     }
 
-    final String finalBeforeCaret = beforeCaret;
-    final String finalAfterCaret = afterCaret;
+    final String finalCommonPrefix = commonPrefix;
     Runnable runnable = new Runnable() {
       public void run() {
-        doInsertCommonPrefix(presentPrefix, finalBeforeCaret, finalAfterCaret);
+        doInsertCommonPrefix(presentPrefix, finalCommonPrefix);
       }
     };
     performGuardedChange(runnable);
     return true;
   }
 
-  private void doInsertCommonPrefix(String presentPrefix, String beforeCaret, String afterCaret) {
+  private void doInsertCommonPrefix(String presentPrefix, String newPrefix) {
     EditorModificationUtil.deleteSelectedText(myEditor);
     int offset = myEditor.getCaretModel().getOffset();
-    if (beforeCaret != null) { // correct case, expand camel-humps
-      final int start = offset - presentPrefix.length();
-      myAdditionalPrefix = "";
-      myEditor.getDocument().replaceString(start, offset, beforeCaret);
-      presentPrefix = beforeCaret;
-    }
-
-    offset = myEditor.getCaretModel().getOffset();
-    myEditor.getDocument().insertString(offset, afterCaret);
-
-    final String newPrefix = presentPrefix + afterCaret;
+    final int start = offset - presentPrefix.length();
+    myEditor.getDocument().replaceString(start, offset, newPrefix);
 
     Map<LookupElement, PrefixMatcher> newItems = myModel.retainMatchingItems(newPrefix, this);
     myMatchers.clear();
@@ -1117,8 +1115,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     myAdditionalPrefix = "";
 
-    offset += afterCaret.length();
-    myEditor.getCaretModel().moveToOffset(offset);
+    myEditor.getCaretModel().moveToOffset(start + newPrefix.length());
     refreshUi();
   }
 
@@ -1232,7 +1229,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      if (isExactPrefixItem(item)) {
+      if (isExactPrefixItem(item, true)) {
         return i;
       }
     }

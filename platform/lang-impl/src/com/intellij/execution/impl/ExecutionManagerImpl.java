@@ -151,10 +151,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
     Runnable startRunnable = new Runnable() {
       public void run() {
+        if (project.isDisposed()) return;
         boolean started = false;
         try {
-          if (project.isDisposed()) return;
-
           project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(executor.getId(), env);
 
           final RunContentDescriptor descriptor = starter.execute(project, executor, state, reuseContent, env);

@@ -27,7 +27,6 @@
   </project-components>
 
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Core.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/WindowManagement.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/components/*)"/>

@@ -83,25 +83,28 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     myIcon = new TallImageComponent(null);
 
-    getRootPane().registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          helpAction();
-        }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),
-      JComponent.WHEN_IN_FOCUSED_WINDOW
-    );
+    JRootPane rootPane = getRootPane();
+    if (rootPane != null) {        // it will be null in headless mode, i.e. tests
+      rootPane.registerKeyboardAction(
+        new ActionListener() {
+          public void actionPerformed(final ActionEvent e) {
+            helpAction();
+          }
+        },
+        KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),
+        JComponent.WHEN_IN_FOCUSED_WINDOW
+      );
 
-    getRootPane().registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          helpAction();
-        }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0),
-      JComponent.WHEN_IN_FOCUSED_WINDOW
-    );
+      rootPane.registerKeyboardAction(
+        new ActionListener() {
+          public void actionPerformed(final ActionEvent e) {
+            helpAction();
+          }
+        },
+        KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0),
+        JComponent.WHEN_IN_FOCUSED_WINDOW
+      );
+    }
   }
 
   protected JComponent createSouthPanel() {

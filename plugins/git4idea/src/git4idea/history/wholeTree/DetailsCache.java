@@ -13,15 +13,26 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SLRUMap;
 import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.LowLevelAccessImpl;
+import git4idea.history.browser.SHAHash;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -34,15 +45,24 @@ public class DetailsCache {
   private final static int ourSize = 400;
   private final SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit> myCache;
   private final SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>> myBranches;
+  private final Project myProject;
   private final DetailsLoaderImpl myDetailsLoader;
   private final ModalityState myModalityState;
+  private final BackgroundTaskQueue myQueue;
   private AbstractCalledLater myRefresh;
   private final Map<VirtualFile, Map<AbstractHash, String>> myStash;
   private final Object myLock;
+  private final static Logger LOG = Logger.getInstance("git4idea.history.wholeTree.DetailsCache");
 
-  public DetailsCache(final Project project, final UIRefresh uiRefresh, final DetailsLoaderImpl detailsLoader, final ModalityState modalityState) {
+  public DetailsCache(final Project project,
+                      final UIRefresh uiRefresh,
+                      final DetailsLoaderImpl detailsLoader,
+                      final ModalityState modalityState,
+                      final BackgroundTaskQueue queue) {
+    myProject = project;
     myDetailsLoader = detailsLoader;
     myModalityState = modalityState;
+    myQueue = queue;
     myStash = new HashMap<VirtualFile, Map<AbstractHash,String>>();
     myRefresh = new AbstractCalledLater(project, myModalityState) {
       @Override
@@ -111,5 +131,32 @@ public class DetailsCache {
       final Map<AbstractHash, String> map = myStash.get(root);
       return map == null ? null : map.get(hash);
     }
+  }
+
+  public void loadAndPutBranches(final VirtualFile root,
+                                 final SHAHash hash,
+                                 final AbstractHash abstractHash,
+                                 final Consumer<List<String>> continuation) {
+    myQueue.run(new Task.Backgroundable(myProject, "Load contained in branches", true, BackgroundFromStartOption.getInstance()) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        if (getBranches(root, abstractHash) != null) return;
+        final List<String> branches;
+        try {
+          branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(hash);
+        }
+        catch (VcsException e) {
+          LOG.info(e);
+          return;
+        }
+        putBranches(root, abstractHash, branches);
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            continuation.consume(branches);
+          }
+        });
+      }
+    });
   }
 }

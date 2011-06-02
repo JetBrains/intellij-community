@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -187,7 +188,6 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       super.update(e);
 
       final Presentation presentation = e.getPresentation();
-      boolean enabled = false;
       final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
       if (project == null || !project.isInitialized() || project.isDisposed() || DumbService.getInstance(project).isDumb()) {
@@ -196,6 +196,8 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       final RunnerAndConfigurationSettings selectedConfiguration = getConfiguration(project);
+      boolean enabled = false;
+      String text;
       if (selectedConfiguration != null) {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
         enabled = runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId());
@@ -203,9 +205,11 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
         }
+        text = getTemplatePresentation().getTextWithMnemonic() + " '" + StringUtil.first(selectedConfiguration.getName(), 30, true) + "'";
       }
-
-      String text = getTemplatePresentation().getTextWithMnemonic();
+      else {
+        text = getTemplatePresentation().getTextWithMnemonic();
+      }
 
       presentation.setEnabled(enabled);
       presentation.setText(text);

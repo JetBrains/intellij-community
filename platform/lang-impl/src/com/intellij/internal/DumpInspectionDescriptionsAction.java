@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,71 +13,145 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Aug 22, 2006
- * Time: 4:42:08 PM
- */
 package com.intellij.internal;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ResourceUtil;
-import org.jetbrains.annotations.NonNls;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
+ * @author stathik
  * Date: Nov 6, 2003
- * Time: 4:05:51 PM
- * To change this template use Options | File Templates.
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class DumpInspectionDescriptionsAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.internal.DumpInspectionDescriptionsAction");
+
   public DumpInspectionDescriptionsAction() {
-    super ("Dump inspection descriptions");
+    super("Dump inspection descriptions");
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(final AnActionEvent event) {
     final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
     final InspectionProfileEntry[] tools = profile.getInspectionTools(null);
-    System.out.println("String[][] inspections = ");
-    for (InspectionProfileEntry tool : tools) {
-      String group = tool.getGroupDisplayName();
-      if (group.length() == 0) group = "General";
-      System.out.print("{\"" + group +"\", ");
-      System.out.print("\"" + tool.getDisplayName() +"\", ");
-      System.out.println("\"inspections/" + tool.getShortName() +".html\"}, ");
 
-      try {
-        @NonNls final String description = ResourceUtil.loadText(getDescriptionUrl(tool));
-        FileWriter writer = new FileWriter("/Users/max/inspections/" + tool.getShortName() + ".html");
-        writer.write(description);
-        writer.close();
-      }
-      catch (IOException e1) {
-        e1.printStackTrace();
+    final Collection<String> classes = Sets.newTreeSet();
+    final Map<String, Collection<String>> groups = Maps.newTreeMap();
+
+    final String tempDirectory = FileUtil.getTempDirectory();
+    final File descDirectory = new File(tempDirectory, "inspections");
+    if (!descDirectory.mkdirs() && !descDirectory.isDirectory()) {
+      LOG.error("Unable to create directory: " + descDirectory.getAbsolutePath());
+      return;
+    }
+
+    for (InspectionProfileEntry tool : tools) {
+      classes.add(getInspectionClass(tool).getName());
+
+      final String group = getGroupName(tool);
+      Collection<String> names = groups.get(group);
+      if (names == null) groups.put(group, (names = Sets.newTreeSet()));
+      names.add(tool.getShortName());
+
+      final URL url = getDescriptionUrl(tool);
+      if (url != null) {
+        doDump(new File(descDirectory, tool.getShortName() + ".html"), new Processor() {
+          @Override public void process(BufferedWriter writer) throws Exception {
+            writer.write(ResourceUtil.loadText(url));
+          }
+        });
       }
     }
-    System.out.println("};");
+    doNotify("Inspection descriptions dumped to\n" + descDirectory.getAbsolutePath());
 
-//    Logger.getInstance("test").error("Test");
+    final File fqnListFile = new File(tempDirectory, "inspection_fqn_list.txt");
+    final boolean fqnOk = doDump(fqnListFile, new Processor() {
+      @Override public void process(BufferedWriter writer) throws Exception {
+        for (String name : classes) {
+          writer.write(name);
+          writer.newLine();
+        }
+      }
+    });
+    if (fqnOk) {
+      doNotify("Inspection class names dumped to\n" + fqnListFile.getAbsolutePath());
+    }
+
+    final File groupsFile = new File(tempDirectory, "inspection_groups.txt");
+    final boolean groupsOk = doDump(groupsFile, new Processor() {
+      @Override public void process(BufferedWriter writer) throws Exception {
+        for (Map.Entry<String, Collection<String>> entry : groups.entrySet()) {
+          writer.write(entry.getKey());
+          writer.write(':');
+          writer.newLine();
+          for (String name : entry.getValue()) {
+            writer.write("  ");
+            writer.write(name);
+            writer.newLine();
+          }
+        }
+      }
+    });
+    if (groupsOk) {
+      doNotify("Inspection groups dumped to\n" + fqnListFile.getAbsolutePath());
+    }
   }
 
-  private static URL getDescriptionUrl(InspectionProfileEntry tool) {
-    Class aClass = tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getClass() : tool.getClass();
+  private static Class getInspectionClass(final InspectionProfileEntry tool) {
+    return tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getClass() : tool.getClass();
+  }
+
+  private static String getGroupName(final InspectionProfileEntry tool) {
+    final String name = tool.getGroupDisplayName();
+    return StringUtil.isEmptyOrSpaces(name) ? "General" : name;
+  }
+
+  private static URL getDescriptionUrl(final InspectionProfileEntry tool) {
+    final Class aClass = getInspectionClass(tool);
     return ResourceUtil.getResource(aClass, "/inspectionDescriptions", tool.getShortName() + ".html");
   }
 
+  private interface Processor {
+    void process(BufferedWriter writer) throws Exception;
+  }
+
+  private static boolean doDump(final File file, final Processor processor) {
+    try {
+      final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+      try {
+        processor.process(writer);
+        return true;
+      }
+      finally {
+        writer.close();
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return false;
+    }
+  }
+
+  private static void doNotify(final String message) {
+    Notifications.Bus.notify(new Notification("Actions", "Inspection descriptions dumped", message, NotificationType.INFORMATION));
+  }
 }

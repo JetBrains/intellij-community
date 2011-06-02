@@ -183,7 +183,7 @@ public class ParametersFolder {
       if (expressions == null) {
         expressions = new ArrayList<PsiExpression>();
         while (expression != null) {
-          if (PsiUtil.isAccessedForWriting((PsiExpression)expression)) return null;
+          if (isAccessedForWriting((PsiExpression)expression)) return null;
           for (PsiElement scopeElement : scopeElements) {
             if (PsiTreeUtil.isAncestor(expression, scopeElement, true)) {
               expression = null;
@@ -212,6 +212,26 @@ public class ParametersFolder {
     }
     myMentionedInExpressions.put(var, expressions);
     return expressions;
+  }
+
+  private static boolean isAccessedForWriting(PsiExpression expression) {
+    final PsiExpression[] exprWithWriteAccessInside = new PsiExpression[1];
+    expression.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (exprWithWriteAccessInside[0] != null) return;
+        super.visitElement(element);
+      }
+
+      @Override
+      public void visitExpression(PsiExpression expression) {
+        if (PsiUtil.isAccessedForWriting(expression)) {
+          exprWithWriteAccessInside[0] = expression;
+        }
+        super.visitExpression(expression);
+      }
+    });
+    return exprWithWriteAccessInside[0] != null;
   }
 
   private static boolean dependsOnLocals(final PsiElement expression, final List<? extends PsiVariable> inputVariables) {

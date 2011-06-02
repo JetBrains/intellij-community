@@ -44,6 +44,10 @@ public class SelectWordUtil {
   private SelectWordUtil() {
   }
 
+  /**
+   * @see ExtendWordSelectionHandler#EP_NAME
+   */
+  @Deprecated
   public static void registerSelectioner(ExtendWordSelectionHandler selectioner) {
     SELECTIONERS = ArrayUtil.append(SELECTIONERS, selectioner);
   }

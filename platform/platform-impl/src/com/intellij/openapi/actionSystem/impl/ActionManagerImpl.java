@@ -694,11 +694,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     AnAction parentGroup = getActionImpl(groupId, true);
     if (parentGroup == null) {
-      reportActionError(pluginId, actionName + ": action with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group");
+      reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group");
       parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true);
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
-      reportActionError(pluginId, actionName + ": action with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName() +
+      reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName() +
                                   " but was " + parentGroup.getClass());
       return null;
     }

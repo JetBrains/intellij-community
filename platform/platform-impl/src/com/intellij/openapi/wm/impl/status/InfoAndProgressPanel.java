@@ -25,10 +25,12 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -45,6 +47,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -52,15 +55,12 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   private final ProcessPopup myPopup;
 
-  private final TextPanel myInfoPanel = new TextPanel();
+  private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
   private final AsyncProcessIcon myProgressIcon;
 
@@ -75,6 +75,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private final Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myShouldClosePopupAndOnProcessFinish;
+
+  private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private AsyncProcessIcon myRefreshIcon;
   private EmptyIcon myEmptyRefreshIcon;
 
@@ -174,7 +176,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   public void addProgress(final ProgressIndicatorEx original, TaskInfo info) {
     synchronized (myOriginals) {
-      final boolean veryFirst = myOriginals.isEmpty();
+      final boolean veryFirst = !hasProgressIndicators();
+
+      if (veryFirst) {
+        myInfoPanel.hideLog();
+      }
 
       myOriginals.add(original);
       myInfos.add(info);
@@ -196,6 +202,12 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       }
 
       runQuery();
+    }
+  }
+
+  private boolean hasProgressIndicators() {
+    synchronized (myOriginals) {
+      return !myOriginals.isEmpty();
     }
   }
 
@@ -230,6 +242,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       }
 
       runQuery();
+
+      if (last) {
+        myInfoPanel.restoreLogIfNeeded();
+      }
     }
   }
 
@@ -251,7 +267,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void openProcessPopup(boolean requestFocus) {
     synchronized (myOriginals) {
       if (myPopup.isShowing()) return;
-      if (!myOriginals.isEmpty()) {
+      if (hasProgressIndicators()) {
         myShouldClosePopupAndOnProcessFinish = true;
         buildInProcessCount();
       }
@@ -270,7 +286,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       if (myOriginals.size() == 1) {
         buildInInlineIndicator(createInlineDelegate(myInfos.get(0), myOriginals.get(0), true));
       }
-      else if (myOriginals.isEmpty()) {
+      else if (!hasProgressIndicators()) {
         restoreEmptyStatus();
       }
       else {
@@ -343,29 +359,31 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.repaint();
   }
 
-  public Pair<String, String> setText(final String text, final String requestor) {
-    if (text == null || text.length() == 0) {
-      if ((requestor != null && !requestor.equals(myCurrentRequestor))
-          || (myCurrentRequestor != null && !myCurrentRequestor.equals(requestor))) {
-        return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
-      }
+  public Pair<String, String> setText(@Nullable final String text, @Nullable final String requestor) {
+    if (StringUtil.isEmpty(text) && !Comparing.equal(requestor, myCurrentRequestor)) {
+      return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
     }
 
-    myInfoPanel.setText(text);
-    myCurrentRequestor = requestor;
+    boolean logMode = myInfoPanel.updateText(!hasProgressIndicators(), text);
+    myCurrentRequestor = logMode ? null : requestor;
     return Pair.create(text, requestor);
   }
 
   public void setRefreshVisible(final boolean visible) {
-    if (visible) {
-      myRefreshIcon.resume();
-    }
-    else {
-      myRefreshIcon.suspend();
-    }
-
-    myRefreshIcon.revalidate();
-    myRefreshIcon.repaint();
+    myRefreshAlarm.cancelAllRequests();
+    myRefreshAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (visible) {
+          myRefreshIcon.resume();
+        }
+        else {
+          myRefreshIcon.suspend();
+        }
+        myRefreshIcon.revalidate();
+        myRefreshIcon.repaint();
+      }
+    }, visible ? 100 : 300);
   }
 
   public void setRefreshToolTipText(final String tooltip) {
@@ -408,6 +426,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         });
       }
     };
+  }
+
+  public void setLogMessage(String text) {
+    myInfoPanel.setLogMessage(text);
   }
 
   private static class InlineLayout extends AbstractLayoutManager {

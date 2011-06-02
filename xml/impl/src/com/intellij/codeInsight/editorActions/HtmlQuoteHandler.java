@@ -22,9 +22,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
  * @author peter
 */
 public class HtmlQuoteHandler implements QuoteHandler {
-  private static QuoteHandler ourStyleQuoteHandler;
   private QuoteHandler myBaseQuoteHandler;
-  private static QuoteHandler ourScriptQuoteHandler;
 
   public HtmlQuoteHandler() {
     this(new XmlQuoteHandler());
@@ -34,33 +32,13 @@ public class HtmlQuoteHandler implements QuoteHandler {
     myBaseQuoteHandler = _baseHandler;
   }
 
-  public static void setStyleQuoteHandler(QuoteHandler quoteHandler) {
-    ourStyleQuoteHandler = quoteHandler;
-  }
-
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     if (myBaseQuoteHandler.isClosingQuote(iterator, offset)) return true;
-
-    if(ourStyleQuoteHandler!=null && ourStyleQuoteHandler.isClosingQuote(iterator, offset)) {
-      return true;
-    }
-
-    if(ourScriptQuoteHandler!=null && ourScriptQuoteHandler.isClosingQuote(iterator, offset)) {
-      return true;
-    }
     return false;
   }
 
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     if (myBaseQuoteHandler.isOpeningQuote(iterator, offset)) return true;
-
-    if(ourStyleQuoteHandler!=null && ourStyleQuoteHandler.isOpeningQuote(iterator, offset)) {
-      return true;
-    }
-
-    if(ourScriptQuoteHandler!=null && ourScriptQuoteHandler.isOpeningQuote(iterator, offset)) {
-      return true;
-    }
 
     return false;
   }
@@ -68,32 +46,12 @@ public class HtmlQuoteHandler implements QuoteHandler {
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
     if (myBaseQuoteHandler.hasNonClosedLiteral(editor,iterator, offset)) return true;
 
-    if(ourStyleQuoteHandler!=null && ourStyleQuoteHandler.hasNonClosedLiteral(editor,iterator, offset)) {
-      return true;
-    }
-
-    if(ourScriptQuoteHandler!=null && ourScriptQuoteHandler.hasNonClosedLiteral(editor,iterator, offset)) {
-      return true;
-    }
-
     return false;
   }
 
   public boolean isInsideLiteral(HighlighterIterator iterator) {
     if (myBaseQuoteHandler.isInsideLiteral(iterator)) return true;
 
-    if(ourStyleQuoteHandler!=null && ourStyleQuoteHandler.isInsideLiteral(iterator)) {
-      return true;
-    }
-
-    if(ourScriptQuoteHandler!=null && ourScriptQuoteHandler.isInsideLiteral(iterator)) {
-      return true;
-    }
-
     return false;
-  }
-
-  public static void setScriptQuoteHandler(QuoteHandler scriptQuoteHandler) {
-    ourScriptQuoteHandler = scriptQuoteHandler;
   }
 }

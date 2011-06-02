@@ -20,8 +20,10 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.testFramework.TestFileType;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -736,9 +738,94 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     CodeFoldingManager.getInstance(getProject()).updateFoldRegions(myEditor);
     assertEquals(new VisualPosition(2, 0), myEditor.logicalToVisualPosition(new LogicalPosition(5, 0)));
   }
+
+  public void testModificationOfSoftWrappedFoldRegion() throws IOException {
+    String text =
+      "import java.util.List;import java.util.ArrayList;import java.util.Collection;import java.util.Collections;\n" +
+      "import java.util.LinkedList;\n" +
+      "import java.util.Set;\n" +
+      "\n" +
+      "class Test {\n" +
+      "}";
+    init(300, text);
+
+    final int foldStartOffset = text.indexOf("java.util.Collections");
+    final int foldEndOffset = text.indexOf("class") - 2;
+    addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
+
+    int modificationOffset = text.indexOf("java.util.Set");
+    myEditor.getDocument().insertString(modificationOffset, "import java.util.HashSet;\n");
+    // Used to get StackOverflowError here, hence, no additional checking is performed.
+  }
+
+  public void testLongSoftWrappedLineWithNonWrappedEndInTheMiddleOfDocument() throws IOException {
+    // Inspired by IDEA-70114
+    
+    String text = 
+      "111\n" +
+      "222\n" +
+      "33333333 33333333333333333333333333333333\n" +
+      "444";
+    init(100, text);
+    
+    assertEquals(new LogicalPosition(3, 0), myEditor.visualToLogicalPosition(new VisualPosition(4, 0)));
+  }
   
-  private void init(final int visibleWidth, String fileText) throws IOException {
-    init(fileText);
+  public void testDeleteThatEndsOnLineWithMultiLineFoldRegion() throws IOException {
+    String text = 
+      "111\n" +
+      "222\n" +
+      "333\n" +
+      "444 55\n" +
+      "666 77";
+    
+    init(100, text);
+
+    int foldStart = text.indexOf("5");
+    int foldEnd = text.indexOf("7");
+    addCollapsedFoldRegion(foldStart, foldEnd, "...");
+
+    int selectionStart = text.indexOf("2");
+    int selectionEnd = text.indexOf("4");
+    getEditor().getSelectionModel().setSelection(selectionStart, selectionEnd);
+    
+    delete();
+    assertEquals(new VisualPosition(1, 8), getEditor().offsetToVisualPosition(getEditor().getDocument().getTextLength() - 1));
+  }
+
+  public void testXmlWithLongCdata() throws IOException {
+    String text = 
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project version=\"4\">\n" +
+      "    <component name=\"LanguageInjectionConfiguration\">\n" +
+      "        <injection language=\"CSS\" injector-id=\"java\">\n" +
+      "            <display-name>Injected.subject (place)</display-name>\n" +
+      "            <place disabled=\"true\">\n" +
+      "                <![CDATA[psiParameter().ofMethod(0, psiMethod().withName(\"subject\").withParameters(\"java.lang.String\", \"java.lang.String\").definedInClass(\"place.Injected\"))]]></place>\n" +
+      "            <place>\n" +
+      "                <![CDATA[psiParameter().ofMethod(1, psiMethod().withName(\"subject\").withParameters(\"java.lang.String\", \"java.lang.String\").definedInClass(\"place.Injected\"))]]></place>\n" +
+      "    </injection>\n" +
+      "  </component>\n" +
+      "</project>";
+    
+    init(500, text, TestFileType.XML);
+    myEditor.getSelectionModel().setSelection(474, 491);
+    delete();
+    
+    TIntHashSet expected = new TIntHashSet(new int[] {286, 443, 482, 491});
+    final List<? extends SoftWrap> actual = getSoftWrapModel().getRegisteredSoftWraps();
+    assertEquals(expected.size(), actual.size());
+    for (SoftWrap softWrap : actual) {
+      assertTrue(expected.contains(softWrap.getStart()));
+    }
+  }
+  
+  private void init(final int visibleWidth, @NotNull String fileText) throws IOException {
+    init(visibleWidth, fileText, TestFileType.TEXT);
+  }
+  
+  private void init(final int visibleWidth, @NotNull String fileText, @NotNull TestFileType fileType) throws IOException {
+    init(fileText, fileType);
     myEditor.getSettings().setUseSoftWraps(true);
     SoftWrapModelImpl model = (SoftWrapModelImpl)myEditor.getSoftWrapModel();
     model.reinitSettings();

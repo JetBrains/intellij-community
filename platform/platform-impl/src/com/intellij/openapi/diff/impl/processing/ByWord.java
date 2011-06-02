@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.ArrayList;
 
@@ -34,7 +35,7 @@ class ByWord implements DiffPolicy{
     myComparisonPolicy = comparisonPolicy;
   }
 
-  public DiffFragment[] buildFragments(String text1, String text2) {
+  public DiffFragment[] buildFragments(String text1, String text2) throws FilesTooBigForDiffException {
     Word[] words1 = buildWords(text1, myComparisonPolicy);
     Word[] words2 = buildWords(text2, myComparisonPolicy);
     Diff.Change change = Diff.buildChanges(words1, words2);
@@ -115,7 +116,7 @@ class ByWord implements DiffPolicy{
     version.addOneSide(prefix, wordCount);
   }
 
-  private void processEquals(int changed1, int changed2, FragmentBuilder result) {
+  private void processEquals(int changed1, int changed2, FragmentBuilder result) throws FilesTooBigForDiffException {
     while (result.getVersion1().getCurrentWordIndex() < changed1) {
       result.processEqual();
     }
@@ -206,11 +207,11 @@ class ByWord implements DiffPolicy{
       myFragments.add(fragment);
     }
 
-    private void addEqual(Word word1, Word word2) {
+    private void addEqual(Word word1, Word word2) throws FilesTooBigForDiffException {
       addAll(CORRECTION.correct(new DiffFragment[]{myComparisonPolicy.createFragment(word1, word2)}));
     }
 
-    public void processEqual() {
+    public void processEqual() throws FilesTooBigForDiffException {
       Word word1 = myVersion1.getCurrentWord();
       Word word2 = myVersion2.getCurrentWord();
       addAll(fragmentsByChar(myVersion1.getCurrentWordPrefix(), myVersion2.getCurrentWordPrefix()));
@@ -220,7 +221,7 @@ class ByWord implements DiffPolicy{
       myVersion2.incCurrentWord();
     }
 
-    private DiffFragment[] fragmentsByChar(String text1, String text2) {
+    private DiffFragment[] fragmentsByChar(String text1, String text2) throws FilesTooBigForDiffException {
       if (text1.length() == 0 && text2.length() == 0) {
         return DiffFragment.EMPTY_ARRAY;
       }
@@ -230,7 +231,7 @@ class ByWord implements DiffPolicy{
       return Util.cutFirst(fragments);
     }
 
-    private void addPostfixes() {
+    private void addPostfixes() throws FilesTooBigForDiffException {
       String postfix1 = myVersion1.getCurrentWordPostfixAndOneMore();
       String postfix2 = myVersion2.getCurrentWordPostfixAndOneMore();
       int length1 = postfix1.length();
@@ -268,7 +269,7 @@ class ByWord implements DiffPolicy{
       myVersion2.incCurrentWord(wordCount2);
     }
 
-    public void addTails() {
+    public void addTails() throws FilesTooBigForDiffException {
       String tail1 = myVersion1.getNotProcessedTail();
       String tail2 = myVersion2.getNotProcessedTail();
       if (tail1.length() == 0 && tail2.length() == 0) return;

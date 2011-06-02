@@ -75,7 +75,12 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   }
 
   private NotificationSettings[] _getAllSettings() {
-    final List<NotificationSettings> result = new ArrayList<NotificationSettings>(myIdToSettingsMap.values());
+    final List<NotificationSettings> result = new ArrayList<NotificationSettings>();
+    for (String s : myIdToSettingsMap.keySet()) {
+      if (!Notifications.LOG_ONLY_GROUP_ID.equals(s)) {
+        result.add(myIdToSettingsMap.get(s));
+      }
+    }
 
     Collections.sort(result, new Comparator<NotificationSettings>() {
       public int compare(NotificationSettings o1, NotificationSettings o2) {
@@ -105,9 +110,9 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     myIdToSettingsMap.clear();
   }
 
-  public void register(@NotNull final String id, @NotNull final NotificationDisplayType displayType) {
-    if (!myIdToSettingsMap.containsKey(id)) {
-      myIdToSettingsMap.put(id, new NotificationSettings(id, displayType));
+  public void register(@NotNull final String groupDisplayType, @NotNull final NotificationDisplayType displayType) {
+    if (!myIdToSettingsMap.containsKey(groupDisplayType)) {
+      myIdToSettingsMap.put(groupDisplayType, new NotificationSettings(groupDisplayType, displayType));
     }
   }
 

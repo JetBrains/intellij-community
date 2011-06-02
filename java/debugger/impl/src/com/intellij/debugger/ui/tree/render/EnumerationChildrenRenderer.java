@@ -98,8 +98,7 @@ public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
     List<DebuggerTreeNode> children = new ArrayList<DebuggerTreeNode>();
-    for (Iterator<Pair<String, TextWithImports>> iterator = myChildren.iterator(); iterator.hasNext();) {
-      Pair<String, TextWithImports> pair = iterator.next();
+    for (Pair<String, TextWithImports> pair : myChildren) {
       children.add(nodeManager.createNode(descriptorFactory.getUserExpressionDescriptor(
         builder.getParentDescriptor(),
         new UserExpressionData((ValueDescriptorImpl)builder.getParentDescriptor(), getClassName(), pair.getFirst(), pair.getSecond())), evaluationContext)

@@ -41,6 +41,8 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -74,8 +76,15 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   @Nullable
-  public static QuoteHandler getQuoteHandler(@NotNull PsiFile file) {
-    QuoteHandler quoteHandler = getQuoteHandlerForType(file.getFileType());
+  public static QuoteHandler getQuoteHandler(@NotNull PsiFile file, Editor editor) {
+    FileType fileType = getFileType(file, editor);
+    QuoteHandler quoteHandler = getQuoteHandlerForType(fileType);
+    if (quoteHandler == null) {
+      FileType fileFileType = file.getFileType();
+      if (fileFileType != fileType) {
+        quoteHandler = getQuoteHandlerForType(fileFileType);
+      }
+    }
     if (quoteHandler == null) {
       final Language baseLanguage = file.getViewProvider().getBaseLanguage();
       for (Map.Entry<Class<? extends Language>, QuoteHandler> entry : ourBaseLanguageQuoteHandlers.entrySet()) {
@@ -85,6 +94,16 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
     return quoteHandler;
+  }
+
+  private static FileType getFileType(PsiFile file, Editor editor) {
+    FileType fileType = file.getFileType();
+    Language language = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
+    if (language != null && language != PlainTextLanguage.INSTANCE) {
+      LanguageFileType associatedFileType = language.getAssociatedFileType();
+      if (associatedFileType != null) fileType = associatedFileType;
+    }
+    return fileType;
   }
 
   public static void registerBaseLanguageQuoteHandler(Class<? extends Language> languageClass, QuoteHandler quoteHandler) {
@@ -106,6 +125,8 @@ public class TypedHandler implements TypedActionHandler {
     return quoteHandlers.get(fileType);
   }
 
+  /** @see QuoteHandlerEP */
+  @Deprecated
   public static void registerQuoteHandler(FileType fileType, QuoteHandler quoteHandler) {
     quoteHandlers.put(fileType, quoteHandler);
   }
@@ -169,7 +190,7 @@ public class TypedHandler implements TypedActionHandler {
       EditorModificationUtil.deleteSelectedText(editor);
     }
 
-    FileType fileType = file.getFileType();
+    FileType fileType = getFileType(file, editor);
 
     for(TypedHandlerDelegate delegate: delegates) {
       final TypedHandlerDelegate.Result result = delegate.beforeCharTyped(charTyped, project, editor, file, fileType);
@@ -379,7 +400,7 @@ public class TypedHandler implements TypedActionHandler {
 
   private boolean handleQuote(Editor editor, char quote, DataContext dataContext, PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return false;
-    final QuoteHandler quoteHandler = getQuoteHandler(file);
+    final QuoteHandler quoteHandler = getQuoteHandler(file, editor);
     if (quoteHandler == null) return false;
 
     int offset = editor.getCaretModel().getOffset();

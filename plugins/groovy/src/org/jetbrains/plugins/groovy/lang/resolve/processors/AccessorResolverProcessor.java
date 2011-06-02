@@ -17,11 +17,9 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -36,7 +34,8 @@ public class AccessorResolverProcessor extends ResolverProcessor {
 
   public boolean execute(PsiElement element, ResolveState state) {
     final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
-    boolean usedInCategory = usedInCategory(resolveContext);
+    boolean usedInCategory = ResolveUtil.isInUseScope(resolveContext, element);
+
     if (mySearchForGetter) {
       if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, null, usedInCategory)) {
         return addAccessor((PsiMethod)element, state);
@@ -58,15 +57,5 @@ public class AccessorResolverProcessor extends ResolverProcessor {
     boolean isStaticsOK = isStaticsOK(method, resolveContext);
     addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK, true));
     return !isAccessible || !isStaticsOK;
-  }
-
-  private static boolean usedInCategory(GroovyPsiElement resolveContext) {
-    if (resolveContext instanceof GrMethodCallExpression) {
-      final GrExpression expression = ((GrMethodCallExpression)resolveContext).getInvokedExpression();
-      if (expression instanceof GrReferenceExpression) {
-        return "use".equals(((GrReferenceExpression)expression).getName());
-      }
-    }
-    return false;
   }
 }

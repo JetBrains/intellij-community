@@ -49,7 +49,7 @@ public interface EditorEx extends Editor {
 
   EditorHighlighter getHighlighter();
 
-  void setHighlighter(EditorHighlighter highlighter);
+  void setHighlighter(@NotNull EditorHighlighter highlighter);
 
   void setColorsScheme(@NotNull EditorColorsScheme scheme);
 
@@ -82,9 +82,9 @@ public interface EditorEx extends Editor {
 
   void reinitSettings();
 
-  void addPropertyChangeListener(PropertyChangeListener listener);
+  void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
 
-  void removePropertyChangeListener(PropertyChangeListener listener);
+  void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   int getMaxWidthInRange(int startOffset, int endOffset);
 
@@ -94,7 +94,7 @@ public interface EditorEx extends Editor {
 
   boolean setCaretEnabled(boolean enabled);
 
-  void addFocusListener(FocusChangeListener listener);
+  void addFocusListener(@NotNull FocusChangeListener listener);
 
   void setOneLineMode(boolean b);
 
@@ -108,7 +108,7 @@ public interface EditorEx extends Editor {
 
   DataContext getDataContext();
 
-  boolean processKeyTyped(KeyEvent e);
+  boolean processKeyTyped(@NotNull KeyEvent e);
 
   void setFontSize(int fontSize);
 
@@ -123,7 +123,7 @@ public interface EditorEx extends Editor {
 
   VirtualFile getVirtualFile();
 
-  int calcColumnNumber(CharSequence text, int start, int offset, int tabSize);
+  int calcColumnNumber(@NotNull CharSequence text, int start, int offset, int tabSize);
 
   int calcColumnNumber(int offset, int lineIndex);
 

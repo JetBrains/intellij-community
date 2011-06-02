@@ -28,7 +28,6 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Function;
-import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -48,6 +46,8 @@ import java.util.List;
  * @author max
  */
 public class PopupChooserBuilder {
+  public static final String SELECTED_BY_MOUSE_EVENT = "byMouseEvent";
+
   private JComponent myChooserComponent;
   private String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<KeyStroke>();
@@ -433,7 +433,9 @@ public class PopupChooserBuilder {
             if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
               Point point = e.getPoint();
               int index = list.locationToIndex(point);
+              list.putClientProperty(SELECTED_BY_MOUSE_EVENT, Boolean.TRUE);
               list.setSelectedIndex(index);
+              list.putClientProperty(SELECTED_BY_MOUSE_EVENT, Boolean.FALSE);
             }
             else {
               myIsEngaged = true;

@@ -17,6 +17,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.Timings;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Random;
@@ -39,8 +40,10 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
   private volatile boolean writeActionInProgress;
   public void testStress() throws Exception {
     int numOfThreads = 10;
-    final int readIterations = 100;
-    final int writeIterations = 30;
+    int iterations = Timings.adjustAccordingToMySpeed(20);
+    System.out.println("iterations = " + iterations);
+    final int readIterations = iterations * 3;
+    final int writeIterations = iterations;
 
     synchronized (this) {
       PsiClass myClass = myJavaFacade.findClass("StressClass", GlobalSearchScope.allScope(myProject));

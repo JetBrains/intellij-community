@@ -105,18 +105,13 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                 throws IncorrectOperationException{
             final PsiJavaCodeReferenceElement referenceElement =
                     (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
-            final PsiJavaFile file =
-                    (PsiJavaFile)referenceElement.getContainingFile();
-            if (file == null) {
-                return;
-            }
-
+            final PsiFile file = referenceElement.getContainingFile();
             final PsiElement target = referenceElement.resolve();
             if (!(target instanceof PsiClass)) {
                 return;
             }
             final PsiClass aClass = (PsiClass) target;
-            ImportUtils.addImportIfNeeded(file, aClass);
+            ImportUtils.addImportIfNeeded(aClass, referenceElement);
             final String fullyQualifiedText = referenceElement.getText();
             final QualificationRemover qualificationRemover =
                     new QualificationRemover(fullyQualifiedText);

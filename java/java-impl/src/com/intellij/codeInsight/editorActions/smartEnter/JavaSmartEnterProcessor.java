@@ -80,7 +80,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     List<EnterProcessor> processors = new ArrayList<EnterProcessor>();
     processors.add(new CommentBreakerEnterProcessor());
     processors.add(new AfterSemicolonEnterProcessor());
-    processors.add(new BreakingControlFlowEnterProcessor());
+    processors.add(new LeaveCodeBlockEnterProcessor());
     processors.add(new PlainEnterProcessor());
     ourEnterProcessors = processors.toArray(new EnterProcessor[processors.size()]);
   }
@@ -90,6 +90,8 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
 
   public static class TooManyAttemptsException extends Exception {}
+  
+  private final JavadocFixer myJavadocFixer = new JavadocFixer();
 
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
     final Document document = editor.getDocument();
@@ -121,6 +123,9 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
       PsiElement atCaret = getStatementAtCaret(editor, file);
       if (atCaret == null) {
+        if (myJavadocFixer.process(editor, file)) {
+          return;
+        }
         if (!new CommentBreakerEnterProcessor().doEnter(editor, file, false)) {
           plainEnter(editor);
         }

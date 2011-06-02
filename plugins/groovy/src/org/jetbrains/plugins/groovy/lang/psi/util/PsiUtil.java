@@ -57,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
@@ -394,7 +395,7 @@ public class PsiUtil {
         GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
         if (qualifier != null) {
           PsiClass containingClass = ((PsiMember)owner).getContainingClass();
-          final boolean isStatic = owner.hasModifierProperty(PsiModifier.STATIC) && !(ResolveUtil.isInUseScope(resolveContext));
+          final boolean isStatic = owner.hasModifierProperty(PsiModifier.STATIC) && !(ResolveUtil.isInUseScope(resolveContext, owner));
           if (qualifier instanceof GrReferenceExpression) {
             if ("class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
               //invoke static members of class from A.class.foo()
@@ -866,6 +867,9 @@ public class PsiUtil {
     else if (method instanceof GrAccessorMethod) {
       return ((GrAccessorMethod)method).getInferredReturnType();
     }
+    else if (method instanceof GrGdkMethod) {
+      return getSmartReturnType(((GrGdkMethod)method).getStaticMethod());
+    }
     else {
       return method.getReturnType();
     }
@@ -1148,7 +1152,7 @@ public class PsiUtil {
     return qualifier == null;
   }
 
-  public static boolean isExpressionStatement(GrExpression expr) {
+  public static boolean isExpressionStatement(PsiElement expr) {
     final PsiElement parent = expr.getParent();
     if (parent instanceof GrControlFlowOwner) return true;
     if (parent instanceof GrExpression ||
@@ -1233,11 +1237,17 @@ public class PsiUtil {
     return defaultValue;
   }
 
-  public static boolean resultOfExpressionUsed(GrExpression expr) {
+  public static boolean isExpressionUsed(PsiElement expr) {
     while (expr.getParent() instanceof GrParenthesizedExpression) expr = (GrExpression)expr.getParent();
 
     final PsiElement parent = expr.getParent();
-    if (parent instanceof GrExpression ||
+    if (parent instanceof GrBinaryExpression ||
+        parent instanceof GrUnaryExpression ||
+        parent instanceof GrConditionalExpression ||
+        parent instanceof GrAssignmentExpression ||
+        parent instanceof GrInstanceOfExpression ||
+        parent instanceof GrSafeCastExpression ||
+        parent instanceof GrTupleExpression ||
         parent instanceof GrArgumentList ||
         parent instanceof GrReturnStatement ||
         parent instanceof GrAssertStatement ||
@@ -1246,6 +1256,12 @@ public class PsiUtil {
         parent instanceof GrVariable) {
       return true;
     }
-    return ControlFlowUtils.collectReturns(ControlFlowUtils.findControlFlowOwner(expr), true).contains(expr);
+    final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expr);
+    if (controlFlowOwner instanceof GrOpenBlock &&
+        controlFlowOwner.getParent() instanceof PsiMethod &&
+        ((PsiMethod)controlFlowOwner.getParent()).getReturnType() == PsiType.VOID) {
+      return false;
+    }
+    return ControlFlowUtils.collectReturns(controlFlowOwner, true).contains(expr);
   }
 }

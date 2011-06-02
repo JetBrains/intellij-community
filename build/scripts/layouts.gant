@@ -231,6 +231,17 @@ public def layoutCommunityPlugins(String home) {
       }
     }
 
+    layoutPlugin("xslt-debugger") {
+      jar("xslt-debugger-engine.jar") {
+        module("xslt-rt") {
+          excludes: "lib"
+        }
+      }
+      fileset(dir: "$home/plugins/xslt-debugger/rt/lib") {
+        includes: "**/*.jar, **/*.html"
+      }
+    }
+
     pluginDir("Groovy") {
       dir("lib") {
         jar("Groovy.jar") {

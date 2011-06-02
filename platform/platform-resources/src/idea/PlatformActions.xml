@@ -97,6 +97,7 @@
       <action id="EditorSelectLine" class="com.intellij.openapi.editor.actions.SelectLineAction"/>
       <action id="EditorSplitLine" class="com.intellij.openapi.editor.actions.SplitLineAction"/>
       <action id="EditorStartNewLine" class="com.intellij.openapi.editor.actions.StartNewLineAction"/>
+      <action id="EditorStartNewLineBefore" class="com.intellij.openapi.editor.actions.StartNewLineBeforeAction"/>
     </group>
 
     <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="/actions/expandall.png"/>
@@ -462,7 +463,6 @@
 
       <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI Inspector"/>
       <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
-      <action id="ShowDirDiff" internal="true" class="com.intellij.openapi.diff.impl.dir.TestDirDiffAction" text="Show Dir Diff" />
       <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
       <separator/>
       <reference ref="MaintenanceGroup"/>

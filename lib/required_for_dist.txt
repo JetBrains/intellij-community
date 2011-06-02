@@ -30,6 +30,7 @@ org.eclipse.jdt.core_3.5.2.v_981_R35x.jar
 oromatcher.jar
 picocontainer.jar
 resolver.jar
+sanselan-0.98-snapshot.jar
 serviceMessages.jar
 trove4j.jar
 velocity.jar

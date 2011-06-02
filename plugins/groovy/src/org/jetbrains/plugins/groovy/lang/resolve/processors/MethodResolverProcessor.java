@@ -114,7 +114,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       boolean isStaticsOK = isStaticsOK(method, resolveContext);
       if (!myAllVariants &&
-          PsiUtil.isApplicable(myArgumentTypes, method, substitutor, ResolveUtil.isInUseScope(resolveContext), (GroovyPsiElement)myPlace, myByShape) &&
+          PsiUtil.isApplicable(myArgumentTypes, method, substitutor, ResolveUtil.isInUseScope(resolveContext, element), (GroovyPsiElement)myPlace, myByShape) &&
           isStaticsOK) {
         addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
@@ -161,7 +161,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         method = ((GrGdkMethod)method).getStaticMethod();
         LOG.assertTrue(method.isValid());
       }
-      else if (ResolveUtil.isInUseScope(resolveContext)) {
+      else if (ResolveUtil.isInUseScope(resolveContext, method)) {
         PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
         newArgTypes[0] = myThisType;
         System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);

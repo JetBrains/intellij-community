@@ -36,10 +36,8 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.KeyEventProcessor;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -510,6 +508,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
     private void initDialog(ActionCallback focused, ActionCallback typeAheadDone) {
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+
       myFocusedCallback = focused;
       myTypeAheadDone = typeAheadDone;
 
@@ -582,7 +582,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
     public void show() {
-      myFocusTrackback = new FocusTrackback(myDialogWrapper, this, true);
+      myFocusTrackback = new FocusTrackback(getDialogWrapper(), getParent(), true);
 
       final DialogWrapper dialogWrapper = getDialogWrapper();
 
@@ -632,6 +632,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         public void windowActivated(final WindowEvent e) {
           final DialogWrapper wrapper = getDialogWrapper();
           if (wrapper != null && myFocusTrackback != null) {
+            myFocusTrackback.cleanParentWindow();
             myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
               public Component getComponent() {
                 return wrapper.getPreferredFocusedComponent();
@@ -792,7 +793,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     @Override
     public void paint(Graphics g) {
-      UIUtil.applyRenderingHints(g);
+      if (!SystemInfo.isMac || UIUtil.isUnderAquaLookAndFeel()) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
+        // actually, it's a bad idea to globally enable this for dialog graphics since renderers, for example, may not
+        // inherit graphics so rendering hints won't be applied and trees or lists may render ugly.
+        UIUtil.applyRenderingHints(g);
+      }
+      
       super.paint(g);
     }
 
@@ -827,6 +833,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       public void windowOpened(final WindowEvent e) {
+        final FocusRequestor requestor = IdeFocusManager.findInstanceByComponent(e.getWindow()).getFurtherRequestor();
+
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             myOpened = true;
@@ -849,12 +857,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               final JComponent toRequest = toFocus;
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  IdeFocusManager.findInstanceByComponent(e.getWindow()).requestFocus(toRequest, true);
-                  notifyFocused(activeWrapper);
+                  if (isShowing()) {
+                    requestor.requestFocus(toRequest, true);
+                    notifyFocused(activeWrapper);
+                  }
                 }
               });
             } else {
-              notifyFocused(activeWrapper);
+              if (isShowing()) {
+                notifyFocused(activeWrapper);
+              }
             }
           }
         });

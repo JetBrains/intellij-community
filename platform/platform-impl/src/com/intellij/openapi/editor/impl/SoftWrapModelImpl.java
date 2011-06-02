@@ -183,14 +183,16 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDeferredFoldRegions.clear();
       myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
       settings.setAdditionalColumnsCount(0);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
     else if (!myUseSoftWraps && softWrapsUsedBefore) {
       settings.setAdditionalColumnsCount(myAdditionalColumnsCount);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
   }
 
   public boolean isSoftWrappingEnabled() {
-    if (myEditor.isOneLineMode()) {
+    if (!myUseSoftWraps || myEditor.isOneLineMode()) {
       return false;
     }
 
@@ -208,12 +210,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       }
     }
 
+    if (application.isUnitTestMode()) return true;
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    if (!application.isUnitTestMode() && (visibleArea.width <= 0 || visibleArea.height <= 0)) {
-      return false;
-    }
-
-    return myUseSoftWraps;
+    return visibleArea.width > 0 && visibleArea.height > 0;
   }
 
   @Nullable

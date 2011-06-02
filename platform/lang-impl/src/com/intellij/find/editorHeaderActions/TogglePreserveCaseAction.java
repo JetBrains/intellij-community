@@ -5,7 +5,7 @@ import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class TogglePreserveCaseAction extends EditorHeaderToggleAction  implements SecondaryHeaderAction {
-  private static final String TEXT = "Preserve Case";
+  private static final String TEXT = "&Preserve Case";
 
   public TogglePreserveCaseAction(EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent, TEXT);
@@ -20,7 +20,7 @@ public class TogglePreserveCaseAction extends EditorHeaderToggleAction  implemen
   public void update(AnActionEvent e) {
     super.update(e);
     FindModel findModel = getEditorSearchComponent().getFindModel();
-    e.getPresentation().setVisible(findModel.isReplaceState());
+    e.getPresentation().setVisible(findModel.isReplaceState() && !findModel.isMultiline());
     e.getPresentation().setEnabled(!findModel.isRegularExpressions());
   }
 

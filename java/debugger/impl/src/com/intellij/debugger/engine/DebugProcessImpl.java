@@ -147,6 +147,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   protected DebuggerSession mySession;
   protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
   private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private volatile boolean myDebugProcessStarted = false;
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -158,11 +159,23 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private void loadRenderers() {
     getManagerThread().invoke(new DebuggerCommandImpl() {
       protected void action() throws Exception {
-        final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
-        for (final NodeRenderer renderer : rendererSettings.getAllRenderers()) {
-          if (renderer.isEnabled()) {
-            myRenderers.add(renderer);
+        try {
+          final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
+          for (final NodeRenderer renderer : rendererSettings.getAllRenderers()) {
+            if (renderer.isEnabled()) {
+              myRenderers.add(renderer);
+            }
           }
+        }
+        finally {
+          DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
+            public void run() {
+              final DebuggerSession session = mySession;
+              if (session != null && session.isAttached()) {
+                session.refresh(true);
+              }
+            }
+          });
         }
       }
     });
@@ -1643,6 +1656,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       fail();
       throw e;
     }
+
+    // writing to volatile field ensures the other threads will see the right values in non-volatile fields
+    myDebugProcessStarted = true;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myExecutionResult;

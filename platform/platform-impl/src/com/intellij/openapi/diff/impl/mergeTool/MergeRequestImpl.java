@@ -179,7 +179,7 @@ public class MergeRequestImpl extends MergeRequest {
       });
     }
 
-    if (getMergeContent() != null) {
+    if (getMergeContent() != null && mergePanel.getMergeList() != null) {
       new AllResolvedListener(mergePanel, builder.getDialogWrapper());
     }
   }

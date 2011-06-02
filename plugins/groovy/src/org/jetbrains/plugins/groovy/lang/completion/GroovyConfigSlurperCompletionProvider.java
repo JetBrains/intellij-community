@@ -23,7 +23,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -75,24 +76,15 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     GrReferenceExpression ref = (GrReferenceExpression)parameters.getPosition().getParent();
     if (ref == null) return;
 
-    List<String> prefix = null;
-    Set<String> variants = null;
+    final Map<String, Boolean> variants = new HashMap<String, Boolean>();
+    collectVariants(new PairConsumer<String, Boolean>() {
+                      @Override
+                      public void consume(String s, Boolean isFinal) {
+                        variants.put(s, isFinal);
+                      }
+                    }, ref, groovyFile);
 
-    for (ConfigSlurperSupport configSlurperSupport : ConfigSlurperSupport.EP_NAME.getExtensions()) {
-      ConfigSlurperSupport.PropertiesProvider provider = configSlurperSupport.getProvider(groovyFile);
-      if (provider == null) continue;
-
-      if (prefix == null) {
-        prefix = getPrefix(ref);
-        if (prefix == null) return;
-
-        variants = new HashSet<String>();
-      }
-
-      provider.collectVariants(prefix, variants);
-    }
-
-    if (variants == null || variants.isEmpty()) return;
+    if (variants.isEmpty()) return;
 
     // Remove existing variants.
     PsiElement parent = ref.getParent();
@@ -102,6 +94,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     if (parent == null) return;
 
     Set<String> processedPrefixes = new HashSet<String>();
+    Set<String> prefixesInMethodCall = new HashSet<String>();
 
     for (PsiElement e = parent.getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof GrAssignmentExpression) {
@@ -118,43 +111,51 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
           variants.remove(s);
         }
       }
-      else if (myAddPrefixes && e instanceof GrMethodCall) {
+      else if (e instanceof GrMethodCall) {
         GrMethodCall call = (GrMethodCall)e;
         if (isPropertyCall(call)) {
           String name = extractPropertyName(call);
           if (name == null) continue;
 
           processedPrefixes.add(name);
-
-          for (Iterator<String> itr = variants.iterator(); itr.hasNext(); ) {
-            String s = itr.next();
-
-            if (name.length() + 1 < s.length() && s.startsWith(name) && s.charAt(name.length() + 1) == '.') {
-              itr.remove();
-            }
-          }
+          prefixesInMethodCall.add(name);
+          variants.remove(name);
         }
       }
     }
 
     // Process variants.
-    for (String variant : variants) {
-      if (myAddPrefixes) {
-        int dotIndex = variant.indexOf('.');
-        if (dotIndex > 0 && dotIndex < variant.length() - 1) {
-          String s = variant.substring(0, dotIndex);
-          if (processedPrefixes.add(s)) {
-            result.addElement(LookupElementBuilder.create(s));
-          }
+    for (Map.Entry<String, Boolean> entry : variants.entrySet()) {
+      String variant = entry.getKey();
+
+      int dotIndex = variant.indexOf('.');
+      if (dotIndex > 0 && dotIndex < variant.length() - 1) {
+        String p = variant.substring(0, dotIndex);
+        if (prefixesInMethodCall.contains(p)) continue;
+
+        if (myAddPrefixes && processedPrefixes.add(p)) {
+          result.addElement(LookupElementBuilder.create(p));
         }
       }
 
       LookupElement lookupElement = LookupElementBuilder.create(variant);
-      if (!variant.endsWith(".")) {
+      if (entry.getValue()) {
         lookupElement = TailTypeDecorator.withTail(lookupElement, TailType.EQ);
       }
 
       result.addElement(lookupElement);
+    }
+  }
+
+  private static void collectVariants(@NotNull PairConsumer<String, Boolean> consumer, @NotNull GrReferenceExpression ref, @NotNull GroovyFile originalFile) {
+    List<String> prefix = getPrefix(ref);
+    if (prefix == null) return;
+
+    for (ConfigSlurperSupport configSlurperSupport : ConfigSlurperSupport.EP_NAME.getExtensions()) {
+      ConfigSlurperSupport.PropertiesProvider provider = configSlurperSupport.getProvider(originalFile);
+      if (provider == null) continue;
+
+      provider.collectVariants(prefix, consumer);
     }
   }
 

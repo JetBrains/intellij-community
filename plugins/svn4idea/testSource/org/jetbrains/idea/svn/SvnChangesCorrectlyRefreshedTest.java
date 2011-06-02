@@ -60,32 +60,25 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     }
   }
 
-  private void sleep1000() {
+  private static void sleep300() {
     try {
       Thread.sleep(300);
     }
-    catch (InterruptedException e) {
-      //
-    }
+    catch (InterruptedException ignore) { }
   }
 
   @Test
   public void testModificationAndAfterRevert() throws Throwable {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
-    try {
-      Thread.sleep(300);
-    }
-    catch (InterruptedException e) {
-      //
-    }
+    sleep300();
 
     editFileInCommand(myProject, subTree.myS1File, "new");
 
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals("new", text1.toString());
 
-    sleep1000();
+    sleep300();
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(subTree.myS1File.getPath()));
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
@@ -120,7 +113,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     assertVF(subTree.mySourceDir, newName);
 
-    sleep1000();
+    sleep300();
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.myS1File}, clManager.getDefaultListName(), clManager);
@@ -145,7 +138,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     assertVF(subTree.myTargetDir, "s1.txt");
 
-    sleep1000();
+    sleep300();
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.myS1File}, clManager.getDefaultListName(), clManager);
@@ -173,7 +166,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.mySourceDir, "s1.txt");
     assertVF(subTree.mySourceDir, "s2.txt");
 
-    sleep1000();
+    sleep300();
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File},
@@ -206,7 +199,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals("new", text1.toString());
 
-    sleep1000();
+    sleep300();
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File},
@@ -269,7 +262,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     checkin();
 
     deleteFileInCommand(subTree.myRootDir);
-    sleep1000();
+    sleep300();
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);

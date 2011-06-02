@@ -21,10 +21,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,8 +30,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.AbstractPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -300,38 +296,5 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public int getColumnPosition() {
     return getLineOrColumn(false);
-  }
-
-  public void showItemPopup(final JBPopup hint) {
-    if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
-      Dimension hintSize = null;
-      if (hint instanceof AbstractPopup) {
-        final String key = ((AbstractPopup)hint).getDimensionServiceKey();
-        if (key != null) {
-          hintSize = DimensionService.getInstance().getSize(key);
-        }
-      }
-
-      if (hintSize == null) {
-        hintSize = hint.getContent().getPreferredSize();
-      }
-
-      final Dimension size = myDropdownPopup.getSize();
-      GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-      final int width = gd.getDisplayMode().getWidth();
-      Point p;
-      if (hintSize != null) {
-        final int dropDownX = myDropdownPopup.getLocationOnScreen().x;
-        if (dropDownX + size.width + 10 + hintSize.width < width || (dropDownX - hintSize.width - 10 < 0)) {
-          p = new Point(size.width + 5, 0);
-        } else {
-          p = new Point(-hintSize.width - 5, 0);
-        }
-      } else {
-        p = new Point(size.width + 5, 0);
-      }
-
-      hint.show(new RelativePoint(myDropdownPopup.getContent(), p));
-    }
   }
 }

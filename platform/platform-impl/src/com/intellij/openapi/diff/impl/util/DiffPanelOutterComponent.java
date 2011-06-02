@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffToolbar;
 import com.intellij.openapi.diff.ex.DiffStatusBar;
 import com.intellij.openapi.diff.impl.DiffToolbarComponent;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 
 import javax.swing.*;
@@ -36,6 +37,7 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
   private ScrollingPanel myScrollingPanel = null;
   private final JPanel myBottomContainer;
   private JComponent myBottomComponent;
+  private JPanel myWrapper;
 
   public DiffPanelOutterComponent(List<TextDiffType> diffTypes, DiffRequest.ToolbarAddons defaultActions) {
     super(new BorderLayout());
@@ -46,6 +48,8 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
     myDefaultActions = defaultActions;
     myToolbar = new DiffToolbarComponent(this);
     disableToolbar(false);
+    myWrapper = new JPanel(new BorderLayout());
+    add(myWrapper, BorderLayout.CENTER);
   }
 
   public DiffToolbar resetToolbar() {
@@ -53,9 +57,18 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
     return myToolbar.getToolbar();
   }
 
+  public void resetDiffComponent(JComponent component, ScrollingPanel scrollingPanel) {
+    myWrapper.removeAll();
+    insertDiffComponent(component, scrollingPanel);
+  }
+
   public void insertDiffComponent(JComponent component, ScrollingPanel scrollingPanel) {
-    add(component, BorderLayout.CENTER);
+    myWrapper.add(component, BorderLayout.CENTER);
     setScrollingPanel(scrollingPanel);
+  }
+
+  public void insertTopComponent(JComponent component) {
+    myWrapper.add(component, BorderLayout.NORTH);
   }
 
   public JComponent getBottomComponent() {
@@ -104,8 +117,11 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
           return null;
         }
       }
-      FocusDiffSide side = (FocusDiffSide)myDataProvider.getData(FocusDiffSide.DATA_KEY.getName());
-      if (side != null) return side.getEditor();
+      final FocusDiffSide side = (FocusDiffSide)myDataProvider.getData(FocusDiffSide.DATA_KEY.getName());
+      if (side != null) {
+        final Editor editor = side.getEditor();
+        return editor != null && editor.getComponent().hasFocus() ? editor : null;
+      }
     }
     return myDataProvider.getData(dataId);
   }
@@ -146,6 +162,10 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
 
   public void cancelScrollEditors() {
     myScrollState = NO_SCROLL_NEEDED;
+  }
+
+  public void removeTopComponent(final JComponent jComponent) {
+    myWrapper.remove(jComponent);
   }
 
   private interface DeferScrollToFirstDiff {

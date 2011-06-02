@@ -128,6 +128,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
     else {
+      PsiClass selection = null;
+      for (PsiClass psiClass : classes) {
+        if (!(psiClass instanceof PsiAnonymousClass)) {
+          selection = psiClass;
+          break;
+        }
+      }
       NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
@@ -137,7 +144,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                             convertExpressionToField(selectedExpr, editor, file, project, tempType);
                                             return false;
                                           }
-                                        }).showInBestPositionFor(editor);
+                                        }, selection).showInBestPositionFor(editor);
     }
     return true;
   }

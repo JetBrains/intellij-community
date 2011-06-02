@@ -15,6 +15,8 @@
  */
 package com.intellij.util.xml.converters.values;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -33,6 +35,18 @@ import java.util.Map;
  * User: Sergey.Vasiliev
  */
 public class GenericDomValueConvertersRegistry {
+
+  public interface Provider {
+    Converter getConverter();
+    Condition<Pair<PsiType, GenericDomValue>> getCondition();
+  }
+
+  public void registerFromExtensions(ExtensionPointName<Provider> extensionPointName) {
+    Provider[] providers = Extensions.getExtensions(extensionPointName);
+    for (Provider provider : providers) {
+      registerConverter(provider.getConverter(), provider.getCondition());
+    }
+  }
 
   private final Map<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>> myConditionConverters =
     new LinkedHashMap<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>>();

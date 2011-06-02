@@ -15,6 +15,7 @@
  */
 package com.intellij.junit4;
 
+import com.intellij.rt.execution.junit.JUnitForkedStarter;
 import org.junit.Ignore;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.requests.ClassRequest;
@@ -41,7 +42,7 @@ public class JUnit4TestRunnerUtil {
    */
   private static final ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
 
-  public static Request buildRequest(String[] suiteClassNames) {
+  public static Request buildRequest(String[] suiteClassNames, boolean notForked) {
     if (suiteClassNames.length == 0) {
       return null;
     }
@@ -122,7 +123,7 @@ public class JUnit4TestRunnerUtil {
             try {
               Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore IgnoreIgnored for junit4.4 and <
               final Method method = clazz.getMethod(methodName, null);
-              if (method != null && method.getAnnotation(Ignore.class) != null) { //override ignored case only
+              if (method != null && notForked && method.getAnnotation(Ignore.class) != null) { //override ignored case only
                 final Request classRequest = new ClassRequest(clazz) {
                   public Runner getRunner() {
                     try {

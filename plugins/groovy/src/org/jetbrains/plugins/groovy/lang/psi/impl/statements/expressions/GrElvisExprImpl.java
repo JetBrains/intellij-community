@@ -35,11 +35,7 @@ public class GrElvisExprImpl extends GrConditionalExprImpl implements GrElvisExp
   }
 
   public GrExpression getThenBranch() {
-    GrExpression[] exprs = findChildrenByClass(GrExpression.class);
-    if (exprs.length > 0) {
-      return exprs[0];
-    }
-    return null;
+    return getCondition();
   }
 
   public GrExpression getElseBranch() {

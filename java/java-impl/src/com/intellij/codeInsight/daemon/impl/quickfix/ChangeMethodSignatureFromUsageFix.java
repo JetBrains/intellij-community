@@ -127,7 +127,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     return !isMethodSignatureExists();
   }
 
-  private boolean isMethodSignatureExists() {
+  public boolean isMethodSignatureExists() {
     PsiClass target = myTargetMethod.getContainingClass();
     PsiMethod[] methods = target.findMethodsByName(myTargetMethod.getName(), false);
     for (PsiMethod method : methods) {

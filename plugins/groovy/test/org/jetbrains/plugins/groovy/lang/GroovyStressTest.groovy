@@ -128,4 +128,9 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
 
   }
 
+  public void testManyAnnotatedScriptVariables() {
+    myFixture.configureByText("a.groovy", (0..100).collect { "@Anno String i$it = null" }.join("\n"))
+    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+  }
+
 }

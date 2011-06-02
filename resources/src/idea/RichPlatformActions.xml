@@ -1,0 +1,435 @@
+<component xmlns:xi="http://www.w3.org/2001/XInclude">
+  <actions>
+    <group id="LookupActions">
+      <!-- these must be declared before standard EnterAction and TabAction -->
+      <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction"/>
+      <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemReplaceAction"/>
+      <action id="EditorChooseLookupItemCompleteStatement"
+              class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemCompleteStatementAction"/>
+
+      <action id="NextTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.NextVariableAction"/>
+      <action id="PreviousTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.PreviousVariableAction"/>
+
+      <action id="NextParameter" class="com.intellij.codeInsight.hint.actions.NextParameterAction"/>
+      <action id="PrevParameter" class="com.intellij.codeInsight.hint.actions.PrevParameterAction"/>
+    </group>
+
+    <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.LangIndentSelectionAction"/>
+
+    <action id="EditorLookupUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpAction"/>
+    <action id="EditorLookupDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownAction"/>
+  </actions>
+
+  <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/component/*)"/>
+
+  <actions>
+    <action id="RerunFailedTests" class="com.intellij.execution.actions.AbstractRerunFailedTestsAction"
+            icon="/runConfigurations/rerunFailedTests.png"/>
+
+    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
+            icon="/nodes/ModuleClosed.png">
+      <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
+    </action>
+
+
+    <group id="NewGroup1">
+      <action id="NewModuleInGroup" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleInGroupAction"
+              icon="/nodes/ModuleClosed.png"/>
+
+      <add-to-group group-id="NewGroup" anchor="first"/>
+    </group>
+
+    <!-- File -->
+    <group id="OpenProjectGroup">
+      <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction"/>
+      <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction"/>
+      <action id="OpenProject" class="com.intellij.ide.actions.OpenProjectAction"/>
+
+      <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </group>
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+      <add-to-group group-id="OpenProjectGroup" anchor="after" relative-to-action="NewModule"/>
+    </action>
+
+
+    <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format...">
+      <add-to-group group-id="ExportImportGroup" anchor="first"/>
+    </action>
+
+    <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
+      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+    </action>
+
+    <action id="ShowProjectStructureSettings" class="com.intellij.ide.actions.ShowStructureSettingsAction"
+            icon="/general/projectStructure.png">
+      <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
+      <add-to-group group-id="MainToolBar" anchor="after" relative-to-action="ShowSettings"/>
+    </action>
+
+    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction">
+      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+    </action>
+
+    <!-- Edit -->
+    <reference ref="EditorCompleteStatement">
+      <add-to-group group-id="EditSmartGroup" anchor="first"/>
+    </reference>
+
+    <!-- View -->
+
+    <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction">
+      <add-to-group group-id="CodeEditorViewGroup" anchor="before" relative-to-action="ShowErrorDescription"/>
+    </action>
+
+    <reference ref="DelegateMethods">
+      <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
+    </reference>
+
+    <!-- Analyze -->
+    <group id="AnalyzeMenu" popup="true">
+      <separator/>
+      <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
+      <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
+    </group>
+
+    <group id="InspectCodeGroup" text="Inspect Code Actions">
+      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction"/>
+      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+      <add-to-group group-id="AnalyzeMenu" anchor="first"/>
+    </group>
+
+    <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction">
+      <add-to-group group-id="AnalyzeMenu" anchor="last"/>
+    </action>
+
+    <group id="BuildMenu" popup="true">
+      <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="/actions/compile.png"/>
+      <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
+      <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
+      <action id="RunAPT" class="com.intellij.compiler.actions.ProcessAnnotationsAction"/>
+      <separator/>
+      <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction"/>
+      <separator/>
+      <action id="GenerateAntBuild" class="com.intellij.compiler.actions.GenerateAntBuildAction"/>
+      <separator/>
+      <action id="BuildArtifact" class="com.intellij.compiler.actions.BuildArtifactAction"/>
+      <action id="CleanArtifact" class="com.intellij.compiler.actions.CleanArtifactAction"/>
+
+      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+    </group>
+
+    <!-- Tools -->
+    <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis" text="Fold Lines Like This">
+      <add-to-group group-id="ConsoleView.PopupMenu" anchor="after" relative-to-action="ConsoleView.Copy"/>
+    </action>
+
+
+    <group id="Internal1" text="IDEA Internal Actions" internal="true">
+      <separator/>
+      <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
+      <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
+      <separator/>
+      <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
+      <separator/>
+      <action id="DumpExtensions" internal="true" text="Dump Extensions" class="com.intellij.internal.DumpExtensionsAction"/>
+      <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
+      <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
+      <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
+      <separator/>
+      <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"
+              text="Add Test Process"/>
+      <action id="AddTestProcessActionIndefinte" internal="true"
+              class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
+      <separator/>
+      <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction" text="Test Gesture Action"/>
+      <separator/>
+      <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"
+              text="Mark File Dirty"/>
+      <separator/>
+      <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"
+              text="Check VFS sanity"/>
+
+      <separator/>
+
+      <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"
+              text="Dump all comments in the project"/>
+      <action internal="true" id="CompilerTest" class="com.intellij.compiler.impl.javaCompiler.api.CompilerPerfTestAction"
+              text="Test Rebuild Performance"/>
+      <action internal="true" id="GenerateDomModel" class="com.intellij.util.dom.generator.GenerateDomModelAction"
+              text="Generate Dom Model"/>
+      <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.tmp.SendStatisticsAction" text="Send statistics"/>
+
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
+    <!-- Help -->
+    <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
+      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="OnlineDocAction"/>
+    </action>
+
+    <!-- Toolbar -->
+
+    <group id="ToolbarMakeGroup">
+      <reference ref="CompileDirty"/>
+
+      <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
+    </group>
+
+    <group id="DebuggerActions">
+    </group>
+
+    <action id="ConfigureFileDefaultEncoding" class="com.intellij.openapi.vfs.encoding.ConfigureFileDefaultEncodingAction">
+      <add-to-group group-id="ChangeFileEncodingGroup" anchor="last"/>
+    </action>
+
+    <action id="AnalyzeStacktraceOnError" class="com.intellij.unscramble.AnalyzeStacktraceOnErrorAction" text="Analyze Stacktrace"/>
+
+    <reference ref="Compile">
+      <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
+    </reference>
+
+    <reference ref="RunAPT">
+      <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
+    </reference>
+
+    <group id="EditorTabCompileGroup">
+      <reference ref="Compile"/>
+      <reference ref="RunAPT"/>
+      <add-to-group group-id="EditorTabPopupMenuEx" anchor="before" relative-to-action="RunContextPopupGroup"/>
+    </group>
+
+    <action id="ModuleSettings" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
+    <group id="MoveModuleToGroup" class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
+
+    <reference ref="AnalyzeMenu">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+      <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+      <add-to-group group-id="EditorPopupMenu1" anchor="after" relative-to-action="FindUsages"/>
+    </reference>
+
+    <group id="ProjectViewAnalysisGroup">
+      <reference ref="TypeHierarchy"/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+
+      <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="first"/>
+    </group>
+
+    <group id="ProjectViewCompileGroup">
+      <reference ref="MakeModule"/>
+      <reference ref="Compile"/>
+      <reference ref="RunAPT"/>
+
+      <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
+    </group>
+
+    <action id="PackageFile" class="com.intellij.packaging.impl.ui.actions.PackageFileAction" use-shortcut-of="Compile">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Compile"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
+      <add-to-group group-id="FavoritesViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
+      <add-to-group group-id="ScopeViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
+    </action>
+
+
+    <reference ref="MoveModuleToGroup">
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="first"/>
+    </reference>
+
+    <group id="StructureViewCompileGroup">
+      <separator/>
+      <reference ref="Compile"/>
+      <reference ref="RunAPT"/>
+
+      <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="RunContextPopupGroup"/>
+    </group>
+
+    <group id="TypeHierarchyPopupMenu">
+      <reference ref="TypeHierarchy.Class"/>
+      <reference ref="TypeHierarchy.Subtypes"/>
+      <reference ref="TypeHierarchy.Supertypes"/>
+      <separator/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <reference ref="MoveToChangeList"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <reference ref="$Delete"/>
+      <separator/>
+      <reference ref="Compile"/>
+      <reference ref="RunAPT"/>
+      <reference ref="VersionControlsGroup"/>
+
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
+
+    <group id="MethodHierarchyPopupMenu">
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <reference ref="MoveToChangeList"/>
+      <separator/>
+      <reference ref="Compile"/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
+
+    <group id="CallHierarchyPopupMenu">
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <reference ref="MoveToChangeList"/>
+      <separator/>
+      <reference ref="Compile"/>
+      <reference ref="RunAPT"/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
+
+    <group id="CommanderPopupMenu">
+      <reference ref="NewGroup"/>
+      <reference ref="AssociateWithFileType"/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="FindInPath"/>
+      <reference ref="ReplaceInPath"/>
+      <reference ref="InspectCode"/>
+      <reference ref="ShowPackageDeps"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <reference ref="MoveToChangeList"/>
+      <separator/>
+      <reference ref="TypeHierarchy"/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <reference ref="$Delete"/>
+      <separator/>
+      <reference ref="Compile"/>
+      <reference ref="RunAPT"/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+    </group>
+
+    <group id="TestStatisticsTablePopupMenu">
+      <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference ref="EditSource"/>
+      <reference ref="ViewSource"/>
+      <separator/>
+    </group>
+
+    <!--  TODO: fix
+      <group id="UsageView.Popup">-->
+    <!--<reference ref="EditSource"/>-->
+    <!--<action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>-->
+    <!--<action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction"/>-->
+    <!--<separator/>-->
+    <!--<reference ref="AddToFavorites"/>-->
+    <!--<reference ref="MoveToChangeList"/>-->
+    <!--<reference ref="FindUsages"/>-->
+    <!--<action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>-->
+    <!--<separator/>-->
+    <!--<reference ref="VersionControlsGroup"/>-->
+    <!--<separator/>-->
+    <!--<reference ref="ExternalToolsGroup"/>-->
+    <!--</group>-->
+
+    <!-- ****************************************************************** -->
+
+    <group id="WelcomeScreen.QuickStart.IDEA">
+      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
+              icon="/general/createNewProject.png"/>
+      <action id="WelcomeScreen.OpenProject" class="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenOpenProjectAction"
+              icon="/general/openProject.png"/>
+      <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction"
+              icon="/general/reopenRecentProject.png"/>
+
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </group>
+
+    <group id="WelcomeScreen.Documentation.IDEA">
+      <action id="WelcomeScreen.JetBrainsTV.IDEA" class="com.intellij.openapi.wm.impl.welcomeScreen.IdeaJetBrainsTvAction"
+              icon="/general/jetbrainsTvIdea.png"/>
+      <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
+              icon="/general/pluginManager.png"/>
+
+      <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
+    </group>
+
+    <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
+      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
+    </action>
+
+
+    <group id="DiffPanel.Toolbar.IDEA">
+      <reference ref="Find"/>
+      <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
+    </group>
+
+    <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction">
+      <add-to-group group-id="MarkRootGroup"/>
+    </action>
+    <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction">
+      <add-to-group group-id="MarkRootGroup"/>
+    </action>
+    <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction">
+      <add-to-group group-id="MarkRootGroup"/>
+    </action>
+    <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction">
+      <add-to-group group-id="MarkRootGroup"/>
+    </action>
+
+  </actions>
+</component>

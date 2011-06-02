@@ -105,4 +105,9 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
   protected static String getDescription(final Class<? extends DomElement> aClass) {
     return StringUtil.join(Arrays.asList(NameUtil.nameToWords(aClass.getSimpleName())), " ");
   }
+
+  @Nullable
+  public String getMappingId() {
+    return myMappingId;
+  }
 }

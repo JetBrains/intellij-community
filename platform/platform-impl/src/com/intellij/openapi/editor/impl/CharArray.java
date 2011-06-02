@@ -36,10 +36,13 @@ import java.util.List;
 abstract class CharArray implements CharSequenceBackedByArray {
   
   //TODO den remove
-  private static final boolean DISABLE_DEFERRED_PROCESSING = true;
+  private static final boolean DISABLE_DEFERRED_PROCESSING = false;
   //TODO den uncomment
   //private static final boolean DISABLE_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.deny.deferred.changes");
-  private static final boolean DEBUG_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.debug.bulk.processing");
+  //TODO den remove
+  private static final boolean DEBUG_DEFERRED_PROCESSING = true;
+  //TODO den uncomment
+  //private static final boolean DEBUG_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.debug.bulk.processing");
   
   private static final Logger LOG = Logger.getInstance("#" + CharArray.class.getName());
 
@@ -583,10 +586,20 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   private void dumpDebugInfo(@NotNull String problem) {
+    //TODO den remove
     LOG.error(String.format(
+      "/***********************************************************\n" +
+      " * Please email idea.log to Denis.Zhdanov@jetbrains.com\n" +
+      " ***********************************************************/\n" +
       "Incorrect CharArray processing detected: '%s'. Start: %d, end: %d, text on batch update start: '%s', deferred changes history: %s, "
       + "current deferred changes: %s",
       problem, myStart, myEnd, myDebugTextOnBatchUpdateStart, myDebugDeferredChanges, myDeferredChangesStorage
     ));
+    //TODO den uncomment
+    //LOG.error(String.format(
+    //  "Incorrect CharArray processing detected: '%s'. Start: %d, end: %d, text on batch update start: '%s', deferred changes history: %s, "
+    //  + "current deferred changes: %s",
+    //  problem, myStart, myEnd, myDebugTextOnBatchUpdateStart, myDebugDeferredChanges, myDeferredChangesStorage
+    //));
   }
 }

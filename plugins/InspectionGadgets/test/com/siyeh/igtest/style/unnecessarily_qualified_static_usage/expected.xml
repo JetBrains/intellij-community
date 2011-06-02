@@ -31,4 +31,11 @@
     <description>Unnecessarily qualified static method call &lt;code&gt;UnnecessarilyQualifiedStaticUsageInspection.r()&lt;/code&gt; #loc</description>
   </problem>
 
+  <problem>
+    <file>UnnecessarilyQualifiedStaticUsageInspection.java</file>
+    <line>64</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified static access</problem_class>
+    <description>Unnecessarily qualified static access &lt;code&gt;X.l&lt;/code&gt; #loc</description>
+  </problem>
+
 </problems>

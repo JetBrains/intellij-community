@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  */
 public interface CommonClassNames {
+  @NonNls String DEFAULT_PACKAGE = "java.lang";
+
   @NonNls String JAVA_LANG_OBJECT = "java.lang.Object";
   @NonNls String JAVA_LANG_CLASS = "java.lang.Class";
   @NonNls String JAVA_LANG_ENUM = "java.lang.Enum";
@@ -80,4 +82,6 @@ public interface CommonClassNames {
 
   @NonNls String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
   @NonNls String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
+
+  @NonNls String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
 }

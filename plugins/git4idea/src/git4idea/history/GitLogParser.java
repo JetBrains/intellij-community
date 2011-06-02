@@ -15,8 +15,11 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import git4idea.GitVcs;
+import git4idea.config.GitVersionSpecialty;
 
 import java.util.*;
 
@@ -58,6 +61,7 @@ class GitLogParser {
 
   private final String myFormat;  // pretty custom format generated in the constructor
   private final GitLogOption[] myOptions;
+  private boolean mySupportsRawBody;
 
   private enum NameStatus { NONE, NAME, STATUS } // --name-only, --name-status or no flag
   private NameStatus myNameStatusOutputted = NameStatus.NONE;
@@ -68,7 +72,8 @@ class GitLogParser {
    */
   enum GitLogOption {
     SHORT_HASH("h"), HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
-    COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), SHORT_PARENTS("p"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd");
+    COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), SHORT_PARENTS("p"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd"),
+    RAW_BODY("B");
 
     private String myPlaceholder;
     private GitLogOption(String placeholder) { myPlaceholder = placeholder; }
@@ -79,7 +84,7 @@ class GitLogParser {
    * Constructs new parser with the specified number of options. Only these options will be parsed out and thus will be available from
    * GitLogRecord.
    */
-  GitLogParser(GitLogOption... options) {
+  GitLogParser(Project project, GitLogOption... options) {
     Function<GitLogOption,String> function = new Function<GitLogOption, String>() {
       @Override public String fun(GitLogOption option) {
         return "%" + option.getPlaceholder();
@@ -87,6 +92,7 @@ class GitLogParser {
     };
     myFormat = RECORD_START_GIT + StringUtil.join(options, function, ITEMS_SEPARATOR_GIT) + RECORD_END_GIT;
     myOptions = options;
+    mySupportsRawBody = GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(GitVcs.getInstance(project).getVersion());
   }
 
   String getPretty() {
@@ -205,6 +211,6 @@ class GitLogParser {
     for (; i < myOptions.length; i++) {  // options which were not returned are set to blank string, extra options are ignored.
       res.put(myOptions[i], "");
     }
-    return new GitLogRecord(res, paths, parts);
+    return new GitLogRecord(res, paths, parts, mySupportsRawBody);
   }
 }

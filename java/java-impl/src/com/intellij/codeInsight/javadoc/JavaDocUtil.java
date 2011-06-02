@@ -248,7 +248,7 @@ public class JavaDocUtil {
       shortName = "null";
     }
     PsiClass containingClass = aClass.getContainingClass();
-    while (containingClass != null) {
+    while (containingClass != null && containingClass.isPhysical()) {
       shortName = containingClass.getName() + "." + shortName;
       containingClass = containingClass.getContainingClass();
     }

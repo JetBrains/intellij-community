@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -28,19 +27,15 @@ import javax.swing.*;
  */
 public class DirDiffDialog extends DialogWrapper {
   private final DirDiffTableModel myModel;
-  private final DirDiffSettings mySettings;
   private DirDiffPanel myDiffPanel;
 
-  public DirDiffDialog(Project project, DirDiffTableModel model, DirDiffSettings settings) {
+  public DirDiffDialog(Project project, DirDiffTableModel model) {
     super(project);
     setModal(false);
     myModel = model;
-    mySettings = settings;
     setTitle("Directory Diff");
     init();
     final JBTable table = myDiffPanel.getTable();
-    //final DirDiffElement element = myModel.getElementAt(0);
-    //table.changeSelection(element.isSeparator() ? 1 : 0, 3, false, false);
     table.setColumnSelectionAllowed(false);
     table.getTableHeader().setReorderingAllowed(false);
     table.getTableHeader().setResizingAllowed(false);
@@ -56,7 +51,7 @@ public class DirDiffDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    myDiffPanel = new DirDiffPanel(myModel, new DirDiffWindow(this), mySettings);
+    myDiffPanel = new DirDiffPanel(myModel, new DirDiffWindow(this));
     Disposer.register(getDisposable(), myDiffPanel);
     return myDiffPanel.getPanel();
   }

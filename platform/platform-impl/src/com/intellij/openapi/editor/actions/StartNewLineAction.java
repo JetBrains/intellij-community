@@ -48,7 +48,7 @@ public class StartNewLineAction extends EditorAction {
       getEnterHandler().execute(editor, dataContext);
     }
 
-    private EditorActionHandler getEnterHandler() {
+    private static EditorActionHandler getEnterHandler() {
       return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
     }
   }

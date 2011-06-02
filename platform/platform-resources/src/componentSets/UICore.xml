@@ -67,10 +67,6 @@
       <implementation-class>com.intellij.ui.switcher.QuickActionManager</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.execution.ui.RunnerLayoutUi$Factory</interface-class>
-      <implementation-class>com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.actionSystem.impl.ActionPreloader</implementation-class>
       <skipForDefaultProject/>
     </component>

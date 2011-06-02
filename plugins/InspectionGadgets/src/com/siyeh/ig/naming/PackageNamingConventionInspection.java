@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
@@ -30,7 +29,7 @@ import com.siyeh.ig.RegExFormatter;
 import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,46 +50,50 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
     /**
      * @noinspection PublicField
      */
-    public String m_regex = "[a-z]*";      // this is public for the DefaultJDomExternalizer
+    @NonNls
+    public String m_regex = "[a-z]*";
 
     /**
      * @noinspection PublicField
      */
-    public int m_minLength = DEFAULT_MIN_LENGTH;  // this is public for the DefaultJDomExternalizer
+    public int m_minLength = DEFAULT_MIN_LENGTH;
 
     /**
      * @noinspection PublicField
      */
-    public int m_maxLength = DEFAULT_MAX_LENGTH;    // this is public for the DefaultJDomExternalizer
+    public int m_maxLength = DEFAULT_MAX_LENGTH;
 
     private Pattern m_regexPattern = Pattern.compile(m_regex);
 
 
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-    }
-
+    @Override
     @Nullable
-    public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope analysisScope, InspectionManager inspectionManager, GlobalInspectionContext globalInspectionContext) {
+    public CommonProblemDescriptor[] checkElement(
+            RefEntity refEntity, AnalysisScope analysisScope,
+            InspectionManager inspectionManager,
+            GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefPackage)) {
             return null;
         }
-        final String name = refEntity.getName();
-        if (name == null) {
+        @NonNls final String name = refEntity.getName();
+        if (name == null || "default package".equals(name)) {
             return null;
         }
 
         final int length = name.length();
         if (length < m_minLength) {
             final String errorString =
-                    InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.short", name);
-            return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
+                    InspectionGadgetsBundle.message(
+                            "package.naming.convention.problem.descriptor.short",
+                            name);
+            return new CommonProblemDescriptor[]{
+                    inspectionManager.createProblemDescriptor(errorString)};
         }
         if (length > m_maxLength) {
             final String errorString =
                     InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.long", name);
-            return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
+            return new CommonProblemDescriptor[]{
+                    inspectionManager.createProblemDescriptor(errorString)};
         }
         final Matcher matcher = m_regexPattern.matcher(name);
         if (matcher.matches()) {
@@ -98,10 +101,12 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
         } else {
             final String errorString =
                     InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.regex.mismatch", name, m_regex);
-            return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
+            return new CommonProblemDescriptor[]{
+                    inspectionManager.createProblemDescriptor(errorString)};
         }
     }
 
+    @Override
     public void readSettings(Element element) throws InvalidDataException {
         super.readSettings(element);
         m_regexPattern = Pattern.compile(m_regex);
@@ -109,6 +114,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
 
     private static final int REGEX_COLUMN_COUNT = 25;
 
+    @Override
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
@@ -124,24 +130,28 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
         numberFormat.setParseIntegerOnly(true);
         numberFormat.setMinimumIntegerDigits(1);
         numberFormat.setMaximumIntegerDigits(2);
-        final InternationalFormatter formatter = new InternationalFormatter(numberFormat);
+        final InternationalFormatter formatter =
+                new InternationalFormatter(numberFormat);
         formatter.setAllowsInvalid(false);
         formatter.setCommitsOnValidEdit(true);
 
-        final JFormattedTextField minLengthField = new JFormattedTextField(formatter);
+        final JFormattedTextField minLengthField =
+                new JFormattedTextField(formatter);
         final Font panelFont = panel.getFont();
         minLengthField.setFont(panelFont);
         minLengthField.setValue(m_minLength);
         minLengthField.setColumns(2);
         FormattedTextFieldMacFix.apply(minLengthField);
 
-        final JFormattedTextField maxLengthField = new JFormattedTextField(formatter);
+        final JFormattedTextField maxLengthField =
+                new JFormattedTextField(formatter);
         maxLengthField.setFont(panelFont);
         maxLengthField.setValue(m_maxLength);
         maxLengthField.setColumns(2);
         FormattedTextFieldMacFix.apply(maxLengthField);
 
-        final JFormattedTextField regexField = new JFormattedTextField(new RegExFormatter());
+        final JFormattedTextField regexField =
+                new JFormattedTextField(new RegExFormatter());
         regexField.setFont(panelFont);
         regexField.setValue(m_regexPattern);
         regexField.setColumns(REGEX_COLUMN_COUNT);
@@ -149,6 +159,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
         regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
         FormattedTextFieldMacFix.apply(regexField);
         final DocumentListener listener = new DocumentAdapter() {
+            @Override
             public void textChanged(DocumentEvent e) {
                 try {
                     regexField.commitEdit();
