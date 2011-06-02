@@ -56,6 +56,7 @@ class IntentionUsagePanel extends JPanel{
     reinitViews();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (myEditor.isDisposed()) return;
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
