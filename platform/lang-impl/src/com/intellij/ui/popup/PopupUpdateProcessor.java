@@ -17,12 +17,14 @@
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBListWithHintProvider;
 
 import java.awt.*;
@@ -49,10 +51,15 @@ public abstract class PopupUpdateProcessor extends JBPopupAdapter {
           if (windowEvent.asPopup().isVisible()) { //was not canceled yet
             final LookupElement item = event.getItem();
             if (item != null) {
-              updatePopup(CompletionUtil.getTargetElement(item)); //open next
+              PsiElement targetElement = CompletionUtil.getTargetElement(item);
+              if (targetElement == null) {
+                targetElement = DocumentationManager.getInstance(myProject).getElementFromLookup(activeLookup.getEditor(), activeLookup.getPsiFile());
+              }
+              
+              updatePopup(targetElement); //open next
             }
           } else {
-            activeLookup.removeLookupListener(this); //do not multiply listeners
+            activeLookup.removeLookupListener(this);
           }
         }
       });
