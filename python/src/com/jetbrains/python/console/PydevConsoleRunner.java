@@ -38,6 +38,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.run.PythonTracebackFilter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
@@ -163,7 +164,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   @Override
   protected PythonConsoleView createConsoleView() {
-    return new PythonConsoleView(getProject(), getConsoleTitle());
+    PythonConsoleView consoleView = new PythonConsoleView(getProject(), getConsoleTitle());
+    consoleView.addMessageFilter(new PythonTracebackFilter(getProject()));
+    return consoleView;
   }
 
   @Override
