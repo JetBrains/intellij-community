@@ -17,6 +17,7 @@ package com.intellij.mock;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ModalityInvokator;
 import com.intellij.openapi.application.ModalityState;
@@ -169,8 +170,18 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public <T> T getCurrentWriteAction(@Nullable Class<T> actionClass) {
-    return null;
+  public AccessToken acquireReadActionLock() {
+    return AccessToken.EMPTY_ACCESS_TOKEN;
+  }
+
+  @Override
+  public AccessToken acquireWriteActionLock(@Nullable Class marker) {
+    return AccessToken.EMPTY_ACCESS_TOKEN;
+  }
+
+  @Override
+  public boolean hasWriteAction(@Nullable Class<?> actionClass) {
+    return false;
   }
 
   @Override

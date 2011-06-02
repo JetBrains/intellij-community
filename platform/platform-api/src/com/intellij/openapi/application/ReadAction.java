@@ -30,14 +30,18 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
     if (EventQueue.isDispatchThread()) {
       return result.run();
     } else {
-      getApplication().runReadAction(new Runnable() {
-        public void run() {
-          result.run();
-        }
-      });
+      AccessToken r = start();
+      try {
+        result.run();
+      } finally {
+        r.finish();
+      }
     }
 
     return result;
   }
 
+  public static AccessToken start() {
+    return ApplicationManager.getApplication().acquireReadActionLock();
+  }
 }

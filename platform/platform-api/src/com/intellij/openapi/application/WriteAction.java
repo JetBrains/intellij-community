@@ -16,6 +16,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ui.GuiUtils;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public RunResult<T> execute() {
@@ -29,11 +30,12 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     try {
       GuiUtils.runOrInvokeAndWait(new Runnable() {
         public void run() {
-          getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              result.run();
-            }
-          });
+          final AccessToken accessToken = start();
+          try {
+            result.run();
+          } finally {
+            accessToken.finish();
+          }
         }
       });
     }
@@ -47,5 +49,13 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       }
     }
     return result;
+  }
+
+  public static AccessToken start() {
+    return start(null);
+  }
+
+  public static AccessToken start(@Nullable Class clazz) {
+    return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
   }
 }

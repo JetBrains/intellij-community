@@ -633,7 +633,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
     }
     
-    if (commitNecessary && ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null){
+    if (commitNecessary && ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)){
       commitDocument(document);
     }
     // avoid documents piling up during batch processing

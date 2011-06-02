@@ -99,7 +99,7 @@ class DocumentUndoProvider implements Disposable {
     }
 
     private boolean isUndoable(Document document) {
-      boolean isFromRefresh = ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null;
+      boolean isFromRefresh = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class);
       if (!isFromRefresh) return true;
 
       return getUndoManager().isUndoOrRedoAvailable(DocumentReferenceManager.getInstance().create(document));

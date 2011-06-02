@@ -134,8 +134,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   private static boolean toProcessPsiEvent() {
     Application application = ApplicationManager.getApplication();
-    return application.getCurrentWriteAction(CommitToPsiFileAction.class) == null
-           && application.getCurrentWriteAction(ExternalChangeAction.class) == null;
+    return !application.hasWriteAction(CommitToPsiFileAction.class)
+           && !application.hasWriteAction(ExternalChangeAction.class);
   }
 
 

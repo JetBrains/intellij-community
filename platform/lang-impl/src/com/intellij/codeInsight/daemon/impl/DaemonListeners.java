@@ -272,8 +272,7 @@ class DaemonListeners implements Disposable {
 
   static boolean isUnderIgnoredAction(Object action) {
     if (action instanceof DocumentRunnable.IgnoreDocumentRunnable) return true;
-    DocumentRunnable currentWriteAction = ApplicationManager.getApplication().getCurrentWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
-    return currentWriteAction instanceof DocumentRunnable.IgnoreDocumentRunnable;
+    return ApplicationManager.getApplication().hasWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
   }
 
   private boolean worthBothering(final Document document, Project project) {
