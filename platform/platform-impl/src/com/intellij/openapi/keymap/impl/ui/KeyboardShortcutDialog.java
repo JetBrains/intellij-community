@@ -212,7 +212,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
       if (loaded) {
         myConflictInfoArea.setText(KeyMapBundle.message("assigned.to.info.message", buffer.toString()));
       } else {
-        myConflictInfoArea.setText("Assigned to " + buffer.toString() + " which is still not loaded");
+        myConflictInfoArea.setText("Assigned to " + buffer.toString() + " which is now not loaded but may be loaded later");
       }
     }
   }
