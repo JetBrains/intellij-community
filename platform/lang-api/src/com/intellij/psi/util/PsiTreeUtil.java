@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.google.common.collect.Lists;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -270,6 +271,26 @@ public class PsiTreeUtil {
         //noinspection unchecked
         return (T)child;
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiElement findFirstParent(@Nullable PsiElement element, Condition<PsiElement> condition) {
+    return findFirstParent(element, false, condition);
+  }
+
+  @Nullable
+  public static PsiElement findFirstParent(@Nullable PsiElement element, boolean strict, Condition<PsiElement> condition) {
+    if (strict && element != null) {
+      element = element.getParent();
+    }
+
+    while (element != null) {
+      if (condition.value(element)) {
+        return element;
+      }
+      element = element.getParent();
     }
     return null;
   }
