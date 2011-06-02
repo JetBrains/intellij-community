@@ -783,8 +783,8 @@ public abstract class ChooseByNameBase {
                     return;
                   }
 
-                  setElementsToList(pos, elements);
                   myListIsUpToDate = true;
+                  setElementsToList(pos, elements);
                   choosenElementMightChange();
 
                   if (elements.size() == 0 && myTextFieldPanel != null) {
@@ -859,7 +859,10 @@ public abstract class ChooseByNameBase {
       // should not occur
     }
 
-    if (change == null) return; // Nothing changed
+    if (change == null) {
+      myListUpdater.doPostponedOkIfNeeded();
+      return; // Nothing changed
+    }
 
     List<Cmd> commands = new ArrayList<Cmd>();
     int inserted = 0;
@@ -1002,7 +1005,9 @@ public abstract class ChooseByNameBase {
       myAlarm.cancelAllRequests();
       myCommands.addAll(commands);
 
-      if (myCommands.isEmpty() || myDisposedFlag) return;
+      if (myCommands.isEmpty() || myDisposedFlag) {
+        return;
+      }
       myAlarm.addRequest(new Runnable() {
         public void run() {
           if (myDisposedFlag) {
@@ -1038,8 +1043,8 @@ public abstract class ChooseByNameBase {
       if (myPosponedOkAction != null) {
         if (getChosenElement() != null) {
           doClose(true);
-          clearPosponedOkAction(myDisposedFlag);
         }
+        clearPosponedOkAction(myDisposedFlag);
       }
     }
   }
