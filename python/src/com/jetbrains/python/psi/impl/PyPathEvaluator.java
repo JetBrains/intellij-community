@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
@@ -12,7 +13,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public class PyPathEvaluator  {
+public class PyPathEvaluator {
 
   private PyPathEvaluator() {
   }
@@ -43,7 +44,15 @@ public class PyPathEvaluator  {
       else if (call.isCalleeText(PyNames.ABSPATH) && args.length == 1) {
         String argValue = evaluate(args[0], path);
         // relative to directory of 'path', not file
-        return argValue == null ? null : new File(new File(path).getParent(), argValue).getPath();
+        if (argValue == null) {
+          return null;
+        }
+        if (FileUtil.isAbsolute(argValue)) {
+          return argValue;
+        }
+        else {
+          return new File(new File(path).getParent(), argValue).getPath();
+        }
       }
       else if (call.isCalleeText(PyNames.REPLACE) && args.length == 2) {
         final PyExpression callee = call.getCallee();
