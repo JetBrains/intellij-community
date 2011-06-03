@@ -111,6 +111,14 @@ class ContextSuite(LazySuite):
     def _exc_info(self):
         return sys.exc_info()
 
+    def addTests(self, tests, context=None):
+        if context:
+            self.context = context
+        if isinstance(tests, basestring):
+            raise TypeError("tests must be an iterable of tests, not a string")
+        for test in tests:
+            self.addTest(test)
+
     def run(self, result):
         """Run tests in suite inside of suite fixtures.
         """

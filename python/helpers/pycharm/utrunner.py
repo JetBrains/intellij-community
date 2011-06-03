@@ -131,7 +131,7 @@ if __name__ == "__main__":
       if pure_unittest:
         all.addTests(testLoader.loadTestsFromTestCase(getattr(module, a[1])))
       else:
-        all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])))
+        all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])), getattr(module, a[1]))
     else:
       # From method in class or from function
       debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
