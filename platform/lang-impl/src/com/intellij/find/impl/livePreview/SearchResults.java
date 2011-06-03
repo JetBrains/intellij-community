@@ -7,10 +7,12 @@ import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -34,7 +36,7 @@ public class SearchResults {
 
   private List<LiveOccurrence> myOccurrences = new ArrayList<LiveOccurrence>();
 
-  private Set<LiveOccurrence> myExcluded = new HashSet<LiveOccurrence>();
+  private Set<RangeMarker> myExcluded = new HashSet<RangeMarker>();
 
   private Editor myEditor;
   private FindModel myFindModel;
@@ -72,19 +74,32 @@ public class SearchResults {
   }
 
   public boolean isExcluded(LiveOccurrence occurrence) {
-    return myExcluded.contains(occurrence);
+    for (RangeMarker rangeMarker : myExcluded) {
+      if (rangeMarker.getStartOffset() == occurrence.getPrimaryRange().getStartOffset() && rangeMarker.getEndOffset() == occurrence.getPrimaryRange().getEndOffset()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void exclude(LiveOccurrence occurrence) {
-    if (myExcluded.contains(occurrence)) {
-      myExcluded.remove(occurrence);
-    } else {
-      myExcluded.add(occurrence);
+    boolean include = false;
+    final TextRange r = occurrence.getPrimaryRange();
+    for (RangeMarker rangeMarker : myExcluded) {
+      if (rangeMarker.getStartOffset() == r.getStartOffset() && rangeMarker.getEndOffset() == r.getEndOffset()) {
+        myExcluded.remove(rangeMarker);
+        rangeMarker.dispose();
+        include = true;
+        break;
+      }
+    }
+    if (!include) {
+      myExcluded.add(myEditor.getDocument().createRangeMarker(r.getStartOffset(), r.getEndOffset(), true));
     }
     notifyChanged();
   }
 
-  public Set<LiveOccurrence> getExcluded() {
+  public Set<RangeMarker> getExcluded() {
     return myExcluded;
   }
 
@@ -230,12 +245,24 @@ public class SearchResults {
 
       myFindModel = findModel;
       updateCursor(oldCursorRange, next);
+      updateExcluded();
       myActualFound = size;
       notifyChanged();
       if (oldCursorRange == null || myCursor == null || !myCursor.getPrimaryRange().equals(oldCursorRange)) {
         notifyCursorMoved(toChangeSelection);
       }
     }
+  }
+
+  private void updateExcluded() {
+    Set<RangeMarker> invalid = new HashSet<RangeMarker>();
+    for (RangeMarker marker : myExcluded) {
+      if (!marker.isValid()) {
+        invalid.add(marker);
+        marker.dispose();
+      }
+    }
+    myExcluded.removeAll(invalid);
   }
 
   private void updateCursor(@Nullable TextRange oldCursorRange, @Nullable TextRange next) {

@@ -50,10 +50,13 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   private static final Key<Object> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
   private static final Object IN_SELECTION1 = new Object();
   private static final Object IN_SELECTION2 = new Object();
+
   private boolean myListeningSelection = false;
   private boolean mySuppressedUpdate = false;
   private boolean myInSmartUpdate = false;
+
   private static final Key<Object> MARKER_USED = Key.create("LivePreview.MARKER_USED");
+  private static final Object YES = new Object();
 
   @Override
   public void selectionChanged(SelectionEvent e) {
@@ -361,10 +364,11 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Collection<RangeHighlighter> highlighters) {
     if (myInSmartUpdate) {
       for (RangeHighlighter highlighter : myHighlighters) {
-        if (highlighter.getStartOffset() == textRange.getStartOffset() && highlighter.getEndOffset() == textRange.getEndOffset()) {
+        if (highlighter.isValid() && highlighter.getStartOffset() == textRange.getStartOffset() && highlighter.getEndOffset() == textRange.getEndOffset()) {
           if (attributes.equals(highlighter.getTextAttributes())) {
-            if (myInSmartUpdate) {
-              highlighter.putUserData(MARKER_USED, new Object());
+            highlighter.putUserData(MARKER_USED, YES);
+            if (highlighters != myHighlighters) {
+              highlighters.add(highlighter);
             }
             return highlighter;
           }
@@ -373,7 +377,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     }
     final RangeHighlighter highlighter = doHightlightRange(textRange, attributes, highlighters);
     if (myInSmartUpdate) {
-      highlighter.putUserData(MARKER_USED, new Object());
+      highlighter.putUserData(MARKER_USED, YES);
     }
     return highlighter;
   }
@@ -384,8 +388,16 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     highlightManager.addRangeHighlight(mySearchResults.getEditor(),
                                        textRange.getStartOffset(), textRange.getEndOffset(),
                                        attributes, false, dummy);
-    highlighters.addAll(dummy);
-    return dummy.get(0);
+
+    final RangeHighlighter h = dummy.get(0);
+    for (RangeHighlighter highlighter : highlighters) {
+      if (h.getStartOffset() == highlighter.getStartOffset() && h.getEndOffset() == highlighter.getEndOffset() &&
+        h.getTextAttributes().equals(highlighter.getTextAttributes())) {
+        return h;
+      }
+    }
+    highlighters.add(h);
+    return h;
   }
 
 
