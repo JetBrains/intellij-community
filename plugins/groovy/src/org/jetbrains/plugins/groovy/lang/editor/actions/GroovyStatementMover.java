@@ -72,7 +72,8 @@ public class GroovyStatementMover extends StatementUpDownMover {
     final GroovyPsiElement pivot = getElementToMove((GroovyFileBase)file, offset);
     if (pivot == null) return false;
 
-    range = getLineRange(pivot);
+    final LineRange pivotRange = getLineRange(pivot);
+    range = new LineRange(Math.min(range.startLine, pivotRange.startLine), Math.max(range.endLine, pivotRange.endLine));
 
     final GroovyPsiElement scope = PsiTreeUtil.getParentOfType(pivot, GrMethod.class, GrTypeDefinitionBody.class, GroovyFileBase.class);
 

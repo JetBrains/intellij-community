@@ -92,6 +92,8 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   public void testInSwitchCaseUp4() throws Throwable { bothTest(); }
   public void testInSwitchCaseUp5() throws Throwable { bothTest(); }
 
+  public void testTwoStatements() throws Throwable { bothTest(); }
+
   private void bothTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     final String initial = data.get(0);
