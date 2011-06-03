@@ -37,7 +37,7 @@ public class PyConditionalExpressionImpl extends PyElementImpl implements PyCond
   @Override
   public PyExpression getCondition() {
     final List<PyExpression> expressions = PsiTreeUtil.getChildrenOfTypeAsList(this, PyExpression.class);
-    return expressions.get(1);
+    return expressions.size() > 1 ? expressions.get(1) : null;
   }
 
   @Override

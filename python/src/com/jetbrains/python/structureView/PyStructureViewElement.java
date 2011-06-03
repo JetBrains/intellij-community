@@ -15,13 +15,12 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nullable;
-import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 import javax.swing.*;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.Arrays;
+import java.util.*;
+
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 /**
  * Handles nodes in Structure View.
@@ -74,7 +73,8 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     myElement.acceptChildren(new PyElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        if (isWorthyClassItem(element)) {
+        if (element instanceof PyClass || element instanceof PyFunction ||
+            (!(myElement instanceof PyClass) && isWorthyItem(element))) {
           childrenElements.add((PyElement)element);
         }
         else {
@@ -82,47 +82,68 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         }
       }
     });
-
-    StructureViewTreeElement[] children = new StructureViewTreeElement[childrenElements.size()];
-    int i = 0;
+    final Collection<StructureViewTreeElement> children = new ArrayList<StructureViewTreeElement>();
     for (PyElement element : childrenElements) {
-      // look at functions and predefined __names__
-      Visibility vis = Visibility.NORMAL;
+      final Visibility vis;
       if (PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
         // whatever is defined inside a def, is hidden
         vis = Visibility.INVISIBLE;
       }
       else {
-        String name = element.getName();
-        if (name != null && name.startsWith("__")) {
-          if (PyNames.UnderscoredAttributes.contains(name)) {
-            vis = Visibility.PREDEFINED;
-          }
-          else {
-            vis = Visibility.PRIVATE;
-          }
-        }
+        vis = getVisibilityByName(element.getName());
       }
-      children[i] = new PyStructureViewElement(element, vis);
+      final PyStructureViewElement e = new PyStructureViewElement(element, vis);
+      children.add(e);
       if (element instanceof PyClass && element.isValid()) {
         PyClass the_exception = PyBuiltinCache.getInstance(element).getClass("Exception");
         final PyClass cls = (PyClass)element;
         for (PyClass anc : cls.iterateAncestorClasses()) {
           if (anc == the_exception) {
-            ((PyStructureViewElement)(children[i])).setIcon(Icons.EXCEPTION_CLASS_ICON);
+            e.setIcon(Icons.EXCEPTION_CLASS_ICON);
             break;
           }
         }
       }
-      i += 1;
     }
-
-    return children;
+    final Collection<PyTargetExpression> attrs = new ArrayList<PyTargetExpression>();
+    if (myElement instanceof PyClass) {
+      final PyClass c = (PyClass)myElement;
+      final Comparator<PyTargetExpression> comparator = new Comparator<PyTargetExpression>() {
+        @Override
+        public int compare(PyTargetExpression e1, PyTargetExpression e2) {
+          final String n1 = e1.getName();
+          final String n2 = e2.getName();
+          return (n1 != null && n2 != null) ? n1.compareTo(n2) : 0;
+        }
+      };
+      final List<PyTargetExpression> instanceAttrs = c.getInstanceAttributes();
+      final List<PyTargetExpression> classAttrs = c.getClassAttributes();
+      Collections.sort(instanceAttrs, comparator);
+      Collections.sort(classAttrs, comparator);
+      attrs.addAll(classAttrs);
+      attrs.addAll(instanceAttrs);
+    }
+    for (PyTargetExpression e : attrs) {
+      if (e.isValid()) {
+        children.add(new PyStructureViewElement(e, getVisibilityByName(e.getName())));
+      }
+    }
+    return children.toArray(new StructureViewTreeElement[children.size()]);
   }
 
-  static boolean isWorthyClassItem(PsiElement element) {
-    if (element instanceof PyClass) return true;
-    if (element instanceof PyFunction) return true;
+  private static Visibility getVisibilityByName(@Nullable String name) {
+    if (name != null && name.startsWith("__")) {
+      if (PyNames.UnderscoredAttributes.contains(name)) {
+        return Visibility.PREDEFINED;
+      }
+      else {
+        return Visibility.PRIVATE;
+      }
+    }
+    return Visibility.NORMAL;
+  }
+
+  private static boolean isWorthyItem(PsiElement element) {
     if ((element instanceof PyTargetExpression) && ((PyTargetExpression)element).getQualifier() == null) {
       PsiElement e = element.getParent();
       if (e instanceof PyAssignmentStatement) {
@@ -141,8 +162,6 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     return false;
   }
 
-
-
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {
@@ -156,12 +175,13 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         else if (myElement instanceof PyClass && myElement.isValid()) {
           PyClass c = (PyClass) myElement;
           StringBuilder result = new StringBuilder(notNullize(c.getName(), unnamed));
-          PyClass[] superClasses = c.getSuperClasses();
-          if (superClasses.length > 0) {
+          PyExpression[] superClassExpressions = c.getSuperClassExpressions();
+          if (superClassExpressions.length > 0) {
             result.append("(");
-            result.append(join(Arrays.asList(c.getSuperClasses()), new Function<PyClass, String>() {
-              public String fun(PyClass c) {
-                return notNullize(c.getName(), unnamed);
+            result.append(join(Arrays.asList(superClassExpressions), new Function<PyExpression, String>() {
+              public String fun(PyExpression expr) {
+                String name = expr.getText();
+                return notNullize(name, unnamed);
               }
             }, ", "));
             result.append(")");

@@ -26,4 +26,9 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   public String getReturnTypeFromDocString() {
     return myReturnTypeFromDocString;
   }
+
+  @Override
+  public String toString() {
+    return "PyFunctionStub(" + myName + ")";
+  }
 }

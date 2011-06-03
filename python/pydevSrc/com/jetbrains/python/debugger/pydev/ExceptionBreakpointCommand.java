@@ -11,7 +11,7 @@ public class ExceptionBreakpointCommand extends AbstractCommand {
   protected final String myException;
 
 
-  protected ExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger,
+  public ExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger,
                                      final int commandCode,
                                      @NotNull String exception) {
     super(debugger, commandCode);

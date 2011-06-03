@@ -27,6 +27,8 @@ public abstract class AbstractCommand {
   public static final int ADD_EXCEPTION_BREAKPOINT = 122;
   public static final int REMOVE_EXCEPTION_BREAKPOINT = 123;
   public static final int LOAD_SOURCE = 124;
+  public static final int ADD_DJANGO_EXCEPTION_BREAKPOINT = 125;
+  public static final int REMOVE_DJANGO_EXCEPTION_BREAKPOINT = 126;
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";

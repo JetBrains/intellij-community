@@ -34,7 +34,11 @@ public class AddImportHelper {
     BUILTIN, THIRD_PARTY, PROJECT
   }
 
-  private static PsiElement getInsertPosition(final PsiFile file, String nameToImport, ImportPriority priority) {
+  public static PsiElement getFileInsertPosition(final PsiFile file) {
+    return getInsertPosition(file, null, null);
+  }
+
+  private static PsiElement getInsertPosition(final PsiFile file, @Nullable String nameToImport, @Nullable ImportPriority priority) {
     PsiElement feeler = file.getFirstChild();
     LOG.assertTrue(feeler != null);
     // skip initial comments and whitespace and try to get just below the last import stmt
@@ -43,7 +47,7 @@ public class AddImportHelper {
     PsiElement seeker = feeler;
     do {
       if (feeler instanceof PyImportStatementBase) {
-        if (shouldInsertBefore(file, (PyImportStatementBase)feeler, nameToImport, priority)) {
+        if (nameToImport != null && priority != null && shouldInsertBefore(file, (PyImportStatementBase)feeler, nameToImport, priority)) {
           break;
         }
         seeker = feeler;

@@ -3,10 +3,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XNamedValue;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,7 +112,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   @Override
-  public void computePresentation(@NotNull final XValueNode node) {
+  public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     String value = PyTypeHandler.format(this);
 
     if (value.length() >= MAX_VALUE) {
@@ -123,7 +120,7 @@ public class PyDebugValue extends XNamedValue {
       value = value.substring(0, MAX_VALUE) + "...";
     }
 
-    node.setPresentation(getValueIcon(), myType, value, myContainer);
+    node.setPresentation(getValueIcon(),  myType, value, myContainer);
   }
 
   @Override

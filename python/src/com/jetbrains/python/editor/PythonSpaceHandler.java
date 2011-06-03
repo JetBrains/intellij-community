@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -28,13 +30,19 @@ public class PythonSpaceHandler extends SpaceHandler {
 
   public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     super.execute(editor, charTyped, dataContext);
+    if (charTyped != ' ') {
+      return;
+    }
 
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     VirtualFile vfile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (project != null && vfile != null) {
       PsiFile file = PsiManager.getInstance(project).findFile(vfile);
       if (file != null) {
-        PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+        int offset = editor.getCaretModel().getOffset();
+        PsiElement element = file.findElementAt(offset);
+        if (element == null && offset > 1)
+          element = file.findElementAt(offset-2);
         if (PythonDocCommentUtil.inDocComment(element)) {
           PythonDocumentationProvider provider = new PythonDocumentationProvider();
           PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
@@ -43,7 +51,9 @@ public class PythonSpaceHandler extends SpaceHandler {
             docStub += element.getParent().getText().substring(0,3);
             if (docStub != null && docStub.length() != 0) {
               editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
-              editor.getCaretModel().moveCaretRelatively(100, 1, false, false, false);
+              PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
+              if (documentationSettings.myDocStringFormat != DocStringFormat.PLAIN)
+                editor.getCaretModel().moveCaretRelatively(100, 1, false, false, false);
               return;
             }
           }

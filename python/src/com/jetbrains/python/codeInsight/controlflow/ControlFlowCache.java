@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.reference.SoftReference;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -31,7 +32,8 @@ public class ControlFlowCache {
     return flow;
   }
 
-  public static Scope getScope(ScopeOwner element) {
+  @NotNull
+  public static Scope getScope(@NotNull ScopeOwner element) {
     SoftReference<Scope> ref = element.getUserData(SCOPE_KEY);
     Scope scope = ref != null ? ref.get() : null;
     if (scope == null) {

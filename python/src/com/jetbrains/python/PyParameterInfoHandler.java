@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -10,6 +11,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.toolbox.FP;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -35,7 +37,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public PyArgumentList findElementForParameterInfo(final CreateParameterInfoContext context) {
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
-      PyArgumentList.AnalysisResult result = arglist.analyzeCall(TypeEvalContext.slow());
+      PyArgumentList.AnalysisResult result = arglist.analyzeCall(TypeEvalContext.fast());
       if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
         context.setItemsToShow(new Object[] { result });
         return arglist;
@@ -90,11 +92,14 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   public boolean tracksParameterIndex() {
-    return true;
+    return false;
   }
 
-  public void updateUI(final PyArgumentList.AnalysisResult result, final ParameterInfoUIContext context) {
-    if (result == null) return;
+  public void updateUI(final PyArgumentList.AnalysisResult prev_result, final ParameterInfoUIContext context) {
+    if (prev_result == null) return;
+    final PyArgumentList arglist = prev_result.getArgumentList();
+    // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
+    PyArgumentList.AnalysisResult result = arglist.analyzeCall(TypeEvalContext.fast());
     PyMarkedCallee marked = result.getMarkedCallee();
     assert marked != null : "findElementForParameterInfo() did it wrong!";
     final Callable callable = marked.getCallable();
@@ -143,8 +148,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       }
     );
 
-
-    final PyArgumentList arglist = result.getArgumentList();
 
     final int current_param_offset = context.getCurrentParameterIndex(); // in Python mode, we get an offset here, not an index!
 
@@ -215,8 +218,18 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     }
 
     // highlight the next parameter to be filled
-    if (can_offer_next && last_param_index < raw_params.size()-1) {
-      hint_flags.get(param_indexes.get(n_param_list.get(last_param_index+1))).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+    if (can_offer_next) {
+      if (last_param_index < raw_params.size() - 1 || flat_args.size() == 0) {
+        int highlight_index;
+        if (flat_args.size() == 0) highlight_index = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
+        else {
+          if (n_param_list.get(last_param_index).isPositionalContainer()) highlight_index = last_param_index; // stick to *arg
+          else highlight_index = last_param_index+1; // highlight next
+        }
+        if (highlight_index < n_param_list.size()) {
+          hint_flags.get(param_indexes.get(n_param_list.get(highlight_index))).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+        }
+      }
     }
 
     final String NO_PARAMS_MSG = "<No parameters>";

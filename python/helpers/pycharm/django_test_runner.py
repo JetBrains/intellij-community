@@ -41,7 +41,7 @@ class DjangoTeamcityTestRunner(BaseRunner):
     #self.interactive = False
 
   def run_suite(self, suite):
-    return TeamcityTestRunner().run(suite)
+    return TeamcityTestRunner.run(self, suite)
 
 def partition_suite(suite, classes, bins):
     """
@@ -127,7 +127,7 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[], **kwa
     old_name = settings.DATABASE_NAME
     from django.db import connection
     connection.creation.create_test_db(verbosity, autoclobber=False)
-    TeamcityServiceMessages(sys.stdout).testCount(suite.countTestCases())
+
     result = DjangoTeamcityTestRunner().run(suite)
     connection.creation.destroy_test_db(old_name, verbosity)
 

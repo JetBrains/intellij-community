@@ -241,9 +241,13 @@ public class PyCallExpressionHelper {
   }
 
   private static boolean isQualifiedByInstance(Callable resolved, List<PyExpression> qualifiers, TypeEvalContext context) {
+    PyDocStringOwner owner = PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyDocStringOwner.class);
+    if (!(owner instanceof PyClass)) {
+      return false;
+    }
     // true = call by instance
     if (qualifiers.isEmpty()) {
-      return resolved.asMethod() != null; // unqualified + method = implicit constructor call
+      return true; // unqualified + method = implicit constructor call
     }
     for (PyExpression qualifier : qualifiers) {
       if (isQualifiedByInstance(resolved, qualifier, context)) {
@@ -269,7 +273,7 @@ public class PyCallExpressionHelper {
     PyType qtype = context.getType(qualifier);
     if (qtype instanceof PyClassType) {
       if (((PyClassType)qtype).isDefinition()) {
-        PyClass resolvedParent = PsiTreeUtil.getParentOfType(resolved, PyClass.class);
+        PyClass resolvedParent = PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyClass.class);
         if (resolvedParent != null) {
           final PyClass qualifierClass = ((PyClassType)qtype).getPyClass();
           if (qualifierClass != null && (qualifierClass.isSubclass(resolvedParent) || resolvedParent.isSubclass(qualifierClass))) {

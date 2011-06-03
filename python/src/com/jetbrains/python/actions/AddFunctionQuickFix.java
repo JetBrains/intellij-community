@@ -5,10 +5,13 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.facet.FacetFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -55,24 +58,32 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       // try to at least match parameter count
       // TODO: get parameter style from code style
       PyFunctionBuilder builder = new PyFunctionBuilder(item_name);
-      PsiElement pe = problem_elt.getParent();
-      sure(pe instanceof PyCallExpression);
-      PyArgumentList arglist = ((PyCallExpression)pe).getArgumentList();
-      sure(arglist);
-      final PyExpression[] args = arglist.getArguments();
-      for (PyExpression arg : args) {
-        if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(bar_1)
-          builder.parameter(((PyKeywordArgument)arg).getKeyword());
-        }
-        else if (arg instanceof PyReferenceExpression) {
-          PyReferenceExpression refex = (PyReferenceExpression)arg;
-          builder.parameter(refex.getReferencedName());
-        }
-        else { // use a boring name
-          builder.parameter("param");
+      PsiElement problem_parent = problem_elt.getParent();
+      if (problem_parent instanceof PyCallExpression) {
+        PyArgumentList arglist = ((PyCallExpression)problem_parent).getArgumentList();
+        sure(arglist);
+        final PyExpression[] args = arglist.getArguments();
+        for (PyExpression arg : args) {
+          if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(bar_1)
+            builder.parameter(((PyKeywordArgument)arg).getKeyword());
+          }
+          else if (arg instanceof PyReferenceExpression) {
+            PyReferenceExpression refex = (PyReferenceExpression)arg;
+            builder.parameter(refex.getReferencedName());
+          }
+          else { // use a boring name
+            builder.parameter("param");
+          }
         }
       }
-      PyFunction function = builder.buildFunction(project, LanguageLevel.getDefault());
+      else if (problem_parent != null) {
+        PsiFile source_file = problem_parent.getContainingFile();
+        if (source_file != null && "urls.py".equals(source_file.getName()) && DjangoFacet.isPresent(source_file)) {
+          builder.parameter("request"); // specifically for mentions in urlpatterns
+        }
+      }
+      // else: no arglist, use empty args
+      PyFunction function = builder.buildFunction(project, LanguageLevel.forFile(myPyFile.getVirtualFile()));
 
       // add to the bottom
       function = (PyFunction) myPyFile.add(function);

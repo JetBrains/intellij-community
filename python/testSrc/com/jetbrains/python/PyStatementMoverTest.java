@@ -1,9 +1,6 @@
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction;
-import com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
@@ -14,20 +11,13 @@ public class PyStatementMoverTest extends PyLightFixtureTestCase {
   private void doTest() {
     final String testName = getTestName(true);
     myFixture.configureByFile("mover/" + testName + ".py");
-    performAction(new MoveStatementUpAction().getHandler());
+    myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION);
     myFixture.checkResultByFile("mover/" + testName + "_afterUp.py", true);
 
     FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()));
     myFixture.configureByFile("mover/" + getTestName(true) + ".py");
-    performAction(new MoveStatementDownAction().getHandler());
+    myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
     myFixture.checkResultByFile("mover/" + testName + "_afterDown.py", true);
-  }
-
-  private void performAction(EditorActionHandler handler) {
-    final Editor editor = myFixture.getEditor();
-    if (handler.isEnabled(editor, null)) {
-      handler.execute(editor, null);
-    }
   }
 
   public void testSimple() {

@@ -40,7 +40,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    ResultList ret = new ResultList();
+    ResolveResultList ret = new ResolveResultList();
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
@@ -180,7 +180,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           if (mod_candidate instanceof PyExpression) {
             addImportedNames(from_import.getImportElements()); // don't propose already imported items
             // collect what's within module file
-            final VariantsProcessor processor = new VariantsProcessor(myElement, node_filter, null);
+            final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(myElement, node_filter, null);
             processor.setPlainNamesOnly(true); // we don't want parens after functions, etc
             PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
             final List<LookupElement> names_from_module = processor.getResultList();

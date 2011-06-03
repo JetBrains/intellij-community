@@ -97,15 +97,15 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     if (stub != null) {
       return stub.getRelativeLevel();
     }
-    // crude but OK for reasonable cases, and in unreasonably complex error cases this number is moot anyway. 
+
     int result = 0;
-    PsiElement import_kwd = findChildByType(PyTokenTypes.IMPORT_KEYWORD);
-    if (import_kwd != null) {
-      ASTNode seeker = import_kwd.getNode();
-      while (seeker != null) {
-        if (seeker.getElementType() == PyTokenTypes.DOT) result += 1;
-        seeker = seeker.getTreePrev();
-      }
+    ASTNode seeker = getNode().getFirstChildNode();
+    while(seeker != null && (seeker.getElementType() == PyTokenTypes.FROM_KEYWORD || seeker.getElementType() == TokenType.WHITE_SPACE)) {
+      seeker = seeker.getTreeNext();
+    }
+    while (seeker != null && seeker.getElementType() == PyTokenTypes.DOT) {
+      result++;
+      seeker = seeker.getTreeNext();
     }
     return result;
   }
@@ -148,7 +148,8 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     else {
       PyImportElement[] importElements = getImportElements();
       for(PyImportElement element: importElements) {
-        if (!element.processDeclarations(processor, state, lastParent, place)) {
+        final PsiElement resolved = ResolveImportUtil.resolveImportElement(element);
+        if (resolved != null && !processor.execute(resolved, state)) {
           return false;
         }
       }

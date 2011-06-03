@@ -267,6 +267,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testErrorInParameterList() {  // PY-3635
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }

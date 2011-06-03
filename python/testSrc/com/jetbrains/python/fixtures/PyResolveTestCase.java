@@ -1,11 +1,11 @@
 package com.jetbrains.python.fixtures;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.*;
 import com.intellij.testFramework.TestDataFile;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -72,7 +72,14 @@ public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
     assertInstanceOf(element, aClass);
     assertEquals(name, ((PsiNamedElement) element).getName());
     if (containingFilePath != null) {
-      assertEquals(containingFilePath, element.getContainingFile().getVirtualFile().getPath());
+      VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+      if (virtualFile.getFileSystem() instanceof TempFileSystem) {
+        assertEquals(containingFilePath, virtualFile.getPath());
+      }
+      else {
+        assertEquals(containingFilePath, virtualFile.getName());
+      }
+
     }
     return (T)element;
   }

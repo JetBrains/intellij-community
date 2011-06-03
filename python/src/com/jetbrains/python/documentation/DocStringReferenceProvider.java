@@ -9,11 +9,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -46,11 +49,38 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
           break;
         }
         pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, tagRange.getEndOffset());
-        int endPos = CharMatcher.JAVA_LETTER_OR_DIGIT.negate().indexIn(docString, pos);
+        CharMatcher identifierMatcher = new CharMatcher() {
+                                        @Override public boolean matches(char c) {
+                                          return Character.isLetterOrDigit(c) || c == '_';
+                                        }}.negate();
+        if (docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).startsWith(":")) {
+          int ws = CharMatcher.anyOf(" \t*").indexIn(docString, pos+1);
+          if (ws != -1) {
+            int next = CharMatcher.anyOf(" \t*").negate().indexIn(docString, ws);
+            if (next != -1 && !docString.substring(pos, next).contains(":")) {
+              int endPos = identifierMatcher.indexIn(docString, pos);
+              PyType type = PyTypeParser.getTypeByName(element, docString.substring(pos, endPos));
+              result.add(new DocStringTypeReference(element, new TextRange(pos, endPos), type));
+              pos = next;
+            }
+          }
+        }
+        int endPos = identifierMatcher.indexIn(docString, pos);
         if (endPos < 0) {
           endPos = docString.length();
         }
         result.add(new DocStringParameterReference(element, new TextRange(pos, endPos)));
+
+        if (docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).equals(":type") ||
+            docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).equals(":rtype")) {
+          pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, endPos+1);
+          endPos = CharMatcher.anyOf("\n\r").indexIn(docString, pos+1);
+          if (endPos == -1)
+            endPos  = pos;
+          Map<TextRange, PyType> map =  PyTypeParser.parseDocstring(element, docString.substring(pos, endPos), pos);
+          for (Map.Entry<TextRange, PyType> pair : map.entrySet())
+            result.add(new DocStringTypeReference(element, pair.getKey(), pair.getValue()));
+        }
         pos = endPos;
       }
 

@@ -27,6 +27,9 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
   public Result beforeCharTyped(char character, Project project, Editor editor, PsiFile file, FileType fileType) {
     if (!(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
     if (character == '(') {
+      if (!PyCodeInsightSettings.getInstance().INSERT_SELF_FOR_METHODS) {
+        return Result.CONTINUE;
+      }
       final Document document = editor.getDocument();
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final int offset = editor.getCaretModel().getOffset();
@@ -49,9 +52,13 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
                 // TODO: all string constants go to Settings
                 String pname = flags.isClassMethod() || flags.isMetaclassMethod() ? "cls" : "self";
                 final boolean is_new = PyNames.NEW.equals(func.getName());
-                if (flags.isMetaclassMethod() && is_new) pname = "typ";
-                else if (flags.isClassMethod() || is_new) pname = "cls";
-                else if (flags.isStaticMethod()) pname="";
+                if (flags.isMetaclassMethod() && is_new) {
+                  pname = "typ";
+                }
+                else if (flags.isClassMethod() || is_new) {
+                  pname = "cls";
+                }
+                else if (flags.isStaticMethod()) pname = "";
                 documentManager.commitDocument(document);
                 // TODO: only print the ")" if Settings require it
                 int caretOffset = editor.getCaretModel().getOffset();

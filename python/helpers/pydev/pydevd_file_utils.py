@@ -45,6 +45,7 @@ from pydevd_constants import * #@UnusedWildImport
 import os.path
 import sys
 import traceback
+import zipfile
 
 normcase = os.path.normcase
 basename = os.path.basename
@@ -85,6 +86,32 @@ def _NormFile(filename):
         #cache it for fast access later
         NORM_FILENAME_CONTAINER[filename] = r
         return r
+
+ZIP_SEARCH_CACHE = {}
+def exists(file):
+    if os.path.exists(file):
+        return True
+
+    ind = file.find('.zip')
+    if ind != -1:
+        ind+=4
+        zip_path = file[:ind]
+        inner_path = file[ind+1:]
+        try:
+            zip = ZIP_SEARCH_CACHE[zip_path]
+        except KeyError:
+            try:
+                zip = zipfile.ZipFile(zip_path, 'r')
+                ZIP_SEARCH_CACHE[zip_path] = zip
+            except :
+                return False
+
+        try:
+            info = zip.getinfo(inner_path)
+            return True
+        except KeyError:
+            return False
+
 
     
 #Now, let's do a quick test to see if we're working with a version of python that has no problems

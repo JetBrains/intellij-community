@@ -54,7 +54,7 @@ class TeamcityTestResult(TestResult):
 
     def find_second(self, val):
       quot = val[-1]
-      count = 1
+      count = 0
       quote_ind = val[:len(val)-count-1].rfind(quot)
       while val[quote_ind-1] == "\\":
         quote_ind = val[:quote_ind-1].rfind(quot)
@@ -167,6 +167,7 @@ class TeamcityTestRunner:
 
     def run(self, test):
         result = self._makeResult()
+        result.messages.testCount(test.countTestCases())
         test(result)
         result.endLastSuite()
         return result

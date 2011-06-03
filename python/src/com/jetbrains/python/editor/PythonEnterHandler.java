@@ -2,7 +2,7 @@ package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class PythonEnterHandler implements EnterHandlerDelegate {
+public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   private static final Class[] IMPLICIT_WRAP_CLASSES = new Class[]{
     PsiComment.class,
     PyStringLiteralExpression.class,
@@ -40,11 +41,11 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
   };
 
   @Override
-  public Result preprocessEnter(PsiFile file,
-                                Editor editor,
-                                Ref<Integer> caretOffset,
-                                Ref<Integer> caretAdvance,
-                                DataContext dataContext,
+  public Result preprocessEnter(@NotNull PsiFile file,
+                                @NotNull Editor editor,
+                                @NotNull Ref<Integer> caretOffset,
+                                @NotNull Ref<Integer> caretAdvance,
+                                @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
     if (!(file instanceof PyFile)) {
       return Result.Continue;
@@ -57,29 +58,24 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
     final int offset = caretOffset.get();
     final PsiElement element = file.findElementAt(offset);
-    if (element == null) {
-      return Result.Continue;
-    }
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    if (codeInsightSettings.JAVADOC_STUB_ON_ENTER && PythonDocCommentUtil.inDocComment(element)) {
-      PythonDocumentationProvider provider = new PythonDocumentationProvider();
-      PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-      if (fun != null) {
-        String docStub = provider.generateDocumentationContentStub(fun, false);
-        docStub += element.getParent().getText().substring(0,3);
-        if (docStub != null && docStub.length() != 0) {
-          editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
-          return Result.Continue;
-        }
-      }
-      PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
-      if (klass != null) {
-        editor.getDocument().insertString(editor.getCaretModel().getOffset(),
-                        PythonDocCommentUtil.generateDocForClass(klass, element.getParent().getText().substring(0,3)));
+    if (codeInsightSettings.JAVADOC_STUB_ON_ENTER) {
+      PsiElement comment = element;
+      if (comment == null && offset != 0)
+        comment = file.findElementAt(offset-1);
+      if (PythonDocCommentUtil.inDocComment(comment)) {
+        insertDocStringStub(editor, comment);
         return Result.Continue;
       }
     }
 
+    if (element == null) {
+      return Result.Continue;
+    }
+
+    if (!PyCodeInsightSettings.getInstance().INSERT_BACKSLASH_ON_WRAP) {
+      return Result.Continue;
+    }
     if (offset > 0) {
       final PsiElement beforeCaret = file.findElementAt(offset-1);
       if (beforeCaret instanceof PsiWhiteSpace && beforeCaret.getText().indexOf('\\') > 0) {
@@ -137,6 +133,24 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       caretOffset.set(offset+1);
     }
     return Result.Continue;
+  }
+
+  private static void insertDocStringStub(Editor editor, PsiElement element) {
+    PythonDocumentationProvider provider = new PythonDocumentationProvider();
+    PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    if (fun != null) {
+      String docStub = provider.generateDocumentationContentStub(fun, false);
+      docStub += element.getParent().getText().substring(0,3);
+      if (docStub != null && docStub.length() != 0) {
+        editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
+        return;
+      }
+    }
+    PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
+    if (klass != null) {
+      editor.getDocument().insertString(editor.getCaretModel().getOffset(),
+                      PythonDocCommentUtil.generateDocForClass(klass, element.getParent().getText().substring(0, 3)));
+    }
   }
 
   @Nullable

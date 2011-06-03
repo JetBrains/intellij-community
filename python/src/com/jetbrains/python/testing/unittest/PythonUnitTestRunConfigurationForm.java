@@ -15,7 +15,6 @@ import java.awt.event.ActionListener;
  * @author Leonid Shalupov
  */
 public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConfigurationParams {
-  private JPanel myTestsPlaceHolder;
   private JPanel myRootPanel;
   private JCheckBox myIsPureUnittest;
 
@@ -23,6 +22,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
 
 
   public PythonUnitTestRunConfigurationForm(final Project project, final PythonUnitTestRunConfiguration configuration) {
+    myRootPanel = new JPanel(new BorderLayout());
     myTestRunConfigurationForm = new PythonTestRunConfigurationForm(project, configuration);
     myIsPureUnittest = new JCheckBox("Inspect only subclasses of unittest.TestCase");
     myIsPureUnittest.setSelected(configuration.isPureUnittest());
@@ -51,7 +51,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
       }
     });
     myTestRunConfigurationForm.getAdditionalPanel().add(myIsPureUnittest);
-    myTestsPlaceHolder.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
+    myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
   public String getPattern() {
     return myTestRunConfigurationForm.getPattern();

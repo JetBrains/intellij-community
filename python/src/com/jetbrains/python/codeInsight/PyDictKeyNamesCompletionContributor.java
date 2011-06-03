@@ -80,7 +80,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
    * @return
    */
   private static CompletionResultSet createResult(PsiElement original, CompletionResultSet result, int offset) {
-    PsiElement prevElement = original.getPrevSibling();
+    PyStringLiteralExpression prevElement = PsiTreeUtil.getPrevSiblingOfType(original, PyStringLiteralExpression.class);
     if (prevElement != null) {
       ASTNode prevNode = prevElement.getNode();
       if (prevNode != null) {
@@ -91,7 +91,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
     PsiElement parentElement = original.getParent();
     if (parentElement != null) {
       if (parentElement instanceof PyStringLiteralExpression)
-        return result.withPrefixMatcher(findPrefix(parentElement, offset));
+        return result.withPrefixMatcher(findPrefix((PyStringLiteralExpression)parentElement, offset));
     }
     return result;
   }
@@ -101,23 +101,8 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
    * @param element to find prefix of
    * @return prefix
    */
-  private static String findPrefix(final PsiElement element, int offset) {
-    if (element instanceof PyStringLiteralExpression) {
-      String text = TextRange.create(element.getTextRange().getStartOffset(), offset).substring(element.getContainingFile().getText());
-      char[] chs = text.toCharArray();
-      char start = chs[0];
-      StringBuilder builder = new StringBuilder();
-      builder.append(start);
-      for (int i = 1; i != chs.length; ++i) {
-        char ch = chs[i];
-        if (ch == start) {
-          break;
-        }
-        builder.append(ch);
-      }
-      return builder.toString();
-    }
-    return element.getText();
+  private static String findPrefix(final PyStringLiteralExpression element, int offset) {
+    return TextRange.create(element.getTextRange().getStartOffset(), offset).substring(element.getContainingFile().getText());
   }
 
   /**
@@ -196,7 +181,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
       if (isDictKeys) {
         if (str.getText().startsWith("'") && str.getText().endsWith("'") ||
             str.getText().startsWith("\"") && str.getText().endsWith("\""))
-          context.setReplacementOffset(context.getSelectionEndOffset()+1);
+          context.setReplacementOffset(str.getTextOffset()+str.getTextLength());
       }
     }
   }

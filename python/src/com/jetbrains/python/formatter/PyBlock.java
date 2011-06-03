@@ -141,7 +141,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = Indent.getContinuationIndent();
+        childIndent = Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.ARGUMENT_LIST) {
@@ -152,7 +152,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION) {
+    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACE) {
         childIndent = Indent.getNoneIndent();
       }
@@ -176,6 +176,9 @@ public class PyBlock implements ASTBlock {
       if (keyValue != null && child.getPsi() == keyValue.getValue()) {
         childIndent = Indent.getNormalIndent();
       }
+    }
+    else if (parentType == PyElementTypes.PARENTHESIZED_EXPRESSION) {
+      childIndent = Indent.getNormalIndent();
     }
 
     if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2)) {  // maybe enter was pressed and cut us from a previous (nested) statement list
@@ -211,7 +214,9 @@ public class PyBlock implements ASTBlock {
 
   private boolean needListAlignment(ASTNode child) {
     IElementType childType = child.getElementType();
-    if (PyTokenTypes.OPEN_BRACES.contains(childType)) {
+    ASTNode firstGrandchild = child.getFirstChildNode();
+    IElementType firstGrandchildType = firstGrandchild == null ? null : firstGrandchild.getElementType();
+    if (PyTokenTypes.OPEN_BRACES.contains(childType) || PyTokenTypes.OPEN_BRACES.contains(firstGrandchildType)) {
       return false;
     }
     if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
@@ -668,6 +673,15 @@ public class PyBlock implements ASTBlock {
   }
 
   public boolean isIncomplete() {
+    // if there's something following us, we're not incomplete
+    PsiElement element = _node.getPsi().getNextSibling();
+    while (element instanceof PsiWhiteSpace) {
+      element = element.getNextSibling();
+    }
+    if (element != null) {
+      return false;
+    }
+
     ASTNode lastChild = getLastNonSpaceChild(_node, false);
     if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST) {
       // only multiline statement lists are considered incomplete

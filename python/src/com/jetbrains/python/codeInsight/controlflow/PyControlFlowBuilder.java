@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -57,8 +58,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyCallExpression(final PyCallExpression node) {
+    final PyExpression callee = node.getCallee();
     // Flow abrupted
-    if (node.isCalleeText("exit")) {
+    if (callee != null && "sys.exit".equals(PyUtil.getReadableRepr(callee, true))) {
+      callee.accept(this);
       for (PyExpression expression : node.getArguments()) {
         expression.accept(this);
       }
@@ -100,7 +103,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.checkPending(readWriteInstruction);
   }
 
-  private static boolean isSelf(PsiElement qualifier) {
+  public static boolean isSelf(PsiElement qualifier) {
     PyFunction func = PsiTreeUtil.getParentOfType(qualifier, PyFunction.class);
     if (func == null || PsiTreeUtil.getParentOfType(func, PyClass.class) == null) {
       return false;
@@ -170,12 +173,19 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyImportStatement(final PyImportStatement node) {
+    visitPyImportStatementBase(node);
+  }
+
+  @Override
+  public void visitPyFromImportStatement(PyFromImportStatement node) {
+    visitPyImportStatementBase(node);
+  }
+
+  private void visitPyImportStatementBase(PyImportStatementBase node) {
     myBuilder.startNode(node);
     for (PyImportElement importElement : node.getImportElements()) {
-      final PyReferenceExpression importReference = importElement.getImportReference();
-      if (importReference != null) {
-        final ReadWriteInstruction instruction =
-          ReadWriteInstruction.write(myBuilder, importElement, importReference.getReferencedName());
+      final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, importElement, importElement.getVisibleName());
+      if (instruction != null) {
         myBuilder.addNode(instruction);
         myBuilder.checkPending(instruction);
       }

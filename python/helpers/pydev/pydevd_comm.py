@@ -104,6 +104,8 @@ CMD_CONSOLE_EXEC = 121
 CMD_ADD_EXCEPTION_BREAK = 122
 CMD_REMOVE_EXCEPTION_BREAK = 123
 CMD_LOAD_SOURCE = 124
+CMD_ADD_DJANGO_EXCEPTION_BREAK = 125
+CMD_REMOVE_DJANGO_EXCEPTION_BREAK = 126
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901 
@@ -773,10 +775,17 @@ class InternalGetCompletions(InternalThreadCommand):
             try:
                 import console._completer
             except:
-                path = os.environ['PYDEV_COMPLETER_PYTHONPATH']
+                try:
+                    path = os.environ['PYDEV_COMPLETER_PYTHONPATH']
+                except :
+                    path = os.path.dirname(__file__)
+                print (path)
                 sys.path.append(path)
                 remove_path = path
-                import console._completer
+                try:
+                    import console._completer
+                except :
+                    pass
             
             try:
                 
@@ -788,10 +797,13 @@ class InternalGetCompletions(InternalThreadCommand):
                 updated_globals = {}
                 updated_globals.update(frame.f_globals)
                 updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
-            
-                completer = console._completer.Completer(updated_globals, None)
-                #list(tuple(name, descr, parameters, type))
-                completions = completer.complete(self.act_tok)
+
+                try:
+                    completer = console._completer.Completer(updated_globals, None)
+                    #list(tuple(name, descr, parameters, type))
+                    completions = completer.complete(self.act_tok)
+                except :
+                    completions = []
                 
                 
                 def makeValid(s):

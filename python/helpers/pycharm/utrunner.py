@@ -26,8 +26,6 @@ def getModuleName(prefix, cnt):
 def loadSource(fileName):
   baseName = os.path.basename(fileName)
   moduleName = os.path.splitext(baseName)[0]
-  if not moduleName.startswith("test"):
-    return
 
   # for users wanted to run unittests under django
   #because of django took advantage of module name
@@ -64,7 +62,7 @@ def loadModulesFromFolderRec(folder):
 
   return modules
 
-def loadModulesFromFolderUsingPattern(folder, pattern):
+def loadModulesFromFolderUsingPattern(folder, pattern="test.*"):
   ''' loads modules from folder ,
       check if module name matches given pattern'''
   modules = loadModulesFromFolderRec(folder)
@@ -116,7 +114,7 @@ if __name__ == "__main__":
       else:
         if a[0].endswith("/"):
           debug("/ from folder " + a[0])
-          modules = loadModulesFromFolderRec(a[0])
+          modules = loadModulesFromFolderUsingPattern(a[0])
         else:
           debug("/ from module " + a[0])
           modules = [loadSource(a[0])]
@@ -153,5 +151,4 @@ if __name__ == "__main__":
 
 
   debug("/ Loaded " + str(all.countTestCases()) + " tests")
-  TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
   TeamcityTestRunner().run(all)

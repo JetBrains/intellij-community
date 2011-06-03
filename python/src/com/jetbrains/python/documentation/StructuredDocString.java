@@ -138,4 +138,5 @@ public abstract class StructuredDocString {
 
   @Nullable
   public abstract String getAttributeDescription();
+  public abstract List<String> getAdditionalTags();
 }

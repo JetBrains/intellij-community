@@ -5,8 +5,9 @@ def foo(a, b, f):
   another line of description
 
   @param b: 
-  @param f: 
   @param a: some description
+            of param
+  @param c: another description
             of param
   @return:
   """

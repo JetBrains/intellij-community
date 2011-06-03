@@ -14,6 +14,7 @@ import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -48,16 +49,18 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         // Ignore qualifier inspections
-        final PyExpression qualifier = node.getQualifier();
-        if (qualifier != null){
-          qualifier.accept(this);
+        if (node.getQualifier() != null) {
           return;
         }
-        // Ignore import arguments
-        if (PyImportStatementNavigator.getImportStatementByElement(node) != null){
+        // Ignore import subelements
+        if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
           return;
         }
-        final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node);
+        final String name = node.getReferencedName();
+        if (name == null) {
+          return;
+        }
+        final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, name);
         if (owner == null) {
           return;
         }
@@ -65,16 +68,21 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (owner != PsiTreeUtil.getParentOfType(node, ScopeOwner.class)) {
           return;
         }
-        final String name = node.getReferencedName();
-        if (name == null) {
-          return;
-        }
         final Scope scope = ControlFlowCache.getScope(owner);
         // Ignore globals and if scope even doesn't contain such a declaration
         if (scope.isGlobal(name) || (!scope.containsDeclaration(name))){
           return;
         }
-        final ScopeVariable variable = scope.getDeclaredVariable(node, name);
+        // Start DFA from the assignment statement in case of augmented assignments
+        final PsiElement anchor;
+        final PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(node, PyAugAssignmentStatement.class);
+        if (augAssignment != null && name.equals(augAssignment.getTarget().getName())) {
+          anchor = augAssignment;
+        }
+        else {
+          anchor = node;
+        }
+        final ScopeVariable variable = scope.getDeclaredVariable(anchor, name);
         if (variable == null) {
           boolean resolves2LocalVariable = false;
           boolean resolve2Scope = true;
@@ -91,17 +99,33 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                 continue;
               }
             }
-            if (PyAssignmentStatementNavigator.getStatementByTarget(element) != null || 
+            if (PyAssignmentStatementNavigator.getStatementByTarget(element) != null ||
                 PyForStatementNavigator.getPyForStatementByIterable(element) != null ||
                 PyExceptPartNavigator.getPyExceptPartByTarget(element) != null ||
-                PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element) != null) {
+                PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element) != null ||
+                PyImportStatementNavigator.getImportStatementByElement(element) != null) {
               resolves2LocalVariable = true;
               resolve2Scope = PsiTreeUtil.isAncestor(owner, element, false);
               break;
             }
           }
-          // Ignore this if can resolve not to local variable
+
+          // TODO: This mechanism for detecting unbound variables would be enough for the whole inspection if the CFG builder was unaware of 'self'
           if (!resolves2LocalVariable) {
+            if (PyControlFlowBuilder.isSelf(node)) {
+              return;
+            }
+            if (owner instanceof PyClass) {
+              if (ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {
+                return;
+              }
+            }
+            if (owner instanceof PyFile) {
+              registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
+            }
+            else {
+              registerUnboundLocal(node);
+            }
             return;
           }
 
@@ -118,7 +142,8 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                 if (inst instanceof ReadWriteInstruction) {
                   final ReadWriteInstruction rwInst = (ReadWriteInstruction)inst;
                   if (name.equals(rwInst.getName())) {
-                    if (scope.getDeclaredVariable(inst.getElement(), name) != null) {
+                    final PsiElement e = inst.getElement();
+                    if (e != null && scope.getDeclaredVariable(e, name) != null) {
                       return ControlFlowUtil.Operation.BREAK;
                     }
                     if (rwInst.getAccess().isWriteAccess()) {
@@ -140,22 +165,36 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           }
           if (resolve2Scope){
             if (owner instanceof PyFile){
-              registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", node.getName()));
+              registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
             }
             else {
-              registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
-                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                              null,
-                              new AddGlobalQuickFix());
+              registerUnboundLocal(node);
             }
           } else
           if (owner instanceof PyFunction && PsiTreeUtil.getParentOfType(owner, PyClass.class, PyFile.class) instanceof PyFile){
-            registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                            null,
-                            new AddGlobalQuickFix());
+            registerUnboundLocal(node);
           }
         }
+      }
+
+      @Override
+      public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
+        for (PyTargetExpression var : node.getVariables()) {
+          final String name = var.getName();
+          final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(var, name);
+          if (owner == null || owner instanceof PyFile) {
+            registerProblem(var, PyBundle.message("INSP.unbound.nonlocal.variable", name),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null);
+          }
+        }
+      }
+
+      private void registerUnboundLocal(PyReferenceExpression node) {
+        registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                        null,
+                        new AddGlobalQuickFix());
+
       }
     };
   }

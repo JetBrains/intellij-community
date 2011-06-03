@@ -372,6 +372,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     PyParameter[] list = element.getParameterList().getParameters();
     StringBuilder builder = new StringBuilder(offset);
     for(PyParameter p : list) {
+      if (p.getText().equals(PyNames.CANONICAL_SELF))
+        continue;
       builder.append(prefix);
       builder.append("param ");
       builder.append(p.getName());

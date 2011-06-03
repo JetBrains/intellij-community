@@ -30,7 +30,6 @@ public class UnixPythonSdkFlavor extends PythonSdkFlavor {
           }
         }
       }
-      candidates.add(rootDir.getPath());
     }
     return candidates;
   }

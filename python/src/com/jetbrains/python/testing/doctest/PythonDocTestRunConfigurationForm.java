@@ -11,15 +11,15 @@ import java.awt.*;
  * User: catherine
  */
 public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfigurationParams {
-  private JPanel myTestsPlaceHolder;
   private JPanel myRootPanel;
 
   private final PythonTestRunConfigurationForm myTestRunConfigurationForm;
 
 
   public PythonDocTestRunConfigurationForm(final Project project, final PythonDocTestRunConfiguration configuration) {
+    myRootPanel = new JPanel(new BorderLayout());
     myTestRunConfigurationForm = new PythonTestRunConfigurationForm(project, configuration);
-    myTestsPlaceHolder.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
+    myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
   public String getPattern() {
     return myTestRunConfigurationForm.getPattern();

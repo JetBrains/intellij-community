@@ -80,6 +80,7 @@
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.DjangoTemplateLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType"/>
 
     <configurationType implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
@@ -254,6 +255,7 @@
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyVariableProcessor" order="last" id="pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFunctionProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyClassProcessor" order="before pyvar"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFileProcessor" order="first"/>
 
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyContainingFileRenamerFactory"/>
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyInheritorRenameFactory"/>
@@ -282,6 +284,7 @@
     <problemFileHighlightFilter implementation="com.jetbrains.python.codeInsight.PyProblemFileHighlightFilter"/>
 
     <editorSmartKeysConfigurable implementation="com.jetbrains.python.codeInsight.PySmartKeysOptions"/>
+    <editorSmartKeysConfigurable implementation="com.jetbrains.python.codeInsight.PySpecificSmartKeysOptions"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor"/>
 
@@ -327,6 +330,8 @@
     <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
 
     <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
 
     <languageInjector implementation="com.jetbrains.django.codeInsight.DjangoRegexpInjector"/>
 

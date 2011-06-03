@@ -6,9 +6,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
@@ -32,7 +34,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    ResultList ret = new ResultList();
+    ResolveResultList ret = new ResolveResultList();
 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
@@ -53,16 +55,11 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
       // resolve within the type proper
       AccessDirection ctx = AccessDirection.of(myElement);
-      final List<? extends PsiElement> membersOfQualifier = qualifierType.resolveMember(referencedName, qualifier, ctx, myContext);
+      final List<? extends RatedResolveResult> membersOfQualifier = qualifierType.resolveMember(referencedName, qualifier, ctx, myContext);
       if (membersOfQualifier == null) {
         return ret; // qualifier is positive that such name cannot exist in it
       }
-      int rate = RatedResolveResult.RATE_NORMAL;
-      for (PsiElement resolved : membersOfQualifier) {
-        PsiElement ref_elt = PyUtil.turnDirIntoInit(resolved);
-        if (ref_elt != null) ret.poke(ref_elt, rate);
-        rate = RatedResolveResult.RATE_LOW;
-      }
+      ret.addAll(membersOfQualifier);
 
       // enrich the type info with any fields assigned nearby
       if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
@@ -70,10 +67,16 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
     }
     else if (myContext.allowImplicits()) {
-      final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
-      for (PyFunction function : functions) {
-        if (function.getContainingClass() != null) {
-          ret.add(new ImplicitResolveResult(function));
+      final Collection functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
+      for (Object function : functions) {
+        if (!(function instanceof PyFunction)) {
+          FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
+                                                       new Throwable("found non-function object " + function + " in function list"));
+          break;
+        }
+        PyFunction pyFunction = (PyFunction) function;
+        if (pyFunction.getContainingClass() != null) {
+          ret.add(new ImplicitResolveResult(pyFunction));
         }
       }
     }
@@ -84,7 +87,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     return ret;
   }
 
-  private static boolean addAssignedAttributes(ResultList ret, String referencedName, PyExpression qualifier) {
+  private static boolean addAssignedAttributes(ResolveResultList ret, String referencedName, PyExpression qualifier) {
     List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
     if (qualifier_path != null) {
       for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
@@ -97,7 +100,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     return false;
   }
 
-  private void addDocReference(ResultList ret, PyExpression qualifier, PyType qualifierType) {
+  private void addDocReference(ResolveResultList ret, PyExpression qualifier, PyType qualifierType) {
     PsiElement docstring = null;
     if (qualifierType instanceof PyClassType) {
       PyClass qual_class = ((PyClassType)qualifierType).getPyClass();

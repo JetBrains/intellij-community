@@ -237,4 +237,8 @@ public class PyEditingTest extends PyLightFixtureTestCase {
   public void testFirstParamDuplicateColon() {  // PY-2652
     doTypingTest('(');
   }
+
+  public void testEnterBeforeString() {  // PY-3673
+    doTestEnter("<caret>''", "\n''");
+  }
 }

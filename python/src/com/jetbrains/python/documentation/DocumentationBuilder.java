@@ -35,7 +35,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.combUp;
 
 class DocumentationBuilder {
   private final PsiElement myElement;
@@ -191,8 +190,8 @@ class DocumentationBuilder {
 
   private boolean isAttribute() {
     return myElement instanceof PyTargetExpression &&
-             (PyUtil.isInstanceAttribute((PyTargetExpression)myElement)) ||
-              PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class) instanceof PyClass;
+             (PyUtil.isInstanceAttribute((PyTargetExpression)myElement) ||
+              PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class) instanceof PyClass);
   }
 
   @Nullable
@@ -453,6 +452,20 @@ class DocumentationBuilder {
       }
     }
 
+    List<String> additionalTags = docString.getAdditionalTags();
+    if (!additionalTags.isEmpty()) {
+      result.append("<br/><br/><b>Additional:</b><br/>");
+      result.append("<table>");
+      for (String tagName : additionalTags) {
+        final List<String> args = docString.getTagArguments(tagName);
+        for(String arg : args) {
+          result.append("<tr><td align=\"right\"><b>").append(tagName);
+          result.append(" ").append(arg).append(":</b>");
+          result.append("</td><td>").append(docString.getTagValue(tagName, arg)).append("</td></tr>");
+        }
+        result.append("</table>");
+      }
+    }
     return result.toString();
   }
 

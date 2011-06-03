@@ -12,17 +12,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.ResolveProcessor;
-import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
@@ -94,8 +91,8 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
-                                                  PyResolveContext resolveContext) {
+  public List<? extends RatedResolveResult> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
+                                                          PyResolveContext resolveContext) {
     if (myClass == null) return null;
     final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
     final Pair<PyClass, String> key = Pair.create(myClass, name);
@@ -104,56 +101,63 @@ public class PyClassType extends UserDataHolderBase implements PyType {
     }
     resolving.add(key);
     try {
-      if (resolveContext.allowProperties()) {
-        Property property = myClass.findProperty(name);
-        if (property != null) {
-          Maybe<PyFunction> accessor = property.getByDirection(direction);
-          if (accessor.isDefined()) {
-            Callable accessor_code = accessor.value();
-            SmartList<PsiElement> ret = new SmartList<PsiElement>();
-            if (accessor_code != null) ret.add(accessor_code);
-            PyTargetExpression site = property.getDefinitionSite();
-            if (site != null) ret.add(site);
-            if (ret.size() > 0) {
-              return ret;
-            }
-            else {
-              return null;
-            } // property is found, but the required accessor is explicitly absent
-          }
-        }
-      }
-
-      final PsiElement classMember = resolveClassMember(this, name, location);
-      if (classMember != null) {
-        return new SmartList<PsiElement>(classMember);
-      }
-
-      for (PyClassRef superClass : myClass.iterateAncestors()) {
-        final PyClass pyClass = superClass.getPyClass();
-        if (pyClass != null) {
-          PsiElement superMember = resolveClassMember(new PyClassType(pyClass, isDefinition()), name, null);
-          if (superMember != null) {
-            return new SmartList<PsiElement>(superMember);
-          }
-        }
-        else {
-          final PsiElement element = superClass.getElement();
-          if (element != null) {
-            for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-              final PyType refType = typeProvider.getReferenceType(element, resolveContext.getTypeEvalContext(), myClass);
-              if (refType != null) {
-                return refType.resolveMember(name, location, direction, resolveContext);
-              }
-            }
-          }
-        }
-      }
-      return Collections.emptyList();
+      return doResolveMember(name, location, direction, resolveContext);
     }
     finally {
       resolving.remove(key);
     }
+  }
+
+  private List<? extends RatedResolveResult> doResolveMember(String name,
+                                                             PyExpression location,
+                                                             AccessDirection direction,
+                                                             PyResolveContext resolveContext) {
+    if (resolveContext.allowProperties()) {
+      Property property = myClass.findProperty(name);
+      if (property != null) {
+        Maybe<PyFunction> accessor = property.getByDirection(direction);
+        if (accessor.isDefined()) {
+          Callable accessor_code = accessor.value();
+          ResolveResultList ret = new ResolveResultList();
+          if (accessor_code != null) ret.poke(accessor_code, RatedResolveResult.RATE_NORMAL);
+          PyTargetExpression site = property.getDefinitionSite();
+          if (site != null) ret.poke(site, RatedResolveResult.RATE_LOW);
+          if (ret.size() > 0) {
+            return ret;
+          }
+          else {
+            return null;
+          } // property is found, but the required accessor is explicitly absent
+        }
+      }
+    }
+
+    final PsiElement classMember = resolveClassMember(this, name, location);
+    if (classMember != null) {
+      return ResolveResultList.to(classMember);
+    }
+
+    for (PyClassRef superClass : myClass.iterateAncestors()) {
+      final PyClass pyClass = superClass.getPyClass();
+      if (pyClass != null) {
+        PsiElement superMember = resolveClassMember(new PyClassType(pyClass, isDefinition()), name, null);
+        if (superMember != null) {
+          return ResolveResultList.to(superMember);
+        }
+      }
+      else {
+        final PsiElement element = superClass.getElement();
+        if (element != null) {
+          for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+            final PyType refType = typeProvider.getReferenceType(element, resolveContext.getTypeEvalContext(), myClass);
+            if (refType != null) {
+              return refType.resolveMember(name, location, direction, resolveContext);
+            }
+          }
+        }
+      }
+    }
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -185,6 +189,9 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
 
   public Object[] getCompletionVariants(String prefix, PyExpression location, ProcessingContext context) {
+    if (myClass == null) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
       visited = new HashSet<PyClassType>();
@@ -221,7 +228,7 @@ public class PyClassType extends UserDataHolderBase implements PyType {
     }
     boolean withinOurClass = containingClass == getPyClass();
 
-    final VariantsProcessor processor = new VariantsProcessor(
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(
       expressionHook, new PyResolveUtil.FilterNotInstance(myClass), null
     );
     processor.setNotice(myClass.getName());
@@ -324,6 +331,6 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   }
 
   public static PyClassType fromClassName(String typeName, Project project) {
-    return new PyClassType(project, typeName, true);
+    return new PyClassType(project, typeName, false);
   }
 }

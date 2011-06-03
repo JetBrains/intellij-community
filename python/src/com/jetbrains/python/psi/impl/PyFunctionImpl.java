@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,7 +194,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       vFile = vFile.getParent();
       if (vFile != null) {
         vFile = vFile.getParent();
-        if (vFile != null && vFile.getName().equals("python_stubs")) {
+        if (vFile != null && vFile.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
           return true;
         }
       }

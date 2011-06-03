@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Collection;
-import java.util.ArrayList;
 
 /**
  * @author oleg
@@ -96,8 +95,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       }
       else if (instruction instanceof ReadWriteInstruction) {
         final String name = ((ReadWriteInstruction)instruction).getName();
-        // Ignore empty, wildcards or global names
-        if (name == null || "_".equals(name) || scope.isGlobal(name)) {
+        // Ignore empty, wildcards, global and nonlocal names
+        if (name == null || "_".equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
           continue;
         }
         // Ignore elements out of scope
@@ -150,9 +149,9 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           // Check if the element is declared out of scope, mark all out of scope write accesses as used
           if (element instanceof PyReferenceExpression) {
             final PyReferenceExpression ref = (PyReferenceExpression)element;
-            final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(ref);
+            final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(ref, ref.getName());
             if (declOwner != null && declOwner != owner) {
-              Collection<PsiElement> writeElements = getWriteElements(name, declOwner);
+              Collection<PsiElement> writeElements = ScopeUtil.getReadWriteElements(name, declOwner, false, true);
               for (PsiElement e : writeElements) {
                 myUsedElements.add(e);
                 myUnusedElements.remove(e);
@@ -201,21 +200,6 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
-  }
-
-  @NotNull
-  private static Collection<PsiElement> getWriteElements(String name, ScopeOwner scopeOwner) {
-    ControlFlow flow = ControlFlowCache.getControlFlow(scopeOwner);
-    Collection<PsiElement> result = new ArrayList<PsiElement>();
-    for (Instruction instr : flow.getInstructions()) {
-      if (instr instanceof ReadWriteInstruction) {
-        ReadWriteInstruction rw = (ReadWriteInstruction)instr;
-        if (name.equals(rw.getName()) && rw.getAccess().isWriteAccess()){
-          result.add(rw.getElement());
-        }
-      }
-    }
-    return result;
   }
 
   private static boolean isAssignedOnEachExceptFlow(final Instruction inst,

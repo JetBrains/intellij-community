@@ -29,7 +29,7 @@ public class ConvertSetLiteralQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement setLiteral = descriptor.getPsiElement();
-    if (!LanguageLevel.forElement(setLiteral).isPy3K() && setLiteral instanceof PySetLiteralExpression) {
+    if (setLiteral instanceof PySetLiteralExpression) {
       PyExpression[] expressions = ((PySetLiteralExpression)setLiteral).getElements();
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       assert expressions.length != 0;
