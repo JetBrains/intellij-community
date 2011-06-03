@@ -134,7 +134,10 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
    */
   private boolean allowToWrapInside(@NotNull PsiElement element) {
     TextRange textRange = element.getTextRange();
-    for (PsiElement parent = element; parent != null && parent.getTextRange().equals(textRange); parent = parent.getParent()) {
+    if (textRange == null) {
+      return false;
+    } 
+    for (PsiElement parent = element; parent != null && textRange.equals(parent.getTextRange()); parent = parent.getParent()) {
       ASTNode parentNode = parent.getNode();
       if (parentNode != null && myEnabledTypes.contains(parentNode.getElementType())) {
         return true;
