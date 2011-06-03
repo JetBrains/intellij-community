@@ -60,10 +60,4 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
     if (pyClass == null || !PythonUnitTestUtil.isUnitTestCaseClass(pyClass)) return false;
     return true;
   }
-
-  protected boolean isTestFile(PsiElement file) {
-    if (file == null || !(file instanceof PyFile) || !PythonUnitTestUtil.isUnitTestFile((PyFile)file)) return false;
-    return true;
-  }
-
 }
