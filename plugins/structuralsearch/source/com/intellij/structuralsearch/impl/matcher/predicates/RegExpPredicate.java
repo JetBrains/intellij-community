@@ -175,6 +175,7 @@ public final class RegExpPredicate extends MatchPredicate {
       return (caseSensitive)?text.equals(regexp):text.equalsIgnoreCase(regexp);
     }
 
+    if(!multiline && text.contains("\n")) setMultiline(true);
     final Matcher matcher = pattern.matcher(text);
 
     if (matcher.matches()) {

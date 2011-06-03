@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -2500,6 +2501,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Static / instance initializers", 2, findMatchesCount(s1,s2));
     assertEquals("Static / instance initializers", 1, findMatchesCount(s1,s2_3));
     assertEquals("Static / instance initializers", 3, findMatchesCount(s1,s2_2));
+  }
+
+  public void testDoNotFindReturn() throws IOException {
+    String s1 = TestUtils.loadFile(getTestName(false) + ".java");
+    String s2 = "ApplicationManager.getApplication().runReadAction(new Runnable() {\n" +
+                "      public void run() {\n" +
+                "        't*:[ !regex( .*return.* ) ];\n" +
+                "    }});";
+    assertEquals(0, findMatchesCount(s1,s2));
   }
 
   public void testDownUpMatch() {
