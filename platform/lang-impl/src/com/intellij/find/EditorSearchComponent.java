@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.LightColors;
@@ -92,6 +93,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   private MyLivePreviewController myLivePreviewController;
   private LivePreview myLivePreview;
+
+  private boolean mySupressUpdate = false;
 
 
   private boolean myListeningSelection = false;
@@ -650,7 +653,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private void initLivePreview() {
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(final DocumentEvent e) {
-        updateResults(false);
+        if (!mySupressUpdate) {
+          myLivePreview.inSmartUpdate();
+          updateResults(false);
+        } else {
+          mySupressUpdate = false;
+        }
       }
     };
 
@@ -787,8 +795,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
 
     public void performReplace() {
+      mySupressUpdate = true;
       String replacement = getStringToReplace(myEditor, mySearchResults.getCursor());
-      performReplace(mySearchResults.getCursor(), replacement, myEditor);
+      final TextRange textRange = performReplace(mySearchResults.getCursor(), replacement, myEditor);
+      if (textRange == null) {
+        mySupressUpdate = false;
+      }
       //getFocusBack();
       addTextToRecents(myReplaceField) ;
     }
