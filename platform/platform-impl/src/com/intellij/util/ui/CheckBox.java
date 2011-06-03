@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.ui;
+package com.intellij.util.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import org.jetbrains.annotations.NonNls;
