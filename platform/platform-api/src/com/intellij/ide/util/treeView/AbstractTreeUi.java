@@ -4150,12 +4150,6 @@ public class AbstractTreeUi {
 
         firstVisible = getNodeForElement(eachElement, true);
         if (eachElement != element || !parentsOnly) {
-          assert !kidsToExpand.contains(eachElement) :
-            "Not a valid tree structure, walking up the structure gives many entries for element=" +
-            eachElement +
-            ", root=" +
-            getTreeStructure().getRootElement() +
-            ", structure=" + getTreeStructure();
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;
@@ -4163,6 +4157,16 @@ public class AbstractTreeUi {
         if (eachElement == null) {
           firstVisible = null;
           break;
+        }
+
+        if (kidsToExpand.contains(eachElement)) {
+          try {
+            LOG.error("Tree path contains equal elements at different levels: element=" + eachElement + " path=" + kidsToExpand);
+          }
+          catch (AssertionError e) {
+          }
+          runDone(onDone);
+          throw new ProcessCanceledException();
         }
       }
 

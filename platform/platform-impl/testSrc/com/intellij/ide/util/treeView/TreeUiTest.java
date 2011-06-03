@@ -9,6 +9,7 @@ import com.intellij.ui.LoadingNode;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.AssertionFailedError;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 
@@ -2323,6 +2324,30 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
   }
 
+
+  public void testAssertionOnInfiniteTree() throws Exception {
+    final Node com = myRoot.addChild("com");
+    final Node intellij = com.addChild("intellij");
+    final Node com2 = intellij.addChild("com");
+    final Node idea = com2.addChild("idea");
+
+    idea.myElement.setForcedParent(com2.myElement);
+    com2.myElement.setForcedParent(intellij.myElement);
+    intellij.myElement.setForcedParent(com.myElement);
+    com.myElement.setForcedParent(myRoot.myElement);
+
+    activate();
+
+    try {
+      System.err.println("The following error is part of the test, no need to fix it");
+      buildNode("idea", true);
+    }
+    catch (AssertionFailedError e) {
+    }
+
+    assertTrue(getBuilder().getUi().isReady());
+  }
+
   private void assertReleaseDuringBuilding(final String actionAction, final Object actionElement, Runnable buildAction) throws Exception {
     buildStructure(myRoot);
 
@@ -2364,11 +2389,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class SyncUpdate extends TreeUiTest {
     public SyncUpdate() {
       super(false, false);
-    }
-
-    @Override
-    public void testQueueUpdate() throws Exception {
-      super.testQueueUpdate();
     }
   }
 
