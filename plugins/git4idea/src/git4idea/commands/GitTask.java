@@ -373,7 +373,9 @@ public class GitTask {
     }
 
     public void dispose() {
-      myTimer.cancel();
+      if (myTimer != null) {
+        myTimer.cancel();
+      }
     }
   }
 
