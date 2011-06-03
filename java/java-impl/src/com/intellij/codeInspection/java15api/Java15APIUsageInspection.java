@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -39,6 +40,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,6 +73,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
+  @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
     if (!ourPresentableShortMessage.containsKey(languageLevel)) return null;
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
@@ -84,34 +87,22 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static void loadForbiddenApi(@NonNls String fileName, Set<String> set) {
-    BufferedReader reader = null;
     try {
       final InputStream stream = Java15APIUsageInspection.class.getResourceAsStream(fileName);
-      reader = new BufferedReader(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
-
-      do {
-        String line = reader.readLine();
-        if (line == null) break;
-
-        set.add(line);
-      } while(true);
-    }
-    catch (UnsupportedEncodingException e) {
-      // can't be.
-    }
-    catch (IOException e) {
-      // can't be
-    }
-    finally {
-      if (reader != null) {
-        try {
-          reader.close();
-        }
-        catch (IOException e) {
-          // Will not happen
-        }
+      final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
+      try {
+        do {
+          String line = reader.readLine();
+          if (line == null) break;
+          set.add(line);
+        } while(true);
+      }
+      finally {
+        reader.close();
       }
     }
+    catch (UnsupportedEncodingException ignored) { }
+    catch (IOException ignored) { }
   }
 
   @NotNull
@@ -186,13 +177,12 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       cModel.addElement(level);
     }
     llCombo.setSelectedItem(myEffectiveLanguageLevel != null ? myEffectiveLanguageLevel : LanguageLevel.JDK_1_3);
-    llCombo.setRenderer(new DefaultListCellRenderer(){
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    llCombo.setRenderer(new ListCellRendererWrapper(llCombo.getRenderer()) {
+      @Override
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LanguageLevel) {
           setText(((LanguageLevel)value).getPresentableText());
         }
-        return rendererComponent;
       }
     });
     llCombo.addActionListener(new ActionListener() {
@@ -348,7 +338,8 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
 
   private static boolean isForbiddenSignature(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
     Set<String> forbiddenApi = getForbiddenApi(languageLevel);
-    return forbiddenApi != null && isForbiddenSignature(getSignature(member), languageLevel, forbiddenApi);
+    String signature = getSignature(member);
+    return forbiddenApi != null && signature != null && isForbiddenSignature(signature, languageLevel, forbiddenApi);
   }
 
   private static boolean isForbiddenSignature(@NotNull String signature, @NotNull LanguageLevel languageLevel, @NotNull Set<String> forbiddenApi) {
@@ -363,6 +354,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     return nextForbiddenApi != null && isForbiddenSignature(signature, nextLanguageLevel, nextForbiddenApi);
   }
 
+  @Nullable
   public static String getSignature(PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
@@ -388,5 +380,4 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     assert false;
     return null;
   }
-
 }

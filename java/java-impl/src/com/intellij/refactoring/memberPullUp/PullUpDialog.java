@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 18.06.2002
- * Time: 13:16:29
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.refactoring.memberPullUp;
 
@@ -44,6 +35,7 @@ import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMem
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,6 +44,10 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author dsl
+ * Date: 18.06.2002
+ */
 public class PullUpDialog extends RefactoringDialog {
   private final Callback myCallback;
   private MemberSelectionPanel myMemberSelectionPanel;
@@ -61,16 +57,13 @@ public class PullUpDialog extends RefactoringDialog {
   private final MemberInfoStorage myMemberInfoStorage;
   private List<MemberInfo> myMemberInfos;
   private DocCommentPanel myJavaDocPanel;
-
   private JComboBox myClassCombo;
 
-  public static interface Callback {
+  public interface Callback {
     boolean checkConflicts(PullUpDialog dialog);
   }
 
-
-  public PullUpDialog(Project project, PsiClass aClass, List<PsiClass> superClasses,
-                      MemberInfoStorage memberInfoStorage, Callback callback) {
+  public PullUpDialog(Project project, PsiClass aClass, List<PsiClass> superClasses, MemberInfoStorage memberInfoStorage, Callback callback) {
     super(project, true);
     myClass = aClass;
     mySuperClasses = superClasses;
@@ -83,6 +76,7 @@ public class PullUpDialog extends RefactoringDialog {
     init();
   }
 
+  @Nullable
   public PsiClass getSuperClass() {
     if (myClassCombo != null) {
       return (PsiClass) myClassCombo.getSelectedItem();
@@ -133,10 +127,9 @@ public class PullUpDialog extends RefactoringDialog {
     panel.add(classComboLabel, gbConstraints);
 
     myClassCombo = new JComboBox(mySuperClasses.toArray());
-    myClassCombo.setRenderer(new ClassCellRenderer());
+    myClassCombo.setRenderer(new ClassCellRenderer(myClassCombo.getRenderer()));
     classComboLabel.setText(RefactoringBundle.message("pull.up.members.to", UsageViewUtil.getLongName(myClass)));
     classComboLabel.setLabelFor(myClassCombo);
-//    myClassCombo.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     PsiClass nearestBase = RefactoringHierarchyUtil.getNearestBaseClass(myClass, false);
     int indexToSelect = 0;
@@ -209,7 +202,6 @@ public class PullUpDialog extends RefactoringDialog {
     public MyMemberInfoModel() {
       super(myClass, getSuperClass(), false, myInterfaceContainmentVerifier);
     }
-
 
     public boolean isMemberEnabled(MemberInfo member) {
       PsiClass currentSuperClass = getSuperClass();

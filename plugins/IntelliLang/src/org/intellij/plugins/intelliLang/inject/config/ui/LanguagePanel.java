@@ -24,8 +24,8 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.ShiftTabAction;
 import com.intellij.ui.SimpleTextAttributes;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
@@ -42,9 +42,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
-
   private JPanel myRoot;
-
   private ComboBox myLanguage;
   private EditorTextField myPrefix;
   private EditorTextField mySuffix;
@@ -57,12 +55,11 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
     Arrays.sort(languageIDs);
 
     myLanguage.setModel(new DefaultComboBoxModel(languageIDs));
-    myLanguage.setRenderer(new ColoredListCellRenderer() {
+    myLanguage.setRenderer(new HtmlListCellRenderer<String>(myLanguage.getRenderer()) {
       final Set<String> IDs = new HashSet<String>(Arrays.asList(languageIDs));
 
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        final String s = String.valueOf(value);
-
+      @Override
+      protected void doCustomize(JList list, String s, int index, boolean selected, boolean hasFocus) {
         final SimpleTextAttributes attributes =
             IDs.contains(s) ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES;
         append(s, attributes);
@@ -74,11 +71,6 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
             setIcon(fileType.getIcon());
             append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
             append("(" + fileType.getDescription() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-//                    } else if (language == StdLanguages.EL) {
-//                        // IDEA-10012
-//                        setIcon(StdFileTypes.JSP.getIcon());
-//                        append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-//                        append("(Expression Language)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }
       }

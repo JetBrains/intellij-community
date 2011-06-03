@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.projectRoots;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -44,7 +45,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 /**
- * User: anna
+ * @author anna
  * Date: Nov 22, 2004
  */
 public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
@@ -110,15 +111,12 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
                                                               GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     wholePanel.add(myInternalJres, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.EAST,
                                                           GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
-    myInternalJres.setRenderer(new DefaultListCellRenderer(){
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    myInternalJres.setRenderer(new ListCellRendererWrapper(myInternalJres.getRenderer()) {
+      @Override
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Sdk) {
           setText(((Sdk)value).getName());
         }
-        return rendererComponent;
       }
     });
 
