@@ -195,7 +195,7 @@ public class GitUtil {
       parsed = Long.parseLong(value.trim());
       return new Date(parsed * 1000);
     } catch (NumberFormatException e) {
-      LOG.error("Error parsing timestamp from " + value, e);
+      LOG.info("Error parsing timestamp from " + value, e);
       return new Date();
     }
   }
