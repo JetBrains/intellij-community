@@ -17,13 +17,13 @@ package com.siyeh.ig.naming;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.RegExFormatter;
+import com.intellij.util.ui.RegExInputVerifier;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.RegExFormatter;
-import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.ui.BlankFiller;
-import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -128,14 +128,14 @@ public abstract class ConventionInspection extends BaseInspection {
         minLengthField.setFont(panelFont);
         minLengthField.setValue(Integer.valueOf(m_minLength));
         minLengthField.setColumns(2);
-        FormattedTextFieldMacFix.apply(minLengthField);
+        UIUtil.fixFormattedField(minLengthField);
 
         final JFormattedTextField maxLengthField =
                 new JFormattedTextField(formatter);
         maxLengthField.setFont(panelFont);
         maxLengthField.setValue(Integer.valueOf(m_maxLength));
         maxLengthField.setColumns(2);
-        FormattedTextFieldMacFix.apply(maxLengthField);
+        UIUtil.fixFormattedField(minLengthField);
 
         final JFormattedTextField regexField =
                 new JFormattedTextField(new RegExFormatter());
@@ -144,7 +144,7 @@ public abstract class ConventionInspection extends BaseInspection {
         regexField.setColumns(REGEX_COLUMN_COUNT);
         regexField.setInputVerifier(new RegExInputVerifier());
         regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
-        FormattedTextFieldMacFix.apply(regexField);
+        UIUtil.fixFormattedField(minLengthField);
         final DocumentListener listener = new DocumentAdapter() {
             @Override
             public void textChanged(DocumentEvent evt) {
