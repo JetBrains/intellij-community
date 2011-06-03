@@ -90,6 +90,7 @@ public class QuestionableNameInspection extends BaseInspection {
                 "questionable.name.column.title")));
         final JScrollPane scrollPane =
                 ScrollPaneFactory.createScrollPane(table);
+        scrollPane.setMinimumSize(new Dimension(-1, 100));
         final ActionToolbar toolbar =
                 UiUtils.createAddRemoveToolbar(table);
 

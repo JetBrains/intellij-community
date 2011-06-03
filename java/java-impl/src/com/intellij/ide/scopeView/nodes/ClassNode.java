@@ -33,10 +33,6 @@ public class ClassNode extends BasePsiNode<PsiClass> implements Comparable<Class
     return aClass != null && aClass.isValid() ? ClassPresentationUtil.getNameForClass(aClass, false) : "";
   }
 
-  public int getWeight() {
-    return 4;
-  }
-
   @Override
   public boolean isDeprecated() {
     final PsiClass psiClass = (PsiClass)getPsiElement();

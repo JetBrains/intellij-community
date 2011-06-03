@@ -160,10 +160,6 @@ public final class MacrosDialog extends DialogWrapper {
     return panel;
   }
 
-  protected JComponent createNorthPanel() {
-    return null;
-  }
-
   /**
    * Macro info shown in list
    */

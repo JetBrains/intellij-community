@@ -19,6 +19,7 @@ import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,10 +29,10 @@ import java.util.*;
  * @author yole
  */
 public class ChooseByNameLanguageFilter extends ChooseByNameFilter<Language> {
-  public ChooseByNameLanguageFilter(final ChooseByNamePopup popup,
-                                    FilteringGotoByModel<Language> languageFilteringGotoByModel,
-                                    ChooseByNameFilterConfiguration<Language> languageChooseByNameFilterConfiguration,
-                                    final Project project) {
+  public ChooseByNameLanguageFilter(@NotNull ChooseByNamePopup popup,
+                                    @NotNull FilteringGotoByModel<Language> languageFilteringGotoByModel,
+                                    @NotNull ChooseByNameFilterConfiguration<Language> languageChooseByNameFilterConfiguration,
+                                    @NotNull Project project) {
     super(popup, languageFilteringGotoByModel, languageChooseByNameFilterConfiguration, project);
   }
 

@@ -95,7 +95,7 @@ public class ModifierListGenerator {
     for (String modifierType : modifiers) {
       if (modifierList.hasModifierProperty(modifierType)) {
         builder.append(modifierType);
-        builder.append(" ");
+        builder.append(' ');
         wasAddedModifiers = true;
       }
     }

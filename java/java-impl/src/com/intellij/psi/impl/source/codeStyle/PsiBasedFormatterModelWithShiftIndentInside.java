@@ -55,9 +55,6 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
     return shiftIndentInsideWithPsi(textRange, shift);
   }
 
-  public void commitChanges() {
-  }
-
 
   private TextRange shiftIndentInsideWithPsi(final TextRange textRange, final int shift) {
     final int offset = textRange.getStartOffset();

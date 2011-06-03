@@ -39,9 +39,6 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
   private PsiMethod myEquals;
   private final AtomicBoolean myInitialized = new AtomicBoolean();
 
-  public void projectOpened(Project project) {
-  }
-
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     if (!myInitialized.getAndSet(true)) {

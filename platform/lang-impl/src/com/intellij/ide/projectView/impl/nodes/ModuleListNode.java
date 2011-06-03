@@ -73,14 +73,6 @@ public class ModuleListNode extends ProjectViewNode<Module> {
     presentation.setIcons(Icons.CLOSED_MODULE_GROUP_ICON);
   }
 
-  public boolean canNavigate() {
-    return false;
-  }
-
-  public boolean canNavigateToSource() {
-    return false;
-  }
-
   @Override
   public boolean isAlwaysExpand() {
     return true;

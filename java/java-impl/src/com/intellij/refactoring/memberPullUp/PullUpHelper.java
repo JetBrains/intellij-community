@@ -91,9 +91,6 @@ public class PullUpHelper extends BaseRefactoringProcessor{
     return new UsageInfo[0];
   }
 
-  protected void refreshElements(PsiElement[] elements) {
-  }
-
   protected void performRefactoring(UsageInfo[] usages) {
     moveMembersToBase();
     moveFieldInitializations();

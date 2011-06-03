@@ -102,9 +102,6 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     return usagesVector.toArray(new MigrationUsageInfo[usagesVector.size()]);
   }
 
-  protected void refreshElements(PsiElement[] elements) {
-  }
-
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     if (refUsages.get().length == 0) {
       Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), REFACTORING_NAME);

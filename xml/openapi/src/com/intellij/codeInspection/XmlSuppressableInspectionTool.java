@@ -56,10 +56,6 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
       XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForTag(element, getID());
     }
-
-    public boolean startInWriteAction() {
-      return true;
-    }
   }
 
   public static class SuppressForFile extends SuppressIntentionAction {
@@ -85,11 +81,6 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
 
     public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
       return  element.isValid() && element.getContainingFile() instanceof XmlFile;
-    }
-
-
-    public boolean startInWriteAction() {
-      return true;
     }
   }
 

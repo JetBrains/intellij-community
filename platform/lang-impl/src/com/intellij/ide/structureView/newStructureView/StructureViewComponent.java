@@ -534,10 +534,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
 
-  public JComponent getComponent() {
-    return this;
-  }
-
   public void dispose() {
     LOG.assertTrue(EventQueue.isDispatchThread(), Thread.currentThread().getName());
     myAbstractTreeBuilder = null;

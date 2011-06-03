@@ -126,8 +126,5 @@ public class StaticGuardedByInstanceInspection extends BaseJavaLocalInspectionTo
     private void registerError(PsiElement element) {
       myHolder.registerProblem(element, "Static member guarded by instance #ref #loc");
     }
-
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-    }
   }
 }

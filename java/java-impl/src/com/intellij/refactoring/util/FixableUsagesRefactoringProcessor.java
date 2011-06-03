@@ -37,9 +37,6 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
     super(project);
   }
 
-  protected void refreshElements(PsiElement[] psiElements) {
-  }
-
   protected void performRefactoring(UsageInfo[] usageInfos) {
     RefactoringUtil.sortDepthFirstRightLeftOrder(usageInfos);
     for (UsageInfo usageInfo : usageInfos) {

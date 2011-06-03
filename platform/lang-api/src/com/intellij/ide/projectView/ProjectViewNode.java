@@ -282,8 +282,4 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   public boolean isValidating() {
     return myValidating;
   }
-
-  public boolean isAlwaysLeaf() {
-    return false;
-  }
 }

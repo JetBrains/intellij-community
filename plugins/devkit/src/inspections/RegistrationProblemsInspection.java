@@ -163,11 +163,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return null;
   }
 
-  @Nullable
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return null;
-  }
-
   private List<ProblemDescriptor> addProblem(List<ProblemDescriptor> problems, ProblemDescriptor problemDescriptor) {
     if (problems == null) problems = new SmartList<ProblemDescriptor>();
     problems.add(problemDescriptor);

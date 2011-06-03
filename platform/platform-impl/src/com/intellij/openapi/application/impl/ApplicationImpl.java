@@ -63,7 +63,6 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
-import net.sf.cglib.core.MethodWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +93,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final String myName;
 
   private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
-  private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>(); // accessed from EDT only, no need to sync
+  private final Stack<Class> myWriteActionsStack = new Stack<Class>(); // accessed from EDT only, no need to sync
 
   private volatile Runnable myExceptionalThreadWithReadAccessRunnable;
 
@@ -775,26 +774,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void runReadAction(@NotNull final Runnable action) {
-    /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-     * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
-    if (isReadAccessAllowed()) {
-      action.run();
-      return;
-    }
-
-    LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
-    try {
-      myActionsLock.readLock().acquire();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeInterruptedException(e);
-    }
+    final AccessToken token = acquireReadActionLock();
 
     try {
       action.run();
     }
     finally {
-      myActionsLock.readLock().release();
+      token.finish();
     }
   }
 
@@ -826,56 +812,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void runWriteAction(@NotNull final Runnable action) {
-    assertCanRunWriteAction();
-
-    ActivityTracker.getInstance().inc();
-    fireBeforeWriteActionStart(action);
-    final AtomicBoolean stopped = new AtomicBoolean(false);
-
-    if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-      executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          while (!stopped.get()) {
-            try {
-              Thread.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-              if (!stopped.get()) {
-                PerformanceWatcher.getInstance().dumpThreads(true);
-              }
-            }
-            catch (InterruptedException ignored) {
-            }
-          }
-        }
-      });
-    }
-
-    LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread())
-                   || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");
+    final AccessToken token = acquireWriteActionLock(action.getClass());
     try {
-      myActionsLock.writeLock().acquire();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeInterruptedException(e);
-    }
-    stopped.set(true);
-
-    try {
-      myWriteActionsStack.push(action);
-
-      fireWriteActionStarted(action);
-
       action.run();
     }
     finally {
-      try {
-        fireWriteActionFinished(action);
-        
-        myWriteActionsStack.pop();
-      }
-      finally {
-        myActionsLock.writeLock().release();
-      }
+      token.finish();
     }
   }
 
@@ -889,14 +831,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return ref.get();
   }
 
-  public <T>  T getCurrentWriteAction(@Nullable Class<T> actionClass) {
+  public boolean hasWriteAction(@Nullable Class<?> actionClass) {
     assertCanRunWriteAction();
 
     for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
-      Runnable action = myWriteActionsStack.get(i);
-      if (actionClass == null || ReflectionCache.isAssignable(actionClass, action.getClass())) return (T)action;
+      Class action = myWriteActionsStack.get(i);
+      if (actionClass == action || (action != null && ReflectionCache.isAssignable(actionClass, action))) return true;
     }
-    return null;
+    return false;
   }
 
   public void assertReadAccessAllowed() {
@@ -1079,6 +1021,98 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myActive;
   }
 
+  @Override
+  public AccessToken acquireReadActionLock() {
+    /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
+     * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
+    if (isReadAccessAllowed()) return AccessToken.EMPTY_ACCESS_TOKEN;
+
+    return new ReadAccessToken();
+  }
+
+  @Override
+  public AccessToken acquireWriteActionLock(Class clazz) {
+    return new WriteAccessToken(clazz);
+  }
+
+  private class WriteAccessToken extends AccessToken {
+    private final Class clazz;
+
+    public WriteAccessToken(Class _clazz) {
+      clazz = _clazz;
+      assertCanRunWriteAction();
+
+      ActivityTracker.getInstance().inc();
+      fireBeforeWriteActionStart(_clazz);
+      final AtomicBoolean stopped = new AtomicBoolean(false);
+
+      if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
+        executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            while (!stopped.get()) {
+              try {
+                Thread.sleep(ourDumpThreadsOnLongWriteActionWaiting);
+                if (!stopped.get()) {
+                  PerformanceWatcher.getInstance().dumpThreads(true);
+                }
+              }
+              catch (InterruptedException ignored) {
+              }
+            }
+          }
+        });
+      }
+
+      LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread())
+                     || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");
+      try {
+        myActionsLock.writeLock().acquire();
+        acquired();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
+      }
+      stopped.set(true);
+
+      myWriteActionsStack.push(_clazz);
+
+      fireWriteActionStarted(_clazz);
+    }
+
+    @Override
+    public void finish() {
+      try {
+        fireWriteActionFinished(clazz);
+
+        myWriteActionsStack.pop();
+      }
+      finally {
+        myActionsLock.writeLock().release();
+        released();
+      }
+    }
+  }
+
+  private class ReadAccessToken extends AccessToken {
+    ReadAccessToken() {
+      LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
+      try {
+        myActionsLock.readLock().acquire();
+        acquired();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
+      }
+    }
+
+    @Override
+    public void finish() {
+      myActionsLock.readLock().release();
+      released();
+    }
+  }
+
   public void assertWriteAccessAllowed() {
     LOG.assertTrue(isWriteAccessAllowed(),
                    "Write access is allowed inside write-action only (see com.intellij.openapi.application.Application.runWriteAction())");
@@ -1113,15 +1147,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myDispatcher.getMulticaster().applicationExiting();
   }
 
-  private void fireBeforeWriteActionStart(Runnable action) {
+  private void fireBeforeWriteActionStart(Class action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
-  private void fireWriteActionStarted(Runnable action) {
+  private void fireWriteActionStarted(Class action) {
     myDispatcher.getMulticaster().writeActionStarted(action);
   }
 
-  private void fireWriteActionFinished(Runnable action) {
+  private void fireWriteActionFinished(Class action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 

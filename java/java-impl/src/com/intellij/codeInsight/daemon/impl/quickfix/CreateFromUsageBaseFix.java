@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
@@ -25,6 +24,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -318,11 +318,27 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     startTemplate(editor, template, project, null);
   }
 
-  protected static void startTemplate (@NotNull final Editor editor, final Template template, @NotNull final Project project, final TemplateEditingListener listener) {
+  protected static void startTemplate(@NotNull final Editor editor,
+                                      final Template template,
+                                      @NotNull final Project project,
+                                      final TemplateEditingListener listener) {
+    startTemplate(editor, template, project, listener, null);
+  }
+
+  protected static void startTemplate(@NotNull final Editor editor,
+                                      final Template template,
+                                      @NotNull final Project project,
+                                      final TemplateEditingListener listener,
+                                      final String commandName) {
     Runnable runnable = new Runnable() {
       public void run() {
         if (project.isDisposed() || editor.isDisposed()) return;
-        TemplateManager.getInstance(project).startTemplate(editor, template, listener);
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            TemplateManager.getInstance(project).startTemplate(editor, template, listener);
+          }
+        }, commandName, commandName);
       }
     };
     if (ApplicationManager.getApplication().isUnitTestMode()) {

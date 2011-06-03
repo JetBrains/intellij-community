@@ -29,13 +29,6 @@ public class GtkPreferredJComboBoxRendererInspection extends InternalInspection 
   @Nls
   @NotNull
   @Override
-  public String getGroupDisplayName() {
-    return InternalInspectionToolsProvider.GROUP_NAME;
-  }
-
-  @Nls
-  @NotNull
-  @Override
   public String getDisplayName() {
     return "Preferred JComboBox renderer";
   }
@@ -44,10 +37,6 @@ public class GtkPreferredJComboBoxRendererInspection extends InternalInspection 
   @Override
   public String getShortName() {
     return "GtkPreferredJComboBoxRenderer";
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

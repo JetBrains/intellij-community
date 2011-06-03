@@ -74,9 +74,9 @@ public class StubGenerator implements ClassItemGenerator {
     text.append(enumConstant.getName());
     PsiMethod constructor = enumConstant.resolveMethod();
     if (constructor != null) {
-      text.append("(");
+      text.append('(');
       writeStubConstructorInvocation(text, constructor, PsiSubstitutor.EMPTY, enumConstant);
-      text.append(")");
+      text.append(')');
     }
 
     GrEnumConstantInitializer initializer = enumConstant.getConstantInitializer();
@@ -85,7 +85,7 @@ public class StubGenerator implements ClassItemGenerator {
       for (PsiMethod method : initializer.getMethods()) {
         writeMethod(text, method, 0);
       }
-      text.append("}");
+      text.append('}');
     }
   }
 
@@ -97,10 +97,10 @@ public class StubGenerator implements ClassItemGenerator {
     final PsiParameter[] superParams = constructor.getParameterList().getParameters();
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
-      text.append("(");
+      text.append('(');
       final PsiType type = superParams[j].getType();
       writeType(text, substitutor.substitute(type), invocation, classNameProvider);
-      text.append(")").append(GroovyToJavaGenerator.getDefaultValueText(type.getCanonicalText()));
+      text.append(')').append(GroovyToJavaGenerator.getDefaultValueText(type.getCanonicalText()));
     }
   }
 
@@ -121,7 +121,7 @@ public class StubGenerator implements ClassItemGenerator {
 
     final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
     if (!throwsTypes.isEmpty()) {
-      text.append("throws ").append(StringUtil.join(throwsTypes, ", ")).append(" ");
+      text.append("throws ").append(StringUtil.join(throwsTypes, ", ")).append(' ');
     }
 
     /************* body **********/
@@ -182,7 +182,7 @@ public class StubGenerator implements ClassItemGenerator {
     ModifierListGenerator.writeModifiers(text, modifierList, STUB_MODIFIERS, false);
     if (method.hasTypeParameters()) {
       GenerationUtil.writeTypeParameters(text, method, classNameProvider);
-      text.append(" ");
+      text.append(' ');
     }
 
     //append return type
@@ -204,7 +204,7 @@ public class StubGenerator implements ClassItemGenerator {
     }
 
     writeType(text, retType, method, classNameProvider);
-    text.append(" ");
+    text.append(' ');
 
     text.append(name);
 
@@ -227,9 +227,9 @@ public class StubGenerator implements ClassItemGenerator {
       text.append(";\n}");
     }
     else {
-      text.append(";");
+      text.append(';');
     }
-    text.append("\n");
+    text.append('\n');
   }
 
   private void writeThrowsList(StringBuilder text, PsiMethod method) {
@@ -358,7 +358,7 @@ public class StubGenerator implements ClassItemGenerator {
        final String initializer = GroovyToJavaGenerator.getDefaultValueText(declaredType.getCanonicalText());
 
       writeType(text, declaredType, variableDeclaration, classNameProvider);
-      text.append(" ").append(name).append(" = ").append(initializer);
+      text.append(' ').append(name).append(" = ").append(initializer);
       text.append(";\n");
     }
   }

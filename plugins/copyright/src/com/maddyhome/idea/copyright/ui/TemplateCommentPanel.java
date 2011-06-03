@@ -343,7 +343,11 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   private void showPreview(LanguageOptions options) {
     final String defaultCopyrightText = myNoCopyright.isSelected() ? "" : FileTypeUtil
       .buildComment(fileType, VelocityHelper.evaluate(null, null, null, EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE)), options);
-    preview.setText(defaultCopyrightText);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        preview.setText(defaultCopyrightText);
+      }
+    });
   }
 
 

@@ -51,8 +51,4 @@ public class MigrationPackageImpl extends PsiPackageImpl implements PsiPackage {
   public VirtualFile[] occursInPackagePrefixes() {
     return VirtualFile.EMPTY_ARRAY;
   }
-
-  public ASTNode getNode() {
-    return null;
-  }
 }

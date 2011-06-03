@@ -101,7 +101,7 @@ public abstract class ChooseByNameBase {
   /**
    * the tool area of the popup, it is just after card box
    */
-  protected JComponent myToolArea;
+  private JComponent myToolArea;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
   protected JList myList;
@@ -223,8 +223,8 @@ public abstract class ChooseByNameBase {
   }
 
   public class JPanelProvider extends JPanel implements DataProvider {
-    JBPopup myHint = null;
-    boolean myFocusRequested = false;
+    private JBPopup myHint = null;
+    private boolean myFocusRequested = false;
 
     JPanelProvider() {
     }
@@ -753,9 +753,9 @@ public abstract class ChooseByNameBase {
 
   protected void rebuildList(final int pos,
                              final int delay,
-                             final @Nullable Runnable postRunnable,
+                             @Nullable final Runnable postRunnable,
                              final ModalityState modalityState,
-                             final @Nullable ComponentEvent e) {
+                             @Nullable final ComponentEvent e) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myListIsUpToDate = false;
     myAlarm.cancelAllRequests();
@@ -783,11 +783,11 @@ public abstract class ChooseByNameBase {
                     return;
                   }
 
-                  setElementsToList(pos, elements);
                   myListIsUpToDate = true;
+                  setElementsToList(pos, elements);
                   choosenElementMightChange();
 
-                  if (elements.size() == 0 && myTextFieldPanel != null) {
+                  if (elements.isEmpty() && myTextFieldPanel != null) {
                     myTextFieldPanel.hideHint();
                   }
                   
@@ -859,7 +859,10 @@ public abstract class ChooseByNameBase {
       // should not occur
     }
 
-    if (change == null) return; // Nothing changed
+    if (change == null) {
+      myListUpdater.doPostponedOkIfNeeded();
+      return; // Nothing changed
+    }
 
     List<Cmd> commands = new ArrayList<Cmd>();
     int inserted = 0;
@@ -1002,7 +1005,9 @@ public abstract class ChooseByNameBase {
       myAlarm.cancelAllRequests();
       myCommands.addAll(commands);
 
-      if (myCommands.isEmpty() || myDisposedFlag) return;
+      if (myCommands.isEmpty() || myDisposedFlag) {
+        return;
+      }
       myAlarm.addRequest(new Runnable() {
         public void run() {
           if (myDisposedFlag) {
@@ -1038,8 +1043,8 @@ public abstract class ChooseByNameBase {
       if (myPosponedOkAction != null) {
         if (getChosenElement() != null) {
           doClose(true);
-          clearPosponedOkAction(myDisposedFlag);
         }
+        clearPosponedOkAction(myDisposedFlag);
       }
     }
   }
@@ -1439,9 +1444,8 @@ public abstract class ChooseByNameBase {
         }
       });
 
-    int matchPosition = 0;
-
     try {
+      int matchPosition = 0;
       patterns:
       for (Pair<String, Matcher> patternAndMatcher : patternsAndMatchers) {
         final String pattern = patternAndMatcher.first;
@@ -1498,7 +1502,7 @@ public abstract class ChooseByNameBase {
   }
 
   private boolean canShowListForEmptyPattern() {
-    return isShowListForEmptyPattern() || (isShowListAfterCompletionKeyStroke() && lastKeyStrokeIsCompletion());
+    return isShowListForEmptyPattern() || isShowListAfterCompletionKeyStroke() && lastKeyStrokeIsCompletion();
   }
 
   protected boolean lastKeyStrokeIsCompletion() {

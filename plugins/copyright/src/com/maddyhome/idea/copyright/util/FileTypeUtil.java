@@ -363,15 +363,7 @@ public class FileTypeUtil
             }
             else
             {
-                if (type.equals(StdFileTypes.JAVA))
-                {
-                    return true;
-                }
-                else if (type.equals(StdFileTypes.XML))
-                {
-                    return true;
-                }
-                else if (type.equals(StdFileTypes.DTD))
+                if (type.equals(StdFileTypes.DTD))
                 {
                     return true;
                 }
@@ -380,14 +372,6 @@ public class FileTypeUtil
                     return true;
                 }
                 else if (type.equals(StdFileTypes.XHTML))
-                {
-                    return true;
-                }
-                else if (type.equals(StdFileTypes.JSP))
-                {
-                    return true;
-                }
-                else if (type.equals(StdFileTypes.JSPX))
                 {
                     return true;
                 }

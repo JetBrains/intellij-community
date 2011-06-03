@@ -20,7 +20,6 @@ import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -75,14 +73,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   public String getText() {
     return getViewProvider().getContents().toString();
-  }
-
-  public PsiElement getNextSibling() {
-    return SharedPsiElementImplUtil.getNextSibling(this);
-  }
-
-  public PsiElement getPrevSibling() {
-    return SharedPsiElementImplUtil.getPrevSibling(this);
   }
 
   public long getModificationStamp() {
@@ -198,14 +188,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return manager.getProject();
   }
 
-  public PsiElement getNavigationElement() {
-    return this;
-  }
-
-  public PsiElement getOriginalElement() {
-    return this;
-  }
-
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     PsiElement child = getFirstChild();
     while (child != null) {
@@ -215,7 +197,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     }
   }
 
-  public synchronized final PsiElement copy() {
+  public final synchronized PsiElement copy() {
     return clone();
   }
 
@@ -228,21 +210,9 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return SharedPsiElementImplUtil.getReferences(this);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState state,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    return true;
-  }
-
   @NotNull
   public SearchScope getUseScope() {
     return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
-  }
-
-  // Default implementation just to make sure it compiles.
-  public ItemPresentation getPresentation() {
-    return null;
   }
 
   public FileStatus getFileStatus() {
@@ -251,14 +221,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   public void navigate(boolean requestFocus) {
     EditSourceUtil.getDescriptor(this).navigate(requestFocus);
-  }
-
-  public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(this);
-  }
-
-  public boolean canNavigateToSource() {
-    return canNavigate();
   }
 
   public synchronized PsiElement findElementAt(int offset) {
@@ -362,10 +324,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
-  }
-
-  public PsiReference getReference() {
-    return null;
   }
 
   public FileASTNode getNode() {

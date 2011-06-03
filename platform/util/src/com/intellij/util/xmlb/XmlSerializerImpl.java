@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
@@ -29,10 +28,8 @@ import java.util.*;
  * @author mike
  */
 class XmlSerializerImpl {
-
   private final SerializationFilter filter;
   private final Map<Pair<Type, Accessor>, Binding> myBindings = new HashMap<Pair<Type, Accessor>, Binding>();
-
 
   public XmlSerializerImpl(SerializationFilter filter) {
     this.filter = filter;
@@ -58,22 +55,19 @@ class XmlSerializerImpl {
     return getTypeBinding(accessor.getGenericType(), accessor);
   }
 
-  Binding getTypeBinding(Type type, Accessor accessor) {
+  Binding getTypeBinding(Type type, @Nullable Accessor accessor) {
     if (type instanceof Class) {
-      //noinspection unchecked
       return _getClassBinding((Class<?>)type, type, accessor);
     }
     else if (type instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)type;
       Type rawType = parameterizedType.getRawType();
       assert rawType instanceof Class;
-      //noinspection unchecked
       return _getClassBinding((Class<?>)rawType, type, accessor);
     }
 
     throw new UnsupportedOperationException("Can't get binding for: " + type);
   }
-
 
   private Binding _getClassBinding(Class<?> aClass, Type originalType, final Accessor accessor) {
     final Pair<Type, Accessor> p = new Pair<Type, Accessor>(originalType, accessor);
@@ -92,19 +86,18 @@ class XmlSerializerImpl {
   private Binding _getNonCachedClassBinding(final Class<?> aClass, final Accessor accessor, final Type originalType) {
     if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
     if (aClass.isArray()) {
-      if (Element.class.isAssignableFrom(aClass.getComponentType())) {
-        return new JDOMElementBinding(accessor);
-      }
-
-      return new ArrayBinding(this, aClass, accessor);
+      return Element.class.isAssignableFrom(aClass.getComponentType())
+             ? new JDOMElementBinding(accessor) : new ArrayBinding(this, aClass, accessor);
     }
     if (Number.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (Boolean.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (String.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
-    if (Collection.class.isAssignableFrom(aClass)) {
+    if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
       return new CollectionBinding((ParameterizedType)originalType, this, accessor);
     }
-    if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType)originalType, this, accessor);
+    if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+      return new MapBinding((ParameterizedType)originalType, this, accessor);
+    }
     if (Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(accessor);
     if (Date.class.isAssignableFrom(aClass)) return new DateBinding();
     if (aClass.isEnum()) return new PrimitiveValueBinding(aClass);
@@ -147,7 +140,6 @@ class XmlSerializerImpl {
     throw new XmlSerializationException("Can't covert " + value.getClass() + " into " + type);
   }
 
-
   public SerializationFilter getFilter() {
     return filter;
   }
@@ -167,7 +159,6 @@ class XmlSerializerImpl {
 
     return false;
   }
-
 
   public static Content[] getNotIgnoredContent(final Element m) {
     List<Content> result = new ArrayList<Content>();

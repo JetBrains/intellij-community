@@ -102,8 +102,4 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
     }
     ifStatement.getElseBranch().delete();
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

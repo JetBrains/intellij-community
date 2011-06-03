@@ -12,11 +12,16 @@ public abstract class JUnitRecognizer {
 
   public static final ExtensionPointName<JUnitRecognizer> EP_NAME = ExtensionPointName.create("com.intellij.junitRecognizer");
 
-  public boolean isTestClass(@NotNull PsiClass aClass) {
+  public abstract boolean isTestAnnotated(@NotNull PsiMethod method);
+
+  public static boolean willBeAnnotatedAfterCompilation(@NotNull PsiMethod method) {
+    for (JUnitRecognizer jUnitRecognizer : EP_NAME.getExtensions()) {
+      if (jUnitRecognizer.isTestAnnotated(method)) {
+        return true;
+      }
+    }
+
     return false;
   }
 
-  public boolean isTestMethod(@NotNull PsiMethod method) {
-    return false;
-  }
 }

@@ -65,10 +65,6 @@ public class ModuleGroupNode extends PackageDependenciesNode {
     return myModuleGroup;
   }
 
-  public int getWeight() {
-    return 0;
-  }
-
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);

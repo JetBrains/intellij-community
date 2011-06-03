@@ -305,10 +305,6 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
         ExtractMethodObjectDialog.this.doCancelAction();
       }
 
-      protected boolean areTypesDirected() {
-        return true;
-      }
-
       @Override
       protected boolean isUsedAfter(PsiVariable variable) {
         return ExtractMethodObjectDialog.this.isUsedAfter(variable);

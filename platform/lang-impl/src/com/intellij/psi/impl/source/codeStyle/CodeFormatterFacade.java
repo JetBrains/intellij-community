@@ -259,7 +259,13 @@ public class CodeFormatterFacade {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
+          final CaretModel caretModel = editorToUse.getCaretModel();
+          final int caretOffset = caretModel.getOffset();
+          final RangeMarker caretMarker = editorToUse.getDocument().createRangeMarker(caretOffset, caretOffset);
           doWrapLongLinesIfNecessary(editorToUse, editorToUse.getDocument(), startOffset, endOffset);
+          if (caretMarker.isValid() && caretModel.getOffset() != caretMarker.getStartOffset()) {
+            caretModel.moveToOffset(caretMarker.getStartOffset());
+          } 
         }
       });
     }

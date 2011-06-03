@@ -187,10 +187,6 @@ public class SuppressFix extends SuppressIntentionAction {
            !SuppressManager.getInstance().alreadyHas14Suppressions(container);
   }
 
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   private String getID(PsiElement place) {
     if (myAlternativeID != null) {
       final Module module = ModuleUtil.findModuleForPsiElement(place);

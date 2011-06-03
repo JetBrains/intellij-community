@@ -31,10 +31,6 @@ public class GotoImplementationAction extends BaseCodeInsightAction implements D
     return new GotoImplementationHandler();
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return true;
-  }
-
   public void update(final AnActionEvent event) {
     if (!DefinitionsSearch.INSTANCE.hasAnyExecutors()) {
       event.getPresentation().setVisible(false);

@@ -39,10 +39,6 @@ public class HippieCompletionAction extends BaseCodeInsightAction implements Dum
     return new HippieWordCompletionHandler(true);
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return true;
-  }
-
   @Override
   protected boolean isValidForLookup() {
     return true;

@@ -22,6 +22,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +30,7 @@ import java.io.IOException;
 public class TeamCityLogger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.TeamCityLogger");
 
-  private final static boolean isUnderTC = System.getProperty("bootstrap.testcases") != null;
+  private static final boolean isUnderTC = System.getProperty("bootstrap.testcases") != null;
 
   private TeamCityLogger() {}
 
@@ -47,21 +48,23 @@ public class TeamCityLogger {
   }
 
   public static void warning(String message) {
+    warning(message, new Throwable());
+  }
+  public static void warning(String message, @Nullable Throwable throwable) {
     if (isUnderTC) {
       tcLog(message, "WARNING");
     }
-    else {
-      LOG.warn(message);
-    }
+    LOG.warn(message, throwable);
   }
 
   public static void error(String message) {
+    error(message, new Throwable());
+  }
+  public static void error(String message, @Nullable Throwable throwable) {
     if (isUnderTC) {
       tcLog(message, "ERROR");
     }
-    else {
-      LOG.error(message);
-    }
+    LOG.error(message, throwable);
   }
 
   private static void tcLog(String message, String level) {

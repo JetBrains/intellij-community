@@ -124,7 +124,7 @@ public class GenerationUtil {
                                           ClassNameProvider classNameProvider) {
     if (parameters.length == 0) return;
 
-    builder.append("<");
+    builder.append('<');
     for (PsiType parameter : parameters) {
       if (parameter instanceof PsiPrimitiveType) {
         parameter = TypesUtil.boxPrimitiveType(parameter, context.getManager(), context.getResolveScope(), true);
@@ -132,7 +132,8 @@ public class GenerationUtil {
       writeType(builder, parameter, context, classNameProvider);
       builder.append(", ");
     }
-    builder.replace(builder.length() - 2, builder.length(), ">");
+    builder.delete(builder.length()-2, builder.length()).append('>');
+    //builder.removeFromTheEnd(2).append('>');
   }
 
   static String suggestVarName(GrExpression expr, ExpressionContext expressionContext) {
@@ -222,7 +223,7 @@ public class GenerationUtil {
 
     if (caller != null) {
       caller.accept(expressionGenerator);
-      builder.append(".");
+      builder.append('.');
     }
     builder.append(methodName);
     final ArgumentListGenerator argumentListGenerator = new ArgumentListGenerator(builder, expressionContext);
@@ -259,7 +260,7 @@ public class GenerationUtil {
 
   public static void insertStatementFromContextBefore(StringBuilder codeBlockBuilder, ExpressionContext context) {
     for (String st : context.myStatements) {
-      codeBlockBuilder.append(st).append("\n");
+      codeBlockBuilder.append(st).append('\n');
     }
   }
 
@@ -272,10 +273,14 @@ public class GenerationUtil {
 
   @Nullable
   static PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
+    Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
     PsiClass curClass = initialClass;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
+
     while (curClass != null && !resolveHelper.isAccessible(curClass, context, null)) {
       curClass = curClass.getSuperClass();
+      if (visitedClasses.contains(curClass)) return null;
+      visitedClasses.add(curClass);
     }
     return curClass;
   }
@@ -294,7 +299,7 @@ public class GenerationUtil {
                                   final ClassNameProvider classNameProvider) {
     if (!typeParameterListOwner.hasTypeParameters()) return;
 
-    text.append("<");
+    text.append('<');
     PsiTypeParameter[] parameters = typeParameterListOwner.getTypeParameters();
     final PsiTypeParameterList typeParameterList = typeParameterListOwner.getTypeParameterList();
     for (int i = 0; i < parameters.length; i++) {
@@ -310,14 +315,14 @@ public class GenerationUtil {
         }
       }
     }
-    text.append(">");
+    text.append('>');
   }
 
   static void writeParameterList(StringBuilder text,
                                  PsiParameter[] parameters,
                                  final ClassNameProvider classNameProvider,
                                  @Nullable ExpressionContext context) {
-    text.append("(");
+    text.append('(');
 
     //writes myParameters
     int i = 0;
@@ -339,13 +344,13 @@ public class GenerationUtil {
       else {
         writeType(text, parameter.getType(), parameter, classNameProvider);
       }
-      text.append(" ");
+      text.append(' ');
       text.append(parameter.getName());
 
       i++;
     }
-    text.append(")");
-    text.append(" ");
+    text.append(')');
+    text.append(' ');
   }
 
   static void writeThrowsList(StringBuilder text,
@@ -358,10 +363,10 @@ public class GenerationUtil {
     for (int i = 0; i < exceptions.length; i++) {
       PsiClassType exception = exceptions[i];
       if (i != 0) {
-        text.append(",");
+        text.append(',');
       }
       writeType(text, exception, throwsList, classNameProvider);
-      text.append(" ");
+      text.append(' ');
     }
   }
 
@@ -424,7 +429,8 @@ public class GenerationUtil {
         writeVariableSeparately(variable, builder, expressionContext);
         builder.append(";\n");
       }
-      builder.delete(builder.length() - 1, builder.length());
+      builder.delete(builder.length()-1, builder.length());
+      //builder.removeFromTheEnd(1);
       /*return;
     }
 
@@ -496,7 +502,7 @@ public class GenerationUtil {
     }
 
     writeType(builder, type, variable);
-    builder.append(" ");
+    builder.append(' ');
 
     writeVariableWithoutType(builder, expressionContext, variable, wrapped, originalType);
   }

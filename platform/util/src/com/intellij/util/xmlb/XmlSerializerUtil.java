@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,9 @@ public class XmlSerializerUtil {
   }
 
   public static <T> void copyBean(@NotNull T from, @NotNull T to) {
-    assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign "+from.getClass()+" to "+to.getClass();
-
-    final Accessor[] accessors = BeanBinding.getAccessors(to.getClass());
-    for (Accessor accessor : accessors) {
+    assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign " +
+                                                             from.getClass() + " to " + to.getClass();
+    for (Accessor accessor : BeanBinding.getAccessors(to.getClass())) {
       accessor.write(to, accessor.read(from));
     }
   }

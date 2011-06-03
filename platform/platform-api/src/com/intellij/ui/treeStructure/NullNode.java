@@ -23,8 +23,4 @@ public class NullNode extends SimpleNode {
   public SimpleNode[] getChildren() {
     return NO_CHILDREN;
   }
-
-  public Object[] getEqualityObjects() {
-    return NONE;
-  }
 }

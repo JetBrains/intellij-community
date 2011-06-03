@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,39 @@
  */
 package com.intellij.codeInspection;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.xmlb.SerializationFilter;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializationException;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Set;
 
 /**
- * User: anna
+ * @author anna
  * Date: 28-Nov-2005
  */
 public abstract class InspectionProfileEntry {
   public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionProfileEntry");
+
+  private static Set<String> myBlackList = null;
+  private Boolean myUseNewSerializer = null;
 
   @Nls @NotNull
   public abstract String getGroupDisplayName();
@@ -62,7 +73,7 @@ public abstract class InspectionProfileEntry {
   public abstract String getShortName();
 
   /**
-   * @return highlighting level for this inspection tool that is used in default settings
+   * @return highlighting level for this inspection tool that is used in default settings.
    */
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
@@ -74,7 +85,7 @@ public abstract class InspectionProfileEntry {
   }
 
   /**
-   * @return null if no UI options required
+   * @return null if no UI options required.
    */
   @Nullable
   public JComponent createOptionsPanel() {
@@ -82,43 +93,125 @@ public abstract class InspectionProfileEntry {
   }
 
   /**
-   * Read in settings from xml config. Default implementation uses DefaultJDOMExternalizer so you may use public fields like <code>int TOOL_OPTION</code> to store your options.
+   * Read in settings from XML config.
+   * Default implementation uses XmlSerializer so you may use public fields (like <code>int TOOL_OPTION</code>)
+   * and bean-style getters/setters (like <code>int getToolOption(), void setToolOption(int)</code>) to store your options.
    *
    * @param node to read settings from.
-   * @throws InvalidDataException if the loaded data was not valid
+   * @throws InvalidDataException if the loaded data was not valid.
    */
+  @SuppressWarnings("deprecation")
   public void readSettings(Element node) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, node);
+    if (useNewSerializer()) {
+      try {
+        XmlSerializer.deserializeInto(this, node);
+      }
+      catch (XmlSerializationException e) {
+        throw new InvalidDataException(e);
+      }
+    }
+    else {
+      //noinspection UnnecessaryFullyQualifiedName
+      com.intellij.openapi.util.DefaultJDOMExternalizer.readExternal(this, node);
+    }
   }
 
   /**
-   * Store current settings in xml config. Default implementation uses DefaultJDOMExternalizer so you may use public fields like <code>int TOOL_OPTION</code> to store your options.
+   * Store current settings in XML config.
+   * Default implementation uses XmlSerializer so you may use public fields (like <code>int TOOL_OPTION</code>)
+   * and bean-style getters/setters (like <code>int getToolOption(), void setToolOption(int)</code>) to store your options.
    *
    * @param node to store settings to.
-   * @throws WriteExternalException if no data should be saved for this component
+   * @throws WriteExternalException if no data should be saved for this component.
    */
+  @SuppressWarnings("deprecation")
   public void writeSettings(Element node) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, node);
+    if (useNewSerializer()) {
+      XmlSerializer.serializeInto(this, node, getSerializationFilter());
+    }
+    else {
+      //noinspection UnnecessaryFullyQualifiedName
+      com.intellij.openapi.util.DefaultJDOMExternalizer.writeExternal(this, node);
+    }
+  }
+
+  private synchronized boolean useNewSerializer() {
+    if (myUseNewSerializer == null) {
+      if (myBlackList == null) {
+        loadBlackList();
+      }
+      myUseNewSerializer = !myBlackList.contains(getClass().getName());
+    }
+    return myUseNewSerializer;
+  }
+
+  private static void loadBlackList() {
+    myBlackList = Sets.newHashSet();
+
+    final URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
+    if (url == null) {
+      LOG.error("Resource not found");
+      return;
+    }
+
+    try {
+      final BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+      try {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          line = line.trim();
+          if (line.length() > 0) myBlackList.add(line);
+        }
+      }
+      finally {
+        reader.close();
+      }
+    }
+    catch (IOException e) {
+      LOG.error("Unable to load resource: " + url, e);
+    }
+  }
+
+  @TestOnly
+  public static synchronized Collection<String> getBlackList() {
+    if (myBlackList == null) {
+      loadBlackList();
+    }
+    return myBlackList;
   }
 
   /**
-   * Initialize inspection with project. Is called on project opened for all profiles as well as on profile creation
+   * Returns filter used to omit default values on saving inspection settings.
+   * Default implementation uses SkipDefaultValuesSerializationFilters.
+   *
+   * @return serialization filter.
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @Nullable
+  protected SerializationFilter getSerializationFilter() {
+    return new SkipDefaultValuesSerializationFilters();
+  }
+
+  /**
+   * Initialize inspection with project. Is called on project opened for all profiles as well as on profile creation.
+   *
    * @param project to be associated with this entry
    */
   public void projectOpened(Project project) {
   }
 
   /**
-   * Cleanup inspection settings corresponding to the project. Is called on project closed for all profiles as well as on profile deletion
+   * Cleanup inspection settings corresponding to the project. Is called on project closed for all profiles as well as on profile deletion.
+   *
    * @param project to be disassociated from this entry
    */
   public void projectClosed(Project project) {
   }
 
-
-
   /**
    * Override this method to return a html inspection description. Otherwise it will be loaded from resources using ID.
+   *
+   * @return hard-code inspection description.
    */
   @Nullable
   public String getStaticDescription() {

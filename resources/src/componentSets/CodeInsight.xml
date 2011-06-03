@@ -1,9 +1,0 @@
-<components>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
-    </component>
-
-
-  </project-components>
-</components>

@@ -57,9 +57,6 @@ public class NonFinalFieldInImmutableInspection extends BaseJavaLocalInspectionT
           holder.registerProblem(field, "Non-final field #ref in @Immutable class  #loc");
         }
       }
-
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
     };
   }
 }

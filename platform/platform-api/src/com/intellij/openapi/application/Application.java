@@ -78,13 +78,12 @@ public interface Application extends ComponentManager {
   <T> T runWriteAction(@NotNull Computable<T> computation);
 
   /**
-   * Returns the currently executing write action of the specified class.
+   * Returns true if there is currently executing write action of the specified class.
    *
    * @param actionClass the class of the write action to return.
-   * @return the write action instance, or null if no action of the specified class is currently executing.
+   * @return true if the action is running, or false if no action of the specified class is currently executing.
    */
-  @Nullable
-  <T> T getCurrentWriteAction(@Nullable Class<T> actionClass);
+  boolean hasWriteAction(@Nullable Class<?> actionClass);
 
   /**
    * Asserts whether the read access is allowed.
@@ -323,4 +322,13 @@ public interface Application extends ComponentManager {
    */
   boolean isActive();
 
+  /**
+   * Returns lock used for read operations, should be closed in finally block
+   */
+  AccessToken acquireReadActionLock();
+
+  /**
+   * Returns lock used for write operations, should be closed in finally block
+   */
+  AccessToken acquireWriteActionLock(@Nullable Class marker);
 }

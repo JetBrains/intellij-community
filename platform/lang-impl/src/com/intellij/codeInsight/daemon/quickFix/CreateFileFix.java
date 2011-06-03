@@ -183,8 +183,4 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
       myIsAvailable = false;
     }
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

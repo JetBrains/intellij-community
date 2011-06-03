@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
-import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -32,7 +34,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.Collection;
 
 class BeanBinding implements Binding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xmlb.BeanBinding");
@@ -48,23 +49,21 @@ class BeanBinding implements Binding {
 
   public BeanBinding(Class<?> beanClass, XmlSerializerImpl serializer, final Accessor accessor) {
     myAccessor = accessor;
-    assert !beanClass.isArray() : "Bean is an array";
-    assert !beanClass.isPrimitive() : "Bean is primitive type";
+    assert !beanClass.isArray() : "Bean is an array: " + beanClass;
+    assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
     myBeanClass = beanClass;
     filter = serializer.getFilter();
     this.serializer = serializer;
     myTagName = getTagName(beanClass);
+    assert !StringUtil.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
   }
 
   public void init() {
     initPropertyBindings(myBeanClass);
   }
 
-
   private void initPropertyBindings(Class<?> beanClass) {
-    Accessor[] accessors = getAccessors(beanClass);
-
-    for (Accessor accessor : accessors) {
+    for (Accessor accessor : getAccessors(beanClass)) {
       final Binding binding = createBindingByAccessor(serializer, accessor);
       myPropertyBindingsList.add(binding);
       myPropertyBindings.put(binding, accessor);
@@ -197,7 +196,8 @@ class BeanBinding implements Binding {
     return aClass.getSimpleName();
   }
 
-  static Accessor[] getAccessors(Class<?> aClass) {
+  @NotNull
+  static List<Accessor> getAccessors(Class<?> aClass) {
     try {
       List<Accessor> accessors = new ArrayList<Accessor>();
 
@@ -221,19 +221,18 @@ class BeanBinding implements Binding {
       Field[] fields = aClass.getFields();
       for (Field field : fields) {
         int modifiers = field.getModifiers();
-        if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) && XmlSerializerImpl.findAnnotation(field.getAnnotations(), Transient.class) == null) {
+        if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers) &&
+            XmlSerializerImpl.findAnnotation(field.getAnnotations(), Transient.class) == null) {
           accessors.add(new FieldAccessor(field));
         }
       }
 
-
-      return accessors.toArray(new Accessor[accessors.size()]);
+      return accessors;
     }
     catch (IntrospectionException e) {
       throw new XmlSerializationException(e);
     }
   }
-
 
   public String toString() {
     return "BeanBinding[" + myBeanClass.getName() + ", tagName=" + myTagName + "]";

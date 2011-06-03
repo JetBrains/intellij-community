@@ -130,7 +130,7 @@ public class RareLogger extends Logger {
   }
 
   @Override
-  public void error(@NonNls String message, Throwable t, @NonNls String... details) {
+  public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
     process(Level.ERROR, message, t, details);
   }
 
@@ -154,7 +154,7 @@ public class RareLogger extends Logger {
     myLogger.setLevel(level);
   }
 
-  private void process(final @NotNull Level level, final @Nullable @NonNls String message, @Nullable final Throwable t, final @NonNls String... details) {
+  private void process(@NotNull final Level level, @NonNls @Nullable final String message, @Nullable final Throwable t, @NonNls final String... details) {
     if (! Level.ERROR.equals(level)) {
       for (LogFilter convertor : myConvertors) {
         final Object key = convertor.getKey(level, message, t, details);
@@ -176,7 +176,7 @@ public class RareLogger extends Logger {
 
   public interface LogFilter {
     @Nullable
-    Object getKey(final @NotNull Level level, final @NonNls String message, @Nullable final Throwable t, final @NonNls String... details);
+    Object getKey(@NotNull final Level level, @NonNls final String message, @Nullable final Throwable t, @NonNls final String... details);
     @NotNull
     Integer getAllowedLoggingInterval(Level level, String message, Throwable t, String[] details);
   }

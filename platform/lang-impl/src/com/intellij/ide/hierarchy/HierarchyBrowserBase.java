@@ -72,10 +72,6 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     myContent = content;
   }
 
-  public JComponent getComponent() {
-    return this;
-  }
-
   protected void buildUi(JComponent toolbar, JComponent content) {
     setToolbar(toolbar);
     setContent(content);

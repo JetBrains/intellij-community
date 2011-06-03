@@ -147,4 +147,21 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.geti"
+    name="geti" toReformat="true" toShortenFQNames="true" value="public static $CLASS_NAME$ getInstance() {&#13;&#10;  return $VALUE$;&#13;&#10;}">
+    <variable name="CLASS_NAME" expression="className" defaultValue="" alwaysStopAt="false"/>
+    <variable name="VALUE" expression="variableOfType(CLASS_NAME)" defaultValue="null" alwaysStopAt="true"/>
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_COMMENT" value="false" />
+      <option name="JAVA_STRING" value="false" />
+      <option name="XML" value="false" />
+      <option name="HTML" value="false" />
+      <option name="JSP" value="false" />
+      <option name="COMPLETION" value="true" />
+      <option name="GROOVY" value="true" />
+      <option name="ASPECTJ" value="true" />
+      <option name="OTHER" value="false" />
+    </context>
+  </template>
 </templateSet>

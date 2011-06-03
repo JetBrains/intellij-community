@@ -124,8 +124,4 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
     assert expressionType != null;
     return "new " + expressionType.getCanonicalText() + "[]{" + expression.getText()+ "}";
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

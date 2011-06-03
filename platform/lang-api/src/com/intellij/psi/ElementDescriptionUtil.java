@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,10 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class ElementDescriptionUtil {
-  private ElementDescriptionUtil() {
-  }
+  private ElementDescriptionUtil() { }
 
   @NotNull
-  public static String getElementDescription(PsiElement element, ElementDescriptionLocation location) {
+  public static String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
     for(ElementDescriptionProvider provider: Extensions.getExtensions(ElementDescriptionProvider.EP_NAME)) {
       String result = provider.getElementDescription(element, location);
       if (result != null) {
