@@ -466,7 +466,7 @@ public class ResolveImportUtil {
 
   @Nullable
   public static PsiElement resolveInRoots(@NotNull final PsiElement context, final String name) {
-    return resolveInRoots(context, PyQualifiedName.fromComponents(name));
+    return resolveInRoots(context, PyQualifiedName.fromDottedString(name));
   }
 
   /**
