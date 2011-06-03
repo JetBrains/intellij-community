@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
@@ -90,6 +91,21 @@ public class FocusTrackback {
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     setLocalFocusOwner(manager.getPermanentFocusOwner());
+
+    final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
+    if (myLocalFocusOwner == null && fm.isFocusBeingTransferred()) {
+      if (index > 0) {
+        int eachIndex = index - 1;
+        while (eachIndex > 0) {
+          final FocusTrackback each = stack.get(eachIndex);
+          if (!each.isConsumed() && each.myLocalFocusOwner != null) {
+            setLocalFocusOwner(each.myLocalFocusOwner);
+            break;
+          }
+          eachIndex--;
+        }
+      }
+    }
 
     if (index == 0) {
       setFocusOwner(manager.getPermanentFocusOwner());
@@ -193,12 +209,23 @@ public class FocusTrackback {
 
     if (project != null && !project.isDisposed()) {
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
-      if (myForcedRestore) {
-        cleanParentWindow();
-      }
+      cleanParentWindow();
+      final Project finalProject = project;
       focusManager.requestFocus(new MyFocusCommand(), myForcedRestore).doWhenProcessed(new Runnable() {
         public void run() {
           dispose();
+        }
+      }).doWhenRejected(new Runnable() {
+        @Override
+        public void run() {
+          focusManager.doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(finalProject) {
+            @Override
+            public void run() {
+              if (UIUtil.isMeaninglessFocusOwner(focusManager.getFocusOwner())) {
+                focusManager.requestDefaultFocus(false);
+              }
+            }
+          });
         }
       });
     }
