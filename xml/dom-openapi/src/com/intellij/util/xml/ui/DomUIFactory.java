@@ -17,8 +17,10 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -39,6 +41,9 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public abstract class DomUIFactory {
+
+  public final static ExtensionPointName<Consumer<DomUIFactory>> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.dom.uiControlsProvider");
+
   public static Method GET_VALUE_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getValue");
   public static Method SET_VALUE_METHOD = findMethod(GenericDomValue.class, "setValue");
   public static Method GET_STRING_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getStringValue");
