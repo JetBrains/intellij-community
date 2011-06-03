@@ -44,6 +44,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase
     myFixture.checkHighlighting(true, false, false);
   }
 
+  public void testHasattrGuard() { // PY-2309
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);

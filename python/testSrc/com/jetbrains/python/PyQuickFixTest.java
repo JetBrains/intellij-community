@@ -211,6 +211,21 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                           PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
+  public void testChainedComparison1() {  // PY-3126
+    doInspectionTest("ChainedComparison1.py", PyChainedComparisonsInspection.class,
+                          PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
+  public void testChainedComparison2() {  // PY-3126
+    doInspectionTest("ChainedComparison2.py", PyChainedComparisonsInspection.class,
+                          PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
+  public void testChainedComparison3() {  // PY-3126
+    doInspectionTest("ChainedComparison3.py", PyChainedComparisonsInspection.class,
+                          PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
   public void testStatementEffect() {  // PY-1362, PY-2585
     doInspectionTest("StatementEffect.py", PyStatementEffectInspection.class,
                           PyBundle.message("QFIX.statement.effect"), true, true);
@@ -283,7 +298,19 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
       doInspectionTest("DocstringParams.py", PyDocstringInspection.class,
-                     PyBundle.message("QFIX.docstring"), true, true);
+                     PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
+  }
+
+  public void testDocstringParams1() {
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      doInspectionTest("DocstringParams1.py", PyDocstringInspection.class,
+                     PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
     }
     finally {
       documentationSettings.setFormat(DocStringFormat.PLAIN);

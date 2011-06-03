@@ -16,8 +16,11 @@ import org.jetbrains.annotations.NotNull;
  * For instance, a < b and b < c  --> a < b < c
  */
 public class ChainedComparisonsQuickFix implements LocalQuickFix {
-
-  public ChainedComparisonsQuickFix() {
+  boolean myIsLeftLeft;
+  boolean myIsRightLeft;
+  public ChainedComparisonsQuickFix(boolean isLeft, boolean isRight) {
+    myIsLeftLeft = isLeft;
+    myIsRightLeft = isRight;
   }
 
   @NotNull
@@ -45,33 +48,69 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     }
   }
 
-  static private void checkOperator(PyBinaryExpression leftExpression,
+  private void checkOperator(PyBinaryExpression leftExpression,
                                                           PyBinaryExpression rightExpression, Project project) {
-    if (leftExpression.getRightExpression() instanceof PyBinaryExpression) {
-      checkOperator((PyBinaryExpression)leftExpression.getRightExpression(), rightExpression, project);
-    }     
-    else if (/*leftExpression.getOperator() == rightExpression.getOperator() &&         */
-                PyTokenTypes.RELATIONAL_OPERATIONS.contains(leftExpression.getOperator())) {
-      PyExpression leftRight = leftExpression.getRightExpression();
-      if (leftRight != null) {
-        if (leftRight.getText().equals(getSmallLeftExpression(rightExpression).getText())) {
-          PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-          PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(
-                  (rightExpression).getPsiOperator().getText(), leftExpression,
-                                                        getLargeRightExpression(rightExpression, project));
-          leftExpression.replace(binaryExpression);
-          rightExpression.delete();
-        }
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    if (myIsLeftLeft) {
+      PyExpression newLeftExpression = invertExpression(leftExpression, elementGenerator);
+
+      if (myIsRightLeft) {
+        PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(
+                    (rightExpression).getPsiOperator().getText(), newLeftExpression,
+                                                          getLargeRightExpression(rightExpression, project));
+        leftExpression.replace(binaryExpression);
+        rightExpression.delete();
+      }
+      else {
+        PsiElement op = rightExpression.getPsiOperator();
+        String newOp = invertOperator(op);
+        PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(
+                    newOp, newLeftExpression, rightExpression.getLeftExpression());
+        leftExpression.replace(binaryExpression);
+        rightExpression.delete();
       }
     }
+    else {
+      if (myIsRightLeft) {
+        PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(
+                    (rightExpression).getPsiOperator().getText(), leftExpression, getLargeRightExpression(rightExpression, project));
+        leftExpression.replace(binaryExpression);
+        rightExpression.delete();
+      }
+      else {
+        PsiElement op = rightExpression.getPsiOperator();
+        String newOp = invertOperator(op);
+        PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(
+                    newOp, leftExpression, rightExpression.getLeftExpression());
+        leftExpression.replace(binaryExpression);
+        rightExpression.delete();
+      }
+    }
+
   }
 
-  static private PyExpression getSmallLeftExpression(PyBinaryExpression expression) {
-    PyExpression result = expression;
-    while (result instanceof PyBinaryExpression) {
-      result = ((PyBinaryExpression)result).getLeftExpression();
+  private PyExpression invertExpression(PyBinaryExpression leftExpression, PyElementGenerator elementGenerator) {
+    PsiElement op = leftExpression.getPsiOperator();
+    PyExpression right = leftExpression.getRightExpression();
+    PyExpression left = leftExpression.getLeftExpression();
+    if (left instanceof PyBinaryExpression){
+      left = invertExpression((PyBinaryExpression)left, elementGenerator);
     }
-    return result;
+    String newOp = invertOperator(op);
+    return elementGenerator.createBinaryExpression(
+                newOp, right, left);
+  }
+
+  private String invertOperator(PsiElement op) {
+    if (op.getText().equals(">"))
+      return "<";
+    if (op.getText().equals("<"))
+      return ">";
+    if (op.getText().equals(">="))
+      return "<=";
+    if (op.getText().equals("<="))
+      return ">=";
+    return op.getText();
   }
 
   static private PyExpression getLargeRightExpression(PyBinaryExpression expression, Project project) {

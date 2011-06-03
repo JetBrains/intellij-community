@@ -21,6 +21,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.python.run.PythonTracebackFilter;
 
 import java.util.ArrayList;
 
@@ -44,7 +45,9 @@ public class PyDebugConsoleBuilder extends TextConsoleBuilder {
   }
 
   protected  ConsoleView createConsole() {
-    return new PythonDebugLanguageConsoleView(myProject);
+    PythonDebugLanguageConsoleView consoleView = new PythonDebugLanguageConsoleView(myProject);
+    consoleView.addMessageFilter(new PythonTracebackFilter(myProject));
+    return consoleView;
   }
 
   public void addFilter(final Filter filter) {

@@ -8,27 +8,27 @@ def foo1(a, b):
   """
   pass
 
-def foo(a, b, n):
-  <warning descr="Missing parameters b, n in docstring.">"""
+def foo(a, <warning descr="Missing parameter b in docstring">b</warning>, <warning descr="Missing parameter n in docstring">n</warning>):
+  """
 
   @param a:
   @return:
-  """</warning>
+  """
   pass
 
 def foo():
-  <warning descr="Unexpected parameters a in docstring.">"""
+  """
 
-  @param a:
+  @param <warning descr="Unexpected parameter a in docstring">a</warning>:
   @return:
-  """</warning>
+  """
   pass
 
 
-def foo(a, c):
-  <warning descr="Missing parameters c in docstring. Unexpected parameters b in docstring.">"""
+def foo(a, <warning descr="Missing parameter c in docstring">c</warning>):
+  """
   @param a:
-  @param b:
+  @param <warning descr="Unexpected parameter b in docstring">b</warning>:
   @return:
-  """</warning>
+  """
   pass

@@ -30,6 +30,8 @@ public class PyChainedComparisonsInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
+    boolean myIsLeft;
+    boolean myIsRight;
 
     public Visitor(final ProblemsHolder holder) {
       super(holder);
@@ -43,24 +45,61 @@ public class PyChainedComparisonsInspection extends PyInspection {
       if (leftExpression instanceof PyBinaryExpression &&
                         rightExpression instanceof PyBinaryExpression) {
         if (node.getOperator() == PyTokenTypes.AND_KEYWORD) {
-          if (checkOperator((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression))
-            registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix());
+          if (isRightSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression) ||
+              isLeftSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression))
+            registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight));
         }
       }
     }
 
-    static private boolean checkOperator(PyBinaryExpression leftExpression,PyBinaryExpression rightExpression) {
-      if (leftExpression.getRightExpression() instanceof PyBinaryExpression) {
-        if (checkOperator((PyBinaryExpression)leftExpression.getRightExpression(), rightExpression))
+    private boolean isRightSimplified(PyBinaryExpression leftExpression, PyBinaryExpression rightExpression) {
+      if (leftExpression.getRightExpression() instanceof PyBinaryExpression &&
+          PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftExpression.getRightExpression()).getOperator())){
+        if (isRightSimplified((PyBinaryExpression)leftExpression.getRightExpression(), rightExpression))
           return true;
       }
       
-      if (/*leftExpression.getOperator() == rightExpression.getOperator() && */
-                  PyTokenTypes.RELATIONAL_OPERATIONS.contains(leftExpression.getOperator())) {
+      if (PyTokenTypes.RELATIONAL_OPERATIONS.contains(leftExpression.getOperator())) {
         PyExpression leftRight = leftExpression.getRightExpression();
         if (leftRight != null) {
-          if (leftRight.getText().equals(getLeftExpression(rightExpression).getText()))
+          if (leftRight.getText().equals(getLeftExpression(rightExpression).getText())) {
+            myIsLeft = false;
+            myIsRight = true;
             return true;
+          }
+
+          PyExpression right = getSmallestRight(rightExpression);
+          if (right != null && leftRight.getText().equals(right.getText())) {
+            myIsLeft = false;
+            myIsRight = false;
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private boolean isLeftSimplified(PyBinaryExpression leftExpression, PyBinaryExpression rightExpression) {
+      if (leftExpression.getLeftExpression() instanceof PyBinaryExpression &&
+        PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftExpression.getLeftExpression()).getOperator())){
+        if (isLeftSimplified((PyBinaryExpression)leftExpression.getLeftExpression(), rightExpression))
+          return true;
+      }
+
+      if (PyTokenTypes.RELATIONAL_OPERATIONS.contains(leftExpression.getOperator())) {
+        PyExpression leftRight = leftExpression.getLeftExpression();
+        if (leftRight != null) {
+          if (leftRight.getText().equals(getLeftExpression(rightExpression).getText())) {
+            myIsLeft = true;
+            myIsRight = true;
+            return true;
+          }
+          PyExpression right = getSmallestRight(rightExpression);
+          if (right != null && leftRight.getText().equals(right.getText())) {
+            myIsLeft = true;
+            myIsRight = false;
+            return true;
+          }
         }
       }
       return false;
@@ -70,6 +109,14 @@ public class PyChainedComparisonsInspection extends PyInspection {
       PyExpression result = expression;
       while (result instanceof PyBinaryExpression) {
         result = ((PyBinaryExpression)result).getLeftExpression();
+      }
+      return result;
+    }
+
+    static private PyExpression getSmallestRight(PyBinaryExpression expression) {
+      PyExpression result = expression;
+      while (result instanceof PyBinaryExpression) {
+        result = ((PyBinaryExpression)result).getRightExpression();
       }
       return result;
     }

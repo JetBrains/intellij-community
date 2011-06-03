@@ -23,6 +23,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   public String getCodeSample(@NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) return SPACING_SETTINGS_PREVIEW;
     if (settingsType == SettingsType.BLANK_LINES_SETTINGS) return BLANK_LINES_SETTINGS_PREVIEW;
+    if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) return WRAP_SETTINGS_PREVIEW;
     return "";
   }
 
@@ -61,7 +62,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                 BLANK_LINES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
-      consumer.showAllStandardOptions();
+      consumer.showStandardOptions("KEEP_LINE_BREAKS",
+                                   "WRAP_LONG_LINES");
     }
   }
 
@@ -77,4 +79,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                        "    x = 1\n" +
                                                        "    def foo(self):\n" +
                                                        "        pass";
+
+  private static String WRAP_SETTINGS_PREVIEW = "long_expression = component_one + component_two + component_three + component_four + component_five + component_six";
 }

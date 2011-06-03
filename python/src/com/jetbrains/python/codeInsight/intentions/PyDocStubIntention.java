@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -45,6 +46,7 @@ public class PyDocStubIntention extends BaseIntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
     PyFunction function = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFunction.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PythonDocumentationProvider documentationProvider = new PythonDocumentationProvider();

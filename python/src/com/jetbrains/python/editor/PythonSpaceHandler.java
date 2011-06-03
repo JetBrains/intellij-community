@@ -37,7 +37,10 @@ public class PythonSpaceHandler extends SpaceHandler {
     if (project != null && vfile != null) {
       PsiFile file = PsiManager.getInstance(project).findFile(vfile);
       if (file != null) {
-        PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+        int offset = editor.getCaretModel().getOffset();
+        PsiElement element = file.findElementAt(offset);
+        if (element == null && offset > 1)
+          element = file.findElementAt(offset-2);
         if (PythonDocCommentUtil.inDocComment(element)) {
           PythonDocumentationProvider provider = new PythonDocumentationProvider();
           PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);

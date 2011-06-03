@@ -1,8 +1,8 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -124,32 +124,41 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
   }
 
+  private final Key<Set<PyFile>> PROCESSED_FILES = Key.create("PyFileImpl.processDeclarations.processedFiles");
+
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
+                                     @NotNull ResolveState resolveState,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    Set<PyFile> pyFiles = resolveState.get(PROCESSED_FILES);
+    if (pyFiles == null) {
+      pyFiles = new HashSet<PyFile>();
+      resolveState = resolveState.put(PROCESSED_FILES, pyFiles);
+    }
+    if (pyFiles.contains(this)) return true;
+    pyFiles.add(this);
     for(PyClass c: getTopLevelClasses()) {
       if (c == lastParent) continue;
-      if (!processor.execute(c, substitutor)) return false;
+      if (!processor.execute(c, resolveState)) return false;
     }
     for(PyFunction f: getTopLevelFunctions()) {
       if (f == lastParent) continue;
-      if (!processor.execute(f, substitutor)) return false;
+      if (!processor.execute(f, resolveState)) return false;
     }
     for(PyTargetExpression e: getTopLevelAttributes()) {
       if (e == lastParent) continue;
-      if (!processor.execute(e, substitutor)) return false;
+      if (!processor.execute(e, resolveState)) return false;
     }
 
     for(PyImportElement e: getImportTargets()) {
       if (e == lastParent) continue;
-      if (!processor.execute(e, substitutor)) return false;
+      if (!processor.execute(e, resolveState)) return false;
     }
 
     for(PyFromImportStatement e: getFromImports()) {
       if (e == lastParent) continue;
-      if (!e.processDeclarations(processor, substitutor, null, this)) return false;
+      if (!e.processDeclarations(processor, resolveState, null, this)) return false;
     }
 
     return true;
@@ -355,22 +364,22 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    VariantsProcessor processor = new VariantsProcessor(this);
     final List<String> dunderAll = getDunderAll();
-    processor.setAllowedNames(dunderAll);
-    processDeclarations(processor, ResolveState.initial(), null, this);
-    List<PyElement> result = new ArrayList<PyElement>();
-    for (LookupElement lookupElement : processor.getResultList()) {
-      final Object value = lookupElement.getObject();
-      if (value instanceof PyElement) {
-        result.add((PyElement) value);
-        if (dunderAll != null) {
-          dunderAll.remove(lookupElement.getLookupString());
+    final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
+    final List<PyElement> result = new ArrayList<PyElement>();
+    VariantsProcessor processor = new VariantsProcessor(this) {
+      @Override
+      protected void addElement(String name, PsiElement element) {
+        result.add((PyElement) element);
+        if (remainingDunderAll != null) {
+          remainingDunderAll.remove(name);
         }
       }
-    }
-    if (dunderAll != null) {
-      for (String s: dunderAll) {
+    };
+    processor.setAllowedNames(dunderAll);
+    processDeclarations(processor, ResolveState.initial(), null, this);
+    if (remainingDunderAll != null) {
+      for (String s: remainingDunderAll) {
         result.add(new LightNamedElement(myManager, PythonLanguage.getInstance(), s));
       }
     }
@@ -428,7 +437,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       return ((PyFileStub) stubElement).getDunderAll();
     }
     if (!myDunderAllCalculated) {
-      myDunderAll = calculateDunderAll();
+      final List<String> dunderAll = calculateDunderAll();
+      myDunderAll = dunderAll == null ? null : Collections.unmodifiableList(dunderAll);
       myDunderAllCalculated = true;
     }
     return myDunderAll;

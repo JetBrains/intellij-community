@@ -12,7 +12,6 @@ import java.awt.*;
  * User: catherine
  */
 public class PythonNoseTestRunConfigurationForm implements PythonNoseTestRunConfigurationParams {
-  private JPanel myTestsPlaceHolder;
   private JPanel myRootPanel;
 
   private final PythonTestRunConfigurationForm myTestRunConfigurationForm;
@@ -20,8 +19,9 @@ public class PythonNoseTestRunConfigurationForm implements PythonNoseTestRunConf
 
 
   public PythonNoseTestRunConfigurationForm(final Project project, final PythonNoseTestRunConfiguration configuration) {
+    myRootPanel = new JPanel(new BorderLayout());
     myTestRunConfigurationForm = new PythonTestRunConfigurationForm(project, configuration);
-    myTestsPlaceHolder.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
+    myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
     myTestRunConfigurationForm.getAdditionalPanel().add(createParamComponent());
     myTestRunConfigurationForm.getPatternComponent().setVisible(false);
   }
