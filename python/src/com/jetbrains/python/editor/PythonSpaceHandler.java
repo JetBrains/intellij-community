@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -49,7 +51,9 @@ public class PythonSpaceHandler extends SpaceHandler {
             docStub += element.getParent().getText().substring(0,3);
             if (docStub != null && docStub.length() != 0) {
               editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
-              editor.getCaretModel().moveCaretRelatively(100, 1, false, false, false);
+              PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
+              if (documentationSettings.myDocStringFormat != DocStringFormat.PLAIN)
+                editor.getCaretModel().moveCaretRelatively(100, 1, false, false, false);
               return;
             }
           }
