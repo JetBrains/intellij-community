@@ -39,6 +39,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -562,7 +563,7 @@ public class IdeEventQueue extends EventQueue {
 
     if (Registry.is("actionSystem.fixNullFocusedComponent")) {
       final Component focusOwner = mgr.getFocusOwner();
-      if (focusOwner == null || !focusOwner.isShowing()) {
+      if (focusOwner == null || !focusOwner.isShowing() || focusOwner instanceof JFrame || focusOwner instanceof JDialog) {
 
         IdeEventQueue queue = IdeEventQueue.getInstance();
         boolean mouseEventsAhead = e instanceof MouseEvent ||
@@ -596,7 +597,7 @@ public class IdeEventQueue extends EventQueue {
             final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
             Runnable requestDefaultFocus = new Runnable() {
               public void run() {
-                if (mgr.getFocusOwner() == null || !mgr.getFocusOwner().isShowing()) {
+                if (UIUtil.isMeaninglessFocusOwner(mgr.getFocusOwner())) {
                   if (getPopupManager().requestDefaultFocus(false)) return;
 
                   final Application app = ApplicationManager.getApplication();

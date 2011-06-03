@@ -728,9 +728,6 @@ public class AbstractPopup implements JBPopup {
     if (myFocusable) {
       window.setFocusableWindowState(true);
       window.setFocusable(true);
-      if (myRequestFocus) {
-        window.requestFocusInWindow();
-      }
     }
 
     myWindow = updateMaskAndAlpha(window);
@@ -763,20 +760,7 @@ public class AbstractPopup implements JBPopup {
 
         afterShow();
 
-        final ActionCallback result = new ActionCallback();
-
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myFocusable && myRequestFocus && myFocusTrackback != null) {
-              myFocusTrackback.cleanParentWindow();
-            }
-
-            result.setDone();
-          }
-        });
-
-        return result;
+        return new ActionCallback.Done();
       }
     }, true);
   }
