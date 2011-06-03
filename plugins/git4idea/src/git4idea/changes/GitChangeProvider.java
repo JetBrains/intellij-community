@@ -150,7 +150,7 @@ public class GitChangeProvider implements ChangeProvider {
       for (FilePath filePath : myDirty) {
         final VirtualFile vf = filePath.getVirtualFile();
         if (vf != null) {
-          if ((! FileStatus.ADDED.equals(myAddGate.getStatus(vf))) && myFileDocumentManager.isFileModified(vf)) {
+          if ((myAddGate.getStatus(vf) == null) && myFileDocumentManager.isFileModified(vf)) {
             final VirtualFile root = myVcsManager.getVcsRootFor(vf);
             if (root != null) {
               final GitRevisionNumber beforeRevisionNumber = GitChangeUtils.loadRevision(myProject, root, "HEAD");
