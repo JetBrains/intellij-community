@@ -1567,6 +1567,21 @@ public class UIUtil {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static void fixFormattedField(JFormattedTextField field) {
+    if (SystemInfo.isMac) {
+      final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      final int commandKeyMask = toolkit.getMenuShortcutKeyMask();
+      final InputMap inputMap = field.getInputMap();
+      final KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, commandKeyMask);
+      inputMap.put(copyKeyStroke, "copy-to-clipboard");
+      final KeyStroke pasteKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_V, commandKeyMask);
+      inputMap.put(pasteKeyStroke, "paste-from-clipboard");
+      final KeyStroke cutKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_X, commandKeyMask);
+      inputMap.put(cutKeyStroke, "cut-to-clipboard");
+    }
+  }
+
   public static class MacTreeUI extends BasicTreeUI {
     public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 

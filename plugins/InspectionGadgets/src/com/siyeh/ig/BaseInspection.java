@@ -27,7 +27,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
-import com.siyeh.ig.ui.FormattedTextFieldMacFix;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -177,7 +177,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
             final Field field = getClass().getField(fieldName);
             valueField.setValue(field.get(this));
             valueField.setColumns(4);
-            FormattedTextFieldMacFix.apply(valueField);
+            UIUtil.fixFormattedField(valueField);
             final Document document = valueField.getDocument();
             document.addDocumentListener(new DocumentAdapter() {
                 @Override
