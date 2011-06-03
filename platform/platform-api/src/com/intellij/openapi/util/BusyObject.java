@@ -15,13 +15,18 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public interface BusyObject {
 
-  ActionCallback getReady(Object requestor);
+  ActionCallback getReady(@NotNull Object requestor);
 
   public abstract static class Impl implements BusyObject {
 
@@ -30,17 +35,27 @@ public interface BusyObject {
     protected abstract boolean isReady();
 
     public final void onReady() {
+      onReady(null);
+    }
+
+    public final void onReady(@Nullable Object readyRequestor) {
       if (!isReady()) return;
 
-      ActionCallback[] ready = getReadyCallbacks(true);
-      for (ActionCallback each : ready) {
-        if (each != null) {
+      if (readyRequestor != null) {
+        Pair<ActionCallback, List<ActionCallback>> callbacks = getReadyCallbacks(readyRequestor);
+        callbacks.getFirst().setDone();
+        for (ActionCallback each : callbacks.getSecond()) {
+          each.setRejected();
+        }
+      } else {
+        ActionCallback[] callbacks = getReadyCallbacks();
+        for (ActionCallback each : callbacks) {
           each.setDone();
         }
       }
     }
 
-    public final ActionCallback getReady(Object requestor) {
+    public final ActionCallback getReady(@NotNull Object requestor) {
       if (isReady()) {
         return new ActionCallback.Done();
       }
@@ -61,16 +76,28 @@ public interface BusyObject {
       }
     }
 
-    private ActionCallback[] getReadyCallbacks(boolean clear) {
+    private ActionCallback[] getReadyCallbacks() {
       synchronized (myReadyCallbacks) {
         ActionCallback[] result = myReadyCallbacks.values().toArray(new ActionCallback[myReadyCallbacks.size()]);
-        if (clear) {
-          myReadyCallbacks.clear();
-        }
+        myReadyCallbacks.clear();
         return result;
       }
     }
 
+    private Pair<ActionCallback, List<ActionCallback>> getReadyCallbacks(Object readyRequestor) {
+      synchronized (myReadyCallbacks) {
+        ActionCallback done = myReadyCallbacks.get(readyRequestor);
+        if (done == null) {
+          done = new ActionCallback();
+        }
+
+        myReadyCallbacks.remove(readyRequestor);
+        ArrayList<ActionCallback> rejected = new ArrayList<ActionCallback>();
+        rejected.addAll(myReadyCallbacks.values());
+        myReadyCallbacks.clear();
+        return new Pair<ActionCallback, List<ActionCallback>>(done, rejected);
+      }
+    }
 
     public static class Simple extends Impl {
 
