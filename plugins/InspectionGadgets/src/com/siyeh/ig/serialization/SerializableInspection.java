@@ -15,20 +15,18 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInspection.ui.AddAction;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.CheckBox;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 

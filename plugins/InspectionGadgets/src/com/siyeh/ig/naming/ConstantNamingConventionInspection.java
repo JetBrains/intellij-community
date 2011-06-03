@@ -19,12 +19,12 @@ import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
