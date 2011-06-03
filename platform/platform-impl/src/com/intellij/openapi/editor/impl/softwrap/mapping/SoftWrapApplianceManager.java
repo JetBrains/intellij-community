@@ -517,10 +517,14 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
         myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
       }
 
-      softWrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(document, myEditor.getProject(), minOffset, maxOffset, preferredOffset, true);
+      softWrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(
+        document, myEditor.getProject(), minOffset, maxOffset, preferredOffset, true, true
+      );
     }
     
-    if (softWrapOffset >= lineData.endLineOffset || softWrapOffset < 0) {
+    if (softWrapOffset >= lineData.endLineOffset || softWrapOffset < 0
+        || (myCustomIndentUsedLastTime && softWrapOffset == lineData.nonWhiteSpaceSymbolOffset))
+    {
       return null;
     }
 
@@ -787,8 +791,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     public int indentInColumns;
     public int indentInPixels;
     public int endLineOffset;
-
-    private int myNonWhiteSpaceSymbolOffset;
+    public int nonWhiteSpaceSymbolOffset;
 
     public void update(int logicalLine, int spaceWidth, Editor editor) {
       Document document = myEditor.getDocument();
@@ -803,7 +806,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       CharSequence text = document.getCharsSequence();
       indentInColumns = 0;
       indentInPixels = 0;
-      myNonWhiteSpaceSymbolOffset = -1;
+      nonWhiteSpaceSymbolOffset = -1;
 
       for (int i = startLineOffset; i < endLineOffset; i++) {
         char c = text.charAt(i);
@@ -814,7 +817,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
             indentInColumns += calculateWidthInColumns(c, x - indentInPixels, spaceWidth);
             indentInPixels = x;
             break;
-          default: myNonWhiteSpaceSymbolOffset = i; return;
+          default: nonWhiteSpaceSymbolOffset = i; return;
         }
       }
     }
@@ -828,7 +831,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
      * @param softWrapOffset    offset of the soft wrap that occurred on document line which data is stored at the current object
      */
     public void update(int softWrapOffset) {
-      if (myNonWhiteSpaceSymbolOffset >= 0 && softWrapOffset > myNonWhiteSpaceSymbolOffset) {
+      if (nonWhiteSpaceSymbolOffset >= 0 && softWrapOffset > nonWhiteSpaceSymbolOffset) {
         return;
       }
       indentInColumns = 0;

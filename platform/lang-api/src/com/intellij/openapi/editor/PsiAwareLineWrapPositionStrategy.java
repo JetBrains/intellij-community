@@ -39,14 +39,17 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
   private static final Logger LOG = Logger.getInstance("#" + PsiAwareLineWrapPositionStrategy.class.getName());
   
   private final TokenSet myEnabledTypes;
+  private final boolean  myNonVirtualOnly;
 
   /**
    * Creates new <code>PsiAwareLineWrapPositionStrategy</code> object.
    * 
+   * @param nonVirtualOnly  defines if current PSI-aware logic should be exploited only for 'real wrap' position requests
    * @param enabledTypes    target element/token types where line wrapping is allowed
    */
-  public PsiAwareLineWrapPositionStrategy(@NotNull IElementType ... enabledTypes) {
+  public PsiAwareLineWrapPositionStrategy(boolean nonVirtualOnly, @NotNull IElementType ... enabledTypes) {
     myEnabledTypes = TokenSet.create(enabledTypes);
+    myNonVirtualOnly = nonVirtualOnly;
     if (enabledTypes.length <= 0) {
       LOG.warn(String.format("%s instance is created with empty token/element types. That will lead to inability to perform line wrap",
                              getClass().getName()));
@@ -59,11 +62,19 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
                                    int startOffset,
                                    int endOffset,
                                    int maxPreferredOffset,
-                                   boolean allowToBeyondMaxPreferredOffset) {
+                                   boolean allowToBeyondMaxPreferredOffset,
+                                   boolean virtual) {
+    if (virtual && myNonVirtualOnly) {
+      LineWrapPositionStrategy implementation = LanguageLineWrapPositionStrategy.INSTANCE.getDefaultImplementation();
+      return implementation.calculateWrapPosition(
+        document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, virtual
+      );
+    }
+
     if (project == null) {
       return -1;
     }
-    
+
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     if (documentManager == null) {
       return -1;
@@ -84,7 +95,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
         TextRange textRange = element.getTextRange();
         int start = Math.max(textRange.getStartOffset(), startOffset);
         int end = Math.min(textRange.getEndOffset(), endOffset);
-        int result = doCalculateWrapPosition(document, project, start, end, end, false);
+        int result = doCalculateWrapPosition(document, project, start, end, end, false, virtual);
         if (result >= 0) {
           return result;
         }
@@ -96,15 +107,15 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
 
         if (start > startOffset) {
           return start;
-        } 
+        }
       }
     }
     return -1;
   }
 
   /**
-   * Serves for the same purposes as {@link #calculateWrapPosition(Document, Project, int, int, int, boolean)} but ensures that given
-   * offsets target {@link #PsiAwareLineWrapPositionStrategy(IElementType...) enabled token/element types}.
+   * Serves for the same purposes as {@link #calculateWrapPosition(Document, Project, int, int, int, boolean, boolean)} but ensures
+   * that given offsets target {@link #PsiAwareLineWrapPositionStrategy(boolean, IElementType...) enabled token/element types}.
    * 
    * @param document                          target document which text is being processed
    * @param project                           target project
@@ -117,12 +128,13 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
    * @param allowToBeyondMaxPreferredOffset   indicates if it's allowed to return value from
    *                                          <code>(maxPreferredOffset; endOffset]</code> interval in case of inability to
    *                                          find appropriate offset from <code>(startOffset; maxPreferredOffset]</code> interval
+   * @param virtual                           identifies if current request is for virtual wrap (soft wrap) position
    * @return                                  offset from <code>(startOffset; endOffset]</code> interval where
    *                                          target line should be wrapped OR <code>-1</code> if no wrapping should be performed
    */
   protected abstract int doCalculateWrapPosition(
     @NotNull Document document, @Nullable Project project, int startOffset, int endOffset, int maxPreferredOffset,
-    boolean allowToBeyondMaxPreferredOffset
+    boolean allowToBeyondMaxPreferredOffset, boolean virtual
   );
 
   /**

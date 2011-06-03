@@ -85,7 +85,8 @@ public class DefaultLineWrapPositionStrategyTest {
     final Context context = new Context(document);
     context.init();
     int actual = myStrategy.calculateWrapPosition(
-      createMockDocument(context.document), myProject, 0, context.document.length(), context.edgeIndex, allowToBeyondMaxPreferredOffset
+      createMockDocument(context.document), myProject, 0, context.document.length(), context.edgeIndex,
+      allowToBeyondMaxPreferredOffset, true
     );
     assertSame(context.wrapIndex, actual);
   }

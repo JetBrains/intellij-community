@@ -104,7 +104,9 @@ public interface EditorSettings {
   void setUseSoftWraps(boolean use);
   boolean isAllSoftWrapsShown();
   boolean isUseCustomSoftWrapIndent();
+  void setUseCustomSoftWrapIndent(boolean useCustomSoftWrapIndent);
   int getCustomSoftWrapIndent();
+  void setCustomSoftWrapIndent(int indent);
 
   boolean isAllowSingleLogicalLineFolding();
   void setAllowSingleLogicalLineFolding(boolean allow);
