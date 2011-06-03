@@ -78,7 +78,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
             result.set(element);
           }
         }
-      }, false);
+      }, true);
 
       return result.get();
   }
