@@ -34,7 +34,6 @@
   <xi:include href="Configurables.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Toolwindows.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="CodeInsight.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Misc.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Debugger.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>
