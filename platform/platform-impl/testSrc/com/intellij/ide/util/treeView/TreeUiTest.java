@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
+import com.intellij.ui.LoadingNode;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
@@ -115,6 +116,20 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     final ActionCallback done = new ActionCallback();
     final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
+    final Ref<ActionCallback> ready = new Ref<ActionCallback>();
+
+    myElementUpdateHook = new ElementUpdateHook() {
+      @Override
+      public void onElementAction(String action, Object element) {
+        if (new NodeElement("jetbrains").equals(element) && ready.get() == null) {
+          ActionCallback readyCallback = new ActionCallback();
+          assertFalse(getBuilder().getUi().isReady());
+          getBuilder().getReady(this).notify(readyCallback);
+          ready.set(readyCallback);
+        }
+      }
+    };
+
     invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -137,6 +152,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
 
     assertTrue(done.isDone());
+    assertNotNull(ready.get());
+    assertTrue(ready.get().isDone());
 
     assertTree("-/\n" +
                " -com\n" +
@@ -151,6 +168,74 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertFalse(indicatorRef.get().isCanceled());
   }
 
+
+  public void testReadyCallbackWhenReleased() throws Exception {
+    buildStructure(myRoot);
+
+    final Ref<Boolean> done = new Ref<Boolean>(false);
+    final Ref<Boolean> rejected = new Ref<Boolean>(false);
+    final Ref<Boolean> processed = new Ref<Boolean>(false);
+    final Ref<Boolean> wasUiNull = new Ref<Boolean>(true);
+
+    final Ref<Runnable> addReadyCallbacks = new Ref<Runnable>(new Runnable() {
+      public void run() {
+        getBuilder().getReady(this).doWhenDone(new NamedRunnable("on done") {
+          @Override
+          public void run() {
+            wasUiNull.set(getBuilder().getUi() == null);
+            done.set(true);
+          }
+        }).doWhenRejected(new NamedRunnable("on rejected") {
+          @Override
+          public void run() {
+            wasUiNull.set(getBuilder().getUi() == null);
+            rejected.set(true);
+          }
+        }).doWhenProcessed(new NamedRunnable("on processed") {
+          @Override
+          public void run() {
+            processed.set(true);
+          }
+        });
+      }
+    });
+
+
+    final Ref<Boolean> disposeRequested = new Ref<Boolean>(false);
+    myElementUpdateHook = new ElementUpdateHook() {
+      @Override
+      public void onElementAction(String action, Object element) {
+        if (addReadyCallbacks.get() != null) {
+          addReadyCallbacks.get().run();
+          addReadyCallbacks.set(null);
+        }
+
+        if (element.equals(new NodeElement("ide"))) {
+          disposeRequested.set(true);
+          getBuilder().dispose();
+        }
+      }
+    };
+
+
+    invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        getBuilder().expand(new NodeElement("fabrique"), null);
+      }
+    });
+
+    waitBuilderToCome(new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return disposeRequested.get();
+      }
+    });
+    assertTrue(wasUiNull.get());
+    assertFalse(done.get());
+    assertTrue(rejected.get());
+    assertTrue(processed.get());
+  }
 
   public void testNoExtraJTreeModelUpdate() throws Exception {
     buildStructure(myRoot);
@@ -2174,6 +2259,56 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTree("-/\n" + " +com\n" + " -[jetbrains]\n" + "  -fabrique\n" + "   ide\n" + " +org\n" + " +xunit\n");
   }
 
+
+  public void testUpdateCollapsedBuiltNode() throws Exception {
+    buildStructure(myRoot, false);
+
+    myCom.removeAll();
+    myAlwaysShowPlus.add(new NodeElement("com"));
+
+    activate();
+
+    buildNode("/", false);
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    final DefaultMutableTreeNode com = findNode("com", false);
+    assertEquals(1, com.getChildCount());
+    assertEquals(LoadingNode.getText(), com.getChildAt(0).toString());
+
+    expand(getPath("com"));
+    assertTree("-/\n" +
+               " com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+
+    myCom.addChild(myIntellij);
+    updateFrom(new NodeElement("com"));
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+    assertEquals(1, com.getChildCount());
+    assertEquals("intellij", com.getChildAt(0).toString());
+
+
+    myCom.removeAll();
+    updateFrom(new NodeElement("com"));
+
+    expand(getPath("com"));
+    assertTree("-/\n" +
+               " com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+  }
+
   public void testReleaseBuilderDuringGetChildren() throws Exception {
     assertReleaseDuringBuilding("getChildren", "fabrique", new Runnable() {
       @Override
@@ -2284,6 +2419,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public YieldingUpdate() {
       super(true, false);
     }
+
   }
 
   public static class BgLoadingSyncUpdate extends TreeUiTest {
@@ -2291,10 +2427,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(false, true);
     }
 
-    @Override
-    public void testClear() throws Exception {
-      super.testClear();    //To change body of overridden methods use File | Settings | File Templates.
-    }
 
     @Override
     protected int getChildrenLoadingDelay() {
