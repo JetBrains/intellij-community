@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -282,24 +283,17 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     });
 
     contexts = new JComboBox(new DefaultComboBoxModel());
-    contexts.setRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      }
-    });
 
     dialects = new JComboBox(new DefaultComboBoxModel());
-    dialects.setRenderer(new DefaultListCellRenderer() {
+    dialects.setRenderer(new ListCellRendererWrapper(dialects.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value == null) {
-          value = "<no dialect>";
+          setText("<no dialect>");
         }
         else if (value instanceof Language) {
-          value = ((Language)value).getDisplayName();
+          setText(((Language)value).getDisplayName());
         }
-        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
     });
     dialects.addItemListener(new ItemListener() {
