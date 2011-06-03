@@ -322,15 +322,17 @@ public class CompletionLists {
                                           XmlElement context,
                                           boolean allowDefault) {
     if (namespaceContext == null) return true;
-    if (uri == null) return true;
 
     final String namespaceURI;
     if (prefixedName.getPrefix() != null) {
+      if (uri == null || uri.length() == 0) return false;
+
       namespaceURI = namespaceContext.getNamespaceURI(prefixedName.getPrefix(), context);
     } else {
-      if (!allowDefault) return false;
+      if (!allowDefault) return (uri == null || uri.length() == 0);
+
       if ((namespaceURI = namespaceContext.getDefaultNamespace(context)) == null) {
-        return false;
+        return (uri == null || uri.length() == 0);
       }
     }
     return uri.equals(namespaceURI);
