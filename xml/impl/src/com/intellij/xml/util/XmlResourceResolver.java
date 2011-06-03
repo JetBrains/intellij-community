@@ -169,7 +169,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
             LOG.debug("next to relative file checking:"+relativePath+","+myExternalResourcesMap.size()+")");
           }
 
-          for(String path:myExternalResourcesMap.values()) {
+          for(String path:getResourcePaths()) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Finding file by url:" + path);
             }

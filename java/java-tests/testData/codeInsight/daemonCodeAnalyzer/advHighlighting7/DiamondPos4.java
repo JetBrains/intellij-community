@@ -1,4 +1,4 @@
-public class Pos04<U> {
+public class Pos4<U> {
 
     void test() {
         class Foo<V> {
@@ -17,7 +17,7 @@ public class Pos04<U> {
     }
 
     public static void main(String[] args) {
-        Pos04<String> p4 = new Pos04<>();
+        Pos4<String> p4 = new Pos4<>();
         p4.test();
     }
 }

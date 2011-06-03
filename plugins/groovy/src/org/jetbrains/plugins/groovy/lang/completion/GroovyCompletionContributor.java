@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -282,8 +283,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
           if (reference.getQualifier() == null) {
             GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
 
-            if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.isRelaxedMatching()) {
-              addAllClasses(parameters, result, inheritors);
+            if (!PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position)) {
+              if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.isRelaxedMatching()) {
+                addAllClasses(parameters, result, inheritors);
+              }
             }
           }
 
@@ -365,7 +368,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     final ElementFilter classFilter = getClassFilter(position);
 
-    reference.processVariants(new Consumer<Object>() {
+    reference.processVariants(result.getPrefixMatcher(), new Consumer<Object>() {
       public void consume(Object element) {
         if (element instanceof PsiClass && inheritorsHolder.alreadyProcessed((PsiClass)element)) {
           return;

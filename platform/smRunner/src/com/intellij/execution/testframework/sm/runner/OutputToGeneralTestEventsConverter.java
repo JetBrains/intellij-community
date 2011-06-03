@@ -49,6 +49,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
   private boolean myStdinSupportEnabled;
+  private boolean myPendingLineBreakFlag;
 
   private static class OutputChunk {
     private final Key myKey;
@@ -87,6 +88,22 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   public void process(final String text, final Key outputType) {
+    final int textLength = text.length();
+    // if text is multi line:
+    if (textLength > 1 && text.substring(0, text.length() - 1).contains("\n")) {
+      // some fake process handler may not auto-split text in lines
+      final List<String> lines = StringUtil.split(text, "\n", false);
+      for (String line : lines) {
+        processLine(line, outputType);
+      }
+    }
+    else {
+      // one line
+      processLine(text, outputType);
+    }
+  }
+
+  private void processLine(String text, Key outputType) {
     if (outputType != ProcessOutputTypes.STDERR && outputType != ProcessOutputTypes.SYSTEM) {
       // we check for consistently only std output
       // because all events must be send to stdout
@@ -101,6 +118,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
    */
   public void flushBufferBeforeTerminating() {
     flushStdOutputBuffer();
+    if (myPendingLineBreakFlag) {
+      fireOnUncapturedLineBreak();
+    }
+  }
+
+  private void fireOnUncapturedLineBreak() {
+    fireOnUncapturedOutput("\n", ProcessOutputTypes.STDOUT);
   }
 
   public void dispose() {
@@ -176,18 +200,35 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private void processConsistentText(final String text, final Key outputType, boolean tcLikeFakeOutput) {
     try {
       if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
+        if (myPendingLineBreakFlag) {
+          // output type for line break isn't important
+          // we may use any, e.g. current one
+          fireOnUncapturedLineBreak();
+          myPendingLineBreakFlag = false;
+        }
         // Filters \n
-        if (text.equals("\n") && tcLikeFakeOutput) {
+        String outputToProcess = text;
+        if (tcLikeFakeOutput && text.endsWith("\n")) {
           // ServiceMessages protocol requires that every message
           // should start with new line, so such behaviour may led to generating
           // some number of useless \n.
           //
-          // This will not affect tests output because all
+          // IDEA process handler flush output by size or line break
+          // So:
+          //  1. "a\n\nb\n" -> ["a\n", "\n", "b\n"]
+          //  2. "a\n##teamcity[..]\n" -> ["a\n", "#teamcity[..]\n"]
+          // We need distinguish 1) and 2) cases, in 2) first linebreak is redundant and must be ignored
+          // in 2) linebreak must be considered as output
           // output will be in TestOutput message
-          return;
+          // Lets set myPendingLineBreakFlag if we meet "\n" and then ignore it or apply depending on
+          // next output chunk
+          myPendingLineBreakFlag = true;
+          outputToProcess = outputToProcess.substring(0, outputToProcess.length() - 1);
         }
         //fire current output
-        fireOnUncapturedOutput(text, outputType);
+        fireOnUncapturedOutput(outputToProcess, outputType);
+      } else {
+        myPendingLineBreakFlag = false;
       }
     }
     catch (ParseException e) {
@@ -199,7 +240,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   protected boolean processServiceMessages(final String text,
                                           final Key outputType,
                                           final ServiceMessageVisitor visitor) throws ParseException {
-    final ServiceMessage message = ServiceMessage.parse(text);
+    // service message parser expects line like "##teamcity[ .... ]" without whitespaces in the end.
+    final ServiceMessage message = ServiceMessage.parse(text.trim());
     if (message != null) {
       message.visit(visitor);
     }
@@ -303,6 +345,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private void fireOnUncapturedOutput(final String text, final Key outputType) {
     assertNotNull(text);
 
+    if (StringUtil.isEmpty(text)) {
+      return;
+    }
+
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
@@ -405,6 +451,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestStarted(@NotNull final TestStarted testStarted) {
+      // TODO
+      // final String locationUrl = testStarted.getLocationHint();
+
       final String locationUrl = testStarted.getAttributes().get(ATTR_KEY_LOCATION_URL);
       fireOnTestStarted(testStarted.getTestName(), locationUrl);
     }

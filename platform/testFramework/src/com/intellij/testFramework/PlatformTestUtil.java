@@ -26,20 +26,28 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.Assert;
+import org.junit.Assert;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +59,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.jar.JarFile;
 
 
 /**
@@ -64,6 +77,7 @@ public class PlatformTestUtil {
    */
   protected static final long ETALON_TIMING = 438;
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
+  public static final CvsVirtualFileFilter CVS_FILE_FILTER = new CvsVirtualFileFilter();
 
   public static <T> void registerExtension(final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
@@ -413,6 +427,120 @@ public class PlatformTestUtil {
         System.gc();
         TeamCityLogger.info("Another epic fail: "+e.getMessage() +"; Attempts remained: "+attempts);
       }
+    }
+  }
+
+  private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, VirtualFileFilter filter) {
+    HashMap<String, VirtualFile> map = new HashMap<String, VirtualFile>();
+    for (VirtualFile file : files) {
+      if (filter != null && !filter.accept(file)) continue;
+      map.put(file.getName(), file);
+    }
+    return map;
+  }
+
+  public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, VirtualFileFilter fileFilter) throws IOException {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    VirtualFile[] childrenAfter = dirAfter.getChildren();
+    if (dirAfter.isInLocalFileSystem()) {
+      File[] ioAfter = new File(dirAfter.getPath()).listFiles();
+      shallowCompare(childrenAfter, ioAfter);
+    }
+    VirtualFile[] childrenBefore = dirBefore.getChildren();
+    if (dirBefore.isInLocalFileSystem()) {
+      File[] ioBefore = new File(dirBefore.getPath()).listFiles();
+      shallowCompare(childrenBefore, ioBefore);
+    }
+
+    HashMap<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter);
+    HashMap<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter);
+
+    Set<String> keySetAfter = mapAfter.keySet();
+    Set<String> keySetBefore = mapBefore.keySet();
+    Assert.assertEquals(keySetAfter, keySetBefore);
+
+    for (String name : keySetAfter) {
+      VirtualFile fileAfter = mapAfter.get(name);
+      VirtualFile fileBefore = mapBefore.get(name);
+      if (fileAfter.isDirectory()) {
+        assertDirectoriesEqual(fileAfter, fileBefore, fileFilter);
+      }
+      else {
+        assertFilesEqual(fileAfter, fileBefore);
+      }
+    }
+  }
+
+  private static void shallowCompare(final VirtualFile[] vfs, final File[] io) {
+    List<String> vfsPaths = new ArrayList<String>();
+    for (VirtualFile file : vfs) {
+      vfsPaths.add(file.getPath());
+    }
+
+    List<String> ioPaths = new ArrayList<String>();
+    for (File file : io) {
+      ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
+    }
+
+    Assert.assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
+  }
+
+  private static String sortAndJoin(List<String> strings) {
+    Collections.sort(strings);
+    StringBuilder buf = new StringBuilder();
+    for (String string : strings) {
+      buf.append(string);
+      buf.append('\n');
+    }
+    return buf.toString();
+  }
+
+  public static void assertFilesEqual(VirtualFile fileAfter, VirtualFile fileBefore) throws IOException {
+    try {
+      assertJarFilesEqual(VfsUtil.virtualToIoFile(fileAfter), VfsUtil.virtualToIoFile(fileBefore));
+    }
+    catch (IOException e) {
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      Document docBefore = manager.getDocument(fileBefore);
+      Document docAfter = manager.getDocument(fileAfter);
+      if (docBefore != null && docAfter != null) {
+        Assert.assertEquals(fileAfter.getPath(), docAfter.getText(), docBefore.getText());
+      } else {
+        Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
+      }
+    }
+  }
+
+  public static void assertJarFilesEqual(File file1, File file2) throws IOException {
+    final JarFile jarFile1 = new JarFile(file1);
+    final JarFile jarFile2 = new JarFile(file2);
+    final File tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
+    final File tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
+    ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
+    ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
+    jarFile1.close();
+    jarFile2.close();
+    final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
+    final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        dirAfter.refresh(false, true);
+        dirBefore.refresh(false, true);
+      }
+    });
+    assertDirectoriesEqual(dirAfter, dirBefore, CVS_FILE_FILTER);
+  }
+
+  public static class CvsVirtualFileFilter implements VirtualFileFilter, FilenameFilter {
+    @Override
+    public boolean accept(VirtualFile file) {
+      return !file.isDirectory() || !"CVS".equals(file.getName());
+    }
+
+    @Override
+    public boolean accept(File dir, String name) {
+      return name.indexOf("CVS") == -1;
     }
   }
 }

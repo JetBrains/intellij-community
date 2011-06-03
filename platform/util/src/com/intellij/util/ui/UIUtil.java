@@ -1925,6 +1925,24 @@ public class UIUtil {
     return null;
   }
 
+  public static <T extends JComponent> List<T> findComponentsOfType(JComponent parent, Class<T> cls) {
+    final ArrayList<T> result = new ArrayList<T>();
+    findComponentsOfType(parent, cls, result);
+    return result;
+  }
+
+  private static <T extends JComponent> void findComponentsOfType(JComponent parent, Class<T> cls, ArrayList<T> result) {
+    if (parent == null) return;
+    if (cls.isAssignableFrom(parent.getClass())) {
+      result.add((T)parent);
+    }
+    for (Component c : parent.getComponents()) {
+      if (c instanceof JComponent) {
+        findComponentsOfType((JComponent)c, cls, result);
+      }
+    }
+  }
+
   public static JRootPane getRootPane(Component c) {
     JRootPane root = getParentOfType(JRootPane.class, c);
     if (root != null) return root;

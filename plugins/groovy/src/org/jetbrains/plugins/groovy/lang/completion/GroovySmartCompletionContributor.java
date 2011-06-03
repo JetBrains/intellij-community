@@ -96,7 +96,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final PsiElement reference = position.getParent();
         if (reference == null) return;
         if (reference instanceof GrReferenceElement) {
-          ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
+          ((GrReferenceElement)reference).processVariants(result.getPrefixMatcher(), new Consumer<Object>() {
             public void consume(Object variant) {
               PsiType type = null;
 

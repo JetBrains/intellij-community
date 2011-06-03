@@ -40,6 +40,7 @@ public class AndroidDrawableDomUtil {
     SPECIAL_STYLEABLE_NAMES.put("inset", "InsetDrawable");
     SPECIAL_STYLEABLE_NAMES.put("clip", "ClipDrawable");
     SPECIAL_STYLEABLE_NAMES.put("scale", "ScaleDrawable");
+    SPECIAL_STYLEABLE_NAMES.put("animation-list", "AnimationDrawable");
 
     SPECIAL_STYLEABLE_NAMES.put("shape", "GradientDrawable");
     SPECIAL_STYLEABLE_NAMES.put("corners", "DrawableCorners");

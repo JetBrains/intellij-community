@@ -539,7 +539,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     FindSettings settings = FindSettings.getInstance();
     String[] recents = textField == mySearchField ?  settings.getRecentFindStrings() : settings.getRecentReplaceStrings();
     Utils.showCompletionPopup(byClickingToolbarButton ? myToolbarComponent : null, new JBList(ArrayUtil.reverseArray(recents)),
-                              "Recent Searches",
+                              "Recent " + (textField == mySearchField ? "Searches" : "Replaces"),
                               (JTextField)textField);
   }
 
@@ -625,6 +625,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   public void requestFocus() {
+    mySearchField.setSelectionStart(0);
+    mySearchField.setSelectionEnd(mySearchField.getText().length());
     requestFocus(mySearchField);
   }
 

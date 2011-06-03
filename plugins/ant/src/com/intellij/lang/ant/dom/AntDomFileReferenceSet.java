@@ -91,11 +91,7 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
     if (super.isAbsolutePathReference()) {
       return true;
     }
-    final String pathString = getPathString();
-    if (SystemInfo.isWindows && pathString.length() == 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':') {
-      return true;
-    }
-    return FileUtil.isAbsolute(pathString);
+    return FileUtil.isAbsoluteFilePath(getPathString());
   }
 
   @NotNull

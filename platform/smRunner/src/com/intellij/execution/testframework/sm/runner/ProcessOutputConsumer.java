@@ -24,5 +24,6 @@ import com.intellij.openapi.util.Key;
 public interface ProcessOutputConsumer extends Disposable {
   void setProcessor(GeneralTestEventsProcessor processor);
   void process(String text, Key outputType);
+  void flushBufferBeforeTerminating();
 }
  

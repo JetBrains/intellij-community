@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -168,6 +169,12 @@ public class RedmineRepository extends BaseRepositoryImpl {
 
   private static Date parseDate(Element element, String name) throws ParseException {
     final String date = element.getChildText(name);
+    if (date.matches(".*\\+\\d\\d:\\d\\d")) {
+      final SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd'T'HH:mm:ss", Locale.US);
+      final int timeZoneIndex = date.length() - 6;
+      format.setTimeZone(TimeZone.getTimeZone("GMT" + date.substring(timeZoneIndex)));
+      return format.parse(date.substring(0, timeZoneIndex));
+    }
     return (new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US)).parse(date);
   }
 

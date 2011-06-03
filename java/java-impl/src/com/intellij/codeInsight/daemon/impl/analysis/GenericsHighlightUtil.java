@@ -1240,6 +1240,9 @@ public class GenericsHighlightUtil {
       if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) return null;
       PsiClass containingClass = ((PsiMember)element).getContainingClass();
       if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor())) {
+        if (parent instanceof PsiCallExpression && PsiUtil.isLanguageLevel7OrHigher(parent)) {
+          return null;
+        }
         final String message = element instanceof PsiClass
                                ? JavaErrorMessages.message("generics.type.arguments.on.raw.type")
                                : JavaErrorMessages.message("generics.type.arguments.on.raw.method");

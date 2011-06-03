@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,11 +117,19 @@ public class PsiScopesUtil {
         substitutor = substitutor.put(arrayTypeParameters[0], ((PsiArrayType)type).getComponentType());
       }
       arrayClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), arrayClass, place);
-    } else if (type instanceof PsiIntersectionType) {
+    }
+    else if (type instanceof PsiIntersectionType) {
       for (PsiType psiType : ((PsiIntersectionType)type).getConjuncts()) {
         processTypeDeclarations(psiType, place, processor);
       }
-    } else {
+    }
+    else if (type instanceof PsiDisjunctionType) {
+      final PsiType lub = ((PsiDisjunctionType)type).getLeastUpperBound();
+      if (lub != null) {
+        processTypeDeclarations(lub, place, processor);
+      }
+    }
+    else {
       final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
       final PsiClass clazz = (PsiClass)result.getElement();
       if (clazz != null) {

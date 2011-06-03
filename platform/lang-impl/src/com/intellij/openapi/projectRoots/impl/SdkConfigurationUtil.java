@@ -169,7 +169,7 @@ public class SdkConfigurationUtil {
     return sdk;
   }
 
-  public static void setDirectoryProjectSdk(final Project project, final Sdk sdk) {
+  public static void setDirectoryProjectSdk(@NotNull final Project project, final Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ProjectRootManager.getInstance(project).setProjectSdk(sdk);
@@ -279,28 +279,34 @@ public class SdkConfigurationUtil {
   }
 
   public static void suggestAndAddSdk(final Project project,
-                                       SdkType sdkType,
                                        final Sdk[] existingSdks,
                                        JComponent popupOwner,
-                                       final Consumer<Sdk> callback) {
-    Collection<String> sdkHomes = sdkType.suggestHomePaths();
-    List<String> suggestedSdkHomes = filterExistingPaths(sdkType, sdkHomes, existingSdks);
+                                       final Consumer<Sdk> callback,
+                                       final SdkType... sdkTypes) {
+    assert sdkTypes.length > 0;
+    final Map<String, SdkType> suggestedSdkHomes = new LinkedHashMap<String, SdkType>();
+    for (SdkType sdkType : sdkTypes) {
+      final Collection<String> sdkHomes = sdkType.suggestHomePaths();
+      for (String sdkHome : filterExistingPaths(sdkType, sdkHomes, existingSdks)) {
+        suggestedSdkHomes.put(sdkHome, sdkType);
+      }
+    }
     if (suggestedSdkHomes.size() > 0) {
-      suggestedSdkHomes.add(null);
-      showSuggestedHomesPopup(project, sdkType, existingSdks, suggestedSdkHomes, popupOwner, callback);
+      suggestedSdkHomes.put(null, sdkTypes[0]);
+      showSuggestedHomesPopup(project, existingSdks, suggestedSdkHomes, popupOwner, callback);
     }
     else {
-      createSdk(project, existingSdks, callback, sdkType);
+      createSdk(project, existingSdks, callback, suggestedSdkHomes.values().iterator().next());
     }
   }
 
   private static void showSuggestedHomesPopup(final Project project,
-                                              final SdkType sdkType,
                                               final Sdk[] existingSdks,
-                                              List<String> suggestedSdkHomes,
-                                              JComponent popupOwner,
+                                              final Map<String, SdkType> suggestedSdkHomes,
+                                              final JComponent popupOwner,
                                               final Consumer<Sdk> callback) {
-    ListPopupStep sdkHomesStep = new BaseListPopupStep<String>("Select Interpreter Path", suggestedSdkHomes) {
+    final List<String> list = new ArrayList<String>(suggestedSdkHomes.keySet());
+    ListPopupStep sdkHomesStep = new BaseListPopupStep<String>("Select Interpreter Path", list) {
       @NotNull
       @Override
       public String getTextFor(String value) {
@@ -308,7 +314,8 @@ public class SdkConfigurationUtil {
       }
 
       @Override
-      public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+      public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
+        final SdkType sdkType = suggestedSdkHomes.get(selectedValue);
         if (selectedValue == null) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override

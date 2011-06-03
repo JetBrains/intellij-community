@@ -132,7 +132,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   }
 
   private void recalculateSoftWraps(IncrementalCacheUpdateEvent event) {
-    event.updateNewOffsetsIfNecessary(myEditor.getDocument());
+    event.updateNewOffsetsIfNecessary(myEditor.getDocument(), myEditor.getFoldingModel());
     
     //CachingSoftWrapDataMapper.log("xxxxxxxxxxxxxx Processing soft wraps for " + event + ". Document length: " + myEditor.getDocument().getTextLength() 
     //                              + ", document: " + System.identityHashCode(myEditor.getDocument()));
@@ -356,7 +356,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
       char c = myContext.text.charAt(offset);
       if (c == '\n') {
-        notifyListenersOnVisualLineEnd();
         myContext.onNewLine();
         continue;
       }
@@ -1021,6 +1020,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
      * Asks current context to update its state assuming that it begins to point to the line next to its current position.
      */
     public void onNewLine() {
+      notifyListenersOnVisualLineEnd();
       currentPosition.onNewLine();
       softWrapStartOffset = currentPosition.offset;
       lineStartPosition.from(currentPosition);

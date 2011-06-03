@@ -79,7 +79,7 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     if (i > 0 && i <= cache.size()) {
       CacheEntry entry = cache.get(i - 1);
       EditorPosition position = entry.buildEndLinePosition();
-      position.onNewLine();
+      position.onNewLine(true);
       setInitialPosition(position);
     }
     else {

@@ -212,6 +212,14 @@ public class PsiTreeUtil {
     return findChildOfAnyType(element, strict, aClass);
   }
 
+  /**
+   * Recursive (depth first) strict({@code element} isn't included) search for first element of any of given {@code classes}.
+   *
+   * @param element a PSI element to start search from.
+   * @param classes element types to search for.
+   * @param <T>     type to cast found element to.
+   * @return first found element, or null if nothing found.
+   */
   @Nullable
   public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, @NotNull final Class<T>... classes) {
     return findChildOfAnyType(element, true, classes);
@@ -302,10 +310,10 @@ public class PsiTreeUtil {
     return result;
   }
 
-  private static boolean instanceOf(final PsiElement child, final Class<?>... classes) {
+  public static boolean instanceOf(final Object object, final Class<?>... classes) {
     if (classes != null) {
-      for (final Class<?> each : classes) {
-        if (each.isInstance(child)) return true;
+      for (final Class<?> c : classes) {
+        if (c.isInstance(object)) return true;
       }
     }
     return false;

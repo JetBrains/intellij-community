@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -343,30 +342,17 @@ public class HighlightUtil {
     PsiType castType = castTypeElement.getType();
 
     PsiExpression operand = expression.getOperand();
-    if (operand == null || isPolymorphicCall(operand)) return null;
+    if (operand == null) return null;
     PsiType operandType = operand.getType();
 
-    if (operandType != null && !TypeConversionUtil.areTypesConvertible(operandType, castType)) {
+    if (operandType != null &&
+        !TypeConversionUtil.areTypesConvertible(operandType, castType) &&
+        !RedundantCastUtil.isInPolymorphicCall(expression)) {
       String message = JavaErrorMessages.message("inconvertible.type.cast", formatType(operandType), formatType(castType));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
     }
 
     return null;
-  }
-
-  /**
-   * <a href="http://download.java.net/jdk7/docs/api/java/lang/invoke/MethodHandle.html#sigpoly">Signature polymorphism</a>
-   */
-  private static boolean isPolymorphicCall(final PsiExpression expression) {
-    if (PsiUtil.isLanguageLevel7OrHigher(expression) &&
-        expression instanceof PsiMethodCallExpression) {
-      final PsiElement method = ((PsiMethodCallExpression)expression).getMethodExpression().resolve();
-      if (method instanceof PsiMethod &&
-          AnnotationUtil.isAnnotated((PsiMethod)method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, false, true)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Nullable
@@ -995,7 +981,8 @@ public class HighlightUtil {
 
 
   @Nullable
-  static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(final PsiParameter parameter, Collection<PsiClassType> thrownTypes) {
+  static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(final PsiParameter parameter,
+                                                                  final Collection<PsiClassType> thrownInTryStatement) {
     final PsiElement scope = parameter.getDeclarationScope();
     if (!(scope instanceof PsiCatchSection)) return null;
 
@@ -1004,7 +991,7 @@ public class HighlightUtil {
     final int idx = ArrayUtil.find(allCatchSections, catchSection);
     if (idx <= 0) return null;
 
-    thrownTypes = Sets.newHashSet(thrownTypes);
+    final Collection<PsiClassType> thrownTypes = Sets.newHashSet(thrownInTryStatement);
     thrownTypes.add(PsiType.getJavaLangError(parameter.getManager(), parameter.getResolveScope()));
     thrownTypes.add(PsiType.getJavaLangRuntimeException(parameter.getManager(), parameter.getResolveScope()));
     final Collection<HighlightInfo> result = Lists.newArrayList();
@@ -1012,8 +999,10 @@ public class HighlightUtil {
     final List<PsiTypeElement> parameterTypeElements = PsiUtil.getParameterTypeElements(parameter);
     final boolean isMultiCatch = parameterTypeElements.size() > 1;
     for (PsiTypeElement catchTypeElement : parameterTypeElements) {
-      // collect exceptions which are caught by this type
       final PsiType catchType = catchTypeElement.getType();
+      if (ExceptionUtil.isGeneralExceptionType(catchType)) continue;
+
+      // collect exceptions which are caught by this type
       Collection<PsiClassType> caught = ContainerUtil.findAll(thrownTypes, new Condition<PsiClassType>() {
         @Override public boolean value(PsiClassType type) { return catchType.isAssignableFrom(type); }
       });

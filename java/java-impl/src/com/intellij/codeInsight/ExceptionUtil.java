@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -466,11 +466,14 @@ public class ExceptionUtil {
     return errorClass != null && InheritanceUtil.isInheritorOrSelf(aClass, errorClass, true);
   }
 
-  public static boolean isUncheckedExceptionOrSuperclass(@NotNull PsiClassType type) {
-    String canonicalText = type.getCanonicalText();
-    return "java.lang.Throwable".equals(canonicalText) ||
-           "java.lang.Exception".equals(canonicalText) ||
-           isUncheckedException(type);
+  public static boolean isUncheckedExceptionOrSuperclass(@NotNull final PsiClassType type) {
+    return isGeneralExceptionType(type) || isUncheckedException(type);
+  }
+
+  public static boolean isGeneralExceptionType(@NotNull final PsiType type) {
+    final String canonicalText = type.getCanonicalText();
+    return CommonClassNames.JAVA_LANG_THROWABLE.equals(canonicalText) ||
+           CommonClassNames.JAVA_LANG_EXCEPTION.equals(canonicalText);
   }
 
   public static boolean isHandled(PsiClassType exceptionType, PsiElement throwPlace) {

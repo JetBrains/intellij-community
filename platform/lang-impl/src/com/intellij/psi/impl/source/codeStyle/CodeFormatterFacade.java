@@ -264,6 +264,10 @@ public class CodeFormatterFacade {
       });
     }
     finally {
+      if (document != null) {
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+        if (documentManager.isUncommited(document)) documentManager.commitDocument(document);
+      }
       if (editorFactory != null) {
         editorFactory.releaseEditor(editor);
       }

@@ -51,7 +51,7 @@ public class FileUtil {
   };
 
   // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
-  private static final long CHANNELS_COPYING_LIMIT = 5L * 1024L *  1024L;
+  private static final long CHANNELS_COPYING_LIMIT = 5L * 1024L * 1024L;
   private static String ourCanonicalTempPathCache = null;
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
@@ -79,7 +79,10 @@ public class FileUtil {
     return StringUtil.endsWithChar(s, endsWith) ? s : s + endsWith;
   }
 
-  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator, final boolean caseSensitive) {
+  public static String getRelativePath(@NotNull String basePath,
+                                       @NotNull String filePath,
+                                       final char separator,
+                                       final boolean caseSensitive) {
     basePath = ensureEnds(basePath, separator);
 
     String basePathToCompare = caseSensitive ? basePath : basePath.toLowerCase();
@@ -97,7 +100,7 @@ public class FileUtil {
     if (len == 0) return null;
 
     StringBuilder relativePath = new StringBuilder();
-    for (int i=len; i < basePath.length(); i++) {
+    for (int i = len; i < basePath.length(); i++) {
       if (basePath.charAt(i) == separator) {
         relativePath.append("..");
         relativePath.append(separator);
@@ -171,23 +174,25 @@ public class FileUtil {
   public static String loadFile(@NotNull File file) throws IOException {
     return loadFile(file, null);
   }
+
   @NotNull
   public static String loadFile(@NotNull File file, String encoding) throws IOException {
     return new String(loadFileText(file, encoding));
   }
+
   @NotNull
   public static char[] loadFileText(@NotNull File file) throws IOException {
     return loadFileText(file, null);
   }
 
   @NotNull
-  public static char[] loadFileText(@NotNull File file, @NonNls String encoding) throws IOException{
+  public static char[] loadFileText(@NotNull File file, @NonNls String encoding) throws IOException {
     InputStream stream = new FileInputStream(file);
     Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
-    try{
+    try {
       return loadText(reader, (int)file.length());
     }
-    finally{
+    finally {
       reader.close();
     }
   }
@@ -201,10 +206,10 @@ public class FileUtil {
       if (n <= 0) break;
       count += n;
     }
-    if (count == chars.length){
+    if (count == chars.length) {
       return chars;
     }
-    else{
+    else {
       char[] newChars = new char[count];
       System.arraycopy(chars, 0, newChars, 0, count);
       return newChars;
@@ -215,7 +220,7 @@ public class FileUtil {
   public static byte[] loadFileBytes(@NotNull File file) throws IOException {
     byte[] bytes;
     final InputStream stream = new FileInputStream(file);
-    try{
+    try {
       final long len = file.length();
       if (len < 0) {
         throw new IOException("File length reported negative, probably doesn't exist");
@@ -227,17 +232,17 @@ public class FileUtil {
 
       bytes = loadBytes(stream, (int)len);
     }
-    finally{
+    finally {
       stream.close();
     }
     return bytes;
   }
 
   @NotNull
-  public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException{
+  public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
     byte[] bytes = new byte[length];
     int count = 0;
-    while(count < length) {
+    while (count < length) {
       int n = stream.read(bytes, count, length - count);
       if (n <= 0) break;
       count += n;
@@ -246,10 +251,10 @@ public class FileUtil {
   }
 
   @NotNull
-  public static byte[] loadBytes(@NotNull InputStream stream) throws IOException{
+  public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     final byte[] bytes = BUFFER.get();
-    while(true) {
+    while (true) {
       int n = stream.read(bytes, 0, bytes.length);
       if (n <= 0) break;
       buffer.write(bytes, 0, n);
@@ -275,17 +280,17 @@ public class FileUtil {
     int count = 0;
     int total = 0;
     while (true) {
-      int n = reader.read(chars, count, chars.length-count);
+      int n = reader.read(chars, count, chars.length - count);
       if (n <= 0) break;
       count += n;
-      if (total > 1024*1024*10) throw new FileTooBigException("File too big "+reader);
+      if (total > 1024 * 1024 * 10) throw new FileTooBigException("File too big " + reader);
       total += n;
       if (count == chars.length) {
         if (buffers == null) {
           buffers = new ArrayList<char[]>();
         }
         buffers.add(chars);
-        int newLength = Math.min(1024*1024, chars.length * 2);
+        int newLength = Math.min(1024 * 1024, chars.length * 2);
         chars = new char[newLength];
         count = 0;
       }
@@ -302,23 +307,23 @@ public class FileUtil {
   }
 
   @NotNull
-  public static byte[] adaptiveLoadBytes(@NotNull InputStream stream) throws IOException{
+  public static byte[] adaptiveLoadBytes(@NotNull InputStream stream) throws IOException {
     byte[] bytes = new byte[4096];
     List<byte[]> buffers = null;
     int count = 0;
     int total = 0;
     while (true) {
-      int n = stream.read(bytes, count, bytes.length-count);
+      int n = stream.read(bytes, count, bytes.length - count);
       if (n <= 0) break;
       count += n;
-      if (total > 1024*1024*10) throw new FileTooBigException("File too big "+stream);
+      if (total > 1024 * 1024 * 10) throw new FileTooBigException("File too big " + stream);
       total += n;
       if (count == bytes.length) {
         if (buffers == null) {
           buffers = new ArrayList<byte[]>();
         }
         buffers.add(bytes);
-        int newLength = Math.min(1024*1024, bytes.length * 2);
+        int newLength = Math.min(1024 * 1024, bytes.length * 2);
         bytes = new byte[newLength];
         count = 0;
       }
@@ -335,7 +340,7 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempDirectory(@NotNull @NonNls String prefix, @NonNls String suffix) throws IOException{
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @NonNls String suffix) throws IOException {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.mkdir();
@@ -343,7 +348,7 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @NonNls String suffix) throws IOException{
+  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @NonNls String suffix) throws IOException {
     File file = doCreateTempFile(prefix, suffix, dir);
     file.delete();
     file.mkdir();
@@ -351,7 +356,16 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @NonNls String suffix, final boolean create) throws IOException{
+  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @NonNls String suffix, final boolean create)
+    throws IOException {
+    return createTempFile(dir, prefix, suffix, create, true);
+  }
+
+  public static File createTempFile(@NonNls final File dir,
+                                    @NotNull @NonNls String prefix,
+                                    @NonNls String suffix,
+                                    final boolean create,
+                                    boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix, dir);
     file.delete();
     if (create) {
@@ -361,7 +375,12 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull @NonNls String prefix, @NonNls String suffix) throws IOException{
+  public static File createTempFile(@NotNull @NonNls String prefix, @NonNls String suffix) throws IOException {
+    return createTempFile(prefix, suffix, false); //false until TeamCity fixes its plugin
+  }
+
+  @NotNull
+  public static File createTempFile(@NotNull @NonNls String prefix, @NonNls String suffix, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.createNewFile();
@@ -382,14 +401,14 @@ public class FileUtil {
     }
 
     int exceptionsCount = 0;
-    while(true){
-      try{
+    while (true) {
+      try {
         //noinspection SSBasedInspection
         final File temp = File.createTempFile(prefix, suffix, dir);
         final File canonical = temp.getCanonicalFile();
         return SystemInfo.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
       }
-      catch(IOException e){ // Win32 createFileExclusively access denied
+      catch (IOException e) { // Win32 createFileExclusively access denied
         if (++exceptionsCount >= 100) {
           throw e;
         }
@@ -508,7 +527,7 @@ public class FileUtil {
     }
   }
 
-  public static boolean delete(@NotNull File file){
+  public static boolean delete(@NotNull File file) {
     File[] files = file.listFiles();
     if (files != null) {
       for (File file1 : files) {
@@ -516,7 +535,7 @@ public class FileUtil {
       }
     }
 
-    for (int i = 0; i < 10; i++){
+    for (int i = 0; i < 10; i++) {
       if (file.delete() || !file.exists()) return true;
       try {
         Thread.sleep(10);
@@ -650,8 +669,8 @@ public class FileUtil {
       return;
     }
     File[] files = fromDir.listFiles();
-    if(files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
-    if(!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
+    if (files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
+    if (!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
     for (File file : files) {
       if (filter != null && !filter.accept(file)) {
         continue;
@@ -683,7 +702,9 @@ public class FileUtil {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
   }
 
-  public static File findSequentNonexistentFile(@NotNull File aParentFolder, @NotNull @NonNls final String aFilePrefix, @NotNull String aExtension) {
+  public static File findSequentNonexistentFile(@NotNull File aParentFolder,
+                                                @NotNull @NonNls final String aFilePrefix,
+                                                @NotNull String aExtension) {
     int postfix = 0;
     String ext = 0 == aExtension.length() ? "" : "." + aExtension;
 
@@ -748,7 +769,7 @@ public class FileUtil {
     char last2 = start.charAt(length2 - 1);
     char next1;
     if (last2 == '/' || last2 == File.separatorChar) {
-      next1 = path.charAt(length2 -1);
+      next1 = path.charAt(length2 - 1);
     }
     else {
       next1 = path.charAt(length2);
@@ -757,15 +778,15 @@ public class FileUtil {
   }
 
   public static boolean pathsEqual(@NotNull String path1, @NotNull String path2) {
-    return SystemInfo.isFileSystemCaseSensitive? path1.equals(path2) : path1.equalsIgnoreCase(path2);
+    return SystemInfo.isFileSystemCaseSensitive ? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 
   public static int comparePaths(@NotNull String path1, @NotNull String path2) {
-    return SystemInfo.isFileSystemCaseSensitive? path1.compareTo(path2) : path1.compareToIgnoreCase(path2);
+    return SystemInfo.isFileSystemCaseSensitive ? path1.compareTo(path2) : path1.compareToIgnoreCase(path2);
   }
 
   public static int pathHashCode(@NotNull String path) {
-    return SystemInfo.isFileSystemCaseSensitive? path.hashCode() : path.toLowerCase().hashCode();
+    return SystemInfo.isFileSystemCaseSensitive ? path.hashCode() : path.toLowerCase().hashCode();
   }
 
   @NotNull
@@ -788,7 +809,10 @@ public class FileUtil {
     collectMatchedFiles(root, root, pattern, outFiles);
   }
 
-  private static void collectMatchedFiles(@NotNull File absoluteRoot, @NotNull File root, @NotNull Pattern pattern, @NotNull List<File> files) {
+  private static void collectMatchedFiles(@NotNull File absoluteRoot,
+                                          @NotNull File root,
+                                          @NotNull Pattern pattern,
+                                          @NotNull List<File> files) {
     final File[] dirs = root.listFiles();
     if (dirs == null) return;
     for (File dir : dirs) {
@@ -813,9 +837,9 @@ public class FileUtil {
   /**
    * @param antPattern ant-style path pattern
    * @return java regexp pattern.
-   * Note that no matter whether forward or backward slashes were used in the antPattern
-   * the returned regexp pattern will use forward slashes ('/') as file separators.
-   * Paths containing windows-style backslashes must be converted before matching against the resulting regexp
+   *         Note that no matter whether forward or backward slashes were used in the antPattern
+   *         the returned regexp pattern will use forward slashes ('/') as file separators.
+   *         Paths containing windows-style backslashes must be converted before matching against the resulting regexp
    * @see com.intellij.openapi.util.io.FileUtil#toSystemIndependentName
    */
   @RegExp
@@ -844,11 +868,21 @@ public class FileUtil {
         continue;
       }
 
-      if (asterisksFound){
+      if (asterisksFound) {
         builder.append("[^/]*?");
       }
 
-      if (ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == '^' || ch == '$' || ch == '.' || ch == '{' || ch == '}' || ch == '+' || ch == '|') {
+      if (ch == '(' ||
+          ch == ')' ||
+          ch == '[' ||
+          ch == ']' ||
+          ch == '^' ||
+          ch == '$' ||
+          ch == '.' ||
+          ch == '{' ||
+          ch == '}' ||
+          ch == '+' ||
+          ch == '|') {
         // quote regexp-specific symbols
         builder.append('\\').append(ch);
         continue;
@@ -865,7 +899,7 @@ public class FileUtil {
     }
 
     // handle ant shorthand: mypackage/test/ is interpreted as if it were mypackage/test/**
-    final boolean isTrailingSlash =  builder.length() > 0 && builder.charAt(builder.length() - 1) == '/';
+    final boolean isTrailingSlash = builder.length() > 0 && builder.charAt(builder.length() - 1) == '/';
     if (asteriskCount == 0 && isTrailingSlash || recursive && asteriskCount == 2) {
       if (isTrailingSlash) {
         builder.setLength(builder.length() - 1);
@@ -929,14 +963,14 @@ public class FileUtil {
   }
 
   public static boolean isSymbolicLink(File file) {
-      return isSymbolicLink(file.getParentFile(), file.getName());
+    return isSymbolicLink(file.getParentFile(), file.getName());
   }
 
   public static boolean isSymbolicLink(File parent, String name) {
     try {
       File toTest = parent != null
-          ? new File(parent.getCanonicalPath(), name)
-          : new File(name);
+                    ? new File(parent.getCanonicalPath(), name)
+                    : new File(name);
       return !toTest.getAbsolutePath().equals(toTest.getCanonicalPath());
     }
     catch (IOException e) {
@@ -952,7 +986,7 @@ public class FileUtil {
   /**
    * Set executable attibute, it makes sense only on non-windows platforms.
    *
-   * @param path the path to use
+   * @param path           the path to use
    * @param executableFlag new value of executable attribute
    * @throws IOException if there is a problem with setting the flag
    */
@@ -980,7 +1014,8 @@ public class FileUtil {
     writeToFile(file, text, 0, text.length, append);
   }
 
-  private static void writeToFile(@NotNull File file, @NotNull byte[] text, final int off, final int len, boolean append) throws IOException {
+  private static void writeToFile(@NotNull File file, @NotNull byte[] text, final int off, final int len, boolean append)
+    throws IOException {
     createParentDirs(file);
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(file, append));
     try {
@@ -1025,7 +1060,8 @@ public class FileUtil {
     for (File file : dir.listFiles()) {
       if (file.isDirectory()) {
         found.addAll(findFilesByMask(pattern, file));
-      } else {
+      }
+      else {
         if (pattern.matcher(file.getName()).matches()) {
           found.add(file);
         }
@@ -1079,5 +1115,19 @@ public class FileUtil {
     }
 
     return null;
+  }
+
+  /**
+   * Treats C: as absolute file path.
+   */
+  public static boolean isAbsoluteFilePath(String path) {
+    return isWindowsAbsolutePath(path) || isAbsolute(path);
+  }
+
+  public static boolean isWindowsAbsolutePath(String pathString) {
+    if (SystemInfo.isWindows && pathString.length() >= 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':') {
+      return true;
+    }
+    return false;
   }
 }

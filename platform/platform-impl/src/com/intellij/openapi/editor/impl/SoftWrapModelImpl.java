@@ -172,9 +172,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myApplianceManager.reset();
       myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
       settings.setAdditionalColumnsCount(0);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
     else if (!myUseSoftWraps && softWrapsUsedBefore) {
       settings.setAdditionalColumnsCount(myAdditionalColumnsCount);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
   }
 

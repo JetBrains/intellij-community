@@ -18,7 +18,6 @@ package com.intellij.openapi.progress;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,16 +61,6 @@ public abstract class ProgressManager {
   }
 
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
-
-  @Deprecated
-  public abstract void registerFunComponentProvider(@NotNull ProgressFunComponentProvider provider);
-  @Deprecated
-  public abstract void removeFunComponentProvider(@NotNull ProgressFunComponentProvider provider);
-
-  /**
-   * @see ProgressFunComponentProvider
-   */
-  public abstract JComponent getProvidedFunComponent(Project project, @NotNull @NonNls String processId);
 
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
   public abstract NonCancelableSection startNonCancelableSection(); 

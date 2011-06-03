@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
       file = ((VirtualFileWindow)file).getDelegate();
     }
     else {
-      textRange = new TextRange(startOffset, endOffset);
+      textRange = new ProperTextRange(startOffset, endOffset);
     }
     openEditor(file, endOffset);
     final Editor editor = openEditor(file, textRange.getStartOffset());

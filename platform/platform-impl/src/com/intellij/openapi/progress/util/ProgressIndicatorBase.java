@@ -54,7 +54,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   private volatile int myNonCancelableCount;
 
   private ProgressIndicator myModalityProgress;
-  private ModalityState myModalityState = ModalityState.NON_MODAL;
+  private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
   private volatile boolean myModalityEntered;
 
   private volatile CopyOnWriteArrayList<ProgressIndicatorEx> myStateDelegates;

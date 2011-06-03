@@ -26,9 +26,11 @@ import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
  * Date: 08-Aug-2008
  */
 public class RootTypeConversionRule extends TypeConversionRule {
-
-  public TypeConversionDescriptorBase findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
-                                                 final TypeMigrationLabeler labeler) {
+  public TypeConversionDescriptorBase findConversion(final PsiType from,
+                                                     final PsiType to,
+                                                     final PsiMember member,
+                                                     final PsiExpression context,
+                                                     final TypeMigrationLabeler labeler) {
     if (to instanceof PsiClassType && from instanceof PsiClassType) {
       final PsiClass targetClass = ((PsiClassType)to).resolve();
       if (targetClass != null && member instanceof PsiMethod && member.isPhysical()) {
@@ -70,7 +72,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
 
             assert originalParams.length == migrationParams.length;
             final PsiSubstitutor methodTypeParamsSubstitutor =
-              labeler.getTypeEvaluator().createMethodSubstitution(originalParams, actualParams, method, (PsiReferenceExpression)context, aSubst != null ? aSubst : PsiSubstitutor.EMPTY, true);
+              labeler.getTypeEvaluator().createMethodSubstitution(originalParams, actualParams, method, context, aSubst != null ? aSubst : PsiSubstitutor.EMPTY, true);
             for (int i = 0; i < originalParams.length; i++) {
               final PsiType originalType = resolveResult.getSubstitutor().substitute(originalParams[i].getType());
 

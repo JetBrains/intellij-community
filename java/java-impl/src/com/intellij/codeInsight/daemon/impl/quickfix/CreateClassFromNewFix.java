@@ -22,6 +22,8 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -54,11 +56,12 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
+        new WriteCommandAction(newExpression.getProject()){
+          @Override
+          protected void run(Result result) throws Throwable {
             setupClassFromNewExpression(psiClass, newExpression);
           }
-        });
+        }.execute();
       }
     });
   }

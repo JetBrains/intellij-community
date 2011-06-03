@@ -239,6 +239,11 @@ class CacheUpdateRunner {
           myQueue.pushback(fileContent);
           return;
         }
+        finally {
+          if (fileContent != null) {
+            myQueue.release(fileContent);
+          }
+        }
       }
     }
   }

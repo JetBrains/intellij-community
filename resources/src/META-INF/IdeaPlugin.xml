@@ -32,6 +32,9 @@
     <extensionPoint name="junitPatcher"
                     interface="com.intellij.execution.JUnitPatcher"/>
 
+    <extensionPoint name="junitRecognizer"
+                    interface="com.intellij.execution.JUnitRecognizer"/>
+
     <extensionPoint name="i18nInspectionTool"
                     interface="com.intellij.codeInspection.FileCheckingInspection"/>
     <extensionPoint name="invalidPropertyKeyInspectionTool"

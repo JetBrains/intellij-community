@@ -20,6 +20,10 @@ import java.util.regex.PatternSyntaxException;
 
 public class SearchResults {
 
+  public int getStamp() {
+    return myStamp;
+  }
+
   public enum Direction {UP, DOWN}
 
   private int myActualFound = 0;
@@ -40,6 +44,9 @@ public class SearchResults {
   private boolean myNotFoundState = false;
 
   private boolean myDisposed = false;
+
+  private int myStamp = 0;
+
   public SearchResults(Editor editor) {
     myEditor = editor;
   }
@@ -142,10 +149,10 @@ public class SearchResults {
   }
 
   public void clear() {
-    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null, false, null);
+    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null, false, null, myStamp);
   }
 
-  public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, final TextRange next) {
+  public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, final TextRange next, final int stamp) {
     if (myDisposed) return;
     final ArrayList<LiveOccurrence> occurrences = new ArrayList<LiveOccurrence>();
     final Editor editor = getEditor();
@@ -189,7 +196,7 @@ public class SearchResults {
           final Runnable searchCompletedRunnable = new Runnable() {
             @Override
             public void run() {
-              searchCompleted(occurrences, results.size(), editor, findModel, toChangeSelection, next);
+              searchCompleted(occurrences, results.size(), editor, findModel, toChangeSelection, next, stamp);
             }
           };
 
@@ -207,8 +214,10 @@ public class SearchResults {
     myDisposed = true;
   }
 
-  private void searchCompleted(List<LiveOccurrence> occurrences, int size, Editor editor, FindModel findModel,
-                               boolean toChangeSelection, TextRange next) {
+  private void searchCompleted(List<LiveOccurrence> occurrences, int size, Editor editor, @Nullable FindModel findModel,
+                               boolean toChangeSelection, @Nullable TextRange next, int stamp) {
+    if (stamp < myStamp) return;
+    myStamp = stamp+1;
     if (editor == getEditor() && !myDisposed) {
       myOccurrences = occurrences;
       final TextRange oldCursorRange = myCursor != null ? myCursor.getPrimaryRange() : null;
@@ -229,7 +238,7 @@ public class SearchResults {
     }
   }
 
-  private void updateCursor(TextRange oldCursorRange, TextRange next) {
+  private void updateCursor(@Nullable TextRange oldCursorRange, @Nullable TextRange next) {
     boolean justReplaced = next != null;
     if (justReplaced || !tryToRepairOldCursor(oldCursorRange)) {
       if (myFindModel != null) {
@@ -334,7 +343,7 @@ public class SearchResults {
     return afterCaret;
   }
 
-  private boolean tryToRepairOldCursor(TextRange oldCursorRange) {
+  private boolean tryToRepairOldCursor(@Nullable TextRange oldCursorRange) {
     if (oldCursorRange == null) return false;
     LiveOccurrence mayBeOldCursor = null;
     for (LiveOccurrence searchResult : getOccurrences()) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
@@ -156,10 +157,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       if (result != null) return result;
     }
 
-    if (element.getTextRange() == null) {
-      return new HardElementInfo(project, element);
-    }
-
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof InjectedFileViewProvider) {
       PsiElement context = containingFile.getContext();
@@ -170,6 +167,11 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       return new FileElementInfo((PsiFile)element);
     }
 
+    TextRange elementRange = element.getTextRange();
+    if (elementRange == null) {
+      return new HardElementInfo(project, element);
+    }
+
     LOG.assertTrue(element.isPhysical());
     LOG.assertTrue(element.isValid());
 
@@ -177,9 +179,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     VirtualFile virtualFile = containingFile.getVirtualFile();
     boolean isElementInMainRoot = virtualFile == null || containingFile.getManager().findFile(virtualFile) == containingFile;
     if (isMultiRoot && !isElementInMainRoot) {
-      return new MultiRootSelfElementInfo(project, element.getTextRange(), element.getClass(), containingFile, containingFile.getLanguage());
+      return new MultiRootSelfElementInfo(project, elementRange, element.getClass(), containingFile, containingFile.getLanguage());
     }
-    return new SelfElementInfo(project, element.getTextRange(), element.getClass(), containingFile, containingFile.getLanguage());
+    return new SelfElementInfo(project, elementRange, element.getClass(), containingFile, containingFile.getLanguage());
   }
 
   public void documentAndPsiInSync() {
