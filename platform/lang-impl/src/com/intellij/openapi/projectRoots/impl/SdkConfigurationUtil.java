@@ -215,19 +215,32 @@ public class SdkConfigurationUtil {
     for (SdkType sdkType : sdkTypes) {
       final String suggestedHomePath = sdkType.suggestHomePath();
       if (suggestedHomePath != null && sdkType.isValidSdkHome(suggestedHomePath)) {
-        VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-          public VirtualFile compute() {
-            return LocalFileSystem.getInstance().refreshAndFindFileByPath(suggestedHomePath);
-          }
-        });
-        if (sdkHome != null) {
-          final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
-          if (newSdk != null) {
-            addSdk(newSdk);
-          }
-          return newSdk;
-        }
+        Sdk an_sdk = createAndAddSDK(suggestedHomePath, sdkType);
+        if (an_sdk != null) return an_sdk;
       }
+    }
+    return null;
+  }
+
+  /**
+   * Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
+   * @param path identifies the SDK
+   * @param sdkType
+   * @return newly created SDK, or null.
+   */
+  @Nullable
+  public static Sdk createAndAddSDK(final String path, SdkType sdkType) {
+    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      }
+    });
+    if (sdkHome != null) {
+      final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
+      if (newSdk != null) {
+        addSdk(newSdk);
+      }
+      return newSdk;
     }
     return null;
   }
