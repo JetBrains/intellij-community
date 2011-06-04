@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -39,14 +39,13 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     final List<Module> validModules = configuration.getValidModules();
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     myModuleComboBox.setModel(new CollectionComboBoxModel(validModules, selection));
-    myModuleComboBox.setRenderer(new ColoredListCellRenderer() {
+    myModuleComboBox.setRenderer(new HtmlListCellRenderer<Module>(myModuleComboBox.getRenderer()) {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) {
+      protected void doCustomize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
+        if (module == null) {
           append("[none]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
         else {
-          Module module = (Module)value;
           setIcon(module.getModuleType().getNodeIcon(false));
           append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }

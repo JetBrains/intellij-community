@@ -36,10 +36,20 @@ public class PyPathEvaluator {
         String argValue = evaluate(args[0], path);
         return argValue == null ? null : new File(argValue).getParent();
       }
-      else if (call.isCalleeText(PyNames.JOIN) && args.length == 2) {
-        String arg1 = evaluate(args[0], path);
-        String arg2 = evaluate(args[1], path);
-        return arg1 == null || arg2 == null ? null : new File(arg1, arg2).getPath();
+      else if (call.isCalleeText(PyNames.JOIN) && args.length >= 1) {
+        String result = null;
+        for (int i = 0; i<args.length; i++) {
+          String arg = evaluate(args[i], path);
+          if (arg == null) {
+            return null;
+          }
+          if (result == null) {
+            result = arg;
+          } else {
+            result = new File(result, arg).getPath();
+          }
+        }
+        return result;
       }
       else if (call.isCalleeText(PyNames.ABSPATH) && args.length == 1) {
         String argValue = evaluate(args[0], path);
