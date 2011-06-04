@@ -429,7 +429,10 @@ def layoutFull(String target, Set usedJars) {
       }
 
       jar("resources_en.jar") {
-        module("platform-resources-en")
+        module("platform-resources-en") {
+          exclude("tips/images/switcher.png")
+          exclude("tips/images/navigateToFilePath.gif")
+        }
         zipfileset(dir: "$home/python/resources/tips", prefix: "tips")
       }
 
