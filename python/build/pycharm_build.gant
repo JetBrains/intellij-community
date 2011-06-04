@@ -429,7 +429,7 @@ def layoutFull(String target, Set usedJars) {
       }
 
       jar("resources_en.jar") {
-        module("platform-resources-en") {
+        fileset(dir: "$home/community/platform/platform-resources-en/src") {
           exclude("tips/images/switcher.png")
           exclude("tips/images/navigateToFilePath.gif")
         }
