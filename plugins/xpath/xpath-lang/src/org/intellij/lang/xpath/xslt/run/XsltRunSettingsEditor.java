@@ -234,16 +234,17 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             myClasspathAndJDKPanel.setVisible(ALLOW_CHOOSING_SDK);
             updateOutputState();
 
-            myFileType.setRenderer(new FileTypeRenderer() {
-                public Component getListCellRendererComponent(JList jList, Object object, int i, boolean b, boolean b1) {
-                    if (object == null) {
-                        super.getListCellRendererComponent(jList, StdFileTypes.ARCHIVE, i, b, b1);
-                        setIcon(IconLoader.getIcon("/actions/cancel.png"));
-                        setText("Disabled");
-                        return this;
-                    }
-                    return super.getListCellRendererComponent(jList, object, i, b, b1);
+            myFileType.setRenderer(new FileTypeRenderer(myFileType.getRenderer()) {
+              @Override
+              public void customize(JList list, FileType type, int index, boolean selected, boolean hasFocus) {
+                if (type == null) {
+                  setIcon(IconLoader.getIcon("/actions/cancel.png"));
+                  setText("Disabled");
                 }
+                else {
+                  super.customize(list, type, index, selected, hasFocus);
+                }
+              }
             });
             myFileType.setModel(new DefaultComboBoxModel(getFileTypes(project)));
 

@@ -332,14 +332,15 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   public void start() {
-    start = System.currentTimeMillis();
+    if (start == 0) {
+      start = System.currentTimeMillis();
+    }
     tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
     rootNode.setInProgress(true);
     rootNode.setStarted(true);
   }
 
   public void finish() {
-    if (end > 0) return;
     if (start > 0) {
       end = System.currentTimeMillis();
     }

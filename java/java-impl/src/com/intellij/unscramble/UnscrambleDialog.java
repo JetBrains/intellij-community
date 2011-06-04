@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author cdr
- */
 package com.intellij.unscramble;
 
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
@@ -50,7 +47,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class UnscrambleDialog extends DialogWrapper{
+/**
+ * @author cdr
+ */
+public class UnscrambleDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
   @NonNls private static final String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
@@ -204,17 +204,13 @@ public class UnscrambleDialog extends DialogWrapper{
 
   private void populateRegisteredUnscramblerList() {
     List<UnscrambleSupport> unscrambleComponents = getRegisteredUnscramblers();
-
-    //myUnscrambleChooser.addItem(null);
     for (final UnscrambleSupport unscrambleSupport : unscrambleComponents) {
       myUnscrambleChooser.addItem(unscrambleSupport);
     }
-    myUnscrambleChooser.setRenderer(new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        UnscrambleSupport unscrambleSupport = (UnscrambleSupport)value;
+    myUnscrambleChooser.setRenderer(new ListCellRendererWrapper<UnscrambleSupport>(myUnscrambleChooser.getRenderer()) {
+      @Override
+      public void customize(JList list, UnscrambleSupport unscrambleSupport, int index, boolean selected, boolean hasFocus) {
         setText(unscrambleSupport == null ? IdeBundle.message("unscramble.no.unscrambler.item") : unscrambleSupport.getPresentableName());
-        return this;
       }
     });
   }
@@ -291,7 +287,7 @@ public class UnscrambleDialog extends DialogWrapper{
       }
       if (!first && mustHaveNewLineBefore(line)) {
         builder.append("\n");
-        if (line.startsWith("\"")) builder.append("\n"); // Additional linebreak for thread names
+        if (line.startsWith("\"")) builder.append("\n"); // Additional line break for thread names
       }
       first = false;
       int i = builder.lastIndexOf("\n");
@@ -312,12 +308,12 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   private static boolean mustHaveNewLineBefore(String line) {
-    final int nonws = CharArrayUtil.shiftForward(line, 0, " \t");
-    if (nonws < line.length()) {
-      line = line.substring(nonws);
+    final int nonWs = CharArrayUtil.shiftForward(line, 0, " \t");
+    if (nonWs < line.length()) {
+      line = line.substring(nonWs);
     }
 
-    if (line.startsWith("at")) return true;        // Start of the new stackframe entry
+    if (line.startsWith("at")) return true;        // Start of the new stack frame entry
     if (line.startsWith("Caused")) return true;    // Caused by message
     if (line.startsWith("- locked")) return true;  // "Locked a monitor" logging
     if (line.startsWith("- waiting")) return true; // "Waiting for monitor" logging

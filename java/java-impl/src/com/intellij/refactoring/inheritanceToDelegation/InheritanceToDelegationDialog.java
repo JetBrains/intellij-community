@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +48,6 @@ import java.util.Collections;
 
 public class InheritanceToDelegationDialog extends RefactoringDialog {
   private final PsiClass[] mySuperClasses;
-
   private final PsiClass myClass;
   private final HashMap<PsiClass, Collection<MemberInfo>> myBasesToMemberInfos;
 
@@ -91,6 +91,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     return myFieldNameField.getEnteredName();
   }
 
+  @Nullable
   public String getInnerClassName() {
     if (myInnerClassNameField != null) {
       return myInnerClassNameField.getEnteredName();
@@ -168,7 +169,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
     gbc.insets = new Insets(4, 8, 0, 8);
     myClassCombo = new JComboBox(mySuperClasses);
-    myClassCombo.setRenderer(new ClassCellRenderer());
+    myClassCombo.setRenderer(new ClassCellRenderer(myClassCombo.getRenderer()));
     gbc.gridwidth = 2;
     final JLabel classComboLabel = new JLabel();
     panel.add(classComboLabel, gbc);

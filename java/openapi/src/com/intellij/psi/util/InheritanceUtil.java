@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class InheritanceUtil {
+  private InheritanceUtil() { }
+
   /**
    * @deprecated Use {@link PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)} instead.
    */
@@ -33,16 +35,19 @@ public class InheritanceUtil {
   }
 
   /**
+   * @param aClass     a class to check.
+   * @param baseClass  supposed base class.
+   * @param checkDeep  true to check deeper than aClass.super (see {@linkplain PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)}).
    * @return true if aClass is the baseClass or baseClass inheritor
    */
-  public static boolean isInheritorOrSelf(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) { //TODO: remove this method!!
+  public static boolean isInheritorOrSelf(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {
     if (aClass == null || baseClass == null) return false;
     PsiManager manager = aClass.getManager();
     return manager.areElementsEquivalent(baseClass, aClass) || aClass.isInheritor(baseClass, checkDeep);
   }
 
   /**
-   * @return true if aClass is the baseClass or baseClass inheritor
+   * @deprecated use {@linkplain #isInheritorOrSelf(com.intellij.psi.PsiClass, com.intellij.psi.PsiClass, boolean)}.
    */
   public static boolean isCorrectDescendant(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {
     return isInheritorOrSelf(aClass, baseClass, checkDeep);

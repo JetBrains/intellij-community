@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
@@ -793,6 +794,21 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(new VisualPosition(1, 8), getEditor().offsetToVisualPosition(getEditor().getDocument().getTextLength() - 1));
   }
 
+  public void testNoWrapAtFirstNonWsSymbolWithCustomIndent() throws IOException {
+    String text = 
+      "   1111111111111111111111111111111";
+    init(70, text);
+    getEditor().getSettings().setCustomSoftWrapIndent(0);
+    getEditor().getSettings().setUseCustomSoftWrapIndent(true);
+    int textLength = getEditor().getDocument().getTextLength();
+    //Trigger soft wraps recalculation.
+    assertEquals(new LogicalPosition(0, textLength), myEditor.offsetToLogicalPosition(textLength));
+    
+    // Don't expect soft wraps to be registered as there is no point in wrapping at the first non-white space symbol position
+    // in all cases when soft wrap is located at the left screen edge.
+    assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
+  }
+  
   public void testXmlWithLongCdata() throws IOException {
     String text = 
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +

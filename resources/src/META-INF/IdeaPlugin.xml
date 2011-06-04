@@ -7,6 +7,8 @@
   <module value="com.intellij.modules.all"/>
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/component/*)"/>
 
+  <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/components/*)"/>
+
   <application-components>
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
@@ -651,8 +653,6 @@
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaStringContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.SmartCompletionContextType"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl$MyProjectExtension"/>
-    <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
-    <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
 
     <moduleExtension implementation="com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl"/>
 
@@ -688,7 +688,10 @@
     <configurationType implementation="com.intellij.execution.applet.AppletConfigurationType"/>
     <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
+    <configurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
+
+    <javaExpressionSurrounder implementation="com.intellij.debugger.codeinsight.JavaWithRuntimeCastSurrounder"/>
 
     <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
                         serviceImplementation="com.intellij.packageDependencies.JavaDependenciesVisitorFactory"/>
@@ -883,6 +886,13 @@
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
 
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
+
+    <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.LineBreakpointFactory"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.ExceptionBreakpointFactory"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpointFactory"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.FieldBreakpointFactory"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory"/>
   </extensions>
 
 </idea-plugin>

@@ -234,12 +234,6 @@
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
 
 
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.LineBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.ExceptionBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.FieldBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory"/>
-
     <projectService serviceInterface="com.intellij.debugger.ui.DebuggerRecents"
                     serviceImplementation="com.intellij.debugger.ui.DebuggerRecents"/>
 
@@ -282,10 +276,6 @@
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.OptimizeOptionsCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeAnalysisCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.TodoCheckinHandlerFactory"/>
-
-    <configurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
-
-    <javaExpressionSurrounder implementation="com.intellij.debugger.codeinsight.JavaWithRuntimeCastSurrounder"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
@@ -365,12 +355,11 @@
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.IdeaModifiableModelsProvider"/>
+    <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
+    <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
   </extensions>
 
   <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/root/*)"/>
-  <extensions defaultExtensionNs="com.intellij">
-    <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
-  </extensions>
 
   <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/RegExpPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>

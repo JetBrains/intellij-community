@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.Stack;
 
 class ControlFlowAnalyzer extends JavaElementVisitor {
@@ -525,13 +527,20 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(switchStmt);
     PsiElementFactory psiFactory = JavaPsiFacade.getInstance(switchStmt.getProject()).getElementFactory();
     PsiExpression caseExpression = switchStmt.getExpression();
-
+    Set<PsiEnumConstant> enumVals = null;
     if (caseExpression != null /*&& !(caseExpression instanceof PsiReferenceExpression)*/) {
       caseExpression.accept(this);
 
       generateBoxingUnboxingInstructionFor(caseExpression, PsiType.INT);
-      if (TypeConversionUtil.isEnumType(caseExpression.getType())) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(caseExpression.getType());
+      if (psiClass != null && psiClass.isEnum()) {
         addInstruction(new FieldReferenceInstruction(caseExpression, "switch statement expression"));
+        enumVals = new HashSet<PsiEnumConstant>();
+        for (PsiField f : psiClass.getFields()) {
+          if (f instanceof PsiEnumConstant) {
+            enumVals.add((PsiEnumConstant)f);
+          }
+        }
       } else {
         addInstruction(new PopInstruction());
       }
@@ -567,6 +576,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
               }
 
               addInstruction(new ConditionalGotoInstruction(offset, false, statement));
+
+              if (enumVals != null) {
+                if (caseValue instanceof PsiReferenceExpression) {
+                  enumVals.remove(((PsiReferenceExpression)caseValue).resolve());
+                }
+              }
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -575,8 +590,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
-      int offset = defaultLabel != null ? getStartOffset(defaultLabel) : getEndOffset(body);
-      addInstruction(new GotoInstruction(offset));
+      if (enumVals == null || !enumVals.isEmpty()) {
+        int offset = defaultLabel != null ? getStartOffset(defaultLabel) : getEndOffset(body);
+        addInstruction(new GotoInstruction(offset));
+      }
 
       body.accept(this);
     }

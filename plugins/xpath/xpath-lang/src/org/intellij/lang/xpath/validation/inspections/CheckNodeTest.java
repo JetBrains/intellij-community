@@ -23,7 +23,6 @@ import com.intellij.psi.xml.XmlElement;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.NamespaceContext;
-import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.psi.PrefixedName;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
 import org.jetbrains.annotations.NonNls;
@@ -141,15 +140,18 @@ public class CheckNodeTest extends XPathInspection {
             boolean b = prefixedName.getLocalName().equals(element.getLocalPart()) || "*".equals(element.getLocalPart());
 
             final String prefix = prefixedName.getPrefix();
-            if (prefix != null || allowDefaultNamespace) {
+            if (prefix != null) {
               if (!"*".equals(prefix)) {
-                final String namespaceURI = prefix != null ? namespaceContext.getNamespaceURI(prefix, context) : namespaceContext.getDefaultNamespace(context);
+                final String namespaceURI = namespaceContext.getNamespaceURI(prefix, context);
                 b = b && element.getNamespaceURI().equals(namespaceURI);
               }
+            } else if (allowDefaultNamespace) {
+              final String namespaceURI = namespaceContext.getDefaultNamespace(context);
+              b = b && (element.getNamespaceURI().equals(namespaceURI) || (element.getNamespaceURI().length() == 0 && namespaceURI == null));
             } else {
               b = b && element.getNamespaceURI().length() == 0;
             }
-            return b;
+          return b;
         }
     }
 }

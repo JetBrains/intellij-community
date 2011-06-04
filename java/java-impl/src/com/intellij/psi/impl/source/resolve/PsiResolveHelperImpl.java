@@ -406,7 +406,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     Pair<PsiType, ConstraintType> substitution = null;
     if (owner instanceof PsiMethod && parent instanceof PsiCallExpression) {
       PsiCallExpression methodCall = (PsiCallExpression)parent;
-      substitution = inferMethodTypeParameterFromParent(methodCall.getParent(), methodCall, typeParameter, substitutor, forCompletion);
+      substitution = inferMethodTypeParameterFromParent(skipParenthesizedExprUp(methodCall.getParent()), methodCall, typeParameter, substitutor, forCompletion);
     }
     return substitution;
   }
@@ -612,11 +612,15 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     Pair<PsiType, ConstraintType> constraint = null;
     PsiType expectedType = null;
 
-    if (parent instanceof PsiVariable && methodCall.equals(((PsiVariable)parent).getInitializer())) {
-      expectedType = ((PsiVariable)parent).getType();
+    if (parent instanceof PsiVariable) {
+      if (methodCall.equals(skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
+        expectedType = ((PsiVariable)parent).getType();
+      }
     }
-    else if (parent instanceof PsiAssignmentExpression && methodCall.equals(((PsiAssignmentExpression)parent).getRExpression())) {
-      expectedType = ((PsiAssignmentExpression)parent).getLExpression().getType();
+    else if (parent instanceof PsiAssignmentExpression) {
+      if (methodCall.equals(skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
+        expectedType = ((PsiAssignmentExpression)parent).getLExpression().getType();
+      }
     }
     else if (parent instanceof PsiReturnStatement) {
       PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
@@ -700,6 +704,21 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       result = new Pair<PsiType, ConstraintType>(guess, constraint.getSecond());
     }
     return result;
+  }
+
+  @Nullable
+  private static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
+    while (initializer instanceof PsiParenthesizedExpression) {
+      initializer = ((PsiParenthesizedExpression)initializer).getExpression();
+    }
+    return initializer;
+  }
+
+  private static PsiElement skipParenthesizedExprUp(PsiElement parent) {
+    while (parent instanceof PsiParenthesizedExpression) {
+      parent = parent.getParent();
+    }
+    return parent;
   }
 
   @Nullable

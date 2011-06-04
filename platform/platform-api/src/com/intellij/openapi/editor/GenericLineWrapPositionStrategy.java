@@ -48,7 +48,8 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
                                    int startOffset,
                                    int endOffset,
                                    int maxPreferredOffset,
-                                   boolean allowToBeyondMaxPreferredOffset)
+                                   boolean allowToBeyondMaxPreferredOffset,
+                                   boolean virtual)
   {
     if (endOffset <= startOffset) {
       return endOffset;

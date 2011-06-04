@@ -123,9 +123,12 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       setServlet(servlet != null && psiClass.isInheritor(servlet, true));
     }
     if (!isApplet() && !isServlet()) {
-      setTestCase(TestUtil.isTestClass(psiClass));
-      for (RefClass refBase : getBaseClasses()) {
-        ((RefClassImpl)refBase).setTestCase(true);
+      final boolean isTestClass = TestUtil.isTestClass(psiClass);
+      setTestCase(isTestClass);
+      if (isTestClass) {
+        for (RefClass refBase : getBaseClasses()) {
+          ((RefClassImpl)refBase).setTestCase(true);
+        }
       }
     }
 

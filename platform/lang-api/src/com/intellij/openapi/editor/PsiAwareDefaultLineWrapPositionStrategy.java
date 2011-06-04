@@ -23,15 +23,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * {@link LineWrapPositionStrategy} implementation that uses
  * {@link LanguageLineWrapPositionStrategy#getDefaultImplementation() default line wrap strategy} but restricts its scope
- * by {@link #PsiAwareDefaultLineWrapPositionStrategy(IElementType...) target tokens/elements}.
+ * by {@link #PsiAwareDefaultLineWrapPositionStrategy(boolean, IElementType...) target tokens/elements}.
  * 
  * @author Denis Zhdanov
  * @since 5/12/11 12:50 PM
  */
 public class PsiAwareDefaultLineWrapPositionStrategy extends PsiAwareLineWrapPositionStrategy {
 
-  public PsiAwareDefaultLineWrapPositionStrategy(@NotNull IElementType ... enabledTypes) {
-    super(enabledTypes);
+  public PsiAwareDefaultLineWrapPositionStrategy(boolean nonVirtualOnly, @NotNull IElementType ... enabledTypes) {
+    super(nonVirtualOnly, enabledTypes);
   }
 
   @Override
@@ -40,10 +40,11 @@ public class PsiAwareDefaultLineWrapPositionStrategy extends PsiAwareLineWrapPos
                                         int startOffset,
                                         int endOffset,
                                         int maxPreferredOffset,
-                                        boolean allowToBeyondMaxPreferredOffset)
+                                        boolean allowToBeyondMaxPreferredOffset,
+                                        boolean virtual)
   {
     LineWrapPositionStrategy implementation = LanguageLineWrapPositionStrategy.INSTANCE.getDefaultImplementation();
     return implementation.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset,
-                                                allowToBeyondMaxPreferredOffset);
+                                                allowToBeyondMaxPreferredOffset, virtual);
   }
 }

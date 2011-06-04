@@ -109,12 +109,12 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                              SvnUtil.checkRepositoryVersion15(myVcs, url);
           final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
 
-          final MySteppedLogGetter logGetter = new MySteppedLogGetter(myVcs, ioFile, progress, client, endRevision, result, url);
+          final MySteppedLogGetter logGetter = new MySteppedLogGetter(myVcs, ioFile, progress, client, endRevision, result, url, calculateMergeinfo);
           logGetter.go();
           final LinkedList<SVNRevision> rp = logGetter.getRevisionPoints();
 
           for (int i = 0; i < rp.size() - 1; i++) {
-            client.doAnnotate(ioFile, SVNRevision.UNDEFINED, rp.get(i + 1), rp.get(i), true, calculateMergeinfo, annotateHandler, null);
+            client.doAnnotate(ioFile, svnRevision, rp.get(i + 1), rp.get(i), true, calculateMergeinfo, annotateHandler, null);
           }
 
           if (rp.get(1).getNumber() > 0) {
@@ -189,7 +189,10 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   @Override
   public VcsAnnotation createCacheable(FileAnnotation fileAnnotation) {
     final SvnFileAnnotation svnFileAnnotation = (SvnFileAnnotation)fileAnnotation;
-    svnFileAnnotation.getAnnotationSourceSwitcher().switchTo(AnnotationSource.LOCAL);
+    final AnnotationSourceSwitcher annotationSourceSwitcher = svnFileAnnotation.getAnnotationSourceSwitcher();
+    if (annotationSourceSwitcher != null) {
+      annotationSourceSwitcher.switchTo(AnnotationSource.LOCAL);
+    }
     final int size = svnFileAnnotation.getNumLines();
 
     final VcsUsualLineAnnotationData lineAnnotationData = new VcsUsualLineAnnotationData(size);
@@ -198,24 +201,28 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       lineAnnotationData.put(i,  revisionNumber);
     }
 
-    final VcsRareLineAnnotationData merged = new VcsRareLineAnnotationData(size);
-    final Map<VcsRevisionNumber, VcsFileRevision> addMap = new HashMap<VcsRevisionNumber, VcsFileRevision>();
-    svnFileAnnotation.getAnnotationSourceSwitcher().switchTo(AnnotationSource.MERGE);
-    for (int i = 0; i < size; i++) {
-      if (svnFileAnnotation.getAnnotationSourceSwitcher().mergeSourceAvailable(i)) {
-        final VcsRevisionNumber number = svnFileAnnotation.getLineRevisionNumber(i);
-        if (number == null) continue;
-        merged.put(i, number);
-        addMap.put(number, svnFileAnnotation.getRevision(((SvnRevisionNumber) number).getRevision().getNumber()));
+    final VcsAnnotation vcsAnnotation = new VcsAnnotation(new FilePathImpl(svnFileAnnotation.getFile()), lineAnnotationData,
+                                                          svnFileAnnotation.getFirstRevisionNumber());
+
+    if (annotationSourceSwitcher != null) {
+      final VcsRareLineAnnotationData merged = new VcsRareLineAnnotationData(size);
+      final Map<VcsRevisionNumber, VcsFileRevision> addMap = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+
+      annotationSourceSwitcher.switchTo(AnnotationSource.MERGE);
+      for (int i = 0; i < size; i++) {
+        if (annotationSourceSwitcher.mergeSourceAvailable(i)) {
+          final VcsRevisionNumber number = svnFileAnnotation.getLineRevisionNumber(i);
+          if (number == null) continue;
+          merged.put(i, number);
+          addMap.put(number, svnFileAnnotation.getRevision(((SvnRevisionNumber) number).getRevision().getNumber()));
+        }
+      }
+      if (! merged.isEmpty()) {
+        vcsAnnotation.addAnnotation(MERGED_KEY, merged);
+        vcsAnnotation.addCachedOtherRevisions(addMap);
       }
     }
 
-    final VcsAnnotation vcsAnnotation = new VcsAnnotation(new FilePathImpl(svnFileAnnotation.getFile()), lineAnnotationData,
-                                                          svnFileAnnotation.getFirstRevisionNumber());
-    if (! merged.isEmpty()) {
-      vcsAnnotation.addAnnotation(MERGED_KEY, merged);
-      vcsAnnotation.addCachedOtherRevisions(addMap);
-    }
     return vcsAnnotation;
   }
 
@@ -264,18 +271,18 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     private final ProgressIndicator myProgress;
     private final SVNLogClient myClient;
     private final SVNRevision myEndRevision;
-    private final boolean mySupportsMergeinfo;
+    private final boolean myCalculateMergeinfo;
     private final SvnFileAnnotation myResult;
     private final String myUrl;
 
     private MySteppedLogGetter(final SvnVcs vcs, final File ioFile, final ProgressIndicator progress, final SVNLogClient client,
-                               final SVNRevision endRevision, final SvnFileAnnotation result, final String url) {
+                               final SVNRevision endRevision, final SvnFileAnnotation result, final String url, final boolean calculateMergeinfo) {
       myVcs = vcs;
       myIoFile = ioFile;
       myProgress = progress;
       myClient = client;
       myEndRevision = endRevision;
-      mySupportsMergeinfo = SvnUtil.checkRepositoryVersion15(myVcs, url);
+      myCalculateMergeinfo = calculateMergeinfo;
       myResult = result;
       myUrl = url;
       myRevisionPoints = new LinkedList<SVNRevision>();
@@ -293,14 +300,14 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       }
 
       if (! longHistory) {
-        doLog(mySupportsMergeinfo, null, 0);
+        doLog(myCalculateMergeinfo, null, 0);
         putDefaultBounds();
       } else {
         doLog(false, null, 0);
         final List<VcsFileRevision> fileRevisionList = myResult.getRevisions();
         if (fileRevisionList.size() < maxAnnotateRevisions) {
           putDefaultBounds();
-          if (mySupportsMergeinfo) {
+          if (myCalculateMergeinfo) {
             doLog(true, null, 0);
           }
           return;
@@ -311,8 +318,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           ((SvnRevisionNumber)fileRevisionList.get(maxAnnotateRevisions - 1).getRevisionNumber()).getRevision();
         myRevisionPoints.add(truncateTo);
 
-        myResult.clearRevisions();
-        if (mySupportsMergeinfo) {
+        // todo file history can be asked in parallel
+        if (myCalculateMergeinfo) {
           doLog(true, truncateTo, maxAnnotateRevisions);
         }
       }
@@ -322,13 +329,15 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       myRevisionPoints.add(myEndRevision);
       myRevisionPoints.add(SVNRevision.create(0));
     }
-    
+
     private void doLog(final boolean includeMerged, final SVNRevision truncateTo, final int max) throws SVNException {
       myClient.doLog(new File[]{myIoFile}, myEndRevision, truncateTo == null ? SVNRevision.create(1L) : truncateTo,
                      SVNRevision.UNDEFINED, false, false, includeMerged, max, null,
                      new ISVNLogEntryHandler() {
                        public void handleLogEntry(SVNLogEntry logEntry) {
-                         if (SVNRevision.UNDEFINED.getNumber() == logEntry.getRevision()) return;
+                         if (SVNRevision.UNDEFINED.getNumber() == logEntry.getRevision()) {
+                           return;
+                         }
 
                          if (myProgress != null) {
                            myProgress.checkCanceled();

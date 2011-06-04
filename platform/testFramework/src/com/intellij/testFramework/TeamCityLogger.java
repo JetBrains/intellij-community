@@ -53,8 +53,9 @@ public class TeamCityLogger {
   public static void warning(String message, @Nullable Throwable throwable) {
     if (isUnderTC) {
       tcLog(message, "WARNING");
+    } else {
+      LOG.warn(message, throwable);
     }
-    LOG.warn(message, throwable);
   }
 
   public static void error(String message) {
@@ -63,8 +64,9 @@ public class TeamCityLogger {
   public static void error(String message, @Nullable Throwable throwable) {
     if (isUnderTC) {
       tcLog(message, "ERROR");
+    } else {
+      LOG.error(message, throwable);
     }
-    LOG.error(message, throwable);
   }
 
   private static void tcLog(String message, String level) {

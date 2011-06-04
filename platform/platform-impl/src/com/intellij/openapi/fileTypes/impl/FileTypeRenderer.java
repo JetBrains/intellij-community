@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,36 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
-public class FileTypeRenderer extends DefaultListCellRenderer {
+public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  private final FileTypeListProvider myFileTypeListProvider;
-
-  public FileTypeRenderer(final FileTypeListProvider fileTypeListProvider) {
-    myFileTypeListProvider = fileTypeListProvider;
-  }
-
-  public FileTypeRenderer() {
-    this(new DefaultFileTypeListProvider());
-  }
-
-  public static interface FileTypeListProvider {
+  public interface FileTypeListProvider {
     Iterable<FileType> getCurrentFileTypeList();
   }
 
-  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    FileType type = (FileType)value;
+  private final FileTypeListProvider myFileTypeListProvider;
+
+  public FileTypeRenderer(final ListCellRenderer renderer) {
+    this(renderer, new DefaultFileTypeListProvider());
+  }
+
+  public FileTypeRenderer(final ListCellRenderer renderer, final FileTypeListProvider fileTypeListProvider) {
+    super(renderer);
+    myFileTypeListProvider = fileTypeListProvider;
+  }
+
+  @Override
+  public void customize(JList list, FileType type, int index, boolean selected, boolean hasFocus) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
     final Icon icon = type.getIcon();
@@ -60,7 +61,6 @@ public class FileTypeRenderer extends DefaultListCellRenderer {
     else {
       setText(type.getDescription());
     }
-    return this;
   }
 
   private boolean isDuplicated(final String description) {
@@ -79,12 +79,12 @@ public class FileTypeRenderer extends DefaultListCellRenderer {
     return false;
   }
 
-  public Dimension getPreferredSize() {
-    return new Dimension(0, 20);
-  }
+  //public Dimension getPreferredSize() {
+  //  return new Dimension(0, 20);
+  //}
 
   private static class DefaultFileTypeListProvider implements FileTypeListProvider {
-    private final java.util.List<FileType> myFileTypes;
+    private final List<FileType> myFileTypes;
 
     public DefaultFileTypeListProvider() {
       myFileTypes = Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes());
