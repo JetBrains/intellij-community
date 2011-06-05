@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * TODO: Add description
+ * Detect and report incompatibilities between __new__ and __init__ signatures.
  * @author dcheryasov
  */
 public class PyInitNewSignatureInspection extends PyInspection {
@@ -40,7 +40,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
     @Override
     public void visitPyClass(PyClass cls) {
       if (! cls.isNewStyleClass()) return; // old-style classes don't know about __new__
-      PyFunction init_or_new = cls.findInitOrNew(true);
+      PyFunction init_or_new = cls.findInitOrNew(false); // only local
       final PyBuiltinCache builtins = PyBuiltinCache.getInstance(cls);
       if (init_or_new == null || builtins.hasInBuiltins(init_or_new.getContainingClass())) return; // nothing is overridden
       String the_other_name = PyNames.NEW.equals(init_or_new.getName()) ? PyNames.INIT : PyNames.NEW;
@@ -48,8 +48,10 @@ public class PyInitNewSignatureInspection extends PyInspection {
       if (the_other == null || builtins.getClass("object") == the_other.getContainingClass()) return;
       final PyParameterList closer_list = init_or_new.getParameterList();
       final PyParameterList farther_list = the_other.getParameterList();
-      if (! farther_list.isCompatibleTo(closer_list) && ! closer_list.isCompatibleTo(farther_list) &&
-          closer_list.getContainingFile() == cls.getContainingFile()) {
+      if (! farther_list.isCompatibleTo(closer_list) &&
+          ! closer_list.isCompatibleTo(farther_list) &&
+          closer_list.getContainingFile() == cls.getContainingFile()
+      ) {
         registerProblem(closer_list, PyNames.NEW.equals(init_or_new.getName()) ?
                                      PyBundle.message("INSP.new.incompatible.to.init") :
                                      PyBundle.message("INSP.init.incompatible.to.new")

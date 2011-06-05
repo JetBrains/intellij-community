@@ -1,3 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
+  <problem>
+    <file>test.py</file>
+    <line>2</line>
+    <problem_class severity="WARNING"/>
+    <description>Signature is not compatible to __new__</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>12</line>
+    <problem_class severity="WARNING"/>
+    <description>Signature is not compatible to __init__</description>
+  </problem>
 </problems>
