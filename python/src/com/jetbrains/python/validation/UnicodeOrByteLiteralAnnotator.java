@@ -51,10 +51,14 @@ public class UnicodeOrByteLiteralAnnotator extends PyAnnotator {
   }
 
   private static boolean isRaw(CharSequence literal) {
-    char first_char = literal.charAt(0);
-    if (first_char == 'r' || first_char == 'R') return true;
-    char second_char = literal.charAt(1); // no way a literal is shorter than 2, it has at least 2 quotes
-    if (second_char == 'r' || second_char == 'R') return true;
+    if (literal.length() > 0) { // no real literal is shorter than 2, but tests provide some degenerate cases
+      char first_char = literal.charAt(0);
+      if (first_char == 'r' || first_char == 'R') return true;
+      if (literal.length() > 1) {
+        char second_char = literal.charAt(1);
+        if (second_char == 'r' || second_char == 'R') return true;
+      }
+    }
     return false;
   }
   
