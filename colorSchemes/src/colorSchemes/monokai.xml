@@ -214,6 +214,14 @@
         <option name="BACKGROUND" value="F92672" />
       </value>
     </option>
+    <option name="LOCAL_VARIABLE_ATTRIBUTES">
+      <value />
+    </option>
+    <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="fda5ff" />
+      </value>
+    </option>
     <option name="INSTANCE_FIELD_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="fda5ff" />
@@ -230,6 +238,12 @@
       <value>
         <option name="FONT_TYPE" value="2" />
       </value>
+    </option>
+    <option name="PARAMETER_ATTRIBUTES">
+      <value />
+    </option>
+    <option name="CLASS_NAME_ATTRIBUTES">
+      <value />
     </option>
     <option name="JAVA_LINE_COMMENT">
       <value>
@@ -388,14 +402,9 @@
         <option name="FOREGROUND" value="F92672" />
       </value>
     </option>
-    <option name="PY.STRING.B">
+    <option name="PY.STRING">
       <value>
-        <option name="FOREGROUND" value="e6a774" />
-      </value>
-    </option>
-    <option name="PY.STRING.U">
-      <value>
-        <option name="FOREGROUND" value="e6db74" />
+        <option name="FOREGROUND" value="E6DB74" />
       </value>
     </option>
     <option name="PY.NUMBER">
@@ -430,7 +439,7 @@
     </option>
     <option name="PY.DOC_COMMENT">
       <value>
-        <option name="FOREGROUND" value="a19b81" />
+        <option name="FOREGROUND" value="75715E" />
       </value>
     </option>
     <option name="PY.DECORATOR">
@@ -556,6 +565,172 @@
     <option name="BUILDOUT.KEY_VALUE_SEPARATOR">
       <value>
         <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="LOCALE.LINE_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="75715E" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGCTXT_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGID_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGID_PLURAL_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGSTR_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGSTR_PLURAL_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="LOCALE.STRING_LITERAL">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="REST.LINE_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="75715E" />
+      </value>
+    </option>
+    <option name="REST.SECTION.HEADER">
+      <value>
+        <option name="FOREGROUND" value="AE81FF" />
+      </value>
+    </option>
+    <option name="REST.BOLD">
+      <value>
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="REST.ITALIC">
+      <value>
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="REST.FIXED">
+      <value>
+        <option name="BACKGROUND" value="48485f" />
+      </value>
+    </option>
+    <option name="REST.INTERPRETED">
+      <value>
+        <option name="BACKGROUND" value="4d5d3d" />
+      </value>
+    </option>
+    <option name="REST.REF.NAME">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="REST.EXPLICIT">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="REST.FIELD">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="REST.INLINE">
+      <value>
+        <option name="BACKGROUND" value="273627" />
+      </value>
+    </option>
+    <option name="SQL_BAD_CHARACTER">
+      <value>
+        <option name="FOREGROUND" value="F8F8F0" />
+        <option name="BACKGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="SQL_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="75715E" />
+      </value>
+    </option>
+    <option name="SQL_IDENT_DELIMITED">
+      <value />
+    </option>
+    <option name="SQL_IDENT">
+      <value />
+    </option>
+    <option name="SQL_SEMICOLON">
+      <value />
+    </option>
+    <option name="SQL_COMMA">
+      <value />
+    </option>
+    <option name="SQL_DOT">
+      <value />
+    </option>
+    <option name="SQL_STRING">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="SQL_PARENS">
+      <value />
+    </option>
+    <option name="SQL_BRACKETS">
+      <value />
+    </option>
+    <option name="SQL_BRACES">
+      <value />
+    </option>
+    <option name="SQL_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="AE81FF" />
+      </value>
+    </option>
+    <option name="SQL_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="SQL_PROCEDURE">
+      <value>
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="SQL_PARAMETER">
+      <value />
+    </option>
+    <option name="SQL_LOCAL_ALIAS">
+      <value />
+    </option>
+    <option name="SQL_TABLE">
+      <value />
+    </option>
+    <option name="SQL_COLUMN">
+      <value>
+        <option name="FOREGROUND" value="fda5ff" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="SQL_SCHEMA">
+      <value />
+    </option>
+    <option name="SQL_DATABASE_OBJECT">
+      <value />
+    </option>
+    <option name="SQL_SYNTETIC_ENTITY">
+      <value>
+        <option name="FOREGROUND" value="fda5ff" />
       </value>
     </option>
     <option name="REGEXP.META">
