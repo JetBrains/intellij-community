@@ -56,8 +56,8 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
             if (all != null && !all.contains(the_name)) {
               continue;
             }
+            return exportedName;
           }
-          return exportedName;
         }
       }
     }

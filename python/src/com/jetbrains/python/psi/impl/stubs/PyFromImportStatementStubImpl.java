@@ -33,4 +33,9 @@ public class PyFromImportStatementStubImpl extends StubBase<PyFromImportStatemen
   public int getRelativeLevel() {
     return myRelativeLevel;
   }
+
+  @Override
+  public String toString() {
+    return "PyFromImportStarementStub(source=" + myImportSourceQName + " starImport=" + myStarImport + ")";
+  }
 }
