@@ -98,6 +98,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public void updateUI(final PyArgumentList.AnalysisResult prev_result, final ParameterInfoUIContext context) {
     if (prev_result == null) return;
     final PyArgumentList arglist = prev_result.getArgumentList();
+    if (!arglist.isValid()) return;
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
     PyArgumentList.AnalysisResult result = arglist.analyzeCall(TypeEvalContext.fast());
     PyMarkedCallee marked = result.getMarkedCallee();
