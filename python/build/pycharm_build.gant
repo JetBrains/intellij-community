@@ -127,6 +127,29 @@ def buildDebuggerEgg(paths, buildName) {
   ant.copy(file: egg, todir: paths.distAll)
 }
 
+def forceDelete(String dirPath) {
+  // if wasn't deleted - retry several times
+  attempt = 1
+  while (attempt < 21 && (new File(dirPath).exists())) {
+    if (attempt > 1) {
+      ant.echo "Deleting $dirPath ... (attempt=$attempt)"
+
+      // let's wait a bit and try again - may be help
+      // in some cases on our windows 7 agents
+      sleep(2000)
+    }
+
+    ant.delete(failonerror: false, dir: dirPath)
+
+    attempt++
+  }
+
+  if (new File(dirPath).exists()) {
+    ant.project.log ("Cannot delete directory: $dirPath" )
+    System.exit (1)
+  }
+}
+
 target('default': "Build artifacts") {
 
   def modules = [
@@ -142,7 +165,7 @@ target('default': "Build artifacts") {
   project.dryRun = dryRun
 
   if (!dryRun) {
-    ant.delete(dir: sandbox)
+    forceDelete(sandbox)
     ant.mkdir(dir: sandbox)
   }
 
@@ -429,7 +452,12 @@ def layoutFull(String target, Set usedJars) {
       }
 
       jar("resources_en.jar") {
-        module("platform-resources-en")
+        module("platform-resources-en") {
+          ant.patternset {
+            exclude(name: "tips/images/switcher.png")
+            exclude(name: "tips/images/navigateToFilePath.gif")
+          }
+        }
         zipfileset(dir: "$home/python/resources/tips", prefix: "tips")
       }
 
