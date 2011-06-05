@@ -28,6 +28,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.commands.GitHandler;
 import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +47,7 @@ class GitLogRecord {
   private final List<String> myPaths;
   private final List<List<String>> myParts;
   private final boolean mySupportsRawBody;
+  private GitHandler myHandler;
 
   GitLogRecord(Map<GitLogParser.GitLogOption, String> options, List<String> paths, List<List<String>> parts, boolean supportsRawBody) {
     myOptions = options;
@@ -93,7 +95,7 @@ class GitLogRecord {
   // access methods with some formatting or conversion
 
   Date getDate() {
-    return GitUtil.parseTimestamp(myOptions.get(COMMIT_TIME));
+    return GitUtil.parseTimestampWithNFEReport(myOptions.get(COMMIT_TIME), myHandler, myOptions.toString());
   }
 
   long getLongTimeStamp() {
@@ -234,5 +236,12 @@ class GitLogRecord {
         throw new VcsException("Unknown file status: " + Arrays.asList(parts));
     }
     return new Change(before, after, status);
+  }
+
+  /**
+   * for debugging purposes - see {@link GitUtil#parseTimestampWithNFEReport(String, git4idea.commands.GitHandler, String)}.
+   */
+  public void setUsedHandler(GitHandler handler) {
+    myHandler = handler;
   }
 }

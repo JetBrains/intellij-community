@@ -743,4 +743,9 @@ public abstract class GitHandler {
       }
     }
   }
+
+  @Override
+  public String toString() {
+    return myCommandLine.toString();
+  }
 }

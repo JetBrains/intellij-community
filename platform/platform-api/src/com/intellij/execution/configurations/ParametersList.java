@@ -349,4 +349,9 @@ public class ParametersList implements Cloneable{
       myTokenStarted = false;
     }
   }
+
+  @Override
+  public String toString() {
+    return myParameters.toString();
+  }
 }

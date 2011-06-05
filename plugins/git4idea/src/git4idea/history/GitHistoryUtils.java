@@ -93,6 +93,7 @@ public class GitHistoryUtils {
       return null;
     }
     final GitLogRecord record = parser.parseOneRecord(result);
+    record.setUsedHandler(h);
     return new GitRevisionNumber(record.getHash(), record.getDate());
   }
 
@@ -128,6 +129,7 @@ public class GitHistoryUtils {
     GitLogRecord record = parser.parseOneRecord(result);
     final List<Change> changes = record.coolChangesParser(project, root);
     boolean exists = ! FileStatus.DELETED.equals(changes.get(0).getFileStatus());
+    record.setUsedHandler(h);
     return new ItemLatestState(new GitRevisionNumber(record.getHash(), record.getDate()), exists, false);
   }
 
@@ -179,6 +181,7 @@ public class GitHistoryUtils {
     final AtomicReference<String> firstCommit = new AtomicReference<String>("HEAD");
     final AtomicReference<String> firstCommitParent = new AtomicReference<String>("HEAD");
     final AtomicReference<FilePath> currentPath = new AtomicReference<FilePath>(path);
+    final AtomicReference<GitLineHandler> logHandler = new AtomicReference<GitLineHandler>();
 
     final Consumer<GitLogRecord> resultAdapter = new Consumer<GitLogRecord>() {
       public void consume(GitLogRecord record) {
@@ -186,6 +189,7 @@ public class GitHistoryUtils {
           exceptionConsumer.consume(new VcsException("revision details are null."));
           return;
         }
+        record.setUsedHandler(logHandler.get());
         final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
         firstCommit.set(record.getHash());
         final String[] parentHashes = record.getParentsHashes();
@@ -216,11 +220,11 @@ public class GitHistoryUtils {
     };
 
     while (currentPath.get() != null && firstCommitParent.get() != null) {
-      GitLineHandler logHandler = getLogHandler(project, finalRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters);
+      logHandler.set(getLogHandler(project, finalRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters));
       final MyTokenAccumulator accumulator = new MyTokenAccumulator(logParser);
       final Semaphore semaphore = new Semaphore();
 
-      logHandler.addLineListener(new GitLineHandlerAdapter() {
+      logHandler.get().addLineListener(new GitLineHandlerAdapter() {
         @Override
         public void onLineAvailable(String line, Key outputType) {
           final GitLogRecord record = accumulator.acceptLine(line);
@@ -247,7 +251,7 @@ public class GitHistoryUtils {
         }
       });
       semaphore.down();
-      logHandler.start();
+      logHandler.get().start();
       semaphore.waitFor();
 
       currentPath.set(getFirstCommitRenamePath(project, finalRoot, firstCommit.get(), currentPath.get()));
@@ -399,6 +403,7 @@ public class GitHistoryUtils {
 
     final List<Pair<SHAHash, Date>> rc = new ArrayList<Pair<SHAHash, Date>>();
     for (GitLogRecord record : parser.parse(output)) {
+      record.setUsedHandler(h);
       rc.add(new Pair<SHAHash, Date>(new SHAHash(record.getHash()), record.getDate()));
     }
     return rc;
