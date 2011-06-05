@@ -56,3 +56,5 @@ def bar(a = "qwer"):
   pass
 
 bar(<warning descr="Argument equals to default parameter value">a = 'qwer'</warning>)
+
+getattr(bar, "__doc__", None) # None is not highlighted

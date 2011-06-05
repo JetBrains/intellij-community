@@ -7,6 +7,7 @@ import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RemoveArgumentEqualDefaultQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +48,11 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       PyArgumentList list = node.getArgumentList();
       PyCallExpression.PyMarkedCallee func = node.resolveCallee(myTypeEvalContext);
       if ((func != null && func.isImplicitlyResolved()) || (list == null)) return;
+      if (func != null) {
+        // getattr's default attribute is a special case, see PY-3440
+        final Callable callable = func.getCallable();
+        if ("getattr".equals(callable.getName()) && PyBuiltinCache.getInstance(node).hasInBuiltins(callable)) return;
+      }
       PyArgumentList.AnalysisResult result = list.analyzeCall(myTypeEvalContext);
       checkArguments(result, node.getArguments());
     }
@@ -70,10 +76,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       for (int i = arguments.length-1; i != -1; --i) {
         if (problemElements.contains(arguments[i])) {
           if (canDelete)
-            registerProblem(arguments[i], "Argument equals to default parameter value",
+            registerProblem(arguments[i], PyBundle.message("INSP.argument.equals.to.default"),
                             new RemoveArgumentEqualDefaultQuickFix(problemElements));
           else
-            registerProblem(arguments[i], "Argument equals to default parameter value");
+            registerProblem(arguments[i], PyBundle.message("INSP.argument.equals.to.default"));
 
         }
         else if (!(arguments[i] instanceof PyKeywordArgument)) canDelete = false;
