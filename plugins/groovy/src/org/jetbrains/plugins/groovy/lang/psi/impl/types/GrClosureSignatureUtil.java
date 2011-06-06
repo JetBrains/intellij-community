@@ -528,7 +528,7 @@ public class GrClosureSignatureUtil {
       if (params.length == 0) return null;
       PsiType type = params[0].getType();
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        innerArgs.add(new InnerArg(PsiUtil.createMapType(context.getResolveScope()), namedArgs));
+        innerArgs.add(new InnerArg(new GrMapType(context.getResolveScope()), namedArgs));
       }
       else {
         return null;
@@ -677,7 +677,7 @@ public class GrClosureSignatureUtil {
         for (int i = 0, size = arg.args.size(); i < size; i++) {
           args[i] = (GrNamedArgument)arg.args.get(i);
         }
-        return new GrMapType(JavaPsiFacade.getInstance(manager.getProject()), resolveScope, args);
+        return new GrMapType(first, args);
       }
       else {
         for (PsiElement elem : arg.args) {
