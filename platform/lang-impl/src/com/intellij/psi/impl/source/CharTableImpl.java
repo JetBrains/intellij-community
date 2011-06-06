@@ -17,10 +17,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
+import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
-import gnu.trove.THashSet;
 
 /**
  * @author max
@@ -28,9 +28,9 @@ import gnu.trove.THashSet;
 public class CharTableImpl implements CharTable {
   private static final int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
   private static final CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
-  private static final MyTHashSet STATIC_ENTRIES = new MyStaticTHashSet();
+  private static final OpenTHashSet<CharSequence> STATIC_ENTRIES = newStaticSet();
 
-  private final MyTHashSet entries = new MyTHashSet();
+  private final OpenTHashSet<CharSequence> entries = new OpenTHashSet<CharSequence>(10, 0.9f, HASHER);
 
   public CharSequence intern(final CharSequence text) {
     if (text.length() > INTERN_THRESHOLD) return createSequence(text);
@@ -72,115 +72,103 @@ public class CharTableImpl implements CharTable {
     }
   }
   
-  private static class MyTHashSet extends THashSet<CharSequence> {
-    private MyTHashSet() {
-      super(10, 0.9f, HASHER);
-    }
+  private static OpenTHashSet<CharSequence> newStaticSet() {
+    final OpenTHashSet<CharSequence> r = new OpenTHashSet<CharSequence>(10, 0.9f, HASHER);
+    r.add("==" );
+    r.add("!=" );
+    r.add("||" );
+    r.add("++" );
+    r.add("--" );
 
-    public int index(final CharSequence obj) {
-      return super.index(obj);
-    }
+    r.add("<" );
+    r.add("<=" );
+    r.add("<<=" );
+    r.add("<<" );
+    r.add(">" );
+    r.add("&" );
+    r.add("&&" );
 
-    public CharSequence get(int index) {
-      return (CharSequence)_set[index];
-    }
+    r.add("+=" );
+    r.add("-=" );
+    r.add("*=" );
+    r.add("/=" );
+    r.add("&=" );
+    r.add("|=" );
+    r.add("^=" );
+    r.add("%=" );
+
+    r.add("("   );
+    r.add(")"   );
+    r.add("{"   );
+    r.add("}"   );
+    r.add("["   );
+    r.add("]"   );
+    r.add(";"   );
+    r.add(","   );
+    r.add("..." );
+    r.add("."   );
+
+    r.add("=" );
+    r.add("!" );
+    r.add("~" );
+    r.add("?" );
+    r.add(":" );
+    r.add("+" );
+    r.add("-" );
+    r.add("*" );
+    r.add("/" );
+    r.add("|" );
+    r.add("^" );
+    r.add("%" );
+    r.add("@" );
+
+    r.add(" " );
+    r.add("  " );
+    r.add("   " );
+    r.add("    " );
+    r.add("     " );
+    r.add("      " );
+    r.add("       " );
+    r.add("        " );
+    r.add("         " );
+    r.add("          " );
+    r.add("           " );
+    r.add("            " );
+    r.add("             " );
+    r.add("              " );
+    r.add("               " );
+    r.add("\n" );
+    r.add("\n  " );
+    r.add("\n    " );
+    r.add("\n      " );
+    r.add("\n        " );
+    r.add("\n          " );
+    r.add("\n            " );
+    r.add("\n              " );
+    r.add("\n                " );
+
+    r.add("<");
+    r.add(">");
+    r.add("</");
+    r.add("/>");
+    r.add("\"");
+    r.add("\'");
+    r.add("<![CDATA[");
+    r.add("]]>");
+    r.add("<!--");
+    r.add("-->");
+    r.add("<!DOCTYPE");
+    r.add("SYSTEM");
+    r.add("PUBLIC");
+    r.add("<?");
+    r.add("?>");
+
+    r.add("<%");
+    r.add("%>");
+    r.add("<%=");
+    r.add("<%@");
+    r.add("${");
+    r.add("");
+    return r;
   }
-
-  private static class MyStaticTHashSet extends MyTHashSet {{
-    add("==" );
-    add("!=" );
-    add("||" );
-    add("++" );
-    add("--" );
-
-    add("<" );
-    add("<=" );
-    add("<<=" );
-    add("<<" );
-    add(">" );
-    add("&" );
-    add("&&" );
-
-    add("+=" );
-    add("-=" );
-    add("*=" );
-    add("/=" );
-    add("&=" );
-    add("|=" );
-    add("^=" );
-    add("%=" );
-
-    add("("   );
-    add(")"   );
-    add("{"   );
-    add("}"   );
-    add("["   );
-    add("]"   );
-    add(";"   );
-    add(","   );
-    add("..." );
-    add("."   );
-
-    add("=" );
-    add("!" );
-    add("~" );
-    add("?" );
-    add(":" );
-    add("+" );
-    add("-" );
-    add("*" );
-    add("/" );
-    add("|" );
-    add("^" );
-    add("%" );
-    add("@" );
-
-    add(" " );
-    add("  " );
-    add("   " );
-    add("    " );
-    add("     " );
-    add("      " );
-    add("       " );
-    add("        " );
-    add("         " );
-    add("          " );
-    add("           " );
-    add("            " );
-    add("             " );
-    add("              " );
-    add("               " );
-    add("\n" );
-    add("\n  " );
-    add("\n    " );
-    add("\n      " );
-    add("\n        " );
-    add("\n          " );
-    add("\n            " );
-    add("\n              " );
-    add("\n                " );
-
-    add("<");
-    add(">");
-    add("</");
-    add("/>");
-    add("\"");
-    add("\'");
-    add("<![CDATA[");
-    add("]]>");
-    add("<!--");
-    add("-->");
-    add("<!DOCTYPE");
-    add("SYSTEM");
-    add("PUBLIC");
-    add("<?");
-    add("?>");
-
-    add("<%");
-    add("%>");
-    add("<%=");
-    add("<%@");
-    add("${");
-    add("");
-  }}
 }
