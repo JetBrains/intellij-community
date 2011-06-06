@@ -23,6 +23,7 @@ import java.util.*;
  */
 public class CompletionVariantsProcessor extends VariantsProcessor {
   private final Map<String, LookupElement> myVariants = new HashMap<String, LookupElement>();
+  private boolean mySuppressParentheses = false;
 
   public CompletionVariantsProcessor(PsiElement context) {
     super(context);
@@ -34,9 +35,14 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     super(context, nodeFilter, nameFilter);
   }
 
+  public void suppressParentheses() {
+    mySuppressParentheses = true;
+  }
+
   protected LookupElementBuilder setupItem(LookupElementBuilder item) {
     if (!myPlainNamesOnly) {
-      if (item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null &&
+      if (!mySuppressParentheses &&
+          item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)item.getObject())) {
         item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final PyParameterList parameterList = ((PyFunction)item.getObject()).getParameterList();
