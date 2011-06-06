@@ -55,6 +55,13 @@ public class TextChangesStorageTest {
     insert("abc", 2);
     checkChanges(c("abc", 2));
   }
+  
+  @Test
+  public void singleLongInsert() {
+    String text = "this is a relatively long text";
+    insert(text, 2);
+    checkChanges(c(text, 2));
+  }
 
   @Test
   public void disconnectedInserts() {
@@ -259,7 +266,7 @@ public class TextChangesStorageTest {
     if (changes.length <= 0) {
       return;
     }
-    int length = changes[changes.length - 1].getEnd();
+    int length = changes[changes.length - 1].getEnd() + 2;
     char[] input = new char[length];
     char c = 'A';
     for (int i = 0; i < input.length; i++) {
