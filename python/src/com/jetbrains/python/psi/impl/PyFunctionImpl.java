@@ -139,7 +139,10 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (docStringType != null) {
       return docStringType;
     }
-    return getReturnStatementType(typeEvalContext);
+    if (typeEvalContext.allowReturnTypes()) {
+      return getReturnStatementType(typeEvalContext);
+    }
+    return null;
   }
 
   @Nullable
