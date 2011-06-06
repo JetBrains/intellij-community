@@ -66,7 +66,7 @@ public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBa
   private SuperMethodsSearch() {
   }
 
-  public static Query<MethodSignatureBackedByPsiMethod> search(final PsiMethod derivedMethod, final PsiClass psiClass, boolean checkBases, boolean allowStaticMethod) {
+  public static Query<MethodSignatureBackedByPsiMethod> search(final PsiMethod derivedMethod, @Nullable final PsiClass psiClass, boolean checkBases, boolean allowStaticMethod) {
     final SearchParameters parameters = new SearchParameters(derivedMethod, psiClass, checkBases, allowStaticMethod);
     return SUPER_METHODS_SEARCH_INSTANCE.createUniqueResultsQuery(parameters, MethodSignatureUtil.METHOD_BASED_HASHING_STRATEGY);
   }
