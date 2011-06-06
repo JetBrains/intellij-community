@@ -145,12 +145,13 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     myClassFilterEditor.setEnabled(myCoverageEnabledCheckbox.isSelected());
 
     myClassFilterEditor.setFilters(configuration.getCoveragePatterns());
-    myTracingRb.setEnabled(myTracingRb.isEnabled() && runner != null && runner.isCoverageByTestApplicable());
-    mySamplingRb.setSelected(configuration.isSampling() || !myTracingRb.isEnabled());
+    final boolean isCoverageByTestApplicable = runner != null && runner.isCoverageByTestApplicable();
+    myTracingRb.setEnabled(myTracingRb.isEnabled() && isCoverageByTestApplicable);
+    mySamplingRb.setSelected(configuration.isSampling() || !isCoverageByTestApplicable);
     myTracingRb.setSelected(!mySamplingRb.isSelected());
 
     myTrackPerTestCoverageCb.setSelected(configuration.isTrackPerTestCoverage());
-    myTrackPerTestCoverageCb.setEnabled(!mySamplingRb.isSelected() && canHavePerTestCoverage() && runner != null && runner.isCoverageByTestApplicable());
+    myTrackPerTestCoverageCb.setEnabled(myTracingRb.isEnabled() && myTracingRb.isSelected() && canHavePerTestCoverage());
 
     myTrackTestSourcesCb.setSelected(configuration.isTrackTestFolders());
   }
