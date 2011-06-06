@@ -32,7 +32,10 @@ class TeamcityDocTestResult(TeamcityTestResult):
 
     def getSuiteLocation(self):
       file = os.path.realpath(self.current_suite.filename)
-      return "file://" + file + ":" + str(self.current_suite.lineno)
+      location = "file://" + file
+      if self.current_suite.lineno:
+        location += ":" + str(self.current_suite.lineno)
+      return location
 
     def startTest(self, test):
         setattr(test, "startTime", datetime.datetime.now())
