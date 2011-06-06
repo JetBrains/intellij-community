@@ -234,20 +234,26 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       if (unicode && c == '\\' && i < undecoded.length()-1) {
         char c2 = undecoded.charAt(i+1);
         if (c2 == 'u' && i < undecoded.length()-5) {
-          char u = (char) Integer.parseInt(undecoded.substring(i+2, i+6), 16);
-          if (!consumer.process(off, off + 6, Character.toString(u))) {
-            return false;
+          try {
+            char u = (char) Integer.parseInt(undecoded.substring(i+2, i+6), 16);
+            if (!consumer.process(off, off + 6, Character.toString(u))) {
+              return false;
+            }
           }
+          catch (NumberFormatException ignore) { }
           //noinspection AssignmentToForLoopParameter
           i += 5;
           continue;
         }
         if (c2 == 'U' && i < undecoded.length()-9) {
           // note: Java has 16-bit chars, so this code will truncate characters which don't fit in 16 bits
-          char u = (char) Long.parseLong(undecoded.substring(i+2, i+10), 16);
-          if (!consumer.process(off, off + 10, Character.toString(u))) {
-            return false;
+          try {
+            char u = (char) Long.parseLong(undecoded.substring(i+2, i+10), 16);
+            if (!consumer.process(off, off + 10, Character.toString(u))) {
+              return false;
+            }
           }
+          catch (NumberFormatException ignore) { }
           //noinspection AssignmentToForLoopParameter
           i += 9;
           continue;

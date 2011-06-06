@@ -166,6 +166,10 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testUnicodeOrByteRaw() {
+    doTest(LanguageLevel.PYTHON25, true, true);
+  }
+
   public void testUnicodeOrByte25() {
     doTest(LanguageLevel.PYTHON25, true, true);
   }

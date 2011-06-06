@@ -202,22 +202,7 @@ public class PythonSdkType extends SdkType {
       sure(parent != null && "bin".equals(parent.getName()));
       File activate_script = new File(parent, "activate_this.py");
       sure(activate_script.exists());
-      File activate_source = null;
-      if (SystemInfo.isWindows || SystemInfo.isOS2) {
-        for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
-          File file = new File(parent, "activate"+suffix);
-          if (file.exists()) {
-            activate_source = file;
-            break;
-          }
-        }
-      }
-      else if (SystemInfo.isUnix) {
-        File file = new File(parent, "activate");
-        if (file.exists()) {
-          activate_source = file;
-        }
-      }
+      File activate_source = findExecutableFile(parent, "activate");
       sure(activate_source);
       // NOTE: maybe read activate_source and see if it handles "VIRTUAL_ENV"
       File root = parent.getParentFile();
@@ -227,6 +212,27 @@ public class PythonSdkType extends SdkType {
     }
     catch (IncorrectOperationException ignore) {
       // did not succeed
+    }
+    return null;
+  }
+
+  /**
+   * Finds a file that looks executable: an .exe or .cmd under windows, plain file under *nix.
+   * @param parent directory to look at
+   * @param name name of the executable without suffix
+   * @return File representing the executable, or null.
+   */
+  @Nullable
+  public static File findExecutableFile(File parent, String name) {
+    if (SystemInfo.isWindows || SystemInfo.isOS2) {
+      for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
+        File file = new File(parent, name+suffix);
+        if (file.exists()) return file;
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      File file = new File(parent, name);
+      if (file.exists()) return file;
     }
     return null;
   }

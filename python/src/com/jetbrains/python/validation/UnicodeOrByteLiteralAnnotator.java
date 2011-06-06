@@ -50,6 +50,18 @@ public class UnicodeOrByteLiteralAnnotator extends PyAnnotator {
     myUnicodeImported = null;
   }
 
+  private static boolean isRaw(CharSequence literal) {
+    if (literal.length() > 0) { // no real literal is shorter than 2, but tests provide some degenerate cases
+      char first_char = literal.charAt(0);
+      if (first_char == 'r' || first_char == 'R') return true;
+      if (literal.length() > 1) {
+        char second_char = literal.charAt(1);
+        if (second_char == 'r' || second_char == 'R') return true;
+      }
+    }
+    return false;
+  }
+  
   @Override
   public void visitPyStringLiteralExpression(PyStringLiteralExpression expr) {
     List<ASTNode> literal_nodes = expr.getStringNodes();
@@ -65,10 +77,11 @@ public class UnicodeOrByteLiteralAnnotator extends PyAnnotator {
         if (is_unicode) {
           getHolder().createInfoAnnotation(node, null).setTextAttributes(PyHighlighter.PY_UNICODE_STRING);
         }
+        final boolean is_raw = isRaw(text);
         // highlight escapes
         Matcher n_matcher = N_ESC_PATTERN.matcher(text);
         int pos = 0;
-        while(pos < length) {
+        while (pos < length) {
           // find a backslash
           while (pos < length && text.charAt(pos) != '\\') pos += 1;
           if (pos < length) {
@@ -76,7 +89,7 @@ public class UnicodeOrByteLiteralAnnotator extends PyAnnotator {
               // pos is where the backslash is
               char escaped_char = text.charAt(pos + 1);
               if (ALLOWED_ESCAPES.indexOf(escaped_char) >= 0) {
-                if (escaped_char == 'x') {
+                if (escaped_char == 'x' && ! is_raw) {
                   int span = 4; // 4 = len("\\xNN")
                   checkHexEscape(start, text, length, pos, span);
                 }
@@ -88,21 +101,21 @@ public class UnicodeOrByteLiteralAnnotator extends PyAnnotator {
                   int span = 10; // 10 = len("\\Unnnnnnnnn")
                   checkHexEscape(start, text, length, pos, span);
                 }
-                else if (is_unicode && escaped_char == 'N') {
+                else if (is_unicode && escaped_char == 'N' && ! is_raw) {
                   if (n_matcher.find(pos+1)) {
                     if (n_matcher.group(1).endsWith("}")) markAsValidEscape(start + pos, start + n_matcher.end(1));
                     else markAsInvalidEscape(start + pos, start + n_matcher.end(1));
                   }
                   else markAsInvalidEscape(start + pos, start + pos + 2); // 3 is len("\\N")
                 }
-                else if (escaped_char >= '0' && escaped_char <= '7') {
+                else if (escaped_char >= '0' && escaped_char <= '7' && ! is_raw) {
                   int span = 4; // 4 = len("\\ooo")
                   if (pos < length-span) {
                     markAsValidEscape(start + pos, start + firstNonOctalPos(text, pos+1, pos + span));
                   }
                 }
                 else { // plain 1-char escape, unless it's Unicode-specific in byte-mode
-                  if (is_unicode || "UuN".indexOf(escaped_char) < 0)
+                  if ((is_unicode || "UuN".indexOf(escaped_char) < 0) && ! is_raw)
                   markAsValidEscape(start + pos, start+pos+2);
                 }
               } // else: a non-interpreted sequence like \Q: not an error, just don't highlight
