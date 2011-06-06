@@ -809,33 +809,6 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
   }
   
-  public void testXmlWithLongCdata() throws IOException {
-    String text = 
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project version=\"4\">\n" +
-      "    <component name=\"LanguageInjectionConfiguration\">\n" +
-      "        <injection language=\"CSS\" injector-id=\"java\">\n" +
-      "            <display-name>Injected.subject (place)</display-name>\n" +
-      "            <place disabled=\"true\">\n" +
-      "                <![CDATA[psiParameter().ofMethod(0, psiMethod().withName(\"subject\").withParameters(\"java.lang.String\", \"java.lang.String\").definedInClass(\"place.Injected\"))]]></place>\n" +
-      "            <place>\n" +
-      "                <![CDATA[psiParameter().ofMethod(1, psiMethod().withName(\"subject\").withParameters(\"java.lang.String\", \"java.lang.String\").definedInClass(\"place.Injected\"))]]></place>\n" +
-      "    </injection>\n" +
-      "  </component>\n" +
-      "</project>";
-    
-    init(500, text, TestFileType.XML);
-    myEditor.getSelectionModel().setSelection(474, 491);
-    delete();
-    
-    TIntHashSet expected = new TIntHashSet(new int[] {286, 443, 482, 491});
-    final List<? extends SoftWrap> actual = getSoftWrapModel().getRegisteredSoftWraps();
-    assertEquals(expected.size(), actual.size());
-    for (SoftWrap softWrap : actual) {
-      assertTrue(expected.contains(softWrap.getStart()));
-    }
-  }
-  
   private void init(final int visibleWidth, @NotNull String fileText) throws IOException {
     init(visibleWidth, fileText, TestFileType.TEXT);
   }
