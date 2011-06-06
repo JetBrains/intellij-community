@@ -344,7 +344,7 @@
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />
   <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
-  <fileBasedIndex implementation="com.intellij.psi.search.PropertyFileIndex"/>
+  <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndex"/>
   <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
 
   <fileBasedIndex implementation="com.intellij.find.ngrams.TrigramIndex"/> 
