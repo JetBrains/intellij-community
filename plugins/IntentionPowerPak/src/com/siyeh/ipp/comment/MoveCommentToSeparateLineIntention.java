@@ -17,10 +17,10 @@ package com.siyeh.ipp.comment;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveCommentToSeparateLineIntention extends Intention {
@@ -36,7 +36,7 @@ public class MoveCommentToSeparateLineIntention extends Intention {
         PsiElement elementToCheck = selectedComment;
         final PsiWhiteSpace whiteSpace;
         while (true) {
-            elementToCheck = TreeUtil.getPrevLeaf(elementToCheck);
+          elementToCheck = PsiTreeUtil.prevLeaf(elementToCheck);
             if (elementToCheck == null) {
                 return;
             }
