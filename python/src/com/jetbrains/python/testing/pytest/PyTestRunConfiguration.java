@@ -90,7 +90,7 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
   public static String findPyTestRunner(final String sdkHome) {
     // HACK -- current getSdkHome logic is somehow broken, because interpreter and its home are not linked
     File bin_path = new File(sdkHome); // this is actually a binary path
-    final String PY_TEST = "py.test" + (SystemInfo.isWindows ? ".exe" : "");
+    final String PY_TEST = "py.test" + (SystemInfo.isWindows ? "-script.py" : "");
     // poke around and see if we got something like runner
     File bin_dir = bin_path.getParentFile();
     if (bin_dir == null) return null;
