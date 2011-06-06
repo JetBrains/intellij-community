@@ -9,6 +9,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +30,16 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
   public Iterable<PyElement> iterateNames() {
     if (getParent() instanceof PyFromImportStatement) {
       PyFromImportStatement import_from_stmt = (PyFromImportStatement)getParent();
-      final PsiElement source = ResolveImportUtil.resolveFromImportStatementSource(import_from_stmt);
-      if (source instanceof PyFile) {
-        return ((PyFile)source).iterateNames();
+      PyReferenceExpression from_src = import_from_stmt.getImportSource();
+      final List<PsiElement> importedFiles = ResolveImportUtil.resolveImportReference(from_src);
+      ChainIterable<PyElement> chain = new ChainIterable<PyElement>();
+      for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
+        final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
+        if (source instanceof PyFile) {
+          chain.add(((PyFile) source).iterateNames());
+        }
       }
+      return chain;
     }
     return Collections.emptyList();
   }
