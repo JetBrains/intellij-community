@@ -71,7 +71,7 @@ public class CopyReferenceAction extends AnAction {
   private static boolean isEnabled(final DataContext dataContext) {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
-    return elementToFqn(element) != null;
+    return elementToFqn(element, editor) != null;
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -80,14 +80,22 @@ public class CopyReferenceAction extends AnAction {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
 
-    if (!doCopy(element, project)) return;
+    if (!doCopy(element, project, editor)) return;
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     if (editor != null) {
-      PsiElement toHighlight = HighlightUsagesHandler.getNameIdentifier(element);
-      if (toHighlight == null) toHighlight = element;
-      highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{toHighlight}, attributes, true, null);
+      PsiElement nameIdentifier = HighlightUsagesHandler.getNameIdentifier(element);
+      if (nameIdentifier != null) {
+        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
+      } else {
+        PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+        if (reference != null) {
+          highlightManager.addOccurrenceHighlights(editor, new PsiReference[]{reference}, attributes, true, null);
+        } else {
+          highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, null);
+        }
+      }
     }
   }
 
@@ -108,7 +116,7 @@ public class CopyReferenceAction extends AnAction {
       return null;
     }
 
-    for(QualifiedNameProvider provider: Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
+    for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
       PsiElement adjustedElement = provider.adjustElementToCopy(element);
       if (adjustedElement != null) return adjustedElement;
     }
@@ -116,7 +124,11 @@ public class CopyReferenceAction extends AnAction {
   }
 
   public static boolean doCopy(final PsiElement element, final Project project) {
-    String fqn = elementToFqn(element);
+    return doCopy(element, project, null);
+  }
+
+  public static boolean doCopy(final PsiElement element, final Project project, @Nullable Editor editor) {
+    String fqn = elementToFqn(element, editor);
     if (fqn == null) return false;
 
     CopyPasteManager.getInstance().setContents(new MyTransferable(fqn));
@@ -155,7 +167,7 @@ public class CopyReferenceAction extends AnAction {
       if (flavor != null) {
         return new DataFlavor[]{flavor, DataFlavor.stringFlavor};
       }
-      return new DataFlavor[] { DataFlavor.stringFlavor };
+      return new DataFlavor[]{DataFlavor.stringFlavor};
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
@@ -167,14 +179,24 @@ public class CopyReferenceAction extends AnAction {
       if (!isDataFlavorSupported(flavor)) return null;
       return fqn;
     }
-
   }
 
   @Nullable
   public static String elementToFqn(final PsiElement element) {
-    for(QualifiedNameProvider provider: Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
-      String result = provider.getQualifiedName(element);
-      if (result != null) return result;
+    return elementToFqn(element, null);
+  }
+
+  @Nullable
+  public static String elementToFqn(final PsiElement element, @Nullable Editor editor) {
+    String result = getQualifiedNameFromProviders(element);
+    if (result != null) return result;
+
+    if (editor != null) { //IDEA-70346
+      PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      if (reference != null) {
+        result = getQualifiedNameFromProviders(reference.resolve());
+        if (result != null) return result;
+      }
     }
 
     String fqn = null;
@@ -183,6 +205,15 @@ public class CopyReferenceAction extends AnAction {
       fqn = FileUtil.toSystemIndependentName(getFileFqn(file));
     }
     return fqn;
+  }
+
+  private static String getQualifiedNameFromProviders(@Nullable PsiElement element) {
+    if (element == null) return null;
+    for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
+      String result = provider.getQualifiedName(element);
+      if (result != null) return result;
+    }
+    return null;
   }
 
   @NotNull
@@ -201,7 +232,7 @@ public class CopyReferenceAction extends AnAction {
 
     final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
     if (contentRoot != null) {
-      return "/"+FileUtil.getRelativePath(VfsUtil.virtualToIoFile(contentRoot), VfsUtil.virtualToIoFile(virtualFile));
+      return "/" + FileUtil.getRelativePath(VfsUtil.virtualToIoFile(contentRoot), VfsUtil.virtualToIoFile(virtualFile));
     }
     return virtualFile.getPath();
   }
