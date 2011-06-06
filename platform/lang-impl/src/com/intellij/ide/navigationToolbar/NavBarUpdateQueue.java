@@ -181,7 +181,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     queueRevalidate(null);
   }
 
-  private void rebuildUi() {
+  public void rebuildUi() {
     if (!myPanel.isRebuildUiNeeded()) return;
 
     myPanel.getItems().clear();
