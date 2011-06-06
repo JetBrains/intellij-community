@@ -56,10 +56,8 @@
       <action class="org.intellij.images.editor.actions.ZoomInAction"
               id="Images.Editor.ZoomIn"
               icon="/org/intellij/images/icons/ZoomIn.png"
-              text="Zoom In">
-        <keyboard-shortcut first-keystroke="control ADD" keymap="$default"/>
-        <keyboard-shortcut first-keystroke="control EQUALS" keymap="$default"/>
-      </action>
+              text="Zoom In"
+              use-shortcut-of="ExpandAll" />
       <action class="org.intellij.images.editor.actions.ZoomOutAction"
               id="Images.Editor.ZoomOut"
               icon="/org/intellij/images/icons/ZoomOut.png"
