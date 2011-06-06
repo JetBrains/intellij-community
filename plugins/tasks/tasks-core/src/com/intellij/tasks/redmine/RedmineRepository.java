@@ -202,7 +202,7 @@ public class RedmineRepository extends BaseRepositoryImpl {
              encodeUrl("values[subject][]") + "=" + encodeUrl(query);
     }
     if (max >= 0) {
-      url += "&limit=" + encodeUrl(String.valueOf(max));
+      url += "&per_page=" + encodeUrl(String.valueOf(max));
     }
     HttpMethod method = doREST(url, false);
     InputStream stream = method.getResponseBodyAsStream();
