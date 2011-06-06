@@ -29,7 +29,6 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
@@ -37,14 +36,12 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.List;
 import java.util.Map;
@@ -64,18 +61,15 @@ public class GroovyPsiManager {
                                                                        CommonClassNames.JAVA_LANG_STRING);
   private final Project myProject;
 
-  private GrTypeDefinition myArrayClass;
+  private volatile GrTypeDefinition myArrayClass;
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
   private final ConcurrentMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>> myClassCache = new ConcurrentHashMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>>();
-  private final GroovyShortNamesCache myCache;
 
-  private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { public int length }";
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
 
   public GroovyPsiManager(Project project) {
     myProject = project;
-    myCache = ContainerUtil.findInstance(project.getExtensions(PsiShortNamesCache.EP_NAME), GroovyShortNamesCache.class);
 
     ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
@@ -175,7 +169,7 @@ public class GroovyPsiManager {
   public GrTypeDefinition getArrayClass() {
     if (myArrayClass == null) {
       try {
-        myArrayClass = GroovyPsiElementFactory.getInstance(myProject).createTypeDefinition(SYNTHETIC_CLASS_TEXT);
+        myArrayClass = GroovyPsiElementFactory.getInstance(myProject).createTypeDefinition("class __ARRAY__ { public int length }");
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -196,7 +190,4 @@ public class GroovyPsiManager {
     return ourGuard.doPreventingRecursion(element, computable);
   }
 
-  public GroovyShortNamesCache getNamesCache() {
-    return myCache;
-  }
 }

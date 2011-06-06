@@ -50,7 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -241,7 +241,7 @@ public class GroovyPositionManager implements PositionManager {
 
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
     try {
-      final List<PsiClass> classes = GroovyPsiManager.getInstance(project).getNamesCache().getClassesByFQName(qName, searchScope);
+      final List<PsiClass> classes = GroovyShortNamesCache.getGroovyShortNamesCache(project).getClassesByFQName(qName, searchScope);
       PsiClass clazz = classes.size() == 1 ? classes.get(0) : null;
       if (clazz != null) return clazz.getContainingFile();
     }
