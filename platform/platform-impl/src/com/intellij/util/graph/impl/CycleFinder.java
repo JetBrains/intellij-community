@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.intellij.cyclicDependencies;
+package com.intellij.util.graph.impl;
 
 import com.intellij.util.graph.Graph;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -24,25 +25,29 @@ import java.util.*;
  * User: anna
  * Date: Feb 13, 2005
  */
-public class CyclicGraphUtil {
-  private CyclicGraphUtil() {
+public class CycleFinder<Node> {
+  private final Graph<Node> myGraph;
+
+  public CycleFinder(Graph<Node> graph) {
+    myGraph = graph;
   }
 
-  public static <Node> Set<List<Node>> getNodeCycles(final Graph<Node> graph, final Node node){
-    Set<List<Node>> result = new HashSet<List<Node>>();
+  @NotNull
+  public Set<List<Node>> getNodeCycles(final Node node){
+    final Set<List<Node>> result = new HashSet<List<Node>>();
 
 
     final Graph<Node> graphWithoutNode = new Graph<Node>() {
       public Collection<Node> getNodes() {
-        final Collection<Node> nodes = graph.getNodes();
+        final Collection<Node> nodes = myGraph.getNodes();
         nodes.remove(node);
         return nodes;
       }
 
       public Iterator<Node> getIn(final Node n) {
         final HashSet<Node> nodes = new HashSet<Node>();
-        final Iterator<Node> in = graph.getIn(n);
-        for(;in.hasNext();){
+        final Iterator<Node> in = myGraph.getIn(n);
+        while (in.hasNext()) {
           nodes.add(in.next());
         }
         nodes.remove(node);
@@ -51,8 +56,8 @@ public class CyclicGraphUtil {
 
       public Iterator<Node> getOut(final Node n) {
         final HashSet<Node> nodes = new HashSet<Node>();
-        final Iterator<Node> out = graph.getOut(n);
-        for(;out.hasNext();){
+        final Iterator<Node> out = myGraph.getOut(n);
+        while (out.hasNext()) {
           nodes.add(out.next());
         }
         nodes.remove(node);
@@ -62,13 +67,13 @@ public class CyclicGraphUtil {
     };
 
     final HashSet<Node> inNodes = new HashSet<Node>();
-    final Iterator<Node> in = graph.getIn(node);
-    for(;in.hasNext();){
+    final Iterator<Node> in = myGraph.getIn(node);
+    while (in.hasNext()) {
       inNodes.add(in.next());
     }
     final HashSet<Node> outNodes = new HashSet<Node>();
-    final Iterator<Node> out = graph.getOut(node);
-    for(;out.hasNext();){
+    final Iterator<Node> out = myGraph.getOut(node);
+    while (out.hasNext()) {
       outNodes.add(out.next());
     }
 
@@ -84,11 +89,10 @@ public class CyclicGraphUtil {
     inNodes.removeAll(retainNodes);
     outNodes.removeAll(retainNodes);
 
-    final ShortestPathUtil<Node> algorithm = new ShortestPathUtil<Node>(graphWithoutNode);
-
+    ShortestPathFinder<Node> finder = new ShortestPathFinder<Node>(graphWithoutNode);
     for (Node fromNode : outNodes) {
       for (Node toNode : inNodes) {
-        final List<Node> shortestPath = algorithm.getShortestPath(toNode, fromNode);
+        final List<Node> shortestPath = finder.findPath(fromNode, toNode);
         if (shortestPath != null) {
           ArrayList<Node> path = new ArrayList<Node>();
           path.addAll(shortestPath);
