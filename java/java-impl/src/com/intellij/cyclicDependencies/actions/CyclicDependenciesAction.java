@@ -65,7 +65,7 @@ public class CyclicDependenciesAction extends AnAction{
       if (scope == null || scope.getScopeType() != AnalysisScope.MODULES){
         ProjectModuleOrPackageDialog dlg = null;
         if (module != null) {
-          dlg = new ProjectModuleOrPackageDialog(ModuleUtil.getModuleNameInReadAction(module));
+          dlg = new ProjectModuleOrPackageDialog(ModuleUtil.getModuleNameInReadAction(module), scope);
           dlg.show();
           if (!dlg.isOK()) return;
         }
@@ -153,16 +153,19 @@ public class CyclicDependenciesAction extends AnAction{
 
   private class ProjectModuleOrPackageDialog extends DialogWrapper {
     private final String myModuleName;
+    private AnalysisScope mySelectedScope;
     private JRadioButton myProjectButton;
     private JRadioButton myModuleButton;
+    private JRadioButton mySelectedScopeButton;
 
     private JPanel myScopePanel;
     private JPanel myWholePanel;
 
 
-    public ProjectModuleOrPackageDialog(String moduleName) {
+    public ProjectModuleOrPackageDialog(String moduleName, AnalysisScope selectedScope) {
       super(true);
       myModuleName = moduleName;
+      mySelectedScope = selectedScope;
       init();
       setTitle(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.title", myTitle));
       setHorizontalStretch(1.75f);
@@ -177,6 +180,10 @@ public class CyclicDependenciesAction extends AnAction{
       if (myModuleName != null) {
         myModuleButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.module.button", myAnalysisVerb, myModuleName));
         group.add(myModuleButton);
+      }
+      mySelectedScopeButton.setVisible(mySelectedScope != null);
+      if (mySelectedScope != null) {
+        mySelectedScopeButton.setText(mySelectedScope.getShortenName());
       }
       return myWholePanel;
     }
