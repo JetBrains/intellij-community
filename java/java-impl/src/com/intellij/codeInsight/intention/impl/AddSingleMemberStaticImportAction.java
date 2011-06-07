@@ -119,8 +119,8 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
         if (refExpr.getReferenceName().equals(expression.getReferenceName())) {
           final PsiExpression qualifierExpression = expression.getQualifierExpression();
+          PsiElement referent = expression.getUserData(TEMP_REFERENT_USER_DATA);
           if (!expression.isQualified()) {
-            PsiElement referent = expression.getUserData(TEMP_REFERENT_USER_DATA);
 
             if (referent instanceof PsiMember && referent != expression.resolve()) {
               PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
@@ -138,11 +138,22 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
             if (qualifierExpression instanceof PsiReferenceExpression) {
               PsiElement aClass = ((PsiReferenceExpression)qualifierExpression).resolve();
               if (aClass == ((PsiMember)resolved).getContainingClass()) {
-                try {
-                  qualifierExpression.delete();
+                boolean foundMemberByName = false;
+                if (referent instanceof PsiMember) {
+                  final String memberName = ((PsiMember)referent).getName();
+                  final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                  if (containingClass != null) {
+                    foundMemberByName |= containingClass.findFieldByName(memberName, true) != null;
+                    foundMemberByName |= containingClass.findMethodsByName(memberName, true).length > 0;
+                  }
                 }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
+                if (!foundMemberByName) {
+                  try {
+                    qualifierExpression.delete();
+                  }
+                  catch (IncorrectOperationException e) {
+                    LOG.error(e);
+                  }
                 }
               }
             }
