@@ -229,17 +229,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   private void correctNotificationIds() {
-    boolean notEmpty = NotificationsConfiguration.getSettings("SVN_NO_JNA") != null ||
-                       NotificationsConfiguration.getSettings("SVN_NO_CRYPT32") != null ||
-                       NotificationsConfiguration.getSettings("SubversionId") != null;
+    boolean notEmpty = NotificationsConfiguration.getNotificationsConfiguration().isRegistered("SVN_NO_JNA") ||
+                       NotificationsConfiguration.getNotificationsConfiguration().isRegistered("SVN_NO_CRYPT32") ||
+                       NotificationsConfiguration.getNotificationsConfiguration().isRegistered("SubversionId");
     if (notEmpty) {
-      NotificationsConfiguration.remove(new NotificationSettings[] {new NotificationSettings("SVN_NO_JNA", null),
-        new NotificationSettings("SVN_NO_CRYPT32", null), new NotificationSettings("SubversionId", null)});
-      // if group ids is being changed, set highest level first
-      final NotificationSettings settings = NotificationsConfiguration.getSettings(getDisplayName());
-      if (settings != null) {
-        settings.setDisplayType(NotificationDisplayType.STICKY_BALLOON);
-      }
+      NotificationsConfiguration.remove("SVN_NO_JNA", "SVN_NO_CRYPT32", "SubversionId");
+      NotificationsConfiguration.getNotificationsConfiguration().registerDefaultSettings(new NotificationSettings(getDisplayName(), NotificationDisplayType.BALLOON, true));
     }
   }
 

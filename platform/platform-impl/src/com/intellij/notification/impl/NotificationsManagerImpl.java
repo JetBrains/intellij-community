@@ -126,11 +126,13 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   public void doNotify(@NotNull final Notification notification, @Nullable NotificationDisplayType displayType, @Nullable final Project project) {
     final NotificationsConfiguration configuration = NotificationsConfiguration.getNotificationsConfiguration();
     if (!configuration.isRegistered(notification.getGroupId())) {
-      configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.STICKY_BALLOON : displayType);
+      configuration.registerDefaultSettings(new NotificationSettings(notification.getGroupId(),
+                                                                     displayType == null ? NotificationDisplayType.STICKY_BALLOON : displayType,
+                                                                     displayType != NotificationDisplayType.BALLOON_ONLY));
     }
 
-    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY &&
-        !LOG_ONLY_GROUP_ID.equals(notification.getGroupId())) {
+    final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
+    if (settings.getDisplayType() != NotificationDisplayType.BALLOON_ONLY && settings.isShouldLog()) {
       myModel.add(notification, project);
     }
 

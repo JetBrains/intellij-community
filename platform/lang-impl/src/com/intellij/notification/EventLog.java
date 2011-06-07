@@ -19,6 +19,8 @@ package com.intellij.notification;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.notification.impl.NotificationSettings;
+import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -67,7 +69,12 @@ public class EventLog implements Notifications {
     }
   }
 
-  public static void logNotification(@Nullable final Project project, final Notification notification) {
+  private static void logNotification(@Nullable final Project project, final Notification notification) {
+    final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
+    if (!settings.isShouldLog()) {
+      return;
+    }
+
     if (project == null) {
       final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length == 0) {

@@ -24,6 +24,8 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
@@ -56,25 +58,27 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     return getNotificationsConfiguration()._getAllSettings();
   }
 
+  @Deprecated
   public static void remove(NotificationSettings[] toRemove) {
+    getNotificationsConfiguration()._remove(ContainerUtil.map2Array(toRemove, String.class, new Function<NotificationSettings, String>() {
+      @Override
+      public String fun(NotificationSettings notificationSettings) {
+        return notificationSettings.getGroupId();
+      }
+    }));
+  }
+
+  public static void remove(String... toRemove) {
     getNotificationsConfiguration()._remove(toRemove);
   }
 
-  public static void removeAll() {
-    getNotificationsConfiguration()._removeAll();
-  }
-
-  private void _removeAll() {
-    myIdToSettingsMap.clear();
-  }
-
-  private void _remove(NotificationSettings[] toRemove) {
-    for (final NotificationSettings settings : toRemove) {
-      myIdToSettingsMap.remove(settings.getGroupId());
+  private synchronized void _remove(String... toRemove) {
+    for (final String id : toRemove) {
+      myIdToSettingsMap.remove(id);
     }
   }
 
-  private NotificationSettings[] _getAllSettings() {
+  private synchronized NotificationSettings[] _getAllSettings() {
     final List<NotificationSettings> result = new ArrayList<NotificationSettings>();
     for (String s : myIdToSettingsMap.keySet()) {
       if (!Notifications.LOG_ONLY_GROUP_ID.equals(s)) {
@@ -92,9 +96,14 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   }
 
   @Nullable
+  private synchronized NotificationSettings _getSettings(@NotNull final String groupId) {
+    return myIdToSettingsMap.get(groupId);
+  }
+
+  @NotNull
   public static NotificationSettings getSettings(@NotNull final String groupId) {
-    final NotificationsConfiguration configuration = getNotificationsConfiguration();
-    return configuration.myIdToSettingsMap.get(groupId);
+    final NotificationSettings settings = getNotificationsConfiguration()._getSettings(groupId);
+    return settings == null ? new NotificationSettings(groupId, NotificationDisplayType.STICKY_BALLOON, true) : settings;
   }
 
   @NotNull
@@ -106,28 +115,28 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     myMessageBus.connect().subscribe(TOPIC, this);
   }
 
-  public void disposeComponent() {
+  public synchronized void disposeComponent() {
     myIdToSettingsMap.clear();
   }
 
   public void register(@NotNull final String groupDisplayType, @NotNull final NotificationDisplayType displayType) {
-    if (!myIdToSettingsMap.containsKey(groupDisplayType)) {
-      myIdToSettingsMap.put(groupDisplayType, new NotificationSettings(groupDisplayType, displayType));
+    registerDefaultSettings(new NotificationSettings(groupDisplayType, displayType));
+  }
+
+  public synchronized void registerDefaultSettings(NotificationSettings settings) {
+    if (!isRegistered(settings.getGroupId())) {
+      myIdToSettingsMap.put(settings.getGroupId(), settings);
     }
   }
 
-  public boolean isRegistered(@NotNull final String id) {
+  public synchronized boolean isRegistered(@NotNull final String id) {
     return myIdToSettingsMap.containsKey(id);
   }
 
   public void notify(@NotNull Notification notification) {
   }
 
-  public void notify(@NotNull Notification notification,
-                     @NotNull NotificationDisplayType defaultDisplayType) {
-  }
-
-  public Element getState() {
+  public synchronized Element getState() {
     @NonNls Element element = new Element("NotificationsConfiguration");
     for (NotificationSettings settings : myIdToSettingsMap.values()) {
       element.addContent(settings.save());
@@ -136,7 +145,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     return element;
   }
 
-  public void loadState(final Element state) {
+  public synchronized void loadState(final Element state) {
     for (@NonNls Element child : (Iterable<? extends Element>)state.getChildren("notification")) {
       final NotificationSettings settings = NotificationSettings.load(child);
       if (settings != null) {
