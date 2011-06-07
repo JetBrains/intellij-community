@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -26,7 +25,6 @@ import com.intellij.openapi.vcs.changes.actions.RefreshAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
@@ -69,6 +67,9 @@ public class GithubShareAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (!GithubUtil.testGitExecutable(project)){
+      return;
+    }
     final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
