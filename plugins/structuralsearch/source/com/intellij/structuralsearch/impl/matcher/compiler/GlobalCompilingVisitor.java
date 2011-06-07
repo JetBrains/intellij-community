@@ -208,8 +208,8 @@ public class GlobalCompilingVisitor {
 
     if (hasLiteralContent) {
       if (kind == OccurenceKind.LITERAL) {
-        buf.insert(0, "\"");
-        buf.append("\"");
+        buf.insert(0, "[\"']");
+        buf.append("[\"']");
       }
       buf.append("$");
     }

@@ -46,9 +46,24 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
                                           FileType sourceFileType,
                                           String sourceExtension,
                                           boolean physicalSourceFile) {
+    return findMatches(in, pattern, filePattern, patternFileType, patternLanugage, sourceFileType, sourceExtension, physicalSourceFile,
+                       true);
+  }
+
+  protected List<MatchResult> findMatches(String in,
+                                          String pattern,
+                                          boolean filePattern,
+                                          FileType patternFileType,
+                                          Language patternLanugage,
+                                          FileType sourceFileType,
+                                          String sourceExtension,
+                                          boolean physicalSourceFile,
+                                          boolean transform) {
     options.clearVariableConstraints();
     options.setSearchPattern(pattern);
-    MatcherImplUtil.transform(options);
+    if (transform) {
+      MatcherImplUtil.transform(options);
+    }
     pattern = options.getSearchPattern();
     options.setFileType(patternFileType);
     options.setDialect(patternLanugage);

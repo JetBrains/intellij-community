@@ -677,7 +677,9 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     private void visitLiteral(PsiElement literal) {
       String value = literal.getText();
 
-      if (value.length() > 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+      if (value.length() > 2 &&
+          (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') ||
+          (value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'')) {
 
         if (mySubstitutionPatterns == null) {
           final String[] prefixes = myGlobalVisitor.getContext().getPattern().getTypedVarPrefixes();
@@ -826,7 +828,9 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         int length = l2.getTextLength();
         final String text = l2.getText();
 
-        if (length > 2 && text.charAt(0) == '"' && text.charAt(length - 1) == '"') {
+        if (length > 2 &&
+            (text.charAt(0) == '"' && text.charAt(length - 1) == '"') ||
+            (text.charAt(0) == '\'' && text.charAt(length - 1) == '\'')) {
           length--;
           offset++;
         }

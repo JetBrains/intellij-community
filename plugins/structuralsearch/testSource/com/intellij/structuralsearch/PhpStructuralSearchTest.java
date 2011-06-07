@@ -214,25 +214,49 @@ public class PhpStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "public function f($param1, $param2)", 1, 1);
   }
 
+  public void testStringLiterals() throws Exception {
+    String s = "<?php\n" +
+               "$s1 = \'aba caba';\n" +
+               "$s2 = 'aba';\n" +
+               "$s3 = \"aba caba\";\n" +
+               "$s4 = \"aba\"";
+    doTest(s, "$v$ = '$s$'", 2, 2, false);
+    doTest(s, "$v$ = '$s1$ $s2$'", 1, 1, false);
+    doTest(s, "$v$ = \"$s$\"", 2, 2, false);
+    doTest(s, "$v$ = \"$s1$ $s2$\"", 1, 1, false);
+    doTest(s, "'$s$'", 2, 2, false);
+    doTest(s, "'$s1$ $s2$'", 1, 1, false);
+    doTest(s, "\"$s$\"", 2, 2, false);
+    doTest(s, "\"$s1$ $s2$\"", 1, 1, false);
+  }
+
   private void doTest(String source,
                       String pattern,
                       int expected,
                       int expectedWithDefaultEquivalence) {
+    doTest(source, pattern, expected, expectedWithDefaultEquivalence, true);
+  }
+
+  private void doTest(String source,
+                      String pattern,
+                      int expected,
+                      int expectedWithDefaultEquivalence,
+                      boolean transform) {
     if (expectedWithDefaultEquivalence >= 0) {
       try {
         EquivalenceDescriptorProvider.ourUseDefaultEquivalence = true;
-        findAndCheck(source, pattern, expectedWithDefaultEquivalence);
+        findAndCheck(source, pattern, expectedWithDefaultEquivalence, transform);
       }
       finally {
         EquivalenceDescriptorProvider.ourUseDefaultEquivalence = false;
       }
     }
-    findAndCheck(source, pattern, expected);
+    findAndCheck(source, pattern, expected, transform);
   }
 
-  private void findAndCheck(String source, String pattern, int expectedOccurences) {
+  private void findAndCheck(String source, String pattern, int expectedOccurences, boolean transform) {
     assertEquals(expectedOccurences,
-                 findMatches(source, pattern, true, PhpFileType.INSTANCE, null, PhpFileType.INSTANCE, null, false)
+                 findMatches(source, pattern, true, PhpFileType.INSTANCE, null, PhpFileType.INSTANCE, null, false, transform)
                    .size());
   }
 }
