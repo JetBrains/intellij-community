@@ -22,6 +22,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +87,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   public String getPassword() {
     if (myPassword == null){
       try {
-        myPassword = PasswordSafe.getInstance().getPassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
+        myPassword = PasswordSafe.getInstance().getPassword(ProjectManager.getInstance().getDefaultProject(), GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
       }
       catch (PasswordSafeException e) {
         myPassword = null;
@@ -103,13 +106,16 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setPassword(final String password) {
+    if (!Comparing.equal(myPassword, password)) {
+      try {
+        PasswordSafe.getInstance().storePassword(ProjectManager.getInstance().getDefaultProject(), GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
+      }
+      catch (PasswordSafeException e) {
+        Messages.showErrorDialog("Error happened while storing password for github", "Error");
+        LOG.error(e);
+      }
+    }
     myPassword = password;
-    try {
-      PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
-    }
-    catch (PasswordSafeException e) {
-      LOG.error(e);
-    }
   }
 
   public void setHost(final String host) {
