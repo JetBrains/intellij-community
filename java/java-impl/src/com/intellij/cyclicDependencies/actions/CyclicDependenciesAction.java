@@ -77,6 +77,9 @@ public class CyclicDependenciesAction extends AnAction{
             scope = getModuleScope(dataContext);
           }
         }
+        if (scope != null) {
+          scope.setIncludeTestSource(dlg != null && dlg.isIncludeTestSources());
+        }
       }
 
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -160,6 +163,7 @@ public class CyclicDependenciesAction extends AnAction{
 
     private JPanel myScopePanel;
     private JPanel myWholePanel;
+    private JCheckBox myIncludeTestSourcesCb;
 
 
     public ProjectModuleOrPackageDialog(String moduleName, AnalysisScope selectedScope) {
@@ -170,6 +174,10 @@ public class CyclicDependenciesAction extends AnAction{
       setTitle(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.title", myTitle));
       setHorizontalStretch(1.75f);
       myModuleButton.setSelected(true);
+    }
+
+    public boolean isIncludeTestSources() {
+      return myIncludeTestSourcesCb.isSelected();
     }
 
     protected JComponent createCenterPanel() {
@@ -184,6 +192,7 @@ public class CyclicDependenciesAction extends AnAction{
       mySelectedScopeButton.setVisible(mySelectedScope != null);
       if (mySelectedScope != null) {
         mySelectedScopeButton.setText(mySelectedScope.getShortenName());
+        group.add(mySelectedScopeButton);
       }
       return myWholePanel;
     }
