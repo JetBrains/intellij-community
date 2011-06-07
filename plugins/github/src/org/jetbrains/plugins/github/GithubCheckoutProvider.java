@@ -41,6 +41,9 @@ public class GithubCheckoutProvider implements CheckoutProvider {
 
   @Override
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
+    if (!GithubUtil.testGitExecutable(project)){
+      return;
+    }
     BasicAction.saveAll();
     final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project, false);
     if (availableRepos == null){
