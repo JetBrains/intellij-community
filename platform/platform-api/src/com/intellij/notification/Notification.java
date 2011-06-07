@@ -16,6 +16,7 @@
 package com.intellij.notification;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,5 +109,9 @@ public class Notification {
   @Nullable
   public Balloon getBalloon() {
     return myBalloonRef == null ? null : myBalloonRef.get();
+  }
+
+  public void notify(@Nullable Project project) {
+    Notifications.Bus.notify(this, project);
   }
 }

@@ -70,10 +70,6 @@ public interface Notifications {
       notify(notification, null);
     }
 
-    public static void logEvent(@NotNull String text, NotificationType type, @Nullable final Project project) {
-      notify(new Notification(LOG_ONLY_GROUP_ID, "", text, type), project);
-    }
-
     public static void notify(@NotNull final Notification notification, @Nullable final Project project) {
       invoke(project, new Processor<MessageBus>() {
         @Override

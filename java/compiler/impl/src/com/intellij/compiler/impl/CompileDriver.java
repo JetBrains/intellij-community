@@ -29,7 +29,8 @@ import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
@@ -70,7 +71,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.*;
@@ -88,6 +92,8 @@ import java.io.*;
 import java.util.*;
 
 public class CompileDriver {
+  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Compiler", NotificationDisplayType.NONE, true);
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
   // to be used in tests only for debug output
   public static volatile boolean ourDebugMode = false;
@@ -551,7 +557,7 @@ public class CompileDriver {
               if (_status == ExitStatus.UP_TO_DATE) {
                 logMessage = "Compilation: all files are up to date";
               }
-              Notifications.Bus.logEvent(logMessage, messageType.toNotificationType(), myProject);
+              NOTIFICATION_GROUP.createNotification(logMessage, messageType.toNotificationType()).notify(myProject);
             }
             if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
               compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
