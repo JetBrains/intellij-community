@@ -128,11 +128,11 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     if (!configuration.isRegistered(notification.getGroupId())) {
       configuration.registerDefaultSettings(new NotificationSettings(notification.getGroupId(),
                                                                      displayType == null ? NotificationDisplayType.STICKY_BALLOON : displayType,
-                                                                     displayType != NotificationDisplayType.BALLOON_ONLY));
+                                                                     true));
     }
 
     final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
-    if (settings.getDisplayType() != NotificationDisplayType.BALLOON_ONLY && settings.isShouldLog()) {
+    if (settings.isShouldLog()) {
       myModel.add(notification, project);
     }
 
@@ -153,7 +153,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       //  break;
       case STICKY_BALLOON:
       case BALLOON:
-      case BALLOON_ONLY:
       default:
         notifyByBalloon(notification, settings.getDisplayType(), project);
         break;
@@ -205,7 +204,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       .setHideOnClickOutside(NotificationDisplayType.BALLOON == displayType)
       .setHideOnKeyOutside(NotificationDisplayType.BALLOON == displayType).setHideOnFrameResize(false);
 
-    if (NotificationDisplayType.BALLOON == displayType || NotificationDisplayType.BALLOON_ONLY == displayType) {
+    if (NotificationDisplayType.BALLOON == displayType) {
       builder.setFadeoutTime(3000);
     }
 

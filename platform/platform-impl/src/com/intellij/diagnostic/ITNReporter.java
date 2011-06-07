@@ -23,10 +23,7 @@ import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -126,11 +123,9 @@ public class ITNReporter extends ErrorReportSubmitter {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            Notification notification = new Notification(ReportMessages.ERROR_REPORT, ReportMessages.ERROR_REPORT,
+            ReportMessages.GROUP.createNotification(ReportMessages.ERROR_REPORT,
                                                          DiagnosticBundle.message("error.report.confirmation"),
-                                                         NotificationType.INFORMATION);
-            Notifications.Bus.register(ReportMessages.ERROR_REPORT, NotificationDisplayType.BALLOON_ONLY);
-            Notifications.Bus.notify(notification, project);
+                                                         NotificationType.INFORMATION, null).notify(project);
           }
         });
       }
@@ -157,7 +152,7 @@ public class ITNReporter extends ErrorReportSubmitter {
             else {
               if (e instanceof NoSuchEAPUserException) {
                 final JetBrainsAccountDialog dialog;
-                if (parentComponent != null && parentComponent.isShowing()) {
+                if (parentComponent.isShowing()) {
                   dialog = new JetBrainsAccountDialog(parentComponent);
                 }
                 else {
