@@ -16,9 +16,8 @@
 package git4idea.ui;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
-import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,7 +36,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Utilities for git plugin user interface
@@ -61,8 +63,8 @@ public class GitUIUtil {
     if (messages != null && !messages.isEmpty()) {
       desc += "<hr/>" + StringUtil.join(messages, "<br/>");
     }
-    String id = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
-    Notifications.Bus.notify(new Notification(id, title, desc, type), project);
+    NotificationGroup group = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
+    group.createNotification(title, desc, type, null).notify(project);
   }
 
   public static void notifyMessage(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<VcsException> errors) {
@@ -105,7 +107,7 @@ public class GitUIUtil {
    * Displays a "success"-notification.
    */
   public static void notifySuccess(Project project, String title, String description) {
-    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.INFORMATION), project);
+    GitVcs.NOTIFICATION_GROUP_ID.createNotification(title, description, NotificationType.INFORMATION, null).notify(project);
   }
 
   public static void notifyError(Project project, String title, String description) {
@@ -479,8 +481,7 @@ public class GitUIUtil {
    */
   public static void checkGitExecutableAndShowNotification(final Project project, VcsException e) {
     if (GitVcs.getInstance(project).getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
-      Notification notification = new Notification(GitVcs.NOTIFICATION_GROUP_ID, GitBundle.getString("general.error"), e.getLocalizedMessage(), NotificationType.ERROR);
-      Notifications.Bus.notify(notification, project);
+      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(GitBundle.getString("general.error"), e.getLocalizedMessage(), NotificationType.ERROR, null).notify(project);
     }
   }
 }

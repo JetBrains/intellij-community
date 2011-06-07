@@ -640,15 +640,20 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
+              final String message;
+              final MessageType type;
               if (!exceptions.isEmpty()) {
                 GitUIUtil.showTabErrors(myProject, title, exceptions);
-                ToolWindowManager.getInstance(myProject).notifyByBalloon(
-                  ChangesViewContentManager.TOOLWINDOW_ID, MessageType.ERROR, "Refreshing remotes failed.");
+                message = "Refreshing remotes failed";
+                type = MessageType.ERROR;
               }
               else {
-                ToolWindowManager.getInstance(myProject).notifyByBalloon(
-                  ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO, "Refreshing remotes complete.");
+                message = "Refreshing remotes complete";
+                type = MessageType.INFO;
               }
+              ToolWindowManager.getInstance(myProject).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, type, message);
+              GitVcs.NOTIFICATION_GROUP_ID.createNotification(message, type).notify(myProject);
+
               myRemoveConfigurations = null;
               cancelPopup();
             }

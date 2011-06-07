@@ -15,9 +15,7 @@
  */
 package git4idea.actions;
 
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -144,7 +142,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     } else {
       LOG.info(message);
     }
-    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "Couldn't compare with branch", message, NotificationType.WARNING), project);
+    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Couldn't compare with branch", message, NotificationType.WARNING, null).notify(project);
   }
 
   private static void showDiffWithBranch(Project project, VirtualFile file, String currentBranch, String compareBranch) throws VcsException, IOException {
@@ -152,7 +150,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     final VcsRevisionNumber currentRevisionNumber = GitHistoryUtils.getCurrentRevision(project, filePath, currentBranch);
     final VcsRevisionNumber compareRevisionNumber = GitHistoryUtils.getCurrentRevision(project, filePath, compareBranch);
     if (compareRevisionNumber == null) {
-      Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "File doesn't exist in branch", "File " + file.getPresentableUrl() + " doesn't exist in branch [" + compareBranch + "]", NotificationType.INFORMATION), project);
+      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("File doesn't exist in branch", "File " + file.getPresentableUrl() + " doesn't exist in branch [" + compareBranch + "]", NotificationType.INFORMATION, null).notify(project);
       return;
     }
     final VcsFileRevision compareRevision = new GitFileRevision(project, filePath, (GitRevisionNumber)compareRevisionNumber);

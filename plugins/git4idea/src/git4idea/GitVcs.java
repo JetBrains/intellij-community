@@ -16,6 +16,8 @@
 package git4idea;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -79,8 +81,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
-  public static final String NOTIFICATION_GROUP_ID = "Git";
-  public static final String IMPORTANT_ERROR_NOTIFICATION = "Git Important Errors";
+  public static final NotificationGroup NOTIFICATION_GROUP_ID = new NotificationGroup("Git Messages", NotificationDisplayType.NONE, true);
+  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup("Git Important Errors", NotificationDisplayType.STICKY_BALLOON, true);
   public static final String NAME = "Git"; // Vcs name
 
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());

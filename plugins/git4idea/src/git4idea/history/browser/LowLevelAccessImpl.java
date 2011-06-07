@@ -19,7 +19,6 @@ package git4idea.history.browser;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
@@ -239,7 +238,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
     @Override
     protected void notifyUnresolvedRemain(final Collection<VirtualFile> roots) {
-      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Conflicts were not resolved during cherry-pick",
+      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Conflicts were not resolved during cherry-pick",
                                                 "Cherry-pick is not complete, you have unresolved merges in your working tree<br/>" +
                                                 "<a href='resolve'>Resolve</a> conflicts.",
                                                 NotificationType.WARNING, new NotificationListener() {
@@ -251,7 +250,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
               }
             }
           }
-      }));
+      }).notify(myProject);
     }
   }
 
