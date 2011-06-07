@@ -20,6 +20,9 @@ public class PyPathEvaluator {
 
   @Nullable
   public static String evaluate(PyExpression expr) {
+    if (expr == null) {
+      return null;
+    }
     VirtualFile vFile = expr.getContainingFile().getVirtualFile();
     return evaluate(expr, vFile == null ? null : vFile.getPath());
   }

@@ -187,6 +187,7 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   }
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
+  public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   public Object[] getCompletionVariants(String prefix, PyExpression location, ProcessingContext context) {
     if (myClass == null) {
@@ -214,14 +215,15 @@ public class PyClassType extends UserDataHolderBase implements PyType {
       }
     }
 
-    addOwnClassMembers(location, namesAlready, ret);
+    boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
+    addOwnClassMembers(location, namesAlready, suppressParentheses, ret);
 
     addInheritedMembers(prefix, location, context, ret);
 
     return ret.toArray();
   }
 
-  private void addOwnClassMembers(PyExpression expressionHook, Set<String> namesAlready, List<Object> ret) {
+  private void addOwnClassMembers(PyExpression expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
       containingClass = PsiUtilBase.getOriginalElement(containingClass, PyClass.class);
@@ -232,6 +234,9 @@ public class PyClassType extends UserDataHolderBase implements PyType {
       expressionHook, new PyResolveUtil.FilterNotInstance(myClass), null
     );
     processor.setNotice(myClass.getName());
+    if (suppressParentheses) {
+      processor.suppressParentheses();
+    }
     ((PyClassImpl)myClass).processClassLevelDeclarations(processor);
 
     List<String> slots = myClass.isNewStyleClass() ? myClass.getSlots() : null;

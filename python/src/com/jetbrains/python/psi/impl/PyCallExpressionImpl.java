@@ -105,14 +105,9 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           }
           if (target instanceof Callable) {
             final Callable callable = (Callable)target;
-            if (context.allowReturnTypes()) {
-              return callable.getReturnType(context, (PyReferenceExpression)callee);
-            }
-            if (callable instanceof PyFunction) {
-              final PyType docStringType = ((PyFunction)callable).getReturnTypeFromDocString();
-              if (docStringType != null) {
-                return docStringType;
-              }
+            PyType returnType = callable.getReturnType(context, (PyReferenceExpression)callee);
+            if (returnType != null) {
+              return returnType;
             }
             return new PyReturnTypeReference(callable);
           }

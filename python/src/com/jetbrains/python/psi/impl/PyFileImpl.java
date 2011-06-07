@@ -370,9 +370,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     VariantsProcessor processor = new VariantsProcessor(this) {
       @Override
       protected void addElement(String name, PsiElement element) {
-        result.add((PyElement) element);
-        if (remainingDunderAll != null) {
-          remainingDunderAll.remove(name);
+        element = PyUtil.turnDirIntoInit(element);
+        if (element instanceof PyElement) {
+          result.add((PyElement) element);
+          if (remainingDunderAll != null) {
+            remainingDunderAll.remove(name);
+          }
         }
       }
     };
