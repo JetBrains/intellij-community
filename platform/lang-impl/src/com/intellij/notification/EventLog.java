@@ -113,8 +113,8 @@ public class EventLog implements Notifications {
     view.print(mainText, type == NotificationType.ERROR
                                         ? ConsoleViewContentType.ERROR_OUTPUT
                                         : type == NotificationType.INFORMATION
-                                          ? ConsoleViewContentType.USER_INPUT
-                                          : ConsoleViewContentType.NORMAL_OUTPUT);
+                                          ? ConsoleViewContentType.NORMAL_OUTPUT
+                                          : ConsoleViewContentType.WARNING_OUTPUT);
     if (showLink) {
       view.print(" ", ConsoleViewContentType.NORMAL_OUTPUT);
       view.printHyperlink("more", new HyperlinkInfo() {

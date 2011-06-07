@@ -1139,6 +1139,11 @@
           <option name="FOREGROUND" value="7f0000"/>
         </value>
       </option>
+      <option name="CONSOLE_WARNING_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="80A000"/>
+        </value>
+      </option>
       <option name="CONSOLE_USER_INPUT">
         <value>
           <option name="FOREGROUND" value="007f00"/>
