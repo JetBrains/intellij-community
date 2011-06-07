@@ -296,7 +296,7 @@ public class SdkConfigurationUtil {
       showSuggestedHomesPopup(project, existingSdks, suggestedSdkHomes, popupOwner, callback);
     }
     else {
-      createSdk(project, existingSdks, callback, suggestedSdkHomes.values().iterator().next());
+      createSdk(project, existingSdks, callback, sdkTypes);
     }
   }
 
