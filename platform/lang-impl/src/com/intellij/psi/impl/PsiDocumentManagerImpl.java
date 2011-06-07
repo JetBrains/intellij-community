@@ -137,7 +137,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
-      LOG.assertTrue(projects.isEmpty() || projects.contains(myProject), "Trying to get PSI for an alien project. VirtualFile=" + virtualFile + "; myProject=" + myProject);
+      LOG.assertTrue(projects.isEmpty() || projects.contains(myProject), "Trying to get PSI for an alien project. VirtualFile=" + virtualFile + ";\n myProject=" + myProject+";\n projects returned: "+projects);
     }
 
     psiFile = getPsiFile(virtualFile);

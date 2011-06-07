@@ -512,7 +512,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public IntentionAction findSingleIntention(@NotNull final String hint) {
     final List<IntentionAction> list = filterAvailableIntentions(hint);
-    if (list.size() == 0) {
+    if (list.isEmpty()) {
       Assert.fail("\"" + hint + "\" not in [" + StringUtil.join(getAvailableIntentions(), INTENTION_NAME_FUN, ", ") + "]");
     }
     else if (list.size() > 1) {
@@ -719,7 +719,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DataContext context = DataManager.getInstance().getDataContext();
     TestActionEvent e = new TestActionEvent(context, action);
     action.beforeActionPerformedUpdate(e);
-    if (e.getPresentation().isVisible() && e.getPresentation().isVisible()) {
+    if (e.getPresentation().isEnabled() && e.getPresentation().isVisible()) {
       action.actionPerformed(e);
     }
     return e.getPresentation();
@@ -1016,8 +1016,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     configureInspections(myInspections == null ? LocalInspectionTool.EMPTY_ARRAY : myInspections);
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    toInitializeDaemon = !daemonCodeAnalyzer.isInitialized();
-    daemonCodeAnalyzer.prepareForTest(toInitializeDaemon);
+    daemonCodeAnalyzer.prepareForTest();
 
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
     ensureIndexesUpToDate(getProject());
@@ -1048,7 +1047,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       editorManager.closeFile(openFile);
     }
     if (toInitializeDaemon) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest(!LightPlatformTestCase.isLight(getProject()));
     }
 
     myEditor = null;

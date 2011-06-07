@@ -179,7 +179,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                        @NotNull int[] toIgnore,
                                        boolean canChangeDocument,
                                        @Nullable Runnable callbackWhileWaiting) {
-    assert isInitialized();
+    assert myInitialized;
     assert !myDisposed;
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
@@ -246,8 +246,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @TestOnly
-  public void prepareForTest(boolean initialize) {
-    if (initialize) {
+  public void prepareForTest() {
+    if (!myInitialized) {
       projectOpened();
     }
     setUpdateByTimerEnabled(false);
@@ -255,12 +255,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @TestOnly
-  public void cleanupAfterTest() {
-    projectClosed();
-    Disposer.dispose(myStatusBarUpdater);
-    myStatusBarUpdater = null;
-    Disposer.dispose(myDaemonListeners);
-    myDaemonListeners = null;
+  public void cleanupAfterTest(boolean dispose) {
+    if (!myProject.isOpen()) return;
+    stopProcess(false);
+    if (dispose) {
+      projectClosed();
+      Disposer.dispose(myStatusBarUpdater);
+      myStatusBarUpdater = null;
+      Disposer.dispose(myDaemonListeners);
+      myDaemonListeners = null;
+    }
     setUpdateByTimerEnabled(false);
     waitForTermination();
   }
@@ -303,12 +307,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     myDisposed = true;
     myLastSettings = null;
-    myInitialized = false;
-  }
-
-  @TestOnly
-  public boolean isInitialized() {
-    return myInitialized;
   }
 
   void repaintErrorStripeRenderer(Editor editor) {
