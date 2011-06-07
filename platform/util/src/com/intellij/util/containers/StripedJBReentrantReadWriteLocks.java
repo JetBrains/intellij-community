@@ -23,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
  * User: cdr
  */
 public final class StripedJBReentrantReadWriteLocks extends StripedLockHolder<JBReentrantReadWriteLock> {
+  private StripedJBReentrantReadWriteLocks() {
+    super(JBReentrantReadWriteLock.class);
+  }
+
   @NotNull
   @Override
   protected JBReentrantReadWriteLock create() {

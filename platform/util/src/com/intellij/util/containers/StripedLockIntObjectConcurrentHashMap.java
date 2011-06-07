@@ -17,7 +17,6 @@
 package com.intellij.util.containers;
 
 import java.util.*;
-import java.util.concurrent.locks.Lock;
 
 /** similar to java.util.ConcurrentHashMap except:
  keys are ints 
@@ -382,14 +381,15 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
 }
 
 class IntSegment<V> {
-  private final Lock lock = StripedReentrantLocks.getInstance().allocateLock();
+  private static final StripedReentrantLocks STRIPED_REENTRANT_LOCKS = StripedReentrantLocks.getInstance();
+  private final byte lockIndex = (byte)STRIPED_REENTRANT_LOCKS.allocateLockIndex();
 
   public void lock() {
-    lock.lock();
+    STRIPED_REENTRANT_LOCKS.lock(lockIndex & 0xff);
   }
 
   public void unlock() {
-    lock.unlock();
+    STRIPED_REENTRANT_LOCKS.unlock(lockIndex & 0xff);
   }
   /*
   * Segments maintain a table of entry lists that are ALWAYS
