@@ -224,7 +224,7 @@ public abstract class ElementPresentationManager {
       }
     }
 
-    final Icon[] icons = getIconsForClass(o.getClass());
+    final Icon[] icons = getIconsForClass(o.getClass(), o);
     if (icons != null && icons.length > 0) {
       return icons[0];
     }
@@ -239,7 +239,7 @@ public abstract class ElementPresentationManager {
         return icon;
       }
     }
-    final Icon[] icons = getIconsForClass(o.getClass());
+    final Icon[] icons = getIconsForClass(o.getClass(), o);
     if (icons != null && icons.length > 0) {
       return icons[0];
     }
@@ -254,12 +254,13 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   public static Icon getIconForClass(Class clazz) {
-    return getFirst(getIconsForClass(clazz));
+    return getFirst(getIconsForClass(clazz, null));
   }
 
   @Nullable
-  private static Icon[] getIconsForClass(final Class clazz) {
-    final Icon icon = TypePresentationService.getService().getTypeIcon(clazz);
+  private static Icon[] getIconsForClass(final Class clazz, @Nullable Object o) {
+    TypePresentationService service = TypePresentationService.getService();
+    final Icon icon = o == null ? service.getTypeIcon(clazz) : service.getIcon(o);
     if (icon != null) {
       return new Icon[]{icon};
     }

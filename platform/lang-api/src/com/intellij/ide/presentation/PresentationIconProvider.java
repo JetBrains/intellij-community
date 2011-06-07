@@ -22,8 +22,8 @@ import javax.swing.*;
 /**
  * @author Dmitry Avdeev
  */
-public interface PresentationIconProvider {
+public interface PresentationIconProvider<T> {
 
   @Nullable
-  Icon getIcon(Object o, int flags);
+  Icon getIcon(T o, int flags);
 }

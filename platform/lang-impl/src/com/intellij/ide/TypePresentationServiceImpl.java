@@ -36,11 +36,20 @@ import java.util.Set;
  */
 public class TypePresentationServiceImpl extends TypePresentationService {
 
+  @Override
+  public Icon getIcon(Object o) {
+    return getIcon(o.getClass(), o);
+  }
+
   @Override@Nullable
   public Icon getTypeIcon(Class type) {
+    return getIcon(type, null);
+  }
+
+  private Icon getIcon(Class type, Object o) {
     Set<PresentationTemplate> templates = mySuperClasses.get(type);
     for (PresentationTemplate template : templates) {
-      Icon icon = template.getIcon(null, 0);
+      Icon icon = template.getIcon(o, 0);
       if (icon != null) return icon;
     }
     return null;
@@ -129,6 +138,7 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     @Override
     @Nullable
     public Icon getIcon(Object o, int flags) {
+      if (o == null) return myIcon.getValue();
       PresentationIconProvider iconProvider = myIconProvider.getValue();
       return iconProvider == null ? myIcon.getValue() : iconProvider.getIcon(o, flags);
     }
