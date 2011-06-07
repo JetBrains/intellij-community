@@ -431,7 +431,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void printThreadDump() {
-    PerformanceWatcher.dumpThreadsToConsole();
+    PerformanceWatcher.dumpThreadsToConsole("Thread dump:");
   }
 
   public static void assertEmpty(final Object[] array) {

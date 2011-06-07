@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -222,8 +223,16 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
   }
 
-  public static void dumpThreadsToConsole() {
-    getInstance().dumpThreadsToFile(new OutputStreamWriter(System.err));
+  public static void dumpThreadsToConsole(String message) {
+    OutputStreamWriter writer = new OutputStreamWriter(System.err);
+    try {
+      writer.write(message);
+      writer.write("\n");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    getInstance().dumpThreadsToFile(writer);
   }
 
   public static String dumpThreadsToString() {
@@ -284,17 +293,28 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
   }
 
+  private static String getReadableState(Thread.State state) {
+    switch (state) {
+      case BLOCKED: return "blocked";
+      case TIMED_WAITING:
+      case WAITING: return "waiting on condition";
+      case RUNNABLE: return "runnable";
+      case NEW: return "new";
+      case TERMINATED: return "terminated";
+    }
+    return null;
+  }
+
   private static void dumpCallStack(final ThreadInfo info, final Writer f, final StackTraceElement[] stackTraceElements) {
     try {
-      StringBuilder sb = new StringBuilder("\"").append(info.getThreadName()).append("\"");
-      sb.append(" prio=0 tid=0x0 nid=0x0 Id=").append(info.getThreadId());
-      sb.append("\n").append(" java.lang.Thread.State: ").append(info.getThreadState()).append("\n");
+      @NonNls StringBuilder sb = new StringBuilder("\"").append(info.getThreadName()).append("\"");
+      sb.append(" prio=0 tid=0x0 nid=0x0 ").append(getReadableState(info.getThreadState())).append("\n");
+      sb.append("     java.lang.Thread.State: ").append(info.getThreadState()).append("\n");
       if (info.getLockName() != null) {
-          sb.append(" on " + info.getLockName());
+        sb.append(" on ").append(info.getLockName());
       }
       if (info.getLockOwnerName() != null) {
-          sb.append(" owned by \"" + info.getLockOwnerName() +
-                    "\" Id=" + info.getLockOwnerId());
+        sb.append(" owned by \"").append(info.getLockOwnerName()).append("\" Id=").append(info.getLockOwnerId());
       }
       if (info.isSuspended()) {
           sb.append(" (suspended)");
