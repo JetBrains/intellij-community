@@ -17,6 +17,7 @@ package com.intellij.notification;
 
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfiguration;
+import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,14 @@ public class NotificationGroup {
     myDisplayId = displayId;
 
     NotificationsConfiguration.getNotificationsConfiguration().registerDefaultSettings(new NotificationSettings(displayId, defaultDisplayType, logByDefault));
+  }
+
+  public String getDisplayId() {
+    return myDisplayId;
+  }
+
+  public Notification createNotification(@NotNull final String content, @NotNull final MessageType type) {
+    return createNotification(content, type.toNotificationType());
   }
 
   public Notification createNotification(@NotNull final String content, @NotNull final NotificationType type) {

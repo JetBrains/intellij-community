@@ -552,13 +552,10 @@ public class CompileDriver {
             final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
             if (duration > ONE_MINUTE_MS) {
               ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
-            } else {
-              String logMessage = statusMessage;
-              if (_status == ExitStatus.UP_TO_DATE) {
-                logMessage = "Compilation: all files are up to date";
-              }
-              NOTIFICATION_GROUP.createNotification(logMessage, messageType.toNotificationType()).notify(myProject);
             }
+
+            NOTIFICATION_GROUP.createNotification(_status == ExitStatus.UP_TO_DATE ? "Compilation: all files are up to date" : statusMessage, messageType).notify(myProject);
+
             if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
               compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
             }

@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -137,6 +138,7 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
         if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
           toolWindowManager.notifyByBalloon(testRunDebugId, type, msg, null, null);
         }
+        TestsUIUtil.NOTIFICATION_GROUP.createNotification(msg, type).notify(project);
       }
     });
   }

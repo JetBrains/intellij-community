@@ -79,12 +79,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   }
 
   private synchronized NotificationSettings[] _getAllSettings() {
-    final List<NotificationSettings> result = new ArrayList<NotificationSettings>();
-    for (String s : myIdToSettingsMap.keySet()) {
-      if (!Notifications.LOG_ONLY_GROUP_ID.equals(s)) {
-        result.add(myIdToSettingsMap.get(s));
-      }
-    }
+    final List<NotificationSettings> result = new ArrayList<NotificationSettings>(myIdToSettingsMap.values());
 
     Collections.sort(result, new Comparator<NotificationSettings>() {
       public int compare(NotificationSettings o1, NotificationSettings o2) {
@@ -154,5 +149,6 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
         myIdToSettingsMap.put(id, settings);
       }
     }
+    _remove("Log Only");
   }
 }

@@ -20,9 +20,6 @@ import com.intellij.facet.ProjectFacetManager;
 import com.intellij.facet.ProjectWideFacetListenersRegistry;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.Notifications;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -72,7 +69,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -1280,7 +1276,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (existing != null) {
       existing.hide();
     }
-    Notifications.Bus.notify(createNotification(type, text, listener), myProject);
 
     if (NotificationsManagerImpl.isEventLogVisible(myProject)) {
       return;
@@ -1387,16 +1382,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       show.run();
     }
 
-  }
-
-  public static Notification createNotification(MessageType type, String text, @Nullable final HyperlinkListener listener) {
-    final NotificationListener notificationListener = listener == null ? null : new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        listener.hyperlinkUpdate(event);
-      }
-    };
-    return new Notification(Notifications.LOG_ONLY_GROUP_ID, "", text, type.toNotificationType(), notificationListener);
   }
 
   @Override

@@ -45,7 +45,7 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 
 public class TestsUIUtil {
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Test Runner", NotificationDisplayType.NONE, true);
+  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Test Runner", NotificationDisplayType.NONE, true);
   @NonNls private static final String ICONS_ROOT = "/runConfigurations/";
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
@@ -125,9 +125,9 @@ public class TestsUIUtil {
 
     if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
       toolWindowManager.notifyByBalloon(testRunDebugId, type, balloonText, null, null);
-    } else {
-      NOTIFICATION_GROUP.createNotification(balloonText, type.toNotificationType()).notify(project);
     }
+
+    NOTIFICATION_GROUP.createNotification(balloonText, type).notify(project);
     SystemNotifications.getInstance().notify("TestRunner", title, text);
   }
 
