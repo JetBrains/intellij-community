@@ -16,6 +16,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
@@ -37,8 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Compiles the handlers for usability
@@ -240,16 +241,26 @@ public class PatternCompiler {
 
   @NotNull
   private static int[] findAllTypedVarOffsets(final PsiFile file, final Pattern[] substitutionPatterns) {
-    final String text = file.getText();
     final TIntHashSet result = new TIntHashSet();
 
-    for (Pattern pattern : substitutionPatterns) {
-      final Matcher matcher = pattern.matcher(text);
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
 
-      while (matcher.find()) {
-        result.add(matcher.end());
+        if (element instanceof LeafElement) {
+          final String text = element.getText();
+
+          for (Pattern pattern : substitutionPatterns) {
+            final Matcher matcher = pattern.matcher(text);
+
+            while (matcher.find()) {
+              result.add(element.getTextRange().getStartOffset() + matcher.end());
+            }
+          }
+        }
       }
-    }
+    });
 
     final int[] resultArray = result.toArray();
     Arrays.sort(resultArray);
