@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.resolve;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.Extensions;
@@ -321,11 +322,11 @@ public class ResolveImportUtil {
     }
     if (module != null) {
       visitRoots(module, visitor);
-      return visitor.results;
+      return visitor.resultsAsList();
     }
     else if (foothold != null) {
       visitRoots(foothold, visitor);
-      return visitor.results;
+      return visitor.resultsAsList();
     }
     else {
       throw new IllegalStateException();
@@ -372,7 +373,7 @@ public class ResolveImportUtil {
         visitor.visitRoot(file);
       }
     }
-    return visitor.results;
+    return visitor.resultsAsList();
   }
 
   public static void visitRoots(@NotNull final PsiElement elt, @NotNull final RootVisitor visitor) {
@@ -521,7 +522,7 @@ public class ResolveImportUtil {
     final boolean myCheckForPackage;
     final @NotNull PyQualifiedName myQualifiedName;
     final @NotNull PsiManager myPsiManager;
-    final List<PsiElement> results = new ArrayList<PsiElement>();
+    final Set<PsiElement> results = Sets.newLinkedHashSet();
 
     public ResolveInRootVisitor(@NotNull PyQualifiedName qName,
                                 @NotNull PsiManager psiManager,
@@ -543,6 +544,11 @@ public class ResolveImportUtil {
       }
 
       return true;
+    }
+
+    @NotNull
+    public List<PsiElement> resultsAsList() {
+      return Lists.newArrayList(results);
     }
 
     @Nullable
