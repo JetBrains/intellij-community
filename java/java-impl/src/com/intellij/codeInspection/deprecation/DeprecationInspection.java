@@ -19,12 +19,15 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,8 +122,52 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         if (!method.isConstructor()) {
           List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
           checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, myHolder);
+        } else {
+          checkImplicitCallToSuper(method);
+        }
+    }
+
+    private void checkImplicitCallToSuper(PsiMethod method) {
+      final PsiClass containingClass = method.getContainingClass();
+      assert containingClass != null;
+      final PsiClass superClass = containingClass.getSuperClass();
+      if (hasDefaultDeprecatedConstructor(superClass)) {
+        final PsiCodeBlock body = method.getBody();
+        if (body != null) {
+          final PsiStatement[] statements = body.getStatements();
+          if (statements.length == 0 || !RefactoringUtil.isSuperOrThisCall(statements[0], true, true)) {
+            registerDefaultConstructorProblem(superClass, method.getNameIdentifier());
+          }
         }
       }
+    }
+
+    private void registerDefaultConstructorProblem(PsiClass superClass, PsiIdentifier nameIdentifier) {
+      myHolder.registerProblem(nameIdentifier, "Default constructor in " + superClass.getQualifiedName() + " is deprecated", ProblemHighlightType.LIKE_DEPRECATED);
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+      final PsiMethod[] currentConstructors = aClass.getConstructors();
+      if (currentConstructors.length == 0) {
+        final PsiClass superClass = aClass.getSuperClass();
+        if (hasDefaultDeprecatedConstructor(superClass)) {
+          registerDefaultConstructorProblem(superClass, aClass.getNameIdentifier());
+        }
+      }
+    }
+  }
+
+  private static boolean hasDefaultDeprecatedConstructor(PsiClass superClass) {
+    if (superClass != null) {
+      final PsiMethod[] constructors = superClass.getConstructors();
+      for (PsiMethod constructor : constructors) {
+        if (constructor.getParameterList().getParametersCount() == 0 && constructor.isDeprecated()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   //@top

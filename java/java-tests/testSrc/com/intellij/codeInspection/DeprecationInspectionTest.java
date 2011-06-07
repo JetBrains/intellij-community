@@ -32,4 +32,13 @@ public class DeprecationInspectionTest extends InspectionTestCase {
   public void testDeprecatedField() throws Exception{
     doTest();
   }
+
+  public void testDeprecatedDefaultConstructorInSuper() throws Exception {
+    doTest();
+  }
+
+  public void testDeprecatedDefaultConstructorInSuperNotCalled() throws Exception {
+    doTest();
+  }
+
 }
