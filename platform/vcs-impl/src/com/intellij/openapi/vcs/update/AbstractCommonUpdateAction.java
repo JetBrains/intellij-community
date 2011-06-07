@@ -62,7 +62,7 @@ import java.io.File;
 import java.util.*;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("VCS Update", NotificationDisplayType.NONE, true);
+  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("VCS Update/Commit", NotificationDisplayType.NONE, true);
   private final boolean myAlwaysVisible;
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.AbstractCommonUpdateAction");
 
