@@ -132,7 +132,6 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                   break;
                 }
               }
-
             }
           });
         }

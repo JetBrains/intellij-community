@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -287,6 +288,29 @@ public class GroovyExpectedTypesProvider {
     @Override
     public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
       ((GroovyPsiElement)expression.getParent()).accept(this);
+    }
+
+    @Override
+    public void visitListOrMap(GrListOrMap listOrMap) {
+      if (listOrMap.isMap()) return;
+      final TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints(listOrMap);
+      List<PsiType> result=new ArrayList<PsiType>(constraints.length);
+      for (TypeConstraint constraint : constraints) {
+        if (constraint instanceof SubtypeConstraint) {
+          final PsiType type = constraint.getType();
+          final PsiType iterable = com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, true);
+          result.add(iterable);
+        }
+      }
+      if (result.size()==0) {
+      myResult = TypeConstraint.EMPTY_ARRAY;
+      }
+      else {
+        myResult = new TypeConstraint[result.size()];
+        for (int i = 0; i < result.size(); i++) {
+          myResult[i] = SubtypeConstraint.create(result.get(i));
+        }
+      }
     }
 
     public TypeConstraint[] getResult() {
