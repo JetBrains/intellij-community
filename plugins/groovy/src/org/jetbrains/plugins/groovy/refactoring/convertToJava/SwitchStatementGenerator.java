@@ -111,7 +111,7 @@ public class SwitchStatementGenerator {
           }
         }
 
-        builder.append("}");
+        builder.append('}');
         if (isCase && i + 1 < caseSections.length) {
           builder.append("\nelse ");
           StringBuilder elseBuilder = new StringBuilder();
@@ -136,7 +136,7 @@ public class SwitchStatementGenerator {
     final String varName = GenerationUtil.validateName("switchArg", condition, context);
     conditionBuilder.append("final ");
     GenerationUtil.writeType(conditionBuilder, type, condition);
-    conditionBuilder.append(" ").append(varName).append(" = ");
+    conditionBuilder.append(' ').append(varName).append(" = ");
     condition.accept(new ExpressionGenerator(conditionBuilder, context));
     conditionBuilder.append(";\n");
     GenerationUtil.insertStatementFromContextBefore(builder, context);
@@ -159,7 +159,7 @@ public class SwitchStatementGenerator {
       generateCaseSection(builder, context, innerContext, section);
     }
 
-    builder.append("}");
+    builder.append('}');
   }
 
   private static void generateCaseSection(StringBuilder builder,

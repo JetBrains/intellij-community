@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListScrollingUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -33,8 +34,7 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class FileTypeChooser extends DialogWrapper{
-  private final DefaultListModel myModel = new DefaultListModel();
+public class FileTypeChooser extends DialogWrapper {
   private JList myList;
   private JLabel myTitleLabel;
   private JTextField myPattern;
@@ -62,13 +62,13 @@ public class FileTypeChooser extends DialogWrapper{
       }
     });
 
+    final DefaultListModel model = new DefaultListModel();
     for (FileType type : fileTypes) {
       if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType)) {
-        myModel.addElement(type);
+        model.addElement(type);
       }
     }
-
-    myList.setModel(myModel);
+    myList.setModel(model);
     myPattern.setText(pattern);
 
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
@@ -79,7 +79,7 @@ public class FileTypeChooser extends DialogWrapper{
     myTitleLabel.setText(FileTypesBundle.message("filetype.chooser.prompt", myFileName));
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new FileTypeRenderer());
+    myList.setCellRenderer(new FileTypeRenderer(myList.getCellRenderer()));
 
     myList.addMouseListener(
       new MouseAdapter() {
@@ -125,22 +125,27 @@ public class FileTypeChooser extends DialogWrapper{
    * Otherwise asks user to select file type and associates it with fileName extension if any selected.
    * @return Known file type or null. Never returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN}.
    */
+  @Nullable
   public static FileType getKnownFileTypeOrAssociate(VirtualFile file) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFile(file);
-    if (type == FileTypes.UNKNOWN)
+    if (type == FileTypes.UNKNOWN) {
       type = getKnownFileTypeOrAssociate(file.getName());
+    }
     return type;
   }
 
+  @Nullable
   public static FileType getKnownFileTypeOrAssociate(String fileName) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(fileName);
-    if (type == FileTypes.UNKNOWN)
+    if (type == FileTypes.UNKNOWN) {
       type = associateFileType(fileName);
+    }
     return type;
   }
 
+  @Nullable
   public static FileType associateFileType(String fileName) {
     final FileTypeChooser chooser = new FileTypeChooser(suggestPatternText(fileName), fileName);
     chooser.show();

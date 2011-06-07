@@ -50,19 +50,6 @@ public abstract class LanguageFileType implements FileType{
     return myLanguage;
   }
 
-  /**
-   * Lower level API for customizing language's file syntax highlighting in editor component.
-   * @param project The project in which the highlighter will work, or null if the highlighter is not tied to any project.
-   * @param virtualFile The file to be highlighted
-   * @param colors color scheme highlighter shall be initialized with.
-   * @return EditorHighlighter implementation
-   */
-  public EditorHighlighter getEditorHighlighter(@Nullable Project project,
-                                                @Nullable final VirtualFile virtualFile,
-                                                @NotNull EditorColorsScheme colors) {
-    return EditorHighlighterFactory.getInstance().createEditorHighlighter(SyntaxHighlighter.PROVIDER.create(this, project, virtualFile), colors);
-  }
-
   public final boolean isBinary() {
     return false;
   }

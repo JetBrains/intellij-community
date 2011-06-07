@@ -1,17 +1,17 @@
 aaaaa
+ccccc
 if <caret>(true){
     boo
 } else {
     baa
 }
-ccccc
 bbbbb
 -----
 aaaaa
-ccccc
 if <caret>(true){
     boo
 } else {
     baa
 }
+ccccc
 bbbbb

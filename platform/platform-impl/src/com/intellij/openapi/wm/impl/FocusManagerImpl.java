@@ -63,7 +63,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private FocusCommand myFocusCommandOnAppActivation;
   private ActionCallback myCallbackOnActivation;
   private final boolean isInternalMode = ApplicationManagerEx.getApplicationEx().isInternal();
-  private List<FocusRequestInfo> myRequests = new ArrayList<FocusRequestInfo>();
+  private final List<FocusRequestInfo> myRequests = new ArrayList<FocusRequestInfo>();
 
   private final IdeEventQueue myQueue;
   private final KeyProcessorConext myKeyProcessorContext = new KeyProcessorConext();
@@ -97,7 +97,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private DataContext myRunContext;
 
-  private Map<Integer, Integer> myModalityCount2FlushCount = new HashMap<Integer, Integer>();
+  private final Map<Integer, Integer> myModalityCount2FlushCount = new HashMap<Integer, Integer>();
 
   private IdeFrame myLastFocusedFrame;
 
@@ -488,12 +488,18 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private void flushNow() {
     final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
     myIdleRequests.clear();
-    for (Runnable each : all) {
-      flushRequest(each);
+    for (int i = 0; i < all.length; i++) {
+      flushRequest(all[i]);
+      if (isFocusBeingTransferred()) {
+        for (int j = i + 1; j < all.length; j++) {
+          myIdleRequests.add(all[j]);
+        }
+        break;
+      }
     }
   }
 
-  private void flushRequest(Runnable each) {
+  private static void flushRequest(Runnable each) {
     if (each == null) return;
     if (each instanceof Expirable) {
       if (!((Expirable)each).isExpired()) {
@@ -590,7 +596,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private int getCurrentModalityCount() {
     int modalDialogs = 0;
-    Window[] windows = Frame.getWindows();
+    Window[] windows = Window.getWindows();
     for (Window each : windows) {
       if (each instanceof Dialog) {
         Dialog eachDialog = (Dialog)each;
@@ -645,7 +651,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
 
     final boolean meaninglessOwner = UIUtil.isMeaninglessFocusOwner(result);
-    if ((result == null && !isFocusBeingTransferred()) || meaninglessOwner) {
+    if (result == null && !isFocusBeingTransferred() || meaninglessOwner) {
       final Component permOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
       if (permOwner != null) {
         result = permOwner;

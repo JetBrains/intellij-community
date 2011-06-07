@@ -20,7 +20,6 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +38,7 @@ public class ExactFileNameMatcher implements FileNameMatcher {
   }
 
   public boolean accept(@NonNls @NotNull final String fileName) {
-    return Comparing.equal(fileName, myFileName, SystemInfo.isFileSystemCaseSensitive && !myIgnoreCase);
+    return Comparing.equal(fileName, myFileName, !myIgnoreCase);
   }
 
   @NonNls

@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
-import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -30,9 +29,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.FilterComponent;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -73,7 +75,7 @@ public class DirDiffPanel implements Disposable {
   private DiffElement myCurrentElement;
   private String oldFilter;
 
-  public DirDiffPanel(DirDiffTableModel model, DirDiffWindow wnd, DirDiffSettings settings) {
+  public DirDiffPanel(DirDiffTableModel model, DirDiffWindow wnd) {
     myModel = model;
     myDiffWindow = wnd;
     mySourceDirField.setText(model.getSourceDir().getPath());
@@ -84,6 +86,7 @@ public class DirDiffPanel implements Disposable {
     myModel.setPanel(this);
     Disposer.register(this, myModel);
     myTable.setModel(myModel);
+    new TableSpeedSearch(myTable);
 
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
     myTable.setDefaultRenderer(Object.class, renderer);
@@ -92,53 +95,19 @@ public class DirDiffPanel implements Disposable {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        final DirDiffElement last = myModel.getElementAt(e.getLastIndex());
-        final DirDiffElement first = myModel.getElementAt(e.getFirstIndex());
+        final int lastIndex = e.getLastIndex();
+        final int firstIndex = e.getFirstIndex();
+        final DirDiffElement last = myModel.getElementAt(lastIndex);
+        final DirDiffElement first = myModel.getElementAt(firstIndex);
         if (last == null || first == null) return;
         if (last.isSeparator()) {
-          myTable.getSelectionModel().setLeadSelectionIndex(e.getFirstIndex());
+          myTable.getSelectionModel().setLeadSelectionIndex(lastIndex + ((lastIndex < firstIndex) ? 1 : -1));
         }
         else if (first.isSeparator()) {
-          myTable.getSelectionModel().setLeadSelectionIndex(e.getLastIndex());
+          myTable.getSelectionModel().setLeadSelectionIndex(firstIndex + ((firstIndex < lastIndex) ? 1 : -1));
         }
         else {
-          final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
-          if (element == null
-              || (myCurrentElement != null && (myCurrentElement == element.getSource() || myCurrentElement == element.getTarget()))) {
-            return;
-          }
-          clearDiffPanel();
-          if (element.getType() == DType.CHANGED) {
-            myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow());
-            if (myDiffPanelComponent != null) {
-              myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
-              myCurrentElement = element.getSource();
-            } else {
-              myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
-              myDiffPanel.revalidate();
-              myDiffPanel.repaint();
-            }
-          } else {
-            final DiffElement object;
-            if (element.getType() == DType.ERROR) {
-              object = element.getSource() == null ? element.getTarget() : element.getSource();
-            } else {
-              object = element.isSource() ? element.getSource() : element.getTarget();
-            }
-            myViewComponent = object.getViewComponent(project, null);
-
-            if (myViewComponent != null) {
-              myCurrentElement = object;
-              myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
-              DataManager.registerDataProvider(myDiffPanel, myCurrentElement.getDataProvider(project));
-              myDiffPanel.revalidate();
-              myDiffPanel.repaint();
-            } else {
-              myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
-              myDiffPanel.revalidate();
-              myDiffPanel.repaint();
-            }
-          }
+          update(false);
         }
         myDiffWindow.setTitle(myModel.getTitle());
       }
@@ -237,7 +206,7 @@ public class DirDiffPanel implements Disposable {
       }
     });
     myFilter.getTextEditor().setColumns(10);
-    myFilter.setFilter(settings.getFilter());
+    myFilter.setFilter(myModel.getSettings().getFilter());
     //oldFilter = myFilter.getText();
     oldFilter = myFilter.getFilter();
     myFilterPanel.add(myFilter, BorderLayout.CENTER);
@@ -289,6 +258,55 @@ public class DirDiffPanel implements Disposable {
       myTargetDirField.getButton().setVisible(false);
       myTargetDirField.setEditable(false);
     }
+  }
+
+  public void update(boolean force) {
+    final Project project = myModel.getProject();
+    final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
+    if (element == null) {
+      clearDiffPanel();
+      return;
+    }
+    if (!force
+        && myCurrentElement != null
+        && (myCurrentElement == element.getSource() || myCurrentElement == element.getTarget())) {
+      return;
+    }
+    clearDiffPanel();
+    if (element.getType() == DType.CHANGED) {
+      try {
+        myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow());
+      }
+      catch (FilesTooBigForDiffException e) {
+        // todo KB: check
+        myDiffPanelComponent = null;
+        myErrorLabel = new JLabel("Can not build diff for file " + element.getTarget().getPath() + ". File is too big and there are too many changes.");
+      }
+      if (myDiffPanelComponent != null) {
+        myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
+        myCurrentElement = element.getSource();
+      } else {
+        myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
+      }
+    } else {
+      final DiffElement object;
+      if (element.getType() == DType.ERROR) {
+        object = element.getSource() == null ? element.getTarget() : element.getSource();
+      } else {
+        object = element.isSource() ? element.getSource() : element.getTarget();
+      }
+      myViewComponent = object.getViewComponent(project, null);
+
+      if (myViewComponent != null) {
+        myCurrentElement = object;
+        myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
+        DataManager.registerDataProvider(myDiffPanel, myCurrentElement.getDataProvider(project));
+      } else {
+        myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
+      }
+    }
+    myDiffPanel.revalidate();
+    myDiffPanel.repaint();
   }
 
   private void registerCustomShortcuts(DirDiffToolbarActions actions, JPanel rootPanel) {

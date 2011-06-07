@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,52 +23,50 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
+ * @author ik
  * Date: 13.02.2003
- * Time: 15:21:27
- * To change this template use Options | File Templates.
  */
-public class FilterScopeProcessor<T> extends BaseScopeProcessor{
+public class FilterScopeProcessor<T> extends BaseScopeProcessor {
   protected final List<T> myResults;
   private PsiElement myCurrentDeclarationHolder;
   private final ElementFilter myFilter;
   private final PsiScopeProcessor myProcessor;
 
-  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor processor, List<T> container){
+  public FilterScopeProcessor(ElementFilter filter, List<T> container) {
+    this(filter, null, container);
+  }
+
+  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor processor) {
+    this(filter, processor, new SmartList<T>());
+  }
+
+  public FilterScopeProcessor(ElementFilter filter) {
+    this(filter, null, new SmartList<T>());
+  }
+
+  public FilterScopeProcessor(ElementFilter filter, @Nullable PsiScopeProcessor processor, List<T> container) {
     myFilter = filter;
     myProcessor = processor;
     myResults = container;
   }
 
-  public FilterScopeProcessor(ElementFilter filter, List<T> container){
-    this(filter, null, container);
-  }
-
-  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor proc){
-    this(filter, proc, new SmartList<T>());
-  }
-
-  public FilterScopeProcessor(ElementFilter filter){
-    this(filter, null, new SmartList<T>());
-  }
-
-  public void handleEvent(Event event, Object associated){
-    if(myProcessor != null){
+  public void handleEvent(Event event, Object associated) {
+    if (myProcessor != null) {
       myProcessor.handleEvent(event, associated);
     }
-    if(event == Event.SET_DECLARATION_HOLDER && associated instanceof PsiElement){
+    if (event == Event.SET_DECLARATION_HOLDER && associated instanceof PsiElement) {
       myCurrentDeclarationHolder = (PsiElement)associated;
     }
   }
 
-  public boolean execute(PsiElement element, ResolveState state){
-    if (myFilter.isAcceptable(element, myCurrentDeclarationHolder)){
-      if(myProcessor != null){
+  public boolean execute(PsiElement element, ResolveState state) {
+    if (myFilter.isAcceptable(element, myCurrentDeclarationHolder)) {
+      if (myProcessor != null) {
         return myProcessor.execute(element, state);
       }
       add(element, state.get(PsiSubstitutor.KEY));
@@ -76,7 +74,8 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor{
     return true;
   }
 
-  protected void add(PsiElement element, PsiSubstitutor substitutor){
+  protected void add(PsiElement element, PsiSubstitutor substitutor) {
+    //noinspection unchecked
     myResults.add((T)element);
   }
 
@@ -88,7 +87,7 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor{
     return null;
   }
 
-  public List<T> getResults(){
+  public List<T> getResults() {
     return myResults;
   }
 }

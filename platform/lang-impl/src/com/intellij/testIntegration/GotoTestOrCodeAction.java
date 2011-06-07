@@ -33,10 +33,6 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
     return new GotoTestOrCodeHandler();
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return true;
-  }
-
   @Override
   public void update(AnActionEvent event) {
     Presentation p = event.getPresentation();

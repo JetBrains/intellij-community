@@ -1,5 +1,6 @@
 def boo() {
     aaaaa
+    cccc
     try {
         do1()
     } catch (E e){
@@ -7,12 +8,10 @@ def boo() {
     } finally<caret> {
         sdf
     }
-    cccc
 }
 -----
 def boo() {
     aaaaa
-    cccc
     try {
         do1()
     } catch (E e){
@@ -20,4 +19,5 @@ def boo() {
     } finally<caret> {
         sdf
     }
+    cccc
 }

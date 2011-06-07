@@ -1,0 +1,75 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.util.containers;
+
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+
+/**
+* @author gregsh
+*/
+public class OpenTHashSet<T> extends THashSet<T> {
+  public OpenTHashSet() {
+    super();
+  }
+
+  public OpenTHashSet(final TObjectHashingStrategy<T> strategy) {
+    super(strategy);
+  }
+
+  public OpenTHashSet(final int initialCapacity) {
+    super(initialCapacity);
+  }
+
+  public OpenTHashSet(final int initialCapacity, final TObjectHashingStrategy<T> strategy) {
+    super(initialCapacity, strategy);
+  }
+
+  public OpenTHashSet(final int initialCapacity, final float loadFactor) {
+    super(initialCapacity, loadFactor);
+  }
+
+  public OpenTHashSet(final int initialCapacity, final float loadFactor, final TObjectHashingStrategy<T> strategy) {
+    super(initialCapacity, loadFactor, strategy);
+  }
+
+  public OpenTHashSet(final Collection<? extends T> ts) {
+    super(ts);
+  }
+
+  public OpenTHashSet(final Collection<? extends T> ts, final TObjectHashingStrategy<T> strategy) {
+    super(ts, strategy);
+  }
+
+  @Override
+  public int index(final T obj) {
+    return super.index(obj);
+  }
+
+  public T get(final int index) {
+    return (T)_set[index];
+  }
+
+  @Nullable
+  public T get(final T obj) {
+    final int index = index(obj);
+    return index < 0 ? null : get(index);
+  }
+
+}

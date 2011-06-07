@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.ui.EnumComboBoxModel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,15 +40,13 @@ class LibraryNameAndLevelPanel {
       levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
       levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
       levels.put(LibrariesContainer.LibraryLevel.MODULE, ProjectBundle.message("combobox.item.module.library"));
-      myLevelComboBox.setRenderer(new DefaultListCellRenderer() {
+      myLevelComboBox.setRenderer(new ListCellRendererWrapper(myLevelComboBox.getRenderer()) {
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof LibrariesContainer.LibraryLevel) {
             final LibrariesContainer.LibraryLevel level = (LibrariesContainer.LibraryLevel)value;
             setText(levels.get(level));
           }
-          return component;
         }
       });
       myLevelComboBox.setModel(new EnumComboBoxModel<LibrariesContainer.LibraryLevel>(LibrariesContainer.LibraryLevel.class));

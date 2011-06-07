@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport;
-import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 
 /**
  * Main application component, that loads Groovy language support
@@ -32,8 +31,6 @@ import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManag
 public class GroovyLoader {
 
   public GroovyLoader() {
-    GroovyEditorActionsManager.registerGroovyEditorActions();
-
     ChangeUtil.registerCopyHandler(new GroovyChangeUtilSupport());
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {

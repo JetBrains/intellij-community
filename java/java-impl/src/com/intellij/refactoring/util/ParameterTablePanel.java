@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.ui.TypeSelector;
@@ -24,9 +25,10 @@ import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -45,7 +47,7 @@ public abstract class ParameterTablePanel extends JPanel {
   private final VariableData[] myVariableData;
   private final TypeSelector[] myParameterTypeSelectors;
 
-  private final Table myTable;
+  private final JBTable myTable;
   private final MyTableModel myTableModel;
   private final JButton myUpButton;
   private final JButton myDownButton;
@@ -88,7 +90,7 @@ public abstract class ParameterTablePanel extends JPanel {
     myVariableData = variableData;
 
     myTableModel = new MyTableModel();
-    myTable = new Table(myTableModel);
+    myTable = new JBTable(myTableModel);
     DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
 
@@ -122,28 +124,24 @@ public abstract class ParameterTablePanel extends JPanel {
     myTypeRendererCombo = new JComboBox(getVariableData());
     myTypeRendererCombo.setOpaque(true);
     myTypeRendererCombo.setBorder(null);
-
-    myTypeRendererCombo.setRenderer(new DefaultListCellRenderer() {
-
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
-        setText(((VariableData)value).type.getPresentableText());
-        return this;
+    myTypeRendererCombo.setRenderer(new ListCellRendererWrapper<VariableData>(myTypeRendererCombo.getRenderer()) {
+      @Override
+      public void customize(JList list, VariableData value, int index, boolean selected, boolean hasFocus) {
+        if (value != null) {
+          setText(value.type.getPresentableText());
+        }
       }
     });
     
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellEditor(new AbstractTableCellEditor() {
       TypeSelector myCurrentSelector;
+
+      @Nullable
       public Object getCellEditorValue() {
         return myCurrentSelector.getSelectedType();
       }
 
-      public Component getTableCellEditorComponent(final JTable table,
-                                                   final Object value,
-                                                   final boolean isSelected,
-                                                   final int row,
-                                                   final int column) {
+      public Component getTableCellEditorComponent(final JTable table, final Object value, final boolean isSelected, final int row, final int column) {
         myCurrentSelector = myParameterTypeSelectors[row];
         return myCurrentSelector.getComponent();
       }

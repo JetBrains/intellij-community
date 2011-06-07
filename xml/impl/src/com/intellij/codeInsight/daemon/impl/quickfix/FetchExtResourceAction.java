@@ -512,7 +512,9 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
         out.write(buffer, 0, read);
         bytesRead += read;
-        indicator.setFraction((double)bytesRead / (double)contentLength);
+        if (contentLength > 0) {
+          indicator.setFraction((double)bytesRead / (double)contentLength);
+        }
       }
 
       in.close();

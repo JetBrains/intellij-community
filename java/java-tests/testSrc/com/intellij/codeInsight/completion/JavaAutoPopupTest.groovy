@@ -789,5 +789,23 @@ public class UTest {
     assert !lookup
   }
 
+  public void testSamePrefixIgnoreCase() {
+    myFixture.addClass("package xxxxx; public class SYSTEM_EXCEPTION {}")
+    myFixture.configureByText "a.java", "class Foo { S<caret> }"
+    type 'Ystem'
+    assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
+    assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
+  }
+
+  public void testSamePrefixIgnoreCase2() {
+    myFixture.addClass("package xxxxx; public class SYSTEM_EXCEPTION {}")
+    myFixture.addClass("package xxxxx; public class SYstem {}")
+    myFixture.configureByText "a.java", "class Foo { S<caret> }"
+    type 'Ystem'
+    assert 'xxxxx.SYstem' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
+    assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
+    assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[2]).qualifiedName
+  }
+
 
 }

@@ -50,6 +50,7 @@ public class MergeSearchHelper {
   }
 
   public static Change findChangeAt(EditorMouseEvent e, MergePanel2 mergePanel, int index) {
+    if (mergePanel.getMergeList() == null) return null;
     Editor editor = e.getEditor();
     LOG.assertTrue(editor == mergePanel.getEditor(index));
     LogicalPosition logicalPosition = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());

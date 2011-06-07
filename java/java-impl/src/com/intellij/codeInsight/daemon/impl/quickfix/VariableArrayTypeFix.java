@@ -178,8 +178,4 @@ public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiEl
       myNewExpression.replace(newExpression);
     }
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

@@ -31,3 +31,21 @@ public class Test {
     IConverter<String> converter2 = <error descr="Inferred type 'java.lang.String' for type parameter 'C' is not within its bound; should extend 'java.lang.Double'">getConverter2(String.class)</error>;
   }
 }
+
+
+class Z {
+
+}
+
+class TestNonNarrowingConversion<T extends Z> {
+    public TestNonNarrowingConversion(T u) {
+
+    }
+
+    public T z = null;
+
+    public int a() {
+        <error descr="Incompatible types. Found: 'TestNonNarrowingConversion<Z>', required: 'TestNonNarrowingConversion<T>'">TestNonNarrowingConversion<T> x = new TestNonNarrowingConversion<Z>(new Z());</error>
+        return 1;
+    }
+}

@@ -100,7 +100,7 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   public LookAheadLexerPosition getCurrentPosition() {
-    return new LookAheadLexerPosition(ImmutableUserMap.EMPTY);
+    return new LookAheadLexerPosition(this, ImmutableUserMap.EMPTY);
   }
 
   public final void restore(final LexerPosition _position) {
@@ -127,15 +127,19 @@ public abstract class LookAheadLexer extends LexerBase{
     doLookAhead();
   }
 
-  protected class LookAheadLexerPosition implements LexerPosition {
-    final int lastOffset = myLastOffset;
-    final int lastState = myLastState;
-    final int tokenStart = myTokenStart;
-    final int advanceCount = myTypeCache.size() - 1;
+  protected static class LookAheadLexerPosition implements LexerPosition {
+    final int lastOffset;
+    final int lastState;
+    final int tokenStart;
+    final int advanceCount;
     final ImmutableUserMap customMap;
 
-    public LookAheadLexerPosition(final ImmutableUserMap map) {
+    public LookAheadLexerPosition(final LookAheadLexer lookAheadLexer, final ImmutableUserMap map) {
       customMap = map;
+      lastOffset = lookAheadLexer.myLastOffset;
+      lastState = lookAheadLexer.myLastState;
+      tokenStart = lookAheadLexer.myTokenStart;
+      advanceCount = lookAheadLexer.myTypeCache.size() - 1;
     }
 
     public ImmutableUserMap getCustomMap() {

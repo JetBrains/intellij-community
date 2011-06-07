@@ -232,15 +232,13 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("xslt-debugger") {
-      dir("rt") {
-        jar("xslt-debugger-engine.jar") {
-          module("xslt-rt") {
-            excludes: "lib"
-          }
+      jar("xslt-debugger-engine.jar") {
+        module("xslt-rt") {
+          excludes: "lib"
         }
-        fileset(dir: "$home/plugins/xslt-debugger/rt/lib") {
-          includes: "**/*.jar, **/*.html"
-        }
+      }
+      fileset(dir: "$home/plugins/xslt-debugger/rt/lib") {
+        includes: "**/*.jar, **/*.html"
       }
     }
 

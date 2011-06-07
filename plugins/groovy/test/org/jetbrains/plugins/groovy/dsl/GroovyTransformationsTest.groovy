@@ -56,8 +56,4 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
 
   public void testNewifyTransform3() throws Throwable { doVariantsTest('Bazz', 'Bazz') }
 
-  @Newify rubyLikeNew() {
-    assert Integer.ne == 42
-  }
-
 }

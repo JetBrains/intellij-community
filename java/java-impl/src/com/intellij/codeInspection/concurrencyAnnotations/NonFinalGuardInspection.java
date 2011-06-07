@@ -105,8 +105,5 @@ public class NonFinalGuardInspection extends BaseJavaLocalInspectionTool {
       }
       myHolder.registerProblem(psiDocTag, "Non-final @GuardedBy field \"" + guardValue + "\" #loc");
     }
-
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-    }
   }
 }

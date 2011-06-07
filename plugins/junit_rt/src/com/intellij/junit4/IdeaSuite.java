@@ -20,6 +20,10 @@
  */
 package com.intellij.junit4;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
+import org.junit.internal.runners.JUnit38ClassRunner;
+import org.junit.internal.runners.SuiteMethod;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runners.ParentRunner;
@@ -28,10 +32,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
 
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class IdeaSuite extends Suite {
   private final String myName;
@@ -67,7 +68,14 @@ class IdeaSuite extends Suite {
     }
     for (Iterator iterator = children.iterator(); iterator.hasNext();) {
       final Object child = iterator.next();
-      if (child instanceof Suite && skipSuite(allNames, child)) {
+      if (child instanceof Suite || child instanceof SuiteMethod) {
+        skipSuiteComponents(allNames, child);
+      }
+    }
+
+    for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+      Object child = iterator.next();
+      if (!allNames.contains(((Runner)child).getDescription().getDisplayName())) {
         iterator.remove();
       }
     }
@@ -75,22 +83,38 @@ class IdeaSuite extends Suite {
     return children;
   }
 
-  private static boolean skipSuite(Set allNames, Object child) {
-    boolean hasRun = true;
+  private static void skipSuiteComponents(Set allNames, Object child) {
     try {
-      final Method getChildrenMethod = Suite.class.getDeclaredMethod("getChildren", new Class[0]);
-      getChildrenMethod.setAccessible(true);
-      final List tests = (List)getChildrenMethod.invoke(child, new Object[0]);
-      for (Iterator suiteIterator = tests.iterator(); suiteIterator.hasNext();) {
-        if (!allNames.contains(((Runner)suiteIterator.next()).getDescription().getDisplayName())) {
-          hasRun = false;
-          break;
+      if (child instanceof Suite) {
+        final Method getChildrenMethod = Suite.class.getDeclaredMethod("getChildren", new Class[0]);
+        getChildrenMethod.setAccessible(true);
+        final List tests = (List)getChildrenMethod.invoke(child, new Object[0]);
+        for (Iterator suiteIterator = tests.iterator(); suiteIterator.hasNext();) {
+          final String displayName = ((Runner)suiteIterator.next()).getDescription().getDisplayName();
+          if (allNames.contains(displayName)) {
+            allNames.remove(displayName);
+          }
+        }
+      } else if (child instanceof SuiteMethod) {
+        final Method getChildrenMethod = JUnit38ClassRunner.class.getDeclaredMethod("getTest", new Class[0]);
+        getChildrenMethod.setAccessible(true);
+        final Test test = (Test)getChildrenMethod.invoke(child, new Object[0]);
+        if (test instanceof TestSuite) {
+          final Enumeration tests = ((TestSuite)test).tests();
+          while (tests.hasMoreElements()) {
+            final Test t = (Test)tests.nextElement();
+            if (t instanceof TestSuite) {
+              final String testDescription = ((TestSuite)t).getName();
+              if (allNames.contains(testDescription)) {
+                allNames.remove(testDescription);
+              }
+            }
+          }
         }
       }
     }
     catch (Exception e) {
       e.printStackTrace();
     }
-    return hasRun;
   }
 }

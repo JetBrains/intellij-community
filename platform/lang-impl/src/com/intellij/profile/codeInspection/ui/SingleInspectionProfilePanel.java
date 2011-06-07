@@ -459,9 +459,6 @@ public class SingleInspectionProfilePanel extends JPanel {
         size = new Dimension(size.width + 10, size.height);
         return size;
       }
-      public int getToggleClickCount() {
-        return -1;
-      }
 
       @Override
       protected void onNodeStateChanged(final CheckedTreeNode node) {

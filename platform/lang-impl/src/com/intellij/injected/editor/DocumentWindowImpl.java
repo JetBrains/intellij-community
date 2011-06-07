@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
@@ -63,6 +64,33 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     myShreds = shreds;
     myPrefixLineCount = Math.max(1, 1 + StringUtil.countNewLines(myShreds.get(0).prefix));
     mySuffixLineCount = Math.max(1, 1 + StringUtil.countNewLines(myShreds.get(shreds.size()- 1).suffix));
+  }
+
+  @Nullable("null means we were unable to calculate")
+  LogicalPosition hostToInjectedInVirtualSpace(@NotNull LogicalPosition hPos) {
+    // beware the virtual space
+    int hLineStartOffset = getDelegate().getLineStartOffset(hPos.line);
+    int iLineStartOffset = hostToInjected(hLineStartOffset);
+    int iLine = getLineNumber(iLineStartOffset);
+
+    for (int i = myShreds.size() - 1; i >= 0; i--) {
+      PsiLanguageInjectionHost.Shred shred = myShreds.get(i);
+      if (!shred.isValid()) continue;
+      int hShredEndOffset = shred.getHostRangeMarker().getEndOffset();
+      int hShredStartOffset = shred.getHostRangeMarker().getStartOffset();
+
+      int hShredStartLine = myDelegate.getLineNumber(hShredStartOffset);
+      int hShredEndLine = myDelegate.getLineNumber(hShredEndOffset);
+
+      if (hShredStartLine <= hPos.line && hPos.line <= hShredEndLine) {
+        int hColumnOfShredEnd = hShredEndOffset - hLineStartOffset;
+        int iColumnOfShredEnd = hostToInjected(hShredEndOffset) - iLineStartOffset;
+        int iColumn = iColumnOfShredEnd + hPos.column - hColumnOfShredEnd;
+        return new LogicalPosition(iLine, iColumn);
+      }
+    }
+
+    return null;
   }
 
   private static class CachedText {

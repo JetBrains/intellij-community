@@ -65,7 +65,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
     final LineRange range = mover.getInfo().toMove;
     if (range.startLine == 0 && !isDown) return false;
 
-    return range.endLine < maxLine || !isDown;
+    return range.endLine <= maxLine || !isDown;
   }
 
   @Nullable

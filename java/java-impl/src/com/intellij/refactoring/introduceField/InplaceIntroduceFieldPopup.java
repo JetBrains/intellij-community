@@ -80,7 +80,6 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
     myLocalVariable = localVariable;
     myParentClass = parentClass;
     myStatic = aStatic;
-    myOccurrences = occurrences;
     myAnchorElement = anchorElement;
     myAnchorElementIfAll = anchorElementIfAll;
     for (int i = 0, occurrencesLength = occurrences.length; i < occurrencesLength; i++) {

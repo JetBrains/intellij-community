@@ -20,6 +20,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +54,7 @@ public class TrafficProgressPanel extends JPanel {
   private final Map<JProgressBar, JLabel> myProgressToText = new HashMap<JProgressBar, JLabel>();
 
   private final JLabel statusLabel = new JLabel();
+  private final JLabel dumbLabel = new JLabel("Complete results will be available after indexing");
   private final TrafficLightRenderer myTrafficLightRenderer;
 
   private final JPanel myPassStatuses = new JPanel();
@@ -72,6 +74,7 @@ public class TrafficProgressPanel extends JPanel {
     add(center, BorderLayout.NORTH);
 
     center.add(statusLabel);
+    center.add(dumbLabel);
     center.add(new Separator());
     center.add(Box.createVerticalStrut(6));
 
@@ -161,13 +164,18 @@ public class TrafficProgressPanel extends JPanel {
 
   public void updatePanel(TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
     if (status == null) return;
+    dumbLabel.setVisible(DumbService.isDumb(myTrafficLightRenderer.getProject()));
     try {
       if (PowerSaveMode.isEnabled()) {
         statusLabel.setText("Code analysis is disabled in power save mode");
         myPassStatuses.setVisible(false);
         statistics.setText("");
       } else if (status.errorAnalyzingFinished) {
-        statusLabel.setText(DaemonBundle.message("analysis.completed"));
+        if (DumbService.isDumb(myTrafficLightRenderer.getProject())) {
+          statusLabel.setText("Shallow analysis completed");
+        } else {
+          statusLabel.setText(DaemonBundle.message("analysis.completed"));
+        }
         myPassStatuses.setVisible(true);
         setPassesEnabled(false, Boolean.TRUE);
       } else if (!status.enabled) {

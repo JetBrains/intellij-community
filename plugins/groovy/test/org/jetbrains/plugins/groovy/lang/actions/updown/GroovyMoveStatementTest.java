@@ -15,17 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.actions.updown;
 
-import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 
 import java.util.List;
 
@@ -38,75 +34,90 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
     return TestUtils.getTestDataPath() + "groovy/actions/moveStatement/";
   }
 
-  public void testClazz1() throws Throwable { downTest(); }
-  public void testClazz2() throws Throwable { upTest(); }
+  public void testClazz2() throws Throwable { bothTest(); }
 
-  public void testClos2() throws Throwable { upTest(); }
+  public void testClos2() throws Throwable { bothTest(); }
 
-  public void testMeth1() throws Throwable { downTest(); }
-  public void testMeth2() throws Throwable { downTest(); }
-  public void testMeth3() throws Throwable { upTest(); }
-  public void testMeth4() throws Throwable { upTest(); }
+  public void testMeth1() throws Throwable { bothTest(); }
 
-  public void testIfst() throws Throwable { downTest(); }
-  public void testIfst2() throws Throwable { upTest(); }
-
-  public void testSimple1() throws Throwable { downTest(); }
-  public void testSimple2() throws Throwable { upTest(); }
-
-  public void testTryst1() throws Throwable { downTest(); }
-  public void testTryst2() throws Throwable { downTest(); }
-
-  public void testStatementOutsideClosure() throws Throwable { downTest(); }
-  public void testVariableOutsideClosure() throws Throwable { upTest(); }
-  public void testVariableOutsideClosureDown() throws Throwable { downTest(); }
-  public void testStatementInsideClosure() throws Throwable { upTest(); }
-
-  public void testMoveGroovydocWithMethod() throws Throwable { downTest(); }
-  public void testMoveMethodWithGroovydoc() throws Throwable { downTest(); }
-  
-  public void testMoveSecondFieldUp() throws Throwable { upTest(); }
-  public void testMoveFirstFieldDown() throws Throwable { downTest(); }
-
-  public void testVariableOverMethodInScript() throws Throwable { downTest(); }
-  public void testVariableOverClassInScript() throws Throwable { downTest(); }
-
-  public void testUpFromLastOffset() throws Throwable { upTest(); }
-  
-  public void testClosureWithPrequel() throws Throwable { upTest(); }
-
-  public void testMultiLineVariable() throws Throwable { downTest(); }
-  public void testClosureVariableByRBrace() throws Throwable { upTest(); }
-
-  public void testInsideMultilineString() throws Throwable { downTest(); }
-  public void _testAroundMultilineString() throws Throwable { downTest(); } //todo
-  public void testAroundMultilineString2() throws Throwable { downTest(); }
-  public void _testAroundMultilineStringUp() throws Throwable { upTest(); }
-
-  private void downTest() throws Exception {
-    doTest(GroovyEditorActionsManager.MOVE_STATEMENT_DOWN_ACTION);
-  }
-
-  private void upTest() throws Exception {
-    doTest(GroovyEditorActionsManager.MOVE_STATEMENT_UP_ACTION);
-  }
-
-  public void doTest(final String actionId) throws Exception {
+  public void testMeth2() throws Throwable {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
-
-    final EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(actionId);
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        final Editor editor = myFixture.getEditor();
-        handler.execute(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()));
-        ((DocumentEx)editor.getDocument()).stripTrailingSpaces(false);
-      }
-    }.execute();
+    performAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
     myFixture.checkResult(data.get(1));
   }
 
+  public void testMeth3() throws Throwable { bothTest(); }
+  public void testMeth4() throws Throwable { bothTest(); }
+
+  public void testIfst() throws Throwable { bothTest(); }
+  public void testIfst2() throws Throwable { bothTest(); }
+
+  public void testSimple1() throws Throwable { bothTest(); }
+  public void testSimple2() throws Throwable { bothTest(); }
+
+  public void testTryst1() throws Throwable { bothTest(); }
+  public void testTryst2() throws Throwable { bothTest(); }
+
+  public void testStatementOutsideClosure() throws Throwable { bothTest(); }
+  public void testVariableOutsideClosure() throws Throwable { bothTest(); }
+  public void testVariableOutsideClosureDown() throws Throwable { bothTest(); }
+  public void testStatementInsideClosure() throws Throwable { bothTest(); }
+
+  public void testMoveGroovydocWithMethod() throws Throwable { bothTest(); }
+  public void testLeaveGroovydocWithMethod() throws Throwable { bothTest(); }
+  public void testMoveMethodWithGroovydoc() throws Throwable { bothTest(); }
+  
+  public void testMoveSecondFieldUp() throws Throwable { bothTest(); }
+  public void testMoveFirstFieldDown() throws Throwable { bothTest(); }
+
+  public void testVariableOverMethodInScript() throws Throwable { bothTest(); }
+  public void testVariableOverClassInScript() throws Throwable { bothTest(); }
+
+  public void testUpFromLastOffset() throws Throwable { bothTest(); }
+  
+  public void testClosureWithPrequel() throws Throwable { bothTest(); }
+
+  public void testMultiLineVariable() throws Throwable { bothTest(); }
+  public void testClosureVariableByRBrace() throws Throwable { bothTest(); }
+
+  public void testInsideMultilineString() throws Throwable { bothTest(); }
+  public void testAroundMultilineString() throws Throwable { bothTest(); }
+  public void testAroundMultilineString2() throws Throwable { bothTest(); }
+
+  public void testInSwitchCaseUp1() throws Throwable { bothTest(); }
+  public void testInSwitchCaseUp2() throws Throwable { bothTest(); }
+  public void testInSwitchCaseUp3() throws Throwable { bothTest(); }
+  public void testInSwitchCaseUp4() throws Throwable { bothTest(); }
+  public void testInSwitchCaseUp5() throws Throwable { bothTest(); }
+
+  public void testTwoStatements() throws Throwable { bothTest(); }
+
+  private void bothTest() {
+    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
+    final String initial = data.get(0);
+    final String upper = data.get(1);
+    String lower = data.size() == 2 ? data.get(0) : data.get(2);
+
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, initial);
+
+    performAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION);
+    myFixture.checkResult(upper);
+
+    performAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
+    if (!lower.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) lower += "\n";
+    myFixture.checkResult(lower);
+  }
+
+  private void performAction(String actionId) {
+    myFixture.performEditorAction(actionId);
+    new WriteCommandAction(getProject()) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        ((DocumentEx)myFixture.getEditor().getDocument()).stripTrailingSpaces(false);
+      }
+    }.execute();
+  }
 }
 

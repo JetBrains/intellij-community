@@ -98,10 +98,4 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
     }
     return result.toArray(new ParameterInfoImpl[result.size()]);
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,24 @@
 package com.intellij.codeInspection.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class GtkPreferredJComboBoxRendererInspection extends InternalInspection {
-  private static final String RENDERER_CLASS_NAME = DefaultListCellRenderer.class.getName();
-  private static final String MESSAGE = "Please use ListCellRendererWrapper instead to prevent artifacts under GTK+ Look and Feel.";
+  private static final String COMBO_BOX_CLASS_NAME = JComboBox.class.getName();
+  private static final String RIGHT_RENDERER_CLASS_NAME = ListCellRendererWrapper.class.getName();
+  private static final String SETTER_METHOD_NAME = "setRenderer";
 
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return InternalInspectionToolsProvider.GROUP_NAME;
-  }
+  private static final String MESSAGE =
+    "Default ListCellRenderer implementations are known to cause UI artifacts under GTK+ Look and Feel," +
+    "so please use ListCellRendererWrapper instead.";
 
   @Nls
   @NotNull
@@ -46,31 +48,33 @@ public class GtkPreferredJComboBoxRendererInspection extends InternalInspection 
     return "GtkPreferredJComboBoxRenderer";
   }
 
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
+      public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+        super.visitMethodCallExpression(expression);
 
-      @Override
-      public void visitClass(final PsiClass aClass) {
-        final PsiClass superClass = aClass.getSuperClass();
-        if (superClass != null && RENDERER_CLASS_NAME.equals(superClass.getQualifiedName())){
-          final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
-          holder.registerProblem(nameIdentifier != null ? nameIdentifier : aClass, MESSAGE);
-        }
-      }
+        final Project project = expression.getProject();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
-      @Override
-      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
-        if (RENDERER_CLASS_NAME.equals(aClass.getBaseClassReference().getQualifiedName())){
-          holder.registerProblem(aClass.getBaseClassReference(), MESSAGE);
-        }
+        final PsiElement target = expression.getMethodExpression().resolve();
+        if (!(target instanceof PsiMethod)) return;
+        final PsiMethod method = (PsiMethod)target;
+        if (!SETTER_METHOD_NAME.equals(method.getName())) return;
+        final PsiClass aClass = ((PsiMethod)target).getContainingClass();
+        final PsiClass comboClass = facade.findClass(COMBO_BOX_CLASS_NAME, GlobalSearchScope.allScope(project));
+        if (!InheritanceUtil.isInheritorOrSelf(aClass, comboClass, true)) return;
+
+        final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+        if (arguments.length != 1) return;
+        final PsiType type = arguments[0].getType();
+        if (!(type instanceof PsiClassType)) return;
+        final PsiClass rendererClass = ((PsiClassType)type).resolve();
+        final PsiClass rightClass = facade.findClass(RIGHT_RENDERER_CLASS_NAME, GlobalSearchScope.allScope(project));
+        if (InheritanceUtil.isInheritorOrSelf(rendererClass, rightClass, true)) return;
+
+        holder.registerProblem(expression, MESSAGE);
       }
     };
   }

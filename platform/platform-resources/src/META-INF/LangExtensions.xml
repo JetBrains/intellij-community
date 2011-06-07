@@ -344,7 +344,7 @@
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />
   <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
-  <fileBasedIndex implementation="com.intellij.psi.search.PropertyFileIndex"/>
+  <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndex"/>
   <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
 
   <fileBasedIndex implementation="com.intellij.find.ngrams.TrigramIndex"/> 
@@ -574,7 +574,7 @@
               factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
   <toolWindow id="Structure" anchor="left" icon="/general/toolWindowStructure.png" secondary="true"
               factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
-  <toolWindow id="Event log" anchor="bottom" secondary="true"
+  <toolWindow id="Event Log" anchor="bottom" secondary="true"
               factoryClass="com.intellij.notification.EventLog$FactoryItself"/>
 
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>

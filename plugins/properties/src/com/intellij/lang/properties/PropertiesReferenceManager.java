@@ -22,8 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PropertyFileIndex;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -115,16 +115,8 @@ public class PropertiesReferenceManager {
                                       @NotNull final PropertiesFileProcessor processor,
                                       @NotNull final BundleNameEvaluator evaluator) {
 
-    if (PropertyFileIndex.DEBUG) {
-      System.out.println("PropertiesReferenceManager.processPropertiesFiles");
-      System.out.println("PropertiesFileType.FILE_TYPE = " + PropertiesFileType.FILE_TYPE);
-    }
-
-    return FileBasedIndex.getInstance().processValues(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE.getName(), null, new FileBasedIndex.ValueProcessor<Void>() {
+    return FileBasedIndex.getInstance().processValues(FileTypeIndex.NAME, PropertiesFileType.FILE_TYPE, null, new FileBasedIndex.ValueProcessor<Void>() {
       public boolean process(VirtualFile file, Void value) {
-        if (PropertyFileIndex.DEBUG) {
-          System.out.println("file = " + file.getPath());
-        }
 
         final PsiFile psiFile = myPsiManager.findFile(file);
         if (psiFile instanceof PropertiesFile){

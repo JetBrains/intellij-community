@@ -89,6 +89,14 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     TypeExpression expression = new TypeExpression(project, expectedTypes);
 
     if (isInline) {
+      final PsiExpression expr = ((PsiExpressionStatement)anchor).getExpression();
+      final PsiElement semicolon = expr.getNextSibling();
+      if (semicolon != null) {
+        final PsiElement nextSibling = semicolon.getNextSibling();
+        if (nextSibling != null) {
+          decl.addRange(nextSibling, anchor.getLastChild());
+        }
+      }
       decl = (PsiDeclarationStatement)anchor.replace(decl);
     }
     else {

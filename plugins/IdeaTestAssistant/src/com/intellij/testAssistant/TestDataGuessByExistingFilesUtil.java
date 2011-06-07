@@ -3,6 +3,7 @@ package com.intellij.testAssistant;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
@@ -23,6 +24,7 @@ import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +40,7 @@ public class TestDataGuessByExistingFilesUtil {
   private static final long CACHE_ENTRY_TTL_MS = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
 
   private static final Map<String, Pair<TestDataDescriptor, Long>> CACHE = new ConcurrentHashMap<String, Pair<TestDataDescriptor, Long>>();
+  private static final Set<String> CLASSES_WITHOUT_TEST_DATA = new java.util.HashSet<String>();
 
   private TestDataGuessByExistingFilesUtil() {
   }
@@ -135,9 +138,18 @@ public class TestDataGuessByExistingFilesUtil {
       return null;
     }
 
-    final Pair<TestDataDescriptor, Long> cached = CACHE.get(psiClass.getQualifiedName());
-    if (cached != null && cached.second + CACHE_ENTRY_TTL_MS > System.currentTimeMillis()) {
-      return cached.first.isComplete() ? cached.first : null;
+    final String qualifiedName = psiClass.getQualifiedName();
+    if (CLASSES_WITHOUT_TEST_DATA.contains(qualifiedName)) {
+      return null;
+    }
+    final Pair<TestDataDescriptor, Long> cached = CACHE.get(qualifiedName);
+    if (cached != null) {
+      if (cached.first.isComplete()) {
+        return cached.first;
+      }
+      if (cached.second > System.currentTimeMillis()) {
+        return null;
+      }
     }
 
     TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
@@ -164,12 +176,66 @@ public class TestDataGuessByExistingFilesUtil {
       }
       testNames.add(name);
     }
+    
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     final TestDataDescriptor descriptor = buildDescriptor(gotoModel, fileIndex, testNames, psiClass);
-    CACHE.put(psiClass.getQualifiedName(), new Pair<TestDataDescriptor, Long>(descriptor, System.currentTimeMillis()));
+    if (isClassWithoutTestData(descriptor, testNames, psiClass)) {
+      CLASSES_WITHOUT_TEST_DATA.add(qualifiedName);
+      return null;
+    } 
+    CACHE.put(qualifiedName, new Pair<TestDataDescriptor, Long>(descriptor, System.currentTimeMillis() + CACHE_ENTRY_TTL_MS));
     return descriptor;
   }
 
+  private static boolean isClassWithoutTestData(@NotNull TestDataDescriptor descriptor, @NotNull List<String> testNames,
+                                                @NotNull PsiClass psiClass) {
+    if (testNames.size() <= 1) {
+      // There is a possible case that the test class is just created.
+      return false;
+    }
+
+    if (!descriptor.isComplete()) {
+      return true;
+    }
+    
+    boolean tooGenericNames = true;
+    genericNamesLoop:
+    for (String testName : testNames) {
+      for (int i = 0; i < testName.length(); i++) {
+        if (!Character.isDigit(testName.charAt(i))) {
+          tooGenericNames = false;
+          break genericNamesLoop;
+        }
+      }
+    }
+
+    final String simpleClassName = getSimpleClassName(psiClass);
+    if (tooGenericNames 
+        && (simpleClassName == null || !descriptor.myDescriptors.get(0).dir.toLowerCase().contains(simpleClassName.toLowerCase())))
+    {
+      return true;
+    }
+    
+    // We assume that test has test data if max(2; half of tests) tests already have test data.
+    int toMatch = Math.max(2, testNames.size() / 2);
+    for (String testName : testNames) {
+      if (toMatch <= 0) {
+        return false;
+      }
+      final List<String> testDataFiles = descriptor.generate(testName);
+      for (String path : testDataFiles) {
+        if (new File(path).isFile()) {
+          // There is a possible case that particular test has only one test data file though the others have
+          // two (e.g. during testing caret position at virtual space).
+          toMatch--;
+          break;
+        }
+      }
+    }
+    
+    return toMatch > 0;
+  }
+  
   //@NotNull
   //private static Collection<VirtualFile> getMatchedFiles(@NotNull final Project project, @NotNull final String testName) {
   //  final List<VirtualFile> result = new ArrayList<VirtualFile>();
@@ -215,6 +281,7 @@ public class TestDataGuessByExistingFilesUtil {
     }
     Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
     for (String name : gotoModel.getNames(false)) {
+      ProgressManager.checkCanceled();
       boolean currentNameProcessed = false;
       for (Trinity<Matcher, String, String> trinity : input) {
         if (!trinity.first.matches(name)) {
@@ -251,27 +318,39 @@ public class TestDataGuessByExistingFilesUtil {
           if (!current.isComplete()) {
             continue;
           }
-          String pattern = current.filePrefix.toLowerCase();
-          if (!StringUtil.isEmpty(current.filePrefix)) {
-            // Handle situations like the one below:
-            //     *) test class has tests with names 'testAlignedParameters' and 'testNonAlignedParameters';
-            //     *) test data files with the following names present: 'AlignedParameters.java' and 'NonAlignedParameters.java';
-            //     *) we're processing the following (test; test data file) pair - ('testAlignedParameters'; 'NonAlignedParameters.java');
-            // We don't want to store descriptor with file prefix 'Non' here.
-            boolean skip = false;
-            for (String testName : testNamesLowerCase) {
-              if (testName.startsWith(pattern)) {
-                skip = true;
-                break;
-              }
+
+          // Handle situations like the one below:
+          //     *) test class has tests with names 'testAlignedParameters' and 'testNonAlignedParameters';
+          //     *) test data files with the following names present: 'AlignedParameters.java' and 'NonAlignedParameters.java';
+          //     *) we're processing the following (test; test data file) pair - ('testAlignedParameters'; 'NonAlignedParameters.java');
+          // We don't want to store descriptor with file prefix 'Non' here.
+          // The same is true for suffixes, e.g. tests like 'testLeaveValidCodeBlock()' and 'testLeaveValidCodeBlockWithEmptyLineAfterIt()'
+          String prefixPattern = current.filePrefix.toLowerCase();
+          boolean checkPrefix = !StringUtil.isEmpty(prefixPattern);
+          String suffixPattern = current.fileSuffix;
+          for (TestLocationDescriptor descriptor : descriptors) {
+            if (suffixPattern.endsWith(descriptor.fileSuffix)) {
+              suffixPattern = suffixPattern.substring(0, suffixPattern.length() - descriptor.fileSuffix.length());
             }
-            if (skip) {
+          }
+          suffixPattern = suffixPattern.toLowerCase();
+          boolean checkSuffix = !StringUtil.isEmpty(suffixPattern);
+          boolean skip = false;
+          for (String testName : testNamesLowerCase) {
+            if (testName.equals(trinity.second)) {
               continue;
             }
+            if ((checkPrefix && testName.startsWith(prefixPattern)) || (checkSuffix && testName.endsWith(suffixPattern))) {
+              skip = true;
+              break;
+            }
+          }
+          if (skip) {
+            continue;
           }
 
           currentNameProcessed = true;
-          if (descriptors.isEmpty() || descriptors.iterator().next().dir.equals(current.dir)) {
+          if (descriptors.isEmpty() || (descriptors.iterator().next().dir.equals(current.dir) && !descriptors.contains(current))) {
             descriptors.add(current);
             continue;
           }
@@ -288,6 +367,22 @@ public class TestDataGuessByExistingFilesUtil {
     return new TestDataDescriptor(descriptors);
   }
 
+  @Nullable
+  private static String getSimpleClassName(@NotNull PsiClass psiClass) {
+    String result = psiClass.getQualifiedName();
+    if (result == null) {
+      return null;
+    }
+    if (result.endsWith("Test")) {
+      result = result.substring(0, result.length() - "Test".length());
+    }
+    int i = result.lastIndexOf('.');
+    if (i >= 0) {
+      result = result.substring(i + 1);
+    }
+    return result;
+  }
+  
   private static boolean moreRelevantPath(@NotNull TestLocationDescriptor candidate,
                                           @NotNull Set<TestLocationDescriptor> currentDescriptors,
                                           @NotNull PsiClass psiClass)
@@ -313,18 +408,14 @@ public class TestDataGuessByExistingFilesUtil {
     }
 
     // By class name.
-    String pattern = className.toLowerCase();
-    if (pattern.endsWith("test")) {
-      pattern = pattern.substring(0, pattern.length() - "Test".length());
-    }
-    i = pattern.lastIndexOf('.');
-    if (i >= 0) {
-      pattern = pattern.substring(i + 1);
-    }
-    candidateMatched = candidate.dir.toLowerCase().contains(pattern);
-    currentMatched = current.dir.toLowerCase().contains(pattern);
-    if (candidateMatched ^ currentMatched) {
-      return candidateMatched;
+    String simpleName = getSimpleClassName(psiClass);
+    if (simpleName != null) {
+      String pattern = simpleName.toLowerCase();
+      candidateMatched = candidate.dir.toLowerCase().contains(pattern);
+      currentMatched = current.dir.toLowerCase().contains(pattern);
+      if (candidateMatched ^ currentMatched) {
+        return candidateMatched;
+      }
     }
 
     return false;
@@ -358,7 +449,7 @@ public class TestDataGuessByExistingFilesUtil {
       }
       if (i < 0) {
         return;
-      } 
+      }
 
       filePrefix = fileName.substring(0, i);
       fileSuffix = fileName.substring(i + testName.length());

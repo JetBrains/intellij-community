@@ -160,10 +160,6 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     return myPanel;
   }
 
-  protected void prepareForReformat(final PsiFile psiFile) {
-    //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
-  }
-
   public void showAllStandardOptions() {
     myAllOptionsAllowed = true;
     for (IntOption option : myOptions) {

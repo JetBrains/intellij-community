@@ -135,7 +135,7 @@ public class CodeBlockGenerator extends Generator {
 
     for (GrParameter parameter : parameters) {
       if (context.analyzedVars.toWrap(parameter)) {
-        StringBuilder typeText = new StringBuilder(GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
+        StringBuilder typeText = new StringBuilder().append(GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
         writeTypeParameters(typeText, new PsiType[]{context.typeProvider.getParameterType(parameter)}, parameter,
                             new GeneratorClassNameProvider());
         builder.append("final ").append(typeText).append(' ').append(context.analyzedVars.toVarName(parameter))
@@ -194,9 +194,9 @@ public class CodeBlockGenerator extends Generator {
     builder.append(statement.getStatementText());
     final String name = statement.getLabelName();
     if (name != null) {
-      builder.append(" ").append(name); //todo check incorrect labels
+      builder.append(' ').append(name); //todo check incorrect labels
     }
-    builder.append(";");
+    builder.append(';');
   }
 
   @Override
@@ -210,7 +210,7 @@ public class CodeBlockGenerator extends Generator {
     final ExpressionGenerator expressionGenerator = new ExpressionGenerator(context);
     returnValue.accept(expressionGenerator);
     StringBuilder builder = new StringBuilder();
-    builder.append("return ").append(expressionGenerator.getBuilder()).append(";"); //todo add casts to return type
+    builder.append("return ").append(expressionGenerator.getBuilder()).append(';'); //todo add casts to return type
     writeStatement(builder, returnStatement, expressionGenerator.getContext());
   }
 
@@ -229,7 +229,7 @@ public class CodeBlockGenerator extends Generator {
         public void writeStatement(StringBuilder builder, ExpressionContext context) {
           builder.append("assert ");
           assertion.accept(new ExpressionGenerator(builder, context));
-          builder.append(";");
+          builder.append(';');
         }
       });
     }
@@ -280,7 +280,7 @@ public class CodeBlockGenerator extends Generator {
           builder.append("return ");
         }
         expression.accept(new ExpressionGenerator(builder, context));
-        builder.append(";");
+        builder.append(';');
       }
     });
   }
@@ -317,7 +317,7 @@ public class CodeBlockGenerator extends Generator {
               new ExpressionGenerator(builder, context), ifStatement);
           }
         }
-        builder.append(")");
+        builder.append(')');
         if (thenBranch != null) thenBranch.accept(new CodeBlockGenerator(builder, context.extend(), myExitPoints));
         if (ifStatement.getElseKeyword() != null) builder.append(" else ");
         if (elseBranch != null) elseBranch.accept(new CodeBlockGenerator(builder, context.extend(), myExitPoints));
@@ -372,17 +372,17 @@ public class CodeBlockGenerator extends Generator {
         }
       }
 
-      builder.append(";");
+      builder.append(';');
       if (condition != null) {
         genForPart(builder, condition, forContext.copy());                 //todo???
       }
 
-      builder.append(";");
+      builder.append(';');
       if (update != null) {
         genForPart(builder, update, forContext.copy());
       }
     }
-    builder.append(")");
+    builder.append(')');
 
     final GrStatement body = forStatement.getBody();
     if (body != null) {
@@ -405,7 +405,7 @@ public class CodeBlockGenerator extends Generator {
   private static void writeVariableWithoutSemicolonAndInitializer(StringBuilder builder, GrVariable var, ExpressionContext context) {
     ModifierListGenerator.writeModifiers(builder, var.getModifierList());
     writeType(builder, context.typeProvider.getVarType(var), var);
-    builder.append(" ").append(var.getName());
+    builder.append(' ').append(var.getName());
   }
 
   @Override
@@ -482,7 +482,7 @@ public class CodeBlockGenerator extends Generator {
 
     statementBuilder.append("synchronized(");
     monitor.accept(new ExpressionGenerator(statementBuilder, expressionContext));
-    statementBuilder.append(")");
+    statementBuilder.append(')');
     body.accept(new CodeBlockGenerator(statementBuilder, context.extend(), myExitPoints));
     writeStatement(statementBuilder, synchronizedStatement, expressionContext);
   }
@@ -517,7 +517,7 @@ public class CodeBlockGenerator extends Generator {
       final PsiType iteratorType =
         JavaPsiFacade.getElementFactory(context.project).createTypeFromText(CommonClassNames.JAVA_UTIL_ITERATOR, variableDeclaration);
       final String iteratorName = suggestVarName(iteratorType, variableDeclaration, expressionContext);
-      builder.append("final ").append(CommonClassNames.JAVA_UTIL_ITERATOR).append(" ").append(iteratorName).append(" = ");
+      builder.append("final ").append(CommonClassNames.JAVA_UTIL_ITERATOR).append(' ').append(iteratorName).append(" = ");
 
       invokeMethodByName(tupleInitializer, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY,
                          GrClosableBlock.EMPTY_ARRAY, new ExpressionGenerator(builder, expressionContext),
@@ -527,7 +527,7 @@ public class CodeBlockGenerator extends Generator {
         ModifierListGenerator.writeModifiers(builder, modifierList);
         final PsiType type = context.typeProvider.getVarType(v);
         writeType(builder, type, variableDeclaration);
-        builder.append(" ").append(v.getName());
+        builder.append(' ').append(v.getName());
         builder.append(" = ").append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null;");
       }
     }

@@ -206,10 +206,6 @@ public class EnvVariablesTable extends Observable {
       super(name);
     }
 
-    public Class getColumnClass() {
-      return String.class;
-    }
-
     @Override
     public TableCellRenderer getRenderer(EnvironmentVariable environmentVariable) {
       if (myRenderer == null) {

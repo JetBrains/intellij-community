@@ -45,11 +45,12 @@ public interface LineWrapPositionStrategy {
    * @param allowToBeyondMaxPreferredOffset   indicates if it's allowed to return value from
    *                                          <code>(maxPreferredOffset; endOffset]</code> interval in case of inability to
    *                                          find appropriate offset from <code>(startOffset; maxPreferredOffset]</code> interval
+   * @param virtual                           identifies if current request is for virtual wrap (soft wrap) position 
    * @return                                  offset from <code>(startOffset; endOffset]</code> interval where
    *                                          target line should be wrapped OR <code>-1</code> if no wrapping should be performed
    */
   int calculateWrapPosition(
     @NotNull Document document, @Nullable Project project, int startOffset, int endOffset, int maxPreferredOffset,
-    boolean allowToBeyondMaxPreferredOffset
+    boolean allowToBeyondMaxPreferredOffset, boolean virtual
   );
 }

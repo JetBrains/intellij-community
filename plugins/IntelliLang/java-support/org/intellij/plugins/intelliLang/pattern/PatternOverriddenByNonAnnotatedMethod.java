@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.intelliLang.pattern;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
@@ -30,11 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
-  }
 
   public boolean isEnabledByDefault() {
     return true;
@@ -54,9 +48,6 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       final Pair<String, ? extends Set<String>> annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getPatternAnnotationPair();
-
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
 
       @Override
       public void visitMethod(PsiMethod method) {

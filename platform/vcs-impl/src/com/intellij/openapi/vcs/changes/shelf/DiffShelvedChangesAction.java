@@ -18,7 +18,10 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -38,7 +41,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -86,19 +88,13 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         }
 
         diffRequestPresentables.add(new DiffRequestPresentableProxy() {
+          @NotNull
           @Override
-          protected DiffRequestPresentable init() {
+          protected DiffRequestPresentable init() throws VcsException {
             if (isConflictingChange(change)) {
               TextFilePatch patch = preloader.getPatch(shelvedChange);
-              if (patch == null) return null;
-
               final FilePath pathBeforeRename = context.getPathBeforeRename(f);
-
               final ApplyPatchForBaseRevisionTexts threeTexts = ApplyPatchForBaseRevisionTexts.create(project, f, pathBeforeRename, patch);
-              if ((threeTexts == null) || (threeTexts.getStatus() == null) || (ApplyPatchStatus.FAILURE.equals(threeTexts.getStatus()))) {
-                return null;
-              }
-
               return new MergedDiffRequestPresentable(project, threeTexts, f, "Shelved Version");
             }
             else {
@@ -135,18 +131,18 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       myFilePatchesMap = new HashMap<String, List<TextFilePatch>>();
     }
 
-    @Nullable
-    public TextFilePatch getPatch(final ShelvedChange shelvedChange) {
+    @NotNull
+    public TextFilePatch getPatch(final ShelvedChange shelvedChange) throws VcsException {
       List<TextFilePatch> textFilePatches = myFilePatchesMap.get(shelvedChange.getPatchPath());
       if (textFilePatches == null) {
         try {
           textFilePatches = ShelveChangesManager.loadPatches(shelvedChange.getPatchPath());
         }
         catch (IOException e) {
-          return null;
+          throw new VcsException(e);
         }
         catch (PatchSyntaxException e) {
-          return null;
+          throw new VcsException(e);
         }
         myFilePatchesMap.put(shelvedChange.getPatchPath(), textFilePatches);
       }
@@ -155,7 +151,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           return textFilePatch;
         }
       }
-      return null;
+      throw new VcsException("Can not find patch for " + shelvedChange.getBeforePath() + " in patch file.");
     }
   }
 

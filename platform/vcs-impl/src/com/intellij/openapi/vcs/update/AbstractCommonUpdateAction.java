@@ -19,7 +19,6 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -458,10 +457,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
 
       final String title = "VCS Update Finished";
-      final String content = text.toString();
 
-      Notifications.Bus.notify(new Notification(Notifications.LOG_ONLY_GROUP_ID, title, content, NotificationType.INFORMATION), myProject);
-      return new NotificationInfo("VCS Update", title, content, true);
+      String log = title;
+      if (text.length() > 0) {
+        log += ": " + text.toString();
+      }
+      Notifications.Bus.logEvent(log, NotificationType.INFORMATION, myProject);
+      return new NotificationInfo("VCS Update", title, log, true);
     }
 
     private void appendGroup(final StringBuffer text, final FileGroup group) {

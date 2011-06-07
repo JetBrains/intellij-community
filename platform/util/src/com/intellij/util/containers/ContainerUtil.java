@@ -1258,4 +1258,15 @@ public class ContainerUtil {
     }
     return true;
   }
+
+  public static <T> List<T> trimToSize(List<T> list) {
+    if (list == null) return null;
+    if (list.isEmpty()) return Collections.emptyList();
+
+    if (list instanceof ArrayList) {
+      ((ArrayList)list).trimToSize();
+    }
+
+    return list;
+  }
 }

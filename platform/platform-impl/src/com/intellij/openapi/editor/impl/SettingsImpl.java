@@ -77,6 +77,8 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRefrainFromScrolling                = null;
   private Boolean myUseSoftWraps                          = null;
   private Boolean myIsAllSoftWrapsShown                   = null;
+  private Boolean myUseCustomSoftWrapIndent               = null;
+  private Integer myCustomSoftWrapIndent                  = null;
 
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
@@ -206,8 +208,6 @@ public class SettingsImpl implements EditorSettings {
 
   public void reinitSettings() {
     myCachedTabSize = null;
-    //TODO den check
-    //myUseSoftWraps = null;
   }
 
   public int getTabSize(Project project) {
@@ -419,12 +419,23 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isUseCustomSoftWrapIndent() {
-    return EditorSettingsExternalizable.getInstance().isUseCustomSoftWrapIndent();
+    return myUseCustomSoftWrapIndent == null ? EditorSettingsExternalizable.getInstance().isUseCustomSoftWrapIndent()
+                                             : myUseCustomSoftWrapIndent;
+  }
+
+  @Override
+  public void setUseCustomSoftWrapIndent(boolean useCustomSoftWrapIndent) {
+    myUseCustomSoftWrapIndent = useCustomSoftWrapIndent;
   }
 
   @Override
   public int getCustomSoftWrapIndent() {
-    return EditorSettingsExternalizable.getInstance().getCustomSoftWrapIndent();
+    return myCustomSoftWrapIndent == null ? EditorSettingsExternalizable.getInstance().getCustomSoftWrapIndent() : myCustomSoftWrapIndent;
+  }
+
+  @Override
+  public void setCustomSoftWrapIndent(int indent) {
+    myCustomSoftWrapIndent = indent;
   }
 
   @Override

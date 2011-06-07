@@ -2,34 +2,43 @@
   <id>com.intellij</id>
   <name>IDEA CORE</name>
 
-  <module value="com.intellij.modules.platform"/>
-  <module value="com.intellij.modules.lang"/>
-  <module value="com.intellij.modules.vcs"/>
-  <module value="com.intellij.modules.xdebugger"/>
-  <module value="com.intellij.modules.xml"/>
+  <xi:include href="/idea/RichPlatformPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.java"/>
   <module value="com.intellij.modules.all"/>
-
-  <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/idea/RichPlatformActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/component/*)"/>
 
-  <extensionPoints>
-    <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
-    <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
-    <xi:include href="/META-INF/LangExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+  <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/components/*)"/>
 
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.psi.JavaPsiFacade</interface-class>
+      <implementation-class>com.intellij.psi.impl.JavaPsiFacadeImpl</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.pom.java.PomJavaAspect</interface-class>
+      <implementation-class>com.intellij.pom.java.impl.PomJavaAspectImpl</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
+    </component>
+  </project-components>
+
+  <extensionPoints>
     <extensionPoint name="codeInsight.changeVariableTypeQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
-    <extensionPoint name="conversion.rule" 
+    <extensionPoint name="conversion.rule"
                     interface="com.intellij.refactoring.typeMigration.rules.TypeConversionRule"/>
 
     <extensionPoint name="overrideImplementsAnnotationsHandler"
                     interface="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler"/>
-
-    <extensionPoint name="project.converterProvider"
-                    interface="com.intellij.conversion.ConverterProvider"/>
-
     <extensionPoint name="junitPatcher"
                     interface="com.intellij.execution.JUnitPatcher"/>
 
@@ -57,23 +66,8 @@
     <extensionPoint name="visibility"
                     interface="com.intellij.codeInspection.visibility.VisibilityExtension"/>
 
-    <extensionPoint name="antBuildGen"
-                    interface="com.intellij.compiler.ant.ChunkBuildExtension"/>
-
-    <extensionPoint name="antCustomCompiler"
-                    interface="com.intellij.compiler.ant.ChunkCustomCompilerExtension"/>
-
     <extensionPoint name="methodImplementor"
                     interface="com.intellij.codeInsight.MethodImplementor"/>
-
-    <extensionPoint name="compiler.buildParticipantProvider"
-                    interface="com.intellij.openapi.compiler.make.BuildParticipantProvider"/>
-
-    <extensionPoint name="compiler.additionalCompileScopeProvider"
-                    interface="com.intellij.compiler.impl.AdditionalCompileScopeProvider"/>
-
-    <extensionPoint name="compiler.makeDependencyProcessor"
-                    interface="com.intellij.compiler.DependencyProcessor"/>
 
     <extensionPoint name="debugger.codeFragmentFactory"
                     interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory"/>
@@ -83,14 +77,6 @@
 
     <extensionPoint name="debugger.jvmDebugProvider"
                     interface="com.intellij.debugger.engine.JVMDebugProvider"/>
-
-    <extensionPoint name="java.programPatcher"
-                    interface="com.intellij.execution.runners.JavaProgramPatcher"/>
-
-    <extensionPoint name="OrderRootTypeUI"
-                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
-
-    <extensionPoint name="library.creator" interface="com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryCreator"/>
 
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
@@ -107,29 +93,11 @@
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
                     area="IDEA_PROJECT"/>
 
-    <extensionPoint name="packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType"/>
-    <extensionPoint name="packaging.artifactPropertiesProvider" interface="com.intellij.packaging.artifacts.ArtifactPropertiesProvider"/>
-    <extensionPoint name="packaging.sourceItemProvider" interface="com.intellij.packaging.ui.PackagingSourceItemsProvider"/>
-    <extensionPoint name="packaging.artifactType" interface="com.intellij.packaging.artifacts.ArtifactType"/>
-
     <extensionPoint name="persistenceModel.persistenceModelProvider"
                     interface="com.intellij.persistenceModel.PersistenceModelProvider"/>
 
-    <extensionPoint name="classpathStorageProvider"
-                    interface="com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider"/>
-
     <extensionPoint name="javaExpressionSurrounder"
                     interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder"/>
-
-    <extensionPoint name="frameworkSupport" interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"/>
-    <extensionPoint name="frameworkSupportCommunicator" interface="com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator"/>
-
-    <!--new project wizard-->
-    <extensionPoint name="wizardMode" interface="com.intellij.ide.util.newProjectWizard.modes.WizardMode"/>
-    <extensionPoint name="projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider"/>
-    <extensionPoint name="projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder"/>
-
-    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
     <extensionPoint name="customPropertyScopeProvider" interface="com.intellij.psi.impl.search.CustomPropertyScopeProvider"/>
 
@@ -137,17 +105,12 @@
 
     <extensionPoint name="unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport"/>
 
-    <extensionPoint name="compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"/>
-    <extensionPoint name="compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
-    <extensionPoint name="compilerSettingsFactory" area="IDEA_PROJECT" interface="com.intellij.compiler.CompilerSettingsFactory"/>
     <extensionPoint name="clsStubBuilderFactory" interface="com.intellij.psi.impl.compiled.ClsStubBuilderFactory"/>
     <extensionPoint name="javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
 
     <extensionPoint name="debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
 
     <extensionPoint name="debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" />
-
-    <extensionPoint name="paletteItemProvider" area="IDEA_PROJECT" interface="com.intellij.ide.palette.PaletteItemProvider"/>
 
     <extensionPoint name="javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
 
@@ -163,21 +126,10 @@
     <extensionPoint name="java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder"/>
     <extensionPoint name="java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache"/>
 
-    <extensionPoint name="attachSourcesProvider" interface="com.intellij.codeInsight.AttachSourcesProvider"/>
-
-    <extensionPoint name="libraryTable.attachHandler" interface="com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableAttachHandler"/>
-
-    <extensionPoint name="java.compiler" area="IDEA_PROJECT" interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler"/>
-
     <extensionPoint name="allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/extensions/*)"/>
-    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/extensions/*)"/>
-    <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/extensions/*)"/>
-
-    <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
     <annotationSupport language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport" />
@@ -198,10 +150,6 @@
 
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
-
-
-
-    <appStarter implementation="com.intellij.compiler.ant.GenerateAntMain"/>
 
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
@@ -226,9 +174,7 @@
     <inspectionToolProvider implementation="com.intellij.codeInspection.ex.StandardInspectionToolsProvider"/>
     <inspectionToolProvider implementation="com.intellij.codeInspection.internal.InternalInspectionToolsProvider"/>
 
-    <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
-
-    <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.DefaultFileTypeFactory"/>
+    <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory"/>
 
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"
@@ -263,14 +209,6 @@
                             order="last, before javaSmart"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaSmartCompletionContributor" id="javaSmart"
                             order="last, before default"/>
-    <completion.contributor language="TEXT" implementationClass="com.intellij.util.CompletionContributorForTextField"/>
-
-    <packaging.sourceItemProvider implementation="com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModulesAndLibrariesSourceItemsProvider"/>
-    <packaging.sourceItemProvider implementation="com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ArtifactsSourceItemsProvider"/>
-    <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.JarArtifactType" order="first"/>
-    <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.PlainArtifactType" order="last"/>
-    <compiler.additionalCompileScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactAdditionalCompileScopeProvider"/>
-    <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
 
@@ -285,33 +223,16 @@
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassArrayConverter"
                     serviceImplementation="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
 
-    <applicationService serviceInterface="com.intellij.util.descriptors.ConfigFileFactory"
-                        serviceImplementation="com.intellij.util.descriptors.impl.ConfigFileFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.debugger.engine.DebuggerUtils"
                         serviceImplementation="com.intellij.debugger.impl.DebuggerUtilsImpl"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory"
-                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.util.projectWizard.ProjectWizardStepFactory"
-                        serviceImplementation="com.intellij.ide.util.projectWizard.ProjectWizardStepFactoryImpl"/>
-
-    <applicationService serviceInterface="com.intellij.peer.PeerFactory" serviceImplementation="com.intellij.peer.impl.PeerFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.codeInspection.reference.RefJavaUtil"
                         serviceImplementation="com.intellij.codeInspection.reference.RefJavaUtilImpl"/>
     <applicationService serviceInterface="com.intellij.psi.EmptySubstitutor"
                         serviceImplementation="com.intellij.psi.impl.EmptySubstitutorImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.deployment.DeploymentUtil"
-                        serviceImplementation="com.intellij.openapi.deployment.DeploymentUtilImpl"/>
-    <applicationService serviceInterface="com.intellij.compiler.ant.BuildTargetsFactory"
-                        serviceImplementation="com.intellij.compiler.ant.BuildTargetsFactoryImpl"/>
-
     <applicationService serviceInterface="com.intellij.codeInsight.intention.QuickFixFactory"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibrariesHelper" serviceImplementation="com.intellij.openapi.roots.libraries.LibrariesHelperImpl"/>
-
 
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
@@ -319,15 +240,6 @@
                     serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.source.resolve.JavaResolveCache"
                     serviceImplementation="com.intellij.psi.impl.source.resolve.JavaResolveCache"/>
-
-    <projectService serviceInterface="com.intellij.facet.impl.ui.FacetEditorsStateManager"
-                    serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsStateManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.openapi.module.ModulePointerManager"
-                    serviceImplementation="com.intellij.openapi.module.impl.ModulePointerManagerImpl"/>
-
-    <applicationService serviceInterface="com.intellij.facet.ui.FacetEditorsFactory"
-                        serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl"/>
@@ -339,14 +251,6 @@
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringSettings"
                         serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
 
-    <applicationService serviceInterface="com.intellij.ide.util.ModuleRendererFactory"
-                        serviceImplementation="com.intellij.ide.util.DefaultModuleRendererFactory"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
-                        serviceImplementation="com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl"/>
-    <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
-
-
     <projectService serviceInterface="com.intellij.refactoring.RefactoringManager"
                     serviceImplementation="com.intellij.refactoring.RefactoringManager"/>
     <projectService serviceInterface="com.intellij.refactoring.listeners.JavaRefactoringListenerManager"
@@ -354,88 +258,32 @@
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
-                        serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
-
-    <applicationService serviceInterface="com.intellij.debugger.settings.NodeRendererSettings"
-                        serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
-    <applicationService serviceInterface="com.intellij.debugger.settings.ViewsGeneralSettings"
-                        serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
-    <applicationService serviceInterface="com.intellij.debugger.settings.DebuggerSettings"
-                        serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
-    <applicationService serviceInterface="com.intellij.debugger.settings.ThreadsViewSettings"
-                        serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
-
     <applicationService serviceInterface="com.intellij.codeInsight.folding.JavaCodeFoldingSettings"
                         serviceImplementation="com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl"/>
     <exportable serviceInterface="com.intellij.codeInsight.folding.JavaCodeFoldingSettings"/>
 
-    <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
-                        serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
-
-    <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactPointerManager"
-                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
-    <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
-                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
-    <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactSortingUtil"
-                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactSortingUtilImpl"/>
-    <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
-
-    <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
-                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"/>
 
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="last"/>
 
-    <applicationService serviceInterface="com.intellij.conversion.ConversionService"
-                        serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
-
-    <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
-
     <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
                     serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
-                    serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
-                    serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.LanguageLevelProjectExtension"
-                    serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.ExpectedTypesProvider"
                     serviceImplementation="com.intellij.codeInsight.ExpectedTypesProvider"/>
 
     <projectService serviceInterface="com.intellij.psi.controlFlow.ControlFlowFactory"
                     serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>
 
-    <projectService serviceInterface="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"
-                    serviceImplementation="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"/>
-
-    <projectService serviceInterface="com.intellij.compiler.CompilerWorkspaceConfiguration"
-                    serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
-
     <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
                     serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.changes.patch.PatchBaseDirectoryDetector"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.patch.PsiPatchBaseDirectoryDetector"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesModuleGroupingPolicyFactory"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.ExcludedFileIndex"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectExcludedFileIndex"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"/>
 
     <applicationService serviceInterface="com.intellij.psi.CommonReferenceProviderTypes"
                     serviceImplementation="com.intellij.psi.impl.CommonReferenceProviderTypesImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
                     serviceImplementation="com.intellij.psi.impl.file.PsiJavaDirectoryFactory"/>
-
-    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
-                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"/>
 
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectPackageIndexImpl"/>
@@ -456,31 +304,8 @@
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManager"/>
 
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.api.CompilerAPIConfiguration"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.api.CompilerAPIConfiguration"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompilerConfiguration"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompilerConfiguration"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"
-                    serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
-                        serviceImplementation="com.intellij.openapi.wm.IdeaFrameTitleBuilder"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager"
-                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryPresentationManagerImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"
-                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"/>
-
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 
-    <compiler.buildParticipantProvider implementation="com.intellij.compiler.impl.jarr.JarBuildParticipantProvider"/>
-    <java.programPatcher implementation="com.intellij.execution.impl.JarProgramPatcher"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
@@ -633,54 +458,6 @@
       <category>Numbers</category>
     </intentionAction>
 
-    <daemon.highlightInfoFilter implementation="com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter"/>
-    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
-
-
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.LineBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.ExceptionBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.FieldBreakpointFactory"/>
-    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory"/>
-
-    <projectService serviceInterface="com.intellij.debugger.ui.DebuggerRecents"
-                    serviceImplementation="com.intellij.debugger.ui.DebuggerRecents"/>
-
-
-    <!-- Project Configurables -->
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
-
-    <!-- Errors -->
-    <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
-    <projectConfigurable provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider"/>
-
-    <!-- Project Structure -->
-    <projectConfigurable instance="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>
-    <!-- Compiler -->
-
-    <projectConfigurable instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"/>
-
-    <!-- Scopes -->
-    <!-- This is registered as a top-level configurable in IDEA, and as a service (accessible from certain dialogs) in platform. -->
-    <projectConfigurable implementation="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"/>
-
-    <!-- Application Configurables -->
-
-    <!-- Path Variables -->
-    <!-- the implementation of this configurable is in platform-impl but it's not registered in platform because
-         it's only required in full IDEA -->
-    <applicationConfigurable instance="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
-
-    <applicationConfigurable instance="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
-
-    <!-- Resources -->
-
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
 
     <lang.refactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaRefactoringSupportProvider"/>
@@ -730,7 +507,6 @@
 
     <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
 
-    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
 
     <lang.psiStructureViewFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaStructureViewBuilderFactory"/>
@@ -743,39 +519,13 @@
                               implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
 
-    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.ReformatCheckinHandlerFactory"/>
-    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.OptimizeOptionsCheckinHandlerFactory"/>
-    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeAnalysisCheckinHandlerFactory"/>
-    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.TodoCheckinHandlerFactory"/>
-
-    <configurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
-
-    <javaExpressionSurrounder implementation="com.intellij.debugger.codeinsight.JavaWithRuntimeCastSurrounder"/>
-
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
-    <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.NewProjectCheckoutListener"/>
-
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.WrappingAndBracesSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.BlankLinesSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.SpacesSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.ImportsSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.JavadocSettingsProvider"/>
 
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
-
-    <!-- new project wizard -->
-    <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode"/>
-    <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode"/>
-    <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.ImportMode"/>
-    <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.ImportImlMode"/>
-
-    <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
-
-    <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
 
     <stacktrace.fold substring="at java.lang.reflect.Method.invoke("/>
     <stacktrace.fold substring="at java.lang.reflect.Constructor.newInstance("/>
@@ -832,29 +582,11 @@
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.CaseStatementsSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.AntLikePropertySelectionHandler"/>
 
-    <selectInTarget implementation="com.intellij.ide.impl.ProjectSettingsSelectInTarget"/>
-
     <syntaxHighlighter key="CLASS" implementationClass="com.intellij.ide.highlighter.JavaFileHighlighter"/>
 
     <structureViewBuilder key="CLASS" factoryClass="com.intellij.ide.highlighter.JavaClsStructureViewBuilderProvider"/>
 
-    <OrderRootTypeUI key="JAVADOC"
-                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.JavadocOrderRootTypeUIFactory"/>
-    <OrderRootTypeUI key="ANNOTATIONS"
-                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.AnnotationsOrderRootTypeUIFactory"/>
-    <OrderRootTypeUI key="CLASSES"
-                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.ClassesOrderRootTypeUIFactory"/>
-    <OrderRootTypeUI key="SOURCES"
-                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.SourcesOrderRootTypeUIFactory"/>
-    <OrderRootTypeUI key="DOCUMENTATION"
-                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.DocumentationOrderRootTypeUIFactory"/>
-    <statistics.usagesCollector implementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryUsageCollector"/>
-
-
     <getDataRule key="analysisScope" implementationClass="com.intellij.analysis.AnalysisScopeRule"/>
-    <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
-
-    <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
     <vcsSelectionProvider implementation="com.intellij.vcsUtil.JavaVcsSelectionProvider"/>
 
@@ -878,7 +610,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SuggestIndexNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GuessElementTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ExpectedTypeMacro"/>
-    
+
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.AnnotatedMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodReturnTypeMacro"/>
@@ -899,7 +631,6 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
 
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
-    <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor"/>
 
 
@@ -922,14 +653,8 @@
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaStringContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.SmartCompletionContextType"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl$MyProjectExtension"/>
-    <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
-    <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
 
-    <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtension"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl"/>
-
-    <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
-    <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>
 
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExceptionsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightSuppressedWarningsFactory"/>
@@ -960,15 +685,13 @@
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiMethodFavoriteNodeProvider"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiPackageFavoriteNodeProvider"/>
 
-    <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
-    <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider" order="after compileBeforeRun"/>
-    <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
-    <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
-
     <configurationType implementation="com.intellij.execution.applet.AppletConfigurationType"/>
     <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
+    <configurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
+
+    <javaExpressionSurrounder implementation="com.intellij.debugger.codeinsight.JavaWithRuntimeCastSurrounder"/>
 
     <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
                         serviceImplementation="com.intellij.packageDependencies.JavaDependenciesVisitorFactory"/>
@@ -1033,7 +756,6 @@
                         serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <gotoClassContributor implementation="com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor"/>
-    <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.ImportPopupHectorComponentProvider"/>
     <scopeTreeExpander implementation="com.intellij.ide.scopeView.ClassesScopeTreeStructureExpander"/>
     <lang.implementationTextSelectioner language="JAVA"
                                         implementationClass="com.intellij.codeInsight.hint.JavaImplementationTextSelectioner"/>
@@ -1091,9 +813,6 @@
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaMethodGroupRuleProvider"/>
     <usageTypeProvider implementation="com.intellij.usages.impl.rules.JavaUsageTypeProvider"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
-    <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
-    <applicationService serviceInterface="com.intellij.usages.impl.ImportFilteringUsageViewSetting"
-                        serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>
 
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider" order="last"/>
 
@@ -1118,7 +837,8 @@
     <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.JavaMethodNavigationOffsetProvider"/>
 
     <editorNavigation implementation="com.intellij.javadoc.JavadocNavigationDelegate"/>
-    
+    <enterHandlerDelegate implementation="com.intellij.javadoc.EnterInJavadocParamDescriptionHandler"/>
+
     <filePasteProvider implementation="com.intellij.ide.JavaFilePasteProvider"/>
 
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
@@ -1132,9 +852,6 @@
     <optionsApplicabilityFilter implementation="com.intellij.application.options.JavaOptionsApplicabilityFilter"/>
 
     <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.JavaTemplateCompletionProcessor"/>
-
-    <!-- this depends on TemplateLanguageConfigurable which isn't registered in LangExtensions, so it should go here as well -->
-    <errorQuickFixProvider implementation="com.intellij.psi.templateLanguages.TemplateLanguageErrorQuickFixProvider"/>
 
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.wordSelection.JavaBasicWordSelectionFilter"/>
 
@@ -1167,33 +884,19 @@
 
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
-    <exportable serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
-    <schemeOwner serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
 
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
 
-    <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
-
-    <!-- File Exclusions -->
-    <!--
-    <projectService serviceInterface="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"
-                    serviceImplementation="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"/>
-    <projectConfigurable instance="com.intellij.openapi.file.exclude.ui.ExcludedFilesConfigurable"/>
-    -->
-    <fileTypeFactory implementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory"/>
-    <applicationService serviceInterface="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"
-                    serviceImplementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
-                        serviceImplementation="com.intellij.openapi.roots.IdeaModifiableModelsProvider"/>
-  </extensions>
-
-  <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/root/*)"/>
-  <extensions defaultExtensionNs="com.intellij">
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.LineBreakpointFactory"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.ExceptionBreakpointFactory"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpointFactory"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.FieldBreakpointFactory"/>
+    <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory"/>
+
+    <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
+
+    <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
   </extensions>
 
-  <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/RegExpPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/ImagesPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

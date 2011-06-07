@@ -67,7 +67,7 @@ public class RunInspectionAction extends GotoActionBase {
     final GotoInspectionModel model = new GotoInspectionModel(project);
     showNavigationPopup(e, model, new GotoActionCallback<Object>() {
       @Override
-      protected ChooseByNameFilter<Object> createFilter(ChooseByNamePopup popup) {
+      protected ChooseByNameFilter<Object> createFilter(@NotNull ChooseByNamePopup popup) {
         popup.setSearchInAnyPlace(true);
         return super.createFilter(popup);
       }

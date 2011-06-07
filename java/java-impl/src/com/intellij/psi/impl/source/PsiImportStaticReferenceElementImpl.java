@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,12 @@ package com.intellij.psi.impl.source;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.resolve.StaticImportResolveProcessor;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -35,9 +33,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author dsl
@@ -214,101 +209,21 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = getManager().getResolveCache();
-    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
-  }
-
-  private class OurResolveResult implements JavaResolveResult {
-    final PsiMember myTarget;
-    Boolean myAccessible = null;
-
-
-    public OurResolveResult(PsiMember target) {
-      myTarget = target;
-    }
-
-    public PsiMember getElement() {
-      return myTarget;
-    }
-
-    public PsiSubstitutor getSubstitutor() {
-      return PsiSubstitutor.EMPTY;
-    }
-
-    public boolean isValidResult() {
-      return isAccessible();
-    }
-
-    public boolean isAccessible() {
-      if (myAccessible == null) {
-        myAccessible = JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(myTarget, PsiImportStaticReferenceElementImpl.this, null);
-      }
-      return myAccessible.booleanValue();
-    }
-
-    public boolean isStaticsScopeCorrect() {
-      return true;
-    }
-
-    public PsiElement getCurrentFileResolveScope() {
-      return null;
-    }
-
-    public boolean isPackagePrefixPackageReference() {
-      return false;
-    }
-
+    final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
+    return results instanceof JavaResolveResult[] ? (JavaResolveResult[])results : JavaResolveResult.EMPTY_ARRAY;
   }
 
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiImportStaticReferenceElementImpl> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
-    public JavaResolveResult[] resolve(PsiImportStaticReferenceElementImpl referenceElement, boolean incompleteCode) {
+
+    public JavaResolveResult[] resolve(final PsiImportStaticReferenceElementImpl referenceElement, final boolean incompleteCode) {
       final PsiElement qualifier = referenceElement.getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return JavaResolveResult.EMPTY_ARRAY;
       final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
       if (!(target instanceof PsiClass)) return JavaResolveResult.EMPTY_ARRAY;
-      final ArrayList<JavaResolveResult> results = new ArrayList<JavaResolveResult>();
-      target
-        .processDeclarations(referenceElement.new MyScopeProcessor(results), ResolveState.initial(), referenceElement, referenceElement);
-      if (results.size() <= 1) {
-        return results.toArray(new JavaResolveResult[results.size()]);
-      }
-      for(int i = results.size() - 1; i >= 0; i--) {
-        final JavaResolveResult resolveResult = results.get(i);
-        if (!resolveResult.isValidResult()) {
-          results.remove(i);
-        }
-      }
-      return results.toArray(new JavaResolveResult[results.size()]);
-    }
-
-  }
-
-  private class MyScopeProcessor extends BaseScopeProcessor implements NameHint {
-    private final List<JavaResolveResult> myResults;
-
-    public MyScopeProcessor(List<JavaResolveResult> results) {
-      myResults = results;
-    }
-
-    public boolean execute(PsiElement element, ResolveState state) {
-      if (element instanceof PsiMember
-          && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
-        myResults.add(new OurResolveResult((PsiMember)element));
-      }
-      return true;
-    }
-
-    public String getName(ResolveState state) {
-      return getReferenceName();
-    }
-
-    @Override
-    public <T> T getHint(Key<T> hintKey) {
-      if (hintKey == NameHint.KEY) {
-        return (T)this;
-      }
-
-      return super.getHint(hintKey);
+      final StaticImportResolveProcessor processor = new StaticImportResolveProcessor(referenceElement);
+      target.processDeclarations(processor, ResolveState.initial(), referenceElement, referenceElement);
+      return processor.getResults();
     }
   }
 
@@ -329,7 +244,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
-    if (oldIdentifier == null){
+    if (oldIdentifier == null) {
       throw new IncorrectOperationException();
     }
     PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);

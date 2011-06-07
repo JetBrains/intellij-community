@@ -53,4 +53,6 @@ public interface StatusBarEx extends StatusBar, Disposable {
 
   @Nullable
   String getInfoRequestor();
+
+  void setLogMessage(@Nullable String text);
 }

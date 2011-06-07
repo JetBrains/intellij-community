@@ -259,7 +259,13 @@ public class CodeFormatterFacade {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
+          final CaretModel caretModel = editorToUse.getCaretModel();
+          final int caretOffset = caretModel.getOffset();
+          final RangeMarker caretMarker = editorToUse.getDocument().createRangeMarker(caretOffset, caretOffset);
           doWrapLongLinesIfNecessary(editorToUse, editorToUse.getDocument(), startOffset, endOffset);
+          if (caretMarker.isValid() && caretModel.getOffset() != caretMarker.getStartOffset()) {
+            caretModel.moveToOffset(caretMarker.getStartOffset());
+          } 
         }
       });
     }
@@ -375,7 +381,7 @@ public class CodeFormatterFacade {
       // We know that current line exceeds right margin if control flow reaches this place, so, wrap it.
       int wrapOffset = strategy.calculateWrapPosition(
         document, editor.getProject(), Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse),
-        preferredWrapPosition, false
+        preferredWrapPosition, false, false
       );
       if (wrapOffset < 0) {
         continue;

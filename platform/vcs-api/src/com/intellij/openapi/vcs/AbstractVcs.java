@@ -347,12 +347,12 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    * @return the parsed revision number
    */
   @Nullable
-  public VcsRevisionNumber parseRevisionNumber(String revisionNumberString, FilePath path) {
+  public VcsRevisionNumber parseRevisionNumber(String revisionNumberString, FilePath path) throws VcsException {
     return parseRevisionNumber(revisionNumberString);
   }
 
   @Nullable
-  public VcsRevisionNumber parseRevisionNumber(String revisionNumberString) {
+  public VcsRevisionNumber parseRevisionNumber(String revisionNumberString) throws VcsException {
     return null;
   }
 

@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 
 /**
  * This class is an extension to range marker that tries to restore its range even in situations when target text referenced by it
@@ -65,13 +66,11 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     }
   }
 
-  @Override
-  protected void changedUpdateImpl(DocumentEvent e) {
-    DocumentEventImpl event = (DocumentEventImpl)e;
-    if (PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this)){
+  private boolean translateViaDiff(final DocumentEventImpl event) {
+    try {
       myStartLine = event.translateLineViaDiffStrict(myStartLine);
       if (myStartLine < 0 || myStartLine >= getDocument().getLineCount()){
-        invalidate(e);
+        invalidate(event);
       }
       else{
         setIntervalStart(getDocument().getLineStartOffset(myStartLine) + myStartColumn);
@@ -79,13 +78,26 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
       myEndLine = event.translateLineViaDiffStrict(myEndLine);
       if (myEndLine < 0 || myEndLine >= getDocument().getLineCount()){
-        invalidate(e);
+        invalidate(event);
       }
       else{
         setIntervalEnd(getDocument().getLineStartOffset(myEndLine) + myEndColumn);
       }
+      return true;
+    } catch (FilesTooBigForDiffException e) {
+      return false;
     }
-    else {
+  }
+
+  @Override
+  protected void changedUpdateImpl(DocumentEvent e) {
+    DocumentEventImpl event = (DocumentEventImpl)e;
+    final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this);
+    boolean wasTranslated = shouldTranslateViaDiff;
+    if (shouldTranslateViaDiff){
+      wasTranslated = translateViaDiff(event);
+    }
+    if (! wasTranslated) {
       super.changedUpdateImpl(e);
       if (isValid()){
         storeLinesAndCols(e);

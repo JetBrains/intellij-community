@@ -39,11 +39,6 @@ import java.util.Set;
 public class LanguageMismatch extends LocalInspectionTool {
   public boolean CHECK_NON_ANNOTATED_REFERENCES = true;
 
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
-  }
-
   public boolean isEnabledByDefault() {
     return true;
   }

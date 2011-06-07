@@ -222,4 +222,8 @@ public class GeneralCommandLine {
     myPassParentEnvs = passParentEnvs;
   }
 
+  @Override
+  public String toString() {
+    return myExePath + " " + myProgramParams;
+  }
 }

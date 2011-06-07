@@ -6,31 +6,36 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import groovy.lang.Closure;
+import groovy.lang.GroovyObjectSupport;
+import groovy.lang.MetaMethod;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.codehaus.groovy.runtime.InvokerHelper;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
  */
-public class CustomMembersGenerator implements GdslMembersHolderConsumer {
+public class CustomMembersGenerator extends GroovyObjectSupport implements GdslMembersHolderConsumer {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator");
+  private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
   private final Set<Map> myMethods = new HashSet<Map>();
   private final Project myProject;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
   private final GroovyClassDescriptor myDescriptor;
+  @Nullable private final Map<String, List> myBindings;
   private final String myQualifiedName;
 
-  public CustomMembersGenerator(GroovyClassDescriptor descriptor, PsiType type) {
+  public CustomMembersGenerator(GroovyClassDescriptor descriptor, PsiType type, Map<String, List> bindings) {
     myDescriptor = descriptor;
+    myBindings = bindings;
     myProject = descriptor.getProject();
     if (type instanceof PsiClassType) {
       final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -90,7 +95,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
     myDepot.addHolder(holder);
   }
 
-  public Object[] constructNewArgs(Object[] args) {
+  private Object[] constructNewArgs(Object[] args) {
     final Object[] newArgs = new Object[args.length + 1];
     //noinspection ManualArrayCopy
     for (int i = 0; i < args.length; i++) {
@@ -147,5 +152,34 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
     LOG.assertTrue(!s.startsWith("? extends"), s);
     return s;
   }
+
+  @SuppressWarnings("UnusedDeclaration")
+  @Nullable
+  public Object methodMissing(String name, Object args) {
+    final Object[] newArgs = constructNewArgs((Object[])args);
+
+    // Get other DSL methods from extensions
+    for (GdslMembersProvider provider : PROVIDERS) {
+      final List<MetaMethod> variants = DefaultGroovyMethods.getMetaClass(provider).respondsTo(provider, name, newArgs);
+      if (variants.size() == 1) {
+        return InvokerHelper.invokeMethod(provider, name, newArgs);
+      }
+    }
+    return null;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  @Nullable
+  public Object propertyMissing(String name) {
+    if (myBindings != null) {
+      final List list = myBindings.get(name);
+      if (list != null) {
+        return list;
+      }
+    }
+
+    return null;
+  }
+
 
 }

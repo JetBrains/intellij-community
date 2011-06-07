@@ -166,8 +166,9 @@ public class ExpressionGenerator extends Generator {
       for (GrNamedArgument namedArg : namedArgs) {
         builder.append(namedArg.getText()).append(',');
       }
-      builder.replace(builder.length() - 1, builder.length(), "]");
-      builder.append(',');
+      builder.delete(builder.length()-1, builder.length());
+      //builder.removeFromTheEnd(1);
+      builder.append("],");
     }
     for (GrExpression expr : exprs) {
       builder.append(expr.getText()).append(',');
@@ -176,7 +177,8 @@ public class ExpressionGenerator extends Generator {
     for (GrClosableBlock clArg : clArgs) {
       builder.append(clArg.getText()).append(',');
     }
-    if (namedArgs.length + exprs.length + clArgs.length > 0) builder.delete(builder.length() - 1, builder.length());
+    if (namedArgs.length + exprs.length + clArgs.length > 0) builder.delete(builder.length()-1, builder.length());
+    //if (namedArgs.length + exprs.length + clArgs.length > 0) builder.removeFromTheEnd(1);
     builder.append("] as Object[]");
 
     result[1] = factory.createExpressionFromText(builder.toString(), psiContext);
@@ -194,7 +196,7 @@ public class ExpressionGenerator extends Generator {
       builder = new StringBuilder();
       varName = suggestVarName(type, newExpression, context);
       writeType(builder, type, newExpression);
-      builder.append(" ").append(varName).append(" = ");
+      builder.append(' ').append(varName).append(" = ");
     }
     else {
       varName = null;
@@ -204,7 +206,7 @@ public class ExpressionGenerator extends Generator {
     final GrExpression qualifier = newExpression.getQualifier();
     if (qualifier != null) {
       qualifier.accept(this);
-      builder.append(".");
+      builder.append('.');
     }
 
     final GrTypeElement typeElement = newExpression.getTypeElement();
@@ -258,9 +260,9 @@ public class ExpressionGenerator extends Generator {
     if (arrayDeclaration != null) {
       final GrExpression[] boundExpressions = arrayDeclaration.getBoundExpressions();
       for (GrExpression boundExpression : boundExpressions) {
-        builder.append("[");
+        builder.append('[');
         boundExpression.accept(this);
-        builder.append("]");
+        builder.append(']');
       }
       if (boundExpressions.length == 0) {
         builder.append("[]");
@@ -303,7 +305,7 @@ public class ExpressionGenerator extends Generator {
                      expression);
     }
     else {
-      builder.append(varName).append(".").append(fieldName).append(" = ");
+      builder.append(varName).append('.').append(fieldName).append(" = ");
       expression.accept(new ExpressionGenerator(builder, context));
     }
     context.myStatements.add(builder.toString());
@@ -381,7 +383,7 @@ public class ExpressionGenerator extends Generator {
       );
     }
 
-    builder.append("?");
+    builder.append('?');
     if (thenBranch != null) {
       if (elvis) {
         builder.append(var);
@@ -391,7 +393,7 @@ public class ExpressionGenerator extends Generator {
       }
     }
 
-    builder.append(":");
+    builder.append(':');
     if (elseBranch != null) {
       elseBranch.accept(this);
     }
@@ -599,7 +601,7 @@ public class ExpressionGenerator extends Generator {
       }
       builder.append(").matcher(");
       left.accept(this);
-      builder.append(")");
+      builder.append(')');
       return;
     }
     if (op == mREGEX_MATCH) {
@@ -656,10 +658,10 @@ public class ExpressionGenerator extends Generator {
 
   private void writeSimpleBinaryExpression(PsiElement opToken, GrExpression left, GrExpression right) {
     left.accept(this);
-    builder.append(" ");
+    builder.append(' ');
     builder.append(opToken.getText());
     if (right != null) {
-      builder.append(" ");
+      builder.append(' ');
       right.accept(this);
     }
   }
@@ -902,7 +904,7 @@ public class ExpressionGenerator extends Generator {
 
     if (type == mMEMBER_POINTER) {
       LOG.assertTrue(qualifier != null);
-      builder.append("new ").append(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE).append("(");
+      builder.append("new ").append(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE).append('(');
       qualifier.accept(this);
       builder.append(", \"").append(referenceExpression.getReferenceName()).append("\")");
       return;
@@ -1013,7 +1015,7 @@ public class ExpressionGenerator extends Generator {
     LOG.assertTrue(resolved instanceof PsiClass);
 
     if (!(resolved instanceof PsiAnonymousClass)) {
-      builder.append(((PsiClass)resolved).getQualifiedName()).append(".");
+      builder.append(((PsiClass)resolved).getQualifiedName()).append('.');
     }
     builder.append(expr.getReferenceName());
   }
@@ -1026,9 +1028,9 @@ public class ExpressionGenerator extends Generator {
   }
 
   private void generateCast(GrTypeElement typeElement, GrExpression operand) {
-    builder.append("(");
+    builder.append('(');
     writeType(builder, typeElement.getType(), typeElement);
-    builder.append(")");
+    builder.append(')');
 
     boolean insertParentheses =
       operand instanceof GrBinaryExpression && ((GrBinaryExpression)operand).getOperationTokenType() == GroovyTokenTypes.mEQUAL;
@@ -1060,7 +1062,8 @@ public class ExpressionGenerator extends Generator {
         builder.append(", ");
       }
       if (initializers.length > 0) {
-        builder.delete(builder.length() - 2, builder.length());
+        builder.delete(builder.length()-2,builder.length());
+        //builder.removeFromTheEnd(2);
       }
       builder.append('}');
       return;
@@ -1108,12 +1111,12 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
-    builder.append("(");
+    builder.append('(');
     final GrExpression operand = expression.getOperand();
     if (operand != null) {
       operand.accept(this);
     }
-    builder.append(")");
+    builder.append(')');
   }
 
   @Override
@@ -1151,10 +1154,10 @@ public class ExpressionGenerator extends Generator {
     }
 
     selectedExpression.accept(this);
-    builder.append("[");
+    builder.append('[');
     final GrExpression arg = exprArgs[0];
     arg.accept(this);
-    builder.append("]");
+    builder.append(']');
   }
 
   public void invokeMethodOn(PsiMethod method,
@@ -1184,7 +1187,7 @@ public class ExpressionGenerator extends Generator {
     if (method.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
-        builder.append(containingClass.getQualifiedName()).append(".");
+        builder.append(containingClass.getQualifiedName()).append('.');
       }
     }
     else {
@@ -1204,7 +1207,7 @@ public class ExpressionGenerator extends Generator {
         if (castNeeded) {
           builder.append(')');
         }
-        builder.append(".");
+        builder.append('.');
       }
     }
     builder.append(method.getName());
@@ -1282,10 +1285,10 @@ public class ExpressionGenerator extends Generator {
 
     writeType(declaration, type, listOrMap);
     final String varName = suggestVarName(type, listOrMap, this.context);
-    declaration.append(" ").append(varName).append(" = new ");
+    declaration.append(' ').append(varName).append(" = new ");
     writeType(declaration, type, listOrMap);
 
-    declaration.append("(");
+    declaration.append('(');
     //insert count of elements in list or map
 
     declaration.append(listOrMap.getNamedArguments().length);
@@ -1304,7 +1307,8 @@ public class ExpressionGenerator extends Generator {
     }
 
     if (initializers.length > 0) {
-      builder.delete(builder.length() - 2, builder.length());
+      builder.delete(builder.length()-2, builder.length());
+      //builder.removeFromTheEnd(2);
     }
   }
 
@@ -1320,7 +1324,7 @@ public class ExpressionGenerator extends Generator {
     else {
       builder.append(resolved.getQualifiedName());
     }
-    builder.append("(");
+    builder.append('(');
     final GrExpression left = range.getLeftOperand();
     left.accept(this);
 
@@ -1331,6 +1335,6 @@ public class ExpressionGenerator extends Generator {
       right.accept(this);
     }
 
-    builder.append(")");
+    builder.append(')');
   }
 }

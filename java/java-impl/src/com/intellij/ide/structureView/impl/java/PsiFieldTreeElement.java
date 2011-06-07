@@ -36,10 +36,6 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField> impl
     return Collections.emptyList();
   }
 
-  public ItemPresentation getPresentation() {
-    return this;
-  }
-
   public String getPresentableText() {
     return PsiFormatUtil.formatVariable(
       getElement(),

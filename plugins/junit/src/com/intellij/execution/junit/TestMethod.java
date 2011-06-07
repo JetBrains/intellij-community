@@ -129,18 +129,16 @@ class TestMethod extends TestObject {
     }
     final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(psiClass);
     boolean found = false;
-    boolean testAnnotatedOrFromRecognizer = false;
+    boolean testAnnotated = false;
     for (final PsiMethod method : psiClass.findMethodsByName(methodName, true)) {
       if (filter.value(method)) found = true;
-      if (JUnitUtil.isTestAnnotated(method) || isFromRecognizer(method)) {
-        testAnnotatedOrFromRecognizer = true;
-      }
+      if (JUnitUtil.isTestAnnotated(method)) testAnnotated = true;
     }
     if (!found) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("test.method.doesnt.exist.error.message", methodName));
     }
 
-    if (!AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, true) && !testAnnotatedOrFromRecognizer) {
+    if (!AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, true) && !testAnnotated) {
       try {
         final PsiClass testCaseClass = JUnitUtil.getTestCaseClass(configurationModule.getModule());
         if (!psiClass.isInheritor(testCaseClass, true)) {
@@ -152,15 +150,5 @@ class TestMethod extends TestObject {
           ExecutionBundle.message("junit.jar.not.found.in.module.class.path.error.message", configurationModule.getModuleName()));
       }
     }
-  }
-
-  private static boolean isFromRecognizer(PsiMethod method) {
-    for (JUnitRecognizer jUnitRecognizer : JUnitRecognizer.EP_NAME.getExtensions()) {
-      if (jUnitRecognizer.isTestMethod(method)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 }

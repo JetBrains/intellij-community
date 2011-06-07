@@ -137,9 +137,4 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
     }
     return result.toArray(new ParameterInfoImpl[result.size()]);
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
-
 }

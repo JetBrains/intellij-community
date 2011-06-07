@@ -39,7 +39,7 @@ public interface Notifications {
   String LOG_ONLY_GROUP_ID = "Log Only";
 
   void notify(@NotNull Notification notification);
-  void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType);
+  void register(@NotNull final String groupDisplayType, @NotNull final NotificationDisplayType defaultDisplayType);
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {

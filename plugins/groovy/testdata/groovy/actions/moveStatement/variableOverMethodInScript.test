@@ -1,9 +1,9 @@
-i<caret>nt x
 def y() {
     x*2 + it
 }
+i<caret>nt x
 -----
+i<caret>nt x
 def y() {
     x*2 + it
 }
-i<caret>nt x

@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -359,11 +358,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     @Override
     public String getText() {
       return myText;
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
     }
 
     @Override

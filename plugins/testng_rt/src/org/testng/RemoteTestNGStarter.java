@@ -101,8 +101,7 @@ public class RemoteTestNGStarter {
       testNG.run();
       return;
     }
-    catch (NoSuchMethodException ignore) {}
-    catch (ClassNotFoundException ignore) {}
+    catch (Throwable ignore) {}
 
     RemoteTestNG.main((String[])resultArgs.toArray(new String[resultArgs.size()]));
   }

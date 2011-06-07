@@ -24,6 +24,7 @@ import com.intellij.concurrency.JobUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
@@ -110,7 +111,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
           int oldWidth = myDelegateIcon.getIconWidth();
           myDelegateIcon = evaluate();
 
-          final boolean shouldRevalidate = myDelegateIcon.getIconWidth() != oldWidth;
+          final boolean shouldRevalidate = Registry.is("ide.tree.deferredicon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {

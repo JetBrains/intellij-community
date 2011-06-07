@@ -250,10 +250,6 @@ public class SimpleClasspathPanel extends JPanel {
           return true;
         }
 
-        public boolean isSelectable(PopupAction value) {
-          return true;
-        }
-
         public PopupStep onChosen(final PopupAction selectedValue, final boolean finalChoice) {
           return doFinalStep(new Runnable() {
             public void run() {

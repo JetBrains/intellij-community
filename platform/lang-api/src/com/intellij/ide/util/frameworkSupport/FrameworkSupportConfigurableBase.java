@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -44,7 +45,8 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     this(frameworkSupportProvider, model, Collections.<FrameworkVersion>emptyList(), null);
   }
 
-  public FrameworkSupportConfigurableBase(final FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model, List<FrameworkVersion> versions, String versionLabelText) {
+  public FrameworkSupportConfigurableBase(FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model,
+                                          List<FrameworkVersion> versions, @Nullable String versionLabelText) {
     myFrameworkSupportProvider = frameworkSupportProvider;
     myFrameworkSupportModel = model;
     if (versions.size() > 0) {
@@ -62,14 +64,12 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
         }
       }
       myVersionComboBox.setPrototypeDisplayValue(maxValue + "_");
-      myVersionComboBox.setRenderer(new DefaultListCellRenderer() {
+      myVersionComboBox.setRenderer(new ListCellRendererWrapper(myVersionComboBox.getRenderer()) {
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof FrameworkVersion) {
             setText(((FrameworkVersion)value).getVersionName());
           }
-          return component;
         }
       });
       myVersionComboBox.setSelectedItem(defaultVersion);
@@ -101,5 +101,4 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
   public FrameworkVersion getSelectedVersion() {
     return (FrameworkVersion)myVersionComboBox.getSelectedItem();
   }
-
 }

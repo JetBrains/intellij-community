@@ -16,12 +16,12 @@
 package com.intellij.openapi.diff.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.DiffSideView;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.diff.impl.DiffSideView;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.ui.DialogWrapperDialog;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperDialog;
 
 import java.awt.*;
 

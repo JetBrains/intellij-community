@@ -64,11 +64,6 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     return true;
   }
 
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
-  }
-
   @Nullable
   public JComponent createOptionsPanel() {
     final JPanel jPanel = new JPanel();

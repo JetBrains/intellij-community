@@ -21,8 +21,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.TreeUtil;
 
 class CStyleCommentPredicate implements PsiElementPredicate{
 
@@ -38,7 +38,7 @@ class CStyleCommentPredicate implements PsiElementPredicate{
         if(!JavaTokenType.C_STYLE_COMMENT.equals(type)){
             return false;
         }
-        final PsiElement sibling = TreeUtil.getNextLeaf(comment);
+      final PsiElement sibling = PsiTreeUtil.nextLeaf(comment);
         if(!(sibling instanceof PsiWhiteSpace))
         {
             return false;

@@ -87,10 +87,6 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
     }
   }
 
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   protected PsiType getReturnType() {
     return myReturnType;
   }

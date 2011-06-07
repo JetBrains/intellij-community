@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
@@ -206,7 +207,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
       }
     }
 
-    if (status.errorAnalyzingFinished) return icon;
+    if (status.errorAnalyzingFinished) {
+      if (myProject != null && DumbService.isDumb(myProject)) {
+        return new LayeredIcon(NO_ANALYSIS_ICON, icon, STARING_EYE_ICON);
+      }
+
+      return icon;
+    }
     if (!status.enabled) return NO_ANALYSIS_ICON;
 
     double progress = getOverallProgress(status);

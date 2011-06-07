@@ -135,10 +135,6 @@ public class MigrationDialog extends DialogWrapper{
     return myPanel;
   }
 
-  protected JComponent createNorthPanel() {
-    return null;
-  }
-
   private void updateDescription() {
     if (myDescriptionTextArea == null){
       return;

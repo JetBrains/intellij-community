@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.formatter;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -148,7 +149,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   public void doTest() throws Throwable {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
-    checkFormatting(data.get(0), data.get(1));
+    checkFormatting(data.get(0), StringUtil.trimEnd(data.get(1), "\n"));
   }
 
   public void testJavadocLink() throws Throwable {

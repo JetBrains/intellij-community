@@ -19,14 +19,11 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +37,7 @@ import java.util.List;
  */
 public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
 
-  private final JavadocNavigationHelper myHelper = JavadocNavigationHelper.getInstance();
+  private static final JavadocHelper ourHelper = JavadocHelper.getInstance();
   
   /**
    * Improves navigation in case of incomplete javadoc parameter descriptions.
@@ -95,11 +92,16 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
     }
     if (psiFile == null) {
       return Result.CONTINUE;
-    } 
+    }
 
+    return navigateToLineEnd(editor, project, psiFile);
+  }
+  
+  public static Result navigateToLineEnd(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile psiFile) {
+    final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
     final int offset = caretModel.getOffset();
-    
+
     final CharSequence text = document.getCharsSequence();
     int line = caretModel.getLogicalPosition().line;
     final int endLineOffset = document.getLineEndOffset(line);
@@ -111,48 +113,13 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
       return Result.CONTINUE;
     }
 
-    final List<JavadocNavigationHelper.JavadocParameterInfo> infos = myHelper.parse(psiFile, editor, offset);
-    JavadocNavigationHelper.JavadocParameterInfo info = null;
-    int descriptionStartColumn = -1;
-    int parameterNameEndColumn = -1;
-    for (JavadocNavigationHelper.JavadocParameterInfo parameterInfo : infos) {
-      parameterNameEndColumn = Math.max(parameterNameEndColumn, parameterInfo.parameterNameEndPosition.column);
-      if (parameterInfo.parameterDescriptionStartPosition != null) {
-        descriptionStartColumn = Math.max(descriptionStartColumn, parameterInfo.parameterDescriptionStartPosition.column);
-      }
-      if (line == parameterInfo.parameterNameEndPosition.line) {
-        info = parameterInfo;
-      }
-    }
-    if (info == null || info.parameterDescriptionStartPosition != null) {
+    final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair = ourHelper.parse(psiFile, editor, offset);
+    if (pair.first == null || pair.first.parameterDescriptionStartPosition != null) {
       return Result.CONTINUE;
     }
 
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    final int indentSize = codeStyleSettings.getIndentSize(psiFile.getFileType());
-    int column;
-    if (codeStyleSettings.JD_ALIGN_PARAM_COMMENTS) {
-      column = Math.max(descriptionStartColumn, parameterNameEndColumn);
-      if (column <= parameterNameEndColumn) {
-        column = parameterNameEndColumn + indentSize;
-      }
-    }
-    else {
-      column = info.parameterNameEndPosition.column + indentSize;
-    }
-    
-    if (!editor.getSettings().isVirtualSpace() && endLineLogicalPosition.column < column && !editor.isViewer()) {
-      final String toInsert = StringUtil.repeat(" ", column - endLineLogicalPosition.column);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          document.insertString(endLineOffset, toInsert);
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-        }
-      });
-    } 
-    
-    caretModel.moveToLogicalPosition(new LogicalPosition(line, column));
+    final LogicalPosition position = ourHelper.calculateDescriptionStartPosition(psiFile, pair.second, pair.first);
+    ourHelper.navigate(position, editor, psiFile.getProject());
     return Result.STOP;
   }
 }

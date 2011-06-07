@@ -103,9 +103,4 @@ public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiE
       }
     }
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

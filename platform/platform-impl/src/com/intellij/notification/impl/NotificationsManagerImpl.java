@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -45,7 +46,7 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
-  public static final String LOG_TOOL_WINDOW_ID = "Event log";
+  public static final String LOG_TOOL_WINDOW_ID = "Event Log";
 
   private final NotificationModel myModel = new NotificationModel();
 
@@ -67,7 +68,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   @Override
-  public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
   }
 
   @Override
@@ -128,7 +129,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.STICKY_BALLOON : displayType);
     }
 
-    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY) {
+    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY &&
+        !LOG_ONLY_GROUP_ID.equals(notification.getGroupId())) {
       myModel.add(notification, project);
     }
 
@@ -243,7 +245,12 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public static boolean isEventLogVisible(Project project) {
-    return project != null && ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID).isVisible();
+    if (project == null) {
+      return false;
+    }
+
+    final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
+    return window != null && window.isVisible();
   }
 
   private static PairFunction<Notification, Project, Boolean> createFilter(@Nullable final Project project, final boolean strict) {

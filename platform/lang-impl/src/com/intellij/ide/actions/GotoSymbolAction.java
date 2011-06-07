@@ -25,9 +25,9 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 public class GotoSymbolAction extends GotoActionBase {
 
@@ -38,13 +38,13 @@ public class GotoSymbolAction extends GotoActionBase {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     showNavigationPopup(e, model, new GotoActionCallback<Language>() {
       @Override
-      protected ChooseByNameFilter<Language> createFilter(ChooseByNamePopup popup) {
+      protected ChooseByNameFilter<Language> createFilter(@NotNull ChooseByNamePopup popup) {
         return new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project);
       }
 
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
-        EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
+        EditSourceUtil.navigate((NavigationItem)element, true, popup.isOpenInCurrentWindowRequested());
       }
     });
   }

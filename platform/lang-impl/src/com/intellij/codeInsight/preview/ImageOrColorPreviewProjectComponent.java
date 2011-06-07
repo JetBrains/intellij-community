@@ -47,13 +47,7 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
     return "ImageOrColorPreviewComponent";
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  private static class MyFileEditorManagerListener implements FileEditorManagerListener {
+  private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
     public void fileOpened(final FileEditorManager source, final VirtualFile file) {
       if (isSuitable(source.getProject(), file)) {
         final FileEditor[] fileEditors = source.getEditors(file);
@@ -78,12 +72,6 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
       }
 
       return false;
-    }
-
-    public void fileClosed(final FileEditorManager source, final VirtualFile file) {
-    }
-
-    public void selectionChanged(final FileEditorManagerEvent event) {
     }
   }
 

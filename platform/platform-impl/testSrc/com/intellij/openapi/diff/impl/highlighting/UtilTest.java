@@ -4,6 +4,7 @@ import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.MultiCheck;
 import com.intellij.util.Assertion;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import junit.framework.TestCase;
 
 public class UtilTest extends TestCase {
@@ -80,7 +81,7 @@ public class UtilTest extends TestCase {
     assertTrue(line[0].isEqual());
   }
 
-  public void testConcatEquals() {
+  public void testConcatEquals() throws FilesTooBigForDiffException {
     Object[] left = new String[]{"a", "x", "a", "b"};
     Object[] right = new String[]{"a", "b"};
     Diff.Change change = Diff.buildChanges(left, right);
@@ -122,6 +123,17 @@ public class UtilTest extends TestCase {
     multiCheck = new MultiCheck();
     multiCheck.assertEquals(0, newChange.line0);
     multiCheck.assertEquals(0, newChange.line1);
+    multiCheck.assertEquals(5, newChange.deleted);
+    multiCheck.assertEquals(1, newChange.inserted);
+    multiCheck.flush();
+
+    left = new String[]{"y", "y", "y", "a", "2", "a", "b", "*"};
+    right = new String[]{"x", "a", "b", "@"};
+    change = Diff.buildChanges(left, right);
+    newChange = Util.concatEquals(change, left, right);
+    multiCheck = new MultiCheck();
+    multiCheck.assertEquals(0, newChange.line0);
+    multiCheck.assertEquals(0, newChange.line1);
     multiCheck.assertEquals(3, newChange.deleted);
     multiCheck.assertEquals(1, newChange.inserted);
     newChange = newChange.link;
@@ -129,23 +141,44 @@ public class UtilTest extends TestCase {
     multiCheck.assertEquals(1, newChange.line1);
     multiCheck.assertEquals(2, newChange.deleted);
     multiCheck.assertEquals(0, newChange.inserted);
+    newChange = newChange.link;
+    multiCheck.assertEquals(7, newChange.line0);
+    multiCheck.assertEquals(3, newChange.line1);
+    multiCheck.assertEquals(1, newChange.deleted);
+    multiCheck.assertEquals(1, newChange.inserted);
     multiCheck.assertNull(newChange.link);
     multiCheck.flush();
   }
 
-  public void testConcatEqualsConcatenatesChanged() {
+  public void testConcatEqualsConcatenatesChanged() throws FilesTooBigForDiffException {
     String[] left = new String[]{"i1", "a", "i2", "a", "b"};
     String[] right = new String[]{"a", "b"};
     Diff.Change change = Diff.buildChanges(left, right);
+    MultiCheck multiCheck = new MultiCheck();
+    multiCheck.assertEquals(0, change.line0);
+    multiCheck.assertEquals(0, change.line1);
+    multiCheck.assertEquals(3, change.deleted);
+    multiCheck.assertEquals(0, change.inserted);
+    multiCheck.assertNull(change.link);
+    multiCheck.flush();
+
+    left = new String[]{"i1", "a", "i2", "a", "b", "*"};
+    right = new String[]{"a", "b", "$"};
+    change = Diff.buildChanges(left, right);
     assertNotNull(change.link);
     assertEquals(2, change.link.deleted);
     assertEquals(2, change.link.line0);
     Diff.Change newChange = Util.concatEquals(change, left, right);
-    MultiCheck multiCheck = new MultiCheck();
     multiCheck.assertEquals(0, newChange.line0);
     multiCheck.assertEquals(0, newChange.line1);
     multiCheck.assertEquals(3, newChange.deleted);
     multiCheck.assertEquals(0, newChange.inserted);
+    assertNotNull(newChange.link);
+    newChange = newChange.link;
+    multiCheck.assertEquals(5, newChange.line0);
+    multiCheck.assertEquals(2, newChange.line1);
+    multiCheck.assertEquals(1, newChange.deleted);
+    multiCheck.assertEquals(1, newChange.inserted);
     multiCheck.assertNull(newChange.link);
     multiCheck.flush();
   }

@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -95,14 +96,14 @@ public class IdeaLogger extends Logger {
     myLogger.debug(message, t);
   }
 
-  public void error(String message, Throwable t, String... details) {
+  public void error(String message, @Nullable Throwable t, String... details) {
     if (t instanceof ProcessCanceledException) {
       myLogger.error("Do not log ProcessCanceledException. Thrown at:", t);
       myLogger.error("Do not log ProcessCanceledException. Logged at: ", new Throwable());
       throw (ProcessCanceledException)t;
     }
 
-    if (t.getClass().getName().contains("ReparsedSuccessfullyException")) {
+    if (t != null && t.getClass().getName().contains("ReparsedSuccessfullyException")) {
       myLogger.error("Do not log ReparsedSuccessfullyException. Thrown at: ", t);
       myLogger.error("Do not log ReparsedSuccessfullyException. Logged at: ", new Throwable());
       throw (RuntimeException)t;
@@ -118,7 +119,7 @@ public class IdeaLogger extends Logger {
 
     myLogger.error(message + (detailString.length() > 0 ? "\nDetails: " + detailString : ""), t);
     logErrorHeader();
-    if (t.getCause() != null) {
+    if (t != null && t.getCause() != null) {
       myLogger.error("Original exception: ", t.getCause());
     }
   }
@@ -160,17 +161,12 @@ public class IdeaLogger extends Logger {
     myLogger.info(message);
   }
 
-  public void info(String message, Throwable t) {
+  public void info(String message, @Nullable Throwable t) {
     myLogger.info(message, t);
   }
 
-  public void warn(@NonNls String message, Throwable t) {
-    if (t == null) {
-      myLogger.warn(message);
-    }
-    else {
-      myLogger.warn(message, t);
-    }
+  public void warn(@NonNls String message, @Nullable Throwable t) {
+    myLogger.warn(message, t);
   }
 
   public static void setApplicationInfoProvider(ApplicationInfoProvider aProvider) {

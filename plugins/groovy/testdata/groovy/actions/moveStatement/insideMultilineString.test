@@ -1,9 +1,9 @@
 def a = """
-aaa<caret>
     bbb
+aaa<caret>
 """
 -----
 def a = """
-    bbb
 aaa<caret>
+    bbb
 """

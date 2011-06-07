@@ -143,8 +143,4 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
   public String getFamilyName() {
     return InspectionsBundle.message("suppress.inspection.family");
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

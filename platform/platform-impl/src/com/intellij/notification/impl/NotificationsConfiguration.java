@@ -110,9 +110,9 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     myIdToSettingsMap.clear();
   }
 
-  public void register(@NotNull final String id, @NotNull final NotificationDisplayType displayType) {
-    if (!myIdToSettingsMap.containsKey(id)) {
-      myIdToSettingsMap.put(id, new NotificationSettings(id, displayType));
+  public void register(@NotNull final String groupDisplayType, @NotNull final NotificationDisplayType displayType) {
+    if (!myIdToSettingsMap.containsKey(groupDisplayType)) {
+      myIdToSettingsMap.put(groupDisplayType, new NotificationSettings(groupDisplayType, displayType));
     }
   }
 

@@ -23,8 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PropertyFileIndex;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -82,11 +82,11 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
   }
 
   public Collection<VirtualFile> getAllPropertiesFiles() {
-    return FileBasedIndex.getInstance().getContainingFiles(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE.getName(), GlobalSearchScope.allScope(myProject));
+    return FileBasedIndex.getInstance().getContainingFiles(FileTypeIndex.NAME, PropertiesFileType.FILE_TYPE, GlobalSearchScope.allScope(myProject));
   }
 
   public boolean processAllPropertiesFiles(final Processor<VirtualFile> processor) {
-    return FileBasedIndex.getInstance().processValues(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE.getName(), null, new FileBasedIndex.ValueProcessor<Void>() {
+    return FileBasedIndex.getInstance().processValues(FileTypeIndex.NAME, PropertiesFileType.FILE_TYPE, null, new FileBasedIndex.ValueProcessor<Void>() {
       public boolean process(VirtualFile file, Void value) {
         return processor.process(file);
       }

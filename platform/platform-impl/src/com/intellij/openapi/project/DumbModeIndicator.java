@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ui.popup.BalloonHandler;
@@ -40,24 +37,14 @@ public class DumbModeIndicator extends AbstractProjectComponent {
   public void projectOpened() {
     myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       boolean myFirstNotification = true; // first dumb mode is always a "forced" dumb mode including initial project scan
-      boolean myLogged;
       BalloonHandler myHandler;
 
       public void enteredDumbMode() {
         final boolean first = myFirstNotification;
         myFirstNotification = false;
         myAlarm.addRequest(new Runnable() {
-          @Override
           public void run() {
-            Notifications.Bus.logEvent(DUMB_MODE_MESSAGE, NotificationType.INFORMATION, myProject);
-            myLogged = true;
-          }
-        }, 100);
-        myAlarm.addRequest(new Runnable() {
-          public void run() {
-            if (!NotificationsManagerImpl.isEventLogVisible(myProject)) {
-              myHandler = DumbService.getInstance(myProject).showDumbModeNotification(DUMB_MODE_MESSAGE);
-            }
+            myHandler = DumbService.getInstance(myProject).showDumbModeNotification(DUMB_MODE_MESSAGE);
           }
         }, first? 10000 : 1000);
       }
@@ -65,10 +52,6 @@ public class DumbModeIndicator extends AbstractProjectComponent {
       public void exitDumbMode() {
         myAlarm.cancelAllRequests();
         if (myHandler != null) myHandler.hide();
-        if (myLogged) {
-          Notifications.Bus.logEvent("Indexing finished", NotificationType.INFORMATION, myProject);
-        }
-        myLogged = false;
         myHandler = null;
         FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
       }

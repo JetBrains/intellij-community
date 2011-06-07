@@ -651,6 +651,11 @@ public class HighlightUtil {
   }
 
   @NotNull
+  public static String formatField(@NotNull PsiField field) {
+    return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+  }
+
+  @NotNull
   public static String formatType(@Nullable PsiType type) {
     if (type == null) return PsiKeyword.NULL;
     String text = type.getInternalCanonicalText();
@@ -2014,18 +2019,18 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkSingleImportClassConflict(PsiImportStatement statement,
-                                                             Map<String, Pair<PsiImportStatementBase, PsiClass>> singleImportedClasses) {
+                                                             Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> singleImportedClasses) {
     if (statement.isOnDemand()) return null;
     PsiElement element = statement.resolve();
     if (element instanceof PsiClass) {
       String name = ((PsiClass)element).getName();
-      Pair<PsiImportStatementBase, PsiClass> imported = singleImportedClasses.get(name);
+      Pair<PsiImportStaticReferenceElement, PsiClass> imported = singleImportedClasses.get(name);
       PsiClass importedClass = imported == null ? null : imported.getSecond();
       if (importedClass != null && !element.getManager().areElementsEquivalent(importedClass, element)) {
         String description = JavaErrorMessages.message("single.import.class.conflict", formatClass(importedClass));
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
       }
-      singleImportedClasses.put(name, Pair.<PsiImportStatementBase, PsiClass>create(statement, (PsiClass)element));
+      singleImportedClasses.put(name, Pair.create((PsiImportStaticReferenceElement)statement.getReference(), (PsiClass)element));
     }
     return null;
   }
@@ -2150,6 +2155,7 @@ public class HighlightUtil {
   private static String format(PsiElement element) {
     if (element instanceof PsiClass) return formatClass((PsiClass)element);
     if (element instanceof PsiMethod) return formatMethod((PsiMethod)element);
+    if (element instanceof PsiField) return formatField((PsiField)element);
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
 

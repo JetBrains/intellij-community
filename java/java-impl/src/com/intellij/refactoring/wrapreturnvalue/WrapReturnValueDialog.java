@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.wrapreturnvalue;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.help.HelpManager;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -107,7 +107,10 @@ class WrapReturnValueDialog extends RefactoringDialog {
     if (myCreateInnerClassButton.isSelected()) {
       final String innerClassName = getInnerClassName().trim();
       if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("\'" + innerClassName + "\' is invalid inner class name");
-      if (sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) != null) throw new ConfigurationException("Inner class with name \'" + innerClassName + "\' already exist");
+      final PsiClass containingClass = sourceMethod.getContainingClass();
+      if (containingClass != null && containingClass.findInnerClassByName(innerClassName, false) != null) {
+        throw new ConfigurationException("Inner class with name \'" + innerClassName + "\' already exist");
+      }
     } else if (useExistingClassButton.isSelected()) {
       final String className = existingClassField.getText().trim();
       if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
@@ -168,7 +171,10 @@ class WrapReturnValueDialog extends RefactoringDialog {
     }
 
     final PsiClass containingClass = sourceMethod.getContainingClass();
-    final String containingClassName = containingClass instanceof PsiAnonymousClass ? "Anonymous " + ((PsiAnonymousClass)containingClass).getBaseClassType().getClassName() : containingClass.getName();
+    assert containingClass != null : sourceMethod;
+    final String containingClassName = containingClass instanceof PsiAnonymousClass
+                                       ? "Anonymous " + ((PsiAnonymousClass)containingClass).getBaseClassType().getClassName()
+                                       : containingClass.getName();
     final String sourceMethodName = sourceMethod.getName();
     sourceMethodTextField.setText(containingClassName + '.' + sourceMethodName);
     final ButtonGroup buttonGroup = new ButtonGroup();
@@ -188,26 +194,21 @@ class WrapReturnValueDialog extends RefactoringDialog {
     
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     myFieldsCombo.setModel(model);
-    myFieldsCombo.setRenderer(new DefaultListCellRenderer(){
+    myFieldsCombo.setRenderer(new ListCellRendererWrapper(myFieldsCombo.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof PsiField) {
           final PsiField field = (PsiField)value;
           setText(field.getName());
           setIcon(field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
         }
-        return rendererComponent;
       }
     });
     existingClassField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
-        final PsiClass currentClass = JavaPsiFacade.getInstance(myProject).findClass(existingClassField.getText(), GlobalSearchScope.allScope(myProject));
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
+        final PsiClass currentClass = facade.findClass(existingClassField.getText(), GlobalSearchScope.allScope(myProject));
         if (currentClass != null) {
           model.removeAllElements();
           for (PsiField field : currentClass.getFields()) {

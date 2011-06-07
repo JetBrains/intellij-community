@@ -16,6 +16,7 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -63,6 +64,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
    * The committer time key for annotations
    */
   @NonNls private static final String COMMITTER_TIME_KEY = "committer-time";
+  private static final Logger LOG = Logger.getInstance(GitAnnotationProvider.class);
 
   /**
    * A constructor
@@ -189,7 +191,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
             commit.author = value;
           }
           if (commitHash != null && COMMITTER_TIME_KEY.equals(key)) {
-            commit.date = GitUtil.parseTimestamp(value);
+            commit.date = GitUtil.parseTimestampWithNFEReport(value, h, output);
             commit.revision = new GitRevisionNumber(commitHash, commit.date);
           }
         }

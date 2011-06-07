@@ -162,8 +162,5 @@ public class UnknownGuardInspection extends BaseJavaLocalInspectionTool {
       }
       myHolder.registerProblem(psiDocTag, "Unknown @GuardedBy field \"" + guardValue + "\" #loc");
     }
-
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-    }
   }
 }

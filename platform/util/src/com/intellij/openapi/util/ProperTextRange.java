@@ -30,12 +30,12 @@ public class ProperTextRange extends TextRange {
     this(range.getStartOffset(), range.getEndOffset());
   }
 
-  public static void assertProperRange(@NotNull TextRange range) throws AssertionError {
+  public static void assertProperRange(@NotNull Segment range) throws AssertionError {
     assert range.getStartOffset() <= range.getEndOffset() : "Invalid range specified: " + range;
     assert range.getStartOffset() >= 0 : "Negative start offset: " + range;
   }
 
-  public static void assertProperRange(@NotNull TextRange range, Object message) throws AssertionError {
+  public static void assertProperRange(@NotNull Segment range, Object message) throws AssertionError {
     assert range.getStartOffset() <= range.getEndOffset() : "Invalid range specified: " + range + "; "+message;
     assert range.getStartOffset() >= 0 : "Negative start offset: " + range +  "; "+message;
   }

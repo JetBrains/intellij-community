@@ -84,9 +84,7 @@ public class GroovyDslScript {
         return CustomMembersHolder.EMPTY;
       }
 
-      final ExtensibleCustomMembersGenerator generator = new ExtensibleCustomMembersGenerator(descriptor, psiType);
-      executor.processVariants(descriptor, generator, ctx);
-      return generator.getMembersHolder();
+      return executor.processVariants(descriptor, ctx, psiType);
     }
     catch (InvokerInvocationException e) {
       Throwable cause = e.getCause();

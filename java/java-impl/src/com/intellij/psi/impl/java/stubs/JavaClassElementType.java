@@ -220,6 +220,10 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
       }
 
       final String fqn = stub.getQualifiedName();
+      if (JavaFullClassNameIndex.DEBUG) {
+        System.out.println("Indexing " + fqn);
+      }
+
       if (fqn != null) {
         sink.occurrence(JavaFullClassNameIndex.KEY, fqn.hashCode());
       }

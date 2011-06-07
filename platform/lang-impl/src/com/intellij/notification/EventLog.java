@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
@@ -74,14 +74,14 @@ public class EventLog implements Notifications {
         getApplicationComponent().addGlobalNotifications(notification);
       }
       for (Project p : openProjects) {
-        printNotification(getProjectComponent(p).myConsoleView, notification);
+        printNotification(getProjectComponent(p).myConsoleView, p, notification);
       }
     } else {
-      printNotification(getProjectComponent(project).myConsoleView, notification);
+      printNotification(getProjectComponent(project).myConsoleView, project, notification);
     }
   }
 
-  private static void printNotification(ConsoleViewImpl view, final Notification notification) {
+  private static void printNotification(ConsoleViewImpl view, Project project, final Notification notification) {
     view.print(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(new Date()) + " ", ConsoleViewContentType.NORMAL_OUTPUT);
 
     boolean showLink = notification.getListener() != null;
@@ -119,6 +119,18 @@ public class EventLog implements Notifications {
       view.print(" ", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     view.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
+
+    notifyStatusBar(project, mainText);
+  }
+
+  private static void notifyStatusBar(Project project, @Nullable String mainText) {
+    final IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+    if (frame != null) {
+      final StatusBar statusBar = frame.getStatusBar();
+      if (statusBar != null) {
+        ((StatusBarEx)statusBar).setLogMessage(mainText);
+      }
+    }
   }
 
   private static int eolIndex(String mainText) {
@@ -133,7 +145,7 @@ public class EventLog implements Notifications {
   }
 
   @Override
-  public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
   }
 
   public static class ProjectTracker extends AbstractProjectComponent {
@@ -152,7 +164,7 @@ public class EventLog implements Notifications {
         }
 
         @Override
-        public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+        public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
         }
       });
     }
@@ -163,6 +175,11 @@ public class EventLog implements Notifications {
         logNotification(myProject, globalNotification);
       }
       myGlobalNotifications.clear();
+    }
+
+    @Override
+    public void projectClosed() {
+      notifyStatusBar(myProject, null);
     }
   }
 

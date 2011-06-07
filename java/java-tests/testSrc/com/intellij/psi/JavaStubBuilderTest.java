@@ -45,11 +45,6 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
   public void testEmpty() {
     doTest("/**/",
            "PsiJavaFileStub []\n" +

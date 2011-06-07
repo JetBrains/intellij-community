@@ -33,10 +33,6 @@ public class TypeMigrationTreeBuilder extends AbstractTreeBuilder{
     initRootNode();
   }
 
-  protected boolean isAlwaysShowPlus(final NodeDescriptor nodeDescriptor) {
-    return false;
-  }
-
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
     return false;
   }

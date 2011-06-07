@@ -74,7 +74,7 @@ public class PsiImplUtil {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
       @NonNls final String name = attribute.getName();
-      if (Comparing.equal(name, attributeName) || attributeName == null && name.equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
+      if (Comparing.equal(name, attributeName) || attributeName == null && PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
         return attribute.getValue();
       }
     }
@@ -144,13 +144,15 @@ public class PsiImplUtil {
     }
     String message = parameter + ":"+parameter.getClass()+" not found among parameters: " + Arrays.asList(parameters) + "." +
                      " parameterList' parent: " + parameterList.getParent() + ";" +
-                     " parameter.getParent()==paramList: " + (parameter.getParent() == parameterList) + ";" +
-                     " " + parameterList.getClass() + ";" +
+                     " parameter.getParent()==paramList: " + (parameter.getParent() == parameterList) + "; " + parameterList.getClass() + ";" +
                      " parameter.isValid()=" + parameter.isValid() + ";" +
                      " parameterList.isValid()= " + parameterList.isValid() + ";" +
+                     " parameterList stub: " + (parameterList instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parameterList).getStub() : "---") + "; " +
                      " parameter stub: "+(parameter instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parameter).getStub() : "---") + ";" +
                      " suspect: " + suspect +" (index="+i+"); " + (suspect==null?null:suspect.getClass()) +
                      " suspect stub: "+(suspect instanceof StubBasedPsiElement ? ((StubBasedPsiElement)suspect).getStub() : suspect == null ? "-null-" : "---"+suspect.getClass()) + ";" +
+                     " parameter.equals(suspect) = " + parameter.equals(suspect) + "; " +
+                     " parameter.getNode() == suspect.getNode():  " + (parameter.getNode() == (suspect==null ? null : suspect.getNode())) + "; " +
                      "."
       ;
     LOG.error(message);

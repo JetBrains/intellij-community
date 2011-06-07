@@ -5543,6 +5543,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           }
           int endOffset = endLine==lineCount ? documentLength : myDocument.getLineEndOffset(endLine);
+          for (
+            FoldRegion region = myFoldingModel.getCollapsedRegionAtOffset(endOffset);
+            region != null && endOffset < myDocument.getTextLength();
+            region = myFoldingModel.getCollapsedRegionAtOffset(endOffset))
+          {
+            final int lineNumber = myDocument.getLineNumber(region.getEndOffset());
+            endOffset = myDocument.getLineEndOffset(lineNumber);
+          }
+          if (endOffset > myDocument.getTextLength()) {
+            break;
+          } 
+          
           IterationState state = new IterationState(EditorImpl.this, offset, endOffset, false);
           int fontType = state.getMergedAttributes().getFontType();
 

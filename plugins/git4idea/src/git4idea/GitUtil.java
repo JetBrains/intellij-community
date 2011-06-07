@@ -29,6 +29,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
@@ -189,14 +190,27 @@ public class GitUtil {
    * @param value a value to parse
    * @return timestamp as {@link Date} object
    */
-  public static Date parseTimestamp(String value) {
+  private static Date parseTimestamp(String value) {
     final long parsed;
+    parsed = Long.parseLong(value.trim());
+    return new Date(parsed * 1000);
+  }
+
+  /**
+   * Parse UNIX timestamp returned from Git and handle {@link NumberFormatException} if one happens: return new {@link Date} and
+   * log the error properly.
+   * In some cases git output gets corrupted and this method is intended to catch the reason, why.
+   * @param value      Value to parse.
+   * @param handler    Git handler that was called to received the output.
+   * @param gitOutput  Git output.
+   * @return Parsed Date or <code>new Date</code> in the case of error.
+   */
+  public static Date parseTimestampWithNFEReport(String value, GitHandler handler, String gitOutput) {
     try {
-      parsed = Long.parseLong(value.trim());
-      return new Date(parsed * 1000);
+      return parseTimestamp(value);
     } catch (NumberFormatException e) {
-      LOG.error("Error parsing timestamp from " + value, e);
-      return new Date();
+      LOG.error("annotate(). NFE. Handler: " + handler + ". Output: " + gitOutput, e);
+      return  new Date();
     }
   }
 
@@ -414,7 +428,7 @@ public class GitUtil {
       if ((!firstStep) && lineIsAStart) {
         final StringScanner innerScanner = new StringScanner(sb.toString());
         sb.setLength(0);
-        consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge));
+        consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge, h));
       }
       sb.append(lineIsAStart ? line.substring(2) : line).append('\n');
       firstStep = false;
@@ -422,7 +436,7 @@ public class GitUtil {
     if (sb.length() > 0) {
       final StringScanner innerScanner = new StringScanner(sb.toString());
       sb.setLength(0);
-      consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge));
+      consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge, h));
     }
     if (s.hasMoreData()) {
       throw new IllegalStateException("More input is avaialble: " + s.line());

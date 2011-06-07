@@ -231,9 +231,6 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     }
   }
 
-  protected void refreshElements(PsiElement[] elements) {
-  }
-
   //should be called before setting static modifier
   protected void setupTypeParameterList() throws IncorrectOperationException {
     final PsiTypeParameterList list = myMember.getTypeParameterList();

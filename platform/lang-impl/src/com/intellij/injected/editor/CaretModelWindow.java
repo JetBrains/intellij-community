@@ -69,7 +69,8 @@ public class CaretModelWindow implements CaretModel {
 
   @NotNull
   public LogicalPosition getLogicalPosition() {
-    return myEditorWindow.hostToInjected(myHostEditor.offsetToLogicalPosition(myDelegate.getOffset()));
+    LogicalPosition hostPos = myDelegate.getLogicalPosition();
+    return myEditorWindow.hostToInjected(hostPos);
   }
 
   @NotNull

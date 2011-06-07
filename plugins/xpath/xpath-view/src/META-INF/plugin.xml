@@ -133,7 +133,8 @@
 
     <treeStructureProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltTreeStructureProvider"/>
 
-    <psi.referenceContributor language="XML" implementation="org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor$XML"/>
+    <psi.referenceContributor language="XPath" implementation="org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor$XPath"/>
     <standardResourceProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltResourceProvider"/>
     <defaultLiveTemplatesProvider implementation="org.intellij.plugins.xpathView.XPathAppComponent" />
 

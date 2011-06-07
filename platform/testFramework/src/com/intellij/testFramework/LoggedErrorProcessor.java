@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
     public void processError(String message, Throwable t, String[] details, Logger logger) {
       logger.info(message, t);
       System.err.println("ERROR: " + message);
-      t.printStackTrace();
+      if (t != null) t.printStackTrace();
       if (details != null && details.length > 0) {
         System.out.println("details: ");
         for (String detail : details) {

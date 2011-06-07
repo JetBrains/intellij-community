@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DirDiffModel;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -38,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Konstantin Bulenkov
  */
-public class DirDiffTableModel extends AbstractTableModel implements Disposable {
+public class DirDiffTableModel extends AbstractTableModel implements DirDiffModel, Disposable {
   public static final String COLUMN_NAME = "Name";
   public static final String COLUMN_SIZE = "Size";
   public static final String COLUMN_DATE = "Date";
@@ -112,6 +113,7 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
     myUpdating.set(false);
     selectFirstRow();
     myPanel.focusTable();
+    myPanel.update(true);
   }
 
   private void selectFirstRow() {
@@ -217,6 +219,7 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
             if (loadingPanel.isLoading()) {
               loadingPanel.stopLoading();
             }
+            myPanel.update(true);
           }
         };
         if (myProject.isDefault()) {

@@ -32,28 +32,53 @@ public class Diff {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.diff.Diff");
 
   @Nullable
-  public static Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) {
+  public static Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) throws FilesTooBigForDiffException {
     final String[] strings1 = LineTokenizer.tokenize(before, false);
     final String[] strings2 = LineTokenizer.tokenize(after, false);
     return buildChanges(strings1, strings2);
   }
   
-  public static <T> Change buildChanges(T[] objects1, T[] objects2) {
+  public static <T> Change buildChanges(T[] objects1, T[] objects2) throws FilesTooBigForDiffException {
+
     // Old variant of enumerator worked incorrectly with null values.
     // This check is to ensure that the corrected version does not introduce bugs.
     for (T anObjects1 : objects1) LOG.assertTrue(anObjects1 != null);
     for (T anObjects2 : objects2) LOG.assertTrue(anObjects2 != null);
 
+    final int startShift = getStartShift(objects1, objects2);
+    final int endCut = getEndCut(objects1, objects2, startShift);
+
     Enumerator<T> enumerator = new Enumerator<T>(objects1.length + objects2.length, TObjectHashingStrategy.CANONICAL);
-    int[] ints1 = enumerator.enumerate(objects1);
-    int[] ints2 = enumerator.enumerate(objects2);
+    int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
+    int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
     Reindexer reindexer = new Reindexer();
     int[][] discarded = reindexer.discardUnique(ints1, ints2);
     IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
     intLCS.execute();
-    ChangeBuilder builder = new ChangeBuilder();
+    ChangeBuilder builder = new ChangeBuilder(startShift);
     reindexer.reindex(intLCS.getPaths(), builder);
     return builder.getFirstChange();
+  }
+
+  private static <T> int getStartShift(final T[] o1, final T[] o2) {
+    final int size = Math.min(o1.length, o2.length);
+    int idx = 0;
+    for (int i = 0; i < size; i++) {
+      if (! o1[i].equals(o2[i])) break;
+      ++ idx;
+    }
+    return idx;
+  }
+
+  private static <T> int getEndCut(final T[] o1, final T[] o2, final int startShift) {
+    final int size = Math.min(o1.length, o2.length) - startShift;
+    int idx = 0;
+
+    for (int i = 0; i < size; i++) {
+      if (! o1[o1.length - i - 1].equals(o2[o2.length - i - 1])) break;
+      ++ idx;
+    }
+    return idx;
   }
 
   /**
@@ -64,7 +89,7 @@ public class Diff {
    * @param line      target line before change
    * @return          translated line if the processing is ok; negative value otherwise
    */
-  public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line) {
+  public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line) throws FilesTooBigForDiffException {
     Change change = buildChanges(before, after);
     if (change == null) {
       return -1;
@@ -150,6 +175,10 @@ public class Diff {
     private int myIndex2 = 0;
     private Change myFirstChange;
     private Change myLastChange;
+
+    public ChangeBuilder(final int startShift) {
+      skip(startShift, startShift);
+    }
 
     public void addChange(int first, int second) {
       Change change = new Change(myIndex1, myIndex2, first, second, null);

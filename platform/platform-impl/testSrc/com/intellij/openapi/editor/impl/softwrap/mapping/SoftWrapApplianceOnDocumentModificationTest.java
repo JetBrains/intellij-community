@@ -20,8 +20,10 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.testFramework.TestFileType;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -769,8 +771,49 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(new LogicalPosition(3, 0), myEditor.visualToLogicalPosition(new VisualPosition(4, 0)));
   }
   
-  private void init(final int visibleWidth, String fileText) throws IOException {
-    init(fileText);
+  public void testDeleteThatEndsOnLineWithMultiLineFoldRegion() throws IOException {
+    String text = 
+      "111\n" +
+      "222\n" +
+      "333\n" +
+      "444 55\n" +
+      "666 77";
+    
+    init(100, text);
+
+    int foldStart = text.indexOf("5");
+    int foldEnd = text.indexOf("7");
+    addCollapsedFoldRegion(foldStart, foldEnd, "...");
+
+    int selectionStart = text.indexOf("2");
+    int selectionEnd = text.indexOf("4");
+    getEditor().getSelectionModel().setSelection(selectionStart, selectionEnd);
+    
+    delete();
+    assertEquals(new VisualPosition(1, 8), getEditor().offsetToVisualPosition(getEditor().getDocument().getTextLength() - 1));
+  }
+
+  public void testNoWrapAtFirstNonWsSymbolWithCustomIndent() throws IOException {
+    String text = 
+      "   1111111111111111111111111111111";
+    init(70, text);
+    getEditor().getSettings().setCustomSoftWrapIndent(0);
+    getEditor().getSettings().setUseCustomSoftWrapIndent(true);
+    int textLength = getEditor().getDocument().getTextLength();
+    //Trigger soft wraps recalculation.
+    assertEquals(new LogicalPosition(0, textLength), myEditor.offsetToLogicalPosition(textLength));
+    
+    // Don't expect soft wraps to be registered as there is no point in wrapping at the first non-white space symbol position
+    // in all cases when soft wrap is located at the left screen edge.
+    assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
+  }
+  
+  private void init(final int visibleWidth, @NotNull String fileText) throws IOException {
+    init(visibleWidth, fileText, TestFileType.TEXT);
+  }
+  
+  private void init(final int visibleWidth, @NotNull String fileText, @NotNull TestFileType fileType) throws IOException {
+    init(fileText, fileType);
     myEditor.getSettings().setUseSoftWraps(true);
     SoftWrapModelImpl model = (SoftWrapModelImpl)myEditor.getSoftWrapModel();
     model.reinitSettings();

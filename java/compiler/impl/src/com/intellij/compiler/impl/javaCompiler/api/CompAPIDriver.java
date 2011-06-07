@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.tools.*;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.util.List;
@@ -108,6 +109,11 @@ class CompAPIDriver {
     finally {
       compiling = false;
       myCompilationResults.offer(GUARD);
+      try {
+        manager.close();
+      }
+      catch (IOException ignored) {
+      }
     }
   }
 

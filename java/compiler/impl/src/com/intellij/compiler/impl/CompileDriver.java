@@ -407,7 +407,7 @@ public class CompileDriver {
                                                     forceCompile
                                                     ? CompilerBundle.message("compiler.content.name.compile")
                                                     : CompilerBundle.message("compiler.content.name.make"), ApplicationManager.getApplication().isUnitTestMode());
-    StatusBar.Info.set("Compiling...", myProject, "Compiler");
+    StatusBar.Info.set("", myProject, "Compiler");
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -543,20 +543,15 @@ public class CompileDriver {
             final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
             final int warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
             final String statusMessage = createStatusMessage(_status, warningCount, errorCount);
-            final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-            if (statusBar != null) { // because this code is in invoke later, the code may work for already closed project
-              // in case another project was opened in the frame while the compiler was working (See SCR# 28591)
-              StatusBar.Info.set(statusMessage, myProject);
-              final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
-              if (duration > ONE_MINUTE_MS) {
-                ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
-              } else {
-                String logMessage = statusMessage;
-                if (_status == ExitStatus.UP_TO_DATE) {
-                  logMessage = "Compilation: all files are up to date";
-                }
-                Notifications.Bus.logEvent(logMessage, messageType.toNotificationType(), myProject);
+            final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
+            if (duration > ONE_MINUTE_MS) {
+              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
+            } else {
+              String logMessage = statusMessage;
+              if (_status == ExitStatus.UP_TO_DATE) {
+                logMessage = "Compilation: all files are up to date";
               }
+              Notifications.Bus.logEvent(logMessage, messageType.toNotificationType(), myProject);
             }
             if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
               compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);

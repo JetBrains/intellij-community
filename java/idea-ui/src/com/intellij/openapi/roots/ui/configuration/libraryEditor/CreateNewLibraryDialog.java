@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
@@ -26,7 +27,6 @@ import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -48,14 +48,12 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
     }
     myLibraryLevelCombobox = new ComboBox(model);
     myLibraryLevelCombobox.setSelectedIndex(selectedTable);
-    myLibraryLevelCombobox.setRenderer(new DefaultListCellRenderer() {
+    myLibraryLevelCombobox.setRenderer(new ListCellRendererWrapper(myLibraryLevelCombobox.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LibraryTable) {
           setText(((LibraryTable)value).getPresentation().getDisplayName(false));
         }
-        return component;
       }
     });
     init();

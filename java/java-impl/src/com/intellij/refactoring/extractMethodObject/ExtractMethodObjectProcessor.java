@@ -138,8 +138,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  protected void refreshElements(final PsiElement[] elements) {}
-
   protected void performRefactoring(final UsageInfo[] usages) {
     try {
       if (isCreateInnerClass()) {

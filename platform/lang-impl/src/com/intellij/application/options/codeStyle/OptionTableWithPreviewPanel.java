@@ -338,10 +338,6 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     myOptions.add(new SelectionOption(null, fieldName, title, groupName, null, null, options, values));
   }
 
-  protected void prepareForReformat(final PsiFile psiFile) {
-    //
-  }
-
   private abstract class Option extends OrderedOption {
     @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
     @NotNull final Field field;

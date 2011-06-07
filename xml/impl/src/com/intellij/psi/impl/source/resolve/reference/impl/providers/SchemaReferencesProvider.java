@@ -224,40 +224,50 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       this.nsPrefix = prefix;
     }
 
-    enum ReferenceType {
+    protected enum ReferenceType {
       ElementReference, AttributeReference, GroupReference, AttributeGroupReference, TypeReference
     }
 
-    private ReferenceType myType;
+    private final ReferenceType myType;
 
-    TypeOrElementOrAttributeReference(PsiElement element, TextRange range) {
+    protected TypeOrElementOrAttributeReference(PsiElement element, TextRange range, ReferenceType type) {
       myElement = element;
       myRange   = range;
-      
+
       assert myRange.getLength() >= 0;
 
-      final XmlAttribute attribute = PsiTreeUtil.getParentOfType(myElement, XmlAttribute.class);
+      myType = type;
+    }
+
+    TypeOrElementOrAttributeReference(PsiElement element, TextRange range) {
+      this(element, range, determineReferenceType(element));
+    }
+
+    @Nullable
+    private static ReferenceType determineReferenceType(PsiElement element) {
+      final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
       final XmlTag tag = attribute.getParent();
       final String localName = tag.getLocalName();
       final String attributeLocalName = attribute.getLocalName();
 
       if (REF_ATTR_NAME.equals(attributeLocalName) || SUBSTITUTION_GROUP_ATTR_NAME.equals(attributeLocalName)) {
         if (localName.equals(GROUP_TAG_NAME)) {
-          myType = ReferenceType.GroupReference;
+          return ReferenceType.GroupReference;
         } else if (localName.equals(ATTRIBUTE_GROUP_TAG_NAME)) {
-          myType = ReferenceType.AttributeGroupReference;
+          return ReferenceType.AttributeGroupReference;
         } else if (ELEMENT_TAG_NAME.equals(localName)) {
-          myType = ReferenceType.ElementReference;
+          return ReferenceType.ElementReference;
         } else if (ATTRIBUTE_TAG_NAME.equals(localName)) {
-          myType = ReferenceType.AttributeReference;
+          return ReferenceType.AttributeReference;
         }
       } else if (TYPE_ATTR_NAME.equals(attributeLocalName) ||
                  BASE_ATTR_NAME.equals(attributeLocalName) ||
                  MEMBER_TYPES_ATTR_NAME.equals(attributeLocalName) ||
                  ITEM_TYPE_ATTR_NAME.equals(attributeLocalName)
                 ) {
-        myType = ReferenceType.TypeReference;
+        return ReferenceType.TypeReference;
       }
+      return null;
     }
 
     public PsiElement getElement() {
@@ -283,7 +293,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     private PsiElement resolveInner() {
-      final XmlTag tag = PsiTreeUtil.getParentOfType(myElement, XmlTag.class);
+      final XmlTag tag = PsiTreeUtil.getContextOfType(myElement, XmlTag.class, false);
       if (tag == null) return PsiUtilBase.NULL_PSI_ELEMENT;
 
       String canonicalText = getCanonicalText();
@@ -333,7 +343,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     private XmlNSDescriptorImpl getDescriptor(final XmlTag tag, String text) {
       if (myType != ReferenceType.ElementReference &&
           myType != ReferenceType.AttributeReference) {
-        final PsiElement parentElement = myElement.getParent();
+        final PsiElement parentElement = myElement.getContext();
         final PsiElement grandParentElement = parentElement != null ? parentElement.getParent() : null;
         boolean doRedefineCheck = false;
 
@@ -416,7 +426,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     @NotNull
     public String getCanonicalText() {
       final String text = myElement.getText();
-      String name = myRange.getEndOffset() < text.length() ? myRange.substring(text) : "";
+      String name = myRange.getEndOffset() <= text.length() ? myRange.substring(text) : "";
       if (name.length() > 0 && nsPrefix != null && nsPrefix.length() > 0) {
         name = nsPrefix + ":" + name;
       }
@@ -460,7 +470,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
 
     @NotNull
     public Object[] getVariants() {
-      final XmlTag tag = PsiTreeUtil.getParentOfType(myElement, XmlTag.class);
+      final XmlTag tag = PsiTreeUtil.getContextOfType(myElement, XmlTag.class, true);
       if (tag == null) return null;
 
       String[] tagNames = null;
@@ -486,7 +496,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       CompletionProcessor processor = new CompletionProcessor();
       processor.tag = tag;
 
-      XmlDocument document = ((XmlFile)myElement.getContainingFile()).getDocument();
+      XmlDocument document = ((XmlFile)PsiTreeUtil.getContextOfType(myElement, XmlElement.class, false).getContainingFile()).getDocument();
       final XmlTag rootTag = document.getRootTag();
       String ourNamespace = rootTag != null ? rootTag.getAttributeValue(TARGET_NAMESPACE) : "";
       if (ourNamespace == null) ourNamespace = "";

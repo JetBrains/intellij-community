@@ -123,9 +123,4 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
       GenerateMembersUtil.positionCaret(editor, method, true);
     }
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

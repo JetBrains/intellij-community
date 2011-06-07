@@ -15,32 +15,26 @@
  */
 package com.intellij.util.containers;
 
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class StringInterner {
-  private static class MySet extends THashSet<String> {
-    public String intern(String name) {
-      int idx = index(name);
-      if (idx >= 0) {
-        return (String)_set[idx];
-      }
 
-      boolean added = add(name);
-      assert added;
-
-      return name;
-    }
-  }
-
-  private final MySet mySet = new MySet();
+  private final OpenTHashSet<String> mySet = new OpenTHashSet<String>();
 
   @NotNull
   public String intern(@NotNull String name) {
-    return mySet.intern(name);
+    int idx = mySet.index(name);
+    if (idx >= 0) {
+      return mySet.get(idx);
+    }
+
+    boolean added = mySet.add(name);
+    assert added;
+
+    return name;
   }
 
   public void clear() {

@@ -184,9 +184,6 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     }
   }
 
-  protected void refreshElements(PsiElement[] elements) {
-  }
-
   protected void performRefactoring(UsageInfo[] usages) {
 
     try {

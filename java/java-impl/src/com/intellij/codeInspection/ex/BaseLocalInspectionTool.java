@@ -24,10 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * Date: Dec 27, 2004
  */
 public abstract class BaseLocalInspectionTool extends BaseJavaLocalInspectionTool {
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
-  }
 
   public boolean isEnabledByDefault() {
     return true;

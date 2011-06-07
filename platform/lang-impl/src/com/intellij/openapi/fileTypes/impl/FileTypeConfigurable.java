@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -356,7 +356,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     public RecognizedFileTypes() {
       super(new BorderLayout());
       add(myWholePanel, BorderLayout.CENTER);
-      myFileTypesList.setCellRenderer(new FileTypeRenderer(new FileTypeRenderer.FileTypeListProvider(){
+      myFileTypesList.setCellRenderer(new FileTypeRenderer(myFileTypesList.getCellRenderer(), new FileTypeRenderer.FileTypeListProvider() {
         public Iterable<FileType> getCurrentFileTypeList() {
           ArrayList<FileType> result = new ArrayList<FileType>();
           for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {

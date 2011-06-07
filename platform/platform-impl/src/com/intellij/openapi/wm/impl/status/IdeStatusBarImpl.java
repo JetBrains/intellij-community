@@ -403,6 +403,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myRequestor;
   }
 
+  @Override
+  public void setLogMessage(String text) {
+    myInfoAndProgressPanel.setLogMessage(text);
+  }
+
   public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) {
     myInfoAndProgressPanel.addProgress(indicator, info);
   }

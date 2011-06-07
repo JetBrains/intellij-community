@@ -30,6 +30,6 @@ import com.intellij.psi.xml.XmlTokenType;
 public class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
 
   public MarkupLineWrapPositionStrategy() {
-    super(XmlElementType.XML_TEXT, TokenType.WHITE_SPACE);
+    super(true, XmlElementType.XML_TEXT, TokenType.WHITE_SPACE);
   }
 }

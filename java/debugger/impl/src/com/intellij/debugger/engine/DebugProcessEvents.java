@@ -118,7 +118,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private class DebuggerEventThread implements Runnable {
-    final VirtualMachineProxyImpl myVmProxy;
+    private final VirtualMachineProxyImpl myVmProxy;
 
     DebuggerEventThread () {
       myVmProxy = getVirtualMachineProxy();

@@ -135,3 +135,21 @@ class TestLocal<X> {
 class QualifiedTest {
   java.util.Map<String, String> s = new java.util.HashMap<>();
 }
+
+
+class TZ {
+
+}
+
+class ParenthTest<T extends TZ> {
+    public ParenthTest(T x) {
+
+    }
+
+    public T z = null;
+
+    public int a() {
+        ParenthTest<T> x = (new ParenthTest<>(null)); //red code is here
+        return 1;
+    }
+}

@@ -708,10 +708,6 @@ public class Messages {
       close(-1);
     }
 
-    protected JComponent createNorthPanel() {
-      return null;
-    }
-
     protected JComponent createCenterPanel() {
       return doCreateCenterPanel();
     }

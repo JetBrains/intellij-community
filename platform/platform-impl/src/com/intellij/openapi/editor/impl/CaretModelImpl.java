@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -539,8 +540,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         moveToOffset(newLength, performSoftWrapAdjustment);
       }
       else {
-        final int line = event.translateLineViaDiff(myLogicalCaret.line);
-        moveToLogicalPosition(new LogicalPosition(line, myLogicalCaret.column), performSoftWrapAdjustment);
+        final int line;
+        try {
+          line = event.translateLineViaDiff(myLogicalCaret.line);
+          moveToLogicalPosition(new LogicalPosition(line, myLogicalCaret.column), performSoftWrapAdjustment);
+        }
+        catch (FilesTooBigForDiffException e1) {
+          LOG.info(e1);
+          moveToOffset(0);
+        }
       }
     }
     else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,9 @@
  */
 package com.intellij.usageView;
 
-import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
-import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -47,19 +42,6 @@ public class XmlUsageViewDescriptionProvider implements ElementDescriptionProvid
       }
     }
 
-    if (location instanceof HighlightUsagesDescriptionLocation) {
-      if (element instanceof PsiPresentableMetaData) {
-        return null;
-      }
-      if (element instanceof PsiFile) {
-        return "File";
-      }
-
-      final FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage());
-      if (provider.canFindUsagesFor(element)) {
-        return provider.getType(element);
-      }
-    }
     return null;
   }
 }

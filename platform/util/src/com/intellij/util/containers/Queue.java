@@ -67,6 +67,10 @@ public class Queue<T> {
     return result;
   }
 
+  public T peekFirst() {
+    return (T)myArray[myFirst];
+  }
+
   private int copyFromTo(int first, int last, T[] result, int destPos) {
     int length = last - first;
     System.arraycopy(myArray, first, result, destPos, length);
@@ -84,5 +88,13 @@ public class Queue<T> {
     }
     copyFromTo(0, myLast, result, tailLength);
     return result;
+  }
+
+  public void clear() {
+    for (int i = 0; i < myArray.length; i++) {
+      myArray[i] = null;
+    }
+
+    myFirst = myLast = 0;
   }
 }

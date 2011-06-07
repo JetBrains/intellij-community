@@ -27,7 +27,6 @@
   </project-components>
 
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Core.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/WindowManagement.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/components/*)"/>
@@ -35,9 +34,7 @@
   <xi:include href="Configurables.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Toolwindows.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="CodeInsight.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Misc.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Debugger.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/components/*)"/>

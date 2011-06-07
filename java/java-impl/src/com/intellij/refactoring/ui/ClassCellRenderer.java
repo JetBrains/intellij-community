@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,66 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 18.06.2002
- * Time: 13:47:11
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.ui;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
- * Renders a list cell which contains a class
+ * Renders a list cell which contains a class.
+ *
+ * @author dsl
+ * Date: 18.06.2002
  */
-public class ClassCellRenderer extends DefaultListCellRenderer {
+public class ClassCellRenderer extends ListCellRendererWrapper<PsiClass> {
   private final boolean myShowReadOnly;
-  public ClassCellRenderer() {
-    setOpaque(true);
+
+  public ClassCellRenderer(ListCellRenderer original) {
+    super(original);
     myShowReadOnly = true;
   }
 
-  public ClassCellRenderer(boolean showReadOnly) {
-    setOpaque(true);
-    myShowReadOnly = showReadOnly;
-  }
+  @Override
+  public void customize(JList list, PsiClass aClass, int index, boolean selected, boolean hasFocus) {
+    if (aClass != null) {
+      setText(getClassText(aClass));
 
-  public Component getListCellRendererComponent(
-          JList list,
-          Object value,
-          int index,
-          boolean isSelected,
-          boolean cellHasFocus) {
-    final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    if (value != null) {
-      return customizeRenderer(this, value, myShowReadOnly);
+      int flags = Iconable.ICON_FLAG_VISIBILITY;
+      if (myShowReadOnly) {
+        flags |= Iconable.ICON_FLAG_READ_STATUS;
+      }
+      Icon icon = aClass.getIcon(flags);
+      if (icon != null) {
+        setIcon(icon);
+      }
     }
-    return rendererComponent;
-  }
-
-  public static JLabel customizeRenderer(final JLabel cellRendererComponent, @NotNull final Object value, final boolean showReadOnly) {
-    PsiClass aClass = (PsiClass) value;
-    cellRendererComponent.setText(getClassText(aClass));
-
-    int flags = Iconable.ICON_FLAG_VISIBILITY;
-    if (showReadOnly) {
-      flags |= Iconable.ICON_FLAG_READ_STATUS;
-    }
-    Icon icon = aClass.getIcon(flags);
-    if(icon != null) {
-      cellRendererComponent.setIcon(icon);
-    }
-    return cellRendererComponent;
   }
 
   private static String getClassText(@NotNull PsiClass aClass) {

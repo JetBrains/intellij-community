@@ -555,8 +555,9 @@ public class EditorWindow {
     if (!(caretSource instanceof TextEditor)) {
       return;
     }
-    
-    final int offset = ((TextEditor)caretSource).getEditor().getCaretModel().getOffset();
+
+    final Editor editorFrom = ((TextEditor)caretSource).getEditor();
+    final int offset = editorFrom.getCaretModel().getOffset();
     if (offset <= 0) {
       return;
     }
@@ -566,8 +567,10 @@ public class EditorWindow {
         continue;
       }
       final Editor editor = ((TextEditor)fileEditor).getEditor();
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      if (editorFrom.getDocument() == editor.getDocument()) {
+        editor.getCaretModel().moveToOffset(offset);
+        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      }
     }
   }
 

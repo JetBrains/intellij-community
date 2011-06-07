@@ -39,11 +39,15 @@ public class Enumerator<T> {
   }
 
   public int[] enumerate(T[] objects) {
-    int[] idx = ArrayUtil.newIntArray(objects.length);
-    for (int i = 0; i < objects.length; i++) {
+    return enumerate(objects, 0, 0);
+  }
+
+  public int[] enumerate(T[] objects, final int startShift, final int endCut) {
+    int[] idx = ArrayUtil.newIntArray(objects.length - startShift - endCut);
+    for (int i = startShift; i < (objects.length - endCut); i++) {
       final T object = objects[i];
       final int number = enumerate(object);
-      idx[i] = number;
+      idx[i - startShift] = number;
     }
     return idx;
   }

@@ -29,6 +29,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -40,6 +41,10 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
@@ -81,6 +86,19 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
         }
       }
     });
+    myBreakpointManager.addBreakpointListener(new XBreakpointAdapter<XBreakpoint<?>>() {
+      @Override
+      public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint) {
+        if (!(breakpoint instanceof XLineBreakpoint)) {
+          final XDebugSessionImpl session = getCurrentSession();
+          if (session != null && breakpoint.equals(session.getActiveNonLineBreakpoint())) {
+            final XBreakpointBase breakpointBase = (XBreakpointBase)breakpoint;
+            breakpointBase.clearIcon();
+            myExecutionPointHighlighter.updateGutterIcon(breakpointBase.createGutterIconRenderer());
+          }
+        }
+      }
+    });
 
     messageBus.connect().subscribe(RunContentManagerImpl.RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
       @Override
@@ -91,7 +109,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
             session.activateSession();
           }
           else {
-            setActiveSession(null, null, false);
+            setActiveSession(null, null, false, null);
           }
         }
       }
@@ -195,18 +213,19 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
     }
   }
 
-  public void setActiveSession(@Nullable XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection) {
+  public void setActiveSession(@Nullable XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection,
+                               final @Nullable GutterIconRenderer gutterIconRenderer) {
     boolean sessionChanged = myActiveSession != session;
     myActiveSession = session;
-    updateExecutionPoint(position, useSelection);
+    updateExecutionPoint(position, useSelection, gutterIconRenderer);
     if (sessionChanged) {
       onActiveSessionChanged();
     }
   }
 
-  public void updateExecutionPoint(XSourcePosition position, boolean useSelection) {
+  public void updateExecutionPoint(XSourcePosition position, boolean useSelection, @Nullable GutterIconRenderer gutterIconRenderer) {
     if (position != null) {
-      myExecutionPointHighlighter.show(position, useSelection);
+      myExecutionPointHighlighter.show(position, useSelection, gutterIconRenderer);
     }
     else {
       myExecutionPointHighlighter.hide();

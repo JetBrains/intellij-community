@@ -83,9 +83,6 @@ public class InstanceGuardedByStaticInspection extends BaseJavaLocalInspectionTo
       myHolder.registerProblem(psiDocTag, "Instance member guarded by static \"" + guardValue + "\" #loc");
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-    }
-
     public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (!JCiPUtil.isGuardedByAnnotation(annotation)) {

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
@@ -96,7 +97,7 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
 
   public void doTest() throws Exception {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
-    assertEquals(data.get(1), processFile(data.get(0)));
+    assertEquals(StringUtil.trimEnd(data.get(1), "\n"), processFile(data.get(0)));
   }
 
 }

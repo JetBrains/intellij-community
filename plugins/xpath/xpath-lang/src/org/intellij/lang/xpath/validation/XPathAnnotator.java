@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.validation;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
@@ -40,6 +41,7 @@ import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.psi.impl.PrefixedNameImpl;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 import org.intellij.lang.xpath.psi.impl.XPathNumberImpl;
+import org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,6 +106,20 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   public void visitXPath2TypeElement(XPath2TypeElement o) {
     final ContextProvider contextProvider = o.getXPathContext();
     checkPrefixReferences(myHolder, o, contextProvider);
+
+    if (o.getDeclaredType() == XPathType.UNKNOWN) {
+      final PsiReference[] references = o.getReferences();
+      for (PsiReference reference : references) {
+        if (reference instanceof XsltReferenceContributor.SchemaTypeReference ) {
+          if (!reference.isSoft() && reference.resolve() == null) {
+            final String message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
+            final Annotation annotation =
+              myHolder.createErrorAnnotation(reference.getRangeInElement().shiftRight(o.getTextOffset()), message);
+            annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+          }
+        }
+      }
+    }
     super.visitXPath2TypeElement(o);
   }
 

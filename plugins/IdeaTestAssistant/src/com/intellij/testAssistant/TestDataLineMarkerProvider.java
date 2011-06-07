@@ -52,7 +52,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
       return false;
     }
     List<String> fileNames = new TestDataReferenceCollector(testDataPath, name.substring(4)).collectTestDataReferences(method);
-    return !fileNames.isEmpty();
+    return fileNames != null && !fileNames.isEmpty();
   }
   
   public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
