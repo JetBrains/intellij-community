@@ -2,7 +2,7 @@ package com.intellij.structuralsearch.extenders;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.css.CssSupportLoader;
+import com.intellij.psi.css.CssFileType;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +20,7 @@ public class CssStructuralSearchProfile extends StructuralSearchProfileBase {
   @NotNull
   @Override
   protected LanguageFileType getFileType() {
-    return CssSupportLoader.CSS_FILE_TYPE;
+    return CssFileType.INSTANCE;
   }
 
   @Nullable
