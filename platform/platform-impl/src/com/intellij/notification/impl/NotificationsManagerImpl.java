@@ -46,7 +46,7 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
-  public static final String LOG_TOOL_WINDOW_ID = "Event log";
+  public static final String LOG_TOOL_WINDOW_ID = "Event Log";
 
   private final NotificationModel myModel = new NotificationModel();
 
