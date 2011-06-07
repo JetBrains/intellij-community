@@ -251,8 +251,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
                   commitsNum -= unchecked.size();
                 }
               }
-              final String pushMessage = "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum) + ".";
-              GitUIUtil.notifySuccess(myProject, "", pushMessage);
+              final String pushMessage = "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum);
               VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(), pushMessage, MessageType.INFO);
               return;
             }
