@@ -94,7 +94,6 @@ public class FileBasedIndex implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
   @NonNls
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false);
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new HashMap<ID<?,?>, Semaphore>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
@@ -282,7 +281,8 @@ public class FileBasedIndex implements ApplicationComponent {
         rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";
       }
       if (rebuildNotification != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        NOTIFICATION_GROUP.createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
+        new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, true)
+          .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
       }
       dropUnregisteredIndices();
 
