@@ -118,6 +118,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
             expression.getParameterList().getFirstChild() != null) return;
 
         if (refExpr.getReferenceName().equals(expression.getReferenceName())) {
+          final PsiExpression qualifierExpression = expression.getQualifierExpression();
           if (!expression.isQualified()) {
             PsiElement referent = expression.getUserData(TEMP_REFERENT_USER_DATA);
 
@@ -126,7 +127,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
               try {
                 PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + expression.getReferenceName(), null);
                 expression = (PsiReferenceExpression)expression.replace(copy);
-                ((PsiReferenceExpression)expression.getQualifierExpression()).bindToElement(((PsiMember)referent).getContainingClass());
+                ((PsiReferenceExpression)qualifierExpression).bindToElement(((PsiMember)referent).getContainingClass());
               }
               catch (IncorrectOperationException e) {
                 LOG.error (e);
@@ -134,11 +135,11 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
             }
             expression.putUserData(TEMP_REFERENT_USER_DATA, null);
           } else {
-            if (expression.getQualifierExpression() instanceof PsiReferenceExpression) {
-              PsiElement aClass = ((PsiReferenceExpression)expression.getQualifierExpression()).resolve();
+            if (qualifierExpression instanceof PsiReferenceExpression) {
+              PsiElement aClass = ((PsiReferenceExpression)qualifierExpression).resolve();
               if (aClass == ((PsiMember)resolved).getContainingClass()) {
                 try {
-                  expression.getQualifierExpression().delete();
+                  qualifierExpression.delete();
                 }
                 catch (IncorrectOperationException e) {
                   LOG.error(e);
