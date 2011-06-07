@@ -109,6 +109,8 @@
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>                  
   <extensionPoint name="lang.psiStructureViewFactory"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.structureViewExtension"
+                  interface="com.intellij.ide.structureView.StructureViewExtension"/>
   <extensionPoint name="lang.ast.factory"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.formatter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>

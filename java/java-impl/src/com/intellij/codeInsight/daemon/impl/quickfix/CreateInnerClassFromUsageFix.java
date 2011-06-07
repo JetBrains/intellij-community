@@ -141,7 +141,11 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
                       : myKind == CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
-    modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+    if (aClass.isInterface()) {
+      modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
+    } else {
+      modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+    }
     if (superClassName != null) {
       PsiJavaCodeReferenceElement superClass =
         elementFactory.createReferenceElementByFQClassName(superClassName, created.getResolveScope());

@@ -207,7 +207,7 @@ public class TypeConversionUtil {
     final LanguageLevel languageLevel = toClassType.getLanguageLevel();
     if (!fromClass.isInterface()) {
       if (toClass.isInterface()) {
-        return !fromClass.hasModifierProperty(PsiModifier.FINAL) &&
+        return (!fromClass.hasModifierProperty(PsiModifier.FINAL) || fromClass.isInheritor(toClass, true))&&
                checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), null, languageLevel);
       }
       else {
@@ -337,6 +337,13 @@ public class TypeConversionUtil {
       PsiType typeArg2 = substitutor2.substitute(typeParameter);
       if (typeArg1 == null || typeArg2 == null) return true;
       if (TypesDistinctProver.provablyDistinct(typeArg1, typeArg2)) return false;
+
+      final PsiClass class1 = PsiUtil.resolveClassInType(typeArg1);
+      if (class1 instanceof PsiTypeParameter) {
+        for (PsiType type : class1.getExtendsListTypes()) {
+          if (TypesDistinctProver.provablyDistinct(type, typeArg2)) return false;
+        }
+      }
     }
 
     return true;
@@ -867,14 +874,6 @@ public class TypeConversionUtil {
       }
     }
     else {
-      final PsiClass leftClass = PsiUtil.resolveClassInType(typeLeft);
-      if (leftClass instanceof PsiTypeParameter) {
-        for (PsiClassType leftClassType : leftClass.getExtendsListTypes()) {
-          if (TypesDistinctProver.provablyDistinct(leftClassType, typeRight)) return false;
-        }
-        if (!(typeRight instanceof PsiCapturedWildcardType || typeRight instanceof PsiWildcardType)) return true;
-      }
-
       return typeLeft.equals(typeRight);
     }
   }

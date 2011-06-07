@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -48,6 +49,10 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   public GroovyShortNamesCache(Project project) {
     myProject = project;
+  }
+
+  public static GroovyShortNamesCache getGroovyShortNamesCache(Project project) {
+    return ObjectUtils.assertNotNull(ContainerUtil.findInstance(project.getExtensions(PsiShortNamesCache.EP_NAME), GroovyShortNamesCache.class));
   }
 
   @NotNull

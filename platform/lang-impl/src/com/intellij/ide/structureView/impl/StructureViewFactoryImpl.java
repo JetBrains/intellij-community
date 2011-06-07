@@ -22,16 +22,19 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ReflectionCache;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,7 +65,19 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   private State myState = new State();
   private Runnable myRunWhenInitialized = null;
 
-  private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
+  private static final NotNullLazyValue<MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>> myExtensions = new NotNullLazyValue<MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>>() {
+    @NotNull
+    @Override
+    protected MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> compute() {
+      MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> map =
+        new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
+      StructureViewExtension[] extensions = Extensions.getExtensions(StructureViewExtension.EXTENSION_POINT_NAME);
+      for (StructureViewExtension extension : extensions) {
+        map.put(extension.getType(), extension);
+      }
+      return map;
+    }
+  };
   private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myImplExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
 
   public StructureViewFactoryImpl(Project project) {
@@ -93,22 +108,13 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     }
   }
 
-  public void registerExtension(Class<? extends PsiElement> type, StructureViewExtension extension) {
-    myExtensions.put(type, extension);
-    myImplExtensions.clear();
-  }
-
-  public void unregisterExtension(Class<? extends PsiElement> type, StructureViewExtension extension) {
-    myExtensions.remove(type, extension);
-    myImplExtensions.clear();
-  }
-
   public Collection<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type) {
     Collection<StructureViewExtension> result = myImplExtensions.get(type);
     if (result == null) {
-      for (Class<? extends PsiElement> registeredType : myExtensions.keySet()) {
+      MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> map = myExtensions.getValue();
+      for (Class<? extends PsiElement> registeredType : map.keySet()) {
         if (ReflectionCache.isAssignable(registeredType, type)) {
-          final Collection<StructureViewExtension> extensions = myExtensions.get(registeredType);
+          final Collection<StructureViewExtension> extensions = map.get(registeredType);
           for (StructureViewExtension extension : extensions) {
             myImplExtensions.put(type, extension);
           }

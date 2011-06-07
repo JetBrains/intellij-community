@@ -175,10 +175,6 @@ public class PsiUtil {
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, context);
   }
 
-  public static PsiClassType createMapType(GlobalSearchScope scope) {
-    return new GrMapType(scope);
-  }
-
   @Nullable
   public static GrArgumentList getArgumentsList(PsiElement methodRef) {
     if (methodRef instanceof GrEnumConstant) return ((GrEnumConstant)methodRef).getArgumentList();
@@ -227,7 +223,7 @@ public class PsiUtil {
     List<PsiType> result = new ArrayList<PsiType>();
 
     if (namedArgs.length > 0) {
-      result.add(createMapType(namedArgs[0].getResolveScope()));
+      result.add(new GrMapType(namedArgs[0], namedArgs));
     }
 
     for (GrExpression expression : expressions) {

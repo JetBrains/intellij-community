@@ -29,6 +29,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
+  public static volatile boolean DEBUG = false;
   public static final StubIndexKey<Integer,PsiClass> KEY = StubIndexKey.createIndexKey("java.class.fqn");
 
   private static final JavaFullClassNameIndex ourInstance = new JavaFullClassNameIndex();

@@ -896,6 +896,7 @@
 
     <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
 
+    <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
   </extensions>
 
 </idea-plugin>

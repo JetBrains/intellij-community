@@ -22,6 +22,7 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,56 +33,41 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ModuleWithDependenciesScope extends GlobalSearchScope {
-  private final Module myModule;
 
-  private final boolean myCompileClasspath;
-  private final boolean myIncludeLibraries;
-  private final boolean myIncludeOtherModules;
-  private final boolean myIncludeTests;
+  public final static int COMPILE = 0x01;
+  public final static int LIBRARIES = 0x02;
+  public final static int MODULES = 0x04;
+  public final static int TESTS = 0x08;
+  public final static int RUNTIME = 0x10;
+  public final static int CONTENT = 0x20;
+
+  private final Module myModule;
+  private final int myOptions;
 
   private final ProjectFileIndex myProjectFileIndex;
 
   private final Set<Module> myModules = new LinkedHashSet<Module>();
   private final Set<VirtualFile> myRoots = new LinkedHashSet<VirtualFile>();
 
-  public ModuleWithDependenciesScope(Module module,
-                                     boolean compileClasspath,
-                                     boolean includeLibraries,
-                                     boolean includeOtherModules,
-                                     boolean includeTests
-                                     ) {
-    this(module, compileClasspath, includeLibraries, includeOtherModules, includeTests, !compileClasspath);
-  }
-
-  // todo refactor to use builder-style tuning like for OrderEnumerator
-  public ModuleWithDependenciesScope(Module module,
-                                     boolean compileClasspath,
-                                     boolean includeLibraries,
-                                     boolean includeOtherModules,
-                                     boolean includeTests,
-                                     boolean runtimeClasspath) {
+  public ModuleWithDependenciesScope(Module module, int options) {
     super(module.getProject());
     myModule = module;
-
-    myCompileClasspath = compileClasspath;
-    myIncludeLibraries = includeLibraries;
-    myIncludeOtherModules = includeOtherModules;
-    myIncludeTests = includeTests;
+    myOptions = options;
 
     myProjectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
 
     OrderEnumerator en = ModuleRootManager.getInstance(module).orderEntries();
     /*if (myIncludeOtherModules) */en.recursively();
 
-    if (myCompileClasspath) {
+    if (hasOption(COMPILE)) {
       en.exportedOnly().compileOnly();
     }
-    if (runtimeClasspath) {
+    if (hasOption(RUNTIME)) {
       en.runtimeOnly();
     }
-    if (!myIncludeLibraries) en.withoutLibraries().withoutSdk();
-    if (!myIncludeOtherModules) en.withoutDepModules();
-    if (!myIncludeTests) en.productionOnly();
+    if (!hasOption(LIBRARIES)) en.withoutLibraries().withoutSdk();
+    if (!hasOption(MODULES)) en.withoutDepModules();
+    if (!hasOption(TESTS)) en.productionOnly();
 
     en.forEach(new Processor<OrderEntry>() {
       @Override
@@ -96,19 +82,33 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
       }
     });
 
-    Collections.addAll(myRoots, en.roots(new NotNullFunction<OrderEntry, OrderRootType>() {
-      @NotNull
-      @Override
-      public OrderRootType fun(OrderEntry entry) {
-        if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
-        return OrderRootType.CLASSES;
+    if (hasOption(CONTENT)) {
+      for (Module m : myModules) {
+        ContentEntry[] entries = ModuleRootManager.getInstance(m).getContentEntries();
+        for (ContentEntry entry : entries) {
+          ContainerUtil.addIfNotNull(entry.getFile(), myRoots);
+        }
       }
-    }).getRoots());
+    }
+    else {
+      Collections.addAll(myRoots, en.roots(new NotNullFunction<OrderEntry, OrderRootType>() {
+        @NotNull
+        @Override
+        public OrderRootType fun(OrderEntry entry) {
+          if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
+          return OrderRootType.CLASSES;
+        }
+      }).getRoots());
+    }
+  }
+
+  private boolean hasOption(int option) {
+    return (myOptions & option) != 0;
   }
 
   @Override
   public String getDisplayName() {
-    return myCompileClasspath ? PsiBundle.message("search.scope.module", myModule.getName())
+    return hasOption(COMPILE) ? PsiBundle.message("search.scope.module", myModule.getName())
                               : PsiBundle.message("search.scope.module.runtime", myModule.getName());
   }
 
@@ -119,16 +119,19 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
-    return isSearchInModuleContent(aModule) && (myIncludeTests || !testSources);
+    return isSearchInModuleContent(aModule) && (hasOption(TESTS) || !testSources);
   }
 
   @Override
   public boolean isSearchInLibraries() {
-    return myIncludeLibraries;
+    return hasOption(LIBRARIES);
   }
 
   @Override
   public boolean contains(VirtualFile file) {
+    if (hasOption(CONTENT)) {
+      return myRoots.contains(myProjectFileIndex.getContentRootForFile(file));
+    }
     if (myProjectFileIndex.isInContent(file) && myRoots.contains(myProjectFileIndex.getSourceRootForFile(file))) {
       return true;
     }
@@ -170,32 +173,20 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     if (o == null || getClass() != o.getClass()) return false;
 
     ModuleWithDependenciesScope that = (ModuleWithDependenciesScope)o;
-
-    if (myCompileClasspath != that.myCompileClasspath) return false;
-    if (myIncludeLibraries != that.myIncludeLibraries) return false;
-    if (myIncludeOtherModules != that.myIncludeOtherModules) return false;
-    if (myIncludeTests != that.myIncludeTests) return false;
-    if (myModule != null ? !myModule.equals(that.myModule) : that.myModule != null) return false;
-
-    return true;
+    return myOptions == that.myOptions && myModule.equals(that.myModule);
   }
 
   @Override
   public int hashCode() {
-    int result = myModule != null ? myModule.hashCode() : 0;
-    result = 31 * result + (myIncludeLibraries ? 1 : 0);
-    result = 31 * result + (myIncludeOtherModules ? 1 : 0);
-    result = 31 * result + (myIncludeTests ? 1 : 0);
-    result = 31 * result + (myCompileClasspath ? 1 : 0);
-    return result;
+    return 31 * myModule.hashCode() + myOptions;
   }
 
   @Override
   public String toString() {
     return "Module with dependencies:" + myModule.getName() +
-           " compile:" + myCompileClasspath +
-           " include libraries:" + myIncludeLibraries +
-           " include other modules:" + myIncludeOtherModules +
-           " include tests:" + myIncludeTests;
+           " compile:" + hasOption(COMPILE) +
+           " include libraries:" + hasOption(LIBRARIES) +
+           " include other modules:" + hasOption(MODULES) +
+           " include tests:" + hasOption(TESTS);
   }
 }

@@ -111,6 +111,8 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    */
   GlobalSearchScope getModuleScope();
 
+  GlobalSearchScope getModuleScope(boolean includeTests);
+
   /**
    * Returns module scope including sources, tests, and libraries, excluding dependencies.
    *

@@ -116,7 +116,6 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
           if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).isReferenceTo(aClass)) {
             try {
               PsiElement resolved = expression.resolve();
-              if (resolved == null) return;
               int end = expression.getTextRange().getEndOffset();
               qualifierExpression.delete();
               delta += end - expression.getTextRange().getEndOffset();

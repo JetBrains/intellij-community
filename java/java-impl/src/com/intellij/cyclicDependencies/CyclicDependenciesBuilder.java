@@ -28,6 +28,7 @@ import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.GraphGenerator;
 
 import java.util.*;
@@ -217,7 +218,7 @@ public class CyclicDependenciesBuilder{
           paths2Pack = new HashSet<List<PsiPackage>>();
           result.put(psiPackage, paths2Pack);
         }
-        paths2Pack.addAll(CyclicGraphUtil.getNodeCycles(myGraph, psiPackage));
+        paths2Pack.addAll(GraphAlgorithms.getInstance().findCycles(myGraph, psiPackage));
     }
     return result;
   }

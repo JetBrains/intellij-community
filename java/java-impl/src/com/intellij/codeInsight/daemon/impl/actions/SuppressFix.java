@@ -188,15 +188,21 @@ public class SuppressFix extends SuppressIntentionAction {
   }
 
   private String getID(PsiElement place) {
-    if (myAlternativeID != null) {
+    String id = getID(place, myAlternativeID);
+    return id != null ? id : myID;
+  }
+
+  @Nullable
+  static String getID(PsiElement place, String alternativeID) {
+    if (alternativeID != null) {
       final Module module = ModuleUtil.findModuleForPsiElement(place);
       if (module != null) {
         if (!ClasspathStorage.getStorageType(module).equals(ClasspathStorage.DEFAULT_STORAGE)) {
-          return myAlternativeID;
+          return alternativeID;
         }
       }
     }
 
-    return myID;
+    return null;
   }
 }

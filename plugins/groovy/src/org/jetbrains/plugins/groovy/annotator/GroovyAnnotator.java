@@ -526,7 +526,18 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkNamedArgs(listOrMap.getNamedArguments(), false);
   }
 
+  private void highlightNamedArgs(GrNamedArgument[] namedArguments) {
+    for (GrNamedArgument namedArgument : namedArguments) {
+      final GrArgumentLabel label = namedArgument.getLabel();
+      if (label != null && label.getExpression() == null) {
+        myHolder.createInfoAnnotation(label, null).setTextAttributes(DefaultHighlighter.MAP_KEY);
+      }
+    }
+  }
+
   private void checkNamedArgs(GrNamedArgument[] namedArguments, boolean forArgList) {
+    highlightNamedArgs(namedArguments);
+
     MultiMap<String, GrArgumentLabel> map = new MultiMap<String, GrArgumentLabel>();
     for (GrNamedArgument element : namedArguments) {
       final GrArgumentLabel label = element.getLabel();
@@ -1547,7 +1558,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
         GroovyPsiElement context = result.getCurrentFileResolveContext();
         if (context instanceof GrImportStatement) {
-          annotation = holder.createInfoAnnotation(((GrImportStatement)context).getImportReference(), null);
+          final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
+          LOG.assertTrue(importReference != null);
+          annotation = holder.createInfoAnnotation(importReference, null);
           annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
         }
       } else {

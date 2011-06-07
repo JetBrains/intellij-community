@@ -85,7 +85,7 @@ public class NavBarPresentation {
   }
 
   @NotNull
-  protected static String getPresentableText(final Object object, Window window) {
+  protected static String getPresentableText(final Object object, @Nullable Window window) {
     if (!NavBarModel.isValid(object)) return IdeBundle.message("node.structureview.invalid");
     for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
       String text = modelExtension.getPresentableText(object);

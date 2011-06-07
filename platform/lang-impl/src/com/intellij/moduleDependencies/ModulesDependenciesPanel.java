@@ -19,7 +19,6 @@ package com.intellij.moduleDependencies;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.cyclicDependencies.CyclicGraphUtil;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -37,7 +36,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
@@ -47,6 +45,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -191,7 +190,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
   private void buildRightTree(Module module){
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myRightTreeModel.getRoot();
     root.removeAllChildren();
-    final Set<List<Module>> cycles = CyclicGraphUtil.getNodeCycles(myModulesGraph, module);
+    final Set<List<Module>> cycles = GraphAlgorithms.getInstance().findCycles(myModulesGraph, module);
     int index = 1;
     for (List<Module> modules : cycles) {
       final DefaultMutableTreeNode cycle = new DefaultMutableTreeNode(
@@ -223,7 +222,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
           if (!module.isDisposed()) {
             Boolean isInCycle = inCycle.get(module);
             if (isInCycle == null) {
-              isInCycle = !CyclicGraphUtil.getNodeCycles(myModulesGraph, module).isEmpty();
+              isInCycle = !GraphAlgorithms.getInstance().findCycles(myModulesGraph, module).isEmpty();
               inCycle.put(module, isInCycle);
             }
             final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(isInCycle.booleanValue(), module));
@@ -407,20 +406,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       return graph;
     }
     else {
-      return new Graph<Module>() {
-        public Collection<Module> getNodes() {
-          return graph.getNodes();
-        }
-
-        public Iterator<Module> getIn(final Module n) {
-          return graph.getOut(n);
-        }
-
-        public Iterator<Module> getOut(final Module n) {
-          return graph.getIn(n);
-        }
-
-      };
+      return GraphAlgorithms.getInstance().invertEdgeDirections(graph);
     }
   }
 

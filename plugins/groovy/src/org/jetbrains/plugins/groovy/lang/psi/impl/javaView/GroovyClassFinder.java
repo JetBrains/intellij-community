@@ -16,12 +16,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.javaView;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.Collection;
 import java.util.List;
@@ -30,21 +31,21 @@ import java.util.List;
  * @author ven
  */
 public class GroovyClassFinder extends PsiElementFinder {
-  private final GroovyPsiManager myGroovyPsiManager;
+  private final GroovyShortNamesCache myCache;
 
-  public GroovyClassFinder(final GroovyPsiManager groovyPsiManager) {
-    myGroovyPsiManager = groovyPsiManager;
+  public GroovyClassFinder(Project project) {
+    myCache = GroovyShortNamesCache.getGroovyShortNamesCache(project);
   }
 
   @Nullable
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    final List<PsiClass> classes = myGroovyPsiManager.getNamesCache().getScriptClassesByFQName(qualifiedName, scope, true);
+    final List<PsiClass> classes = myCache.getScriptClassesByFQName(qualifiedName, scope, true);
     return classes.isEmpty() ? null : classes.get(0);
   }
 
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    final Collection<PsiClass> classes = myGroovyPsiManager.getNamesCache().getScriptClassesByFQName(qualifiedName, scope, true);
+    final Collection<PsiClass> classes = myCache.getScriptClassesByFQName(qualifiedName, scope, true);
     return classes.isEmpty() ? PsiClass.EMPTY_ARRAY : classes.toArray(new PsiClass[classes.size()]);
   }
 

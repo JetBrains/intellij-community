@@ -294,7 +294,7 @@ def foo(p) {
 }
 """
     def method = PsiTreeUtil.findElementOfClassAtOffset(myFixture.file, myFixture.editor.caretModel.offset, GrMethod.class, false)
-    def usages = RenameUtil.findUsages(method, "project", false, false, [method:"project"])
+    def usages = RenameUtil.findUsages(method, "project", false, false, [(method):"project"])
     assert !usages[0].isNonCodeUsage
     assert usages[1].isNonCodeUsage
   }

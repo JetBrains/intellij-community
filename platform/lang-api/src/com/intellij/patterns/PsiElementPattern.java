@@ -23,6 +23,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
@@ -159,18 +160,10 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
         PsiElement element = t;
         while (true) {
-          do {
-            while (element != null && element.getPrevSibling() == null) {
-              element = element.getParent();
-            }
-            if (element == null) break;
-            element = element.getPrevSibling();
-
-            while (element != null && element.getLastChild() != null) {
-              element = element.getLastChild();
-            }
+          element = PsiTreeUtil.prevLeaf(element);
+          if (element != null && element.getTextLength() == 0) {
+            continue;
           }
-          while (element != null && element.getTextLength() == 0);
 
           if (!skip.getCondition().accepts(element, context)) {
             return pattern.getCondition().accepts(element, context);
@@ -186,18 +179,11 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
         PsiElement element = t;
         while (true) {
-          do {
-            while (element != null && element.getNextSibling() == null) {
-              element = element.getParent();
-            }
-            if (element == null) break;
-            element = element.getNextSibling();
-
-            while (element != null && element.getFirstChild() != null) {
-              element = element.getFirstChild();
-            }
+          element = PsiTreeUtil.nextLeaf(element);
+          if (element != null && element.getTextLength() == 0) {
+            continue;
           }
-          while (element != null && element.getTextLength() == 0);
+
           if (!skip.getCondition().accepts(element, context)) {
             return pattern.getCondition().accepts(element, context);
           }
