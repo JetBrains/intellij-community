@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -27,7 +26,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,35 +36,40 @@ public class ApplyPatchForBaseRevisionTexts {
   private CharSequence myBase;
   private final String myPatched;
   private ApplyPatchStatus myStatus;
-  private VcsException myException;
   private List<String> myWarnings;
+  private boolean myBaseRevisionLoaded;
 
-  @Nullable
+  @NotNull
   public static ApplyPatchForBaseRevisionTexts create(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
-                                                       final TextFilePatch patch) {
+                                                       final TextFilePatch patch) throws VcsException {
     if (patch.isNewFile()) return createForAddition(patch);
     final String beforeVersionId = patch.getBeforeVersionId();
     if (beforeVersionId == null) {
-      return null;
+      throw new VcsException(VcsBundle.message("patch.load.base.revision.error", pathBeforeRename, "No revision specified for base version."));
     }
     final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project, file, beforeVersionId);
     if (provider.canProvideContent()) {
       return new ApplyPatchForBaseRevisionTexts(provider, pathBeforeRename, patch, file);
+    } else {
+      if (! provider.hasVcs()) {
+        throw new VcsException(VcsBundle.message("patch.load.base.revision.error", pathBeforeRename,
+                                                 "Target file is not under version control."));
+      } else {
+        throw new VcsException(VcsBundle.message("patch.load.base.revision.error", pathBeforeRename, "Can not parse base revision."));
+      }
     }
-    return null;
   }
 
-  @Nullable
+  @NotNull
   private static ApplyPatchForBaseRevisionTexts createForAddition(final TextFilePatch patch) {
-    return new ApplyPatchForBaseRevisionTexts("", null, "", patch.getNewFileText(), ApplyPatchStatus.SUCCESS);
+    return new ApplyPatchForBaseRevisionTexts("", "", patch.getNewFileText(), ApplyPatchStatus.SUCCESS);
   }
 
-  private ApplyPatchForBaseRevisionTexts(CharSequence base, VcsException exception,
+  private ApplyPatchForBaseRevisionTexts(CharSequence base,
                                         CharSequence local,
                                         String patched,
                                         ApplyPatchStatus status) {
     myBase = base;
-    myException = exception;
     myLocal = local;
     myPatched = patched;
     myStatus = status;
@@ -73,30 +77,28 @@ public class ApplyPatchForBaseRevisionTexts {
   }
 
   ApplyPatchForBaseRevisionTexts(final DefaultPatchBaseVersionProvider provider, final FilePath pathBeforeRename, final TextFilePatch patch,
-                                 final VirtualFile file) {
+                                 final VirtualFile file) throws VcsException {
     myWarnings = new ArrayList<String>();
-      myLocal = LoadTextUtil.loadText(file);
-      final StringBuilder newText = new StringBuilder();
-      try {
-        provider.getBaseVersionContent(pathBeforeRename, new Processor<CharSequence>() {
-          public boolean process(final CharSequence text) {
-            newText.setLength(0);
-            try {
-              myStatus = ApplyFilePatchBase.applyModifications(patch, text, newText);
-            }
-            catch(ApplyPatchException ex) {
-              return true;  // continue to older versions
-            }
-            myBase = text;
-            return false;
-          }
-        }, myWarnings);
+    myLocal = LoadTextUtil.loadText(file);
+    final StringBuilder newText = new StringBuilder();
+    provider.getBaseVersionContent(pathBeforeRename, new Processor<CharSequence>() {
+      public boolean process(final CharSequence text) {
+        newText.setLength(0);
+        try {
+          myStatus = ApplyFilePatchBase.applyModifications(patch, text, newText);
+        }
+        catch(ApplyPatchException ex) {
+          return true;  // continue to older versions
+        }
+        myBase = text;
+        myBaseRevisionLoaded = true;
+        return false;
       }
-      catch (VcsException vcsEx) {
-        myException = vcsEx;
-        myStatus = ApplyPatchStatus.FAILURE;
-      }
-      myPatched = newText.toString();
+    }, myWarnings);
+    if ((! myBaseRevisionLoaded) || myStatus == null || ApplyPatchStatus.FAILURE.equals(myStatus)) {
+      throw new VcsException(getCannotLoadBaseMessage(pathBeforeRename.getPath()));
+    }
+    myPatched = newText.toString();
   }
 
   public CharSequence getLocal() {
@@ -115,13 +117,7 @@ public class ApplyPatchForBaseRevisionTexts {
     return myStatus;
   }
 
-  public VcsException getException() {
-    return myException;
-  }
-
-  public static String getCannotLoadBaseMessage(final ApplyPatchForBaseRevisionTexts texts, final FilePatch filePatch) {
-    final VcsException vcsException = texts == null ? null : texts.getException();
-    return VcsBundle.message("patch.load.base.revision.error", filePatch.getBeforeName(),
-                                      vcsException == null ? null : vcsException.getMessage());
+  public static String getCannotLoadBaseMessage(final String filePatch) {
+    return VcsBundle.message("patch.load.base.revision.error", filePatch,"");
   }
 }

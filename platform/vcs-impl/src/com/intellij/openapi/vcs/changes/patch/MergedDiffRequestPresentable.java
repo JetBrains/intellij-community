@@ -55,8 +55,7 @@ public class MergedDiffRequestPresentable implements DiffRequestPresentable {
     return myFile.getPath();
   }
 
-  public String haveStuff() {
-    return null;
+  public void haveStuff() {
   }
 
   public List<? extends AnAction> createActions(ShowDiffAction.DiffExtendUIFactory uiFactory) {

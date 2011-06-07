@@ -16,21 +16,22 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class DiffRequestPresentableProxy implements DiffRequestPresentable {
   private DiffRequestPresentable myDelegate;
   private List<? extends AnAction> myCachedActions;
   private MyResult myStepResult;
-  protected String myInitProblem;
 
-  @Nullable
-  protected abstract DiffRequestPresentable init();
+  @NotNull
+  protected abstract DiffRequestPresentable init() throws VcsException;
 
-  @Nullable
-  private DiffRequestPresentable initRequest() {
+  @NotNull
+  private DiffRequestPresentable initRequest() throws VcsException {
     if (myDelegate == null) {
       myDelegate = init();
     }
@@ -39,26 +40,31 @@ public abstract class DiffRequestPresentableProxy implements DiffRequestPresenta
 
   public List<? extends AnAction> createActions(ShowDiffAction.DiffExtendUIFactory uiFactory) {
     if (myCachedActions == null) {
-      myCachedActions = initRequest().createActions(uiFactory);
+      try {
+        myCachedActions = initRequest().createActions(uiFactory);
+      }
+      catch (VcsException e) {
+        //should not occur
+        return Collections.emptyList();
+      }
     }
     return myCachedActions;
   }
 
   public MyResult step(DiffChainContext context) {
-    final DiffRequestPresentable request = initRequest();
-    if (request == null) {
-      return new MyResult(null, DiffPresentationReturnValue.removeFromList,
-                          "Can not find context for '" + getPathPresentation() + "'");
+    final DiffRequestPresentable request;
+    try {
+      request = initRequest();
+      myStepResult = request.step(context);
     }
-    myStepResult = request.step(context);
+    catch (VcsException e) {
+      myStepResult = new MyResult(null, DiffPresentationReturnValue.quit);
+    }
     return myStepResult;
   }
 
-  public String haveStuff() {
+  public void haveStuff() throws VcsException {
     final DiffRequestPresentable request = initRequest();
-    if (request == null) {
-      return myInitProblem;
-    }
-    return request.haveStuff();
+    request.haveStuff();
   }
 }

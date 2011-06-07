@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,16 +75,17 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   }
 
   @Nullable
-  public String quickCheckHaveStuff() {
-    if (mySteps.isEmpty()) return "Nothing selected to show diff";
-    if (mySteps.size() == 1) {
-      return mySteps.get(0).haveStuff();
+  public void quickCheckHaveStuff() throws VcsException {
+    if (mySteps.isEmpty()) {
+      throw new VcsException("Nothing selected to show diff");
     }
-    return null;
+    if (mySteps.size() == 1) {
+      mySteps.get(0).haveStuff();
+    }
   }
 
   @Nullable
-  public DiffRequest init(final int idx) {
+  public DiffRequest init(final int idx) throws VcsException {
     if (idx < 0 || idx > (mySteps.size() - 1)) return null;
     myIndex = idx - 1;
     final DiffRequest result = moveForward();

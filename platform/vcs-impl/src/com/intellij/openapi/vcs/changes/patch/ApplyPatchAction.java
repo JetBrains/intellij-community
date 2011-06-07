@@ -154,17 +154,14 @@ public class ApplyPatchAction extends DumbAwareAction {
   @Nullable
   public static ApplyPatchStatus mergeAgainstBaseVersion(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
                                                          final TextFilePatch patch, final PatchMergeRequestFactory mergeRequestFactory) {
-    final ApplyPatchForBaseRevisionTexts threeTexts = ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch);
-    if ((threeTexts == null) || (threeTexts.getStatus() == null)) {
-      return null;
+    final ApplyPatchForBaseRevisionTexts threeTexts;
+    try {
+      threeTexts = ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch);
+    }
+    catch (VcsException e) {
+      return mergeBaseFailure(project, patch, e.getMessage());
     }
     ApplyPatchStatus status = threeTexts.getStatus();
-    if (ApplyPatchStatus.FAILURE.equals(status)) {
-      final VcsException vcsExc = threeTexts.getException();
-      Messages.showErrorDialog(project, VcsBundle.message("patch.load.base.revision.error", patch.getBeforeName(),
-                                                          vcsExc == null ? null : vcsExc.getMessage()), VcsBundle.message("patch.apply.dialog.title"));
-      return status;
-    }
     if (status != ApplyPatchStatus.ALREADY_APPLIED) {
       return ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
         @Override
@@ -176,6 +173,12 @@ public class ApplyPatchAction extends DumbAwareAction {
     else {
       return status;
     }
+  }
+
+  private static ApplyPatchStatus mergeBaseFailure(Project project, TextFilePatch patch, final String message) {
+    Messages.showErrorDialog(project, VcsBundle.message("patch.load.base.revision.error", patch.getBeforeName(),
+                                                        message), VcsBundle.message("patch.apply.dialog.title"));
+    return ApplyPatchStatus.FAILURE;
   }
 
   private static ApplyPatchStatus showMergeDialog(Project project, VirtualFile file, CharSequence content, final String patchedContent,

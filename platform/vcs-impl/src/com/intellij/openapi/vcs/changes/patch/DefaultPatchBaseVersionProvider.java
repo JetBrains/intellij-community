@@ -152,6 +152,10 @@ public class DefaultPatchBaseVersionProvider {
     return true;
   }
 
+  public boolean hasVcs() {
+    return myVcs != null;
+  }
+
   private Long getFromTsPattern() {
     final String trimmed = myVersionId.trim();
     final String startPattern = "(date";
