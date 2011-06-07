@@ -58,6 +58,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
+  private static final String INTERNAL_LOG_REQUESTOR = "Internal log requestor";
   private final ProcessPopup myPopup;
 
   private final StatusPanel myInfoPanel = new StatusPanel();
@@ -364,8 +365,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
     }
 
-    boolean logMode = myInfoPanel.updateText(!hasProgressIndicators(), text);
-    myCurrentRequestor = logMode ? null : requestor;
+    boolean logMode = myInfoPanel.updateText(!hasProgressIndicators(), requestor == INTERNAL_LOG_REQUESTOR ? "" : text);
+    myCurrentRequestor = logMode ? INTERNAL_LOG_REQUESTOR : requestor;
     return Pair.create(text, requestor);
   }
 
