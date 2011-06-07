@@ -73,12 +73,13 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     }
   }
 
-  public boolean quickCheckHaveStuff() {
-    if (mySteps.isEmpty()) return false;
+  @Nullable
+  public String quickCheckHaveStuff() {
+    if (mySteps.isEmpty()) return "Nothing selected to show diff";
     if (mySteps.size() == 1) {
       return mySteps.get(0).haveStuff();
     }
-    return true;
+    return null;
   }
 
   @Nullable

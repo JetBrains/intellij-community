@@ -24,6 +24,7 @@ public abstract class DiffRequestPresentableProxy implements DiffRequestPresenta
   private DiffRequestPresentable myDelegate;
   private List<? extends AnAction> myCachedActions;
   private MyResult myStepResult;
+  protected String myInitProblem;
 
   @Nullable
   protected abstract DiffRequestPresentable init();
@@ -53,10 +54,10 @@ public abstract class DiffRequestPresentableProxy implements DiffRequestPresenta
     return myStepResult;
   }
 
-  public boolean haveStuff() {
+  public String haveStuff() {
     final DiffRequestPresentable request = initRequest();
     if (request == null) {
-      return false;
+      return myInitProblem;
     }
     return request.haveStuff();
   }

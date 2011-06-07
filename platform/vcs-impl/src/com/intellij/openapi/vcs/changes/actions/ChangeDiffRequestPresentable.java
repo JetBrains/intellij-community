@@ -63,8 +63,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return ChangesUtil.getFilePath(myChange).getPath();
   }
 
-  public boolean haveStuff() {
-    return checkContentsAvailable(myChange.getBeforeRevision(), myChange.getAfterRevision());
+  @Nullable
+  public String haveStuff() {
+    final boolean canShow = checkContentsAvailable(myChange.getBeforeRevision(), myChange.getAfterRevision());
+    return canShow ? null : "Can not load contents of " + ChangesUtil.getFilePath(myChange).getPath();
   }
 
   public List<? extends AnAction> createActions(ShowDiffAction.DiffExtendUIFactory uiFactory) {

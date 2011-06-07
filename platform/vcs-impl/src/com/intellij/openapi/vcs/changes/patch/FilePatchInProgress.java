@@ -232,8 +232,10 @@ public class FilePatchInProgress implements Strippable {
                 (ApplyPatchStatus.SUCCESS.equals(texts.getStatus()) || ApplyPatchStatus.ALREADY_APPLIED.equals(texts.getStatus()))) {
               return new MergedDiffRequestPresentable(project, texts,
                       myPatchInProgress.getCurrentBase(), myPatchInProgress.getPatch().getAfterVersionId());
+            } else {
+              myInitProblem = ApplyPatchForBaseRevisionTexts.getCannotLoadBaseMessage(texts, myPatchInProgress.getPatch());
+              return null;
             }
-            return null;
           } else {
             return new ChangeDiffRequestPresentable(project, PatchChange.this);
           }

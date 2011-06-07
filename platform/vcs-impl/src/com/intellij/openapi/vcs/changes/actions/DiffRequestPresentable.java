@@ -17,13 +17,19 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffRequest;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public interface DiffRequestPresentable {
   MyResult step(DiffChainContext context);
-  boolean haveStuff();
+
+  /**
+   * @return null for ok or error text if problems
+   */
+  @Nullable
+  String haveStuff();
   List<? extends AnAction> createActions(final ShowDiffAction.DiffExtendUIFactory uiFactory);
   String getPathPresentation();
 

@@ -17,15 +17,20 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ApplyPatchForBaseRevisionTexts {
   private final CharSequence myLocal;
@@ -33,6 +38,7 @@ public class ApplyPatchForBaseRevisionTexts {
   private final String myPatched;
   private ApplyPatchStatus myStatus;
   private VcsException myException;
+  private List<String> myWarnings;
 
   @Nullable
   public static ApplyPatchForBaseRevisionTexts create(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
@@ -63,10 +69,12 @@ public class ApplyPatchForBaseRevisionTexts {
     myLocal = local;
     myPatched = patched;
     myStatus = status;
+    myWarnings = new ArrayList<String>();
   }
 
   ApplyPatchForBaseRevisionTexts(final DefaultPatchBaseVersionProvider provider, final FilePath pathBeforeRename, final TextFilePatch patch,
                                  final VirtualFile file) {
+    myWarnings = new ArrayList<String>();
       myLocal = LoadTextUtil.loadText(file);
       final StringBuilder newText = new StringBuilder();
       try {
@@ -82,7 +90,7 @@ public class ApplyPatchForBaseRevisionTexts {
             myBase = text;
             return false;
           }
-        });
+        }, myWarnings);
       }
       catch (VcsException vcsEx) {
         myException = vcsEx;
@@ -109,5 +117,11 @@ public class ApplyPatchForBaseRevisionTexts {
 
   public VcsException getException() {
     return myException;
+  }
+
+  public static String getCannotLoadBaseMessage(final ApplyPatchForBaseRevisionTexts texts, final FilePatch filePatch) {
+    final VcsException vcsException = texts == null ? null : texts.getException();
+    return VcsBundle.message("patch.load.base.revision.error", filePatch.getBeforeName(),
+                                      vcsException == null ? null : vcsException.getMessage());
   }
 }

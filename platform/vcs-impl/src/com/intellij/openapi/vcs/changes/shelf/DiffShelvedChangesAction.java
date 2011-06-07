@@ -96,6 +96,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
 
               final ApplyPatchForBaseRevisionTexts threeTexts = ApplyPatchForBaseRevisionTexts.create(project, f, pathBeforeRename, patch);
               if ((threeTexts == null) || (threeTexts.getStatus() == null) || (ApplyPatchStatus.FAILURE.equals(threeTexts.getStatus()))) {
+                myInitProblem = ApplyPatchForBaseRevisionTexts.getCannotLoadBaseMessage(threeTexts, patch);
                 return null;
               }
 

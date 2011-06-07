@@ -252,7 +252,11 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, int index, @NotNull final ShowDiffUIContext context) {
     final ChangeDiffRequest request = new ChangeDiffRequest(project, changeList, context.getActionsFactory(), context.isShowFrame());
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
-    if (! request.quickCheckHaveStuff()) return;
+    final String error = request.quickCheckHaveStuff();
+    if (error != null) {
+      Messages.showWarningDialog(error, "Show Diff");
+      return;
+    }
     final DiffRequest simpleRequest = request.init(index);
 
     if (simpleRequest != null) {

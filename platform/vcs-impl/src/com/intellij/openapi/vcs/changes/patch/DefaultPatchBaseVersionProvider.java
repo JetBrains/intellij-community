@@ -27,10 +27,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.history.VcsHistorySession;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsRunnable;
@@ -68,7 +65,9 @@ public class DefaultPatchBaseVersionProvider {
     myRevisionPattern = null;
   }
 
-  public void getBaseVersionContent(final FilePath filePath, Processor<CharSequence> processor) throws VcsException {
+  public void getBaseVersionContent(final FilePath filePath,
+                                    Processor<CharSequence> processor,
+                                    List<String> warnings) throws VcsException {
     if (myVcs == null) {
       return;
     }
@@ -80,6 +79,9 @@ public class DefaultPatchBaseVersionProvider {
       final Matcher matcher = myRevisionPattern.matcher(myVersionId);
       if (matcher.find()) {
         revision = myVcs.parseRevisionNumber(matcher.group(1), filePath);
+        if (historyProvider instanceof VcsBaseRevisionAdviser) {
+          if (((VcsBaseRevisionAdviser) historyProvider).getBaseVersionContent(filePath, processor, revision.asString(), warnings)) return;
+        }
       }
     }
 

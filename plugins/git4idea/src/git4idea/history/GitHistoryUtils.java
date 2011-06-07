@@ -534,6 +534,7 @@ public class GitHistoryUtils {
                                 List<String> locals,
                                 List<String> remotes,
                                 List<String> tags) {
+    if (refs == null) return null;
     for (String ref : currentRefs) {
       final SymbolicRefs.Kind kind = refs.getKind(ref);
       if (SymbolicRefs.Kind.LOCAL.equals(kind)) {
@@ -676,5 +677,22 @@ public class GitHistoryUtils {
       path = change.getBeforeRevision().getFile();
     }
     return path;
+  }
+
+  @Nullable
+  public static GitRevisionNumber getMergeBase(final Project project, final VirtualFile root, @NotNull final String first,
+                                               @NotNull final String second)
+    throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.MERGE_BASE);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters(first, second);
+    String output = h.run().trim();
+    if (output.length() == 0) {
+      return null;
+    }
+    else {
+      return GitRevisionNumber.resolve(project, root, output);
+    }
   }
 }

@@ -18,15 +18,23 @@ package git4idea.history;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import git4idea.GitFileRevision;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
+import git4idea.changes.GitChangeUtils;
 import git4idea.config.GitExecutableValidator;
+import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +45,8 @@ import java.util.List;
 /**
  * Git history provider implementation
  */
-public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession> {
+public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
+                                           VcsBaseRevisionAdviser {
   /**
    * logger instance
    */
@@ -144,6 +153,52 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         return createSession(filePath, getRevisionList(), getCurrentRevisionNumber());
       }
     };
+  }
+
+  @Override
+  public boolean getBaseVersionContent(FilePath filePath,
+                                       Processor<CharSequence> processor,
+                                       final String beforeVersionId,
+                                       List<String> warnings)
+    throws VcsException {
+    if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return false;
+    // apply if base revision id matches revision
+    final VirtualFile root = GitUtil.getGitRoot(filePath);
+    if (root == null) return false;
+
+    final SHAHash shaHash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, "--all");
+    if (shaHash == null) {
+      throw new VcsException("Can not apply patch to " + filePath.getPath() + ".\nCan not find revision '" + beforeVersionId + "'.");
+    }
+
+    //common parent
+    final GitRevisionNumber mergeBase = GitHistoryUtils.getMergeBase(myProject, root, "HEAD", shaHash.getValue());
+    if (mergeBase == null) {
+      throw new VcsException("Can not apply patch to " + filePath.getPath() +
+                             ".\nBase revision '" + beforeVersionId + "', used in patch, is not on current branch (reachable from current HEAD)," +
+                             "\nand there is no merge base between '" + beforeVersionId + "' and HEAD.");
+    }
+    final ContentRevision content = GitVcs.getInstance(myProject).getDiffProvider()
+      .createFileContent(new GitRevisionNumber(shaHash.getValue()), filePath.getVirtualFile());
+    if (content == null) {
+      throw new VcsException("Can not load content of '" + filePath.getPath() + "' for revision '" + shaHash.getValue() + "'");
+    }
+    final boolean matched = ! processor.process(content.getContent());
+    if (shaHash.getValue().startsWith(mergeBase.getRev())) {
+      // ok
+      return matched;
+    } else {
+      if (matched) {
+        warnings.add("Base revision '" + beforeVersionId + "', used in patch, is not on current branch (reachable from current HEAD)." +
+                     "\nMerge base '" + mergeBase.getRev() +"' between '" + beforeVersionId + "' and HEAD was used.");
+        return true;
+      } else {
+        throw new VcsException("Can not apply patch to " + filePath.getPath() +
+                               ".\nBase revision '" + beforeVersionId + "', used in patch, is not on current branch (reachable from current HEAD)," +
+                               "\nand found merge base '" + mergeBase.getRev() + "' between '" + beforeVersionId +
+                               "' and HEAD doesn't match the context.");
+      }
+    }
   }
 
   public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
