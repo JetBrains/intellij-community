@@ -1,4 +1,4 @@
-package com.intellij.structuralsearch.extenders;
+package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.fileTypes.LanguageFileType;

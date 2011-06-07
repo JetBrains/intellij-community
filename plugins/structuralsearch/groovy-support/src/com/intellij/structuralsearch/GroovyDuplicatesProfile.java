@@ -1,8 +1,10 @@
-package com.intellij.structuralsearch.duplicates;
+package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.structuralsearch.duplicates.PsiElementRole;
+import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfileBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;

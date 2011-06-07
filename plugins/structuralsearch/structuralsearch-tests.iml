@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="JavaScriptLanguage" />
     <orderEntry type="module" module-name="duplicates" />
-    <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="xml" />
   </component>
 </module>

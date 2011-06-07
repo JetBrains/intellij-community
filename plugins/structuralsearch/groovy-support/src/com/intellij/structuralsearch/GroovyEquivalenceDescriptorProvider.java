@@ -1,4 +1,4 @@
-package com.intellij.structuralsearch.equivalence.groovy;
+package com.intellij.structuralsearch;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
