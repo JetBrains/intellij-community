@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public interface PresentationNameProvider {
+public interface PresentationNameProvider<T> {
 
   @Nullable
-  String getName(Object o);
+  String getName(T o);
 }
