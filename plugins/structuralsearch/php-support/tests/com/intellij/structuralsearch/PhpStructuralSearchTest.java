@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.structuralsearch.extenders.PhpStructuralSearchProfile;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.jetbrains.php.lang.PhpFileType;
@@ -256,7 +255,7 @@ public class PhpStructuralSearchTest extends StructuralSearchTestCase {
 
   private void findAndCheck(String source, String pattern, int expectedOccurences, boolean transform) {
     assertEquals(expectedOccurences,
-                 findMatches(source, pattern, true, PhpFileType.INSTANCE, null, PhpFileType.INSTANCE, null, false, transform)
-                   .size());
+                        findMatches(source, pattern, true, PhpFileType.INSTANCE, null, PhpFileType.INSTANCE, null, false, transform)
+                          .size());
   }
 }

@@ -1,8 +1,10 @@
-package com.intellij.structuralsearch.duplicates;
+package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.structuralsearch.duplicates.PsiElementRole;
+import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfileBase;
 import com.jetbrains.php.lang.PhpLanguage;
 import com.jetbrains.php.lang.lexer.PhpTokenTypes;
 import com.jetbrains.php.lang.psi.elements.*;

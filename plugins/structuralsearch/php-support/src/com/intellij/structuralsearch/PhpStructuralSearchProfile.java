@@ -1,10 +1,9 @@
-package com.intellij.structuralsearch.extenders;
+package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.jetbrains.php.lang.PhpFileType;
 import com.jetbrains.php.lang.lexer.PhpTokenTypes;
 import com.jetbrains.php.refactoring.PhpTemplateContextType;

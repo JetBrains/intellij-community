@@ -1,6 +1,9 @@
-package com.intellij.structuralsearch.equivalence;
+package com.intellij.structuralsearch;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
+import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorBuilder;
+import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 import com.jetbrains.php.lang.PhpLanguage;
 import com.jetbrains.php.lang.psi.elements.GroupStatement;
 import org.jetbrains.annotations.NotNull;
