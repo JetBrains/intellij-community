@@ -40,6 +40,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +50,8 @@ import org.picocontainer.MutablePicoContainer;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope.*;
 
 /**
  * @author max
@@ -59,20 +63,13 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private ModuleType myModuleType = null;
   private boolean isModuleAdded;
 
-  @NonNls private static final String MODULE_LAYER = "module-components";
-
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
   @NonNls public static final String ELEMENT_TYPE = "type";
 
-  private GlobalSearchScope myModuleScope;
-  private GlobalSearchScope myModuleWithLibrariesScope;
-  private GlobalSearchScope myModuleWithDependenciesScope;
-  private GlobalSearchScope myModuleWithDependenciesAndLibrariesScope;
-  private GlobalSearchScope myModuleWithDependenciesAndLibrariesNoTestsScope;
+  private final Map<Integer, GlobalSearchScope> myScopeCache = new StripedLockConcurrentHashMap<Integer, GlobalSearchScope>();
+
   private GlobalSearchScope myModuleWithDependentsScope;
   private GlobalSearchScope myModuleTestsWithDependentsScope;
-  private GlobalSearchScope myModuleTestsRuntimeClasspathScope;
-  private GlobalSearchScope myModuleRuntimeClasspathScope;
 
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
@@ -245,39 +242,24 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   public GlobalSearchScope getModuleScope() {
-    if (myModuleScope == null) {
-      myModuleScope = new ModuleWithDependenciesScope(this, true, false, false, true);
-    }
-    return myModuleScope;
+    return getCachedScope(COMPILE | TESTS);
+  }
+
+  @Override
+  public GlobalSearchScope getModuleScope(boolean includeTests) {
+    return getCachedScope(COMPILE | (includeTests ? TESTS : 0));
   }
 
   public GlobalSearchScope getModuleWithLibrariesScope() {
-    if (myModuleWithLibrariesScope == null) {
-      myModuleWithLibrariesScope = new ModuleWithDependenciesScope(this, true, true, false, true);
-    }
-    return myModuleWithLibrariesScope;
+    return getCachedScope(COMPILE | TESTS | LIBRARIES);
   }
 
   public GlobalSearchScope getModuleWithDependenciesScope() {
-    if (myModuleWithDependenciesScope == null) {
-      myModuleWithDependenciesScope = new ModuleWithDependenciesScope(this, true, false, true, true);
-    }
-    return myModuleWithDependenciesScope;
+    return getCachedScope(COMPILE | TESTS | MODULES);
   }
 
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
-    if (includeTests) {
-      if (myModuleWithDependenciesAndLibrariesScope == null) {
-        myModuleWithDependenciesAndLibrariesScope = new ModuleWithDependenciesScope(this, true, true, true, true);
-      }
-      return myModuleWithDependenciesAndLibrariesScope;
-    }
-    else {
-      if (myModuleWithDependenciesAndLibrariesNoTestsScope == null) {
-        myModuleWithDependenciesAndLibrariesNoTestsScope = new ModuleWithDependenciesScope(this, true, true, true, false);
-      }
-      return myModuleWithDependenciesAndLibrariesNoTestsScope;
-    }
+    return getCachedScope(COMPILE | MODULES | LIBRARIES | (includeTests ? TESTS : 0));
   }
 
   public GlobalSearchScope getModuleWithDependentsScope() {
@@ -295,30 +277,22 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
-    if (includeTests) {
-      if (myModuleTestsRuntimeClasspathScope == null) {
-        myModuleTestsRuntimeClasspathScope = new ModuleWithDependenciesScope(this, false, true, true, true, false);
-      }
-      return myModuleTestsRuntimeClasspathScope;
+    return getCachedScope(MODULES | LIBRARIES | (includeTests ? TESTS : 0));
+  }
+
+  public GlobalSearchScope getCachedScope(int options) {
+    GlobalSearchScope scope = myScopeCache.get(options);
+    if (scope == null) {
+      scope = new ModuleWithDependenciesScope(this, options);
+      myScopeCache.put(options, scope);
     }
-    else {
-      if (myModuleRuntimeClasspathScope == null) {
-        myModuleRuntimeClasspathScope = new ModuleWithDependenciesScope(this, false, true, true, false, false);
-      }
-      return myModuleRuntimeClasspathScope;
-    }
+    return scope;
   }
 
   public void clearScopesCache() {
-    myModuleScope = null;
-    myModuleWithLibrariesScope = null;
-    myModuleWithDependenciesScope = null;
-    myModuleWithDependenciesAndLibrariesScope = null;
-    myModuleWithDependenciesAndLibrariesNoTestsScope = null;
+    myScopeCache.clear();
     myModuleWithDependentsScope = null;
     myModuleTestsWithDependentsScope = null;
-    myModuleTestsRuntimeClasspathScope = null;
-    myModuleRuntimeClasspathScope = null;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
