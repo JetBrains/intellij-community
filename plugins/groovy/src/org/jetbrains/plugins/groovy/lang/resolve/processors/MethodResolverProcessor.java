@@ -408,8 +408,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (argTypes != null && argTypes.length > i) {
         PsiType argType = argTypes[i];
         if (argType != null) {
-          final boolean converts1 = TypesUtil.isAssignable(type1, argType, manager, scope, false);
-          final boolean converts2 = TypesUtil.isAssignable(type2, argType, manager, scope, false);
+          final boolean converts1 = TypesUtil.isAssignable(TypeConversionUtil.erasure(type1), argType, manager, scope, false);
+          final boolean converts2 = TypesUtil.isAssignable(TypeConversionUtil.erasure(type2), argType, manager, scope, false);
           if (converts1 != converts2) {
             return converts2;
           }
