@@ -114,8 +114,8 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   private <T extends XBreakpointProperties> XBreakpointBase<?, T, ?> createBreakpoint(XBreakpointType<XBreakpoint<T>, T> type,
                                                                                       T properties, final boolean enabled) {
-    XBreakpointBase.BreakpointState<?,T,?> state = new XBreakpointBase.BreakpointState<XBreakpoint<T>,T,XBreakpointType<XBreakpoint<T>,T>>(enabled, type.getId());
-    return new XBreakpointBase<XBreakpoint<T>,T, XBreakpointBase.BreakpointState<?,T,?>>(type, this, properties, state);
+    BreakpointState<?,T,?> state = new BreakpointState<XBreakpoint<T>,T,XBreakpointType<XBreakpoint<T>,T>>(enabled, type.getId());
+    return new XBreakpointBase<XBreakpoint<T>,T, BreakpointState<?,T,?>>(type, this, properties, state);
   }
 
   private <T extends XBreakpointProperties> void addBreakpoint(final XBreakpointBase<?, T, ?> breakpoint, final boolean defaultBreakpoint,
@@ -286,7 +286,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myDependentBreakpointManager.saveState();
     BreakpointManagerState state = new BreakpointManagerState();
     for (XBreakpointBase<?, ?, ?> breakpoint : myDefaultBreakpoints.values()) {
-      final XBreakpointBase.BreakpointState breakpointState = breakpoint.getState();
+      final BreakpointState breakpointState = breakpoint.getState();
       if (differsFromDefault(breakpoint.getType(), breakpointState)) {
         state.getDefaultBreakpoints().add(breakpointState);
       }
@@ -301,13 +301,13 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   private <P extends XBreakpointProperties> boolean differsFromDefault(XBreakpointType<?, P> type,
-                                                                              XBreakpointBase.BreakpointState state) {
+                                                                              BreakpointState state) {
     final XBreakpoint<P> defaultBreakpoint = createDefaultBreakpoint(type);
     if (defaultBreakpoint == null) {
       return false;
     }
 
-    XBreakpointBase.BreakpointState defaultState = ((XBreakpointBase)defaultBreakpoint).getState();
+    BreakpointState defaultState = ((XBreakpointBase)defaultBreakpoint).getState();
     Element defaultElement = XmlSerializer.serialize(defaultState, SERIALIZATION_FILTER);
     Element currentElement = XmlSerializer.serialize(state, SERIALIZATION_FILTER);
     return !JDOMUtil.areElementsEqual(defaultElement, currentElement);
@@ -323,7 +323,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     }
 
     myDefaultBreakpoints.clear();
-    for (XBreakpointBase.BreakpointState breakpointState : state.getDefaultBreakpoints()) {
+    for (BreakpointState breakpointState : state.getDefaultBreakpoints()) {
       loadBreakpoint(breakpointState, true);
     }
     for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
@@ -335,7 +335,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     for (XBreakpointBase<?,?,?> breakpoint : myBreakpoints.values()) {
       doRemoveBreakpoint(breakpoint);
     }
-    for (XBreakpointBase.BreakpointState breakpointState : state.getBreakpoints()) {
+    for (BreakpointState breakpointState : state.getBreakpoints()) {
       loadBreakpoint(breakpointState, false);
     }
     myDependentBreakpointManager.loadState();
@@ -361,7 +361,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     });
   }
 
-  private void loadBreakpoint(XBreakpointBase.BreakpointState breakpointState, final boolean defaultBreakpoint) {
+  private void loadBreakpoint(BreakpointState breakpointState, final boolean defaultBreakpoint) {
     XBreakpointBase<?,?,?> breakpoint = createBreakpoint(breakpointState);
     if (breakpoint != null) {
       addBreakpoint(breakpoint, defaultBreakpoint, false);
@@ -378,7 +378,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   @Nullable
-  private XBreakpointBase<?,?,?> createBreakpoint(final XBreakpointBase.BreakpointState breakpointState) {
+  private XBreakpointBase<?,?,?> createBreakpoint(final BreakpointState breakpointState) {
     XBreakpointType<?,?> type = XBreakpointUtil.findType(breakpointState.getTypeId());
     if (type == null) return null;
     //noinspection unchecked
@@ -388,20 +388,20 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   @Tag("breakpoint-manager")
   public static class BreakpointManagerState {
-    private List<XBreakpointBase.BreakpointState> myDefaultBreakpoints = new ArrayList<XBreakpointBase.BreakpointState>();
-    private List<XBreakpointBase.BreakpointState> myBreakpoints = new ArrayList<XBreakpointBase.BreakpointState>();
+    private List<BreakpointState> myDefaultBreakpoints = new ArrayList<BreakpointState>();
+    private List<BreakpointState> myBreakpoints = new ArrayList<BreakpointState>();
     private Map<String, XBreakpointTypeDialogState> myBreakpointTypeDialogProperties = new HashMap<String, XBreakpointTypeDialogState>();
 
     @Tag("default-breakpoints")
     @AbstractCollection(surroundWithTag = false)
-    public List<XBreakpointBase.BreakpointState> getDefaultBreakpoints() {
+    public List<BreakpointState> getDefaultBreakpoints() {
       return myDefaultBreakpoints;
     }
 
     @Tag("breakpoints")
     @AbstractCollection(surroundWithTag = false,
-                        elementTypes = {XBreakpointBase.BreakpointState.class, XLineBreakpointImpl.LineBreakpointState.class})
-    public List<XBreakpointBase.BreakpointState> getBreakpoints() {
+                        elementTypes = {BreakpointState.class, LineBreakpointState.class})
+    public List<BreakpointState> getBreakpoints() {
       return myBreakpoints;
     }
 
@@ -412,11 +412,11 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       return myBreakpointTypeDialogProperties;
     }
 
-    public void setBreakpoints(final List<XBreakpointBase.BreakpointState> breakpoints) {
+    public void setBreakpoints(final List<BreakpointState> breakpoints) {
       myBreakpoints = breakpoints;
     }
 
-    public void setDefaultBreakpoints(List<XBreakpointBase.BreakpointState> defaultBreakpoints) {
+    public void setDefaultBreakpoints(List<BreakpointState> defaultBreakpoints) {
       myDefaultBreakpoints = defaultBreakpoints;
     }
 
