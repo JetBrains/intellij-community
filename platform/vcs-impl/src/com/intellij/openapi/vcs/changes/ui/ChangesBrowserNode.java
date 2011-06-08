@@ -144,13 +144,17 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   }
 
   public List<Change> getAllChangesUnder() {
-    List<Change> changes = new ArrayList<Change>();
+    return getAllObjectsUnder(Change.class);
+  }
+
+  public <T> List<T> getAllObjectsUnder(final Class<T> clazz) {
+    List<T> changes = new ArrayList<T>();
     final Enumeration enumeration = depthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
       ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
       final Object value = child.getUserObject();
-      if (value instanceof Change) {
-        changes.add((Change)value);
+      if (clazz.isAssignableFrom(value.getClass())) {
+        changes.add((T) value);
       }
     }
     return changes;

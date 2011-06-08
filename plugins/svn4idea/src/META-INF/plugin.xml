@@ -86,6 +86,12 @@
       <separator/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
+    <action id="Subversion.MarkLocallyDeletedTreeResolved" class="org.jetbrains.idea.svn.actions.MarkLocallyDeletedTreeConflictResolvedAction">
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.Diff"/>
+    </action>
+    <reference id="Subversion.MarkTreeResolved">
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.Diff"/>
+    </reference>
     <group id="SubversionUpdateActionGroup" class="org.jetbrains.idea.svn.actions.SubversionGroup">
       <reference id="Subversion.Add"/>
       <reference id="ChangesView.Rollback"/>
