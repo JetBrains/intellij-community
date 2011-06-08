@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -46,19 +47,18 @@ public abstract class BraceMatcherBasedSelectioner extends ExtendWordSelectionHa
     final BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
 
     final ArrayList<TextRange> result = new ArrayList<TextRange>();
-    final LinkedList<Pair<Integer, IElementType>> stack = new LinkedList<Pair<Integer, IElementType>>();
+    final LinkedList<Trinity<Integer, Integer, IElementType>> stack = new LinkedList<Trinity<Integer, Integer, IElementType>>();
     while (!iterator.atEnd() && iterator.getStart() < totalRange.getEndOffset()) {
-      final Pair<Integer, IElementType> last;
+      final Trinity<Integer, Integer, IElementType> last;
       if (braceMatcher.isLBraceToken(iterator, editorText, fileType)) {
-        stack.addLast(Pair.create(iterator.getStart(), iterator.getTokenType()));
+        stack.addLast(Trinity.create(iterator.getStart(), iterator.getEnd(), iterator.getTokenType()));
       }
       else if (braceMatcher.isRBraceToken(iterator, editorText, fileType)
-          && !stack.isEmpty() && braceMatcher.isPairBraces((last = stack.getLast()).second, iterator.getTokenType())) {
+          && !stack.isEmpty() && braceMatcher.isPairBraces((last = stack.getLast()).third, iterator.getTokenType())) {
         stack.removeLast();
-        final int start = last.first;
-        result.addAll(expandToWholeLine(editorText, new TextRange(start, iterator.getEnd())));
-        int bodyStart = start + 1;
-        int bodyEnd = iterator.getEnd() - 1;
+        result.addAll(expandToWholeLine(editorText, new TextRange(last.first, iterator.getEnd())));
+        int bodyStart = last.second + 1;
+        int bodyEnd = iterator.getStart();
         while (Character.isWhitespace(editorText.charAt(bodyStart))) bodyStart ++;
         while (Character.isWhitespace(editorText.charAt(bodyEnd - 1))) bodyEnd --;
         result.addAll(expandToWholeLine(editorText, new TextRange(bodyStart, bodyEnd)));
