@@ -299,7 +299,9 @@ public class GroovyExpectedTypesProvider {
         if (constraint instanceof SubtypeConstraint) {
           final PsiType type = constraint.getType();
           final PsiType iterable = com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, true);
-          result.add(iterable);
+          if (iterable != null) {
+            result.add(iterable);
+          }
         }
       }
       if (result.size()==0) {
@@ -308,7 +310,10 @@ public class GroovyExpectedTypesProvider {
       else {
         myResult = new TypeConstraint[result.size()];
         for (int i = 0; i < result.size(); i++) {
-          myResult[i] = SubtypeConstraint.create(result.get(i));
+          final PsiType type = result.get(i);
+          if (type!=null) {
+            myResult[i] = SubtypeConstraint.create(type);
+          }
         }
       }
     }
