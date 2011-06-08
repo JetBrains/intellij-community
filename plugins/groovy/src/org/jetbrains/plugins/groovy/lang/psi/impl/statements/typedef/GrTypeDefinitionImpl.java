@@ -308,7 +308,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   public PsiClass[] getInterfaces() {
-    return GrClassImplUtil.getInterfaces(this);
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClass[]>() {
+      @Override
+      public Result<PsiClass[]> compute() {
+        return Result.create(GrClassImplUtil.getInterfaces(GrTypeDefinitionImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @NotNull
