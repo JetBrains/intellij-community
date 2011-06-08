@@ -158,6 +158,10 @@ public class GithubShareAction extends DumbAwareAction {
         }
       }, "Committing", false, project);
     }
+
+    // In this case we should create sample commit for binding project
+    performFirstCommitIfRequired(project, root);
+
     //git remote add origin git@github.com:login/name.git
     LOG.info("Adding GitHub as a remote host");
     final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
@@ -176,36 +180,6 @@ public class GithubShareAction extends DumbAwareAction {
       LOG.info("Failed to add GitHub as remote: " + e.getMessage());
       return;
     }
-    //git configure tracked branch
-    LOG.info("Configuring tracked branch");
-    final GitSimpleHandler configureTrackedHandler = new GitSimpleHandler(project, root, GitCommand.CONFIG);
-    configureTrackedHandler.setNoSSH(true);
-    configureTrackedHandler.setSilent(true);
-    configureTrackedHandler.addParameters("branch.master.remote", "origin");
-
-    final GitSimpleHandler configureTrackedHandler2 = new GitSimpleHandler(project, root, GitCommand.CONFIG);
-    configureTrackedHandler2.setNoSSH(true);
-    configureTrackedHandler2.setSilent(true);
-    configureTrackedHandler2.addParameters("branch.master.merge", "refs/heads/master");
-    try {
-      configureTrackedHandler.run();
-      if (configureTrackedHandler.getExitCode() != 0) {
-        Messages.showErrorDialog("Failed to configured tracked branch", "Failed to configured tracked branch");
-        return;
-      }
-      configureTrackedHandler2.run();
-      if (configureTrackedHandler2.getExitCode() != 0) {
-        Messages.showErrorDialog("Failed to configured tracked branch", "Failed to configured tracked branch");
-        return;
-      }
-    }
-    catch (VcsException e) {
-      Messages.showErrorDialog(e.getMessage(), "Failed to configured tracked branch");
-      LOG.info("Failed to configured tracked branch: " + e.getMessage());
-      return;
-    }
-    // In this case we should create sample commit for binding project
-    performFirstCommitIfRequired(project, root);
 
     //git push origin master
     final ProgressManager manager = ProgressManager.getInstance();
@@ -217,7 +191,7 @@ public class GithubShareAction extends DumbAwareAction {
             progressIndicator.setText("Pushing to GitHub");
           }
           final GitLineHandler gitPushHandler = new GitLineHandler(project, root, GitCommand.PUSH);
-          gitPushHandler.addParameters("origin", "master");
+          gitPushHandler.addParameters("-u", "origin", "master");
           GitPushUtils.trackPushRejectedAsError(gitPushHandler, "Rejected push (" + root.getPresentableUrl() + "): ");
           errors.addAll(GitHandlerUtil.doSynchronouslyWithExceptions(gitPushHandler));
         }
