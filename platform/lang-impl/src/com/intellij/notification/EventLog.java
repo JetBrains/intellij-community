@@ -27,6 +27,7 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -120,6 +121,11 @@ public class EventLog implements Notifications {
       view.printHyperlink("more", new HyperlinkInfo() {
         @Override
         public void navigate(Project project) {
+          Balloon balloon = notification.getBalloon();
+          if (balloon != null) {
+            balloon.hide();
+          }
+
           NotificationsManagerImpl.notifyByBalloon(notification, NotificationDisplayType.STICKY_BALLOON, project);
         }
       });
