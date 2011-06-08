@@ -17,6 +17,8 @@ package com.intellij.util.graph;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.Chunk;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,4 +48,8 @@ public abstract class GraphAlgorithms {
 
   @NotNull
   public abstract <Node> Graph<Node> invertEdgeDirections(@NotNull Graph<Node> graph);
+
+  public abstract <Node> Graph<Chunk<Node>> computeSCCGraph(final Graph<Node> graph);
+
+  public abstract <Node> Graph<Node> createGraphByInArcs(MultiMap<Node, Node> inArcs);
 }

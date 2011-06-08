@@ -150,8 +150,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
 
   private static void doTest(Map<String, String> graph, final String start, final String finish, final int k, String... expectedPaths) {
     final Graph<String> generator = initGraph(graph);
-    final KShortestPathsFinder<String> finder = new KShortestPathsFinder<String>(generator, start, finish, new EmptyProgressIndicator());
-    final List<List<String>> paths = finder.findShortestPaths(k);
+    final List<List<String>> paths = getAlgorithmsInstance().findKShortestPaths(generator, start, finish, k, new EmptyProgressIndicator());
     List<String> pathStrings = new ArrayList<String>();
     Set<Integer> sizes = new HashSet<Integer>();
     for (List<String> path : paths) {
