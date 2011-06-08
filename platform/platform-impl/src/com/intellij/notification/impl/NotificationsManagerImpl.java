@@ -132,7 +132,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
 
     final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
-    if (settings.isShouldLog()) {
+    if (settings.isShouldLog() && settings.getDisplayType() != NotificationDisplayType.NONE) {
       myModel.add(notification, project);
     }
 

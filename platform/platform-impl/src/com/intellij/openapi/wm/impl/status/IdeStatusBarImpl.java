@@ -311,7 +311,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         }
       }
       else {
-        wid = "Notifications";
+        wid = "Memory";
         before = true;
       }
 

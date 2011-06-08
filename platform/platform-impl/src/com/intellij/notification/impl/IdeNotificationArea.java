@@ -130,29 +130,23 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
   public void updateStatus() {
     final NotificationsManagerImpl manager = getManager();
 
-    Icon icon = EMPTY_ICON;
-    final NotificationType maximumType = manager.getMaximumType(getProject());
-    if (maximumType != null) {
-      switch (maximumType) {
-        case WARNING:
-          icon = WARNING_ICON;
-          break;
-        case ERROR:
-          icon = ERROR_ICON;
-          break;
-        case INFORMATION:
-        default:
-          icon = INFO_ICON;
-          break;
-      }
-    }
-
-    myCurrentIcon = icon;
+    myCurrentIcon = getPendingNotificationsIcon(EMPTY_ICON, manager.getMaximumType(getProject()));
     if (manager.count(getProject()) == 0) {
       cancelPopup();
     }
 
     myStatusBar.updateWidget(ID());
+  }
+
+  public static Icon getPendingNotificationsIcon(Icon defIcon, final NotificationType maximumType) {
+    if (maximumType != null) {
+      switch (maximumType) {
+        case WARNING: return WARNING_ICON;
+        case ERROR: return ERROR_ICON;
+        case INFORMATION: return INFO_ICON;
+      }
+    }
+    return defIcon;
   }
 
   public void notificationsAdded(@NotNull final Notification... notifications) {

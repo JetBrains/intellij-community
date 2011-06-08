@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,6 +67,7 @@ class StatusPanel extends JPanel {
         if (eventLog != null) {
           if (!eventLog.isVisible()) {
             eventLog.activate(null, true);
+            NotificationsManagerImpl.getNotificationsManagerImpl().clear(getActiveProject());
           } else {
             eventLog.hide(null);
           }
@@ -77,15 +80,21 @@ class StatusPanel extends JPanel {
   }
 
   @Nullable
-  private ToolWindow getEventLog() {
+  private Project getActiveProject() {
     // a better way of finding a project would be great
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       final JComponent frame = WindowManager.getInstance().getIdeFrame(project).getComponent();
       if (SwingUtilities.isDescendingFrom(this, frame)) {
-        return ToolWindowManager.getInstance(project).getToolWindow(NotificationsManagerImpl.LOG_TOOL_WINDOW_ID);
+        return project;
       }
     }
     return null;
+  }
+
+  @Nullable
+  private ToolWindow getEventLog() {
+    final Project project = getActiveProject();
+    return project != null ? ToolWindowManager.getInstance(project).getToolWindow(NotificationsManagerImpl.LOG_TOOL_WINDOW_ID) : null;
   }
 
   public void setLogMessage(String text) {
@@ -127,9 +136,21 @@ class StatusPanel extends JPanel {
             return;
           }
 
+          final Project project = getActiveProject();
+          assert project != null;
+
           final boolean visible = eventLog.isVisible();
-          myShowLog.setIcon(visible ? ourHideLogIcon : ourShowLogIcon);
-          myShowLog.setToolTipText(visible ? "" : "Click to open the event log");
+          if (visible) {
+            NotificationsManagerImpl.getNotificationsManagerImpl().clear(project);
+          }
+
+          final NotificationsManagerImpl manager = NotificationsManagerImpl.getNotificationsManagerImpl();
+          final int count = manager.count(project);
+
+          final NotificationType maximumType = count > 1 ? manager.getMaximumType(project) : null;
+
+          myShowLog.setIcon(visible ? ourHideLogIcon : IdeNotificationArea.getPendingNotificationsIcon(ourShowLogIcon, maximumType));
+          myShowLog.setToolTipText(visible ? "" : count > 1 ? String.format("%s notifications pending", count) : "Click to open the event log");
 
           myLogAlarm.addRequest(this, 50);
         }
