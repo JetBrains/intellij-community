@@ -40,7 +40,7 @@ public class GitRebaserReorderCommitsTest extends GitSingleUserTest {
 
   @BeforeMethod @Override protected void setUp() throws Exception {
     super.setUp();
-    myRebaser = new GitRebaser(myProject);
+    myRebaser = new GitRebaser(myProject, null);
     myRoot = myRepo.getDir();
     myFirstCommit = makeCommit();
   }
