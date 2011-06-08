@@ -25,5 +25,5 @@ import javax.swing.*;
 public interface PresentationIconProvider<T> {
 
   @Nullable
-  Icon getIcon(T o, int flags);
+  Icon getIcon(T o);
 }

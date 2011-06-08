@@ -37,4 +37,7 @@ public abstract class TypePresentationService {
 
   @Nullable
   public abstract String getTypePresentableName(Class type);
+
+  @Nullable
+  public abstract String getTypeName(Object o);
 }

@@ -104,7 +104,7 @@ public abstract class ElementPresentationManager {
 
   /**
    * @deprecated
-   * @see com.intellij.ide.presentation.Presentation#nameProviderClass()
+   * @see com.intellij.ide.presentation.Presentation#provider()
    */
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
 
@@ -185,6 +185,8 @@ public abstract class ElementPresentationManager {
   public static String getTypeNameForObject(Object o) {
     final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
     o = firstImpl != null ? firstImpl : o;
+    String typeName = TypePresentationService.getService().getTypeName(o);
+    if (typeName != null) return typeName;
     final Class<? extends Object> aClass = o.getClass();
     String s = TypeNameManager._getTypeName(aClass);
     if (s != null) {

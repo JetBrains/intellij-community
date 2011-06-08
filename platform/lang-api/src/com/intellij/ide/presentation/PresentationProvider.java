@@ -17,11 +17,19 @@ package com.intellij.ide.presentation;
 
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Dmitry Avdeev
  */
-public interface PresentationNameProvider<T> {
+public abstract class PresentationProvider<T> implements PresentationIconProvider<T> {
 
   @Nullable
-  String getName(T o);
+  public String getName(T t) { return null; }
+
+  @Nullable
+  public Icon getIcon(T t) { return null; }
+
+  @Nullable
+  public String getTypeName(T t) { return null; }
 }
