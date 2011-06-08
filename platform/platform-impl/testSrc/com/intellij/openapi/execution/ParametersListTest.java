@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Assertion;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 
@@ -38,7 +39,7 @@ public class ParametersListTest extends UsefulTestCase {
     checkTokenizer("a \"\" b", new String[]{"a", "\"\"", "b"});
   }
 
-  private void checkTokenizer(String parmsString, String[] expected) {
+  private void checkTokenizer(@NonNls String parmsString, @NonNls String[] expected) {
     ParametersList params = new ParametersList();
     params.addParametersString(parmsString);
     String[] strings = ArrayUtil.toStringArray(params.getList());
@@ -166,5 +167,27 @@ public class ParametersListTest extends UsefulTestCase {
 
     assertEquals("group2_param1 group2_param2 group3_param1", params.getParametersString().trim());
     assertEquals("group1_param1 group2_param1 group3_param1", params_clone.getParametersString().trim());
+  }
+
+  public void testParamsWithSpaces() {
+    checkTokenizer("a b=\"some text\" c", new String[]{"a", "b=\"some", "text\"", "c"});
+    checkTokenizer("a b=\"some text with spaces\" c", new String[]{"a", "b=\"some", "text", "with", "spaces\"", "c"});
+    checkTokenizer("a b=\"some text with spaces\"more c", new String[]{"a", "b=\"some", "text", "with", "spaces\"more", "c"});
+    checkTokenizer("a b=\"some text with spaces \"more c", new String[]{"a", "b=\"some", "text", "with", "spaces", "\"more", "c"});
+
+    //this test just fixes the way it works;
+    // i don't see any use cases when it definitely should or shouldn't be this way
+    checkTokenizer("a \"some text with spaces\"More c", new String[]{"a", "some text with spacesMore", "c"});
+
+    checkTokenizer("a \"some text with spaces \"more c", new String[]{"a", "some text with spaces more", "c"});
+    checkTokenizer("a\"some text with spaces \"more c", new String[]{"a\"some", "text", "with", "spaces", "\"more", "c"});
+    checkTokenizer("a\"some text with spaces \"more", new String[]{"a\"some", "text", "with", "spaces", "\"more"});
+    checkTokenizer("a\"some text with spaces \"more next\"text moreText\"end c", new String[]{"a\"some", "text", "with", "spaces", "\"more",
+      "next\"text", "moreText\"end", "c"});
+
+    checkTokenizer("\"\"C:\\phing.bat\"",
+                   new String[]{"\"\"C:\\phing.bat\""});
+   checkTokenizer("-Dparam=\"some text main\"\"",
+                   new String[]{"-Dparam=\"some", "text", "main\"\""});
   }
 }
