@@ -19,8 +19,10 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.ide.presentation.Presentation;
 import org.jetbrains.annotations.NotNull;
 
+@Presentation(typeName = "Repository")
 public interface MavenDomRepository extends MavenDomRepositoryBase {
   @NotNull
   MavenDomRepositoryPolicy getReleases();
