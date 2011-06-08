@@ -46,7 +46,7 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
-  public static final String LOG_TOOL_WINDOW_ID = "Event Log";
+  private static final String LOG_TOOL_WINDOW_ID = "Event Log";
 
   private final NotificationModel myModel = new NotificationModel();
 
@@ -246,12 +246,13 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public static boolean isEventLogVisible(Project project) {
-    if (project == null) {
-      return false;
-    }
-
-    final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
+    final ToolWindow window = getEventLog(project);
     return window != null && window.isVisible();
+  }
+
+  @Nullable
+  public static ToolWindow getEventLog(Project project) {
+    return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
   }
 
   private static PairFunction<Notification, Project, Boolean> createFilter(@Nullable final Project project, final boolean strict) {

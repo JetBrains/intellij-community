@@ -26,7 +26,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
@@ -93,8 +92,7 @@ class StatusPanel extends JPanel {
 
   @Nullable
   private ToolWindow getEventLog() {
-    final Project project = getActiveProject();
-    return project != null ? ToolWindowManager.getInstance(project).getToolWindow(NotificationsManagerImpl.LOG_TOOL_WINDOW_ID) : null;
+    return NotificationsManagerImpl.getEventLog(getActiveProject());
   }
 
   public void setLogMessage(String text) {
