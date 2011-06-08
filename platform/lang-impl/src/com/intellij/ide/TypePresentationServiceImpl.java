@@ -155,7 +155,13 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     public Icon getIcon(Object o, int flags) {
       if (o == null) return myIcon.getValue();
       PresentationProvider provider = myPresentationProvider.getValue();
-      return provider == null ? myIcon.getValue() : provider.getIcon(o);
+      if (provider == null) {
+        return myIcon.getValue();
+      }
+      else {
+        Icon icon = provider.getIcon(o);
+        return icon == null ? myIcon.getValue() : icon;
+      }
     }
 
     @Override
