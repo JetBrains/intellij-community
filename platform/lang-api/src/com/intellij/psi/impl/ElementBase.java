@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,7 +58,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       return computeIconNow(element, request.getFlags());
     }
   };
-  private TIntObjectHashMap<Icon> myBaseIcon;
+  private static final Key<TIntObjectHashMap<Icon>> BASE_ICONS = Key.create("BASE_ICONS");
 
   private static final Icon VISIBILITY_ICON_PLACEHOLDER = new EmptyIcon(Icons.PUBLIC_ICON);
   public static final Icon ICON_PLACEHOLDER = IconLoader.getIcon("/nodes/nodePlaceholder.png");
@@ -86,28 +87,26 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   @Nullable
   private Icon computeIcon(final int flags) {
     PsiElement psiElement = (PsiElement)this;
-    Icon baseIcon = LastComputedIcon.get(psiElement, flags);
-    if (baseIcon == null) {
-      if (myBaseIcon == null) {
-        myBaseIcon = new TIntObjectHashMap<Icon>(3);
-      }
-      if (!myBaseIcon.containsKey(flags)) {
-        myBaseIcon.put(flags, computeBaseIcon(flags));
-      }
-      baseIcon = myBaseIcon.get(flags);
-    }
-
     if (!psiElement.isValid()) return null;
-    if (isToDeferIconLoading()) {
+
+    if (Registry.is("psi.deferIconLoading")) {
+      Icon baseIcon = LastComputedIcon.get(psiElement, flags);
+      if (baseIcon == null) {
+        TIntObjectHashMap<Icon> cache = getUserData(BASE_ICONS);
+        if (cache == null) {
+          cache = putUserDataIfAbsent(BASE_ICONS, new TIntObjectHashMap<Icon>());
+        }
+        synchronized (cache) {
+          if (!cache.containsKey(flags)) {
+            cache.put(flags, computeBaseIcon(flags));
+          }
+          baseIcon = cache.get(flags);
+        }
+      }
       return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), ICON_COMPUTE);
     }
-    else {
-      return computeIconNow(psiElement, flags);
-    }
-  }
 
-  protected boolean isToDeferIconLoading() {
-    return Registry.is("psi.deferIconLoading");
+    return computeIconNow(psiElement, flags);
   }
 
   @Nullable
