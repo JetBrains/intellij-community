@@ -713,4 +713,16 @@ class Foo {
     PsiReference ref = configureByFile("staticImportInSamePackage/A.groovy", "A.groovy");
     assertNotNull(ref.resolve())
   }
+
+  void testStringRefExpr1() {
+    assertNotNull(resolve("a.groovy"));
+  }
+
+  void testStringRefExpr2() {
+    assertNotNull(resolve("a.groovy"));
+  }
+
+  void testStringRefExpr3() {
+    assertNotNull(resolve("a.groovy"));
+  }
 }

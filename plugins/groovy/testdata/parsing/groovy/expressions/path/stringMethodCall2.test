@@ -1,0 +1,18 @@
+'foo'.substring(0, 1)
+-----
+Groovy script
+  Method call
+    Reference expression
+      Literal
+        PsiElement(string)(''foo'')
+      PsiElement(.)('.')
+      PsiElement(identifier)('substring')
+    Arguments
+      PsiElement(()('(')
+      Literal
+        PsiElement(Integer)('0')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Integer)('1')
+      PsiElement())(')')
