@@ -30,6 +30,7 @@ import java.util.Map;
 
 /**
  * @deprecated this should not be used
+ * @see TypePresentationService
  * @see com.intellij.ide.TypeNameEP
  * @see @Presentation
  */
