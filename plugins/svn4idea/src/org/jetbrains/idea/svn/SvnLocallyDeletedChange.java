@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,5 +41,9 @@ public class SvnLocallyDeletedChange extends LocallyDeletedChange {
       return SvnBundle.message("svn.changeview.locally.deleted.item.in.conflict.text", description);
     }
     return description;
+  }
+
+  public ConflictState getConflictState() {
+    return myConflictState;
   }
 }
