@@ -110,7 +110,6 @@ class BeanBinding implements Binding {
     }
   }
 
-
   public void deserializeInto(final Object bean, final Element element) {
     _deserializeInto(bean, element);
   }
@@ -134,11 +133,11 @@ class BeanBinding implements Binding {
 
     ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
 
-
     MultiMap<Binding, Object> data = new MultiMap<Binding, Object>();
 
     final Object[] children = JDOMUtil.getChildNodesWithAttrs(e);
-    nextNode: for (Object child : children) {
+    nextNode:
+    for (Object child : children) {
       if (XmlSerializerImpl.isIgnoredNode(child)) continue;
 
       for (Binding binding : bindings) {
@@ -188,11 +187,9 @@ class BeanBinding implements Binding {
     return Element.class;
   }
 
-
   private static String getTagName(Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
     if (tag != null && tag.value().length() != 0) return tag.value();
-
     return aClass.getSimpleName();
   }
 
@@ -201,27 +198,26 @@ class BeanBinding implements Binding {
     try {
       List<Accessor> accessors = new ArrayList<Accessor>();
 
-      BeanInfo info = Introspector.getBeanInfo(aClass);
+      BeanInfo info = Introspector.getBeanInfo(aClass, Introspector.IGNORE_ALL_BEANINFO);
 
       PropertyDescriptor[] propertyDescriptors = info.getPropertyDescriptors();
       for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
         if (propertyDescriptor.getName().equals(CLASS_PROPERTY)) continue;
+
         final Method readMethod = propertyDescriptor.getReadMethod();
         final Method writeMethod = propertyDescriptor.getWriteMethod();
-
-        if (readMethod == null) continue;
-        if (writeMethod == null) continue;
-
-        if (XmlSerializerImpl.findAnnotation(readMethod.getAnnotations(), Transient.class) != null ||
-            XmlSerializerImpl.findAnnotation(writeMethod.getAnnotations(), Transient.class) != null) continue;
-
-        accessors.add(new PropertyAccessor(propertyDescriptor));
+        if (readMethod != null && writeMethod != null &&
+            XmlSerializerImpl.findAnnotation(readMethod.getAnnotations(), Transient.class) == null &&
+            XmlSerializerImpl.findAnnotation(writeMethod.getAnnotations(), Transient.class) == null) {
+          accessors.add(new PropertyAccessor(propertyDescriptor));
+        }
       }
 
       Field[] fields = aClass.getFields();
       for (Field field : fields) {
-        int modifiers = field.getModifiers();
-        if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers) &&
+        final int modifiers = field.getModifiers();
+        if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) &&
+            !Modifier.isFinal(modifiers) && !Modifier.isTransient(modifiers) &&
             XmlSerializerImpl.findAnnotation(field.getAnnotations(), Transient.class) == null) {
           accessors.add(new FieldAccessor(field));
         }
@@ -260,7 +256,6 @@ class BeanBinding implements Binding {
       return new AttributeBinding(accessor, attribute, xmlSerializer);
     }
 
-
     if (tag != null) {
       if (tag.value().length() > 0) return new TagBinding(accessor, tag, xmlSerializer);
     }
@@ -281,5 +276,4 @@ class BeanBinding implements Binding {
     OptionTag optionTag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), OptionTag.class);
     return new OptionTagBinding(accessor, xmlSerializer, optionTag);
   }
-
 }
