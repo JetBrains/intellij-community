@@ -238,7 +238,14 @@ public def layoutCommunityPlugins(String home) {
         }
       }
       fileset(dir: "$home/plugins/xslt-debugger/rt/lib") {
-        includes: "**/*.jar, **/*.html"
+        include(name: "**/rmi-stubs.jar")
+      }
+      dir("rt") {
+        fileset(dir: "$home/plugins/xslt-debugger/rt/lib") {
+          include(name: "**/*.jar")
+          exclude(name: "**/rmi-stubs.jar")
+          include(name: "**/*.html")
+        }
       }
     }
 
