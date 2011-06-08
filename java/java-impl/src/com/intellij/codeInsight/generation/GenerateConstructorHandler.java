@@ -161,9 +161,22 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         }
         constructors.add(new PsiGenerationInfo(generateConstructorPrototype(aClass, baseConstructor, myCopyJavadoc, fields)));
       }
-      return constructors;
+      return filterOutAlreadyInsertedConstructors(aClass, constructors);
     }
-    return Collections.<GenerationInfo>singletonList(new PsiGenerationInfo(generateConstructorPrototype(aClass, null, false, fields)));
+    final List<GenerationInfo> constructors =
+      Collections.<GenerationInfo>singletonList(new PsiGenerationInfo(generateConstructorPrototype(aClass, null, false, fields)));
+    return filterOutAlreadyInsertedConstructors(aClass, constructors);
+  }
+
+  private static List<? extends GenerationInfo> filterOutAlreadyInsertedConstructors(PsiClass aClass, List<? extends GenerationInfo> constructors) {
+    boolean alreadyExist = true;
+    for (GenerationInfo constructor : constructors) {
+      alreadyExist &= aClass.findMethodBySignature((PsiMethod)constructor.getPsiMember(), false) != null;
+    }
+    if (alreadyExist) {
+      return Collections.emptyList();
+    }
+    return constructors;
   }
 
   public static PsiMethod generateConstructorPrototype(PsiClass aClass, PsiMethod baseConstructor, boolean copyJavaDoc, PsiField[] fields) throws IncorrectOperationException {
@@ -172,6 +185,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
     PsiMethod constructor = factory.createConstructor();
+    constructor.setName(aClass.getName());
     @Modifier String modifier = getConstructorModifier(aClass);
     if (modifier != null) {
       PsiUtil.setModifierProperty(constructor, modifier, true);
