@@ -22,9 +22,12 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public class ChangeContextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ChangeContextUtil");
@@ -212,7 +215,8 @@ public class ChangeContextUtil {
               InheritanceUtil.isInheritorOrSelf(thisClass, realParentClass, true)) {
             boolean needQualifier = true;
             PsiElement refElement = refExpr.resolve();
-            if (refMember.equals(refElement)){
+            if (refMember.equals(refElement) ||
+                (refElement instanceof PsiMethod && refMember instanceof PsiMethod && ArrayUtil.find(((PsiMethod)refElement).findSuperMethods(), refMember) > -1)){
               if (thisAccessExpr instanceof PsiThisExpression && ((PsiThisExpression)thisAccessExpr).getQualifier() == null) {
                 //Trivial qualifier
                 needQualifier = false;
