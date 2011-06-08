@@ -155,9 +155,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       if (value instanceof String) {
         return (String)value;
       }
-      if (value instanceof Number) {
-        return value.toString();
-      }
     }
 
     final IElementType elemType = element.getNode().getElementType();
