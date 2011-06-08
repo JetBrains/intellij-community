@@ -289,9 +289,15 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     forEach(new Processor<OrderEntry>() {
       @Override
       public boolean process(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
+        if (myRecursively && orderEntry instanceof ModuleSourceOrderEntry) {
           final Module module = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getModule();
           return processor.process(module);
+        }
+        else if (!myRecursively && orderEntry instanceof ModuleOrderEntry) {
+          final Module module = ((ModuleOrderEntry)orderEntry).getModule();
+          if (module != null) {
+            return processor.process(module);
+          }
         }
         return true;
       }

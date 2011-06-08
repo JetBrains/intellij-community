@@ -311,7 +311,7 @@ public class GitUpdateProcess {
    * @return true if rebase is in progress, which means that update can't continue.
    */
   private boolean checkRebaseInProgress() {
-    final GitRebaser rebaser = new GitRebaser(myProject);
+    final GitRebaser rebaser = new GitRebaser(myProject, myProgressIndicator);
     final Collection<VirtualFile> rebasingRoots = rebaser.getRebasingRoots();
     if (rebasingRoots.isEmpty()) {
       return false;

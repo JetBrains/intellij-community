@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,24 +141,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   /**
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   *
-   * THIS IS AN "ABSOLUTELY-GURU METHOD".
-   * NOBODY SHOULD ADD OTHER USAGES OF IT :)
-   * ONLY ANTON AND VOVA ARE PERMITTED TO USE THIS METHOD!!!
-   *
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   */
-  public final void setDefaultFocusableComponent(final JComponent component) {
-    LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(component);
-  }
-
-  /**
-   * This is overriden to get rid of strange Alloy LaF customization of frames. For unknown reason it sets the maxBounds rectangle
+   * This is overridden to get rid of strange Alloy LaF customization of frames. For unknown reason it sets the maxBounds rectangle
    * and it does it plain wrong. Setting bounds to <code>null</code> means default value should be taken from the underlying OS.
    */
   public synchronized void setMaximizedBounds(Rectangle bounds) {
@@ -315,7 +298,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     final StatusBar statusBar = getStatusBar();
 
     final PositionPanel positionPanel = new PositionPanel(project);
-    statusBar.addWidget(positionPanel, "before Notifications");
+    statusBar.addWidget(positionPanel, "before Memory");
 
     final EncodingPanel encodingPanel = new EncodingPanel(project);
     statusBar.addWidget(encodingPanel, "after Position");

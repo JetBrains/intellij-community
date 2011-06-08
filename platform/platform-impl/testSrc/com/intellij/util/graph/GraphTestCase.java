@@ -15,6 +15,7 @@
  */
 package com.intellij.util.graph;
 
+import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import junit.framework.TestCase;
 
 import java.util.*;
@@ -23,6 +24,10 @@ import java.util.*;
  * @author nik
  */
 public abstract class GraphTestCase extends TestCase {
+  protected static GraphAlgorithmsImpl getAlgorithmsInstance() {
+    return new GraphAlgorithmsImpl();
+  }
+
   protected static Graph<String> initGraph(final Map<String, String> graph) {
     final Map<String, List<String>> out = new HashMap<String, List<String>>();
     final Map<String, List<String>> in = new HashMap<String, List<String>>();

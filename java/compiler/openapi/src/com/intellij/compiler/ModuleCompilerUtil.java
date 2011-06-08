@@ -27,12 +27,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Chunk;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphGenerator;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
+import com.intellij.util.graph.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -92,47 +87,7 @@ public final class ModuleCompilerUtil {
   }
   
   public static <Node> Graph<Chunk<Node>> toChunkGraph(final Graph<Node> graph) {
-    final DFSTBuilder<Node> builder = new DFSTBuilder<Node>(graph);
-    final TIntArrayList sccs = builder.getSCCs();
-
-    final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>(sccs.size());
-    final Map<Node, Chunk<Node>> nodeToChunkMap = new LinkedHashMap<Node, Chunk<Node>>();
-    sccs.forEach(new TIntProcedure() {
-      int myTNumber = 0;
-      public boolean execute(int size) {
-        final Set<Node> chunkNodes = new LinkedHashSet<Node>();
-        final Chunk<Node> chunk = new Chunk<Node>(chunkNodes);
-        chunks.add(chunk);
-        for (int j = 0; j < size; j++) {
-          final Node node = builder.getNodeByTNumber(myTNumber + j);
-          chunkNodes.add(node);
-          nodeToChunkMap.put(node, chunk);
-        }
-
-        myTNumber += size;
-        return true;
-      }
-    });
-
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Chunk<Node>>() {
-      public Collection<Chunk<Node>> getNodes() {
-        return chunks;
-      }
-
-      public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
-        final Set<Node> chunkNodes = chunk.getNodes();
-        final Set<Chunk<Node>> ins = new LinkedHashSet<Chunk<Node>>();
-        for (final Node node : chunkNodes) {
-          for (Iterator<Node> nodeIns = graph.getIn(node); nodeIns.hasNext();) {
-            final Node in = nodeIns.next();
-            if (!chunk.containsNode(in)) {
-              ins.add(nodeToChunkMap.get(in));
-            }
-          }
-        }
-        return ins.iterator();
-      }
-    }));
+    return GraphAlgorithms.getInstance().computeSCCGraph(graph);
   }
 
   public static void sortModules(final Project project, final List<Module> modules) {

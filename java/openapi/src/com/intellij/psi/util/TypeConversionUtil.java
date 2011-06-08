@@ -822,6 +822,7 @@ public class TypeConversionUtil {
     PsiSubstitutor leftSubstitutor = leftResult.getSubstitutor();
 
     if (!leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
+      if (!allowUncheckedConversion && PsiUtil.isRawSubstitutor(leftClass, leftSubstitutor) && !rightClass.hasTypeParameters()) return false;
       rightSubstitutor = getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
       rightClass = leftClass;
     }
