@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
@@ -123,14 +124,16 @@ public class CommitHelper {
           @Override
           public NotificationInfo notifyFinished() {
             final List<Change> changesFailedToCommit = processor.getChangesFailedToCommit();
-            
-            String text = (myIncludedChanges.size() - changesFailedToCommit.size()) + " Change(s) Commited";
-            if (changesFailedToCommit.size() > 0) {
-              text += ", " + changesFailedToCommit.size() + " Change(s) Failed To Commit";
+
+            int failed = changesFailedToCommit.size();
+            int committed = myIncludedChanges.size() - failed;
+
+            String text = committed + " " + StringUtil.pluralize("change", committed) + " committed";
+            if (failed > 0) {
+              text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
             }
-            final String title = "VCS Commit Finished";
-            AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(title + ", " + text, myCommitMessage, NotificationType.INFORMATION, null).notify( myProject);
-            return new NotificationInfo("VCS Commit", title, text, true);
+            AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(text, myCommitMessage, NotificationType.INFORMATION, null).notify( myProject);
+            return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
           }
         };
       ProgressManager.getInstance().run(task);
