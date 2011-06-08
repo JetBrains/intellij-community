@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -89,9 +88,8 @@ public class GithubSettings implements PersistentStateComponent<Element> {
       try {
         myPassword = PasswordSafe.getInstance().getPassword(ProjectManager.getInstance().getDefaultProject(), GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
       }
-      catch (PasswordSafeException e) {
-        myPassword = null;
-        return "";
+      catch (Exception e) {
+        myPassword = "";
       }
     }
     return myPassword;
@@ -110,7 +108,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
       try {
         PasswordSafe.getInstance().storePassword(ProjectManager.getInstance().getDefaultProject(), GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
       }
-      catch (PasswordSafeException e) {
+      catch (Exception e) {
         Messages.showErrorDialog("Error happened while storing password for github", "Error");
         LOG.error(e);
       }
