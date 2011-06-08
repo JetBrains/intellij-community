@@ -420,4 +420,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testResultOfIncUsed() {
     doTest(new GroovyResultOfIncrementOrDecrementUsedInspection());
   }
+
+  public void testNativeMapAssignability() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }

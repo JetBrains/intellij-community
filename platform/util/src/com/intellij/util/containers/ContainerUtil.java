@@ -122,6 +122,10 @@ public class ContainerUtil {
     return result;
   }
 
+  public static <T> List<T> subList(List<T> list, int from) {
+    return list.subList(from, list.size());
+  }
+
   public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterable<T> appendix) {
     addAll(collection, appendix.iterator());
   }

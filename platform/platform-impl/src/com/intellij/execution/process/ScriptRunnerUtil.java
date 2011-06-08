@@ -20,16 +20,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -72,66 +66,9 @@ public class ScriptRunnerUtil {
         }
       });
     }
-    processHandler.startNotify();
+
     //ProcessTerminatedListener.attach(processHandler, project);
     return processHandler;
-  }
-
-  public static Pair<String, String[]> getExePathAndCommand(List<String> commandToExecute) {
-    @NonNls String exePath = "";
-    @NonNls List<String> parameters = new ArrayList<String>();
-    if (SystemInfo.isOS2) {
-      exePath = "cmd";
-      parameters.add("/c");
-    }
-    else if (SystemInfo.isWindows) {
-      if (!SystemInfo.isWindows9x) {
-        exePath = "cmd";
-      }
-      else {
-        exePath = "command.com";
-      }
-      parameters.add("/c");
-
-      /*if exe-path and at least one of parameters contain spaces the whole command must be quoted,
-         e.g. instead of
-            cmd /c "C:\Program Files\jdk1.5\bin\java" "-Dproperty=a b c" myclass
-         must be used
-            cmd /c ""C:\Program Files\jdk1.5\bin\java" "-Dproperty=a b c" myclass"
-      */
-      boolean quoteWholeCommand = false;
-      for (int i = 1; i < commandToExecute.size(); i++) {
-        quoteWholeCommand |= commandToExecute.get(i).contains(" ");
-      }
-      quoteWholeCommand &= commandToExecute.size() > 0 && commandToExecute.get(0).contains(" ");
-
-      if (quoteWholeCommand) {
-        StringBuilder builder = new StringBuilder();
-        builder.append('"');
-        for (int i = 0; i < commandToExecute.size(); i++) {
-          if (i > 0) {
-            builder.append(' ');
-          }
-          builder.append(GeneralCommandLine.quote(commandToExecute.get(i)));
-        }
-        builder.append('"');
-
-        parameters.add(builder.toString());
-        return Pair.create(exePath, ArrayUtil.toStringArray(parameters));
-      }
-    }
-
-    int firstParamIdx = 0;
-    if (SystemInfo.isUnix) {
-      exePath = commandToExecute.get(0);
-      firstParamIdx = 1;
-    }
-
-    for (int i = firstParamIdx; i < commandToExecute.size(); i++) {
-      parameters.add(commandToExecute.get(i));
-    }
-
-    return Pair.create(exePath, ArrayUtil.toStringArray(parameters));
   }
 
   public static ScriptOutput executeScriptInConsoleWithFullOutput(String exePathString,
@@ -148,6 +85,7 @@ public class ScriptRunnerUtil {
     final StringBuilder mergedOutput =
       (scriptOutputType.readStandardOutput() && scriptOutputType.readErrorOutput()) ? new StringBuilder() : null;
     addReadingProcessListener(scriptOutputType, processHandler, standardOutput, errorOutput, mergedOutput);
+    processHandler.startNotify();
 
     if (!processHandler.waitFor(timeout)) {
       LOG.warn("Process did not complete in " + timeout / 1000 + "s");

@@ -239,6 +239,9 @@ class SvnChangeProviderContext implements StatusReceiver {
           myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
                                                    CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status), changeListNameFromStatus(status),
                                                   SvnVcs.getKey());
+        } else if (status.getTreeConflict() != null) {
+          myChangelistBuilder.processChange(createChange(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
+                                                   CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status), SvnVcs.getKey());
         }
         checkSwitched(filePath, myChangelistBuilder, status, fStatus);
       }

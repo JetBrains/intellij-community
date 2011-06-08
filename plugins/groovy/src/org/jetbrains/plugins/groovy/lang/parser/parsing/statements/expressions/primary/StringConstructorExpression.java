@@ -35,17 +35,6 @@ public class StringConstructorExpression implements GroovyElementTypes {
 
     Marker sMarker = builder.mark();
     if (ParserUtils.getToken(builder, mGSTRING_BEGIN)) {
-      ParserUtils.getToken(builder, mGSTRING_CONTENT);
-      if (mGSTRING_END.equals(builder.getTokenType())) {
-        sMarker.rollbackTo();
-        sMarker = builder.mark();
-        builder.advanceLexer();
-        builder.advanceLexer();
-        builder.advanceLexer();
-        sMarker.done(LITERAL);
-        return LITERAL;
-      }
-
       while (ParserUtils.getToken(builder, mGSTRING_CONTENT) || mDOLLAR.equals(builder.getTokenType())) {
         if (mDOLLAR.equals(builder.getTokenType())) {
           stringConstructorValuePart(builder, parser);

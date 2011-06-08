@@ -50,10 +50,19 @@ public class PathExpression implements GroovyElementTypes {
    */
   public static Result parsePathExprQualifierForExprStatement(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    final IElementType qualifierType = PrimaryExpression.parsePrimaryExpression(builder, parser);
+    final PsiBuilder.Marker marker1 = builder.mark();
+    IElementType qualifierType = PrimaryExpression.parsePrimaryExpression(builder, parser);
     if (qualifierType != WRONGWAY) {
       Result result;
       if (isPathElementStart(builder)) {
+        if (builder.getTokenType() == mLPAREN && qualifierType == LITERAL) {
+          marker1.rollbackTo();
+          qualifierType = PrimaryExpression.parsePrimaryExpression(builder, parser, true);
+          assert qualifierType != WRONGWAY;
+        }
+        else {
+          marker1.drop();
+        }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.drop();
         if (checkForLCurly(builder)) {
@@ -67,12 +76,14 @@ public class PathExpression implements GroovyElementTypes {
         }
       }
       else {
+        marker1.drop();
         marker.drop();
         result = INVOKED_EXPR;
       }
       return result;
     }
     else {
+      marker1.drop();
       marker.drop();
       return WRONG_WAY;
     }
