@@ -22,7 +22,7 @@ import javax.swing.*;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class PresentationProvider<T> implements PresentationIconProvider<T> {
+public abstract class PresentationProvider<T> {
 
   @Nullable
   public String getName(T t) { return null; }
