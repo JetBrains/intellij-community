@@ -534,8 +534,14 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   @NotNull
   public Graph<Module> moduleGraph() {
+    return moduleGraph(true);
+  }
+
+  @NotNull
+  @Override
+  public Graph<Module> moduleGraph(boolean includeTests) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myModuleModel.moduleGraph();
+    return myModuleModel.moduleGraph(includeTests);
   }
 
   @NotNull public List<Module> getModuleDependentModules(@NotNull Module module) {
@@ -782,18 +788,18 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     private Comparator<Module> moduleDependencyComparator() {
-      DFSTBuilder<Module> builder = new DFSTBuilder<Module>(moduleGraph());
+      DFSTBuilder<Module> builder = new DFSTBuilder<Module>(moduleGraph(true));
       return builder.comparator();
     }
 
-    private Graph<Module> moduleGraph() {
+    private Graph<Module> moduleGraph(final boolean includeTests) {
       return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
         public Collection<Module> getNodes() {
           return myPathToModule.values();
         }
 
         public Iterator<Module> getIn(Module m) {
-          Module[] dependentModules = ModuleRootManager.getInstance(m).getDependencies();
+          Module[] dependentModules = ModuleRootManager.getInstance(m).getDependencies(includeTests);
           return Arrays.asList(dependentModules).iterator();
         }
       }));
