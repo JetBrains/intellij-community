@@ -8,7 +8,7 @@ import unittest
 from nose_helper.case import Test
 from nose_helper.config import Config
 from nose_helper.util import isclass, resolve_name, try_run
-
+PYTHON_VERSION_MAJOR = sys.version_info[0]
 class LazySuite(unittest.TestSuite):
     """A suite that may use a generator as its list of tests
     """
@@ -114,7 +114,10 @@ class ContextSuite(LazySuite):
     def addTests(self, tests, context=None):
         if context:
             self.context = context
-        if isinstance(tests, basestring):
+        if PYTHON_VERSION_MAJOR < 3 and isinstance(tests, basestring):
+          raise TypeError("tests must be an iterable of tests, not a string")
+        else:
+          if isinstance(tests, str):
             raise TypeError("tests must be an iterable of tests, not a string")
         for test in tests:
             self.addTest(test)
