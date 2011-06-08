@@ -302,7 +302,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       if (!anchor.equals("__AUTODETECT__")) {
         final List<String> parts = StringUtil.split(anchor, " ");
         if (parts.size() < 2 || !myWidgetMap.keySet().contains(parts.get(1))) {
-          wid = "Notifications";
+          wid = "Memory";
           before = true;
         }
         else {
