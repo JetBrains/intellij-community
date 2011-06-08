@@ -17,8 +17,6 @@
 package com.intellij.util.xml;
 
 import com.intellij.ide.TypePresentationService;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -34,18 +32,10 @@ public class TypeNameManager {
   }
 
   public static String getTypeName(Class aClass) {
-    String s = _getTypeName(aClass);
-    if (s != null) return s;
-    return getDefaultTypeName(aClass);
-  }
 
-  public static String getDefaultTypeName(final Class aClass) {
-    String simpleName = aClass.getSimpleName();
-    final int i = simpleName.indexOf('$');
-    if (i >= 0) {
-      simpleName = simpleName.substring(i + 1);
-    }
-    return StringUtil.capitalizeWords(StringUtil.join(NameUtil.nameToWords(simpleName),  " "), true);
+    String s = TypePresentationService.getService().getTypePresentableName(aClass);
+    if (s != null) return s;
+    return TypePresentationService.getDefaultTypeName(aClass);
   }
 
   @Nullable
@@ -54,16 +44,6 @@ public class TypeNameManager {
       if (entry.getKey().isAssignableFrom(value)) {
         return entry.getValue();
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static String _getTypeName(final Class aClass) {
-
-    final String name = TypePresentationService.getService().getTypePresentableName(aClass);
-    if (name != null) {
-      return name;
     }
     return null;
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomDescriptionProvider;
 import com.intellij.pom.PomNamedTarget;
@@ -23,7 +24,6 @@ import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
-import com.intellij.util.xml.TypeNameManager;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +47,8 @@ public class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider 
   }
 
   private static String getTypeName(PomTarget element) {
-    final String s = TypeNameManager._getTypeName(element.getClass());
+
+    final String s = TypePresentationService.getService().getTypePresentableName(element.getClass());
     return s == null ? "Element" : s;
   }
 }

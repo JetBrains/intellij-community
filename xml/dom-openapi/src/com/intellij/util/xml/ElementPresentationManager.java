@@ -134,7 +134,7 @@ public abstract class ElementPresentationManager {
   };
   public static <T> NullableFunction<T, String> namer() {
     //noinspection unchecked
-    return (NullableFunction<T, String>)NAMER;
+    return NAMER;
   }
 
   @Nullable
@@ -187,17 +187,11 @@ public abstract class ElementPresentationManager {
     o = firstImpl != null ? firstImpl : o;
     String typeName = TypePresentationService.getService().getTypeName(o);
     if (typeName != null) return typeName;
-    final Class<? extends Object> aClass = o.getClass();
-    String s = TypeNameManager._getTypeName(aClass);
-    if (s != null) {
-      return s;
-    }
-
     if (o instanceof DomElement) {
       final DomElement element = (DomElement)o;
       return StringUtil.capitalizeWords(element.getNameStrategy().splitIntoWords(element.getXmlElementName()), true);
     }
-    return TypeNameManager.getDefaultTypeName(aClass);
+    return TypePresentationService.getDefaultTypeName(o.getClass());
   }
 
   @Nullable
