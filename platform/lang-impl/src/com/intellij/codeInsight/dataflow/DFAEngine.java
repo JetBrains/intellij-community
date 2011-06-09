@@ -24,7 +24,7 @@ import java.util.*;
 
 public class DFAEngine<E> {
   private static final Logger LOG = Logger.getInstance(DFAEngine.class.getName());
-  private static final double TIME_LIMIT = 3*10e9;
+  private static final double TIME_LIMIT = 3 * 10e9;
 
   private final Instruction[] myFlow;
 
@@ -40,14 +40,14 @@ public class DFAEngine<E> {
   }
 
 
-  public List<E> performDFA() {
+  public List<E> performDFA() throws DFALimitExceededException {
     final ArrayList<E> info = new ArrayList<E>(myFlow.length);
     return performDFA(info);
   }
 
-  public List<E> performDFA(final List<E> info) {
-    if (LOG.isDebugEnabled()){
-      LOG.debug("Perfoming DFA\n" + "Instance: "  + myDfa + " Semilattice: " + mySemilattice);
+  public List<E> performDFA(final List<E> info) throws DFALimitExceededException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Perfoming DFA\n" + "Instance: " + myDfa + " Semilattice: " + mySemilattice);
     }
 
 // initializing dfa
@@ -66,18 +66,18 @@ public class DFAEngine<E> {
     int dfaCount = 0;
     final long startTime = System.nanoTime();
 
-    for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0;) {
+    for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0; ) {
       // Check if canceled
       ProgressManager.checkCanceled();
 
       // Check time limit only in EDT
-      if (!ApplicationManager.getApplication().isUnitTestMode() && 
+      if (!ApplicationManager.getApplication().isUnitTestMode() &&
           ApplicationManager.getApplication().isDispatchThread() &&
-          System.nanoTime() - startTime > TIME_LIMIT){
-        if (LOG.isDebugEnabled()){
+          System.nanoTime() - startTime > TIME_LIMIT) {
+        if (LOG.isDebugEnabled()) {
           LOG.debug("Time limit exceeded");
         }
-        break;
+        throw new DFALimitExceededException("Time limit exceeded");
       }
 
       // Iteration count per one worklist
@@ -98,11 +98,11 @@ public class DFAEngine<E> {
           // This gives us more chances that resulting info will be closer to expected result
           // Also it is used as indicator that "equals" method is implemented correctly in E
           count++;
-          if (count > limit){
-             if (LOG.isDebugEnabled()){
-               LOG.debug("Iteration count exceeded on worklist");
-             }
-             break;
+          if (count > limit) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Iteration count exceeded on worklist");
+            }
+            throw new DFALimitExceededException("Iteration count exceeded on worklist");
           }
 
           final Instruction currentInstruction = worklist.poll();
@@ -115,7 +115,7 @@ public class DFAEngine<E> {
           final E joinedE = join(currentInstruction, info);
           final E newE = myDfa.fun(joinedE, currentInstruction);
           if (!mySemilattice.eq(newE, oldE)) {
-            if (LOG.isDebugEnabled()){
+            if (LOG.isDebugEnabled()) {
               LOG.debug("Number: " + currentNumber + " old: " + oldE.toString() + " new: " + newE.toString());
             }
             info.set(currentNumber, newE);
@@ -130,13 +130,14 @@ public class DFAEngine<E> {
       // Move to another worklist
       if (forward) {
         i++;
-      } else {
+      }
+      else {
         i--;
       }
       dfaCount += count;
     }
-    if (LOG.isDebugEnabled()){
-      LOG.debug("Done in: " + (System.nanoTime() - startTime)/10e6 + "ms. Ratio: " + dfaCount / myFlow.length);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Done in: " + (System.nanoTime() - startTime) / 10e6 + "ms. Ratio: " + dfaCount / myFlow.length);
     }
     return info;
   }
