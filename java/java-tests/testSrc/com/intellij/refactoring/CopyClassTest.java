@@ -10,7 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.copy.CopyClassesHandler;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -38,20 +38,20 @@ public class CopyClassTest extends CodeInsightTestCase {
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17("java 1.5"));
     myRootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
 
-    performAction(oldName, copyName);
+    PsiElement element = performAction(oldName, copyName);
 
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     FileDocumentManager.getInstance().saveAllDocuments();
 
     VirtualFile fileAfter = myRootDir.findChild(copyName + ".java");
-    VirtualFile fileExpected = myRootDir.findChild(copyName + ".java.expected");
+    VirtualFile fileExpected = myRootDir.findChild(copyName + ".expected.java");
 
-    IdeaTestUtil.assertFilesEqual(fileExpected, fileAfter);
+    PlatformTestUtil.assertFilesEqual(fileExpected, fileAfter);
   }
 
-  private void performAction(final String oldName, final String copyName) throws IncorrectOperationException {
+  private PsiElement performAction(final String oldName, final String copyName) throws IncorrectOperationException {
     PsiClass oldClass = JavaPsiFacade.getInstance(myProject).findClass(oldName, ProjectScope.getAllScope(myProject));
-    CopyClassesHandler.doCopyClasses(Collections.singletonMap(oldClass.getNavigationElement().getContainingFile(), new PsiClass[]{oldClass}), copyName, myPsiManager.findDirectory(myRootDir),
+    return CopyClassesHandler.doCopyClasses(Collections.singletonMap(oldClass.getNavigationElement().getContainingFile(), new PsiClass[]{oldClass}), copyName, myPsiManager.findDirectory(myRootDir),
                                      myProject);
   }
 
@@ -85,7 +85,7 @@ public class CopyClassTest extends CodeInsightTestCase {
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
   }
 
   public void testPackageHierarchy() throws Exception {
@@ -110,6 +110,6 @@ public class CopyClassTest extends CodeInsightTestCase {
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
   }
 }
