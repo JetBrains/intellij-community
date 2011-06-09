@@ -50,7 +50,8 @@ public class JavaAnalysisScope extends AnalysisScope {
     super(psiFile);
   }
 
-  public AnalysisScope[] getNarrowedComplementaryScope(Project defaultProject) {
+  @NotNull
+  public AnalysisScope getNarrowedComplementaryScope(Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     final HashSet<Module> modules = new HashSet<Module>();
     if (myType == FILE) {
@@ -66,7 +67,7 @@ public class JavaAnalysisScope extends AnalysisScope {
         if (onlyPackLocalClasses) {
           final PsiDirectory psiDirectory = psiJavaFile.getContainingDirectory();
           if (psiDirectory != null) {
-            return new AnalysisScope[]{new JavaAnalysisScope(JavaDirectoryService.getInstance().getPackage(psiDirectory), null)};
+            return new JavaAnalysisScope(JavaDirectoryService.getInstance().getPackage(psiDirectory), null);
           }
         }
       }
