@@ -19,7 +19,6 @@ package com.intellij.notification;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsManagerImpl;
@@ -48,12 +47,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author peter
  */
 public class EventLog implements Notifications {
-  private final List<Notification> myNotifications = new ArrayList<Notification>();
+  private final List<Notification> myNotifications = new CopyOnWriteArrayList<Notification>();
 
   public EventLog() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, this);
@@ -61,7 +61,13 @@ public class EventLog implements Notifications {
 
   @Override
   public void notify(@NotNull Notification notification) {
-    logNotification(null, notification);
+    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (openProjects.length == 0) {
+      addGlobalNotifications(notification);
+    }
+    for (Project p : openProjects) {
+      printNotification(getProjectComponent(p).myConsoleView, p, notification);
+    }
   }
 
   private void addGlobalNotifications(Notification notification) {
@@ -70,7 +76,7 @@ public class EventLog implements Notifications {
     }
   }
 
-  public List<Notification> takeNotifications() {
+  private List<Notification> takeNotifications() {
     synchronized (myNotifications) {
       final ArrayList<Notification> result = new ArrayList<Notification>(myNotifications);
       myNotifications.clear();
@@ -78,26 +84,11 @@ public class EventLog implements Notifications {
     }
   }
 
-  private static void logNotification(@Nullable final Project project, final Notification notification) {
-    final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
-    if (!settings.isShouldLog()) {
+  private static void printNotification(ConsoleViewImpl view, Project project, final Notification notification) {
+    if (!NotificationsConfiguration.getSettings(notification.getGroupId()).isShouldLog()) {
       return;
     }
 
-    if (project == null) {
-      final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-      if (openProjects.length == 0) {
-        getApplicationComponent().addGlobalNotifications(notification);
-      }
-      for (Project p : openProjects) {
-        printNotification(getProjectComponent(p).myConsoleView, p, notification);
-      }
-    } else {
-      printNotification(getProjectComponent(project).myConsoleView, project, notification);
-    }
-  }
-
-  private static void printNotification(ConsoleViewImpl view, Project project, final Notification notification) {
     view.print(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(new Date()) + " ", ConsoleViewContentType.NORMAL_OUTPUT);
 
     boolean showLink = notification.getListener() != null;
@@ -171,31 +162,24 @@ public class EventLog implements Notifications {
 
   public static class ProjectTracker extends AbstractProjectComponent {
     private final ConsoleViewImpl myConsoleView;
-    private final List<Notification> myGlobalNotifications;
 
     public ProjectTracker(final Project project) {
       super(project);
       myConsoleView = new ConsoleViewImpl(project, true);
-      myGlobalNotifications = getApplicationComponent().takeNotifications();
+      for (Notification notification : getApplicationComponent().takeNotifications()) {
+        printNotification(myConsoleView, project, notification);
+      }
+
       project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new Notifications() {
         @Override
         public void notify(@NotNull Notification notification) {
-          projectOpened();
-          logNotification(project, notification);
+          printNotification(myConsoleView, project, notification);
         }
 
         @Override
         public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
         }
       });
-    }
-
-    @Override
-    public void projectOpened() {
-      for (Notification globalNotification : myGlobalNotifications) {
-        logNotification(myProject, globalNotification);
-      }
-      myGlobalNotifications.clear();
     }
 
     @Override
