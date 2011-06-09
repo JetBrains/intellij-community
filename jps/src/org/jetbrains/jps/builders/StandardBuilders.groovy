@@ -298,7 +298,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
         cp.append(File.pathSeparator)
       }
 
-      state.loader = InstrumentationUtil.createClassLoader(cp.toString())
+      state.loader = InstrumentationUtil.createPseudoClassLoader(cp.toString())
 
       final List<File> formFiles = new ArrayList<File>();
       final ProjectWrapper pw = state.projectWrapper;
@@ -335,8 +335,8 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       }
     }
 
-    //if (project.getBuilder().useInProcessJavac)
-    //  return;
+    if (project.getBuilder().useInProcessJavac)
+      return;
 
     if (!state.incremental) {
       new Object() {

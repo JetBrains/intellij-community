@@ -1,5 +1,7 @@
 package org.jetbrains.jps.builders.javacApi;
 
+import com.intellij.ant.InstrumentationUtil;
+import com.intellij.ant.PseudoClassLoader;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefaultFileManager;
 import com.sun.tools.javac.util.List;
@@ -15,23 +17,25 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author nik
  */
 public class OptimizedFileManager extends DefaultFileManager {
+    private interface DelayedClassFileWriter {
+        public void commit() throws IOException;
+    }
 
+    private java.util.List<DelayedClassFileWriter> myWriters = new ArrayList<DelayedClassFileWriter>();
     private boolean myUseZipFileIndex;
     private final Map<File, Archive> myArchives;
     private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
     private Callbacks.Backend callback;
-    private ClassLoader loader;
+    private PseudoClassLoader loader;
 
-    public void setProperties(final Callbacks.Backend c, final ClassLoader l) {
+    public void setProperties(final Callbacks.Backend c, final PseudoClassLoader l) {
         callback = c;
         loader = l;
     }
@@ -165,24 +169,23 @@ public class OptimizedFileManager extends DefaultFileManager {
     }
 
     @Override
-    public JavaFileObject getJavaFileForOutput(Location location, String className, final JavaFileObject.Kind kind, FileObject fileObject) throws IOException {
+    public JavaFileObject getJavaFileForOutput(Location location, final String className, final JavaFileObject.Kind kind, FileObject fileObject) throws IOException {
         final JavaFileObject result = super.getJavaFileForOutput(location, className, kind, fileObject);
         final String classFileName = result.toUri().toString();
         final String sourceFileName = fileObject.toUri().toString();
 
         return new ForwardingJavaFileObject<JavaFileObject>(result) {
+            private OutputStream superOpenOutputStream() throws IOException {
+                return super.openOutputStream();
+            }
+
             @Override
             public OutputStream openOutputStream() throws IOException {
-                final OutputStream result = super.openOutputStream();
-
                 return new OutputStream() {
-
                     public void flush() throws IOException {
-                        result.flush();
                     }
 
                     public void close() throws IOException {
-                        result.close();
                     }
 
                     public void write(int b) throws IOException {
@@ -193,26 +196,55 @@ public class OptimizedFileManager extends DefaultFileManager {
                         assert (false);
                     }
 
-                    public void write(byte[] b, int off, int len) throws IOException {
-                        if (kind.equals(JavaFileObject.Kind.CLASS) && callback != null) {
-                            final ClassReader reader = new ClassReader(b, off, len);
-                            callback.associate(classFileName, Callbacks.getDefaultLookup(sourceFileName), reader);
+                    public void write(final byte[] b, final int off, final int len) throws IOException {
+                        final byte[] buffer = Arrays.copyOfRange(b, off, len);
 
-                            // Need more work to support the case when the needed file not yet written.
+                        if (kind.equals(JavaFileObject.Kind.CLASS)) {
+                            loader.defineClass(className.replaceAll("\\.", "/"), buffer);
 
-                            //final byte[] instrumented = Instrumenter.instrumentNotNull(reader, loader);
+                            if (callback != null) {
+                                final ClassReader reader = new ClassReader(buffer);
+                                callback.associate(classFileName, Callbacks.getDefaultLookup(sourceFileName), reader);
+                            }
 
-                            //if (instrumented != null) {
-                            //    result.write (instrumented);
-                            //    result.flush();
-                            //    return;
-                            //}
+                            myWriters.add(new DelayedClassFileWriter() {
+                                public void commit() throws IOException {
+                                    final OutputStream result = superOpenOutputStream();
+                                    final ClassReader reader = new ClassReader(buffer);
+                                    final byte[] instrumented = InstrumentationUtil.instrumentNotNull(reader, loader);
+
+                                    if (instrumented != null) {
+                                        result.write(instrumented);
+                                    } else {
+                                        result.write(buffer);
+                                    }
+
+                                    result.close();
+                                }
+                            });
+                        } else {
+                            final OutputStream result = superOpenOutputStream();
+                            result.write(buffer);
+                            result.close();
                         }
-                        result.write(b, off, len);
-                        result.flush();
                     }
                 };
             }
         };
+    }
+
+    @Override
+    public void flush() {
+        super.flush();
+
+        for (DelayedClassFileWriter f : myWriters) {
+            try {
+                f.commit();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        myWriters.clear();
     }
 }

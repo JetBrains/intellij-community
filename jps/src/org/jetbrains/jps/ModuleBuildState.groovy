@@ -1,6 +1,7 @@
 package org.jetbrains.jps
 
 import com.intellij.ant.InstrumentationUtil.FormInstrumenter
+import com.intellij.ant.PseudoClassLoader
 import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.ether.dependencyView.Callbacks.Backend
 
@@ -12,7 +13,7 @@ class ModuleBuildState {
   boolean tests
   Backend callback
   FormInstrumenter formInstrumenter
-  ClassLoader loader
+  PseudoClassLoader loader
   ProjectWrapper projectWrapper
   List<File> sourceFiles
   List<String> sourceRoots

@@ -92,7 +92,7 @@ class Java16ApiCompiler {
 
       System.out.println("Chunk: " + chunk.toString() + " Classpath: " + cp.toString());
 
-      fileManager.setProperties(state.callback, InstrumentationUtil.createClassLoader(cp.toString()))
+      fileManager.setProperties(state.callback, InstrumentationUtil.createPseudoClassLoader(cp.toString()))
 
       Iterable<? extends JavaFileObject> toCompile = fileManager.getJavaFileObjectsFromFiles(filesToCompile)
       Project project = chunk.project
@@ -107,7 +107,6 @@ class Java16ApiCompiler {
         System.out.println(out.toString());
       }
       project.builder.listeners*.onJavaFilesCompiled(chunk, filesToCompile.size())
-      fileManager.flush()
     }
     else {
       chunk.project.info("No java source files found in '${chunk.name}', skipping compilation")
