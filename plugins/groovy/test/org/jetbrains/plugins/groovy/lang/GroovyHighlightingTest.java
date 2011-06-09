@@ -424,4 +424,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testNativeMapAssignability() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
+
+  public void testDelegatedMethodIsImplemented() {
+    doTest();
+  }
 }
