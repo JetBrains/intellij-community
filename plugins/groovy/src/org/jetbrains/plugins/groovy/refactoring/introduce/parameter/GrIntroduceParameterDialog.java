@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -59,6 +58,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   private JLabel myNameLabel;
   private GrIntroduceParameterContext myContext;
   TObjectIntHashMap<JCheckBox> toRemoveCBs;
+  private static final String GROOVY_INTRODUCE_PARAMETER = "refactoring.introduceParameter.groovy";
 
   public GrIntroduceParameterDialog(GrIntroduceParameterContext context, TObjectIntHashMap<GrParameter> parametersToRemove) {
     super(context.project, true);
@@ -177,7 +177,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
   @Override
   protected String getHelpId() {
-    return HelpID.INTRODUCE_PARAMETER;
+    return GROOVY_INTRODUCE_PARAMETER;
   }
 
   private TIntArrayList getParametersToRemove() {
