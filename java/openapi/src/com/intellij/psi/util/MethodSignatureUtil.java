@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,39 @@ public class MethodSignatureUtil {
       }
     };
 
-  public static MethodSignature createMethodSignature(@NonNls @NotNull  String name,
+  public static final TObjectHashingStrategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY =
+    new TObjectHashingStrategy<MethodSignature>() {
+      public int computeHashCode(final MethodSignature signature) {
+        int result = signature.getName().hashCode();
+
+        PsiType[] parameterTypes = signature.getParameterTypes();
+        result += 37 * parameterTypes.length;
+        PsiType firstParamType = parameterTypes.length == 0 ? null : parameterTypes[0];
+        if (firstParamType != null) {
+          firstParamType = TypeConversionUtil.erasure(firstParamType);
+          result = 31*result + firstParamType.hashCode();
+        }
+        return result;
+      }
+
+      public boolean equals(MethodSignature method1, MethodSignature method2) {
+        if (!method1.getName().equals(method2.getName())) return false;
+        final PsiType[] parameterTypes1 = method1.getParameterTypes();
+        final PsiType[] parameterTypes2 = method2.getParameterTypes();
+        if (parameterTypes1.length != parameterTypes2.length) return false;
+
+        final PsiSubstitutor substitutor1 = method1.getSubstitutor();
+        final PsiSubstitutor substitutor2 = method2.getSubstitutor();
+        for (int i = 0; i < parameterTypes1.length; i++) {
+          final PsiType type1 = TypeConversionUtil.erasure(substitutor1.substitute(parameterTypes1[i]), substitutor1);
+          final PsiType type2 = TypeConversionUtil.erasure(substitutor2.substitute(parameterTypes2[i]), substitutor2);
+          if (!Comparing.equal(type1, type2)) return false;
+        }
+        return true;
+      }
+    };
+
+  public static MethodSignature createMethodSignature(@NonNls @NotNull String name,
                                                       @Nullable PsiParameterList parameterTypes,
                                                       @Nullable PsiTypeParameterList typeParameterList,
                                                       @NotNull PsiSubstitutor substitutor) {
@@ -55,8 +87,6 @@ public class MethodSignatureUtil {
                                                       @NotNull PsiSubstitutor substitutor) {
     return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor);
   }
-
-  public static final TObjectHashingStrategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY = new MethodParametersErasureEquality();
 
   /**
    * @deprecated use areSignaturesEqual() which takes correct substitutors
@@ -114,7 +144,8 @@ public class MethodSignatureUtil {
     PsiClass derivedClass = derivedMethod.getContainingClass();
     if (derivedClass == null || superClassCandidate == null) return false;
     if (!derivedClass.isInheritor(superClassCandidate, true)) return false;
-    final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClassCandidate, derivedClass, PsiSubstitutor.EMPTY);
+    final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClassCandidate, derivedClass,
+                                                                                        PsiSubstitutor.EMPTY);
     final MethodSignature superSignature = superMethodCandidate.getSignature(superSubstitutor);
     final MethodSignature derivedSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
     return isSubsignature(superSignature, derivedSignature);
@@ -154,12 +185,12 @@ public class MethodSignatureUtil {
   }
 
   @Nullable
-  public static PsiMethod findMethodBySignature(final PsiClass aClass, PsiMethod pattenMethod, boolean checkBases) {
+  public static PsiMethod findMethodBySignature(final PsiClass aClass, final PsiMethod pattenMethod, boolean checkBases) {
     return findMethodBySignature(aClass, pattenMethod.getSignature(PsiSubstitutor.EMPTY), checkBases);
   }
 
   @Nullable
-  public static PsiMethod findMethodBySignature(final PsiClass aClass, MethodSignature methodSignature, boolean checkBases) {
+  public static PsiMethod findMethodBySignature(final PsiClass aClass, final MethodSignature methodSignature, boolean checkBases) {
     List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), checkBases);
     for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod method = pair.first;
@@ -171,7 +202,7 @@ public class MethodSignatureUtil {
   }
 
   @Nullable
-  public static PsiMethod findMethodBySuperSignature(final PsiClass aClass, MethodSignature methodSignature, final boolean checkBases) {
+  public static PsiMethod findMethodBySuperSignature(final PsiClass aClass, final MethodSignature methodSignature, final boolean checkBases) {
     List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), checkBases);
     for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod method = pair.first;
@@ -183,7 +214,7 @@ public class MethodSignatureUtil {
   }
 
   @Nullable
-  public static PsiMethod findMethodBySuperMethod(final PsiClass aClass, PsiMethod method, final boolean checkBases) {
+  public static PsiMethod findMethodBySuperMethod(final PsiClass aClass, final PsiMethod method, final boolean checkBases) {
     List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(method.getName(), checkBases);
     for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod candidate = pair.first;
@@ -289,37 +320,6 @@ public class MethodSignatureUtil {
       substitutor1 = substitutor1.put(typeParameter, otherSubstituted);
     }
     return substitutor1;
-  }
-
-  private static class MethodParametersErasureEquality implements TObjectHashingStrategy<MethodSignature> {
-    public int computeHashCode(final MethodSignature signature) {
-      int result = signature.getName().hashCode();
-
-      PsiType[] parameterTypes = signature.getParameterTypes();
-      result += 37 * parameterTypes.length;
-      PsiType firstParamType = parameterTypes.length == 0 ? null : parameterTypes[0];
-      if (firstParamType != null) {
-        firstParamType = TypeConversionUtil.erasure(firstParamType);
-        result = 31*result + firstParamType.hashCode();
-      }
-      return result;
-    }
-
-    public boolean equals(MethodSignature method1, MethodSignature method2) {
-      if (!method1.getName().equals(method2.getName())) return false;
-      final PsiType[] parameterTypes1 = method1.getParameterTypes();
-      final PsiType[] parameterTypes2 = method2.getParameterTypes();
-      if (parameterTypes1.length != parameterTypes2.length) return false;
-
-      final PsiSubstitutor substitutor1 = method1.getSubstitutor();
-      final PsiSubstitutor substitutor2 = method2.getSubstitutor();
-      for (int i = 0; i < parameterTypes1.length; i++) {
-        final PsiType type1 = TypeConversionUtil.erasure(substitutor1.substitute(parameterTypes1[i]), substitutor1);
-        final PsiType type2 = TypeConversionUtil.erasure(substitutor2.substitute(parameterTypes2[i]), substitutor2);
-        if (!Comparing.equal(type1, type2)) return false;
-      }
-      return true;
-    }
   }
 
   @NotNull
