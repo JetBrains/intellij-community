@@ -735,7 +735,7 @@ public class PsiUtil {
         qClass.processDeclarations(processor, state, null, expr);
       }
 
-      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr, state);
+      ResolveUtil.processNonCodeMembers(qualifierType, processor, expr, state);
       final GroovyResolveResult[] candidates = processor.getCandidates();
       PsiType type = null;
       if (candidates.length == 1) {
