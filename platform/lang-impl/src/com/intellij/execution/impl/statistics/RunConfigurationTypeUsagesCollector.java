@@ -35,7 +35,7 @@ import java.util.Set;
  */
 public class RunConfigurationTypeUsagesCollector extends AbstractApplicationUsagesCollector {
 
-  private static final String GROUP_ID = "runConfigurationType";
+  private static final String GROUP_ID = "run-configuration-type";
 
   @NotNull
   @Override
