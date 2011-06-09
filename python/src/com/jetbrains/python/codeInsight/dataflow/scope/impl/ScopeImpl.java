@@ -1,8 +1,10 @@
 package com.jetbrains.python.codeInsight.dataflow.scope.impl;
 
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DFAMapEngine;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -27,6 +29,7 @@ public class ScopeImpl implements Scope {
   private Set<String> myNonlocals;
   private final ScopeOwner myFlowOwner;
   private Set<String> myAllNames;
+  private static final Logger LOG = Logger.getInstance(ScopeImpl.class.getName());
 
   public ScopeImpl(final ScopeOwner flowOwner) {
     myFlowOwner = flowOwner;
@@ -64,7 +67,13 @@ public class ScopeImpl implements Scope {
       final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
       final PyReachingDefsSemilattice semilattice = new PyReachingDefsSemilattice();
       final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<ScopeVariable>(myFlow, dfaInstance, semilattice);
-      myCachedScopeVariables = engine.performDFA();
+      try {
+        myCachedScopeVariables = engine.performDFA();
+      }
+      catch (DFALimitExceededException e) {
+        LOG.warn(e);
+        myCachedScopeVariables = Collections.emptyList();
+      }
     }
     return myCachedScopeVariables;
   }
