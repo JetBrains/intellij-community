@@ -113,18 +113,6 @@ public abstract class ElementPresentationManager {
    * @see Documentation
    */
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
-  public static void registerIconProvider(Function<Object, Icon> function) { ourIconProviders.add(function); }
-
-  /**
-   * @deprecated
-   * @see com.intellij.ide.presentation.Presentation#icon()
-   */
-  public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
-  /**
-   * @deprecated
-   * @see com.intellij.ide.presentation.Presentation#icon()
-   */
-  public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 
 
   public static final NullableFunction<Object, String> NAMER = new NullableFunction<Object, String>() {
