@@ -134,7 +134,7 @@ public abstract class ElementPresentationManager {
   };
   public static <T> NullableFunction<T, String> namer() {
     //noinspection unchecked
-    return NAMER;
+    return (NullableFunction<T, String>)NAMER;
   }
 
   @Nullable
