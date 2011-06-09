@@ -38,12 +38,12 @@ public class Notification {
   private boolean myExpired;
   private WeakReference<Balloon> myBalloonRef;
 
-  public Notification(@NotNull final String groupId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type) {
-    this(groupId, title, content, type, null);
+  public Notification(@NotNull final String groupDisplayId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type) {
+    this(groupDisplayId, title, content, type, null);
   }
 
-  public Notification(@NotNull final String groupId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type, @Nullable NotificationListener listener) {
-    myGroupId = groupId;
+  public Notification(@NotNull final String groupDisplayId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type, @Nullable NotificationListener listener) {
+    myGroupId = groupDisplayId;
     myTitle = title;
     myContent = content;
     myType = type;
