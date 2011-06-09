@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,10 @@ public class Pair<A, B> {
   public final A first;
   public final B second;
 
-
   public static <A, B> Pair<A, B> create(A first, B second) {
     return new Pair<A, B>(first, second);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
   public static <A, B> Function<A, Pair<A, B>> createFunction(@Nullable final B value) {
     return new Function<A, Pair<A, B>>() {
       public Pair<A, B> fun(A a) {
@@ -37,12 +35,22 @@ public class Pair<A, B> {
     };
   }
 
+  @Nullable
   public static <T> T getFirst(@Nullable Pair<T, ?> pair) {
     return pair != null ? pair.first : null;
   }
 
+  @Nullable
   public static <T> T getSecond(@Nullable Pair<?, T> pair) {
     return pair != null ? pair.second : null;
+  }
+
+  @SuppressWarnings({"unchecked", "NullableProblems"})
+  private static final Pair EMPTY = create(null, null);
+
+  @SuppressWarnings("unchecked")
+  public static <A, B> Pair<A, B> empty() {
+    return EMPTY;
   }
 
   public Pair(A first, B second) {
