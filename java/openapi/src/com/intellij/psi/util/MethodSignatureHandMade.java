@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,26 +21,45 @@ import org.jetbrains.annotations.Nullable;
 
 public class MethodSignatureHandMade extends MethodSignatureBase {
   private final String myName;
-  MethodSignatureHandMade(@NotNull String name, @Nullable PsiParameterList parameterList, @Nullable PsiTypeParameterList typeParameterList, @NotNull PsiSubstitutor substitutor) {
+  private final boolean myIsConstructor;
+
+  MethodSignatureHandMade(@NotNull String name,
+                          @Nullable PsiParameterList parameterList,
+                          @Nullable PsiTypeParameterList typeParameterList,
+                          @NotNull PsiSubstitutor substitutor,
+                          boolean isConstructor) {
     super(substitutor, parameterList, typeParameterList);
     myName = name;
+    myIsConstructor = isConstructor;
   }
 
-  MethodSignatureHandMade(@NotNull String name, @NotNull PsiType[] parameterTypes, @NotNull PsiTypeParameter[] typeParameters, @NotNull PsiSubstitutor substitutor) {
+  MethodSignatureHandMade(@NotNull String name,
+                          @NotNull PsiType[] parameterTypes,
+                          @NotNull PsiTypeParameter[] typeParameters,
+                          @NotNull PsiSubstitutor substitutor,
+                          boolean isConstructor) {
     super(substitutor, parameterTypes, typeParameters);
     myName = name;
+    myIsConstructor = isConstructor;
   }
 
 
   @NotNull
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public boolean isRaw() {
     for (final PsiTypeParameter typeParameter : myTypeParameters) {
       if (getSubstitutor().substitute(typeParameter) == null) return true;
     }
     return false;
+  }
+
+  @Override
+  public boolean isConstructor() {
+    return myIsConstructor;
   }
 }

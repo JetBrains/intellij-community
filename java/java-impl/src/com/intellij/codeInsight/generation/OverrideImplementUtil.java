@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,12 +113,14 @@ public class OverrideImplementUtil {
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
       PsiClass hisClass = method.getContainingClass();
       if (hisClass == null) continue;
-      //Filter non-immediate super constructors
+      // filter non-immediate super constructors
       if (method.isConstructor() && (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass || aClass.isEnum())) {
         continue;
       }
-
-      if (MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) continue;
+      // filter already implemented
+      if (MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) {
+        continue;
+      }
 
       if (method.hasModifierProperty(PsiModifier.FINAL)) {
         finals.put(signature, method);

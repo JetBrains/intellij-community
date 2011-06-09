@@ -78,14 +78,30 @@ public class MethodSignatureUtil {
                                                       @Nullable PsiParameterList parameterTypes,
                                                       @Nullable PsiTypeParameterList typeParameterList,
                                                       @NotNull PsiSubstitutor substitutor) {
-    return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor);
+    return createMethodSignature(name, parameterTypes, typeParameterList, substitutor, false);
+  }
+
+  public static MethodSignature createMethodSignature(@NonNls @NotNull String name,
+                                                      @Nullable PsiParameterList parameterTypes,
+                                                      @Nullable PsiTypeParameterList typeParameterList,
+                                                      @NotNull PsiSubstitutor substitutor,
+                                                      boolean isConstructor) {
+    return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor, isConstructor);
   }
 
   public static MethodSignature createMethodSignature(@NonNls @NotNull String name,
                                                       @NotNull PsiType[] parameterTypes,
                                                       @NotNull PsiTypeParameter[] typeParameterList,
                                                       @NotNull PsiSubstitutor substitutor) {
-    return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor);
+    return createMethodSignature(name, parameterTypes, typeParameterList, substitutor, false);
+  }
+
+  public static MethodSignature createMethodSignature(@NonNls @NotNull String name,
+                                                      @NotNull PsiType[] parameterTypes,
+                                                      @NotNull PsiTypeParameter[] typeParameterList,
+                                                      @NotNull PsiSubstitutor substitutor,
+                                                      boolean isConstructor) {
+    return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor, isConstructor);
   }
 
   /**
@@ -104,14 +120,14 @@ public class MethodSignatureUtil {
 
   private static boolean checkSignaturesEqualInner(final MethodSignature subSignature,
                                                    final MethodSignature superSignature,
-                                                   PsiSubstitutor unifyingSubstitutor) {
+                                                   final PsiSubstitutor unifyingSubstitutor) {
     if (unifyingSubstitutor == null) return false;
 
     final PsiType[] subParameterTypes = subSignature.getParameterTypes();
     final PsiType[] superParameterTypes = superSignature.getParameterTypes();
     for (int i = 0; i < subParameterTypes.length; i++) {
-      PsiType type1 = unifyingSubstitutor.substitute(subParameterTypes[i]);
-      PsiType type2 = unifyingSubstitutor.substitute(superParameterTypes[i]);
+      final PsiType type1 = unifyingSubstitutor.substitute(subParameterTypes[i]);
+      final PsiType type2 = unifyingSubstitutor.substitute(superParameterTypes[i]);
       if (!Comparing.equal(type1, type2)) {
         return false;
       }
@@ -120,18 +136,25 @@ public class MethodSignatureUtil {
     return true;
   }
 
-  public static boolean areSignaturesEqualLightweight(MethodSignature sig1, MethodSignature sig2) {
-    String name1 = sig1.getName();
-    String name2 = sig2.getName();
-    if (!name1.equals(name2)) return false;
+  public static boolean areSignaturesEqualLightweight(final MethodSignature sig1, final MethodSignature sig2) {
+    final boolean isConstructor1 = sig1.isConstructor();
+    final boolean isConstructor2 = sig2.isConstructor();
+    if (isConstructor1 != isConstructor2) return false;
+
+    if (!isConstructor1 && !isConstructor2) {
+      final String name1 = sig1.getName();
+      final String name2 = sig2.getName();
+      if (!name1.equals(name2)) return false;
+    }
+
     final PsiType[] parameterTypes1 = sig1.getParameterTypes();
     final PsiType[] parameterTypes2 = sig2.getParameterTypes();
     if (parameterTypes1.length != parameterTypes2.length) return false;
 
     // optimization: check for really different types in method parameters
     for (int i = 0; i < parameterTypes1.length; i++) {
-      PsiType type1 = parameterTypes1[i];
-      PsiType type2 = parameterTypes2[i];
+      final PsiType type1 = parameterTypes1[i];
+      final PsiType type2 = parameterTypes2[i];
       if (type1 instanceof PsiPrimitiveType != type2 instanceof PsiPrimitiveType) return false;
       if (type1 instanceof PsiPrimitiveType && !type1.equals(type2)) return false;
     }
@@ -191,7 +214,8 @@ public class MethodSignatureUtil {
 
   @Nullable
   public static PsiMethod findMethodBySignature(final PsiClass aClass, final MethodSignature methodSignature, boolean checkBases) {
-    List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), checkBases);
+    String name = methodSignature.isConstructor() ? aClass.getName() : methodSignature.getName();
+    List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(name, checkBases);
     for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod method = pair.first;
       PsiSubstitutor substitutor = pair.second;
@@ -203,7 +227,8 @@ public class MethodSignatureUtil {
 
   @Nullable
   public static PsiMethod findMethodBySuperSignature(final PsiClass aClass, final MethodSignature methodSignature, final boolean checkBases) {
-    List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), checkBases);
+    String name = methodSignature.isConstructor() ? aClass.getName() : methodSignature.getName();
+    List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(name, checkBases);
     for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod method = pair.first;
       PsiSubstitutor substitutor = pair.second;
