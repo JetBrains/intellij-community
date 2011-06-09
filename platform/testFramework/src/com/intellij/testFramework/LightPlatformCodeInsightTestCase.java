@@ -450,6 +450,16 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
+  protected void caretUp() {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+    action.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
+  protected void deleteLine() {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_LINE);
+    action.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
   protected static void type(char c) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     final DataContext dataContext = DataManager.getInstance().getDataContext();

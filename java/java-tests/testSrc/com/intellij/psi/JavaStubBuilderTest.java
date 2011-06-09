@@ -17,8 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -26,8 +24,9 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.JavaFileStubBuilder;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ThrowableRunnable;
 
 import java.io.File;
 import java.security.SecureRandom;
@@ -357,12 +356,12 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     String text = FileUtil.loadFile(new File(path));
     final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", text);
 
-    IdeaTestUtil.assertTiming("Source file size: " + text.length(), 2000, new Runnable() {
+    PlatformTestUtil.startPerformanceTest("Source file size: " + text.length(), 2000, new ThrowableRunnable() {
       @Override
-      public void run() {
+      public void run() throws Exception {
         NEW_BUILDER.buildStubTree(file);
       }
-    });
+    }).cpuBound().assertTiming();
   }
 
   private static void doTest(final String source, final String tree) {

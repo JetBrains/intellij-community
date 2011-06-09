@@ -28,8 +28,9 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.lang.ant.dom.AntResolveInspection;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
@@ -110,12 +111,12 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
 
     try {
       myIgnoreInfos = true;
-      IdeaTestUtil.assertTiming("Should be quite performant !", 25000, new Runnable() {
+      PlatformTestUtil.startPerformanceTest("Should be quite performant !", 25000, new ThrowableRunnable() {
         @Override
         public void run() {
           doDoTest(true, false);
         }
-      });
+      }).cpuBound().assertTiming();
     }
     finally {
       myIgnoreInfos = false;
