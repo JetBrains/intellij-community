@@ -7,12 +7,13 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -75,7 +76,7 @@ public class MoveClassTest extends CodeInsightTestCase {
     doTest("unusedImport", new String[]{"p2.F2"}, "p1");
   }
 
-  private void doTest(String testName, String[] classNames, String newPackageName) throws Exception{
+  private void doTest(@NonNls String testName, @NonNls String[] classNames, @NonNls String newPackageName) throws Exception{
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveClass/" + testName;
 
     String rootBefore = root + "/before";
@@ -87,7 +88,7 @@ public class MoveClassTest extends CodeInsightTestCase {
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
   }
 
   private void performAction(String[] classNames, String newPackageName) throws Exception{
