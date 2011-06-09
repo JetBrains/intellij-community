@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -67,41 +68,39 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     if (enclosing != null && object instanceof PsiElement) {
       final PsiType type = JavaCompletionUtil.getLookupElementType(delegate);
       final TailType itemType = item != null ? item.getTailType() : TailType.NONE;
-      TailType cached = itemType;
-      int cachedPrior = 0;
       if (type != null && type.isValid()) {
+        Set<TailType> voidTyped = new HashSet<TailType>();
+        Set<TailType> sameTyped = new HashSet<TailType>();
+        Set<TailType> assignableTyped = new HashSet<TailType>();
         for (ExpectedTypeInfo info : myExpectedTypeInfos) {
           final PsiType infoType = info.getType();
           if (PsiType.VOID.equals(infoType)) {
-            cached = info.getTailType();
-            continue;
-          }
-
-          if (infoType.equals(type) && cachedPrior < 2) {
-            cachedPrior = 2;
-            cached = info.getTailType();
-          }
-          else if (cachedPrior == 2 && cached != info.getTailType()) {
-            cachedPrior = 3;
-            cached = itemType;
-          }
-          else if (((infoType.isAssignableFrom(type) && info.getKind() == ExpectedTypeInfo.TYPE_OR_SUBTYPE)
-                    || (type.isAssignableFrom(infoType) && info.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE))
-                   && cachedPrior < 1) {
-            cachedPrior = 1;
-            cached = info.getTailType();
-          }
-          else if (cachedPrior == 1 && cached != info.getTailType()) {
-            cached = itemType;
+            voidTyped.add(info.getTailType());
+          } else if (infoType.equals(type)) {
+            sameTyped.add(info.getTailType());
+          } else if ((infoType.isAssignableFrom(type) && info.getKind() == ExpectedTypeInfo.TYPE_OR_SUBTYPE) ||
+                     (type.isAssignableFrom(infoType) && info.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE)) {
+            assignableTyped.add(info.getTailType());
           }
         }
+
+        if (!sameTyped.isEmpty()) {
+          return sameTyped.size() == 1 ? sameTyped.iterator().next() : itemType;
+        }
+        if (!assignableTyped.isEmpty()) {
+          return assignableTyped.size() == 1 ? assignableTyped.iterator().next() : itemType;
+        }
+        if (!voidTyped.isEmpty()) {
+          return voidTyped.size() == 1 ? voidTyped.iterator().next() : itemType;
+        }
+
       }
       else {
         if (myExpectedTypeInfos.size() == 1) {
-          cached = myExpectedTypeInfos.iterator().next().getTailType();
+          return myExpectedTypeInfos.iterator().next().getTailType();
         }
       }
-      return cached;
+      return itemType;
     }
     return null;
   }
