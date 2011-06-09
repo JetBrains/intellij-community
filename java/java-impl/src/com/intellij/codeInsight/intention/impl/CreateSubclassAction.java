@@ -145,85 +145,81 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
   public static PsiClass createSubclass(final PsiClass psiClass, final PsiDirectory targetDirectory, final String className) {
     final Project project = psiClass.getProject();
     final PsiClass[] targetClass = new PsiClass[1];
-    PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable () {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
 
-            IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+        IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-            final PsiTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
+        final PsiTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
 
-            try {
-              targetClass[0] = JavaDirectoryService.getInstance().createClass(targetDirectory, className);
-              if (psiClass.hasTypeParameters()) {
-                final PsiTypeParameterList typeParameterList = targetClass[0].getTypeParameterList();
-                assert typeParameterList != null;
-                typeParameterList.replace(oldTypeParameterList);
-              }
-            }
-            catch (final IncorrectOperationException e) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
-                                                    "\n"+e.getLocalizedMessage(),
-                                           CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-                }
-              });
-              return;
-            }
-            final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-            PsiJavaCodeReferenceElement ref = elementFactory.createClassReferenceElement(psiClass);
-            try {
-              if (psiClass.isInterface()) {
-                ref = (PsiJavaCodeReferenceElement)targetClass[0].getImplementsList().add(ref);
-              }
-              else {
-                ref = (PsiJavaCodeReferenceElement)targetClass[0].getExtendsList().add(ref);
-              }
-
-              if (oldTypeParameterList != null) {
-                for (PsiTypeParameter parameter : oldTypeParameterList.getTypeParameters()) {
-                  ref.getParameterList().add(elementFactory.createTypeElement(elementFactory.createType(parameter)));
-                }
-              }
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
+        try {
+          targetClass[0] = JavaDirectoryService.getInstance().createClass(targetDirectory, className);
+          if (psiClass.hasTypeParameters()) {
+            final PsiTypeParameterList typeParameterList = targetClass[0].getTypeParameterList();
+            assert typeParameterList != null;
+            typeParameterList.replace(oldTypeParameterList);
           }
-        });
-        if (targetClass[0] == null) return;
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-
-          final Editor editor = CodeInsightUtil.positionCursor(project, targetClass[0].getContainingFile(), targetClass[0].getLBrace());
-          if (editor == null) return;
-
-          boolean hasNonTrivialConstructor = false;
-          final PsiMethod[] constructors = psiClass.getConstructors();
-          for (PsiMethod constructor : constructors) {
-            if (constructor.getParameterList().getParametersCount() > 0) {
-              hasNonTrivialConstructor = true;
-              break;
+        }
+        catch (final IncorrectOperationException e) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
+                                                "\n"+e.getLocalizedMessage(),
+                                       CodeInsightBundle.message("intention.error.cannot.create.class.title"));
             }
+          });
+          return;
+        }
+        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+        PsiJavaCodeReferenceElement ref = elementFactory.createClassReferenceElement(psiClass);
+        try {
+          if (psiClass.isInterface()) {
+            ref = (PsiJavaCodeReferenceElement)targetClass[0].getImplementsList().add(ref);
           }
-          if (hasNonTrivialConstructor) {
-            final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, targetClass[0], PsiSubstitutor.EMPTY);
-            final List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
-            for (PsiMethod baseConstr : constructors) {
-              if (PsiUtil.isAccessible(baseConstr, targetClass[0], targetClass[0])) {
-                baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
-              }
-            }
-            CreateConstructorMatchingSuperFix.chooseConstructor2Delegate(project, editor,
-                                                                         substitutor,
-                                                                         baseConstructors, constructors, targetClass[0]);
+          else {
+            ref = (PsiJavaCodeReferenceElement)targetClass[0].getExtendsList().add(ref);
           }
 
-          OverrideImplementUtil.chooseAndImplementMethods(project, editor, targetClass[0]);
+          if (oldTypeParameterList != null) {
+            for (PsiTypeParameter parameter : oldTypeParameterList.getTypeParameters()) {
+              ref.getParameterList().add(elementFactory.createTypeElement(elementFactory.createType(parameter)));
+            }
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       }
     });
+    if (targetClass[0] == null) return null;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+
+      final Editor editor = CodeInsightUtil.positionCursor(project, targetClass[0].getContainingFile(), targetClass[0].getLBrace());
+      if (editor == null) return targetClass[0];
+
+      boolean hasNonTrivialConstructor = false;
+      final PsiMethod[] constructors = psiClass.getConstructors();
+      for (PsiMethod constructor : constructors) {
+        if (constructor.getParameterList().getParametersCount() > 0) {
+          hasNonTrivialConstructor = true;
+          break;
+        }
+      }
+      if (hasNonTrivialConstructor) {
+        final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, targetClass[0], PsiSubstitutor.EMPTY);
+        final List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
+        for (PsiMethod baseConstr : constructors) {
+          if (PsiUtil.isAccessible(baseConstr, targetClass[0], targetClass[0])) {
+            baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
+          }
+        }
+        CreateConstructorMatchingSuperFix.chooseConstructor2Delegate(project, editor,
+                                                                     substitutor,
+                                                                     baseConstructors, constructors, targetClass[0]);
+      }
+
+      OverrideImplementUtil.chooseAndImplementMethods(project, editor, targetClass[0]);
+    }
     return targetClass[0];
   }
 
