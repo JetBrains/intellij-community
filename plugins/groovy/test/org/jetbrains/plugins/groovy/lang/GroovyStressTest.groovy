@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
+import com.intellij.util.ThrowableRunnable
 
 /**
  * @author peter
@@ -19,6 +20,13 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
   @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
     LightGroovyTestCase.GROOVY_DESCRIPTOR
+  }
+
+  ThrowableRunnable highlight;
+  @Override
+  protected void setUp() {
+    super.setUp();
+    highlight = { myFixture.doHighlighting() } as ThrowableRunnable
   }
 
   public void testDontWalkLongInferenceChain() throws Exception {
@@ -91,7 +99,7 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     text += "}"
 
     myFixture.configureByText("a.groovy", text)
-    IdeaTestUtil.assertTiming "slow", 5000, { myFixture.doHighlighting() }
+    IdeaTestUtil.startPerformanceTest("slow", 5000, highlight).cpuBound().usesAllCPUCores().assertTiming()
   }
 
   public void testDeeplyNestedClosures() {
@@ -103,7 +111,7 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     }
     myFixture.configureByText("a.groovy", defs + text)
     myFixture.enableInspections(new MissingReturnInspection())
-    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+    IdeaTestUtil.startPerformanceTest("slow", 10000, highlight).cpuBound().usesAllCPUCores().assertTiming()
   }
 
   public void testDeeplyNestedClosuresInGenericCalls() {
@@ -113,7 +121,7 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     }
     myFixture.configureByText("a.groovy", "def <T> foo(T t, Closure cl) {}\n" + text)
     myFixture.enableInspections(new MissingReturnInspection())
-    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+    IdeaTestUtil.startPerformanceTest("slow", 10000, highlight).cpuBound().usesAllCPUCores().assertTiming()
 
   }
 
@@ -124,13 +132,12 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     }
     myFixture.configureByText("a.groovy", "def <T> foo(T t, Closure<T> cl) {}\n" + text)
     myFixture.enableInspections(new MissingReturnInspection())
-    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+    IdeaTestUtil.startPerformanceTest("slow", 10000, highlight).cpuBound().usesAllCPUCores().assertTiming()
 
   }
 
   public void testManyAnnotatedScriptVariables() {
     myFixture.configureByText("a.groovy", (0..100).collect { "@Anno String i$it = null" }.join("\n"))
-    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+    IdeaTestUtil.startPerformanceTest("slow", 10000, highlight).cpuBound().usesAllCPUCores().assertTiming()
   }
-
 }

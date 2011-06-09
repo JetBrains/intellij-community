@@ -91,7 +91,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
                                                                       allVariants, false);
       final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
       clazz.processDeclarations(processor, state, null, this);
-      ResolveUtil.processNonCodeMethods(thisType, processor, this, state);
+      ResolveUtil.processNonCodeMembers(thisType, processor, this, state);
 
       return processor.getCandidates();
     }

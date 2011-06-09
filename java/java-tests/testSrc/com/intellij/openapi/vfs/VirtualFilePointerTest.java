@@ -16,6 +16,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -384,16 +385,16 @@ public class VirtualFilePointerTest extends IdeaTestCase {
   }
 
   public void testContainerDeletePerformance() throws Exception {
-    PlatformTestUtil.assertTiming("", 3000, new Runnable() {
+    PlatformTestUtil.startPerformanceTest(3000, new ThrowableRunnable() {
       @Override
-      public void run() {
+      public void run() throws Exception {
         Disposable parent = Disposer.newDisposable();
         for (int i = 0; i < 10000; i++) {
           myVirtualFilePointerManager.createContainer(parent);
         }
         Disposer.dispose(parent);
       }
-    });
+    }).cpuBound().assertTiming();
   }
 
   private static void doVfsRefresh() {

@@ -298,7 +298,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     final StatusBar statusBar = getStatusBar();
 
     final PositionPanel positionPanel = new PositionPanel(project);
-    statusBar.addWidget(positionPanel, "before Memory");
+    statusBar.addWidget(positionPanel, "before FatalError");
 
     final EncodingPanel encodingPanel = new EncodingPanel(project);
     statusBar.addWidget(encodingPanel, "after Position");

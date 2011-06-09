@@ -298,7 +298,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   public static void cleanupApplicationCaches(Project project) {
     if (project != null && !project.isDisposed()) {
+      ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+
       ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().cleanupForNextTest();
     }
 

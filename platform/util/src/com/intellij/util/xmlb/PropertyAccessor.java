@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,31 @@ import org.jetbrains.annotations.NonNls;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 class PropertyAccessor implements Accessor {
-  private final PropertyDescriptor myPropertyDescriptor;
+  private final String myName;
+  private final Class<?> myType;
+  private final Method myReadMethod;
+  private final Method myWriteMethod;
 
-
-  public PropertyAccessor(PropertyDescriptor myPropertyDescriptor) {
-    this.myPropertyDescriptor = myPropertyDescriptor;
+  public PropertyAccessor(PropertyDescriptor descriptor) {
+    this(descriptor.getName(), descriptor.getPropertyType(), descriptor.getReadMethod(), descriptor.getWriteMethod());
   }
 
+  public PropertyAccessor(String name, Class<?> type, Method readMethod, Method writeMethod) {
+    myName = name;
+    myType = type;
+    myReadMethod = readMethod;
+    myWriteMethod = writeMethod;
+  }
 
   public Object read(Object o) {
     try {
-      return myPropertyDescriptor.getReadMethod().invoke(o);
+      return myReadMethod.invoke(o);
     }
     catch (IllegalAccessException e) {
       throw new XmlSerializationException(e);
@@ -49,7 +58,7 @@ class PropertyAccessor implements Accessor {
 
   public void write(Object o, Object value) {
     try {
-      myPropertyDescriptor.getWriteMethod().invoke(o, XmlSerializerImpl.convert(value, myPropertyDescriptor.getPropertyType()));
+      myWriteMethod.invoke(o, XmlSerializerImpl.convert(value, myType));
     }
     catch (IllegalAccessException e) {
       throw new XmlSerializationException(e);
@@ -62,32 +71,31 @@ class PropertyAccessor implements Accessor {
   public Annotation[] getAnnotations() {
     List<Annotation> result = new ArrayList<Annotation>();
 
-    if (myPropertyDescriptor.getReadMethod() != null) {
-      ContainerUtil.addAll(result, myPropertyDescriptor.getReadMethod().getAnnotations());
+    if (myReadMethod != null) {
+      ContainerUtil.addAll(result, myReadMethod.getAnnotations());
     }
 
-    if (myPropertyDescriptor.getWriteMethod() != null) {
-      ContainerUtil.addAll(result, myPropertyDescriptor.getWriteMethod().getAnnotations());
+    if (myWriteMethod != null) {
+      ContainerUtil.addAll(result, myWriteMethod.getAnnotations());
     }
 
     return result.toArray(new Annotation[result.size()]);
   }
 
   public String getName() {
-    return myPropertyDescriptor.getName();
+    return myName;
   }
 
   public Class<?> getValueClass() {
-    return myPropertyDescriptor.getPropertyType();
+    return myType;
   }
 
   public Type getGenericType() {
-    return myPropertyDescriptor.getReadMethod().getGenericReturnType();
+    return myReadMethod.getGenericReturnType();
   }
-
 
   @NonNls
   public String toString() {
-    return "PropertyAccessor[" + myPropertyDescriptor.getReadMethod().getDeclaringClass().getName() + "." + getName() +"]";
+    return "PropertyAccessor[" + myReadMethod.getDeclaringClass().getName() + "." + getName() +"]";
   }
 }

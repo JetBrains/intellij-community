@@ -725,4 +725,8 @@ class Foo {
   void testStringRefExpr3() {
     assertNotNull(resolve("a.groovy"));
   }
+
+  void testNestedWith() {
+    assertNotNull(resolve('a.groovy'))
+  }
 }

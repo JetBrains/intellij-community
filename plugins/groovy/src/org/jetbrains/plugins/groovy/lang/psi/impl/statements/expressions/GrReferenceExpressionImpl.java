@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -45,7 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -106,13 +104,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (findClassOrPackageAtFirst()) {
       ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
-      resolveImpl(classProcessor);
+      GrReferenceResolveUtil.resolveImpl(classProcessor, this);
       classCandidates = classProcessor.getCandidates();
       if (classCandidates.length > 0) return classCandidates;
     }
 
     ResolverProcessor processor = new PropertyResolverProcessor(name, this);
-    resolveImpl(processor);
+    GrReferenceResolveUtil.resolveImpl(processor, this);
     final GroovyResolveResult[] fieldCandidates = processor.getCandidates();
 
     if (hasAt()) {
@@ -138,7 +136,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
     for (String accessorName : accessorNames) {
       AccessorResolverProcessor accessorResolver = new AccessorResolverProcessor(accessorName, this, !isLValue);
-      resolveImpl(accessorResolver);
+      GrReferenceResolveUtil.resolveImpl(accessorResolver, this);
       final GroovyResolveResult[] candidates = accessorResolver.getCandidates(); //can be only one correct candidate
       if (candidates.length > 0 && candidates[candidates.length - 1].isStaticsOK()) {
         if (isPropertyName || candidates[candidates.length - 1].getElement() instanceof GrAccessorMethod) {
@@ -153,7 +151,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (fieldCandidates.length > 0) return fieldCandidates;
     if (classCandidates == null) {
       ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
-      resolveImpl(classProcessor);
+      GrReferenceResolveUtil.resolveImpl(classProcessor, this);
       classCandidates = classProcessor.getCandidates();
     }
     if (classCandidates.length > 0) return classCandidates;
@@ -166,7 +164,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   private void processMethods(final MethodResolverProcessor methodResolver) {
-    resolveImpl(methodResolver);
+    GrReferenceResolveUtil.resolveImpl(methodResolver, this);
     if (methodResolver.hasApplicableCandidates()) {
       return;
     }
@@ -196,7 +194,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(name, this);
-    resolveImpl(propertyResolver);
+    GrReferenceResolveUtil.resolveImpl(propertyResolver, this);
     final GroovyResolveResult[] propertyCandidates = propertyResolver.getCandidates();
 
     if (!allVariants) { //search for local variables
@@ -249,7 +247,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
       AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true);
-      resolveImpl(getterResolver);
+      GrReferenceResolveUtil.resolveImpl(getterResolver, this);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {
         return candidates;
@@ -340,54 +338,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    /*
-    final PsiElement resolved = resolve();
-    if (resolved instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod) resolved;
-      final String oldName = getReferenceName();
-      if (!method.getName().equals(oldName)) { //was property reference to accessor
-        if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
-          final String newPropertyName = GroovyPropertyUtils.getPropertyNameByAccessorName(newElementName);
-          if (newPropertyName != null && newPropertyName.length() > 0) {
-            return handleElementRenameInner(newPropertyName);
-          } else {
-            if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
-              final PsiElement qualifier = getQualifier();
-              String qualifierText = qualifier != null ? qualifier.getText() + '.' : "";
-              final GrMethodCallExpression replaced =
-                (GrMethodCallExpression)replace(
-                  GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(qualifierText + newElementName + "()"));
-              return replaced.getInvokedExpression();
-            }
-            else {
-              final PsiElement parent = getParent();
-              if (parent instanceof GrAssignmentExpression) {
-                final PsiElement qualifier = getQualifier();
-                String qualifierText = qualifier != null ? qualifier.getText() + '.' : "";
-                final GrExpression rValue = ((GrAssignmentExpression)parent).getRValue();
-                String rValueText = rValue != null ? rValue.getText() : "";
-                final GrMethodCallExpression replaced = ((GrMethodCallExpression)parent.replace(
-                  GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(
-                    qualifierText + newElementName + "(" + rValueText + ")")));
-                return replaced.getInvokedExpression();
-              }
-            }
-          }
-        }
-      }
-    } else if (resolved instanceof GrField && ((GrField) resolved).isProperty()) {
-      final GrField field = (GrField) resolved;
-      final String oldName = getReferenceName();
-      if (oldName != null && !oldName.equals(field.getName())) { //was accessor reference to property
-        if (oldName.startsWith("get")) {
-          return handleElementRenameInner("get" + StringUtil.capitalize(newElementName));
-        } else if (oldName.startsWith("set")) {
-          return handleElementRenameInner("set" + StringUtil.capitalize(newElementName));
-        }
-      }
-    }
-*/
-
     return handleElementRenameInner(newElementName);
   }
 
@@ -550,7 +500,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private PsiType getQualifierType() {
     final GrExpression qualifier = getQualifierExpression();
     if (qualifier == null) {
-      final PsiNamedElement context = PsiTreeUtil.getParentOfType(this, GroovyFile.class, PsiClass.class);
+      final PsiElement context = PsiUtil.getFileOrClassContext(this);
       PsiClass contextClass = null;
       if (context instanceof PsiClass) {
         contextClass = (PsiClass)context;
@@ -626,7 +576,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (incompleteCode) {
       ResolverProcessor processor = CompletionProcessor.createRefSameNameProcessor(this, name);
-      resolveImpl(processor);
+      GrReferenceResolveUtil.resolveImpl(processor, this);
       GroovyResolveResult[] propertyCandidates = processor.getCandidates();
       if (propertyCandidates.length > 0) return propertyCandidates;
     }
@@ -639,142 +589,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       default:
         return GroovyResolveResult.EMPTY_ARRAY;
     }
-  }
-
-  private boolean resolveImpl(ResolverProcessor processor) {
-    GrExpression qualifier = getQualifierExpression();
-    if (qualifier == null) {
-      ResolveUtil.treeWalkUp(this, processor, true);
-      if (!processor.hasCandidates()) {
-        qualifier = PsiImplUtil.getRuntimeQualifier(this);
-        if (qualifier != null) {
-          if (!processQualifier(processor, qualifier)) return false;
-        }
-      }
-    } else {
-      if (getDotTokenType() != mSPREAD_DOT) {
-        if (!processQualifier(processor, qualifier)) return false;
-      } else {
-        if (!processQualifierForSpreadDot(processor, qualifier)) return false;
-      }
-
-      if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName()) ||
-          qualifier instanceof GrThisReferenceExpression) {
-        return processIfJavaLangClass(processor, qualifier.getType(), qualifier);
-      }
-    }
-    return true;
-  }
-
-  private boolean processIfJavaLangClass(ResolverProcessor processor, PsiType type, GroovyPsiElement resolveContext) {
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-        final PsiType[] params = ((PsiClassType)type).getParameters();
-        if (params.length == 1) {
-          if (!processClassQualifierType(processor, params[0], resolveContext)) return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  private boolean processQualifierForSpreadDot(ResolverProcessor processor, GrExpression qualifier) {
-    PsiType qualifierType = qualifier.getType();
-    if (qualifierType instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = ((PsiClassType) qualifierType).resolveGenerics();
-      PsiClass clazz = result.getElement();
-      if (clazz != null) {
-        PsiClass collection =
-          JavaPsiFacade.getInstance(getManager().getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, getResolveScope());
-        if (collection != null && collection.getTypeParameters().length == 1) {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(collection, clazz, result.getSubstitutor());
-          if (substitutor != null) {
-            PsiType componentType = substitutor.substitute(collection.getTypeParameters()[0]);
-            if (componentType != null) {
-              return processClassQualifierType(processor, componentType, qualifier);
-            }
-          }
-        }
-      }
-    } else if (qualifierType instanceof PsiArrayType) {
-      return processClassQualifierType(processor, ((PsiArrayType) qualifierType).getComponentType(), qualifier);
-    }
-    return true;
-  }
-
-  private boolean processQualifier(ResolverProcessor processor, GrExpression qualifier) {
-    PsiType qualifierType = qualifier.getType();
-    if (qualifierType == null) {
-      if (qualifier instanceof GrReferenceExpression) {
-        PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
-        if (resolved instanceof PsiPackage) {
-          return resolved.processDeclarations(processor, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, qualifier), null,
-                                              this);
-        }
-        else {
-          qualifierType = TypesUtil.getJavaLangObject(this);
-          return processClassQualifierType(processor, qualifierType, qualifier);
-        }
-      }
-    } else {
-      if (qualifierType instanceof PsiIntersectionType) {
-        for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
-          if (!processClassQualifierType(processor, conjunct, qualifier)) return false;
-        }
-      } else {
-        if (!processClassQualifierType(processor, qualifierType, qualifier)) return false;
-        if (qualifier instanceof GrReferenceExpression) {
-          PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
-          if (resolved instanceof PsiClass) { //omitted .class
-            PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, getResolveScope());
-            if (javaLangClass != null) {
-              ResolveState state = ResolveState.initial();
-              PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
-              PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-              if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-              if (typeParameters.length == 1) {
-                substitutor = substitutor.put(typeParameters[0], qualifierType);
-                state = state.put(PsiSubstitutor.KEY, substitutor);
-              }
-              if (!javaLangClass.processDeclarations(processor, state, null, this)) return false;
-              PsiType javaLangClassType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(javaLangClass, substitutor);
-              if (!ResolveUtil.processNonCodeMethods(javaLangClassType, processor, this, state)) return false;
-            }
-          }
-        }
-      }
-    }
-    return true;
-  }
-
-  private boolean processClassQualifierType(ResolverProcessor processor, PsiType qualifierType, GroovyPsiElement resolveContext) {
-    final ResolveState state;
-    if (qualifierType instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType)qualifierType).resolveGenerics();
-      PsiClass qualifierClass = qualifierResult.getElement();
-      state = ResolveState.initial().put(PsiSubstitutor.KEY, qualifierResult.getSubstitutor())
-        .put(ResolverProcessor.RESOLVE_CONTEXT, resolveContext);
-      if (qualifierClass != null) {
-        if (!qualifierClass.processDeclarations(processor, state, null, this)) return false;
-      }
-    }
-    else if (qualifierType instanceof PsiArrayType) {
-      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(getProject()).getArrayClass();
-      state = ResolveState.initial();
-      if (!arrayClass.processDeclarations(processor, state, null, this)) return false;
-    }
-    else if (qualifierType instanceof PsiIntersectionType) {
-      for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
-        if (!processClassQualifierType(processor, conjunct, resolveContext)) return false;
-      }
-      return true;
-    } else {
-      state = ResolveState.initial();
-    }
-
-    if (!ResolveUtil.processCategoryMembers(this, processor)) return false;
-    return ResolveUtil.processNonCodeMethods(qualifierType, processor, this, state);
   }
 
   private PsiType getThisType() {

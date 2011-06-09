@@ -33,8 +33,15 @@ public class Timings {
   public static final long IO_TIMING;
   public static final long MACHINE_TIMING;
 
-  static {
+  /**
+   * Measured on dual core p4 3HZ 1gig ram
+   */
+  public static final long ETALON_TIMING = 438;
+  public static final long ETALON_CPU_TIMING = 200;
+  public static final long ETALON_IO_TIMING = 100;
 
+
+  static {
     long start = System.currentTimeMillis();
     BigInteger k = new BigInteger("1");
     for (int i = 0; i < CPU_PROBES; i++) {
@@ -90,17 +97,18 @@ public class Timings {
   }
 
   /**
-   * Measured on dual core p4 3HZ 1gig ram
-   */
-  public static final long ETALON_TIMING = 438;
-
-  /**
    * @param value
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
    */
   public static int adjustAccordingToMySpeed(int value) {
-    //System.out.println("ETALON_TIMING = " + ETALON_TIMING);
-    //System.out.println("MACHINE_TIMING = " + MACHINE_TIMING);
     return Math.max(1, (int)(1.0 * value * ETALON_TIMING / MACHINE_TIMING) / 8 * JobSchedulerImpl.CORES_COUNT);
+  }
+
+  public static String getStatistics() {
+                         return
+                           " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
+                      ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
+                      ", total=" + MACHINE_TIMING + " ("+(int)(MACHINE_TIMING*1.0/ ETALON_TIMING*100) + "% of the etalon)" +
+                      ".";
   }
 }

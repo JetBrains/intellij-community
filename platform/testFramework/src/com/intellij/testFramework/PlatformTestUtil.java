@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -45,16 +46,17 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
-import org.junit.Assert;
 import junit.framework.AssertionFailedError;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.junit.Assert;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -378,27 +380,119 @@ public class PlatformTestUtil {
     final double acceptableChangeFactor = 1.1;
 
     // Allow 10% more in case of test machine is busy.
-    final int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
-    String logMessage = message + ".";
+    String logMessage = message;
     if (actual > expectedOnMyMachine) {
-      logMessage += " Operation took " + percentage + "% longer than expected.";
+      int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
+      logMessage += ". Operation took " + percentage + "% longer than expected";
     }
-    logMessage += " Expected on my machine: " + expectedOnMyMachine + "." +
+    logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
                   " Actual: " + actual + "." +
                   " Expected on Etalon machine: " + expected + ";" +
                   " Actual on Etalon: " + actual * Timings.ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
-                  " Timings: CPU=" + Timings.CPU_TIMING + ", I/O=" + Timings.IO_TIMING + ".";
-
+                  " Timings: CPU=" + Timings.CPU_TIMING +
+                  ", I/O=" + Timings.IO_TIMING + "." +
+                  " (" + (int)(Timings.MACHINE_TIMING*1.0/Timings.ETALON_TIMING*100) + "% of the etalon)" +
+                  ".";
     if (actual < expectedOnMyMachine) {
       TeamCityLogger.info(logMessage);
     }
     else if (actual < expectedOnMyMachine * acceptableChangeFactor) {
-      TeamCityLogger.warning(logMessage);
+      TeamCityLogger.warning(logMessage, null);
     }
     else {
-      TeamCityLogger.error(logMessage);
+      // throw AssertionFailedError to try one more time
+      throw new AssertionFailedError(logMessage);
     }
   }
+
+  public static TestInfo startPerformanceTest(int expected, @NotNull ThrowableRunnable test) {
+    return new TestInfo(test, expected);
+  }
+  public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expected, @NotNull ThrowableRunnable test) {
+    return startPerformanceTest(expected, test).message(message);
+  }
+  public static class TestInfo {
+    private final ThrowableRunnable test; // runnable to measure
+    private final int expected;           // millis the test is expected to run
+    private ThrowableRunnable setup;      // to run before each test
+    private boolean usesAllCPUCores;      // true if the test runs faster on multicore
+    private int attempts = 4;             // number of retries if performance failed
+    private String message="";            // to print on fail
+    private boolean adjustForIO = true;   // true if test uses IO, timings need to be recalibrated according to this agent disk performance
+    private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be recalibrated according to this agent CPU speed
+
+    private TestInfo(@NotNull ThrowableRunnable test, int expected) {
+      this.test = test;
+      this.expected = expected;
+    }
+
+    public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
+    public TestInfo usesAllCPUCores() { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usesAllCPUCores = true; return this; }
+    public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
+    public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }
+    public TestInfo attempts(int attempts) { this.attempts = attempts; return this; }
+    public TestInfo message(@NonNls @NotNull String message) { assert this.message==""; this.message = message; return this; }
+
+    public void assertTiming() {
+      assert expected != 0 : "Must call .expect() before run test";
+      if (COVERAGE_ENABLED_BUILD) return;
+
+      while (true) {
+        attempts--;
+        long start;
+        try {
+          if (setup != null) setup.run();
+          start = System.currentTimeMillis();
+          test.run();
+        }
+        catch (Throwable throwable) {
+          throw new RuntimeException(throwable);
+        }
+        long finish = System.currentTimeMillis();
+        long duration = finish - start;
+
+        int expectedOnMyMachine = expected;
+        if (adjustForCPU) {
+          expectedOnMyMachine = Math.max(1, (int)(1.0 * expectedOnMyMachine * Timings.CPU_TIMING / Timings.ETALON_CPU_TIMING));
+          expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 / JobSchedulerImpl.CORES_COUNT : expectedOnMyMachine;
+        }
+        if (adjustForIO) {
+          expectedOnMyMachine = Math.max(1, (int)(1.0 * expectedOnMyMachine * Timings.IO_TIMING / Timings.ETALON_IO_TIMING));
+        }
+        final double acceptableChangeFactor = 1.1;
+
+        // Allow 10% more in case of test machine is busy.
+        String logMessage = message;
+        if (duration > expectedOnMyMachine) {
+          int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
+          logMessage += ". (" + percentage + "% longer).";
+        }
+        logMessage += " Expected: " + expectedOnMyMachine + "." +
+                      " Actual: " + duration + "." + Timings.getStatistics() ;
+        if (duration < expectedOnMyMachine) {
+          TeamCityLogger.info(logMessage);
+          System.out.println("SUCCESS: "+logMessage);
+        }
+        else if (duration < expectedOnMyMachine * acceptableChangeFactor) {
+          TeamCityLogger.warning(logMessage, null);
+          System.out.println("WARNING: " + logMessage);
+        }
+        else {
+          // try one more time
+          if (attempts == 0) throw new AssertionFailedError(logMessage);
+          System.gc();
+          System.gc();
+          System.gc();
+          String s = "Another epic fail (remaining attempts: " + attempts + "): " + logMessage;
+          TeamCityLogger.warning(s, null);
+          System.err.println(s);
+          continue;
+        }
+        break;
+      }
+    }
+  }
+
 
   public static void assertTiming(String message, long expected, @NotNull Runnable actionToMeasure) {
     assertTiming(message, expected, 4, actionToMeasure);
@@ -424,7 +518,9 @@ public class PlatformTestUtil {
         System.gc();
         System.gc();
         System.gc();
-        TeamCityLogger.info("Another epic fail: "+e.getMessage() +"; Attempts remained: "+attempts);
+        String s = "Another epic fail (remaining attempts: " + attempts + "): " + e.getMessage();
+        TeamCityLogger.warning(s, null);
+        System.err.println(s);
       }
     }
   }

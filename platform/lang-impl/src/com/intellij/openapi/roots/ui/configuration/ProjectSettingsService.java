@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -61,6 +62,13 @@ public class ProjectSettingsService {
   }
 
   public boolean canOpenContentEntriesSettings() {
+    return false;
+  }
+
+  public void openModuleDependenciesSettings(@NotNull Module module, @Nullable OrderEntry orderEntry) {
+  }
+
+  public boolean canOpenModuleDependenciesSettings() {
     return false;
   }
 
