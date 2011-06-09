@@ -17,7 +17,6 @@ package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.*;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
@@ -107,24 +106,6 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
           }
         }
         return ins.iterator();
-      }
-    }));
-  }
-
-  @Override
-  public <Node> Graph<Node> createGraphByInArcs(final MultiMap<Node, Node> inArcs) {
-    final Set<Node> nodes = new LinkedHashSet<Node>();
-    nodes.addAll(inArcs.keySet());
-    nodes.addAll(inArcs.values());
-    return new GraphGenerator<Node>(new CachingSemiGraph<Node>(new GraphGenerator.SemiGraph<Node>() {
-      @Override
-      public Collection<Node> getNodes() {
-        return nodes;
-      }
-
-      @Override
-      public Iterator<Node> getIn(Node n) {
-        return inArcs.get(n).iterator();
       }
     }));
   }
