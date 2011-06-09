@@ -55,7 +55,7 @@ public class PathExpression implements GroovyElementTypes {
     if (qualifierType != WRONGWAY) {
       Result result;
       if (isPathElementStart(builder)) {
-        if (builder.getTokenType() == mLPAREN && qualifierType == LITERAL) {
+        if ((builder.getTokenType() == mLPAREN || builder.getTokenType() == mLCURLY) && qualifierType == LITERAL) {
           marker1.rollbackTo();
           qualifierType = PrimaryExpression.parsePrimaryExpression(builder, parser, true);
           assert qualifierType != WRONGWAY;

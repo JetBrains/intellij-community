@@ -1,0 +1,15 @@
+'dg'{1}
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(string)(''dg'')
+    Arguments
+      <empty list>
+    Closable block
+      PsiElement({)('{')
+      Parameter list
+        <empty list>
+      Literal
+        PsiElement(Integer)('1')
+      PsiElement(})('}')
