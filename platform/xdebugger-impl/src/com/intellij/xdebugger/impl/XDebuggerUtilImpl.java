@@ -42,6 +42,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
@@ -239,5 +240,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         off++;
       }
     }
+  }
+
+  @Override
+  public void showBreakpointsDialog(@NotNull Project project, @Nullable XBreakpoint<?> breakpointToSelect) {
+    BreakpointsConfigurationDialogFactory.getInstance(project).createDialog(breakpointToSelect).show();
   }
 }

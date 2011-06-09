@@ -284,4 +284,5 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testpath$stringMethodCall1() {doTest()}
   void testpath$stringMethodCall2() {doTest()}
+  void testpath$stringMethodCall3() {doTest()}
 }

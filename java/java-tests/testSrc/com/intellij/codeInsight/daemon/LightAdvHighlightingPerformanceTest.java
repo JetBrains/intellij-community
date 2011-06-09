@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     }
   }
 
-  private List<HighlightInfo> doTest(final long maxMillis) throws Exception {
+  private List<HighlightInfo> doTest(final int maxMillis) throws Exception {
     @NonNls String filePath = LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java";
     configureByFile(filePath);
 
@@ -82,15 +83,15 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
     final List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
-    PlatformTestUtil.assertTiming("Performance failed", maxMillis, new Runnable() {
+    PlatformTestUtil.startPerformanceTest(maxMillis, new ThrowableRunnable() {
       @Override
-      public void run() {
+      public void run() throws Exception {
         infos.clear();
         DaemonCodeAnalyzer.getInstance(getProject()).restart();
         List<HighlightInfo> h = doHighlighting();
         infos.addAll(h);
       }
-    });
+    }).cpuBound().assertTiming();
     return DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR);
   }
 

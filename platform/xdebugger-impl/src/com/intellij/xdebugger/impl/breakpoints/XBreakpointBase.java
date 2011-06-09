@@ -90,7 +90,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myBreakpointManager;
   }
 
-  protected final void fireBreakpointChanged() {
+  public final void fireBreakpointChanged() {
     myBreakpointManager.fireBreakpointChanged(this);
   }
 

@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.util.Alarm;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author lex
@@ -43,6 +44,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     super();
   }
 
+  @TestOnly
   public static DebuggerManagerThreadImpl createTestInstance() {
     return new DebuggerManagerThreadImpl();
   }
@@ -222,4 +224,10 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     }
 
   }
+
+  @TestOnly
+  public void clearQueue() {
+    myEvents.clearQueue();
+  }
+
 }

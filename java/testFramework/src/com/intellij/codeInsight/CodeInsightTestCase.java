@@ -641,6 +641,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
     action.execute(getEditor(), DataManager.getInstance().getDataContext());
   }
+  protected void caretUp() {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+    action.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
   protected void deleteLine() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_LINE);

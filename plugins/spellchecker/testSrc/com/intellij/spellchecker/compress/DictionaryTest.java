@@ -23,6 +23,7 @@ import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.Transformation;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ public class DictionaryTest extends TestCase {
   }
 
   public void testDictionary() throws IOException {
-    final String[] names = new String[]{JETBRAINS_DIC, ENGLISH_DIC};
+    final String[] names = {JETBRAINS_DIC, ENGLISH_DIC};
     for (String name : names) {
       loadDictionaryTest(name, sizes.get(name));
       loadHalfDictionaryTest(name, 50000);
@@ -62,24 +63,23 @@ public class DictionaryTest extends TestCase {
 
   public void loadDictionaryTest(@NotNull final String name, int wordCount) throws IOException {
     final Transformation transform = new Transformation();
-    PlatformTestUtil.assertTiming("Dictionary load time depends on words count. Approximate word count: " + wordCount + ".", times.get(name),
-        new Runnable() {
-          @Override
-          public void run() {
-            dictionary = CompressedDictionary.create(new StreamLoader(DefaultBundledDictionariesProvider.class.getResourceAsStream(name), name), transform);
-          }
-        });
+    PlatformTestUtil.startPerformanceTest(times.get(name), new ThrowableRunnable() {
+      @Override
+      public void run() throws Exception {
+        dictionary = CompressedDictionary
+          .create(new StreamLoader(DefaultBundledDictionariesProvider.class.getResourceAsStream(name), name), transform);
+      }
+    }).cpuBound().assertTiming();
 
     final Set<String> wordsToStoreAndCheck = createWordSets(name, 50000, 1).getFirst();
-    PlatformTestUtil.assertTiming("Invoke 'contains'  " + wordsToStoreAndCheck.size() + " times", 2000, new Runnable() {
+    PlatformTestUtil.startPerformanceTest(2000, new ThrowableRunnable() {
       @Override
-      public void run() {
+      public void run() throws Exception {
         for (String s : wordsToStoreAndCheck) {
           assertTrue(dictionary.contains(s));
         }
       }
-    });
-
+    }).cpuBound().assertTiming();
   }
 
   private static Loader createLoader(final Set<String> words) {

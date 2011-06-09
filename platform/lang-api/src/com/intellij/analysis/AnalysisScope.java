@@ -554,14 +554,11 @@ public class AnalysisScope {
     return true;
   }
 
-  public AnalysisScope[] getNarrowedComplementaryScope(Project defaultProject) {
+  @NotNull
+  public AnalysisScope getNarrowedComplementaryScope(Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     final HashSet<Module> modules = new HashSet<Module>();
-    if (myType == FILE) {
-      final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
-      modules.addAll(getAllInterestingModules(fileIndex, vFile));
-    }
-    else if (myType == DIRECTORY) {
+    if (myType == FILE || myType == DIRECTORY) {
       final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
       modules.addAll(getAllInterestingModules(fileIndex, vFile));
     }
@@ -574,19 +571,19 @@ public class AnalysisScope {
     return collectScopes(defaultProject, modules);
   }
 
-  protected static AnalysisScope[] collectScopes(final Project defaultProject, final HashSet<Module> modules) {
+  @NotNull
+  protected static AnalysisScope collectScopes(final Project defaultProject, final HashSet<Module> modules) {
     if (modules.isEmpty()) {
-      return new AnalysisScope[]{new AnalysisScope(defaultProject)};
+      return new AnalysisScope(defaultProject);
     }
-    final HashSet<AnalysisScope> result = new HashSet<AnalysisScope>();
     final Module[] allModules = ModuleManager.getInstance(defaultProject).getModules();
+    Set<Module> modulesToAnalyze = new HashSet<Module>();
     for (final Module module : modules) {
-      Set<Module> modulesToAnalyze = getDirectBackwardDependencies(module, allModules);
+      modulesToAnalyze.addAll(getDirectBackwardDependencies(module, allModules));
       modulesToAnalyze.addAll(getExportBackwardDependencies(module, allModules));
       modulesToAnalyze.add(module);
-      result.add(new AnalysisScope(modulesToAnalyze.toArray(new Module[modulesToAnalyze.size()])));
     }
-    return result.toArray(new AnalysisScope[result.size()]);
+    return new AnalysisScope(modulesToAnalyze.toArray(new Module[modulesToAnalyze.size()]));
   }
 
   private static Set<Module> getExportBackwardDependencies(Module fromModule, Module [] allModules) {
