@@ -182,7 +182,6 @@ public abstract class ElementPresentationManager {
     return TypePresentationService.getDefaultTypeName(o.getClass());
   }
 
-  @Nullable
   public static Icon getIcon(Object o) {
     for (final Function<Object, Icon> function : ourIconProviders) {
       final Icon icon = function.fun(o);
