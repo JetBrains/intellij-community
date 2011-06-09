@@ -3,7 +3,8 @@ package com.intellij.structuralsearch;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ThrowableRunnable;
 
 import java.io.IOException;
 
@@ -1779,15 +1780,12 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     options.setToReformatAccordingToStyle(true);
     options.setToShortenFQN(true);
 
-    IdeaTestUtil.assertTiming(
-      "SSR should work fast",
-      3500,
-      new Runnable() {
+    PlatformTestUtil.startPerformanceTest("SSR should work fast", 3500, new ThrowableRunnable() {
         public void run() {
           doTest(testName, ext, message);
         }
       }
-    );
+    ).cpuBound().assertTiming();
 
     options.setToReformatAccordingToStyle(false);
     options.setToShortenFQN(false);
