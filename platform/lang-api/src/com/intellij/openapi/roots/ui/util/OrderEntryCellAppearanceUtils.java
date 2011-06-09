@@ -24,12 +24,14 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
+import com.intellij.util.PathUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,12 +95,8 @@ public class OrderEntryCellAppearanceUtils {
     if (files.length == 1) {
       return forVirtualFilePointer(new LightFilePointer(files[0]));
     }
-    String url = files[0];
-    if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-      url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
-    }
-    int startIndex = Math.min(url.lastIndexOf('/') + 1, url.length() - 1);
-    return SimpleTextCellAppearance.normal(url.substring(startIndex), Icons.LIBRARY_ICON);
+    String url = StringUtil.trimEnd(files[0], JarFileSystem.JAR_SEPARATOR);
+    return SimpleTextCellAppearance.normal(PathUtil.getFileName(url), Icons.LIBRARY_ICON);
   }
 
   public static CellAppearance normalOrRedWaved(String text, final Icon icon, boolean waved) {

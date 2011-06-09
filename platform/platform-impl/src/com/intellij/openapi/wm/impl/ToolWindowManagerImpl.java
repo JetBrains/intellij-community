@@ -20,7 +20,6 @@ import com.intellij.facet.ProjectFacetManager;
 import com.intellij.facet.ProjectWideFacetListenersRegistry;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -1275,10 +1274,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     Balloon existing = myWindow2Balloon.get(toolWindowId);
     if (existing != null) {
       existing.hide();
-    }
-
-    if (NotificationsManagerImpl.isEventLogVisible(myProject)) {
-      return;
     }
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);

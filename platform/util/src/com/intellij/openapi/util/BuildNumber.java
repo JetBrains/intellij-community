@@ -20,6 +20,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class BuildNumber implements Comparable<BuildNumber> {
   private final String myProductCode;
@@ -63,6 +64,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static BuildNumber fromString(String version) {
+    return fromString(version, null);
+  }
+
+  public static BuildNumber fromString(String version, @Nullable String name) {
     if (version == null) return null;
 
     if (BUILD_NUMBER.equals(version)) return new BuildNumber("IU", TOP_BASELINE_VERSION, Integer.MAX_VALUE);
@@ -89,13 +94,13 @@ public class BuildNumber implements Comparable<BuildNumber> {
         code = code.substring(baselineVersionSeparator + 1);
       }
       catch (NumberFormatException e) {
-        throw new RuntimeException("Unparseable version number: " + version);
+        throw new RuntimeException("Unparseable version number: " + version + "; plugin name: " + name);
       }
 
-      buildNumber = parseBuildNumber(version, code);
+      buildNumber = parseBuildNumber(version, code, name);
     }
     else {
-      buildNumber = parseBuildNumber(version, code);
+      buildNumber = parseBuildNumber(version, code, name);
 
       if (buildNumber <= 2000) {
         // it's probably a baseline, not a build number
@@ -108,7 +113,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return new BuildNumber(productCode, baselineVersion, buildNumber);
   }
 
-  private static int parseBuildNumber(String version, String code) {
+  private static int parseBuildNumber(String version, String code, String name) {
     if ("SNAPSHOT".equals(code) || BUILD_NUMBER.equals(code)) {
       return Integer.MAX_VALUE;
     }
@@ -116,7 +121,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
       return Integer.parseInt(code);
     }
     catch (NumberFormatException e) {
-      throw new RuntimeException("Unparseable version number: " + version);
+      throw new RuntimeException("Unparseable version number: " + version +"; plugin name: " + name);
     }
   }
 

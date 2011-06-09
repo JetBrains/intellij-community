@@ -17,6 +17,7 @@ public class GenerateConstructorTest extends LightCodeInsightTestCase {
   public void testBoundComments() throws Exception { doTest(); }
   public void testSameNamedFields() throws Exception { doTest(); }
   public void testEnumWithAbstractMethod() throws Exception { doTest(); }
+  public void testNoMoreConstructorsCanBeGenerated() throws Exception { doTest(); }
 
   public void testImmediatelyAfterRBrace() throws Exception {    // IDEADEV-28811
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();

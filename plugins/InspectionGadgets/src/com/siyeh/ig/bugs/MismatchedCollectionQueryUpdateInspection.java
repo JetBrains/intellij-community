@@ -105,13 +105,14 @@ public class MismatchedCollectionQueryUpdateInspection
 
         constraints.gridx = 0;
         constraints.gridy = 1;
-        constraints.weightx = 1.0;
+        constraints.weightx = 0.5;
         constraints.weighty = 1.0;
         constraints.fill = GridBagConstraints.BOTH;
         panel.add(scrollPane1, constraints);
 
         constraints.gridx = 1;
         panel.add(scrollPane2, constraints);
+        panel.setMinimumSize(new Dimension(-1, 150));
         return panel;
     }
 

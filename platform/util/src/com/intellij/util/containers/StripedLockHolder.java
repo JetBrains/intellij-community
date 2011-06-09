@@ -17,15 +17,19 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Array;
+
 /**
  * User: cdr
  */
 public abstract class StripedLockHolder<T> {
   private static final int NUM_LOCKS = 256;
-  private final Object[] ourLocks = new Object[NUM_LOCKS];
+  protected final T[] ourLocks;
   private int ourLockAllocationCounter = 0;
 
-  protected StripedLockHolder() {
+  @SuppressWarnings("unchecked")
+  protected StripedLockHolder(@NotNull Class<T> aClass) {
+    ourLocks = (T[])Array.newInstance(aClass, NUM_LOCKS);
     for (int i = 0; i < ourLocks.length; i++) {
       ourLocks[i] = create();
     }
@@ -36,7 +40,10 @@ public abstract class StripedLockHolder<T> {
 
   @NotNull
   public T allocateLock() {
-    ourLockAllocationCounter = (ourLockAllocationCounter + 1) % NUM_LOCKS;
-    return (T)ourLocks[ourLockAllocationCounter];
+    return ourLocks[allocateLockIndex()];
+  }
+
+  public int allocateLockIndex() {
+    return ourLockAllocationCounter = (ourLockAllocationCounter + 1) % NUM_LOCKS;
   }
 }

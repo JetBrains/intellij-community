@@ -16,20 +16,32 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 public class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteral> {
   public GrLiteral handleContentChange(GrLiteral expr, TextRange range, String newContent) throws IncorrectOperationException {
     if (!(expr.getValue() instanceof String)) throw new IncorrectOperationException("cannot handle content change");
     String oldText = expr.getText();
-    newContent = StringUtil.escapeStringCharacters(newContent);
-    String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
+    if (oldText.startsWith("'")) {
+      newContent = GrStringUtil.escapeSymbolsForString(newContent, !oldText.startsWith("'''"), true);
+    }
+    else {
+      newContent = GrStringUtil.escapeSymbolsForGString(newContent, !oldText.startsWith("\"\"\""), true);
+    }
+    String newText;
+    if (range.getStartOffset() == 1 && (newContent.indexOf('\n') >= 0 || newContent.indexOf('\r') >= 0)) {
+      String corner = oldText.substring(0, 1) + oldText.substring(0, 1) + oldText.substring(0, 1);
+      newText = corner + newContent + corner;
+    }
+    else {
+      newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
+    }
     final GrExpression newExpr = GroovyPsiElementFactory.getInstance(expr.getProject()).createExpressionFromText(newText);
 
     PsiElement firstChild = expr.getFirstChild();
@@ -48,9 +60,18 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
   }
 
   public static TextRange getLiteralRange(String text) {
-    if (text.length() > 6 && text.startsWith("\"\"\"") && text.endsWith("\"\"\"")) {
-      return new TextRange(3, text.length() - 3);
+    int start = 1;
+    int fin = text.length();
+
+    String begin = text.substring(0, 1);
+    if (text.startsWith("\"\"\"") || text.startsWith("'''")) {
+      start += 2;
+      begin = text.substring(0, 3);
     }
-    return new TextRange(1, Math.max(1, text.length() - 1));
+
+    if (text.length() >= begin.length()*2 && text.endsWith(begin)) {
+      fin -= begin.length();
+    }
+    return new TextRange(start, Math.max(1, fin));
   }
 }

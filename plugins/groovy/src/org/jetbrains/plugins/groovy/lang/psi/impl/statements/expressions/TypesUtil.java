@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.HashMap;
@@ -38,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
@@ -283,14 +285,11 @@ public class TypesUtil {
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     if (lType == null || rType == null) return false;
 
-    if (rType instanceof GrTupleType) {
-      final GrTupleType tuple = (GrTupleType)rType;
-      if (tuple.getComponentTypes().length == 0) {
-        if (lType instanceof PsiArrayType ||
-            InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
-            InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
-          return true;
-        }
+    if (rType instanceof GrTupleType && ((GrTupleType)rType).getComponentTypes().length == 0) {
+      if (lType instanceof PsiArrayType ||
+          InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
+          InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
+        return true;
       }
     }
 
@@ -318,8 +317,52 @@ public class TypesUtil {
       return true;
     }
 
+    if (rType instanceof GrMapType || rType instanceof GrTupleType) {
+      Boolean result = isAssignableForNativeTypes(lType, (PsiClassType)rType, manager, scope);
+      if (result != null) return result.booleanValue();
+    }
+
     return TypeConversionUtil.isAssignable(lType, rType);
 
+  }
+
+  @Nullable
+  private static Boolean isAssignableForNativeTypes(PsiType lType, PsiClassType rType, PsiManager manager, GlobalSearchScope scope) {
+    if (!(lType instanceof PsiClassType)) return null;
+    final PsiClassType.ClassResolveResult leftResult = ((PsiClassType)lType).resolveGenerics();
+    final PsiClassType.ClassResolveResult rightResult = rType.resolveGenerics();
+    final PsiClass leftClass = leftResult.getElement();
+    PsiClass rightClass = rightResult.getElement();
+    if (rightClass == null || leftClass == null) return null;
+
+    if (!InheritanceUtil.isInheritorOrSelf(rightClass, leftClass, true)) return Boolean.FALSE;
+
+    PsiSubstitutor rightSubstitutor = rightResult.getSubstitutor();
+
+    if (!leftClass.hasTypeParameters()) return Boolean.TRUE;
+    PsiSubstitutor leftSubstitutor = leftResult.getSubstitutor();
+
+    if (!leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
+      rightSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
+      rightClass = leftClass;
+    }
+    else if (!rightClass.hasTypeParameters()) return Boolean.TRUE;
+
+    Iterator<PsiTypeParameter> li = PsiUtil.typeParametersIterator(leftClass);
+    Iterator<PsiTypeParameter> ri = PsiUtil.typeParametersIterator(rightClass);
+    while (li.hasNext()) {
+      if (!ri.hasNext()) return Boolean.FALSE;
+      PsiTypeParameter lp = li.next();
+      PsiTypeParameter rp = ri.next();
+      final PsiType typeLeft = leftSubstitutor.substitute(lp);
+      if (typeLeft == null) continue;
+      final PsiType typeRight = rightSubstitutor.substituteWithBoundsPromotion(rp);
+      if (typeRight == null) {
+        return Boolean.TRUE;
+      }
+      if (!isAssignableByMethodCallConversion(typeLeft, typeRight, manager, scope)) return Boolean.FALSE;
+    }
+    return Boolean.TRUE;
   }
 
   public static boolean isNumericType(PsiType type) {

@@ -20,23 +20,32 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.impl.NotificationSettings;
+import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -111,15 +120,20 @@ public class EventLog implements Notifications {
 
     final NotificationType type = notification.getType();
     view.print(mainText, type == NotificationType.ERROR
-                                        ? ConsoleViewContentType.ERROR_OUTPUT
-                                        : type == NotificationType.INFORMATION
-                                          ? ConsoleViewContentType.NORMAL_OUTPUT
-                                          : ConsoleViewContentType.WARNING_OUTPUT);
+                         ? ConsoleViewContentType.ERROR_OUTPUT
+                         : type == NotificationType.INFORMATION
+                           ? ConsoleViewContentType.NORMAL_OUTPUT
+                           : ConsoleViewContentType.WARNING_OUTPUT);
     if (showLink) {
       view.print(" ", ConsoleViewContentType.NORMAL_OUTPUT);
       view.printHyperlink("more", new HyperlinkInfo() {
         @Override
         public void navigate(Project project) {
+          Balloon balloon = notification.getBalloon();
+          if (balloon != null) {
+            balloon.hide();
+          }
+
           NotificationsManagerImpl.notifyByBalloon(notification, NotificationDisplayType.STICKY_BALLOON, project);
         }
       });
@@ -194,9 +208,25 @@ public class EventLog implements Notifications {
     return project.getComponent(ProjectTracker.class);
   }
   public static class FactoryItself implements ToolWindowFactory, DumbAware {
-    public void createToolWindowContent(Project project, ToolWindow toolWindow) {
+    public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
       final ProjectTracker tracker = getProjectComponent(project);
-      final Content content = ContentFactory.SERVICE.getInstance().createContent(tracker.myConsoleView.getComponent(), "", false);
+
+      SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
+      panel.setContent(tracker.myConsoleView.getComponent());
+
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.add(new DumbAwareAction("Settings", "Edit notification settings", IconLoader.getIcon("/general/secondaryGroup.png")) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          ShowSettingsUtil.getInstance().editConfigurable(project, new NotificationsConfigurable());
+        }
+      });
+      group.addAll(ContainerUtil.subList(Arrays.asList(tracker.myConsoleView.createConsoleActions()), 2)); // no next/prev
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
+      toolbar.setTargetComponent(panel);
+      panel.setToolbar(toolbar.getComponent());
+
+      final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
       toolWindow.getContentManager().addContent(content);
     }
 

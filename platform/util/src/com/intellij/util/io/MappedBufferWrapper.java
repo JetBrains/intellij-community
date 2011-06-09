@@ -20,13 +20,11 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
+import sun.misc.Cleaner;
+import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -34,14 +32,11 @@ import java.security.PrivilegedAction;
 public abstract class MappedBufferWrapper {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
 
-  @NonNls private static final String CLEANER_METHOD_NAME = "cleaner";
-  @NonNls private static final String CLEAN_METHOD_NAME = "clean";
-
   protected final File myFile;
   protected final long myPosition;
   protected final long myLength;
 
-  private volatile ByteBuffer myBuffer;
+  private volatile MappedByteBuffer myBuffer;
 
   public MappedBufferWrapper(final File file, final long pos, final long length) {
     myFile = file;
@@ -60,27 +55,24 @@ public abstract class MappedBufferWrapper {
     myBuffer = null;
   }
 
-  public ByteBuffer getIfCached() {
+  public MappedByteBuffer getIfCached() {
     return myBuffer;
   }
 
-  public ByteBuffer buf() throws IOException {
-    if (myBuffer == null) {
-      myBuffer = map();
+  public MappedByteBuffer buf() throws IOException {
+    MappedByteBuffer buffer = myBuffer;
+    if (buffer == null) {
+      myBuffer = buffer = map();
     }
-    return myBuffer;
+    return buffer;
   }
 
 
   private static boolean unmapMappedByteBuffer142b19(MappedBufferWrapper holder) {
-    if (clean(holder.getIfCached())) {
-      return true;
-    }
-
-    return false;
+    return clean(holder.getIfCached());
   }
 
-  public static boolean clean(final ByteBuffer buffer) {
+  private static boolean clean(final MappedByteBuffer buffer) {
     if (buffer == null) return true;
 
     if (!tryForce(buffer)) {
@@ -90,25 +82,21 @@ public abstract class MappedBufferWrapper {
     return AccessController.doPrivileged(new PrivilegedAction<Object>() {
       public Object run() {
         try {
-          Method getCleanerMethod = getCleanerMethod(buffer);
-          Object cleaner = getCleanerMethod.invoke(buffer, ArrayUtil.EMPTY_OBJECT_ARRAY);
-          if (cleaner == null) return null; // Already cleaned
-
-          Method cleanMethod = getCleanMethod();
-          cleanMethod.invoke(cleaner, ArrayUtil.EMPTY_OBJECT_ARRAY);
+          Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
+          if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
+          return null;
         }
         catch (Exception e) {
           return buffer;
         }
-        return null;
       }
     }) == null;
   }
 
-  public static boolean tryForce(ByteBuffer buffer) {
+  private static boolean tryForce(MappedByteBuffer buffer) {
     for (int i = 0; i < MAX_FORCE_ATTEMPTS; i++) {
       try {
-        ((MappedByteBuffer)buffer).force();
+        buffer.force();
         return true;
       }
       catch (Throwable e) {
@@ -123,37 +111,13 @@ public abstract class MappedBufferWrapper {
     return false;
   }
 
-  private static Method CLEAN_METHOD;
-  private static Method getCleanMethod() throws ClassNotFoundException, NoSuchMethodException {
-    Method m = CLEAN_METHOD;
-    if (m == null) {
-      Class cleanerClass = Class.forName("sun.misc.Cleaner");
-      m = cleanerClass.getMethod(CLEAN_METHOD_NAME, ArrayUtil.EMPTY_CLASS_ARRAY);
-
-      CLEAN_METHOD = m;
-    }
-
-    return m;
-  }
-
-  private static Method GET_CLEANER_METHOD;
-  private static Method getCleanerMethod(final Object buffer) throws NoSuchMethodException {
-    Method m = GET_CLEANER_METHOD;
-    if (m == null) {
-      m = buffer.getClass().getMethod(CLEANER_METHOD_NAME, ArrayUtil.EMPTY_CLASS_ARRAY);
-      m.setAccessible(true);
-      GET_CLEANER_METHOD = m;
-    }
-    return m;
-  }
-
   public boolean isMapped() {
     return getIfCached() != null;
   }
 
   public void flush() {
-    final ByteBuffer buffer = getIfCached();
-    if (buffer instanceof MappedByteBuffer) {
+    final MappedByteBuffer buffer = getIfCached();
+    if (buffer != null) {
       tryForce(buffer);
     }
   }

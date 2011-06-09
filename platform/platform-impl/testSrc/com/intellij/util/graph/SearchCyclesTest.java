@@ -16,11 +16,13 @@
 
 package com.intellij.util.graph;
 
-import com.intellij.util.graph.impl.CycleFinder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -81,8 +83,7 @@ public class SearchCyclesTest extends GraphTestCase {
   }
 
   private static void doTest(HashMap<String, String> graph, final String node, String... expected) {
-    Graph<String> stringGraph = initGraph(graph);
-    final Set<List<String>> nodeCycles = new CycleFinder<String>(stringGraph).getNodeCycles(node);
+    final Set<List<String>> nodeCycles = getAlgorithmsInstance().findCycles(initGraph(graph), node);
     checkResult(expected, nodeCycles);
   }
 

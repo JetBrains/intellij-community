@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * similar to java.util.ConcurrentHashMap except:
@@ -57,42 +56,19 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
   public static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
 
-  /* ---------------- Fields -------------- */
-
-  Set<K> keySet;
-  Set<Entry<K, V>> entrySet;
-  Collection<V> values;
-
-  /* ---------------- Small Utilities -------------- */
-
-  /* ---------------- Inner Classes -------------- */
-
-
   /* ---------------- Public operations -------------- */
 
-  public StripedLockConcurrentHashMap(@Nullable TObjectHashingStrategy<K> hashingStrategy) {
-    this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, hashingStrategy);
+  public static <K,V> StripedLockConcurrentHashMap<K,V> createWithStrategy(@NotNull final TObjectHashingStrategy<K> hashingStrategy, int initialCapacity) {
+    return new StripedLockConcurrentHashMap<K, V>(initialCapacity){
+      @Override
+      protected TObjectHashingStrategy<K> getHashingStrategy() {
+        return hashingStrategy;
+      }
+    };
   }
 
-  /**
-   * Creates a new, empty map with the specified initial
-   * capacity, load factor, and concurrency level.
-   *
-   * @param initialCapacity the initial capacity. The implementation
-   *                        performs internal sizing to accommodate this many elements.
-   * @param loadFactor      the load factor threshold, used to control resizing.
-   *                        Resizing may be performed when the average number of elements per
-   *                        bin exceeds this threshold.
-   * @throws IllegalArgumentException if the initial capacity is
-   *                                  negative or the load factor or concurrencyLevel are
-   *                                  nonpositive.
-   */
-  public StripedLockConcurrentHashMap(int initialCapacity, float loadFactor) {
-    this(initialCapacity, loadFactor, null);
-  }
-
-  public StripedLockConcurrentHashMap(int initialCapacity, float loadFactor, @Nullable TObjectHashingStrategy<K> hashingStrategy) {
-    super(getInitCap(initialCapacity, loadFactor), loadFactor, hashingStrategy);
+  public StripedLockConcurrentHashMap(int initialCapacity) {
+    super(getInitCap(initialCapacity, DEFAULT_LOAD_FACTOR));
   }
 
   private static int getInitCap(int initialCapacity, float loadFactor) {
@@ -111,24 +87,11 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
   }
 
   /**
-   * Creates a new, empty map with the specified initial
-   * capacity, and with default load factor and concurrencyLevel.
-   *
-   * @param initialCapacity the initial capacity. The implementation
-   *                        performs internal sizing to accommodate this many elements.
-   * @throws IllegalArgumentException if the initial capacity of
-   *                                  elements is negative.
-   */
-  public StripedLockConcurrentHashMap(int initialCapacity) {
-    this(initialCapacity, DEFAULT_LOAD_FACTOR);
-  }
-
-  /**
    * Creates a new, empty map with a default initial capacity,
    * load factor, and concurrencyLevel.
    */
   public StripedLockConcurrentHashMap() {
-    this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
+    this(DEFAULT_INITIAL_CAPACITY);
   }
 
   /**
@@ -140,7 +103,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @param t the map
    */
   public StripedLockConcurrentHashMap(@NotNull Map<? extends K, ? extends V> t) {
-    this(Math.max((int)(t.size() / DEFAULT_LOAD_FACTOR) + 1, 11), DEFAULT_LOAD_FACTOR);
+    this(Math.max((int)(t.size() / DEFAULT_LOAD_FACTOR) + 1, 11));
     putAll(t);
   }
 
@@ -169,7 +132,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    */
   public V get(@NotNull Object key) {
     K kKey = (K)key;
-    int hash = myHashingStrategy.computeHashCode(kKey); // throws NullPointerException if key null
+    int hash = getHashingStrategy().computeHashCode(kKey); // throws NullPointerException if key null
     return get(kKey, hash);
   }
 
@@ -185,7 +148,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    */
   public boolean containsKey(@NotNull Object key) {
     K kKey = (K)key;
-    int hash = myHashingStrategy.computeHashCode(kKey); // throws NullPointerException if key null
+    int hash = getHashingStrategy().computeHashCode(kKey); // throws NullPointerException if key null
     return containsKey(kKey, hash);
   }
 
@@ -224,7 +187,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *                              <tt>null</tt>.
    */
   public V put(@NotNull K key, @NotNull V value) {
-    int hash = myHashingStrategy.computeHashCode(key);
+    int hash = getHashingStrategy().computeHashCode(key);
     return put(key, hash, value, false);
   }
 
@@ -248,7 +211,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *                              <tt>null</tt>.
    */
   public V putIfAbsent(@NotNull K key, @NotNull V value) {
-    int hash = myHashingStrategy.computeHashCode(key);
+    int hash = getHashingStrategy().computeHashCode(key);
     return put(key, hash, value, true);
   }
 
@@ -282,7 +245,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    */
   public V remove(@NotNull Object key) {
     K kKey = (K)key;
-    int hash = myHashingStrategy.computeHashCode(kKey);
+    int hash = getHashingStrategy().computeHashCode(kKey);
     return remove(kKey, hash, null);
   }
 
@@ -305,7 +268,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    */
   public boolean remove(@NotNull Object key, @NotNull Object value) {
     K kKey = (K)key;
-    int hash = myHashingStrategy.computeHashCode(kKey);
+    int hash = getHashingStrategy().computeHashCode(kKey);
     return remove(kKey, hash, value) != null;
   }
 
@@ -329,7 +292,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *                              <tt>null</tt>.
    */
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    int hash = myHashingStrategy.computeHashCode(key);
+    int hash = getHashingStrategy().computeHashCode(key);
     return replace(key, hash, oldValue, newValue);
   }
 
@@ -351,7 +314,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *                              <tt>null</tt>.
    */
   public V replace(@NotNull K key, @NotNull V value) {
-    int hash = myHashingStrategy.computeHashCode(key);
+    int hash = getHashingStrategy().computeHashCode(key);
     return replace(key, hash, value);
   }
 
@@ -373,8 +336,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @return a set view of the keys contained in this map.
    */
   public Set<K> keySet() {
-    Set<K> ks = keySet;
-    return ks != null ? ks : (keySet = new KeySet());
+    return new KeySet(); //conserve memory by not caching keyset
   }
 
 
@@ -395,8 +357,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @return a collection view of the values contained in this map.
    */
   public Collection<V> values() {
-    Collection<V> vs = values;
-    return vs != null ? vs : (values = new Values());
+    return new Values(); //conserve memory by not caching
   }
 
 
@@ -418,8 +379,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @return a collection view of the mappings contained in this map.
    */
   public Set<Entry<K, V>> entrySet() {
-    Set<Entry<K, V>> es = entrySet;
-    return es != null ? es : (entrySet = new EntrySet());
+    return new EntrySet(); //conserve memory by not caching
   }
 
 
@@ -582,7 +542,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       Entry e = (Entry)o;
       K o1 = getKey();
       K o2 = (K)e.getKey();
-      return myHashingStrategy.equals(o1, o2) && getValue().equals(e.getValue());
+      return getHashingStrategy().equals(o1, o2) && getValue().equals(e.getValue());
     }
 
     public int hashCode() {
@@ -761,7 +721,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       }
       Entry e = (Entry)o;
       K o2 = (K)e.getKey();
-      return myHashingStrategy.equals(key, o2) && value.equals(e.getValue());
+      return getHashingStrategy().equals(key, o2) && value.equals(e.getValue());
     }
 
     public int hashCode() {
@@ -776,6 +736,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
   static class CanonicalHashingStrategy<K> implements TObjectHashingStrategy<K> {
     private static final CanonicalHashingStrategy INSTANCE = new CanonicalHashingStrategy();
 
+    @SuppressWarnings("unchecked")
     static <K> CanonicalHashingStrategy<K> getInstance() {
       return INSTANCE;
     }
@@ -802,15 +763,16 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
  * simplify some locking and avoid separate construction.
  */
 class _CHMSegment<K, V> {
-  private final Lock lock = StripedReentrantLocks.getInstance().allocateLock();
+  private static final StripedReentrantLocks STRIPED_REENTRANT_LOCKS = StripedReentrantLocks.getInstance();
+  private final byte lockIndex = (byte)STRIPED_REENTRANT_LOCKS.allocateLockIndex();
 
   private void lock() {
-    lock.lock();
+    STRIPED_REENTRANT_LOCKS.lock((int)lockIndex & 0xff);
     if (modificationBlocked) throw new ConcurrentModificationException();
   }
 
   private void unlock() {
-    lock.unlock();
+    STRIPED_REENTRANT_LOCKS.unlock((int)lockIndex & 0xff);
   }
   /*
   * Segments maintain a table of entry lists that are ALWAYS
@@ -867,20 +829,10 @@ class _CHMSegment<K, V> {
    */
   volatile HashEntry[] table;
 
-  /**
-   * The load factor for the hash table.  Even though this value
-   * is same for all segments, it is replicated to avoid needing
-   * links to outer object.
-   *
-   * @serial
-   */
-  final float loadFactor;
-  protected final TObjectHashingStrategy<K> myHashingStrategy;
+  private static final float loadFactor = 0.75f;
   private volatile boolean modificationBlocked; // the only state transition is 0 -> 1
 
-  _CHMSegment(int initialCapacity, float lf, TObjectHashingStrategy<K> hashingStrategy) {
-    loadFactor = lf;
-    myHashingStrategy = hashingStrategy == null ? StripedLockConcurrentHashMap.CanonicalHashingStrategy.<K>getInstance() : hashingStrategy;
+  _CHMSegment(int initialCapacity) {
     setTable(new HashEntry[initialCapacity]);
   }
 
@@ -933,7 +885,7 @@ class _CHMSegment<K, V> {
     if (count != 0) { // read-volatile
       HashEntry<K, V> e = getFirst(hash);
       while (e != null) {
-        if (e.hash == hash && myHashingStrategy.equals(key, e.key)) {
+        if (e.hash == hash && getHashingStrategy().equals(key, e.key)) {
           V v = e.value;
           if (v != null) {
             return v;
@@ -950,7 +902,7 @@ class _CHMSegment<K, V> {
     if (count != 0) { // read-volatile
       HashEntry<K, V> e = getFirst(hash);
       while (e != null) {
-        if (e.hash == hash && myHashingStrategy.equals(key, e.key)) {
+        if (e.hash == hash && getHashingStrategy().equals(key, e.key)) {
           return true;
         }
         e = e.next;
@@ -983,7 +935,7 @@ class _CHMSegment<K, V> {
     try {
       lock();
       HashEntry<K, V> e = getFirst(hash);
-      while (e != null && (e.hash != hash || !myHashingStrategy.equals(key, e.key))) {
+      while (e != null && (e.hash != hash || !getHashingStrategy().equals(key, e.key))) {
         e = e.next;
       }
 
@@ -1003,7 +955,7 @@ class _CHMSegment<K, V> {
     try {
       lock();
       HashEntry<K, V> e = getFirst(hash);
-      while (e != null && (e.hash != hash || !myHashingStrategy.equals(key, e.key))) {
+      while (e != null && (e.hash != hash || !getHashingStrategy().equals(key, e.key))) {
         e = e.next;
       }
 
@@ -1032,7 +984,7 @@ class _CHMSegment<K, V> {
       int index = hash & tab.length - 1;
       HashEntry<K, V> first = tab[index];
       HashEntry<K, V> e = first;
-      while (e != null && (e.hash != hash || !myHashingStrategy.equals(key, e.key))) {
+      while (e != null && (e.hash != hash || !getHashingStrategy().equals(key, e.key))) {
         e = e.next;
       }
 
@@ -1130,7 +1082,7 @@ class _CHMSegment<K, V> {
       int index = hash & tab.length - 1;
       HashEntry<K, V> first = tab[index];
       HashEntry<K, V> e = first;
-      while (e != null && (e.hash != hash || !myHashingStrategy.equals(key, e.key))) {
+      while (e != null && (e.hash != hash || !getHashingStrategy().equals(key, e.key))) {
         e = e.next;
       }
 
@@ -1171,6 +1123,10 @@ class _CHMSegment<K, V> {
         unlock();
       }
     }
+  }
+
+  protected TObjectHashingStrategy<K> getHashingStrategy() {
+    return StripedLockConcurrentHashMap.CanonicalHashingStrategy.getInstance();
   }
 
   /**

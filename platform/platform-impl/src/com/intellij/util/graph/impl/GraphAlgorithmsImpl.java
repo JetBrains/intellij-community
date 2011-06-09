@@ -16,8 +16,11 @@
 package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphAlgorithms;
+import com.intellij.util.Chunk;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.graph.*;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -61,6 +64,69 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
       }
 
     };
+  }
+
+  @Override
+  public <Node> Graph<Chunk<Node>> computeSCCGraph(final Graph<Node> graph) {
+    final DFSTBuilder<Node> builder = new DFSTBuilder<Node>(graph);
+    final TIntArrayList sccs = builder.getSCCs();
+
+    final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>(sccs.size());
+    final Map<Node, Chunk<Node>> nodeToChunkMap = new LinkedHashMap<Node, Chunk<Node>>();
+    sccs.forEach(new TIntProcedure() {
+      int myTNumber = 0;
+      public boolean execute(int size) {
+        final Set<Node> chunkNodes = new LinkedHashSet<Node>();
+        final Chunk<Node> chunk = new Chunk<Node>(chunkNodes);
+        chunks.add(chunk);
+        for (int j = 0; j < size; j++) {
+          final Node node = builder.getNodeByTNumber(myTNumber + j);
+          chunkNodes.add(node);
+          nodeToChunkMap.put(node, chunk);
+        }
+
+        myTNumber += size;
+        return true;
+      }
+    });
+
+    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Chunk<Node>>() {
+      public Collection<Chunk<Node>> getNodes() {
+        return chunks;
+      }
+
+      public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
+        final Set<Node> chunkNodes = chunk.getNodes();
+        final Set<Chunk<Node>> ins = new LinkedHashSet<Chunk<Node>>();
+        for (final Node node : chunkNodes) {
+          for (Iterator<Node> nodeIns = graph.getIn(node); nodeIns.hasNext(); ) {
+            final Node in = nodeIns.next();
+            if (!chunk.containsNode(in)) {
+              ins.add(nodeToChunkMap.get(in));
+            }
+          }
+        }
+        return ins.iterator();
+      }
+    }));
+  }
+
+  @Override
+  public <Node> Graph<Node> createGraphByInArcs(final MultiMap<Node, Node> inArcs) {
+    final Set<Node> nodes = new LinkedHashSet<Node>();
+    nodes.addAll(inArcs.keySet());
+    nodes.addAll(inArcs.values());
+    return new GraphGenerator<Node>(new CachingSemiGraph<Node>(new GraphGenerator.SemiGraph<Node>() {
+      @Override
+      public Collection<Node> getNodes() {
+        return nodes;
+      }
+
+      @Override
+      public Iterator<Node> getIn(Node n) {
+        return inArcs.get(n).iterator();
+      }
+    }));
   }
 
   @NotNull

@@ -30,7 +30,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   private static final Key<Map<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   /**
-   * Concurrent writes to this field are via CASes only, using the {@link updater}
+   * Concurrent writes to this field are via CASes only, using the {@link #updater}
    * When map becomes empty, this field set to null atomically
    *
    * Basic state transitions are as follows:
@@ -87,6 +87,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
   public <T> T getUserData(@NotNull Key<T> key) {
     final Map<Key, Object> map = myUserMap;
+    //noinspection unchecked
     return map == null ? null : (T)map.get(key);
   }
 
@@ -96,6 +97,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
         if (value == null) {
           ConcurrentMap<Key, Object> map = myUserMap;
           if (map == null) break;
+          @SuppressWarnings("unchecked")
           T previous = (T)map.remove(key);
           boolean removed = previous != null;
           if (removed) {
@@ -103,8 +105,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
           }
         }
         else {
-          Map<Key, Object> map = getOrCreateMap();
-          map.put(key, value);
+          getOrCreateMap().put(key, value);
         }
         break;
       }
@@ -113,7 +114,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
-  protected ConcurrentMap<Key, Object> createDataMap(int initialCapacity) {
+  private static ConcurrentMap<Key, Object> createDataMap(int initialCapacity) {
     return new StripedLockConcurrentHashMap<Key, Object>(initialCapacity);
   }
 
@@ -123,6 +124,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
   protected final <T> T getCopyableUserDataImpl(Key<T> key) {
     Map map = getUserData(COPYABLE_USER_MAP_KEY);
+    //noinspection unchecked
     return map == null ? null : (T)map.get(key);
   }
 
@@ -210,9 +212,13 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   @NotNull
   public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
     Object v = getOrCreateMap().get(key);
-    if (v != null) return (T)v;
+    if (v != null) {
+      //noinspection unchecked
+      return (T)v;
+    }
     while (true) {
       try {
+        @SuppressWarnings("unchecked")
         T prev = (T)getOrCreateMap().putIfAbsent(key, value);
         return prev == null ? value : prev;
       }

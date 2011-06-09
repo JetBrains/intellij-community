@@ -169,6 +169,10 @@ public class InlineMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testSuperMethodInAnonymousClass() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineMethod/" + name + ".java";

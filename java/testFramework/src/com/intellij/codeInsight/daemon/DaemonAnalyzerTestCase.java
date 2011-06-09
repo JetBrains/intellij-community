@@ -167,8 +167,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
     InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    toInitializeDaemon = !daemonCodeAnalyzer.isInitialized();
-    daemonCodeAnalyzer.prepareForTest(toInitializeDaemon);
+    daemonCodeAnalyzer.prepareForTest();
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject());
     startupManager.runStartupActivities();
     startupManager.startCacheUpdate();
@@ -194,9 +193,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     ((StartupManagerImpl)StartupManager.getInstance(getProject())).checkCleared();
-    if (toInitializeDaemon) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
-    }
+    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest(!LightPlatformTestCase.isLight(getProject()));
     super.tearDown();
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }

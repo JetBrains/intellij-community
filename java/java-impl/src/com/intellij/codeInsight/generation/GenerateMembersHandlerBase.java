@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -114,9 +115,15 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       LOG.error(e);
       return;
     }
-    if (newMembers.isEmpty()) return;
 
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
+
+    if (newMembers.isEmpty()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        HintManager.getInstance().showErrorHint(editor, "Nothing found to insert");
+      }
+      return;
+    }
 
     final ArrayList<TemplateGenerationInfo> templates = new ArrayList<TemplateGenerationInfo>();
     for (GenerationInfo member : newMembers) {

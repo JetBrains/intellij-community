@@ -36,47 +36,56 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class PrimaryExpression implements GroovyElementTypes {
 
-  public static IElementType parsePrimaryExpression(PsiBuilder builder, GroovyParser parser) {
 
-    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
+  public static IElementType parsePrimaryExpression(PsiBuilder builder, GroovyParser parser) {
+    return parsePrimaryExpression(builder, parser, false);
+  }
+  public static IElementType parsePrimaryExpression(PsiBuilder builder, GroovyParser parser, boolean literalsAsRefExprs) {
+
+    final IElementType tokenType = builder.getTokenType();
+    if (TokenSets.BUILT_IN_TYPE.contains(tokenType)) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE_EXPRESSION);
       return BUILT_IN_TYPE_EXPRESSION;
     }
-    if (kTHIS == builder.getTokenType()) {
+    if (kTHIS == tokenType) {
       ParserUtils.eatElement(builder, THIS_REFERENCE_EXPRESSION);
       return THIS_REFERENCE_EXPRESSION;
     }
-    if (kSUPER == builder.getTokenType()) {
+    if (kSUPER == tokenType) {
       ParserUtils.eatElement(builder, SUPER_REFERENCE_EXPRESSION);
       return SUPER_REFERENCE_EXPRESSION;
     }
-    if (kNEW == builder.getTokenType()) {
+    if (kNEW == tokenType) {
       return newExprParse(builder, parser);
     }
-    if (mIDENT == builder.getTokenType()) {
+    if (mIDENT == tokenType) {
       ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
       return REFERENCE_EXPRESSION;
     }
-    if (mGSTRING_BEGIN == builder.getTokenType()) {
+    if (mGSTRING_BEGIN == tokenType) {
       return StringConstructorExpression.parse(builder, parser);
     }
-    if (mREGEX_BEGIN == builder.getTokenType()) {
+    if (mREGEX_BEGIN == tokenType) {
       return RegexConstructorExpression.parse(builder, parser);
     }
-    if (mLBRACK == builder.getTokenType()) {
+    if (mLBRACK == tokenType) {
       return ListOrMapConstructorExpression.parse(builder, parser);
     }
-    if (mLPAREN == builder.getTokenType()) {
+    if (mLPAREN == tokenType) {
       return parenthesizedExprParse(builder, parser);
     }
-    if (mLCURLY == builder.getTokenType()) {
+    if (mLCURLY == tokenType) {
       return OpenOrClosableBlock.parseClosableBlock(builder, parser);
     }
-    if (TokenSets.CONSTANTS.contains(builder.getTokenType())) {
-      ParserUtils.eatElement(builder, LITERAL);
-      return LITERAL;
+    if (tokenType == mSTRING_LITERAL ||
+        tokenType == mGSTRING_LITERAL ||
+        tokenType == mREGEX_LITERAL) {
+      return ParserUtils.eatElement(builder, literalsAsRefExprs ? REFERENCE_EXPRESSION : LITERAL);
     }
-    if (mWRONG_REGEX_LITERAL == builder.getTokenType()) {
+    if (TokenSets.CONSTANTS.contains(tokenType)) {
+      return ParserUtils.eatElement(builder, LITERAL);
+    }
+    if (mWRONG_REGEX_LITERAL == tokenType) {
       PsiBuilder.Marker marker = builder.mark();
       builder.advanceLexer();
       builder.error(GroovyBundle.message("wrong.string"));

@@ -26,9 +26,7 @@
             <constraints>
               <splitpane position="left"/>
             </constraints>
-            <properties>
-              <focusCycleRoot value="true"/>
-            </properties>
+            <properties/>
             <border type="none"/>
             <children/>
           </grid>
@@ -57,9 +55,7 @@
                     <constraints>
                       <splitpane position="left"/>
                     </constraints>
-                    <properties>
-                      <focusCycleRoot value="true"/>
-                    </properties>
+                    <properties/>
                     <border type="none"/>
                     <children/>
                   </grid>
@@ -68,9 +64,7 @@
                     <constraints>
                       <splitpane position="right"/>
                     </constraints>
-                    <properties>
-                      <focusCycleRoot value="true"/>
-                    </properties>
+                    <properties/>
                     <border type="none"/>
                     <children/>
                   </grid>
@@ -80,20 +74,19 @@
           </grid>
         </children>
       </splitpane>
-      <grid id="a4d7" layout-manager="GridLayoutManager" row-count="1" column-count="7" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="a4d7" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
           <component id="85961" class="javax.swing.JCheckBox" binding="myShowWhiteSpacesBox">
             <constraints>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <focusCycleRoot value="true"/>
               <margin top="0" left="0" bottom="0" right="0"/>
               <selected value="true"/>
               <text value="Show Psi&amp;WhiteSpace"/>
@@ -101,45 +94,17 @@
           </component>
           <component id="88f36" class="javax.swing.JCheckBox" binding="myShowTreeNodesCheckBox" default-binding="true">
             <constraints>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <focusCycleRoot value="true"/>
               <margin top="0" left="0" bottom="0" right="0"/>
               <selected value="true"/>
-              <text value="Show Tree &amp;Nodes"/>
+              <text value="Show tree &amp;nodes"/>
             </properties>
           </component>
-          <component id="73b46" class="javax.swing.JComboBox" binding="myDialectsComboBox">
-            <constraints>
-              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <focusCycleRoot value="true"/>
-            </properties>
-          </component>
-          <component id="b08f6" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <iconTextGap value="0"/>
-              <text value="Show &amp;PSI structure for:"/>
-            </properties>
-          </component>
-          <grid id="3a7d8" binding="myButtonPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <focusCycleRoot value="true"/>
-            </properties>
-            <border type="none"/>
-            <children/>
-          </grid>
           <grid id="6039a" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>
-              <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -148,7 +113,7 @@
                 <constraints border-constraint="West"/>
                 <properties>
                   <labelFor value="baf2a"/>
-                  <text value="Extension:"/>
+                  <text value="E&amp;xtension:"/>
                 </properties>
               </component>
               <component id="baf2a" class="javax.swing.JComboBox" binding="myExtensionComboBox">
@@ -157,11 +122,49 @@
               </component>
             </children>
           </grid>
-          <hspacer id="88604">
+          <grid id="77ead" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>
-              <grid row="0" column="6" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
-          </hspacer>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="69754" class="com.intellij.ui.components.JBLabel" binding="myDialectLabel">
+                <constraints border-constraint="West"/>
+                <properties>
+                  <labelFor value="91e46"/>
+                  <text value="&amp;Dialect:"/>
+                </properties>
+              </component>
+              <component id="91e46" class="javax.swing.JComboBox" binding="myDialectComboBox">
+                <constraints border-constraint="Center"/>
+                <properties/>
+              </component>
+            </children>
+          </grid>
+          <grid id="dd04d" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="f146a" class="javax.swing.JLabel">
+                <constraints border-constraint="West"/>
+                <properties>
+                  <iconTextGap value="0"/>
+                  <labelFor value="383b1"/>
+                  <text value="Show &amp;PSI structure for:"/>
+                </properties>
+              </component>
+              <component id="383b1" class="javax.swing.JComboBox" binding="myFileTypeComboBox">
+                <constraints border-constraint="Center"/>
+                <properties>
+                  <maximumRowCount value="30"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
         </children>
       </grid>
     </children>

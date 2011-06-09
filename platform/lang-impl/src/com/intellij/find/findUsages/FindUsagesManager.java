@@ -38,6 +38,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -134,6 +135,9 @@ public class FindUsagesManager implements JDOMExternalizable {
           return true;
         }
       }
+      catch (IndexNotReadyException e) {
+        throw e;
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -143,6 +147,9 @@ public class FindUsagesManager implements JDOMExternalizable {
         if (factory.canFindUsages(element)) {
           return true;
         }
+      }
+      catch (IndexNotReadyException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error(e);

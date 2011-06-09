@@ -4,7 +4,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -27,76 +29,145 @@ public class GrStringUtil {
   }
 
   public static String escapeSymbolsForGString(String s, boolean escapeDoubleQuotes) {
+    return escapeSymbolsForGString(s, escapeDoubleQuotes, false);
+  }
+
+  public static String escapeSymbolsForGString(String s, boolean escapeDoubleQuotes, boolean forInjection) {
     StringBuilder b = new StringBuilder();
-    final char[] chars = s.toCharArray();
-    final int len = chars.length - 1;
-    int i;
-    for (i = 0; i < len; i++) {
-      if (chars[i] == '\\') {
-        final char next = chars[i + 1];
-        if (next == '\'') {
-          b.append('\'');
-          i++;
-        }
-        else if (next == 'n') {
-          b.append('\n');
-          i++;
-        }
-        else if (escapeDoubleQuotes && next == '"') {
-          b.append('"');
-          i++;
-        }
-        else {
-          b.append(chars[i]);
-          i++;
-          b.append(chars[i]);
-        }
-        continue;
-      }
-      if (chars[i] == '"' || chars[i] == '$') b.append('\\');
-      b.append(chars[i]);
-    }
-    if (i == len) {
-      if (chars[i] == '"') b.append('\\');
-      b.append(chars[i]);
+    escapeStringCharacters(s.length(), s, escapeDoubleQuotes ? "$\"" : "$", false, forInjection, b);
+    if (!forInjection) {
+      unescapeCharacters(b, escapeDoubleQuotes ? "'" : "'\"", true);
     }
     return b.toString();
   }
 
   public static String escapeSymbolsForString(String s, boolean escapeQuotes) {
-    StringBuilder b = new StringBuilder();
-    final char[] chars = s.toCharArray();
-    final int len = chars.length - 1;
-    int i;
-    for (i = 0; i < len; i++) {
-      if (chars[i] == '\\') {
-        final char next = chars[i + 1];
-        if (next == '"' || next == '$') {
-          b.append(next);
+    return escapeSymbolsForString(s, escapeQuotes, false);
+  }
+
+  public static String escapeSymbolsForString(String s, boolean escapeQuotes, boolean forInjection) {
+    final StringBuilder builder = new StringBuilder();
+    escapeStringCharacters(s.length(), s, escapeQuotes ? "'" : "", false, forInjection, builder);
+    if (!forInjection) {
+      unescapeCharacters(builder, escapeQuotes ? "$\"" : "$'\"", true);
+    }
+    return builder.toString();
+  }
+
+  @NotNull
+  public static StringBuilder escapeStringCharacters(int length,
+                                                     @NotNull String str,
+                                                     @Nullable String additionalChars,
+                                                     boolean escapeNR,
+                                                     boolean escapeSlash,
+                                                     @NotNull @NonNls StringBuilder buffer) {
+    for (int idx = 0; idx < length; idx++) {
+      char ch = str.charAt(idx);
+      switch (ch) {
+        case '\b':
+          buffer.append("\\b");
+          break;
+
+        case '\t':
+          buffer.append("\\t");
+          break;
+
+        case '\f':
+          buffer.append("\\f");
+          break;
+
+        case '\\':
+          if (escapeSlash) {
+            buffer.append("\\\\");
+          }
+          else {
+            buffer.append("\\");
+          }
+          break;
+
+        case '\n':
+          if (escapeNR) {
+            buffer.append("\\n");
+          }
+          else {
+            buffer.append('\n');
+          }
+          break;
+
+        case '\r':
+          if (escapeNR) {
+            buffer.append("\\r");
+          }
+          else {
+            buffer.append('\r');
+          }
+          break;
+
+        default:
+          if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
+            buffer.append("\\").append(ch);
+          }
+          else if (Character.isISOControl(ch)) {
+            String hexCode = Integer.toHexString(ch).toUpperCase();
+            buffer.append("\\u");
+            int paddingCount = 4 - hexCode.length();
+            while (paddingCount-- > 0) {
+              buffer.append(0);
+            }
+            buffer.append(hexCode);
+          }
+          else {
+            buffer.append(ch);
+          }
+      }
+    }
+    return buffer;
+  }
+
+  public static void unescapeCharacters(StringBuilder builder, String toUnescape, boolean isMultiLine) {
+    for (int i = 0; i < builder.length(); i++) {
+      if (builder.charAt(i) != '\\') continue;
+      if (i + 1 == builder.length()) break;
+      char next = builder.charAt(i + 1);
+      if (next == 'n') {
+        if (isMultiLine) {
+          builder.replace(i, i + 2, "\n");
         }
-        else if (next == 'n') {
-          b.append('\n');
+      }
+      else if (next == 'r') {
+        if (isMultiLine) {
+          builder.replace(i, i + 2, "\r");
         }
-        else if (escapeQuotes && next == '\'') {
-          b.append(next);
-        }
-        else {
-          b.append('\\');
-          b.append(next);
-        }
+      }
+      else if (toUnescape.indexOf(next) != -1) {
+        builder.delete(i, i + 1);
+      }
+      else {
         i++;
+      }
+    }
+  }
+
+  public static String escapeSymbols(String s, String toEscape) {
+    StringBuilder builder = new StringBuilder();
+    boolean escaped = false;
+    for (int i = 0; i < s.length(); i++) {
+      final char ch = s.charAt(i);
+      if (escaped) {
+        builder.append(ch);
+        escaped = false;
         continue;
       }
-      if (chars[i] == '\'') b.append('\\');
-      b.append(chars[i]);
-    }
+      if (ch == '\\') {
+        escaped = true;
+      }
+      if (toEscape.indexOf(ch) >= 0) {
+        builder.append('\\');
+      }
 
-    if (i == len) {
-      if (chars[i] == '\'') b.append('\\');
-      b.append(chars[i]);
+      builder.append(ch);
     }
-    return b.toString();
-
+    return builder.toString();
   }
 
   public static String removeQuotes(@NotNull String s) {
@@ -121,7 +192,7 @@ public class GrStringUtil {
 
   public static String addQuotes(String s, boolean forGString) {
     if (forGString) {
-      if (s.contains("\n")) {
+      if (s.contains("\n") || s.contains("\r")) {
         return TRIPLE_DOUBLE_QUOTES + s + TRIPLE_DOUBLE_QUOTES;
       }
       else {
@@ -129,7 +200,7 @@ public class GrStringUtil {
       }
     }
     else {
-      if (s.contains("\n")) {
+      if (s.contains("\n") || s.contains("\r")) {
         return TRIPLE_QUOTES + s + TRIPLE_QUOTES;
       }
       else {

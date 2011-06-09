@@ -16,6 +16,7 @@
 package git4idea.rebase;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -27,6 +28,7 @@ import git4idea.commands.*;
 import git4idea.merge.GitMergeConflictResolver;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -44,9 +46,11 @@ public class GitRebaser {
   private GitVcs myVcs;
   private List<GitRebaseUtils.CommitInfo> mySkippedCommits;
   private static final Logger LOG = Logger.getInstance(GitRebaser.class);
+  private final @Nullable ProgressIndicator myProgressIndicator;
 
-  public GitRebaser(Project project) {
+  public GitRebaser(Project project, ProgressIndicator progressIndicator) {
     myProject = project;
+    myProgressIndicator = progressIndicator;
     myVcs = GitVcs.getInstance(project);
     mySkippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
   }
@@ -56,6 +60,7 @@ public class GitRebaser {
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.addParameters("--abort");
     GitTask task = new GitTask(myProject, rh, "Aborting rebase");
+    task.setProgressIndicator(myProgressIndicator);
     task.executeAsync(new GitTaskResultNotificationHandler(myProject, "Rebase aborted", "Abort rebase cancelled", "Error aborting rebase"));
   }
 
@@ -85,6 +90,7 @@ public class GitRebaser {
 
     final GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
+    rebaseTask.setProgressIndicator(myProgressIndicator);
     return executeRebaseTaskInBackground(root, rh, rebaseConflictDetector, rebaseTask);
   }
 
@@ -130,6 +136,7 @@ public class GitRebaser {
       rebaseEditorService.configureHandler(h, rebaseEditorNo);
 
       final GitTask rebaseTask = new GitTask(myProject, h, "Reordering commits");
+      rebaseTask.setProgressIndicator(myProgressIndicator);
       return executeRebaseTaskInBackground(root, h, rebaseConflictDetector, rebaseTask);
     } finally {
       // unregistering rebase service

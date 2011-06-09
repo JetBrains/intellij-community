@@ -318,7 +318,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
           final PsiModifierList modifierList = parameters[i].getModifierList();
           if (modifierList != null && !Comparing.strEqual(modifier, modifierList.getText())) {
             final PsiModifierList newModifierList =
-              elementFactory.createParameterFromText(modifier + " type name", method).getModifierList();
+              elementFactory.createParameterFromText((modifier.isEmpty() ? "" : modifier + " ") + "type name", method).getModifierList();
             if (newModifierList != null) {
               modifierList.replace(newModifierList);
             }

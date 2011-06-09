@@ -18,24 +18,28 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
       PsiMethod method = (PsiMethod)refElement;
       if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
         final Query<PsiReference> query = ReferencesSearch.search(method.getContainingClass(), p.getScope(), p.isIgnoreAccessScope());
-        return query.forEach(new ReadActionProcessor<PsiReference>() {
-          public boolean processInReadAction(final PsiReference reference) {
-            if (reference instanceof PsiJavaCodeReferenceElement) {
-              PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;
-              if (javaReference.getParent() instanceof PsiAnnotation) {
-                PsiNameValuePair[] members = ((PsiAnnotation)javaReference.getParent()).getParameterList().getAttributes();
-                if (members.length == 1 && members[0].getNameIdentifier() == null) {
-                  PsiReference t = members[0].getReference();
-                  if (t != null && !consumer.process(t)) return false;
-                }
-              }
-            }
-            return true;
-          }
-        });
+        return query.forEach(createImplicitDefaultAnnotationMethodConsumer(consumer));
       }
     }
 
     return true;
+  }
+
+  public static ReadActionProcessor<PsiReference> createImplicitDefaultAnnotationMethodConsumer(final Processor<PsiReference> consumer) {
+    return new ReadActionProcessor<PsiReference>() {
+      public boolean processInReadAction(final PsiReference reference) {
+        if (reference instanceof PsiJavaCodeReferenceElement) {
+          PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;
+          if (javaReference.getParent() instanceof PsiAnnotation) {
+            PsiNameValuePair[] members = ((PsiAnnotation)javaReference.getParent()).getParameterList().getAttributes();
+            if (members.length == 1 && members[0].getNameIdentifier() == null) {
+              PsiReference t = members[0].getReference();
+              if (t != null && !consumer.process(t)) return false;
+            }
+          }
+        }
+        return true;
+      }
+    };
   }
 }

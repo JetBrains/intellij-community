@@ -431,14 +431,14 @@ public class PluginManager {
     }
 
     if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
-      BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild());
+      BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild(), descriptor.getName());
       if (sinceBuild.compareTo(buildNumber) > 0) {
         return true;
       }
     }
 
     if (!StringUtil.isEmpty(descriptor.getUntilBuild()) && !buildNumber.isSnapshot()) {
-      BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild());
+      BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild(), descriptor.getName());
       if (untilBuild.compareTo(buildNumber) < 0) return true;
     }
 
