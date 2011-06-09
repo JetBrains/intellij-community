@@ -33,6 +33,7 @@ import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -220,6 +221,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     if (resolved == null) {
       PsiElement refNameElement = referenceExpression.getReferenceNameElement();
+      if (refNameElement != null && referenceExpression.getQualifier() == null) {
+        final IElementType type = refNameElement.getNode().getElementType();
+        if (type == GroovyTokenTypes.mGSTRING_LITERAL || type == GroovyTokenTypes.mSTRING_LITERAL) return;
+      }
       PsiElement elt = refNameElement == null ? referenceExpression : refNameElement;
       Annotation annotation = myHolder.createInfoAnnotation(elt, null);
       final GrExpression qualifier = referenceExpression.getQualifierExpression();
