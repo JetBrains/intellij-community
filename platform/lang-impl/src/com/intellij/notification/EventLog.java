@@ -33,19 +33,17 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -64,6 +62,7 @@ public class EventLog implements Notifications {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) {
       addGlobalNotifications(notification);
+      NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(null, notification);
     }
     for (Project p : openProjects) {
       printNotification(getProjectComponent(p).myConsoleView, p, notification);
@@ -89,33 +88,18 @@ public class EventLog implements Notifications {
       return;
     }
 
-    view.print(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(new Date()) + " ", ConsoleViewContentType.NORMAL_OUTPUT);
+    view.print(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(notification.getCreationTime()) + " ", ConsoleViewContentType.NORMAL_OUTPUT);
 
-    boolean showLink = notification.getListener() != null;
-    String content = notification.getContent();
-    String mainText = notification.getTitle();
-    if (StringUtil.isNotEmpty(content) && !content.startsWith("<")) {
-      if (StringUtil.isNotEmpty(mainText)) {
-        mainText += ": ";
-      }
-      mainText += content;
-    }
+    Pair<String, Boolean> pair = NotificationsManagerImpl.formatForLog(notification);
 
-    int nlIndex = eolIndex(mainText);
-    if (nlIndex >= 0) {
-      mainText = mainText.substring(0, nlIndex);
-      showLink = true;
-    }
-
-    mainText = mainText.replaceAll("<[^>]*>", "");
 
     final NotificationType type = notification.getType();
-    view.print(mainText, type == NotificationType.ERROR
+    view.print(pair.first, type == NotificationType.ERROR
                          ? ConsoleViewContentType.ERROR_OUTPUT
                          : type == NotificationType.INFORMATION
                            ? ConsoleViewContentType.NORMAL_OUTPUT
                            : ConsoleViewContentType.WARNING_OUTPUT);
-    if (showLink) {
+    if (pair.second) {
       view.print(" ", ConsoleViewContentType.NORMAL_OUTPUT);
       view.printHyperlink("more", new HyperlinkInfo() {
         @Override
@@ -132,24 +116,7 @@ public class EventLog implements Notifications {
     }
     view.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
 
-    notifyStatusBar(project, mainText);
-  }
-
-  private static void notifyStatusBar(Project project, @Nullable String mainText) {
-    final IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-    if (frame != null) {
-      final StatusBar statusBar = frame.getStatusBar();
-      if (statusBar != null) {
-        ((StatusBarEx)statusBar).setLogMessage(mainText);
-      }
-    }
-  }
-
-  private static int eolIndex(String mainText) {
-    int nlIndex = mainText.indexOf("<br>");
-    if (nlIndex < 0) nlIndex = mainText.indexOf("<br/>");
-    if (nlIndex < 0) nlIndex = mainText.indexOf("\n");
-    return nlIndex;
+    NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(project, notification);
   }
 
   private static EventLog getApplicationComponent() {
@@ -184,7 +151,7 @@ public class EventLog implements Notifications {
 
     @Override
     public void projectClosed() {
-      notifyStatusBar(myProject, null);
+      NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(null, null);
     }
   }
 

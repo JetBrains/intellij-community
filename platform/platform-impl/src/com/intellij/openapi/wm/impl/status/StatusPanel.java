@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
@@ -35,18 +35,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Date;
 
 /**
  * @author peter
  */
 class StatusPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusPanel");
   private static final Icon ourShowLogIcon = IconLoader.getIcon("/general/hideSideUp.png");
   private static final Icon ourHideLogIcon = IconLoader.getIcon("/general/hideSideDown.png");
   private boolean myLogMode;
-  private String myLogMessage;
-  private Date myLogTime;
   private boolean myDirty;
   private final Alarm myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final TextPanel myTextPanel = new TextPanel();
@@ -98,8 +94,6 @@ class StatusPanel extends JPanel {
   public void setLogMessage(String text) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myLogMessage = text;
-    myLogTime = new Date();
     myDirty = false;
 
     updateText(StringUtil.isNotEmpty(text), "");
@@ -108,18 +102,20 @@ class StatusPanel extends JPanel {
   public boolean updateText(boolean logAllowed, @Nullable String nonLogText) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && myLogMessage != null;
+    final Project project = getActiveProject();
+    final Notification statusMessage = NotificationsManagerImpl.getNotificationsManagerImpl().getStatusMessage(project);
+    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null && project != null;
 
     myShowLog.setVisible(myLogMode);
 
     if (myLogMode) {
-      LOG.assertTrue(myLogTime != null);
       new Runnable() {
         @Override
         public void run() {
-          String text = myLogMessage;
-          if (myDirty || System.currentTimeMillis() - myLogTime.getTime() >= DateFormatUtil.MINUTE) {
-            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(myLogTime)) + ")";
+          assert statusMessage != null;
+          String text = NotificationsManagerImpl.formatForLog(statusMessage).first;
+          if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
+            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
           }
           myTextPanel.setText(text);
           myLogAlarm.addRequest(this, 30000);
@@ -134,7 +130,6 @@ class StatusPanel extends JPanel {
             return;
           }
 
-          final Project project = getActiveProject();
           assert project != null;
 
           final boolean visible = eventLog.isVisible();

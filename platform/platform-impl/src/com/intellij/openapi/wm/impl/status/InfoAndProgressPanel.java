@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -58,7 +59,6 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
-  private static final String INTERNAL_LOG_REQUESTOR = "Internal log requestor";
   private final ProcessPopup myPopup;
 
   private final StatusPanel myInfoPanel = new StatusPanel();
@@ -361,12 +361,13 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   public Pair<String, String> setText(@Nullable final String text, @Nullable final String requestor) {
-    if (StringUtil.isEmpty(text) && !Comparing.equal(requestor, myCurrentRequestor)) {
+    if (StringUtil.isEmpty(text) && !Comparing.equal(requestor, myCurrentRequestor) && requestor != NotificationsManagerImpl.LOG_REQUESTOR) {
       return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
     }
 
-    boolean logMode = myInfoPanel.updateText(!hasProgressIndicators(), requestor == INTERNAL_LOG_REQUESTOR ? "" : text);
-    myCurrentRequestor = logMode ? INTERNAL_LOG_REQUESTOR : requestor;
+    boolean logMode = myInfoPanel.updateText(!hasProgressIndicators(), requestor == NotificationsManagerImpl.LOG_REQUESTOR
+                                                                       ? "" : text);
+    myCurrentRequestor = logMode ? NotificationsManagerImpl.LOG_REQUESTOR : requestor;
     return Pair.create(text, requestor);
   }
 

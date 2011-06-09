@@ -35,6 +35,7 @@ public class Notification {
   private final NotificationType myType;
   private final NotificationListener myListener;
   private final String myTitle;
+  private final long myCreationTime;
   private boolean myExpired;
   private WeakReference<Balloon> myBalloonRef;
 
@@ -49,7 +50,13 @@ public class Notification {
     myType = type;
     myListener = listener;
 
+    myCreationTime = System.currentTimeMillis();
+
     LOG.assertTrue(myContent.trim().length() > 0, "Notification should have content, groupId: " + myGroupId);
+  }
+
+  public long getCreationTime() {
+    return myCreationTime;
   }
 
   @Nullable
