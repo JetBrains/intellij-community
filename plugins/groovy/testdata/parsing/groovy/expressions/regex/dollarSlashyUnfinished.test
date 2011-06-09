@@ -70,7 +70,7 @@ Groovy script
     PsiElement(identifier)('backslash')
   PsiElement(new line)('\n    ')
   Call expression
-    Literal
+    Reference expression
       PsiElement(regexp)('/ slash\n    $/')
     PsiWhiteSpace(' ')
     Command arguments

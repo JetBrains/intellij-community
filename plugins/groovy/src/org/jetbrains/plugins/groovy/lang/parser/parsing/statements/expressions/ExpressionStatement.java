@@ -52,7 +52,14 @@ public class ExpressionStatement implements GroovyElementTypes {
         marker.drop();
         return PATH_METHOD_CALL;
       }
-      else if (CommandArguments.parseCommandArguments(builder, parser)) {
+
+      if (result == PathExpression.Result.LITERAL) {
+        final PsiBuilder.Marker newMarker = marker.precede();
+        marker.rollbackTo();
+        marker = newMarker;
+        PrimaryExpression.parsePrimaryExpression(builder, parser, true);
+      }
+      if (CommandArguments.parseCommandArguments(builder, parser)) {
         marker.done(CALL_EXPRESSION);
         return CALL_EXPRESSION;
       }

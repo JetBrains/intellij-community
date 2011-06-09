@@ -279,6 +279,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testcommandExpr$as() {doTest()}
   public void testcommandExpr$arrayAccess() {doTest()}
   public void testcommandExpr$keywords() {doTest()}
+  public void testcommandExpr$literalInvoked() {doTest()}
 
   public void testDiamond() {doTest()}
 

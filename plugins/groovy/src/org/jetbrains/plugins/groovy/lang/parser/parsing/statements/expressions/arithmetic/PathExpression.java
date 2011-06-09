@@ -43,7 +43,7 @@ public class PathExpression implements GroovyElementTypes {
     return parsePathExprQualifierForExprStatement(builder, parser) != PathExpression.Result.WRONG_WAY;
   }
 
-  public enum Result {INVOKED_EXPR, METHOD_CALL, WRONG_WAY}
+  public enum Result {INVOKED_EXPR, METHOD_CALL, WRONG_WAY, LITERAL}
 
   /**
    * parses method calls with parentheses, property index access, etc
@@ -78,7 +78,8 @@ public class PathExpression implements GroovyElementTypes {
       else {
         marker1.drop();
         marker.drop();
-        result = INVOKED_EXPR;
+        if (qualifierType == LITERAL) return Result.LITERAL;
+        return INVOKED_EXPR;
       }
       return result;
     }
