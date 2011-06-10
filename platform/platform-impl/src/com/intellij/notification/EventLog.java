@@ -112,6 +112,10 @@ public class EventLog implements Notifications {
     public ProjectTracker(final Project project) {
       super(project);
 
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return;
+      }
+
       for (Notification notification : getApplicationComponent().takeNotifications()) {
         printNotification(notification);
       }
@@ -126,7 +130,6 @@ public class EventLog implements Notifications {
         public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
         }
       });
-
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
