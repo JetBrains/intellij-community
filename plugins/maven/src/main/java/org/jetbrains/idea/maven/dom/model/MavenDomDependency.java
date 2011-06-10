@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
@@ -36,6 +37,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyTypeConverter;
  * 3.0.0+
  * </pre>
  */
+@Presentation(typeName = "Dependency", icon = "/nodes/ppLib.png")
 public interface MavenDomDependency extends MavenDomElement, MavenDomArtifactCoordinates {
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getVersion();

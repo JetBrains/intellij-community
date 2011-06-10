@@ -622,6 +622,7 @@
 
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.ModuleTypeUsagesCollector"/>
+  <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
 
   <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
   <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>

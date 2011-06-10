@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PropertyMemberType;
@@ -86,7 +87,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   public String getErrorMessage(final String s, final ConvertContext context) {
     final DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
-    return CodeInsightBundle.message("error.cannot.resolve.0.1", TypeNameManager.getTypeName(parent.getClass()), s);
+    return CodeInsightBundle.message("error.cannot.resolve.0.1", TypePresentationService.getService().getTypeName(parent), s);
   }
 
   @NotNull

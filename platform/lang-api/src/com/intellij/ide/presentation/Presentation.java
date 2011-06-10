@@ -32,9 +32,7 @@ public @interface Presentation {
    */
   String icon() default "";
 
-  Class<? extends PresentationIconProvider> iconProviderClass() default PresentationIconProvider.class;
-
-  Class<? extends PresentationNameProvider> nameProviderClass() default PresentationNameProvider.class;
+  Class<? extends PresentationProvider> provider() default PresentationProvider.class;
 
   String typeName() default "";
 }

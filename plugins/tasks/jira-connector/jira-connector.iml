@@ -15,7 +15,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="tasks-api" />
-    <orderEntry type="module" module-name="tasks-core" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
   </component>
 </module>
