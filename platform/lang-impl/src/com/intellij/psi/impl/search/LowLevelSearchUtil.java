@@ -60,7 +60,7 @@ public class LowLevelSearchUtil {
                                        final PsiElement scope,
                                        final StringSearcher searcher,
                                        final int offset,
-                                       final boolean ignoreInjectedPsi,
+                                       final boolean processInjectedPsi,
                                        ProgressIndicator progress) {
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
     final int patternLength = searcher.getPatternLength();
@@ -107,7 +107,7 @@ public class LowLevelSearchUtil {
       }
       contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
       if (contains) {
-        if (!ignoreInjectedPsi) {
+        if (processInjectedPsi) {
           Boolean result = processInjectedFile(run, processor, searcher, progress);
           if (result != null) {
             return result.booleanValue();
@@ -134,7 +134,7 @@ public class LowLevelSearchUtil {
   public static boolean processElementsContainingWordInElement(@NotNull TextOccurenceProcessor processor,
                                                                @NotNull PsiElement scope,
                                                                @NotNull StringSearcher searcher,
-                                                               final boolean ignoreInjectedPsi,
+                                                               final boolean processInjectedPsi,
                                                                ProgressIndicator progress) {
     if (progress != null) progress.checkCanceled();
 
@@ -159,7 +159,7 @@ public class LowLevelSearchUtil {
       if (startOffset < 0) {
         return true;
       }
-      if (!processTreeUp(processor, scope, searcher, startOffset - scopeStart, ignoreInjectedPsi, progress)) return false;
+      if (!processTreeUp(processor, scope, searcher, startOffset - scopeStart, processInjectedPsi, progress)) return false;
 
       startOffset++;
     }

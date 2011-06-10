@@ -202,7 +202,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       public Boolean compute() {
         StringSearcher searcher = new StringSearcher(word, caseSensitive, true);
 
-        return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, ignoreInjectedPsi, progress);
+        return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, !ignoreInjectedPsi, progress);
       }
     }).booleanValue();
   }
@@ -229,7 +229,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     try {
       return processPsiFileRoots(fileSet, new Processor<PsiElement>() {
         public boolean process(PsiElement psiRoot) {
-          return LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, false, progress);
+          return LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, true, progress);
         }
       }, progress);
     }
@@ -599,7 +599,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                      for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
                                        StringSearcher searcher = searchers.get(singleRequest);
                                        TextOccurenceProcessor adapted = adaptProcessor(singleRequest.request, singleRequest.refProcessor);
-                                       if (!LowLevelSearchUtil.processElementsContainingWordInElement(adapted, psiRoot, searcher, false, progress)) {
+                                       if (!LowLevelSearchUtil.processElementsContainingWordInElement(adapted, psiRoot, searcher, true, progress)) {
                                          return false;
                                        }
                                      }
