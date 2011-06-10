@@ -383,7 +383,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
           AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
           final DiffProvider diffProvider = vcs == null ? null : vcs.getDiffProvider();
           if (diffProvider != null) {
-            ContentRevision beforeRevision = new VcsCurrentRevisionProxy(diffProvider, file);
+            ContentRevision beforeRevision = new VcsCurrentRevisionProxy(diffProvider, file, myProject, vcs.getKeyInstanceMethod());
             ContentRevision afterRevision = new CurrentContentRevision(new FilePathImpl(file));
             changes.add(new Change(beforeRevision, afterRevision, FileStatus.HIJACKED));
           }

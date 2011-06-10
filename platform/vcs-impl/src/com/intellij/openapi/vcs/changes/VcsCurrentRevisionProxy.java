@@ -15,14 +15,23 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * @author yole
@@ -30,11 +39,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class VcsCurrentRevisionProxy implements ContentRevision {
   private final DiffProvider myDiffProvider;
   private final VirtualFile myFile;
-  private ContentRevision myVcsRevision;
+  private final Project myProject;
+  private final VcsKey myVcsKey;
 
-  public VcsCurrentRevisionProxy(final DiffProvider diffProvider, final VirtualFile file) {
+  public VcsCurrentRevisionProxy(final DiffProvider diffProvider, final VirtualFile file, final Project project, final VcsKey vcsKey) {
     myDiffProvider = diffProvider;
     myFile = file;
+    myProject = project;
+    myVcsKey = vcsKey;
   }
 
   @Nullable
@@ -58,16 +70,53 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
   }
 
   private ContentRevision getVcsRevision() throws VcsException {
-    if (myVcsRevision == null) {
-      final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(myFile);
-      if (currentRevision == null) {
-        throw new VcsException("Failed to fetch current revision");
-      }
-      myVcsRevision = myDiffProvider.createFileContent(currentRevision, myFile);
-      if (myVcsRevision == null) {
-        throw new VcsException("Failed to create content for current revision");
-      }
+    final FilePath file = getFile();
+    final Pair<VcsRevisionNumber, String> pair;
+    try {
+      pair = ContentRevisionCache.getOrLoadCurrentAsString(myProject, file, myVcsKey,
+                                                           new Throwable2Computable<Pair<VcsRevisionNumber, byte[]>, VcsException, IOException>() {
+                                                             @Override
+                                                             public Pair<VcsRevisionNumber, byte[]> compute()
+                                                               throws VcsException, IOException {
+                                                               return loadContent();
+                                                             }
+                                                           });
     }
-    return myVcsRevision;
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
+
+    return new ContentRevision() {
+      @Override
+      public String getContent() throws VcsException {
+        return pair.getSecond();
+      }
+
+      @NotNull
+      @Override
+      public FilePath getFile() {
+        return file;
+      }
+
+      @NotNull
+      @Override
+      public VcsRevisionNumber getRevisionNumber() {
+        return pair.getFirst();
+      }
+    };
+  }
+
+  private Pair<VcsRevisionNumber, byte[]> loadContent() throws VcsException {
+    final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(myFile);
+    if (currentRevision == null) {
+      throw new VcsException("Failed to fetch current revision");
+    }
+    final ContentRevision contentRevision = myDiffProvider.createFileContent(currentRevision, myFile);
+    if (contentRevision == null) {
+      throw new VcsException("Failed to create content for current revision");
+    }
+    Charset charset = myFile.getCharset();
+    charset = charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset;
+    return new Pair<VcsRevisionNumber, byte[]>(currentRevision, contentRevision.getContent().getBytes(charset));
   }
 }

@@ -17,13 +17,14 @@ package git4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -70,12 +72,24 @@ public class GitContentRevision implements ContentRevision {
     if (myFile.isDirectory()) {
       return null;
     }
-    VirtualFile root = GitUtil.getGitRoot(myFile);
-    byte[] result = GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
-    if (myCharset == null) {
-      myCharset = myFile.getCharset(myProject);
+    try {
+      return ContentRevisionCache
+        .getOrLoadAsString(myProject, myFile, myRevision, GitVcs.getKey(), ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
+                           new Throwable2Computable<byte[], VcsException, IOException>() {
+                             @Override
+                             public byte[] compute() throws VcsException, IOException {
+                               return loadContent();
+                             }
+                           }, myCharset);
     }
-    return result == null ? null : CharsetToolkit.bytesToString(result, myCharset);
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
+  }
+
+  private byte[] loadContent() throws VcsException {
+    VirtualFile root = GitUtil.getGitRoot(myFile);
+    return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
   }
 
   @NotNull

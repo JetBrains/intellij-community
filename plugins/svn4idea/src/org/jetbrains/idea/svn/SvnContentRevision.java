@@ -16,11 +16,13 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +33,6 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 
 /**
  * @author yole
@@ -39,8 +40,11 @@ import java.lang.ref.SoftReference;
 class SvnContentRevision implements ContentRevision {
   private final SvnVcs myVcs;
   protected final FilePath myFile;
-  private SoftReference<String> myContent;
   private final SVNRevision myRevision;
+  /**
+   * this flag is necessary since SVN would not do remote request only if constant SVNRevision.BASE
+   * -> usual current revision content class can't be used
+   */
   private final boolean myUseBaseRevision;
 
   protected SvnContentRevision(SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision, final boolean useBaseRevision) {
@@ -50,7 +54,7 @@ class SvnContentRevision implements ContentRevision {
     myFile = file;
   }
 
-  public static SvnContentRevision create(@NotNull SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision) {
+  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision) {
     if (file.getFileType().isBinary()) {
       return new SvnBinaryContentRevision(vcs, file, revision, true);
     }
@@ -66,34 +70,49 @@ class SvnContentRevision implements ContentRevision {
 
   @Nullable
   public String getContent() throws VcsException {
-    SoftReference<String> ref = myContent;
-    String content = ref == null ? null : ref.get();
-    if (content == null) {
-      try {
-        final byte[] byteContent = getUpToDateBinaryContent();
-        if (byteContent != null) {
-          content = CharsetToolkit.bytesToString(byteContent, myFile.getCharset());
-          myContent = new SoftReference<String>(content);
-        }
-      }
-      catch(Exception ex) {
-        throw new VcsException(ex);
+    try {
+      if (myUseBaseRevision) {
+        return ContentRevisionCache.getOrLoadCurrentAsString(myVcs.getProject(), myFile, myVcs.getKeyInstanceMethod(),
+                                                             new Throwable2Computable<Pair<VcsRevisionNumber, byte[]>, VcsException, IOException>() {
+                                                               @Override
+                                                               public Pair<VcsRevisionNumber, byte[]> compute() throws VcsException, IOException {
+                                                                 return new Pair<VcsRevisionNumber, byte[]>(getRevisionNumber(), getUpToDateBinaryContent());
+                                                               }
+                                                             }).getSecond();
+      } else {
+        return ContentRevisionCache.getOrLoadAsString(myVcs.getProject(), myFile, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
+                                                      ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
+                                                      new Throwable2Computable<byte[], VcsException, IOException>() {
+                                                        @Override
+                                                        public byte[] compute() throws VcsException, IOException {
+                                                          return getUpToDateBinaryContent();
+                                                        }
+                                                      });
       }
     }
-    return content;
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
   }
 
-  @Nullable
-  protected byte[] getUpToDateBinaryContent() throws SVNException, IOException {
+  protected byte[] getUpToDateBinaryContent() throws VcsException {
     File file = myFile.getIOFile();
     File lock = new File(file.getParentFile(), SvnUtil.PATH_TO_LOCK_FILE);
     if (lock.exists()) {
-      return null;
+      throw new VcsException("Can not access file base revision contents: administrative area is locked");
     }
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     SVNWCClient wcClient = myVcs.createWCClient();
-    wcClient.doGetFileContents(file, SVNRevision.UNDEFINED, myUseBaseRevision ? SVNRevision.BASE : myRevision, true, buffer);
-    buffer.close();
+    try {
+      wcClient.doGetFileContents(file, SVNRevision.UNDEFINED, myUseBaseRevision ? SVNRevision.BASE : myRevision, true, buffer);
+      buffer.close();
+    }
+    catch (SVNException e) {
+      throw new VcsException(e);
+    }
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
     return buffer.toByteArray();
   }
 

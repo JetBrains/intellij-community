@@ -19,6 +19,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +111,15 @@ public class SLRUMap<K,V> {
     }
 
     return false;
+  }
+
+  public void iterateKeys(final Consumer<K> keyConsumer) {
+    for (K key : myProtectedQueue.keySet()) {
+      keyConsumer.consume(key);
+    }
+    for (K key : myProbationalQueue.keySet()) {
+      keyConsumer.consume(key);
+    }
   }
 
   public Set<Map.Entry<K, V>> entrySet() {

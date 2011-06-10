@@ -1315,8 +1315,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       return myRevision.getCommitMessage();
     }
 
-    public void loadContent() throws VcsException {
-      myRevision.loadContent();
+    public byte[] loadContent() throws IOException, VcsException {
+      return myRevision.loadContent();
     }
 
     public VcsRevisionNumber getRevisionNumber() {
@@ -1331,7 +1331,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       return myRevision.getBranchName();
     }
 
-    public byte[] getContent() throws IOException {
+    public byte[] getContent() throws IOException, VcsException {
       return myRevision.getContent();
     }
 

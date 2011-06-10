@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.impl.projectlevelman.*;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vcs.update.UpdatedFilesListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -106,6 +107,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private VcsEventsListenerManagerImpl myVcsEventListenerManager;
 
   private final VcsHistoryCache myVcsHistoryCache;
+  private final ContentRevisionCache myContentRevisionCache;
   private MessageBusConnection myConnect;
   private VcsListener myVcsListener;
   private final ExcludedFileIndex myExcludedIndex;
@@ -128,6 +130,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
 
     myVcsHistoryCache = new VcsHistoryCache();
+    myContentRevisionCache = new ContentRevisionCache();
     myConnect = myMessageBus.connect();
     myVcsListener = new VcsListener() {
       @Override
@@ -136,6 +139,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     };
     myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
+    myConnect.subscribe(UpdatedFilesListener.UPDATED_FILES, new UpdatedFilesListener() {
+      @Override
+      public void consume(Set<String> strings) {
+        myContentRevisionCache.clearCurrent(strings);
+      }
+    });
     myExcludedIndex = excludedFileIndex;
   }
 
@@ -763,5 +772,10 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
 
   public VcsHistoryCache getVcsHistoryCache() {
     return myVcsHistoryCache;
+  }
+
+  @Override
+  public ContentRevisionCache getContentRevisionCache() {
+    return myContentRevisionCache;
   }
 }

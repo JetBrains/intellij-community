@@ -398,6 +398,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
           }
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
+          myProject.getMessageBus().syncPublisher(UpdatedFilesListener.UPDATED_FILES).
+            consume(UpdatedFilesReverseSide.getPathsFromUpdatedFiles(myUpdatedFiles));
         }
       }
     }

@@ -19,9 +19,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -41,7 +44,6 @@ import java.util.List;
 public class SvnFileRevision implements VcsFileRevision {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.SvnFileRevision");
 
-  private byte[] myContent;
   private final Date myDate;
   private final String myCommitMessage;
   private final String myAuthor;
@@ -128,7 +130,7 @@ public class SvnFileRevision implements VcsFileRevision {
     return myMergeSources;
   }
 
-  public void loadContent() throws VcsException {
+  public byte[] loadContent() throws IOException, VcsException {
     ByteArrayOutputStream contents = new ByteArrayOutputStream();
     ContentLoader loader = new ContentLoader(myURL, contents, myRevision, myPegRevision);
     if (ApplicationManager.getApplication().isDispatchThread() &&
@@ -139,7 +141,7 @@ public class SvnFileRevision implements VcsFileRevision {
       loader.run();
     }
     if (loader.getException() == null) {
-      myContent = contents.toByteArray();
+      return contents.toByteArray();
     }
     else {
       final SVNException svnException = loader.getException();
@@ -148,8 +150,16 @@ public class SvnFileRevision implements VcsFileRevision {
     }
   }
 
-  public byte[] getContent() throws IOException {
-    return myContent;
+  public byte[] getContent() throws IOException, VcsException {
+    return ContentRevisionCache.getOrLoadAsBytes(myVCS.getProject(), VcsContextFactory.SERVICE.getInstance()
+                                                   .createFilePathOnNonLocal(myURL, false),
+                                                 getRevisionNumber(), myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT,
+                                                 new Throwable2Computable<byte[], VcsException, IOException>() {
+                                                   @Override
+                                                   public byte[] compute() throws VcsException, IOException {
+                                                     return loadContent();
+                                                   }
+                                                 });
   }
 
   public String getCopyFromPath() {

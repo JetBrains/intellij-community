@@ -17,11 +17,13 @@ package git4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.commands.GitFileUtils;
@@ -44,7 +46,6 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   private final GitRevisionNumber revision;
   private final Pair<Pair<String, String>, Pair<String, String>> authorAndCommitter;
   private final String message;
-  private byte[] content;
   private final Project project;
   private final String branch;
 
@@ -108,26 +109,19 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return branch;
   }
 
-  public synchronized void loadContent() throws VcsException {
+  public synchronized byte[] loadContent() throws IOException, VcsException {
     final VirtualFile root = GitUtil.getGitRoot(path);
-    if (content == null) {
-      content = GitFileUtils.getFileContent(project, root, revision.getRev(), VcsFileUtil.relativePath(root, path));
-      if (content == null) {
-        content = new byte[0];
-      }
-    }
+    return GitFileUtils.getFileContent(project, root, revision.getRev(), VcsFileUtil.relativePath(root, path));
   }
 
-  public synchronized byte[] getContent() throws IOException {
-    if (content == null) {
-      try {
-        loadContent();
-      }
-      catch (VcsException e) {
-        throw new IOException(e.getMessage());
-      }
-    }
-    return content;
+  public synchronized byte[] getContent() throws IOException, VcsException {
+    return ContentRevisionCache.getOrLoadAsBytes(project, path, revision, GitVcs.getKey(), ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
+                                          new Throwable2Computable<byte[], VcsException, IOException>() {
+                                            @Override
+                                            public byte[] compute() throws VcsException, IOException {
+                                                return loadContent();
+                                            }
+                                          });
   }
 
   public int compareTo(VcsFileRevision rev) {

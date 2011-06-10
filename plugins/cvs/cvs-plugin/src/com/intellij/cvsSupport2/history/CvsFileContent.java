@@ -22,6 +22,8 @@ import com.intellij.openapi.vcs.history.VcsFileContent;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+
 public abstract class CvsFileContent implements VcsFileContent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.history.CvsFileContent");
   protected final ComparableVcsRevisionOnOperation myComparableCvsRevisionOnOperation;
@@ -39,14 +41,14 @@ public abstract class CvsFileContent implements VcsFileContent{
   }
 
   @Nullable
-  public byte[] getContent() {
+  public byte[] getContent() throws IOException, VcsException {
     if (! isLoaded()) return null;
     return myComparableCvsRevisionOnOperation.getContent();
   }
 
   public abstract VcsRevisionNumber getRevisionNumber();
 
-  public void loadContent() throws VcsException {
+  public byte[] loadContent() throws IOException, VcsException {
     myComparableCvsRevisionOnOperation.loadContent();
     if (!isLoaded()) {
       throw new VcsException(CvsBundle.message("exception.text.cannot.load.revision", getRevisionNumber()));
@@ -58,6 +60,7 @@ public abstract class CvsFileContent implements VcsFileContent{
     if (isDeleted()) {
       throw new VcsException(CvsBundle.message("message.text.revision.was.deleted.from.repository", getRevisionNumber()));
     }
+    return myComparableCvsRevisionOnOperation.getContent();
   }
 
   public boolean fileNotFound() {

@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
+import java.io.IOException;
 import java.util.Date;
 
 public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
@@ -45,16 +46,15 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
     return myOperation.isDeleted();
   }
 
-  public byte[] getContent() {
+  public byte[] getContent() throws IOException, VcsException {
     LOG.assertTrue(myOperation.isLoaded());
     return myOperation.getFileBytes();
   }
 
-  public void loadContent() throws VcsException {
+  public byte[] loadContent() throws IOException, VcsException {
     if (!myOperation.isLoaded()) {
       CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-      executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file"),
-                                                       myOperation),
+      executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file"), myOperation),
                                  CvsOperationExecutorCallback.EMPTY);
       CvsResult result = executor.getResult();
       if (result.isCanceled()) {
@@ -67,6 +67,7 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
         throw new VcsException(CvsBundle.message("message.text.revision.was.deleted.from.repository", myOperation.getRevisionString()));
       }
     }
+    return getContent();
   }
 
   public boolean fileNotFound() {

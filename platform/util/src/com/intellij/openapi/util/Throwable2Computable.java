@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.history;
+package com.intellij.openapi.util;
 
-import com.intellij.openapi.vcs.VcsException;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-
-public interface VcsFileContent {
-  byte[] loadContent() throws IOException, VcsException;
-
-  @Nullable
-  byte[] getContent() throws IOException, VcsException;
+/**
+ * @author irengrig
+ *         Date: 6/9/11
+ *         Time: 5:46 PM
+ */
+public interface Throwable2Computable<T, E extends Throwable, E2 extends Throwable> {
+  T compute() throws E, E2;
 }

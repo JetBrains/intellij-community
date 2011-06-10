@@ -293,7 +293,12 @@ public class GitHistoryUtilsTest extends GitSingleUserTest {
     assertEquals(convertWhitespacesToSpacesAndRemoveDoubles(actual.getCommitMessage()), convertWhitespacesToSpacesAndRemoveDoubles(expected.myCommitMessage));
     assertEquals(actual.getAuthor(), expected.myAuthorName);
     assertEquals(actual.getBranchName(), expected.myBranchName);
-    assertEquals(actual.getContent(), expected.myContent);
+    try {
+      assertEquals(actual.getContent(), expected.myContent);
+    }
+    catch (VcsException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
   }
 
   private static void assertCommitEqualToTestRevision(GitCommit commit, GitTestRevision expected) throws IOException {

@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
 
+import java.io.IOException;
 import java.util.Date;
 
 public interface VcsFileRevision extends VcsFileContent {
@@ -41,10 +43,11 @@ public interface VcsFileRevision extends VcsFileContent {
       return null;
     }
 
-    public void loadContent(){
+    public byte[] loadContent() throws IOException, VcsException {
+      return getContent();
     }
 
-    public byte[] getContent(){
+    public byte[] getContent() throws IOException, VcsException {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
 
