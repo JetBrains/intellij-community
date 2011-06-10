@@ -65,10 +65,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -77,6 +74,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
@@ -842,15 +840,23 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public static void linkFollowed(final Editor editor, final Hyperlinks hyperlinks, final HyperlinkInfo info) {
+    linkFollowed(editor, hyperlinks.getRanges().keySet(), new Condition<RangeHighlighter>() {
+      @Override
+      public boolean value(RangeHighlighter rangeHighlighter) {
+        return hyperlinks.getRanges().get(rangeHighlighter) == info;
+      }
+    });
+  }
+
+  public static void linkFollowed(final Editor editor, final Iterable<RangeHighlighter> hyperlinks, Condition<RangeHighlighter> current) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    for (Map.Entry<RangeHighlighter, HyperlinkInfo> entry : hyperlinks.getRanges().entrySet()) {
-      RangeHighlighter range = entry.getKey();
+    for (RangeHighlighter range : hyperlinks) {
       TextAttributes oldAttr = range.getUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES);
       if (oldAttr != null) {
         markupModel.setRangeHighlighterAttributes(range, oldAttr);
         range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, null);
       }
-      if (entry.getValue() == info) {
+      if (current.value(range)) {
         TextAttributes oldAttributes = range.getTextAttributes();
         range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, oldAttributes);
         TextAttributes attributes = getFollowedHyperlinkAttributes().clone();
@@ -1408,8 +1414,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Nullable
-  private OccurenceInfo next(final int delta, boolean doMove) {
-    List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(myHyperlinks.getRanges().keySet());
+  protected OccurenceInfo next(final int delta, boolean doMove) {
+    return getNextOccurrence(myHyperlinks.getRanges().keySet(), delta, doMove, new Consumer<RangeHighlighter>() {
+      @Override
+      public void consume(RangeHighlighter next) {
+        final HyperlinkInfo hyperlinkInfo = myHyperlinks.getRanges().get(next);
+        if (hyperlinkInfo != null) {
+          hyperlinkInfo.navigate(myProject);
+          linkFollowed(hyperlinkInfo);
+        }
+      }
+    });
+  }
+
+  @Nullable
+  protected final OccurenceInfo getNextOccurrence(Collection<RangeHighlighter> highlighters, final int delta, boolean doMove, final Consumer<RangeHighlighter> action) {
+    List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(highlighters);
     for (Iterator<RangeHighlighter> iterator = ranges.iterator(); iterator.hasNext();) {
       RangeHighlighter highlighter = iterator.next();
       if (myEditor.getFoldingModel().getCollapsedRegionAtOffset(highlighter.getStartOffset()) != null) {
@@ -1429,16 +1449,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
     int newIndex = ranges.isEmpty() ? -1 : i == ranges.size() ? 0 : (i + delta + ranges.size()) % ranges.size();
-    RangeHighlighter next = newIndex < ranges.size() && newIndex >= 0 ? ranges.get(newIndex) : null;
+    final RangeHighlighter next = newIndex < ranges.size() && newIndex >= 0 ? ranges.get(newIndex) : null;
     if (next == null) return null;
     if (doMove) {
       scrollTo(next.getStartOffset());
     }
-    final HyperlinkInfo hyperlinkInfo = myHyperlinks.getRanges().get(next);
-    return hyperlinkInfo == null ? null : new OccurenceInfo(new Navigatable.Adapter() {
+    return new OccurenceInfo(new Navigatable.Adapter() {
       public void navigate(final boolean requestFocus) {
-        hyperlinkInfo.navigate(myProject);
-        linkFollowed(hyperlinkInfo);
+        action.consume(next);
       }
     }, i, ranges.size());
   }
