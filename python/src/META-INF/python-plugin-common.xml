@@ -486,7 +486,7 @@
     <projectService serviceInterface="com.jetbrains.rest.actions.PyRestructuredSettings"
                     serviceImplementation="com.jetbrains.rest.actions.PyRestructuredSettings"/>
     <inspectionToolProvider implementation="com.jetbrains.rest.inspections.RestInspectionToolProvider"/>
-
+    <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
   </extensions>
 
   <extensionPoints>
