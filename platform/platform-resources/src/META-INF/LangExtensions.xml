@@ -475,6 +475,11 @@
     <className>com.intellij.refactoring.changeSignature.ChangeSignatureDetectorAction</className>
   </intentionAction>
 
+  <intentionAction>
+    <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
+    <category>Declaration</category>
+  </intentionAction>
+
   <!-- CodeInsightSettings -->
   <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.editorActions.EnterHandler" id="editorEnter"/>
   <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.editorActions.EndHandler"/>
@@ -617,6 +622,7 @@
 
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.ModuleTypeUsagesCollector"/>
+  <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
 
   <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
   <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>

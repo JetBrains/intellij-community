@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBackedByPsiMethod");
+
   private final PsiMethod myMethod;
   private final boolean myIsRaw;
 
@@ -38,12 +39,19 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   }
 
   @NotNull
+  @Override
   public String getName() {
     return myMethod.getName();
   }
 
+  @Override
   public boolean isRaw() {
     return myIsRaw;
+  }
+
+  @Override
+  public boolean isConstructor() {
+    return myMethod.isConstructor();
   }
 
   public boolean equals(Object o) {
@@ -62,6 +70,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   public static MethodSignatureBackedByPsiMethod create(PsiMethod method, PsiSubstitutor substitutor) {
     return create(method, substitutor, PsiUtil.isRawSubstitutor(method, substitutor));
   }
+
   public static MethodSignatureBackedByPsiMethod create(PsiMethod method, PsiSubstitutor substitutor, boolean isRaw) {
     PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     final PsiParameter[] parameters = method.getParameterList().getParameters();

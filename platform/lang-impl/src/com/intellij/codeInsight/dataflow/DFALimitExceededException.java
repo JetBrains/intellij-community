@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.presentation;
-
-import org.jetbrains.annotations.Nullable;
+package com.intellij.codeInsight.dataflow;
 
 /**
- * @author Dmitry Avdeev
+ * @author oleg
  */
-public interface PresentationNameProvider {
-
-  @Nullable
-  String getName(Object o);
+public class DFALimitExceededException extends Exception {
+  public DFALimitExceededException(final String message) {
+    super(message);
+  }
 }

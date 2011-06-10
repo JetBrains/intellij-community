@@ -325,7 +325,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     startTemplate(editor, template, project, listener, null);
   }
 
-  protected static void startTemplate(@NotNull final Editor editor,
+  public static void startTemplate(@NotNull final Editor editor,
                                       final Template template,
                                       @NotNull final Project project,
                                       final TemplateEditingListener listener,

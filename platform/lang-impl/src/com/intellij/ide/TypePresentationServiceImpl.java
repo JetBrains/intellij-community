@@ -36,11 +36,20 @@ import java.util.Set;
  */
 public class TypePresentationServiceImpl extends TypePresentationService {
 
+  @Override
+  public Icon getIcon(Object o) {
+    return getIcon(o.getClass(), o);
+  }
+
   @Override@Nullable
   public Icon getTypeIcon(Class type) {
+    return getIcon(type, null);
+  }
+
+  private Icon getIcon(Class type, Object o) {
     Set<PresentationTemplate> templates = mySuperClasses.get(type);
     for (PresentationTemplate template : templates) {
-      Icon icon = template.getIcon(null, 0);
+      Icon icon = template.getIcon(o, 0);
       if (icon != null) return icon;
     }
     return null;
@@ -51,6 +60,16 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     Set<PresentationTemplate> templates = mySuperClasses.get(type);
     for (PresentationTemplate template : templates) {
       String typeName = template.getTypeName();
+      if (typeName != null) return typeName;
+    }
+    return null;
+  }
+
+  @Override
+  public String getTypeName(Object o) {
+    Set<PresentationTemplate> templates = mySuperClasses.get(o.getClass());
+    for (PresentationTemplate template : templates) {
+      String typeName = template.getTypeName(o);
       if (typeName != null) return typeName;
     }
     return null;
@@ -88,6 +107,11 @@ public class TypePresentationServiceImpl extends TypePresentationService {
         @Override
         public String getTypeName() {
           return typeName == null ? null : typeName.getValue();
+        }
+
+        @Override
+        public String getTypeName(Object o) {
+          return getTypeName();
         }
       };
     }
@@ -129,8 +153,15 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     @Override
     @Nullable
     public Icon getIcon(Object o, int flags) {
-      PresentationIconProvider iconProvider = myIconProvider.getValue();
-      return iconProvider == null ? myIcon.getValue() : iconProvider.getIcon(o, flags);
+      if (o == null) return myIcon.getValue();
+      PresentationProvider provider = myPresentationProvider.getValue();
+      if (provider == null) {
+        return myIcon.getValue();
+      }
+      else {
+        Icon icon = provider.getIcon(o);
+        return icon == null ? myIcon.getValue() : icon;
+      }
     }
 
     @Override
@@ -140,9 +171,19 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     }
 
     @Override
+    public String getTypeName(Object o) {
+      PresentationProvider provider = myPresentationProvider.getValue();
+      if (provider != null) {
+        String typeName = provider.getTypeName(o);
+        if (typeName != null) return typeName;
+      }
+      return getTypeName();
+    }
+
+    @Override
     @Nullable
     public String getName(Object o) {
-      PresentationNameProvider namer = myNameProvider.getValue();
+      PresentationProvider namer = myPresentationProvider.getValue();
       return namer == null ? null : namer.getName(o);
     }
 
@@ -162,34 +203,19 @@ public class TypePresentationServiceImpl extends TypePresentationService {
       }
     };
 
-    private final NullableLazyValue<PresentationNameProvider> myNameProvider = new NullableLazyValue<PresentationNameProvider>() {
+    private final NullableLazyValue<PresentationProvider> myPresentationProvider = new NullableLazyValue<PresentationProvider>() {
       @Override
-      protected PresentationNameProvider compute() {
-        Class<? extends PresentationNameProvider> aClass = myPresentation.nameProviderClass();
+      protected PresentationProvider compute() {
+        Class<? extends PresentationProvider> aClass = myPresentation.provider();
 
         try {
-          return aClass == PresentationNameProvider.class ? null : aClass.newInstance();
+          return aClass == PresentationProvider.class ? null : aClass.newInstance();
         }
         catch (Exception e) {
           return null;
         }
       }
     };
-
-    private final NullableLazyValue<PresentationIconProvider> myIconProvider = new NullableLazyValue<PresentationIconProvider>() {
-      @Override
-      protected PresentationIconProvider compute() {
-        Class<? extends PresentationIconProvider> aClass = myPresentation.iconProviderClass();
-
-        try {
-          return aClass == PresentationIconProvider.class ? null : aClass.newInstance();
-        }
-        catch (Exception e) {
-          return null;
-        }
-      }
-    };
-
   }
 
   interface PresentationTemplate {
@@ -202,5 +228,7 @@ public class TypePresentationServiceImpl extends TypePresentationService {
 
     @Nullable
     String getTypeName();
+
+    String getTypeName(Object o);
   }
 }
