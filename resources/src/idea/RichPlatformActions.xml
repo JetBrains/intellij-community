@@ -127,6 +127,9 @@
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
     </group>
 
+    <group id="CompilerErrorViewPopupMenu">
+    </group>
+
     <!-- Tools -->
     <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis" text="Fold Lines Like This">
       <add-to-group group-id="ConsoleView.PopupMenu" anchor="after" relative-to-action="ConsoleView.Copy"/>
