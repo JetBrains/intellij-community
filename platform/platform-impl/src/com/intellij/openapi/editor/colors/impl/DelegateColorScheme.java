@@ -25,6 +25,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -74,7 +75,7 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
-  public void setColor(ColorKey key, Color color) {
+  public void setColor(ColorKey key, @Nullable Color color) {
     myDelegate.setColor(key, color);
   }
 
