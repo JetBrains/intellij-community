@@ -27,6 +27,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,9 +38,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -50,7 +49,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -686,9 +684,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected EditorEx createRealEditor() {
-    final EditorFactoryImpl document = (EditorFactoryImpl)EditorFactory.getInstance();
-    final Document editorDocument = document.createDocument(true);
-    editorDocument.addDocumentListener(new DocumentListener() {
+    final EditorEx editor = EventLog.setupConsoleEditor(myProject, true);
+
+    editor.getDocument().addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
       }
 
@@ -698,32 +696,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     });
-    final EditorEx editor = (EditorEx)document.createViewer(editorDocument, myProject);
+
     editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
-    editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
-
-    final EditorHighlighter highlighter = createHighlighter();
-    editor.setHighlighter(highlighter);
-
-    final EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setLineMarkerAreaShown(false);
-    editorSettings.setIndentGuidesShown(false);
-    editorSettings.setLineNumbersShown(false);
-    editorSettings.setFoldingOutlineShown(true);
-    editorSettings.setAdditionalPageAtBottom(false);
-    editorSettings.setAdditionalColumnsCount(0);
-    editorSettings.setAdditionalLinesCount(0);
-
-    final DelegateColorScheme scheme = new DelegateColorScheme(editor.getColorsScheme()) {
-      @Override
-      public Color getDefaultBackground() {
-        final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
-        return color == null ? super.getDefaultBackground() : color;
-      }
-    };
-    editor.setColorsScheme(scheme);
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-    scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
+    editor.setHighlighter(createHighlighter());
 
     if (!isViewer) {
       setEditorUpActions(editor);

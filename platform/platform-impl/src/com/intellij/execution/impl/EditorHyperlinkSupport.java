@@ -113,7 +113,7 @@ public class EditorHyperlinkSupport {
     return highlighter.getStartOffset() <= offset && offset <= highlighter.getEndOffset();
   }
 
-  public void addHyperlink(final RangeHighlighter highlighter, final HyperlinkInfo hyperlinkInfo) {
+  public void addHyperlink(@NotNull final RangeHighlighter highlighter, @NotNull final HyperlinkInfo hyperlinkInfo) {
     myHighlighterToMessageInfoMap.put(highlighter, hyperlinkInfo);
     if (myLastIndex != NO_INDEX && containsOffset(myLastIndex, highlighter)) myLastIndex = NO_INDEX;
   }
@@ -127,10 +127,10 @@ public class EditorHyperlinkSupport {
     return getHyperlinkAt(myEditor.logicalPositionToOffset(new LogicalPosition(line, col)));
   }
 
-  void addHyperlink(final int highlightStartOffset,
+  public void addHyperlink(final int highlightStartOffset,
                     final int highlightEndOffset,
-                    final TextAttributes highlightAttributes,
-                    final HyperlinkInfo hyperlinkInfo) {
+                    @Nullable final TextAttributes highlightAttributes,
+                    @NotNull final HyperlinkInfo hyperlinkInfo) {
     TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : getHyperlinkAttributes();
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                        highlightEndOffset,
