@@ -15,6 +15,7 @@
  */
 package com.theoryinpractice.testng.model;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,8 @@ import com.theoryinpractice.testng.util.TestNGUtil;
  */
 public class TestClassFilter implements ClassFilter.ClassFilterWithScope
 {
+    public static final String GUICE_INJECTION = "com.google.inject.Inject";
+
     private final GlobalSearchScope scope;
     private final Project project;
     private final boolean includeConfig;
@@ -63,14 +66,20 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope
         if (checkClassCanBeInstantiated) {
           final PsiMethod[] constructors = psiClass.getConstructors();
           if (constructors.length > 0) {
-            boolean withoutParam = false;
+            boolean canBeInstantiated = false;
             for (PsiMethod constructor : constructors) {
               if (constructor.getParameterList().getParametersCount() == 0) {
-                withoutParam = true;
+                canBeInstantiated = true;
+                break;
+              }
+              if (AnnotationUtil.isAnnotated(constructor, GUICE_INJECTION, true)) {
+                canBeInstantiated = true;
                 break;
               }
             }
-            if (!withoutParam) return includeConfig && TestNGUtil.hasConfig(psiClass);
+            if (!canBeInstantiated){
+              return false;
+            }
           }
         }
         return true;
