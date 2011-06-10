@@ -630,10 +630,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       if (value instanceof ClasspathTableItem<?>) {
         final ClasspathTableItem<?> tableItem = (ClasspathTableItem<?>)value;
         getCellAppearance(tableItem, myContext, selected).customize(this);
-        String tooltip = tableItem.getTooltipText();
-        if (tooltip != null) {
-          setToolTipText(tooltip);
-        }
+        setToolTipText(tableItem.getTooltipText());
       }
     }
   }
