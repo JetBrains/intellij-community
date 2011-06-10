@@ -18,7 +18,7 @@ package com.intellij.ide.fileTemplates;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
- * Should be implemented by an {@link com.intellij.openapi.components.ApplicationComponent} or in an extension point
+ * Should be implemented in an extension point
  */
 public interface FileTemplateGroupDescriptorFactory {
   ExtensionPointName<FileTemplateGroupDescriptorFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileTemplateGroup");
