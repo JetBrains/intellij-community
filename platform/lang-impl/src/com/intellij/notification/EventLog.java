@@ -65,7 +65,7 @@ public class EventLog implements Notifications {
       NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(null, notification);
     }
     for (Project p : openProjects) {
-      printNotification(getProjectComponent(p).myConsoleView, p, notification);
+      getProjectComponent(p).printNotification(notification);
     }
   }
 
@@ -83,42 +83,6 @@ public class EventLog implements Notifications {
     }
   }
 
-  private static void printNotification(ConsoleViewImpl view, Project project, final Notification notification) {
-    if (!NotificationsConfiguration.getSettings(notification.getGroupId()).isShouldLog()) {
-      return;
-    }
-
-    view.print(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(notification.getCreationTime()) + " ", ConsoleViewContentType.NORMAL_OUTPUT);
-
-    Pair<String, Boolean> pair = NotificationsManagerImpl.formatForLog(notification);
-
-
-    final NotificationType type = notification.getType();
-    view.print(pair.first, type == NotificationType.ERROR
-                         ? ConsoleViewContentType.ERROR_OUTPUT
-                         : type == NotificationType.INFORMATION
-                           ? ConsoleViewContentType.NORMAL_OUTPUT
-                           : ConsoleViewContentType.WARNING_OUTPUT);
-    if (pair.second) {
-      view.print(" ", ConsoleViewContentType.NORMAL_OUTPUT);
-      view.printHyperlink("more", new HyperlinkInfo() {
-        @Override
-        public void navigate(Project project) {
-          Balloon balloon = notification.getBalloon();
-          if (balloon != null) {
-            balloon.hide();
-          }
-
-          NotificationsManagerImpl.notifyByBalloon(notification, NotificationDisplayType.STICKY_BALLOON, project);
-        }
-      });
-      view.print(" ", ConsoleViewContentType.NORMAL_OUTPUT);
-    }
-    view.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
-
-    NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(project, notification);
-  }
-
   private static EventLog getApplicationComponent() {
     return ApplicationManager.getApplication().getComponent(EventLog.class);
   }
@@ -134,13 +98,13 @@ public class EventLog implements Notifications {
       super(project);
       myConsoleView = new ConsoleViewImpl(project, true);
       for (Notification notification : getApplicationComponent().takeNotifications()) {
-        printNotification(myConsoleView, project, notification);
+        printNotification(notification);
       }
 
       project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new Notifications() {
         @Override
         public void notify(@NotNull Notification notification) {
-          printNotification(myConsoleView, project, notification);
+          printNotification(notification);
         }
 
         @Override
@@ -153,6 +117,45 @@ public class EventLog implements Notifications {
     public void projectClosed() {
       NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(null, null);
     }
+
+    private void printNotification(final Notification notification) {
+      if (!NotificationsConfiguration.getSettings(notification.getGroupId()).isShouldLog()) {
+        return;
+      }
+
+      myConsoleView.print(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(notification.getCreationTime()) + " ",
+                          ConsoleViewContentType.NORMAL_OUTPUT);
+
+      Pair<String, Boolean> pair = NotificationsManagerImpl.formatForLog(notification);
+
+
+      final NotificationType type = notification.getType();
+      myConsoleView.print(pair.first, type == NotificationType.ERROR
+                                      ? ConsoleViewContentType.ERROR_OUTPUT
+                                      : type == NotificationType.INFORMATION
+                                        ? ConsoleViewContentType.NORMAL_OUTPUT
+                                        : ConsoleViewContentType.WARNING_OUTPUT);
+      if (pair.second) {
+        myConsoleView.print(" ", ConsoleViewContentType.NORMAL_OUTPUT);
+        myConsoleView.printHyperlink("more", new HyperlinkInfo() {
+          @Override
+          public void navigate(Project project) {
+            Balloon balloon = notification.getBalloon();
+            if (balloon != null) {
+              balloon.hide();
+            }
+
+            NotificationsManagerImpl.notifyByBalloon(notification, NotificationDisplayType.STICKY_BALLOON, project);
+          }
+        });
+        myConsoleView.print(" ", ConsoleViewContentType.NORMAL_OUTPUT);
+      }
+      myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
+
+      NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(myProject, notification);
+    }
+
+
   }
 
   public static ProjectTracker getProjectComponent(Project project) {
