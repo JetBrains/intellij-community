@@ -26,10 +26,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class FileContent extends DiffContent {
@@ -71,21 +69,18 @@ public class FileContent extends DiffContent {
     return FileTypeManager.getInstance().getFileTypeByFile(myFile).isBinary();
   }
 
-  @Nullable
-  public static FileContent createFromTempFile(Project project, String name, String ext, byte[] content) {
-    try {
-      final File tempFile = FileUtil.createTempFile(name, ext);
-      tempFile.deleteOnExit();
-      final FileOutputStream fos = new FileOutputStream(tempFile);
-      fos.write(content);
-      fos.close();
-      final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(tempFile);
-      if (file != null) {
-        return new FileContent(project, file);
-      }
+  public static FileContent createFromTempFile(Project project, String name, String ext, byte[] content) throws IOException {
+    final File tempFile = FileUtil.createTempFile(name, ext);
+    tempFile.deleteOnExit();
+    FileUtil.writeToFile(tempFile, content);
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile file = lfs.findFileByIoFile(tempFile);
+    if (file == null) {
+      file = lfs.refreshAndFindFileByIoFile(tempFile);
     }
-    catch (IOException e) {//
+    if (file != null) {
+      return new FileContent(project, file);
     }
-    return null;
+    throw new IOException("Can not create temp file for revision content");
   }
 }
