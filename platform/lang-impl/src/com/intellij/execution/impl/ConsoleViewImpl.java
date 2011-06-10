@@ -913,31 +913,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  public static class CopyAction extends DumbAwareAction {
-
+  public static class CopyAction extends EditorCopyAction {
     @Override
-    public void update(AnActionEvent e) {
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-      final boolean enabled = editor != null && e.getData(LangDataKeys.CONSOLE_VIEW) != null;
-      e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setVisible(enabled);
-
-      e.getPresentation().setText(editor != null && editor.getSelectionModel().hasSelection()
-                                  ? ExecutionBundle.message("copy.selected.content.action.name")
-                                  : ExecutionBundle.message("copy.content.action.name"));
-    }
-
-    public void actionPerformed(final AnActionEvent e) {
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-      assert editor != null;
-      if (editor.getSelectionModel().hasSelection()) {
-        editor.getSelectionModel().copySelectionToClipboard();
-      }
-      else {
-        editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
-        editor.getSelectionModel().copySelectionToClipboard();
-        editor.getSelectionModel().removeSelection();
-      }
+    protected boolean isEnabled(AnActionEvent e) {
+      return super.isEnabled(e) && e.getData(LangDataKeys.CONSOLE_VIEW) != null;
     }
   }
 

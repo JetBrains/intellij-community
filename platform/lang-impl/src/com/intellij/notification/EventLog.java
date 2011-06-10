@@ -17,6 +17,7 @@
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.EditorCopyAction;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.impl.NotificationsConfigurable;
@@ -30,6 +31,7 @@ import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
@@ -48,9 +50,11 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.EditorPopupHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -131,9 +135,7 @@ public class EventLog implements Notifications {
             return;
           }
 
-          myLogEditor = setupConsoleEditor(project, false);
-          //todo popup
-          myHyperlinkSupport = new EditorHyperlinkSupport(myLogEditor, project);
+          createEditor(project);
 
           for (Notification notification : myInitial) {
             printNotification(notification);
@@ -141,6 +143,42 @@ public class EventLog implements Notifications {
           myInitial.clear();
         }
       });
+    }
+
+    private void createEditor(Project project) {
+      myLogEditor = setupConsoleEditor(project, false);
+      myLogEditor.addEditorMouseListener(new EditorPopupHandler() {
+        public void invokePopup(final EditorMouseEvent event) {
+          final ActionManager actionManager = ActionManager.getInstance();
+          final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, createPopupActions(actionManager));
+          final MouseEvent mouseEvent = event.getMouseEvent();
+          menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+        }
+      });
+      myHyperlinkSupport = new EditorHyperlinkSupport(myLogEditor, project);
+    }
+
+    private static DefaultActionGroup createPopupActions(ActionManager actionManager) {
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.add(new DumbAwareAction("Clear All") {
+        @Override
+        public void update(AnActionEvent e) {
+          final boolean enabled = e.getData(PlatformDataKeys.EDITOR) != null;
+          e.getPresentation().setEnabled(enabled);
+          e.getPresentation().setVisible(enabled);
+        }
+
+        public void actionPerformed(final AnActionEvent e) {
+          final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+          if (editor != null) {
+            editor.getDocument().deleteString(0, editor.getDocument().getTextLength());
+          }
+        }
+      });
+      group.add(new EditorCopyAction());
+      group.addSeparator();
+      group.add(actionManager.getAction(IdeActions.ACTION_COMPARE_CLIPBOARD_WITH_SELECTION));
+      return group;
     }
 
     @Override
