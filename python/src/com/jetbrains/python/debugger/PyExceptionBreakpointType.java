@@ -12,6 +12,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,18 @@ public class PyExceptionBreakpointType
 
   public PyExceptionBreakpointType() {
     super("python-exception", "Python Exception Breakpoint", false);
+  }
+
+  @NotNull
+  @Override
+  public Icon getEnabledIcon() {
+    return DebuggerIcons.ENABLED_EXCEPTION_BREAKPOINT_ICON;
+  }
+
+  @NotNull
+  @Override
+  public Icon getDisabledIcon() {
+    return DebuggerIcons.DISABLED_EXCEPTION_BREAKPOINT_ICON;
   }
 
   @Override

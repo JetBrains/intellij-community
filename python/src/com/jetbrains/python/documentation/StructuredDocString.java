@@ -50,7 +50,7 @@ public abstract class StructuredDocString {
     return myDescription;
   }
 
-  private int parseTag(String[] lines, int index, String tagPrefix) {
+  protected int parseTag(String[] lines, int index, String tagPrefix) {
     String line = lines[index].trim();
     int tagEnd = StringUtil.indexOfAny(line, " \t:", 1, line.length());
     if (tagEnd < 0) return index;
