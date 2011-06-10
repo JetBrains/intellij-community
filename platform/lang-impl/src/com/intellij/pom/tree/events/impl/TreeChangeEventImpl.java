@@ -62,16 +62,16 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   public void addElementaryChange(@NotNull ASTNode element, @NotNull ChangeInfo change) {
     final ASTNode parent = element.getTreeParent();
-    if(parent == null) return;
+    if (parent == null) return;
     ASTNode currentParent = parent;
     ASTNode prevParent = element;
     int depth = 0;
-    while(currentParent != null){
-      if(myChangedElements.containsKey(currentParent)){
+    while (currentParent != null) {
+      if (myChangedElements.containsKey(currentParent)) {
         final TreeChange changesByElement = getChangesByElement(currentParent);
         final boolean currentParentHasChange = changesByElement.getChangeByChild(prevParent) != null;
-        if(currentParentHasChange && prevParent != element) return;
-        if(prevParent != element){
+        if (currentParentHasChange && prevParent != element) return;
+        if (prevParent != element) {
           final ChangeInfo newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent);
           if (change.getChangeType() != ChangeInfo.REMOVED) {
             ((ChangeInfoImpl)newChange).processElementaryChange(change, element);
@@ -103,7 +103,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   private void processElementaryChange(ASTNode parent, ASTNode element, ChangeInfo change, int depth) {
     TreeChange treeChange = myChangedElements.get(parent);
-    if(treeChange == null){
+    if (treeChange == null) {
       treeChange = new TreeChangeImpl(parent);
       myChangedElements.put(parent, treeChange);
       insertAtList(parent);
@@ -112,10 +112,10 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
       addToEqualsDepthList(index, parent);
     }
     treeChange.addChange(element, change);
-    if(change.getChangeType() == ChangeInfo.REMOVED){
+    if (change.getChangeType() == ChangeInfo.REMOVED) {
       element.putUserData(CharTable.CHAR_TABLE_KEY, myFileElement.getCharTable());
     }
-    if(treeChange.isEmpty()) removeAssociatedChanges(parent, depth);
+    if (treeChange.isEmpty()) removeAssociatedChanges(parent, depth);
   }
 
   private void addToEqualsDepthList(final int depth, final ASTNode parent) {
@@ -186,11 +186,10 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   private void insertAtList(ASTNode node){
     if (!myChangedInOrder.isEmpty()) {
       final int[] nodeRoute = getRoute(node);
-      int index = 0;
-      while(index < myChangedInOrder.size()){
-        final ASTNode current = myChangedInOrder.get(index++);
+      for (int index = 0; index < myChangedInOrder.size(); index++) {
+        final ASTNode current = myChangedInOrder.get(index);
         final int[] route = getRoute(current);
-        if(compareRouts(nodeRoute, route) < 0) {
+        if (compareRoutes(nodeRoute, route) < 0) {
           myChangedInOrder.add(index, node);
           return;
         }
@@ -219,7 +218,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     return root;
   }
 
-  private static int compareRouts(int[] root1, int[] root2){
+  private static int compareRoutes(int[] root1, int[] root2){
     final int depth = Math.min(root1.length, root2.length);
     for(int i = 0; i < depth; i++){
       if(root1[i] == root2[i]) continue;

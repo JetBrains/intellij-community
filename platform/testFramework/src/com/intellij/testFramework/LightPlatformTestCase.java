@@ -418,9 +418,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
 
-    FileDocumentManager manager = FileDocumentManager.getInstance();
+    final FileDocumentManager manager = FileDocumentManager.getInstance();
     if (manager instanceof FileDocumentManagerImpl) {
-      assertEmpty(manager.getUnsavedDocuments());
+      Document[] unsavedDocuments = manager.getUnsavedDocuments();
+      manager.saveAllDocuments();
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
+        }
+      });
+
+      assertEmpty(unsavedDocuments);
     }
   }
 
