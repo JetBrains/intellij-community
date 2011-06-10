@@ -34,10 +34,6 @@ import java.util.StringTokenizer;
  */
 public class GitRevisionNumber implements ShortVcsRevisionNumber {
   /**
-   * the name of tip revision
-   */
-  @NonNls public static final String TIP = "HEAD";
-  /**
    * the hash from 40 zeros representing not yet created commit
    */
   public static final String NOT_COMMITTED_HASH;
@@ -56,15 +52,6 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    * the date when revision created
    */
   @NotNull private final Date myTimestamp;
-
-  /**
-   * A constructor for TIP revision
-   */
-  public GitRevisionNumber() {
-    // TODO review usages
-    myRevisionHash = TIP;
-    myTimestamp = new Date();
-  }
 
   /**
    * A constructor from version. The current date is used.
@@ -88,11 +75,6 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
     myRevisionHash = version;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @see #getRev()
-   */
   @NotNull
   public String asString() {
     return myRevisionHash;
@@ -223,16 +205,6 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
       return rev.substring(0, tildeIndex) + "~" + n;
     }
     return rev + "~1";
-  }
-
-  /**
-   * Create revision number from string
-   *
-   * @param rev a revision string
-   * @return revision number (the same as {@link #GitRevisionNumber(String)}
-   */
-  public static GitRevisionNumber createRevision(String rev) {
-    return new GitRevisionNumber(rev);
   }
 
   /**
