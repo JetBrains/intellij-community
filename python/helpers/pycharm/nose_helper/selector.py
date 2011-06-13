@@ -47,7 +47,7 @@ class Selector(object):
             return False
         import inspect
         arguments = inspect.getargspec(function)
-        if len(arguments.args) or arguments.varargs or arguments.keywords:
+        if len(arguments[0]) or arguments[1] or arguments[2]:
             return False
         declared = getattr(function, '__test__', None)
         if declared is not None:
