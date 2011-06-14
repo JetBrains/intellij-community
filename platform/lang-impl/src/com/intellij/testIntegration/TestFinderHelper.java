@@ -17,10 +17,14 @@
 package com.intellij.testIntegration;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.codeStyle.NameUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class TestFinderHelper {
   public static PsiElement findSourceElement(PsiElement from) {
@@ -57,5 +61,46 @@ public class TestFinderHelper {
 
   public static TestFinder[] getFinders() {
     return Extensions.getExtensions(TestFinder.EP_NAME);
+  }
+
+  public static Integer calcTestNameProximity(final String className, final String testName) {
+    int posProximity = testName.indexOf(className);
+    int sizeProximity = testName.length() - className.length();
+
+    return posProximity + sizeProximity;
+  }
+
+  public static List<PsiElement> getSortedElements(final List<Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
+                                                   final boolean weightsAscending) {
+    Collections.sort(elementsWithWeights, new Comparator<Pair<? extends PsiNamedElement, Integer>>() {
+      public int compare(Pair<? extends PsiNamedElement, Integer> o1, Pair<? extends PsiNamedElement, Integer> o2) {
+        int result = weightsAscending ? o1.second.compareTo(o2.second) : o2.second.compareTo(o1.second);
+        if (result == 0) {
+          result = Comparing.compare(o1.first.getName(), o2.first.getName());
+        }
+        return result;
+      }
+    });
+
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    for (Pair<? extends PsiNamedElement, Integer> each : elementsWithWeights) {
+      result.add(each.first);
+    }
+
+    return result;
+  }
+
+  public static List<Pair<String, Integer>> collectPossibleClassNamesWithWeights(String testName) {
+    String[] words = NameUtil.splitNameIntoWords(testName);
+    List<Pair<String, Integer>> result = new ArrayList<Pair<String, Integer>>();
+
+    for (int from = 0; from < words.length; from++) {
+      for (int to = from; to < words.length; to++) {
+        result.add(new Pair<String, Integer>(StringUtil.join(words, from, to + 1, ""),
+                                             words.length - from + to));
+      }
+    }
+
+    return result;
   }
 }
