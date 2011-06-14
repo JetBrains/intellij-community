@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -106,7 +107,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
       myName = name;
     }
 
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiMethod method = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       if (method != null){
         final PsiModifierList modifierList = method.getModifierList();
@@ -118,8 +119,17 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
         }
 
         if (method.getReturnType() != PsiType.VOID) {
-          ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID, new ParameterInfoImpl[0]);
-          csp.run();
+          final Runnable runnable = new Runnable() {
+            public void run() {
+              ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID, new ParameterInfoImpl[0]);
+              csp.run();
+            }
+          };
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            runnable.run();
+          } else {
+            ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+          }
         }
       }
     }

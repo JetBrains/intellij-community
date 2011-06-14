@@ -179,7 +179,7 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
           public void run() {
             inlineSameParameterValue(method, parameterToInline, defToInline);
           }
-        });
+        }, project.getDisposed());
       }
     }
 

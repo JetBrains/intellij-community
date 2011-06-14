@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -73,7 +74,16 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
                      @NotNull PsiElement endElement) {
     final PsiParameter myParameter = (PsiParameter)startElement;
     if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
-    removeReferences(myParameter);
+    Runnable runnable = new Runnable() {
+      public void run() {
+        removeReferences(myParameter);
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+    }
   }
 
   private static void removeReferences(PsiParameter parameter) {

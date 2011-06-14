@@ -269,7 +269,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
           if (ApplicationManager.getApplication().isUnitTestMode()) {
             runnable.run();
           } else {
-            ApplicationManager.getApplication().invokeLater(runnable);
+            ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
           }
         }
       }
