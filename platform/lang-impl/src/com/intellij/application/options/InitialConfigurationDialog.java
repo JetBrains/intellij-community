@@ -32,11 +32,13 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private JComboBox myKeymapComboBox;
   private JComboBox myColorSchemeComboBox;
-  private JButton myPreviewButton;
   private JCheckBox myCreateScriptCheckbox;
   private JTextField myScriptPathTextField;
   private JPanel myCreateScriptPanel;
+  private JPanel myColorPreviewPanel;
   private String myColorSettingsPage;
+  private SimpleEditorPreview myPreviewEditor;
+  private ColorAndFontOptions myPreviewOptions;
 
   public InitialConfigurationDialog(Component parent, String colorSettingsPage) {
     super(parent, true);
@@ -79,15 +81,15 @@ public class InitialConfigurationDialog extends DialogWrapper {
       public void customize(JList list, Object value, int index, boolean selected, boolean cellHasFocus) {
         setText(((EditorColorsScheme)value).getName());
       }
-
     });
-
-    init();
-    myPreviewButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        showColorSchemePreviewDialog();
+    myColorSchemeComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        updateColorSchemePreview();
       }
     });
+    updateColorSchemePreview();
+    init();
 
     final boolean canCreateLauncherScript = SystemInfo.isMac || SystemInfo.isLinux;
     myCreateScriptCheckbox.setVisible(canCreateLauncherScript);
@@ -123,22 +125,21 @@ public class InitialConfigurationDialog extends DialogWrapper {
     return true;
   }
 
-  private void showColorSchemePreviewDialog() {
-    showColorSchemePreviewDialog(ColorAndFontOptions.getColorAndFontsInstance());
-  }
-
-  private void showColorSchemePreviewDialog(final ColorAndFontOptions options) {
-    final NewColorAndFontPanel page = options.findPage(myColorSettingsPage);
+  private void updateColorSchemePreview() {
+    if (myPreviewEditor != null) {
+      myColorPreviewPanel.remove(myPreviewEditor.getPanel());
+      myPreviewEditor.disposeUIResources();
+    }
+    myPreviewOptions = ColorAndFontOptions.getColorAndFontsInstance();
+    myPreviewOptions.reset();
+    myPreviewOptions.selectScheme(((EditorColorsScheme)myColorSchemeComboBox.getSelectedItem()).getName());
+    final NewColorAndFontPanel page = myPreviewOptions.findPage(myColorSettingsPage);
     assert page != null;
-    options.reset();
-    final String selectedScheme = ((EditorColorsScheme)myColorSchemeComboBox.getSelectedItem()).getName();
-    options.selectScheme(selectedScheme);
-    final SimpleEditorPreview preview = new SimpleEditorPreview(options, page.getSettingsPage());
-    preview.updateView();
-    DialogWrapper wrapper = new PreviewDialog(preview, selectedScheme);
-    wrapper.show();
-    preview.disposeUIResources();
-    options.disposeUIResources();
+    myPreviewEditor = new SimpleEditorPreview(myPreviewOptions, page.getSettingsPage());
+    myPreviewEditor.updateView();
+    myColorPreviewPanel.add(myPreviewEditor.getPanel());
+    myColorPreviewPanel.revalidate();
+    myColorPreviewPanel.repaint();
   }
 
   protected JComponent createCenterPanel() {
@@ -150,6 +151,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myMainPanel));
 
     super.doOKAction();
+
+    myPreviewEditor.disposeUIResources();
+    myPreviewOptions.disposeUIResources();
     // set keymap
     ((KeymapManagerImpl)KeymapManager.getInstance()).setActiveKeymap((Keymap)myKeymapComboBox.getSelectedItem());
     // set color scheme
@@ -168,33 +172,10 @@ public class InitialConfigurationDialog extends DialogWrapper {
     }
   }
 
-  private class PreviewDialog extends DialogWrapper {
-    private final SimpleEditorPreview myPreview;
-
-    public PreviewDialog(final SimpleEditorPreview preview, final String selectedScheme) {
-      super(myMainPanel, true);
-      myPreview = preview;
-      setTitle("Preview for " + selectedScheme);
-      init();
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-      JPanel panel = new JPanel(new BorderLayout()) {
-        @Override
-        public Dimension getPreferredSize() {
-          return new Dimension(400, 300);
-        }
-      };
-      panel.add(myPreview.getPanel(), BorderLayout.CENTER);
-      return panel;
-    }
-
-    @Override
-    protected Action[] createActions() {
-      final Action action = getOKAction();
-      action.putValue(Action.NAME, "Close");
-      return new Action[]{action};
-    }
+  @Override
+  public void doCancelAction() {
+    myPreviewEditor.disposeUIResources();
+    myPreviewOptions.disposeUIResources();
+    super.doCancelAction();
   }
 }
