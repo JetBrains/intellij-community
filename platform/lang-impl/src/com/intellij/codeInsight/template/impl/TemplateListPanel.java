@@ -92,7 +92,7 @@ class TemplateListPanel extends JPanel {
 
     Collections.sort(groups, new Comparator<TemplateGroup>(){
       public int compare(final TemplateGroup o1, final TemplateGroup o2) {
-        return o1.getName().compareTo(o2.getName());
+        return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
 
