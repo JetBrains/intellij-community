@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
@@ -381,11 +380,12 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
       if (selectedModifiedWithoutEditing != null && selectedModifiedWithoutEditing.size() > 0) {
         for(VirtualFile file: selectedModifiedWithoutEditing) {
           AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-          final DiffProvider diffProvider = vcs == null ? null : vcs.getDiffProvider();
-          if (diffProvider != null) {
-            ContentRevision beforeRevision = new VcsCurrentRevisionProxy(diffProvider, file, myProject, vcs.getKeyInstanceMethod());
+          if (vcs == null) continue;
+          final VcsCurrentRevisionProxy before =
+            VcsCurrentRevisionProxy.create(file, myProject, vcs.getKeyInstanceMethod());
+          if (before != null) {
             ContentRevision afterRevision = new CurrentContentRevision(new FilePathImpl(file));
-            changes.add(new Change(beforeRevision, afterRevision, FileStatus.HIJACKED));
+            changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
           }
         }
       }

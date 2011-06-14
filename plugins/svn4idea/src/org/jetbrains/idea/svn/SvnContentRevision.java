@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
+import com.intellij.openapi.vcs.impl.CurrentRevisionProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,9 +74,15 @@ class SvnContentRevision implements ContentRevision {
     try {
       if (myUseBaseRevision) {
         return ContentRevisionCache.getOrLoadCurrentAsString(myVcs.getProject(), myFile, myVcs.getKeyInstanceMethod(),
-                                                             new Throwable2Computable<Pair<VcsRevisionNumber, byte[]>, VcsException, IOException>() {
+                                                             new CurrentRevisionProvider() {
                                                                @Override
-                                                               public Pair<VcsRevisionNumber, byte[]> compute() throws VcsException, IOException {
+                                                               public VcsRevisionNumber getCurrentRevision() throws VcsException {
+                                                                 return getRevisionNumber();
+                                                               }
+
+                                                               @Override
+                                                               public Pair<VcsRevisionNumber, byte[]> get()
+                                                                 throws VcsException, IOException {
                                                                  return new Pair<VcsRevisionNumber, byte[]>(getRevisionNumber(), getUpToDateBinaryContent());
                                                                }
                                                              }).getSecond();
