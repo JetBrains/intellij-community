@@ -95,7 +95,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public XSourcePosition getSourcePosition() {
-    return null;
+    return getType().getSourcePosition(this);
   }
 
   public Navigatable getNavigatable() {

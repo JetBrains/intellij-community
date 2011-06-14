@@ -19,6 +19,7 @@ package com.intellij.xdebugger.breakpoints;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -164,6 +165,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @Nullable @NonNls
   public String getBreakpointsDialogHelpTopic() {
+    return null;
+  }
+
+  public XSourcePosition getSourcePosition(XBreakpoint<P> breakpoint) {
     return null;
   }
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +77,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   @NotNull
   public Comparator<XLineBreakpoint<P>> getBreakpointComparator() {
     return XDebuggerUtil.getInstance().getDefaultLineBreakpointComparator();
+  }
+
+  @Override
+  public final XSourcePosition getSourcePosition(XBreakpoint<P> pxBreakpoint) {
+    return super.getSourcePosition(pxBreakpoint);
   }
 
   /**
