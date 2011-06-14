@@ -1,6 +1,6 @@
 <component>
   <!-- <version name="IntelliJ IDEA" major="6" minor="0.2 Beta"/> -->
-  <version codename="1.2 Early Access Preview" major="1" minor="2" eap="true" update-channel="pycharm"/>
+  <version codename="2.0 Early Access Preview" major="2" minor="0" eap="true" update-channel="pycharm"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_logo.png" textcolor="B7C9B5"/>
   <about url="/pycharm_about.png"/>
