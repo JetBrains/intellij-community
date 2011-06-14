@@ -42,7 +42,7 @@
   <actions>
     <group id="IDEACoverageMenu" popup="false">
       <reference ref="CoverageMenu"/>
-      <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="ShowPackageDeps"/>
+      <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="AnalyzeActions"/>
     </group>
   </actions>
 </idea-plugin>
