@@ -311,9 +311,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public void dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    DebuggerManagerThreadImpl managerThread = getProcess().getManagerThread();
     getProcess().dispose();
     getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_DISPOSED, EVENT_DISPOSE, null);
     Disposer.dispose(myUpdateAlarm);
+    managerThread.clearQueue();
   }
 
   // ManagerCommands
