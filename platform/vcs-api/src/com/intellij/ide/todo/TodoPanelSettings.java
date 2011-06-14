@@ -31,6 +31,7 @@ public class TodoPanelSettings implements JDOMExternalizable {
   public boolean myAreFlattenPackages;
   public boolean myIsAutoScrollToSource;
   public String myTodoFilterName;
+  public boolean myShowPreview;
 
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
   @NonNls private static final String ELEMENT_ARE_PACKAGES_SHOWN = "are-packages-shown";
@@ -39,6 +40,7 @@ public class TodoPanelSettings implements JDOMExternalizable {
   @NonNls private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "is-autoscroll-to-source";
   @NonNls private static final String ELEMENT_TODO_FILTER = "todo-filter";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String ELEMENT_IS_PREVIEW_ENABLED = "is-preview-enabled";
 
   public TodoPanelSettings() {
   }
@@ -54,20 +56,23 @@ public class TodoPanelSettings implements JDOMExternalizable {
   public void readExternal(Element e){
     for(Iterator i=e.getChildren().iterator();i.hasNext();){
       Element child=(Element)i.next();
-      if(ELEMENT_ARE_PACKAGES_SHOWN.equals(child.getName())){
+      final String childName = child.getName();
+      if(ELEMENT_ARE_PACKAGES_SHOWN.equals(childName)){
         myArePackagesShown=Boolean.valueOf(child.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
       }
-      else if(ELEMENT_ARE_MODULES_SHOWN.equals(child.getName())){
+      else if(ELEMENT_ARE_MODULES_SHOWN.equals(childName)){
         myAreModulesShown=Boolean.valueOf(child.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
       }
-      else if(ELEMENT_FLATTEN_PACKAGES.equals(child.getName())){
+      else if(ELEMENT_FLATTEN_PACKAGES.equals(childName)){
         myAreFlattenPackages=Boolean.valueOf(child.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
       }
-      else if(ELEMENT_AUTOSCROLL_TO_SOURCE.equals(child.getName())){
+      else if(ELEMENT_AUTOSCROLL_TO_SOURCE.equals(childName)){
         myIsAutoScrollToSource=Boolean.valueOf(child.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
       }
-      else if(ELEMENT_TODO_FILTER.equals(child.getName())){
+      else if(ELEMENT_TODO_FILTER.equals(childName)){
         myTodoFilterName=child.getAttributeValue(ATTRIBUTE_NAME);
+      } else if (ELEMENT_IS_PREVIEW_ENABLED.equals(childName)) {
+        myShowPreview = Boolean.valueOf(child.getAttributeValue(ELEMENT_IS_PREVIEW_ENABLED)).booleanValue();
       }
     }
   }
@@ -93,6 +98,12 @@ public class TodoPanelSettings implements JDOMExternalizable {
       Element todoFilterElement=new Element(ELEMENT_TODO_FILTER);
       todoFilterElement.setAttribute(ATTRIBUTE_NAME,myTodoFilterName);
       e.addContent(todoFilterElement);
+    }
+
+    if (myShowPreview) {
+      Element showPreviewElement = new Element(ELEMENT_IS_PREVIEW_ENABLED);
+      showPreviewElement.setAttribute(ATTRIBUTE_VALUE, Boolean.TRUE.toString());
+      e.addContent(showPreviewElement);
     }
   }
 
@@ -134,5 +145,13 @@ public class TodoPanelSettings implements JDOMExternalizable {
 
   public void setTodoFilterName(String todoFilterName){
     myTodoFilterName=todoFilterName;
+  }
+
+  public boolean isShowPreview() {
+    return myShowPreview;
+  }
+
+  public void setShowPreview(boolean showPreview) {
+    myShowPreview = showPreview;
   }
 }
