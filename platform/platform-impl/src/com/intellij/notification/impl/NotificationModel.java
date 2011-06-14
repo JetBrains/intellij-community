@@ -293,6 +293,11 @@ public class NotificationModel {
       myLock.release();
     }
 
+    return getMaximumType(notifications);
+  }
+
+  @Nullable
+  public static NotificationType getMaximumType(List<Notification> notifications) {
     NotificationType result = null;
     for (Notification notification : notifications) {
       if (NotificationType.ERROR == notification.getType()) {

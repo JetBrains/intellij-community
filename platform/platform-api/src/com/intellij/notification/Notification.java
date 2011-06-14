@@ -121,4 +121,8 @@ public class Notification {
   public void notify(@Nullable Project project) {
     Notifications.Bus.notify(this, project);
   }
+
+  public boolean isImportant() {
+    return getListener() != null;
+  }
 }

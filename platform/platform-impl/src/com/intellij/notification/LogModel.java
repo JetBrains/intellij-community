@@ -20,12 +20,14 @@ import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -46,12 +48,8 @@ public class LogModel {
 
       @Override
       public void notificationsRemoved(@NotNull Notification... notification) {
-        List<Notification> list = Arrays.asList(notification);
-        synchronized (myNotifications) {
-          myNotifications.removeAll(list);
-        }
-        if (list.contains(myStatusMessage)) {
-          setStatusMessage(null);
+        for (Notification notification1 : notification) {
+          removeNotification(notification1);
         }
       }
 
@@ -72,7 +70,7 @@ public class LogModel {
 
   List<Notification> takeNotifications() {
     synchronized (myNotifications) {
-      final ArrayList<Notification> result = new ArrayList<Notification>(myNotifications);
+      final ArrayList<Notification> result = getNotifications();
       myNotifications.clear();
       return result;
     }
@@ -91,4 +89,33 @@ public class LogModel {
     }
   }
 
+  public void logShown() {
+    for (Notification notification : getNotifications()) {
+      if (!notification.isImportant()) {
+        removeNotification(notification);
+      }
+    }
+  }
+
+  public ArrayList<Notification> getNotifications() {
+    synchronized (myNotifications) {
+      return new ArrayList<Notification>(myNotifications);
+    }
+  }
+
+  private void removeNotification(Notification notification) {
+    synchronized (myNotifications) {
+      myNotifications.remove(notification);
+    }
+    if (notification == getStatusMessage() && notification.isImportant()) {
+      ArrayList<Notification> notifications = getNotifications();
+      Collections.reverse(notifications);
+      setStatusMessage(ContainerUtil.find(notifications, new Condition<Notification>() {
+        @Override
+        public boolean value(Notification notification) {
+          return notification.isImportant();
+        }
+      }));
+    }
+  }
 }

@@ -16,10 +16,11 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.notification.EventLog;
+import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
-import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.notification.impl.NotificationModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -36,6 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 /**
  * @author peter
@@ -63,7 +65,7 @@ class StatusPanel extends JPanel {
         if (eventLog != null) {
           if (!eventLog.isVisible()) {
             eventLog.activate(null, true);
-            NotificationsManagerImpl.getNotificationsManagerImpl().clear(getActiveProject());
+            EventLog.getLogModel(getActiveProject()).logShown();
           } else {
             eventLog.hide(null);
           }
@@ -134,17 +136,19 @@ class StatusPanel extends JPanel {
           assert project != null;
 
           final boolean visible = eventLog.isVisible();
+          LogModel logModel = EventLog.getLogModel(project);
           if (visible) {
-            NotificationsManagerImpl.getNotificationsManagerImpl().clear(project);
+            logModel.logShown();
           }
 
-          final NotificationsManagerImpl manager = NotificationsManagerImpl.getNotificationsManagerImpl();
-          final int count = manager.count(project);
+          ArrayList<Notification> notifications = logModel.getNotifications();
 
-          final NotificationType maximumType = count > 1 ? manager.getMaximumType(project) : null;
+          final int count = notifications.size();
+
+          final NotificationType maximumType = count > 0 ? NotificationModel.getMaximumType(notifications) : null;
 
           myShowLog.setIcon(visible ? ourHideLogIcon : IdeNotificationArea.getPendingNotificationsIcon(ourShowLogIcon, maximumType));
-          myShowLog.setToolTipText(visible ? "" : count > 1 ? String.format("%s notifications pending", count) : "Click to open the event log");
+          myShowLog.setToolTipText(visible ? "" : count > 0 ? String.format("%s notifications pending", count) : "Click to open the event log");
 
           myLogAlarm.addRequest(this, 50);
         }
