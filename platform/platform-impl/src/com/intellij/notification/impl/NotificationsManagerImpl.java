@@ -70,6 +70,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   @Override
   public void expire(@NotNull Notification notification) {
+    EventLog.expire(notification);
     remove(notification);
   }
 

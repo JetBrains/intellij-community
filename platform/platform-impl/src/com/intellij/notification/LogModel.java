@@ -15,15 +15,12 @@
  */
 package com.intellij.notification;
 
-import com.intellij.notification.impl.NotificationModelListener;
 import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -40,23 +37,6 @@ public class LogModel {
 
   LogModel(@Nullable Project project) {
     myProject = project;
-
-    NotificationsManagerImpl.getNotificationsManagerImpl().addListener(new NotificationModelListener() {
-      @Override
-      public void notificationsAdded(@NotNull Notification... notification) {
-      }
-
-      @Override
-      public void notificationsRemoved(@NotNull Notification... notification) {
-        for (Notification notification1 : notification) {
-          removeNotification(notification1);
-        }
-      }
-
-      @Override
-      public void notificationsRead(@NotNull Notification... notification) {
-      }
-    }, project == null ? ApplicationManager.getApplication() : project);
   }
 
   void addNotification(Notification notification) {
@@ -103,7 +83,8 @@ public class LogModel {
     }
   }
 
-  private void removeNotification(Notification notification) {
+  void removeNotification(Notification notification) {
+    NotificationsManagerImpl.getNotificationsManagerImpl().remove(notification);
     synchronized (myNotifications) {
       myNotifications.remove(notification);
     }

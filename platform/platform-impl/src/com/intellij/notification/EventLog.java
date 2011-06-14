@@ -85,6 +85,13 @@ public class EventLog implements Notifications {
     }
   }
 
+  public static void expire(@NotNull Notification notification) {
+    getApplicationComponent().myModel.removeNotification(notification);
+    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+      getProjectComponent(p).myProjectModel.removeNotification(notification);
+    }
+  }
+
   private static EventLog getApplicationComponent() {
     return ApplicationManager.getApplication().getComponent(EventLog.class);
   }
