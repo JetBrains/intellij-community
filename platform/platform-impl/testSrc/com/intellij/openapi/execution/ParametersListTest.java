@@ -184,10 +184,5 @@ public class ParametersListTest extends UsefulTestCase {
     checkTokenizer("a\"some text with spaces \"more", new String[]{"a\"some", "text", "with", "spaces", "\"more"});
     checkTokenizer("a\"some text with spaces \"more next\"text moreText\"end c", new String[]{"a\"some", "text", "with", "spaces", "\"more",
       "next\"text", "moreText\"end", "c"});
-
-    checkTokenizer("\"\"C:\\phing.bat\"",
-                   new String[]{"\"\"C:\\phing.bat\""});
-   checkTokenizer("-Dparam=\"some text main\"\"",
-                   new String[]{"-Dparam=\"some", "text", "main\"\""});
   }
 }
