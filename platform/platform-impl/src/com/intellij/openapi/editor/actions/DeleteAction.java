@@ -101,8 +101,9 @@ public class DeleteAction extends EditorAction {
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     int afterLineEnd = EditorModificationUtil.calcAfterLineEnd(editor);
     Document document = editor.getDocument();
+    int offset = editor.getCaretModel().getOffset();
+    if (!EditorActionUtil.canEditAtOffset(editor, offset + 1)) return;
     if (afterLineEnd < 0) {
-      int offset = editor.getCaretModel().getOffset();
       FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
       if (region != null && region.shouldNeverExpand()) {
         document.deleteString(region.getStartOffset(), region.getEndOffset());

@@ -34,11 +34,12 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EditorPopupHandler;
-import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -88,7 +89,10 @@ public class EditorActionUtil {
     //editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     VisualPosition caretPos = editor.getCaretModel().getVisualPosition();
     Point caretLocation2 = editor.visualPositionToXY(caretPos);
-    editor.getScrollingModel().scrollVertically(caretLocation2.y - caretVShift);
+    final boolean scrollToCaret = !(editor instanceof EditorImpl) || ((EditorImpl)editor).isScrollToCaret();
+    if (scrollToCaret) {
+      editor.getScrollingModel().scrollVertically(caretLocation2.y - caretVShift);
+    }
   }
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
@@ -661,5 +665,16 @@ public class EditorActionUtil {
         }
       }
     };
+  }
+
+  public static boolean canEditAtOffset(Editor editor, int offset) {
+    final Pair<String,String> markers = editor.getUserData(EditorImpl.EDITABLE_AREA_MARKER);
+    if (markers != null) {
+      final String text = editor.getDocument().getText();
+      final int start = text.indexOf(markers.first) + markers.first.length();
+      final int end = text.indexOf(markers.second);
+      return start <= offset && offset < end;
+    }
+    return true;
   }
 }

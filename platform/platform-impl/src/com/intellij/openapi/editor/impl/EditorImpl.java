@@ -123,6 +123,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
+  public static final Key<Pair<String, String>> EDITABLE_AREA_MARKER = Key.create("editable.area.marker");
   private final DocumentImpl myDocument;
 
   private final JPanel myPanel;
@@ -267,6 +268,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   
   private boolean myStickySelection;
   private int myStickySelectionStart;
+  private boolean myScrollToCaret = true;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -1445,6 +1447,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int scrollOffset = caretLocation.y - myCaretUpdateVShift;
       getScrollingModel().scrollVertically(scrollOffset);
     }
+  }
+
+  public boolean isScrollToCaret() {
+    return myScrollToCaret;
+  }
+
+  public void setScrollToCaret(boolean scrollToCaret) {
+    myScrollToCaret = scrollToCaret;
   }
 
   private static int countLineFeeds(CharSequence c) {

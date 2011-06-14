@@ -65,6 +65,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private TextAttributes myTextAttributes;
   private boolean myIsInUpdate;
   private RangeMarker savedBeforeBulkCaretMarker;
+  private boolean ignoreWrongMoves = false;
 
   /**
    * There is a possible case that user defined non-monospaced font for editor. That means that various symbols have different
@@ -182,12 +183,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     assertIsDispatchThread();
     validateCallContext();
     moveToLogicalPosition(myEditor.offsetToLogicalPosition(offset), locateBeforeSoftWrap);
-    if (!myEditor.offsetToLogicalPosition(myOffset).equals(myEditor.offsetToLogicalPosition(offset))) {
+    if (!ignoreWrongMoves && !myEditor.offsetToLogicalPosition(myOffset).equals(myEditor.offsetToLogicalPosition(offset))) {
       LOG.error(
         "caret moved to wrong offset. Requested:" + offset + " but actual:" + myOffset 
         + ". Soft wraps data: " + myEditor.getSoftWrapModel() + ", folding data: " + myEditor.getFoldingModel()
         + ", document:\n" + myEditor.getDocument().getText());
     }
+  }
+
+  public void setIgnoreWrongMoves(boolean ignoreWrongMoves) {
+    this.ignoreWrongMoves = ignoreWrongMoves;
   }
 
   public void moveCaretRelatively(int columnShift,
@@ -525,7 +530,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   public void documentChanged(DocumentEvent e) {
-    myIsInUpdate = false;
+    finishUpdate();
 
     DocumentEventImpl event = (DocumentEventImpl)e;
     final Document document = myEditor.getDocument();
@@ -577,6 +582,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
     myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+  }
+
+  public void finishUpdate() {
+    myIsInUpdate = false;
   }
 
   private boolean needToShiftWhiteSpaces(final DocumentEvent e) {
