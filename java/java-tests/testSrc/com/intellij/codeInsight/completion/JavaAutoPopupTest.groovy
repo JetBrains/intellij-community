@@ -436,7 +436,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   }
 
-  void testArrows(boolean cycleScrolling, boolean lookupAbove, int indexDown, indexUp) {
+  void testArrows(boolean cycleScrolling, boolean lookupAbove, int indexDown, int indexUp) {
     testArrow true, cycleScrolling, lookupAbove, indexUp
     testArrow false, cycleScrolling, lookupAbove, indexDown
   }
@@ -691,6 +691,18 @@ class Foo {
     myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { foo(<caret>) } } """)
     type 'aaa,'
     assert myFixture.editor.document.text.contains('foo(aaa,)')
+  }
+
+  public void testNonFinishedVariableEq() {
+    myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { <caret> } } """)
+    type 'a='
+    assert myFixture.editor.document.text.contains('aaa = ')
+  }
+
+  public void testFinishedVariableEq() {
+    myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { <caret> } } """)
+    type 'aaa='
+    assert myFixture.editor.document.text.contains('aaa=')
   }
 
   public void testCompletionWhenLiveTemplateAreNotSufficient() {
