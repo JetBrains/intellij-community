@@ -150,6 +150,10 @@ public interface PopupComponent {
         JRootPane rootPane = ((JWindow)wnd).getRootPane();
         if (rootPane != null) {
           ReflectionUtil.resetField(rootPane, "clientProperties");
+          final Container cp = rootPane.getContentPane();
+          if (cp != null) {
+            cp.removeAll();
+          }
         }
       }
     }
