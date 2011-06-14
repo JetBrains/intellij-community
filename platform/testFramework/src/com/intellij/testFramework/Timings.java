@@ -26,7 +26,6 @@ import java.math.BigInteger;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class Timings {
-  private static final int CPU_PROBES = 1000000;
   private static final int IO_PROBES = 42;
 
   public static final long CPU_TIMING;
@@ -42,13 +41,21 @@ public class Timings {
 
 
   static {
-    long start = System.currentTimeMillis();
-    BigInteger k = new BigInteger("1");
-    for (int i = 0; i < CPU_PROBES; i++) {
-      k = k.add(new BigInteger("1"));
+    int N = 20;
+    for (int i=0; i<N; i++) {
+      long m = measureCPU();//warmup
+      System.out.println("warmup m = " + m);
     }
-    CPU_TIMING = System.currentTimeMillis() - start;
+    long elapsed=0;
+    for (int i=0; i< N; i++) {
+      long m = measureCPU();
+      elapsed += m;
+    }
+    elapsed /= N;
+    System.out.println("elapsed = " + elapsed);
+    CPU_TIMING = elapsed;
 
+    long start;
     start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {
       try {
@@ -96,6 +103,17 @@ public class Timings {
     MACHINE_TIMING = CPU_TIMING + IO_TIMING;
   }
 
+  private static long measureCPU() {
+    long start = System.currentTimeMillis();
+
+    BigInteger k = new BigInteger("1");
+    for (int i = 0; i < 1000000; i++) {
+      k = k.add(new BigInteger("1"));
+    }
+
+    return System.currentTimeMillis() - start;
+  }
+
   /**
    * @param value
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
@@ -105,10 +123,10 @@ public class Timings {
   }
 
   public static String getStatistics() {
-                         return
-                           " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
-                      ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
-                      ", total=" + MACHINE_TIMING + " ("+(int)(MACHINE_TIMING*1.0/ ETALON_TIMING*100) + "% of the etalon)" +
-                      ".";
+    return
+      " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
+      ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
+      ", total=" + MACHINE_TIMING + " ("+(int)(MACHINE_TIMING*1.0/ ETALON_TIMING*100) + "% of the etalon)" +
+      ".";
   }
 }

@@ -33,6 +33,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -183,6 +185,8 @@ public class PlatformTestUtil {
   @TestOnly
   public static void waitForAlarm(final int delay) throws InterruptedException {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
+    assert ApplicationManager.getApplication().isDispatchThread();
+
     final AtomicBoolean invoked = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     alarm.addRequest(new Runnable() {
@@ -405,11 +409,14 @@ public class PlatformTestUtil {
     }
   }
 
+  /**
+   * example usage: startPerformanceTest(100, testRunnable).cpuBound().assertTiming();
+   */
   public static TestInfo startPerformanceTest(int expected, @NotNull ThrowableRunnable test) {
-    return new TestInfo(test, expected);
+    return startPerformanceTest("",expected, test);
   }
   public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expected, @NotNull ThrowableRunnable test) {
-    return startPerformanceTest(expected, test).message(message);
+    return new TestInfo(test, expected,message);
   }
   public static class TestInfo {
     private final ThrowableRunnable test; // runnable to measure
@@ -417,13 +424,14 @@ public class PlatformTestUtil {
     private ThrowableRunnable setup;      // to run before each test
     private boolean usesAllCPUCores;      // true if the test runs faster on multicore
     private int attempts = 4;             // number of retries if performance failed
-    private String message="";            // to print on fail
+    private final String message;         // to print on fail
     private boolean adjustForIO = true;   // true if test uses IO, timings need to be recalibrated according to this agent disk performance
     private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be recalibrated according to this agent CPU speed
 
-    private TestInfo(@NotNull ThrowableRunnable test, int expected) {
+    private TestInfo(@NotNull ThrowableRunnable test, int expected, String message) {
       this.test = test;
       this.expected = expected;
+      this.message = message;
     }
 
     public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
@@ -431,7 +439,6 @@ public class PlatformTestUtil {
     public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
     public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }
     public TestInfo attempts(int attempts) { this.attempts = attempts; return this; }
-    public TestInfo message(@NonNls @NotNull String message) { assert this.message==""; this.message = message; return this; }
 
     public void assertTiming() {
       assert expected != 0 : "Must call .expect() before run test";
@@ -453,11 +460,12 @@ public class PlatformTestUtil {
 
         int expectedOnMyMachine = expected;
         if (adjustForCPU) {
-          expectedOnMyMachine = Math.max(1, (int)(1.0 * expectedOnMyMachine * Timings.CPU_TIMING / Timings.ETALON_CPU_TIMING));
+          // most of our algorithms are quadratic. sad but true.
+          expectedOnMyMachine = Math.max(1, (int)(expectedOnMyMachine * (0.907 + Math.pow(1.0 * Timings.CPU_TIMING / Timings.ETALON_CPU_TIMING - 0.695,2))));
           expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 / JobSchedulerImpl.CORES_COUNT : expectedOnMyMachine;
         }
         if (adjustForIO) {
-          expectedOnMyMachine = Math.max(1, (int)(1.0 * expectedOnMyMachine * Timings.IO_TIMING / Timings.ETALON_IO_TIMING));
+          expectedOnMyMachine = Math.max(1, (int)(1.0 * expectedOnMyMachine * (1 + Math.pow(1.0 * Timings.IO_TIMING / Timings.ETALON_IO_TIMING - 1,2))));
         }
         final double acceptableChangeFactor = 1.1;
 
@@ -470,6 +478,9 @@ public class PlatformTestUtil {
         logMessage += " Expected: " + expectedOnMyMachine + "." +
                       " Actual: " + duration + "." + Timings.getStatistics() ;
         if (duration < expectedOnMyMachine) {
+          int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
+          logMessage = "(" + percentage + "% faster). " + logMessage;
+
           TeamCityLogger.info(logMessage);
           System.out.println("SUCCESS: "+logMessage);
         }
@@ -597,24 +608,41 @@ public class PlatformTestUtil {
     catch (IOException e) {
       FileDocumentManager manager = FileDocumentManager.getInstance();
       Document docBefore = manager.getDocument(fileBefore);
+      boolean canLoadBeforeText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
+      String textB = docBefore == null ? !canLoadBeforeText ? null : LoadTextUtil.getTextByBinaryPresentation(fileBefore.contentsToByteArray(false), fileBefore).toString() : docBefore.getText();
       Document docAfter = manager.getDocument(fileAfter);
-      if (docBefore != null && docAfter != null) {
-        Assert.assertEquals(fileAfter.getPath(), docAfter.getText(), docBefore.getText());
-      } else {
+      boolean canLoadAfterText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
+      String textA = docAfter == null ? !canLoadAfterText ? null : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString() : docAfter.getText();
+      if (textA != null && textB != null) {
+        Assert.assertEquals(fileAfter.getPath(), textA, textB);
+      }
+      else {
         Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
       }
     }
   }
 
   public static void assertJarFilesEqual(File file1, File file2) throws IOException {
-    final JarFile jarFile1 = new JarFile(file1);
-    final JarFile jarFile2 = new JarFile(file2);
-    final File tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
-    final File tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
-    ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
-    ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
-    jarFile1.close();
-    jarFile2.close();
+    JarFile jarFile1 = null;
+    JarFile jarFile2 = null;
+    final File tempDirectory1;
+    final File tempDirectory2;
+    try {
+      jarFile2 = new JarFile(file2);
+      jarFile1 = new JarFile(file1);
+      tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
+      tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
+      ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
+      ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
+    }
+    finally {
+      if (jarFile1 != null) {
+        jarFile1.close();
+      }
+      if (jarFile2 != null) {
+        jarFile2.close();
+      }
+    }
     final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -647,7 +675,7 @@ public class PlatformTestUtil {
 
     @Override
     public boolean accept(File dir, String name) {
-      return name.indexOf("CVS") == -1;
+      return !name.contains("CVS");
     }
   }
 }
