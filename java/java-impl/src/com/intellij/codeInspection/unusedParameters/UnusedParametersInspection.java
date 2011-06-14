@@ -256,20 +256,10 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
           final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
           final long startModificationCount = tracker.getModificationCount();
 
-          Runnable runnable = new Runnable() {
-            public void run() {
-              if (!psiMethod.isValid()) return;
-              removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
-              if (startModificationCount != tracker.getModificationCount()) {
-                myProcessor.ignoreElement(refMethod);
-              }
-            }
-          };
-          //move refactoring progress out of write action
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            runnable.run();
-          } else {
-            ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+          if (!psiMethod.isValid()) return;
+          removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
+          if (startModificationCount != tracker.getModificationCount()) {
+            myProcessor.ignoreElement(refMethod);
           }
         }
       }

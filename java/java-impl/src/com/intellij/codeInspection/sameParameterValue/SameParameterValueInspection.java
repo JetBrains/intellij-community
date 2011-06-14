@@ -170,17 +170,7 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
         return;
       }
       final PsiParameter parameterToInline = parameter;
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        inlineSameParameterValue(method, parameterToInline, defToInline);
-      } else {
-        //move change signature from write action
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            inlineSameParameterValue(method, parameterToInline, defToInline);
-          }
-        }, project.getDisposed());
-      }
+      inlineSameParameterValue(method, parameterToInline, defToInline);
     }
 
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {

@@ -74,16 +74,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
                      @NotNull PsiElement endElement) {
     final PsiParameter myParameter = (PsiParameter)startElement;
     if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
-    Runnable runnable = new Runnable() {
-      public void run() {
-        removeReferences(myParameter);
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-    }
+    removeReferences(myParameter);
   }
 
   private static void removeReferences(PsiParameter parameter) {

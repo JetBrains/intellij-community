@@ -98,26 +98,17 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
       }
 
       final PsiMethod finalMethod = method;
-      Runnable runnable = new Runnable() {
-        public void run() {
-          ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project,
-                                                                            finalMethod,
-                                                                            false, null,
-                                                                            finalMethod.getName(),
-                                                                            finalMethod.getReturnType(),
-                                                                            getNewParametersInfo(finalMethod));
+      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project,
+                                                                        finalMethod,
+                                                                        false, null,
+                                                                        finalMethod.getName(),
+                                                                        finalMethod.getReturnType(),
+                                                                        getNewParametersInfo(finalMethod));
 
-          processor.run();
+      processor.run();
 
 
-          UndoUtil.markPsiFileForUndo(file);
-        }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();
-      } else {
-        ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-      }
+      UndoUtil.markPsiFileForUndo(file);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
