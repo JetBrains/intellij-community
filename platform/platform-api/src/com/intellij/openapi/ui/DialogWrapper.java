@@ -54,6 +54,7 @@ import java.util.List;
  * In case when the dialog must be created from other threads use
  * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}.
  */
+@SuppressWarnings({"SSBasedInspection", "MethodMayBeStatic", "UnusedDeclaration"})
 public abstract class DialogWrapper {
   /**
    * The default exit code for "OK" action.
@@ -184,8 +185,9 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @param parent parent component whicg is used to canculate heavy weight window ancestor.
+   * @param parent parent component which is used to calculate heavy weight window ancestor.
    *               <code>parent</code> cannot be <code>null</code> and must be showing.
+   * @param canBeParent can be parent
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   protected DialogWrapper(Component parent, boolean canBeParent) {
@@ -275,23 +277,14 @@ public abstract class DialogWrapper {
     myPeer.setUndecorated(undecorated);
   }
 
-  /**
-   * @see java.awt.Component#addMouseListener
-   */
   public final void addMouseListener(MouseListener listener) {
     myPeer.addMouseListener(listener);
   }
 
-  /**
-   * @see java.awt.Component#addMouseMotionListener
-   */
   public final void addMouseListener(MouseMotionListener listener) {
     myPeer.addMouseListener(listener);
   }
 
-  /**
-   * @see java.awt.Component#addKeyListener
-   */
   public final void addKeyListener(KeyListener listener) {
     myPeer.addKeyListener(listener);
   }
@@ -299,6 +292,8 @@ public abstract class DialogWrapper {
   /**
    * Closes and disposes the dialog and sets the specified exit code.
    *
+   * @param exitCode exit code
+   * @param isOk is OK
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   public final void close(int exitCode, boolean isOk) {
@@ -323,8 +318,10 @@ public abstract class DialogWrapper {
   /**
    * Factory method. It creates border for dialog's content pane. By default content
    * pane has has empty border with <code>(8,8,8,8)</code> insets. The subclasses can
-   * retirn <code>null</code> in overridden methods. In this case there will be no
+   * return <code>null</code> in overridden methods. In this case there will be no
    * any border in the content pane.
+   *
+   * @return content pane border
    */
   @Nullable
   protected Border createContentPaneBorder() {
@@ -335,6 +332,8 @@ public abstract class DialogWrapper {
    * This is factory method. It creates the panel located at the south of the content pane. By default that
    * panel contains dialog's buttons. This default implementation uses <code>createActions()</code>
    * and <code>createJButtonForAction(Action)</code> methods to construct the panel.
+   *
+   * @return south panel
    */
   @Nullable
   protected JComponent createSouthPanel() {
@@ -394,7 +393,6 @@ public abstract class DialogWrapper {
 
     if (myDoNotAsk != null) {
       myCheckBoxDoNotShowDialog = new JCheckBox(myDoNotAsk.getDoNotShowMessage());
-
       JComponent southPanel = panel;
 
       if (!myDoNotAsk.canBeHidden()) {
@@ -463,6 +461,9 @@ public abstract class DialogWrapper {
    * Creates <code>JButton</code> for the specified action. If the button has not <code>null</code>
    * value for <code>DialogWrapper.DEFAULT_ACTION</code> key then the created button will be the
    * default one for the dialog.
+   *
+   * @param action action for the button
+   * @return button with action specified
    *
    * @see com.intellij.openapi.ui.DialogWrapper#DEFAULT_ACTION
    */
@@ -548,6 +549,8 @@ public abstract class DialogWrapper {
    * Factory method. It creates the panel located at the
    * north of the dialog's content pane. The implementation can return <code>null</code>
    * value. In this case there will be no input panel.
+   *
+   * @return north panel
    */
   @Nullable
   protected JComponent createNorthPanel() {
@@ -558,6 +561,8 @@ public abstract class DialogWrapper {
    * Factory method. It creates panel with dialog options. Options panel is located at the
    * center of the dialog's content pane. The implementation can return <code>null</code>
    * value. In this case there will be no options panel.
+   *
+   * @return center panel
    */
   @Nullable
   protected abstract JComponent createCenterPanel();
@@ -652,7 +657,7 @@ public abstract class DialogWrapper {
    * You can use this method if you want to know by which event this actions got triggered. It is called only if
    * the cancel action was triggered by some input event, <code>doCancelAction</code> is called otherwise.
    *
-   * @param source
+   * @param source AWT event
    * @see #doCancelAction
    */
   public void doCancelAction(AWTEvent source) {
@@ -709,6 +714,8 @@ public abstract class DialogWrapper {
    * method returns "OK" and "Cancel" action. The help action is automatically added is if
    * {@link #getHelpId()} returns non null value.
    *
+   * @return dialog actions
+   *
    * @see #createSouthPanel
    * @see #createJButtonForAction
    */
@@ -761,9 +768,13 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * Returns content pane
+   *
+   * @return content pane
    * @see javax.swing.JDialog#getContentPane
    */
   public Container getContentPane() {
+    assert myPeer != null;
     return myPeer.getContentPane();
   }
 
@@ -785,12 +796,16 @@ public abstract class DialogWrapper {
    * This is factory method. It returns key for installation into the dimension service.
    * If this method returns <code>null</code> then the component does not require installation
    * into dimension service. This default implementation returns <code>null</code>.
+   *
+   * @return dimension service key
    */
+  @Nullable
   @NonNls
   protected String getDimensionServiceKey() {
     return null;
   }
 
+  @Nullable
   public final String getDimensionKey() {
     return getDimensionServiceKey();
   }
@@ -836,6 +851,7 @@ public abstract class DialogWrapper {
 
   /**
    * @see java.awt.Window#getOwner
+   * @return window owner
    */
   public Window getOwner() {
     return myPeer.getOwner();
@@ -847,6 +863,7 @@ public abstract class DialogWrapper {
 
   /**
    * @see javax.swing.JDialog#getRootPane
+   * @return root pane
    */
   public JRootPane getRootPane() {
     return myPeer.getRootPane();
@@ -854,6 +871,7 @@ public abstract class DialogWrapper {
 
   /**
    * @see java.awt.Window#getSize
+   * @return dialog size
    */
   public Dimension getSize() {
     return myPeer.getSize();
@@ -861,6 +879,7 @@ public abstract class DialogWrapper {
 
   /**
    * @see java.awt.Dialog#getTitle
+   * @return dialog title
    */
   public String getTitle() {
     return myPeer.getTitle();
@@ -1004,7 +1023,8 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Sets margine for command buttons ("OK", "Cance", "Help").
+   * Sets margin for command buttons ("OK", "Cancel", "Help").
+   * @param insets buttons margin
    */
   public final void setButtonsMargin(@Nullable Insets insets) {
     myButtonMargins = insets;
@@ -1090,6 +1110,7 @@ public abstract class DialogWrapper {
 
   /**
    * @see java.awt.Component#isVisible
+   * @return <code>true</code> if and only if visible
    */
   public boolean isVisible() {
     return myPeer.isVisible();
@@ -1097,12 +1118,15 @@ public abstract class DialogWrapper {
 
   /**
    * @see java.awt.Window#isShowing
+   * @return <code>true</code> if and only if showing
    */
   public boolean isShowing() {
     return myPeer.isShowing();
   }
 
   /**
+   * @param width width
+   * @param height height
    * @see javax.swing.JDialog#setSize
    */
   public void setSize(int width, int height) {
@@ -1110,6 +1134,7 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * @param title title
    * @see javax.swing.JDialog#setTitle
    */
   public void setTitle(String title) {
@@ -1124,6 +1149,7 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * @param resizable is resizable
    * @see javax.swing.JDialog#setResizable
    */
   public void setResizable(boolean resizable) {
@@ -1132,12 +1158,14 @@ public abstract class DialogWrapper {
 
   /**
    * @see javax.swing.JDialog#getLocation
+   * @return dialog location
    */
   public Point getLocation() {
     return myPeer.getLocation();
   }
 
   /**
+   * @param p new dialog location
    * @see javax.swing.JDialog#setLocation(Point)
    */
   public void setLocation(Point p) {
@@ -1145,6 +1173,8 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * @param x x
+   * @param y y
    * @see javax.swing.JDialog#setLocation(int,int)
    */
   public void setLocation(int x, int y) {
@@ -1313,6 +1343,8 @@ public abstract class DialogWrapper {
      * Do actual work for the action. This method is called only if no other action
      * is performed in parallel (checked using {@link com.intellij.openapi.ui.DialogWrapper#myPerformAction}),
      * and dialog is active (checked using {@link com.intellij.openapi.ui.DialogWrapper#myClosed})
+     *
+     * @param e action
      */
     protected abstract void doAction(ActionEvent e);
   }
@@ -1450,7 +1482,7 @@ public abstract class DialogWrapper {
       }
     }
 
-    public boolean isTextSet(String text) {
+    public boolean isTextSet(@Nullable String text) {
       return StringUtil.equals(text, myText);
     }
 
@@ -1530,7 +1562,7 @@ public abstract class DialogWrapper {
       return true;
     }
 
-    public void setValidationInfo(ValidationInfo info) {
+    public void setValidationInfo(@Nullable ValidationInfo info) {
       myInfo = info;
     }
   }
@@ -1541,7 +1573,7 @@ public abstract class DialogWrapper {
     public final String message;
     public final JComponent component;
 
-    public ValidationInfo(@NotNull String message, JComponent component) {
+    public ValidationInfo(@NotNull String message, @Nullable JComponent component) {
       this.message = message;
       this.component = component;
     }
