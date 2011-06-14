@@ -30,6 +30,7 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
   private Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
   private TextFieldWithBrowseButton myWorkDir;
+  private JCheckBox txtIsRst;
 
   public PyIntegratedToolsConfigurable(Project project) {
     myProject = project;
@@ -40,6 +41,7 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
     myWorkDir.addBrowseFolderListener("Please choose working directory:", null, project, fileChooserDescriptor);
     ReSTService service = ReSTService.getInstance(myProject);
     myWorkDir.setText(service.getWorkdir());
+    txtIsRst.setSelected(service.txtIsRst());
   }
 
   @Nls
@@ -81,6 +83,8 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
     }
     if (!ReSTService.getInstance(myProject).getWorkdir().equals(myWorkDir.getText()))
       return true;
+    if (!ReSTService.getInstance(myProject).txtIsRst() == txtIsRst.isSelected())
+      return true;
     return false;
   }
 
@@ -89,6 +93,7 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
     myModel.apply();
     myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
     ReSTService.getInstance(myProject).setWorkdir(myWorkDir.getText());
+    ReSTService.getInstance(myProject).setTxtIsRst(txtIsRst.isSelected());
   }
 
   @Override
@@ -98,6 +103,7 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
     myModel.reset();
     myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
     myWorkDir.setText(ReSTService.getInstance(myProject).getWorkdir());
+    txtIsRst.setSelected(ReSTService.getInstance(myProject).txtIsRst());
   }
 
   @Override

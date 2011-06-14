@@ -65,10 +65,7 @@ class TestBase(unittest.TestCase):
       pass
 
     def runTest(self):
-      try:
-        self.test(*self.arg)
-      except TypeError:
-        raise TypeError("Test method shouldn't have arguments")
+      self.test(*self.arg)
 
 class FunctionTestCase(TestBase):
     """TestCase wrapper for test functions.
