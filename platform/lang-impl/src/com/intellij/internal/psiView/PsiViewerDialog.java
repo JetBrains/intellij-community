@@ -55,12 +55,14 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -105,7 +107,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private JList myRefs;
 
   private final Set<SourceWrapper> mySourceWrappers = Sets.newTreeSet();
-  private EditorEx myEditor;
+  private final EditorEx myEditor;
   private final EditorListener myEditorListener = new EditorListener();
   private String myLastParsedText = null;
   private int myLastParsedTextHashCode = 17;
@@ -176,6 +178,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     setModal(modal);
     setOKButtonText("&Build PSI Tree");
     setCancelButtonText("&Close");
+    final Document document = EditorFactory.getInstance().createDocument("");
+    myEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject);
+
     init();
   }
 
@@ -238,11 +243,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       }
     });
 
-    final EditorFactory editorFactory = EditorFactory.getInstance();
-    final Document document = editorFactory.createDocument("");
-    myEditor = (EditorEx)editorFactory.createEditor(document, myProject);
     myEditor.getSettings().setFoldingOutlineShown(false);
-    document.addDocumentListener(myEditorListener);
+    myEditor.getDocument().addDocumentListener(myEditorListener);
     myEditor.getSelectionModel().addSelectionListener(myEditorListener);
     myEditor.getCaretModel().addCaretListener(myEditorListener);
 
@@ -332,6 +334,12 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       public void actionPerformed(ActionEvent e) {
         updateDialectsCombo(null);
         updateExtensionsCombo();
+        updateEditor();
+      }
+    });
+    myDialectComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
         updateEditor();
       }
     });
@@ -882,12 +890,24 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   }
 
   private void updateEditor() {
-    // todo: consider dialect here
     final Object source = getSource();
-    final FileType fileType = source instanceof FileType ? (FileType)source :
-                              source instanceof PsiViewerExtension ? ((PsiViewerExtension)source).getDefaultFileType() :
-                              PlainTextFileType.INSTANCE;
-    myEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, fileType));
+
+    final String fileName = "Dummy." + (source instanceof FileType? ((FileType)source).getDefaultExtension() : "txt");
+    final LightVirtualFile lightFile;
+    if (source instanceof PsiViewerExtension) {
+      lightFile = new LightVirtualFile(fileName, ((PsiViewerExtension)source).getDefaultFileType(), "");
+    }
+    else if (source instanceof LanguageFileType) {
+      lightFile = new LightVirtualFile(fileName, ObjectUtils
+        .chooseNotNull((Language)myDialectComboBox.getSelectedItem(), ((LanguageFileType)source).getLanguage()), "");
+    }
+    else if (source instanceof FileType) {
+      lightFile = new LightVirtualFile(fileName, (FileType)source, "");
+    }
+    else {
+      return;
+    }
+    myEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, lightFile));
   }
 
   private class EditorListener implements CaretListener, SelectionListener, DocumentListener {
