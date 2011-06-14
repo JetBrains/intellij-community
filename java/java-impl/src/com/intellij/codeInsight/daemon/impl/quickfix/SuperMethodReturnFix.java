@@ -84,6 +84,6 @@ public class SuperMethodReturnFix implements IntentionAction {
   }
 
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }
