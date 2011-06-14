@@ -97,7 +97,9 @@ class PyDBFrame:
                     if mainDebugger.django_exception_break and get_exception_name(exception) in ['django.template.base.VariableDoesNotExist', 'django.template.base.TemplateDoesNotExist', 'django.template.base.TemplateSyntaxError'] and just_raised(frame):
                         render_frame = find_django_render_frame(frame)
                         if render_frame:
-                            suspend_frame = suspend_django(self, mainDebugger, thread, render_frame)
+                            suspend_frame = suspend_django(self, mainDebugger, thread, render_frame, CMD_ADD_DJANGO_EXCEPTION_BREAK)
+                            thread.additionalInfo.message = 'VariableDoesNotExist'
+
                             if suspend_frame:
                                 suspend_frame.f_back = frame
                                 frame = suspend_frame
