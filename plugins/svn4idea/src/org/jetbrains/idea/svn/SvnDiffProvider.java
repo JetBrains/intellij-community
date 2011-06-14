@@ -72,7 +72,7 @@ public class SvnDiffProvider implements DiffProvider {
     final SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
 
     if (! SVNRevision.HEAD.equals(svnRevision)) {
-      if (getCurrentRevision(selectedFile).equals(selectedFile)) {
+      if (revisionNumber.equals(getCurrentRevision(selectedFile))) {
         return SvnContentRevision.createBaseRevision(myVcs, filePath, svnRevision);
       }
     }
