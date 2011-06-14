@@ -418,6 +418,19 @@ public class PlatformTestUtil {
   public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expected, @NotNull ThrowableRunnable test) {
     return new TestInfo(test, expected,message);
   }
+
+  // calculates average of the median values in the selected part of the array. E.g. for part=3 returns average in the middle third.
+  public static long averageAmongMedians(@NotNull long[] time, int part) {
+    assert part >= 1;
+    int n = time.length;
+    Arrays.sort(time);
+    long total = 0;
+    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
+      total += time[i];
+    }
+    return total/(n / part);
+  }
+
   public static class TestInfo {
     private final ThrowableRunnable test; // runnable to measure
     private final int expected;           // millis the test is expected to run

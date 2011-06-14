@@ -43,20 +43,15 @@ public class Timings {
   static {
     int N = 20;
     for (int i=0; i<N; i++) {
-      long m = measureCPU();//warmup
-      System.out.println("warmup m = " + m);
+      measureCPU(); //warmup
     }
-    long elapsed=0;
+    long[] elapsed=new long[N];
     for (int i=0; i< N; i++) {
-      long m = measureCPU();
-      elapsed += m;
+      elapsed[i] = measureCPU();
     }
-    elapsed /= N;
-    System.out.println("elapsed = " + elapsed);
-    CPU_TIMING = elapsed;
+    CPU_TIMING = PlatformTestUtil.averageAmongMedians(elapsed, 2);
 
-    long start;
-    start = System.currentTimeMillis();
+    long start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {
       try {
         final File tempFile = FileUtil.createTempFile("test", "test" + i);
