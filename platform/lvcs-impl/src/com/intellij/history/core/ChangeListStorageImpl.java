@@ -136,9 +136,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
                                                     ShowFilePathAction.open(file, new File(logFile));
                                                   }
                                                 }
-                                              }),
-                             NotificationDisplayType.STICKY_BALLOON,
-                             null);
+                                              }), null);
   }
 
   public synchronized void close() {

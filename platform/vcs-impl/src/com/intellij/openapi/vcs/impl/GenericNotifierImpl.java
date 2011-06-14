@@ -117,19 +117,7 @@ public abstract class GenericNotifierImpl<T, Key> {
       notification = new MyNotification<T>(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj, getToString(obj));
       myState.put(key, notification);
     }
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      Notifications.Bus.notify(notification, NotificationDisplayType.STICKY_BALLOON, myProject);
-    } else {
-      application.invokeLater(new Runnable() {
-        public void run() {
-          synchronized (myLock) {
-            if (notification.isExpired() || ! myState.containsKey(getKey(notification.getObj()))) return;
-          }
-          Notifications.Bus.notify(notification, NotificationDisplayType.STICKY_BALLOON, myProject);
-        }
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
-    }
+    Notifications.Bus.notify(notification, myProject);
   }
 
   public void removeLazyNotificationByKey(final Key key) {

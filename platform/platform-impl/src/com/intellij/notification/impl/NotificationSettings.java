@@ -59,7 +59,7 @@ public class NotificationSettings {
   @Nullable
   public static NotificationSettings load(@NotNull final Element element) {
     final String displayTypeString = element.getAttributeValue("displayType");
-    NotificationDisplayType displayType = NotificationDisplayType.STICKY_BALLOON;
+    NotificationDisplayType displayType = NotificationDisplayType.BALLOON;
     boolean shouldLog = !"false".equals(element.getAttributeValue("shouldLog"));
     if ("BALLOON_ONLY".equals(displayTypeString)) {
       shouldLog = false;
@@ -83,7 +83,7 @@ public class NotificationSettings {
 
     result.setAttribute("groupId", getGroupId());
     final NotificationDisplayType displayType = getDisplayType();
-    if (displayType != NotificationDisplayType.STICKY_BALLOON) {
+    if (displayType != NotificationDisplayType.BALLOON) {
       result.setAttribute("displayType", displayType.toString());
     }
     if (!myShouldLog) {

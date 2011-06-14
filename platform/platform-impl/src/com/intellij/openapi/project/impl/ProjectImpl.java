@@ -465,7 +465,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     final UnableToSaveProjectNotification[] notifications =
       NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
     if (notifications.length == 0) {
-      Notifications.Bus.notify(new UnableToSaveProjectNotification(project, readOnlyFiles), NotificationDisplayType.STICKY_BALLOON, project);
+      Notifications.Bus.notify(new UnableToSaveProjectNotification(project, readOnlyFiles), project);
     }
   }
 

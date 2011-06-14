@@ -98,7 +98,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   @NotNull
   public static NotificationSettings getSettings(@NotNull final String groupId) {
     final NotificationSettings settings = getNotificationsConfiguration()._getSettings(groupId);
-    return settings == null ? new NotificationSettings(groupId, NotificationDisplayType.STICKY_BALLOON, true) : settings;
+    return settings == null ? new NotificationSettings(groupId, NotificationDisplayType.BALLOON, true) : settings;
   }
 
   @NotNull

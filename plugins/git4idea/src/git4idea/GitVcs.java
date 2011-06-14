@@ -82,7 +82,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public static final NotificationGroup NOTIFICATION_GROUP_ID = new NotificationGroup("Git Messages", NotificationDisplayType.NONE, true);
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup("Git Important Errors", NotificationDisplayType.STICKY_BALLOON, true);
+  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup("Git Important Errors", NotificationDisplayType.BALLOON, true);
   public static final String NAME = "Git"; // Vcs name
 
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());

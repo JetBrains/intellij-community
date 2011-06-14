@@ -162,7 +162,7 @@ public class StartupManagerImpl extends StartupManagerEx {
               BrowserUtil.launchBrowser(event.getURL().toString());
             }
           });
-        Notifications.Bus.notify(n, NotificationDisplayType.STICKY_BALLOON, null);
+        Notifications.Bus.notify(n, null);
       }
     }
 

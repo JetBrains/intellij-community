@@ -19,7 +19,6 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
@@ -286,16 +285,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             }
             // it is not modal warning at all
             //Messages.showWarningDialog(myProject, message, ProjectBundle.message("module.unknown.type.title"));
-            Notifications.Bus.notify(
-              new Notification(
-                "Module Manager",
-                ProjectBundle.message("module.unknown.type.title"),
-                message,
-                NotificationType.WARNING
-              ), 
-              NotificationDisplayType.STICKY_BALLOON,
-              myProject
-            );
+            Notifications.Bus.notify(new Notification(
+              "Module Manager",
+              ProjectBundle.message("module.unknown.type.title"),
+              message,
+              NotificationType.WARNING
+            ), myProject);
           }
         }
       };

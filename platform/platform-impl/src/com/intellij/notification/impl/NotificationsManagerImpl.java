@@ -61,7 +61,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public void notify(@NotNull Notification notification) {
-    doNotify(notification, NotificationDisplayType.STICKY_BALLOON);
+    doNotify(notification, NotificationDisplayType.BALLOON);
   }
 
   @Override
@@ -125,7 +125,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     final NotificationsConfiguration configuration = NotificationsConfiguration.getNotificationsConfiguration();
     if (!configuration.isRegistered(notification.getGroupId())) {
       configuration.registerDefaultSettings(new NotificationSettings(notification.getGroupId(),
-                                                                     displayType == null ? NotificationDisplayType.STICKY_BALLOON : displayType,
+                                                                     displayType == null ? NotificationDisplayType.BALLOON : displayType,
                                                                      true));
     }
 
