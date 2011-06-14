@@ -208,7 +208,7 @@ public class EventLog implements Notifications {
       myHyperlinkSupport = new EditorHyperlinkSupport(myLogEditor, project);
     }
 
-    private static DefaultActionGroup createPopupActions(ActionManager actionManager) {
+    private DefaultActionGroup createPopupActions(ActionManager actionManager) {
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(new DumbAwareAction("Clear All") {
         @Override
@@ -222,6 +222,9 @@ public class EventLog implements Notifications {
           final Editor editor = e.getData(PlatformDataKeys.EDITOR);
           if (editor != null) {
             editor.getDocument().deleteString(0, editor.getDocument().getTextLength());
+          }
+          for (Notification notification : myProjectModel.getNotifications()) {
+            myProjectModel.removeNotification(notification);
           }
         }
       });
