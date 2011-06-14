@@ -5,7 +5,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
@@ -332,7 +331,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyPrintStatement(PyPrintStatement node) {
     super.visitPyPrintStatement(node);
-    if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)) {
+    if (shouldBeCompatibleWithPy3()) {
       boolean hasProblem = false;
       PsiElement[] arguments = node.getChildren();
       for (PsiElement element : arguments) {
@@ -401,6 +400,25 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
+  public void visitPyReferenceExpression(PyReferenceExpression node) {
+    super.visitPyElement(node);
+    if (shouldBeCompatibleWithPy3()) {
+      if (PyNames.BASESTRING.equals(node.getText())) {
+        PsiElement res = node.getReference().resolve();
+        if (res != null) {
+          ProjectFileIndex ind = ProjectRootManager.getInstance(node.getProject()).getFileIndex();
+          PsiFile file = res.getContainingFile();
+          if (file != null && ind.isInLibraryClasses(file.getVirtualFile())) {
+            registerProblem(node, "basestring type is not available in py3");
+          }
+        } else {
+          registerProblem(node, "basestring type is not available in py3");
+        }
+      }
+    }
+  }
+
+  @Override
   public void visitPyCallExpression(PyCallExpression node) {
     super.visitPyCallExpression(node);
     int len = 0;
@@ -422,31 +440,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
     commonRegisterProblem(message, " not support this syntax. super() should have arguments in Python 2",
                           len, node, null);
+  }
 
+  private boolean shouldBeCompatibleWithPy3() {
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)
-        || myVersionsToProcess.contains(LanguageLevel.PYTHON32)) {
-      if (node.getCallee() != null && "isinstance".equals(node.getCallee().getText())) {
-        PyExpression[] args = node.getArguments();
-        if (args.length > 1) {
-          PyExpression baseString = args[1];
-          if ("basestring".equals(baseString.getText())) {
-            PsiReference ref = baseString.getReference();
-            if (ref != null) {
-              PsiElement res = ref.resolve();
-              if (res != null) {
-                ProjectFileIndex ind = ProjectRootManager.getInstance(node.getProject()).getFileIndex();
-                PsiFile file = res.getContainingFile();
-                if (file != null && ind.isInLibraryClasses(file.getVirtualFile())) {
-                  registerProblem(baseString, "basestring type is not available in py3");
-                }
-              } else {
-                registerProblem(baseString, "basestring type is not available in py3");
-              }
-            }
-          }
-        }
-      }
-    }
+        || myVersionsToProcess.contains(LanguageLevel.PYTHON32))
+      return true;
+    return false;
   }
 
   protected abstract void registerProblem(PsiElement node, String s, LocalQuickFix localQuickFix, boolean asError);

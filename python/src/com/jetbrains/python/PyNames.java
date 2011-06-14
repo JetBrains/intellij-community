@@ -194,6 +194,7 @@ public class PyNames {
 
   // canonical names, not forced by interpreter
   public static final String CANONICAL_SELF = "self";
+  public static final String BASESTRING = "basestring";
   
   /**
    * Contains keywords as of CPython 2.5.
