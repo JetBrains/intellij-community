@@ -16,7 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -361,13 +361,13 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   public Pair<String, String> setText(@Nullable final String text, @Nullable final String requestor) {
-    if (StringUtil.isEmpty(text) && !Comparing.equal(requestor, myCurrentRequestor) && requestor != NotificationsManagerImpl.LOG_REQUESTOR) {
+    if (StringUtil.isEmpty(text) && !Comparing.equal(requestor, myCurrentRequestor) && requestor != EventLog.LOG_REQUESTOR) {
       return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
     }
 
-    boolean logMode = myInfoPanel.updateText(!hasProgressIndicators(), requestor == NotificationsManagerImpl.LOG_REQUESTOR
+    boolean logMode = myInfoPanel.updateText(!hasProgressIndicators(), requestor == EventLog.LOG_REQUESTOR
                                                                        ? "" : text);
-    myCurrentRequestor = logMode ? NotificationsManagerImpl.LOG_REQUESTOR : requestor;
+    myCurrentRequestor = logMode ? EventLog.LOG_REQUESTOR : requestor;
     return Pair.create(text, requestor);
   }
 

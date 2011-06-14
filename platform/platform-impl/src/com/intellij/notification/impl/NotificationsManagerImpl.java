@@ -22,12 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
@@ -50,9 +44,6 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
-  private static final Key<Notification> STATUS_MESSAGE = Key.create("StatusMessage");
-  private static final String LOG_TOOL_WINDOW_ID = "Event Log";
-  public static final String LOG_REQUESTOR = "Internal log requestor";
 
   private final NotificationModel myModel = new NotificationModel();
 
@@ -71,16 +62,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   public void notify(@NotNull Notification notification) {
     doNotify(notification, NotificationDisplayType.STICKY_BALLOON);
-  }
-
-  public void setStatusMessage(@Nullable Project project, @Nullable Notification statusMessage) {
-    (project != null ? project : ApplicationManager.getApplication()).putUserData(STATUS_MESSAGE, statusMessage);
-    StatusBar.Info.set("", project, LOG_REQUESTOR);
-  }
-
-  @Nullable
-  public Notification getStatusMessage(@Nullable Project project) {
-    return (project != null ? project : ApplicationManager.getApplication()).getUserData(STATUS_MESSAGE);
   }
 
   @Override
@@ -156,7 +137,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public static void showNotification(final Notification notification, @Nullable final Project project) {
-    if (isEventLogVisible(project)) {
+    if (EventLog.isEventLogVisible(project)) {
       return;
     }
 
@@ -261,16 +242,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     });
   }
 
-  public static boolean isEventLogVisible(Project project) {
-    final ToolWindow window = getEventLog(project);
-    return window != null && window.isVisible();
-  }
-
-  @Nullable
-  public static ToolWindow getEventLog(Project project) {
-    return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
-  }
-
   private static PairFunction<Notification, Project, Boolean> createFilter(@Nullable final Project project, final boolean strict) {
     return project == null ? APPLICATION : new ProjectFilter(project, strict);
   }
@@ -312,44 +283,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     return myModel.getMaximumType(createFilter(project, false));
   }
 
-  public boolean hasUnread(@Nullable final Project project) {
-    return myModel.hasUnread(createFilter(project, false));
-  }
-
-  public boolean hasRead(@Nullable final Project project) {
-    return myModel.hasRead(createFilter(project, false));
-  }
-
   public boolean wasRead(@NotNull final Notification notification) {
     return myModel.wasRead(notification);
-  }
-
-  public static Pair<String, Boolean> formatForLog(final Notification notification) {
-    boolean showLink = notification.getListener() != null;
-    String content = notification.getContent();
-    String mainText = notification.getTitle();
-    if (StringUtil.isNotEmpty(content) && !content.startsWith("<")) {
-      if (StringUtil.isNotEmpty(mainText)) {
-        mainText += ": ";
-      }
-      mainText += content;
-    }
-
-    int nlIndex = eolIndex(mainText);
-    if (nlIndex >= 0) {
-      mainText = mainText.substring(0, nlIndex);
-      showLink = true;
-    }
-
-    mainText = mainText.replaceAll("<[^>]*>", "");
-    return Pair.create(mainText, showLink);
-  }
-
-  private static int eolIndex(String mainText) {
-    int nlIndex = mainText.indexOf("<br>");
-    if (nlIndex < 0) nlIndex = mainText.indexOf("<br/>");
-    if (nlIndex < 0) nlIndex = mainText.indexOf("\n");
-    return nlIndex;
   }
 
   private static class ProjectFilter implements PairFunction<Notification, Project, Boolean> {

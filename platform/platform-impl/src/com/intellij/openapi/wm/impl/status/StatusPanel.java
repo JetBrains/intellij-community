@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
@@ -88,7 +89,7 @@ class StatusPanel extends JPanel {
 
   @Nullable
   private ToolWindow getEventLog() {
-    return NotificationsManagerImpl.getEventLog(getActiveProject());
+    return EventLog.getEventLog(getActiveProject());
   }
 
   public void setLogMessage(String text) {
@@ -103,7 +104,7 @@ class StatusPanel extends JPanel {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final Project project = getActiveProject();
-    final Notification statusMessage = NotificationsManagerImpl.getNotificationsManagerImpl().getStatusMessage(project);
+    final Notification statusMessage = EventLog.getStatusMessage(project);
     myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null && project != null;
 
     myShowLog.setVisible(myLogMode);
@@ -113,7 +114,7 @@ class StatusPanel extends JPanel {
         @Override
         public void run() {
           assert statusMessage != null;
-          String text = NotificationsManagerImpl.formatForLog(statusMessage).first;
+          String text = EventLog.formatForLog(statusMessage).first;
           if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
             text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
           }

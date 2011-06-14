@@ -45,13 +45,18 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.EditorPopupHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -64,6 +69,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author peter
  */
 public class EventLog implements Notifications {
+  private static final Key<Notification> STATUS_MESSAGE = Key.create("StatusMessage");
+  public static final String LOG_REQUESTOR = "Internal log requestor";
+  public static final String LOG_TOOL_WINDOW_ID = "Event Log";
   private final List<Notification> myNotifications = new CopyOnWriteArrayList<Notification>();
 
   public EventLog() {
@@ -75,7 +83,7 @@ public class EventLog implements Notifications {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) {
       addGlobalNotifications(notification);
-      NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(null, notification);
+      setStatusMessage(null, notification);
     }
     for (Project p : openProjects) {
       getProjectComponent(p).printNotification(notification);
@@ -102,6 +110,54 @@ public class EventLog implements Notifications {
 
   @Override
   public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
+  }
+
+  private static void setStatusMessage(@Nullable Project project, @Nullable Notification statusMessage) {
+    (project != null ? project : ApplicationManager.getApplication()).putUserData(STATUS_MESSAGE, statusMessage);
+    StatusBar.Info.set("", project, LOG_REQUESTOR);
+  }
+
+  @Nullable
+  public static Notification getStatusMessage(@Nullable Project project) {
+    return (project != null ? project : ApplicationManager.getApplication()).getUserData(STATUS_MESSAGE);
+  }
+
+  public static Pair<String, Boolean> formatForLog(final Notification notification) {
+    boolean showLink = notification.getListener() != null;
+    String content = notification.getContent();
+    String mainText = notification.getTitle();
+    if (StringUtil.isNotEmpty(content) && !content.startsWith("<")) {
+      if (StringUtil.isNotEmpty(mainText)) {
+        mainText += ": ";
+      }
+      mainText += content;
+    }
+
+    int nlIndex = eolIndex(mainText);
+    if (nlIndex >= 0) {
+      mainText = mainText.substring(0, nlIndex);
+      showLink = true;
+    }
+
+    mainText = mainText.replaceAll("<[^>]*>", "");
+    return Pair.create(mainText, showLink);
+  }
+
+  private static int eolIndex(String mainText) {
+    int nlIndex = mainText.indexOf("<br>");
+    if (nlIndex < 0) nlIndex = mainText.indexOf("<br/>");
+    if (nlIndex < 0) nlIndex = mainText.indexOf("\n");
+    return nlIndex;
+  }
+
+  public static boolean isEventLogVisible(Project project) {
+    final ToolWindow window = getEventLog(project);
+    return window != null && window.isVisible();
+  }
+
+  @Nullable
+  public static ToolWindow getEventLog(Project project) {
+    return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
   }
 
   public static class ProjectTracker extends AbstractProjectComponent {
@@ -191,7 +247,7 @@ public class EventLog implements Notifications {
         EditorFactory.getInstance().releaseEditor(logEditor);
       }
 
-      NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(null, null);
+      setStatusMessage(null, null);
     }
 
     private void printNotification(final Notification notification) {
@@ -205,7 +261,7 @@ public class EventLog implements Notifications {
         return;
       }
 
-      NotificationsManagerImpl.getNotificationsManagerImpl().setStatusMessage(myProject, notification);
+      setStatusMessage(myProject, notification);
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
@@ -222,7 +278,7 @@ public class EventLog implements Notifications {
 
       append(document, DateFormat.getTimeInstance(DateFormat.MEDIUM).format(notification.getCreationTime()) + " ");
 
-      Pair<String, Boolean> pair = NotificationsManagerImpl.formatForLog(notification);
+      Pair<String, Boolean> pair = formatForLog(notification);
 
       final NotificationType type = notification.getType();
       ConsoleViewContentType contentType = type == NotificationType.ERROR
