@@ -15,47 +15,38 @@
  */
 package com.intellij.ant;
 
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+
+import java.io.IOException;
 
 /**
  * @author yole
  */
 public class AntClassWriter extends ClassWriter {
-  private final ClassLoader myClassLoader;
+  private final PseudoClassLoader myPseudoClassLoader;
 
-  public AntClassWriter(int flags, final ClassLoader classLoader) {
+  public AntClassWriter(int flags, final PseudoClassLoader pseudoLoader) {
     super(flags);
-    myClassLoader = classLoader;
+    myPseudoClassLoader = pseudoLoader;
   }
 
-  public AntClassWriter(ClassReader classReader, int flags, final ClassLoader classLoader) {
+  public AntClassWriter(ClassReader classReader, int flags, final PseudoClassLoader pseudoLoader) {
     super(classReader, flags);
-    myClassLoader = classLoader;
+    myPseudoClassLoader = pseudoLoader;
   }
 
   protected String getCommonSuperClass(final String type1, final String type2) {
-    Class c;
-    Class d;
     try {
-        c = myClassLoader.loadClass(type1.replace('/', '.'));
-        d = myClassLoader.loadClass(type2.replace('/', '.'));
+      PseudoClassLoader.PseudoClass p1 = myPseudoClassLoader.loadClass(type1);
+      PseudoClassLoader.PseudoClass p2 = myPseudoClassLoader.loadClass(type2);
+
+      return p1.getCommonSuperClassName(p2);
     } catch (ClassNotFoundException e) {
         throw new RuntimeException(e.getMessage());
     }
-    if (c.isAssignableFrom(d)) {
-        return type1;
-    }
-    if (d.isAssignableFrom(c)) {
-        return type2;
-    }
-    if (c.isInterface() || d.isInterface()) {
-        return "java/lang/Object";
-    } else {
-        do {
-            c = c.getSuperclass();
-        } while (!c.isAssignableFrom(d));
-        return c.getName().replace('.', '/');
+    catch (IOException e) {
+      throw new RuntimeException(e.getMessage());
     }
   }
 }
