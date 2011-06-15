@@ -260,6 +260,15 @@ public class TextChangesStorageTest {
     checkChanges(c("a", 51, 62), c("a", 64, 71), c("b", 72, 79));
   }
   
+  @Test
+  public void exactRemoveOfPreviousInsert() {
+    insert("a", 1);
+    insert("bcd", 3);
+    insert("efg", 7);
+    delete(3, 6);
+    checkChanges(c("a", 1), c("efg", 3));
+  }
+  
   private void checkChanges(TextChangeImpl ... changes) {
     assertEquals(asList(changes), myStorage.getChanges());
     assertEquals(changes.length > 0, !myStorage.isEmpty());
