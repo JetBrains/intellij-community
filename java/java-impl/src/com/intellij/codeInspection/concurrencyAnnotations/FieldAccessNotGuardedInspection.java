@@ -78,14 +78,16 @@ public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool
         }
       }
 
-      PsiElement lockExpr = findLockTryStatement(expression, guard);
-      while (lockExpr != null) {
-        PsiElement child = lockExpr;
-        while (child != null) {
-          if (isLockGuardStatement(guard, child, "lock")) return;
-          child = child.getPrevSibling();
+      if (findLockTryStatement(expression, guard) != null) {
+        PsiElement lockExpr = expression;
+        while (lockExpr != null) {
+          PsiElement child = lockExpr;
+          while (child != null) {
+            if (isLockGuardStatement(guard, child, "lock")) return;
+            child = child.getPrevSibling();
+          }
+          lockExpr = lockExpr.getParent();
         }
-        lockExpr = lockExpr.getParent();
       }
 
       PsiElement check = expression;
@@ -127,7 +129,7 @@ public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool
         if (psiExpression instanceof PsiMethodCallExpression) {
           final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)psiExpression).getMethodExpression();
           final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-          if (qualifierExpression != null && qualifierExpression.getText().equals(guard)) {
+          if (qualifierExpression != null && qualifierExpression.getText().startsWith(guard + ".")) {
             final PsiElement resolve = methodExpression.resolve();
             if (resolve instanceof PsiMethod && ((PsiMethod)resolve).getName().startsWith(lockMethodStart)) {
               return true;
