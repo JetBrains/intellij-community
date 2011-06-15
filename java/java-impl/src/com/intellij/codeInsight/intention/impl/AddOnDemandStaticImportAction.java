@@ -57,8 +57,8 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       return null;
     }
     PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
-    if (refExpr.getParent() instanceof PsiReferenceExpression &&
-        isParameterizedReference((PsiReferenceExpression)refExpr.getParent())) return null;
+    if (refExpr.getParent() instanceof PsiJavaCodeReferenceElement &&
+        isParameterizedReference((PsiJavaCodeReferenceElement)refExpr.getParent())) return null;
 
     PsiElement resolved = refExpr.resolve();
     if (!(resolved instanceof PsiClass)) {
