@@ -385,14 +385,14 @@ public class ResolveUtil {
     if (call == null) return true;
 
     final GrClosableBlock[] closures = call.getClosureArguments();
-    if (closures.length != 1 || !closures[0].equals(place)) return true;
+    final GrExpression[] args = call.getExpressionArguments();
+    int last = args.length - 1;
+    if (!(closures.length == 1 && place.equals(closures[0])) &&
+        !(args.length > 0 && place.equals(args[last]))) {
+      return true;
+    }
 
     if (!(call.resolveMethod() instanceof GrGdkMethod)) return true;
-
-    final GrArgumentList argList = call.getArgumentList();
-    if (argList == null) return true;
-
-    final GrExpression[] args = argList.getExpressionArguments();
 
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override

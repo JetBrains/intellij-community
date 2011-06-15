@@ -729,4 +729,8 @@ class Foo {
   void testNestedWith() {
     assertNotNull(resolve('a.groovy'))
   }
+
+  void testCategory() {
+    assertNotNull(resolve('a.groovy'))
+  }
 }
