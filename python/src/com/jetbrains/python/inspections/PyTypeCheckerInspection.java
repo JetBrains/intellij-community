@@ -86,6 +86,12 @@ public class PyTypeCheckerInspection extends PyInspection {
     if (superType == null || subType == null || superType instanceof PyUnknownType || subType instanceof PyUnknownType) {
       return true;
     }
+    if (superType instanceof PyTypeReference) {
+      return match(((PyTypeReference)superType).resolve(null, context), subType, context);
+    }
+    if (subType instanceof PyTypeReference) {
+      return match(superType, ((PyTypeReference)subType).resolve(null, context), context);
+    }
     if (superType instanceof PyUnionType) {
       for (PyType t : ((PyUnionType)superType).getMembers()) {
         if (match(t, subType, context)) {
