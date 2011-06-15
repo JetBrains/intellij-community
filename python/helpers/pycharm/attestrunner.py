@@ -114,30 +114,10 @@ class TeamCityReporter(AbstractReporter, TeamcityTestResult):
 
     def start_test(self, result, name):
       """trying to find test location """
-      if hasattr(result.test, "__wrapped__"): #function
-        test = result.test.__wrapped__
-        module = getattr(test, '__module__', None)
-        file = None
-        if module is not None:
-            m = sys.modules[module]
-            file = getattr(m, '__file__', None)
-            if file is not None:
-                file = os.path.abspath(file)
-        if file.endswith("pyc"):
-          file = file[:-1]
-        self.messages.testStarted(name, location="file://"+file+":"+str(func_lineno(test)))
-      else:
-        lineno = inspect.getsourcelines(result.test)
-        file = inspect.getsourcefile(result.test)
-        if hasattr(result.test, "__test__"):
-          klass = getattr(result.test, "im_class", None)
-          if klass:
-            lineno = inspect.getsourcelines(klass)
-            file = inspect.getmodule(klass).__file__
-        if file.endswith("pyc"):
-            file = file[:-1]
-        #TODO[kate]: get lineno for wrapped function?
-        self.messages.testStarted(name, "file://"+file+":"+str(lineno[1]))
+      real_func = result.test.func_closure[0].cell_contents
+      lineno = inspect.getsourcelines(real_func)
+      file = inspect.getsourcefile(real_func)
+      self.messages.testStarted(name, "file://"+file+":"+str(lineno[1]))
 
 def get_subclasses(module, base_class=TestBase):
   test_classes = []
