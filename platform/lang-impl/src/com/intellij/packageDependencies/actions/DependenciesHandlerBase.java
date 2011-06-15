@@ -67,16 +67,23 @@ public abstract class DependenciesHandlerBase {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              final String displayName = getPanelDisplayName(builders.get(0).getScope());
-              DependenciesPanel panel = new DependenciesPanel(DependenciesHandlerBase.this.myProject, builders, myExcluded);
-              Content content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, false);
-              content.setDisposer(panel);
-              panel.setContent(content);
-              ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(DependenciesHandlerBase.this.myProject)).addContent(content);
+              if (shouldShowDependenciesPanel(builders)) {
+                final String displayName = getPanelDisplayName(builders.get(0).getScope());
+                DependenciesPanel panel = new DependenciesPanel(DependenciesHandlerBase.this.myProject, builders, myExcluded);
+                Content content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, false);
+                content.setDisposer(panel);
+                panel.setContent(content);
+                ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(DependenciesHandlerBase.this.myProject))
+                  .addContent(content);
+              }
             }
           });
         }
       });
+  }
+
+  protected boolean shouldShowDependenciesPanel(List<DependenciesBuilder> builders) {
+    return true;
   }
 
   protected abstract String getProgressTitle();
