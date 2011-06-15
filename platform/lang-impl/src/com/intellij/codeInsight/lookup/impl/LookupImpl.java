@@ -493,7 +493,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (choosePreselectedItem) {
       myList.setSelectedValue(myPreselectedItem, false);
     } else {
-      myList.setSelectedIndex(doSelectMostPreferableItem(getItems(), groups));
+      ListScrollingUtil.selectItem(myList, doSelectMostPreferableItem(getItems(), groups));
     }
 
     if (myPreselectedItem != null && myShown) {
