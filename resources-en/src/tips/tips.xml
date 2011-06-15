@@ -142,4 +142,5 @@
   <tip file="AnnotationsAndDiffs.html"/>
   <tip file="DirDiff.html"/>
   <tip file="JarDiff.html"/>
+  <tip file="CommitCtrlK.html"/>
 </tips>
