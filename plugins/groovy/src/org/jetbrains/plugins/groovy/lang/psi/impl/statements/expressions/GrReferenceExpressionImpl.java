@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -410,6 +411,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     final GroovyResolveResult resolveResult = advancedResolve();
     PsiElement resolved = resolveResult.getElement();
+
+    for (GrReferenceTypeEnhancer enhancer : GrReferenceTypeEnhancer.EP_NAME.getExtensions()) {
+      PsiType type = enhancer.getReferenceType(this, resolved);
+      if (type != null) {
+        return type;
+      }
+    }
+
     if (dotType == mMEMBER_POINTER) {
       if (resolved instanceof PsiMethod) {
         return GrClosureType.create((PsiMethod) resolved, resolveResult.getSubstitutor());
