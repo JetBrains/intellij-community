@@ -98,11 +98,15 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   public void updateView() {
-    EditorColorsScheme scheme = myOptions.getSelectedScheme();
+    EditorColorsScheme scheme = updateOptionsScheme(myOptions.getSelectedScheme());
 
     myEditor.setColorsScheme(scheme);
     myEditor.reinitSettings();
 
+  }
+
+  protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
+    return selectedScheme;
   }
 
   public void blinkSelectedHighlightType(Object description) {

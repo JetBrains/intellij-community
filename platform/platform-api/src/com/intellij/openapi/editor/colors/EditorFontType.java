@@ -15,9 +15,28 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum EditorFontType {
   PLAIN,
   BOLD,
   ITALIC,
-  BOLD_ITALIC
+  BOLD_ITALIC,
+  CONSOLE_PLAIN,
+  CONSOLE_BOLD,
+  CONSOLE_ITALIC,
+  CONSOLE_BOLD_ITALIC;
+
+  private static final Map<EditorFontType, EditorFontType> ourConsoleTypes = new HashMap<EditorFontType, EditorFontType>();
+  static {
+    ourConsoleTypes.put(PLAIN, CONSOLE_PLAIN);
+    ourConsoleTypes.put(ITALIC, CONSOLE_ITALIC);
+    ourConsoleTypes.put(BOLD_ITALIC, CONSOLE_BOLD_ITALIC);
+    ourConsoleTypes.put(BOLD, CONSOLE_BOLD);
+  }
+
+  public static EditorFontType getConsoleType(EditorFontType fontType) {
+    return ourConsoleTypes.get(fontType);
+  }
 }

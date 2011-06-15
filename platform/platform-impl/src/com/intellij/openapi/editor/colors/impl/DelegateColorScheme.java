@@ -145,4 +145,35 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   public Object clone() {
     return myDelegate.clone();
   }
+
+  @Override
+  public String getConsoleFontName() {
+    return myDelegate.getConsoleFontName();
+  }
+
+  @Override
+  public void setConsoleFontName(String fontName) {
+    myDelegate.setConsoleFontName(fontName);
+  }
+
+  @Override
+  public int getConsoleFontSize() {
+    return myDelegate.getConsoleFontSize();
+  }
+
+  @Override
+  public void setConsoleFontSize(int fontSize) {
+    myDelegate.setConsoleFontSize(fontSize);
+  }
+
+  @Override
+  public float getConsoleLineSpacing() {
+    return myDelegate.getConsoleLineSpacing();
+  }
+
+  @Override
+  public void setConsoleLineSpacing(float lineSpacing) {
+    myDelegate.setConsoleLineSpacing(lineSpacing);
+  }
+
 }

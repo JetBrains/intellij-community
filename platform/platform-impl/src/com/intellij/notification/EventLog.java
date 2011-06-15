@@ -30,6 +30,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -374,18 +376,40 @@ public class EventLog implements Notifications {
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(0);
 
-    final DelegateColorScheme scheme = new DelegateColorScheme(editor.getColorsScheme()) {
-      @Override
-      public Color getDefaultBackground() {
-        final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
-        return color == null ? super.getDefaultBackground() : color;
-      }
-    };
+    final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
     editor.setColorsScheme(scheme);
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
     return editor;
   }
 
+  public static DelegateColorScheme updateConsoleColorScheme(EditorColorsScheme scheme) {
+    return new DelegateColorScheme(scheme) {
+      @Override
+      public Color getDefaultBackground() {
+        final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
+        return color == null ? super.getDefaultBackground() : color;
+      }
 
+      @Override
+      public int getEditorFontSize() {
+        return getConsoleFontSize();
+      }
+
+      @Override
+      public String getEditorFontName() {
+        return getConsoleFontName();
+      }
+
+      @Override
+      public float getLineSpacing() {
+        return getConsoleLineSpacing();
+      }
+
+      @Override
+      public Font getFont(EditorFontType key) {
+        return super.getFont(EditorFontType.getConsoleType(key));
+      }
+    };
+  }
 }

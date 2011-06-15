@@ -5192,6 +5192,36 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int globalFontSize = getGlobal().getEditorFontSize();
       myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
     }
+
+    @Override
+    public String getConsoleFontName() {
+      return getGlobal().getConsoleFontName();
+    }
+
+    @Override
+    public void setConsoleFontName(String fontName) {
+      getGlobal().setConsoleFontName(fontName);
+    }
+
+    @Override
+    public int getConsoleFontSize() {
+      return getGlobal().getConsoleFontSize();
+    }
+
+    @Override
+    public void setConsoleFontSize(int fontSize) {
+      getGlobal().setConsoleFontSize(fontSize);
+    }
+
+    @Override
+    public float getConsoleLineSpacing() {
+      return getGlobal().getConsoleLineSpacing();
+    }
+
+    @Override
+    public void setConsoleLineSpacing(float lineSpacing) {
+      getGlobal().setConsoleLineSpacing(lineSpacing);
+    }
   }
 
   private static class MyTransferHandler extends TransferHandler {

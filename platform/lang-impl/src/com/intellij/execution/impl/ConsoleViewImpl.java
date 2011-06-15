@@ -95,8 +95,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
-
-  private @NonNls String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
+  @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
   private static final int FLUSH_DELAY = 200; //TODO : make it an option

@@ -54,6 +54,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private String myFallbackFontName;
   private String mySchemeName;
 
+  private String myConsoleFontName;
+  private int myConsoleFontSize = -1;
+  private float myConsoleLineSpacing = -1;
+
   // version influences XML format and triggers migration
   private int myVersion;
 
@@ -62,6 +66,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @NonNls private static final String DEFAULT_FONT_NAME = SystemInfo.isMac ? "Menlo" : "Monospaced";
   @NonNls private static final String EDITOR_FONT_NAME = "EDITOR_FONT_NAME";
+  @NonNls private static final String CONSOLE_FONT_NAME = "CONSOLE_FONT_NAME";
   @NonNls protected static final String SCHEME_NAME = "SCHEME_NAME";
   protected DefaultColorSchemesManager myDefaultColorSchemesManager;
   private Color myDeprecatedBackgroundColor = null;
@@ -76,7 +81,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NonNls private static final String VALUE_ELEMENT = "value";
   @NonNls private static final String BACKGROUND_COLOR_NAME = "BACKGROUND";
   @NonNls private static final String LINE_SPACING = "LINE_SPACING";
+  @NonNls private static final String CONSOLE_LINE_SPACING = "CONSOLE_LINE_SPACING";
   @NonNls private static final String EDITOR_FONT_SIZE = "EDITOR_FONT_SIZE";
+  @NonNls private static final String CONSOLE_FONT_SIZE = "CONSOLE_FONT_SIZE";
   @NonNls private static final String EDITOR_QUICK_JAVADOC_FONT_SIZE = "EDITOR_QUICK_DOC_FONT_SIZE";
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
@@ -113,6 +120,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     newScheme.myLineSpacing = myLineSpacing;
     newScheme.setEditorFontName(getEditorFontName());
     newScheme.myQuickDocFontSize = myQuickDocFontSize;
+    newScheme.myConsoleFontName = myConsoleFontName;
+    newScheme.myConsoleFontSize = myConsoleFontSize;
+    newScheme.myConsoleLineSpacing = myConsoleLineSpacing;
 
     final Set<EditorFontType> types = myFonts.keySet();
     for (EditorFontType type : types) {
@@ -195,6 +205,19 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     myFonts.put(EditorFontType.BOLD, boldFont);
     myFonts.put(EditorFontType.ITALIC, italicFont);
     myFonts.put(EditorFontType.BOLD_ITALIC, boldItalicFont);
+
+    String consoleFontName = getConsoleFontName();
+    int consoleFontSize = getConsoleFontSize();
+
+    Font consolePlainFont = new Font(consoleFontName, Font.PLAIN, consoleFontSize);
+    Font consoleBoldFont = new Font(consoleFontName, Font.BOLD, consoleFontSize);
+    Font consoleItalicFont = new Font(consoleFontName, Font.ITALIC, consoleFontSize);
+    Font consoleBoldItalicFont = new Font(consoleFontName, Font.BOLD + Font.ITALIC, consoleFontSize);
+
+    myFonts.put(EditorFontType.CONSOLE_PLAIN, consolePlainFont);
+    myFonts.put(EditorFontType.CONSOLE_BOLD, consoleBoldFont);
+    myFonts.put(EditorFontType.CONSOLE_ITALIC, consoleItalicFont);
+    myFonts.put(EditorFontType.CONSOLE_BOLD_ITALIC, consoleBoldItalicFont);
   }
 
   public String toString() {
@@ -322,11 +345,20 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     else if (EDITOR_FONT_SIZE.equals(name)) {
       myEditorFontSize = Integer.parseInt(value);
     }
+    else if (EDITOR_FONT_NAME.equals(name)) {
+      setEditorFontName(value);
+    }
+    else if (CONSOLE_LINE_SPACING.equals(name)) {
+      setConsoleLineSpacing(Float.parseFloat(value));
+    }
+    else if (CONSOLE_FONT_SIZE.equals(name)) {
+      setConsoleFontSize(Integer.parseInt(value));
+    }
+    else if (CONSOLE_FONT_NAME.equals(name)) {
+      setConsoleFontName(value);
+    }
     else if (EDITOR_QUICK_JAVADOC_FONT_SIZE.equals(name)) {
       myQuickDocFontSize = FontSize.valueOf(value);
-    }
-    else if (AbstractColorsScheme.EDITOR_FONT_NAME.equals(name)) {
-      setEditorFontName(value);
     }
   }
 
@@ -347,6 +379,27 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     element.setAttribute(NAME_ATTR, EDITOR_FONT_SIZE);
     element.setAttribute(VALUE_ELEMENT, String.valueOf(getEditorFontSize()));
     parentNode.addContent(element);
+
+    if (!Comparing.strEqual(getConsoleFontName(), getEditorFontName())) {
+      element = new Element(OPTION_ELEMENT);
+      element.setAttribute(NAME_ATTR, CONSOLE_FONT_NAME);
+      element.setAttribute(VALUE_ELEMENT, getConsoleFontName());
+      parentNode.addContent(element);
+    }
+
+    if (getConsoleFontSize() != getEditorFontSize()) {
+      element = new Element(OPTION_ELEMENT);
+      element.setAttribute(NAME_ATTR, CONSOLE_FONT_SIZE);
+      element.setAttribute(VALUE_ELEMENT, Integer.toString(getConsoleFontSize()));
+      parentNode.addContent(element);
+    }
+
+    if (getConsoleLineSpacing() != getLineSpacing()) {
+      element = new Element(OPTION_ELEMENT);
+      element.setAttribute(NAME_ATTR, CONSOLE_LINE_SPACING);
+      element.setAttribute(VALUE_ELEMENT, Float.toString(getConsoleLineSpacing()));
+      parentNode.addContent(element);
+    }
 
     if (DEFAULT_FONT_SIZE != getQuickDocFontSize()) {
       element = new Element(OPTION_ELEMENT);
@@ -431,5 +484,44 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
     return true;
 
+  }
+
+  @Override
+  public String getConsoleFontName() {
+    if (myConsoleFontName == null) {
+      return getEditorFontName();
+    }
+    return myConsoleFontName;
+  }
+
+  @Override
+  public void setConsoleFontName(String fontName) {
+    myConsoleFontName = fontName;
+  }
+
+  @Override
+  public int getConsoleFontSize() {
+    if (myConsoleFontSize == -1) {
+      return getEditorFontSize();
+    }
+    return myConsoleFontSize;
+  }
+
+  @Override
+  public void setConsoleFontSize(int fontSize) {
+    myConsoleFontSize = fontSize;
+  }
+
+  @Override
+  public float getConsoleLineSpacing() {
+    if (myConsoleLineSpacing == -1) {
+      return getLineSpacing();
+    }
+    return myConsoleLineSpacing;
+  }
+
+  @Override
+  public void setConsoleLineSpacing(float lineSpacing) {
+    myConsoleLineSpacing = lineSpacing;
   }
 }
