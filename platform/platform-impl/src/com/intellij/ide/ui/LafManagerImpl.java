@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import javax.swing.plaf.synth.SynthLookAndFeel;
 import javax.swing.plaf.synth.SynthStyle;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -79,21 +80,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String IDEA_LAF_CLASSNAME = "idea.laf.classname";
-
-  /**
-   * One of the possible values of -Didea.popup.weight property. Heavy weight means
-   * that all popups are shown inside the window. Under UNIXes it's possible to configure
-   * window manager "Focus follows mouse with Auto Raise". In this case popup window will
-   * be immediately closed after showing.
-   */
-  @NonNls private static final String HEAVY_WEIGHT_POPUP="heavy";
-  /**
-   * One of the possible values of -Didea.popup.weight property. Medium weight means
-   * that popup will be show inside the parent JLayeredPane if it can be fit to it.
-   * Otherwise popup will be shown in the window. This mode is default for the Swing but
-   * it's very slow (much slower then heavy weight popups).
-   */
-  @NonNls private static final String MEDIUM_WEIGHT_POPUP="medium";
 
   private final EventListenerList myListenerList;
   private final UIManager.LookAndFeelInfo[] myLafs;
@@ -286,20 +272,19 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
-  public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo){
-    if(findLaf(lookAndFeelInfo.getClassName())==null){
-      LOG.error("unknown LookAndFeel : "+lookAndFeelInfo);
+  public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    if (findLaf(lookAndFeelInfo.getClassName()) == null) {
+      LOG.error("unknown LookAndFeel : " + lookAndFeelInfo);
       return;
     }
-
     // Set L&F
-
-    if(IDEA_LAF_CLASSNAME.equals(lookAndFeelInfo.getClassName())){ // that is IDEA default LAF
-      IdeaLaf laf=new IdeaLaf();
-      IdeaLaf.setCurrentTheme(new IdeaBlueMetalTheme());
+    if (IDEA_LAF_CLASSNAME.equals(lookAndFeelInfo.getClassName())) { // that is IDEA default LAF
+      IdeaLaf laf = new IdeaLaf();
+      MetalLookAndFeel.setCurrentTheme(new IdeaBlueMetalTheme());
       try {
         UIManager.setLookAndFeel(laf);
-      } catch (Exception exc) {
+      }
+      catch (Exception exc) {
         Messages.showMessageDialog(
           IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName()),
           CommonBundle.getErrorTitle(),
@@ -307,14 +292,16 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         );
         return;
       }
-    }else{ // non default LAF
+    }
+    else { // non default LAF
       try {
-        LookAndFeel laf=((LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).newInstance());
-        if(laf instanceof MetalLookAndFeel){
+        LookAndFeel laf = ((LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).newInstance());
+        if (laf instanceof MetalLookAndFeel) {
           MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
         }
         UIManager.setLookAndFeel(laf);
-      } catch(Exception exc) {
+      }
+      catch (Exception exc) {
         Messages.showMessageDialog(
           IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName()),
           CommonBundle.getErrorTitle(),
@@ -323,60 +310,55 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         return;
       }
     }
-    myCurrentLaf=lookAndFeelInfo;
+    myCurrentLaf = lookAndFeelInfo;
 
     checkLookAndFeel(lookAndFeelInfo, false);
 
     // The following code is a trick! By default Swing uses lightweight and "medium" weight
-    // popups to show JPopupMenu. The code below force the creation of real heavyweight menus.
-    // It dramatically increases speed of popups.
-
-    //noinspection HardCodedStringLiteral
-    String popupWeight=System.getProperty("idea.popup.weight");
-    if(popupWeight==null){ // use defaults if popup weight isn't specified
-      if(SystemInfo.isWindows){
-        popupWeight=HEAVY_WEIGHT_POPUP;
-      }else{ // UNIXes (Linux and MAC) go here
-        popupWeight=MEDIUM_WEIGHT_POPUP;
-      }
-    } else if (!HEAVY_WEIGHT_POPUP.equals(popupWeight) && !MEDIUM_WEIGHT_POPUP.equals(popupWeight)) {
-      throw new IllegalStateException("unknown value of property -Didea.popup.weight: " + popupWeight);
-    }
-
+    // popups to show JPopupMenu. The code below force the creation of real heavyweight menus -
+    // this increases speed of popups and allows to get rid of some drawing artifacts.
+    int popupWeight = OurPopupFactory.WEIGHT_DEFAULT;
+    String property = System.getProperty("idea.popup.weight");
+    if (property != null) property = property.toLowerCase().trim();
     if (SystemInfo.isMacOSLeopard) {
-      // Force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
-      popupWeight = HEAVY_WEIGHT_POPUP;
+      // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
+      popupWeight = OurPopupFactory.WEIGHT_HEAVY;
+    }
+    else if (property == null) {
+      // use defaults if popup weight isn't specified
+      if (SystemInfo.isWindows || UIUtil.isUnderGTKLookAndFeel()) {
+        popupWeight = OurPopupFactory.WEIGHT_HEAVY;
+      }
+    }
+    else {
+      if ("light".equals(property)) {
+        popupWeight = OurPopupFactory.WEIGHT_LIGHT;
+      }
+      else if ("medium".equals(property)) {
+        popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
+      }
+      else if ("heavy".equals(property)) {
+        popupWeight = OurPopupFactory.WEIGHT_HEAVY;
+      }
+      else {
+        LOG.error("Illegal value of property \"idea.popup.weight\": " + property);
+      }
     }
 
-    popupWeight = popupWeight.trim();
-
-    PopupFactory popupFactory;
+    final OurPopupFactory ourFactory;
     final PopupFactory oldFactory = PopupFactory.getSharedInstance();
-    if (!(oldFactory instanceof OurPopupFactory)) {
-      popupFactory = new OurPopupFactory() {
-        public Popup getPopup(
-          Component owner,
-          Component contents,
-          int x,
-          int y
-        ) throws IllegalArgumentException {
-          final Point point = fixPopupLocation(contents, x, y);
-
-          final int popupType = PopupUtil.getPopupType(this);
-          if (popupType >= 0) {
-            PopupUtil.setPopupType(oldFactory, popupType);
-          }
-
-          return oldFactory.getPopup(owner, contents, point.x, point.y);
-        }
-      };
-
-      PopupUtil.setPopupType(popupFactory, HEAVY_WEIGHT_POPUP.equals(popupWeight) ? 2 : 1);
-      PopupFactory.setSharedInstance(popupFactory);
+    if (oldFactory instanceof OurPopupFactory) {
+      ourFactory = (OurPopupFactory)oldFactory;
     }
+    else {
+      ourFactory = new OurPopupFactory(oldFactory);
+      PopupFactory.setSharedInstance(ourFactory);
+    }
+    ourFactory.setPopupType(popupWeight);
 
     // update ui for popup menu to get round corners
     if (UIUtil.isUnderAquaLookAndFeel()) {
+      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
       final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
@@ -418,36 +400,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     catch (IllegalAccessException e1) {
       return null;
     }
-  }
-
-  private static Point fixPopupLocation(final Component contents, final int x, final int y) {
-    if (!(contents instanceof JToolTip)) return new Point(x, y);
-
-    final PointerInfo info;
-    try {
-      info = MouseInfo.getPointerInfo();
-    }
-    catch (InternalError e) {
-      // http://www.jetbrains.net/jira/browse/IDEADEV-21390
-      // may happen under Mac OSX 10.5
-      return new Point(x, y);
-    }
-    int deltaY = 0;
-
-    if (info != null) {
-      final Point mouse = info.getLocation();
-      deltaY = mouse.y - y;
-    }
-
-    final Dimension size = contents.getPreferredSize();
-    final Rectangle rec = new Rectangle(new Point(x, y), size);
-    ScreenUtil.moveRectangleToFitTheScreen(rec);
-
-    if (rec.y < y) {
-      rec.y += deltaY;
-    }
-
-    return rec.getLocation();
   }
 
   @Override
@@ -590,18 +542,18 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private static void installCutCopyPasteShortcuts(InputMap inputMap, boolean useSimpleActionKeys){
+  private static void installCutCopyPasteShortcuts(InputMap inputMap, boolean useSimpleActionKeys) {
     String copyActionKey = useSimpleActionKeys ? "copy" : DefaultEditorKit.copyAction;
     String pasteActionKey = useSimpleActionKeys ? "paste" : DefaultEditorKit.pasteAction;
     String cutActionKey = useSimpleActionKeys ? "cut" : DefaultEditorKit.cutAction;
     // Ctrl+Ins, Shift+Ins, Shift+Del
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),copyActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,KeyEvent.SHIFT_MASK|KeyEvent.SHIFT_DOWN_MASK),pasteActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE,KeyEvent.SHIFT_MASK|KeyEvent.SHIFT_DOWN_MASK),cutActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK), copyActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_MASK | InputEvent.SHIFT_DOWN_MASK), pasteActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_MASK | InputEvent.SHIFT_DOWN_MASK), cutActionKey);
     // Ctrl+C, Ctrl+V, Ctrl+X
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),copyActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),pasteActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),DefaultEditorKit.cutAction);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK), copyActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK), pasteActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -777,5 +729,69 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private static class OurPopupFactory extends PopupFactory {}
+  private static class OurPopupFactory extends PopupFactory {
+    public static final int WEIGHT_DEFAULT = -1;
+    public static final int WEIGHT_LIGHT = 0;
+    public static final int WEIGHT_MEDIUM = 1;
+    public static final int WEIGHT_HEAVY = 2;
+
+    private final PopupFactory myDelegate;
+    private int myPopupType;
+
+    public OurPopupFactory(final PopupFactory delegate) {
+      myDelegate = delegate;
+    }
+
+    public void setPopupType(final int popupType) {
+      myPopupType = popupType;
+    }
+
+    public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
+      final Point point = fixPopupLocation(contents, x, y);
+
+      int oldType = WEIGHT_DEFAULT;
+      if (myPopupType > WEIGHT_DEFAULT) {
+        oldType = PopupUtil.getPopupType(this);
+        PopupUtil.setPopupType(myDelegate, myPopupType);
+      }
+
+      final Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
+
+      if (oldType > WEIGHT_DEFAULT) {
+        PopupUtil.setPopupType(myDelegate, oldType);
+      }
+
+      return popup;
+    }
+
+    private static Point fixPopupLocation(final Component contents, final int x, final int y) {
+      if (!(contents instanceof JToolTip)) return new Point(x, y);
+
+      final PointerInfo info;
+      try {
+        info = MouseInfo.getPointerInfo();
+      }
+      catch (InternalError e) {
+        // http://www.jetbrains.net/jira/browse/IDEADEV-21390
+        // may happen under Mac OSX 10.5
+        return new Point(x, y);
+      }
+      int deltaY = 0;
+
+      if (info != null) {
+        final Point mouse = info.getLocation();
+        deltaY = mouse.y - y;
+      }
+
+      final Dimension size = contents.getPreferredSize();
+      final Rectangle rec = new Rectangle(new Point(x, y), size);
+      ScreenUtil.moveRectangleToFitTheScreen(rec);
+
+      if (rec.y < y) {
+        rec.y += deltaY;
+      }
+
+      return rec.getLocation();
+    }
+  }
 }
