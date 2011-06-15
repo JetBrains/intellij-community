@@ -79,9 +79,12 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return XDebuggerUtil.getInstance().getDefaultLineBreakpointComparator();
   }
 
+  /**
+   * Source position for line breakpoint is determined by its file and line
+   */
   @Override
-  public final XSourcePosition getSourcePosition(XBreakpoint<P> pxBreakpoint) {
-    return super.getSourcePosition(pxBreakpoint);
+  public final XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
+    return null;
   }
 
   /**

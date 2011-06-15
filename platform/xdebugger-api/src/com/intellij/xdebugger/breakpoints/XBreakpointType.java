@@ -168,7 +168,11 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
-  public XSourcePosition getSourcePosition(XBreakpoint<P> breakpoint) {
+  /**
+   * Override this method to define source position for a breakpoint. It will be used e.g. by 'Go To' and 'View Source' buttons in 'Breakpoints' dialog
+   */
+  @Nullable
+  public XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
     return null;
   }
 
