@@ -83,7 +83,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
   public static boolean match(PyType superType, PyType subType, TypeEvalContext context) {
     // TODO: subscriptable types?, module types?, etc.
-    if (superType == null || subType == null) {
+    if (superType == null || subType == null || superType instanceof PyUnknownType || subType instanceof PyUnknownType) {
       return true;
     }
     if (superType instanceof PyUnionType) {

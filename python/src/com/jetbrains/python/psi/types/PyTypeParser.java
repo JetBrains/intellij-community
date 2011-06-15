@@ -45,7 +45,7 @@ public class PyTypeParser {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
 
     if (type.equals("unknown")) {
-      return null;
+      return PyUnknownType.INSTANCE;
     }
     if (type.equals("string")) {
       return builtinCache.getStringType(LanguageLevel.forElement(anchor));
