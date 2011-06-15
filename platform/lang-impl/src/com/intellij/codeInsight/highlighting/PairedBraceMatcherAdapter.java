@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.lang.BraceMatcherTerminationAspect;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;

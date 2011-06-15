@@ -1,4 +1,4 @@
-package com.intellij.lang;
+package com.intellij.codeInsight.highlighting;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
