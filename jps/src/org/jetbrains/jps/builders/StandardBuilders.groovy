@@ -38,7 +38,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     if (sourceLevel != null) params.source = sourceLevel
     if (targetLevel != null) params.target = targetLevel
 
-    def javacOpts = module.project.props["compiler.javac.options"];
+    def javacOpts = module.project.props["compiler.javac.options"] ?: [:];
     def memHeapSize = javacOpts["MAXIMUM_HEAP_SIZE"] == null ? "512m" : javacOpts["MAXIMUM_HEAP_SIZE"] + "m";
     def boolean debugInfo = !"false".equals(javacOpts["DEBUGGING_INFO"]);
     def boolean nowarn = "true".equals(javacOpts["GENERATE_NO_WARNINGS"]);
