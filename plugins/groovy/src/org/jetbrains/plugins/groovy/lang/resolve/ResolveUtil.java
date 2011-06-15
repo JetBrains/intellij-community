@@ -374,6 +374,8 @@ public class ResolveUtil {
   }
 
   private static boolean categoryIteration(PsiElement place, PsiScopeProcessor processor, PsiElement prev, Ref<Boolean> result) {
+    if (!(prev instanceof GrClosableBlock)) return false;
+    if (place instanceof GrArgumentList) place = place.getParent();
     if (!(place instanceof GrMethodCall)) return false;
 
     final GrMethodCall call = (GrMethodCall)place;
@@ -381,7 +383,12 @@ public class ResolveUtil {
     if (!(invoked instanceof GrReferenceExpression) || !"use".equals(((GrReferenceExpression)invoked).getReferenceName())) return false;
 
     final GrClosableBlock[] closures = call.getClosureArguments();
-    if (closures.length != 1 || !closures[0].equals(prev)) return false;
+    GrExpression[] exprs = call.getExpressionArguments();
+    int last = exprs.length - 1;
+    if (!(closures.length == 1 && prev.equals(closures[0])) &&
+        !(exprs.length > 0 && prev.equals(exprs[last]))) {
+      return false;
+    }
 
     if (!(call.resolveMethod() instanceof GrGdkMethod)) return false;
 
