@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
@@ -157,11 +156,40 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
   }
 
-  public static void notifyByBalloon(final Notification notification,
+  private static void notifyByBalloon(final Notification notification,
                                       final NotificationDisplayType displayType,
                                       @Nullable final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
+    final Balloon balloon = createBalloon(notification, false, NotificationDisplayType.BALLOON == displayType,
+                                          NotificationDisplayType.BALLOON == displayType);
+
+
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (balloon.isDisposed()) return;
+        Window window = findWindowForBalloon(project);
+        if (window instanceof IdeFrameImpl) {
+          ((IdeFrameImpl)window).getBalloonLayout().add(balloon);
+        }
+      }
+    });
+  }
+
+  public static Window findWindowForBalloon(Project project) {
+    Window window = null;
+    if (project != null) {
+      window = WindowManager.getInstance().getFrame(project);
+    }
+
+    if (window == null) {
+      window = JOptionPane.getRootFrame();
+    }
+    return window;
+  }
+
+  public static Balloon createBalloon(final Notification notification, final boolean showCallout, final boolean hideOnClickOutside, final boolean fadeOut) {
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
 
@@ -198,11 +226,11 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     content.setBorder(new EmptyBorder(2, 4, 2, 4));
 
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
-    builder.setFillColor(NotificationsUtil.getBackground(notification)).setCloseButtonEnabled(true).setShowCallout(false)
-      .setHideOnClickOutside(NotificationDisplayType.BALLOON == displayType)
-      .setHideOnKeyOutside(NotificationDisplayType.BALLOON == displayType).setHideOnFrameResize(false);
+    builder.setFillColor(NotificationsUtil.getBackground(notification)).setCloseButtonEnabled(true).setShowCallout(showCallout)
+      .setHideOnClickOutside(hideOnClickOutside)
+      .setHideOnKeyOutside(hideOnClickOutside).setHideOnFrameResize(false);
 
-    if (NotificationDisplayType.BALLOON == displayType) {
+    if (fadeOut) {
       builder.setFadeoutTime(3000);
     }
 
@@ -215,32 +243,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     });
 
     notification.setBalloon(balloon);
-
-    final Runnable show = new Runnable() {
-      public void run() {
-        Window window = null;
-        if (project != null) {
-          window = WindowManager.getInstance().getFrame(project);
-        }
-
-        if (window == null) {
-          window = JOptionPane.getRootFrame();
-        }
-
-        if (window instanceof IdeFrameImpl) {
-          final BalloonLayout balloonLayout = ((IdeFrameImpl)window).getBalloonLayout();
-          balloonLayout.add(balloon);
-        }
-      }
-    };
-
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (balloon.isDisposed()) return;
-        show.run();
-      }
-    });
+    return balloon;
   }
 
   private static PairFunction<Notification, Project, Boolean> createFilter(@Nullable final Project project, final boolean strict) {

@@ -50,12 +50,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.EditorPopupHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.text.DateFormat;
@@ -289,7 +291,7 @@ public class EventLog implements Notifications {
         String s = " ";
         append(document, s);
 
-        int linkStart = document.getTextLength();
+        final int linkStart = document.getTextLength();
         append(document, "more");
         myHyperlinkSupport.addHyperlink(linkStart, document.getTextLength(), null, new HyperlinkInfo() {
           @Override
@@ -299,7 +301,13 @@ public class EventLog implements Notifications {
               balloon.hide();
             }
 
-            NotificationsManagerImpl.notifyByBalloon(notification, NotificationDisplayType.STICKY_BALLOON, project);
+            Window window = NotificationsManagerImpl.findWindowForBalloon(project);
+            if (window != null) {
+              Point point = myLogEditor.visualPositionToXY(myLogEditor.offsetToVisualPosition(linkStart));
+              Point target = SwingUtilities.convertPoint(myLogEditor.getContentComponent(), point, window);
+              balloon = NotificationsManagerImpl.createBalloon(notification, true, true, false);
+              balloon.show(new RelativePoint(window, target), Balloon.Position.above);
+            }
           }
         });
 
