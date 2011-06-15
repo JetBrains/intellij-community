@@ -474,7 +474,7 @@ public class PlatformTestUtil {
         int expectedOnMyMachine = expected;
         if (adjustForCPU) {
           // most of our algorithms are quadratic. sad but true.
-          expectedOnMyMachine = Math.max(1, (int)(expectedOnMyMachine * (0.907 + Math.pow(1.0 * Timings.CPU_TIMING / Timings.ETALON_CPU_TIMING - 0.695,2))));
+          expectedOnMyMachine = Math.max(1, (int)(expectedOnMyMachine * (0.45 + Math.pow(1.0 * Timings.CPU_TIMING / Timings.ETALON_CPU_TIMING - 0.25,2))));
           expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 / JobSchedulerImpl.CORES_COUNT : expectedOnMyMachine;
         }
         if (adjustForIO) {
