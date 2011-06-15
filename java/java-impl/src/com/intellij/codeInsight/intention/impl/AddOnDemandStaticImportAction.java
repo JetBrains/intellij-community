@@ -53,10 +53,10 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
   @Nullable
   public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
-    if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiReferenceExpression)) {
+    if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiJavaCodeReferenceElement)) {
       return null;
     }
-    PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
+    PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     if (refExpr.getParent() instanceof PsiReferenceExpression &&
         isParameterizedReference((PsiReferenceExpression)refExpr.getParent())) return null;
 
@@ -89,7 +89,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
   public static void invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     
-    final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
+    final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     if (aClass == null) {
       return;
@@ -110,10 +110,11 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       final TIntArrayList expressionToDequalifyOffsets = new TIntArrayList();
       copy.accept(new JavaRecursiveElementWalkingVisitor() {
         int delta = 0;
-        @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+        @Override
+        public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
           if (isParameterizedReference(expression)) return;
-          PsiExpression qualifierExpression = expression.getQualifierExpression();
-          if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).isReferenceTo(aClass)) {
+          PsiElement qualifierExpression = expression.getQualifier();
+          if (qualifierExpression instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
             try {
               PsiElement resolved = expression.resolve();
               int end = expression.getTextRange().getEndOffset();
@@ -134,12 +135,12 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
 
       expressionToDequalifyOffsets.forEachDescending(new TIntProcedure() {
         public boolean execute(int offset) {
-          PsiReferenceExpression expression = PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiReferenceExpression.class, false);
+          PsiJavaCodeReferenceElement expression = PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiJavaCodeReferenceElement.class, false);
           if (expression == null) {
             return false;
           }
-          PsiExpression qualifierExpression = expression.getQualifierExpression();
-          if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).isReferenceTo(aClass)) {
+          PsiElement qualifierExpression = expression.getQualifier();
+          if (qualifierExpression instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
             qualifierExpression.delete();
             HighlightManager.getInstance(project)
               .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
@@ -158,7 +159,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     invoke(project, file, editor, element);
   }
 
-  private static boolean isParameterizedReference(final PsiReferenceExpression expression) {
+  private static boolean isParameterizedReference(final PsiJavaCodeReferenceElement expression) {
     if (expression.getParameterList() == null) {
       return false;
     }
