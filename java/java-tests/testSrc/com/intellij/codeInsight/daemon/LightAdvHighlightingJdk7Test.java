@@ -48,6 +48,12 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   }
 
   @Override
+  protected void setUp() throws Exception {
+
+    super.setUp();
+  }
+
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new UnusedSymbolLocalInspection(),
@@ -272,6 +278,11 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testErasureClashConfusion() throws Exception {
+    enableInspectionTool(new UnusedDeclarationInspection());
+    doTest(true, false);
+  }
+
+  public void testUnused() throws Exception {
     enableInspectionTool(new UnusedDeclarationInspection());
     doTest(true, false);
   }

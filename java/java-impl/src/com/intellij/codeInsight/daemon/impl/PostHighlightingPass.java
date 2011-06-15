@@ -61,6 +61,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
@@ -542,12 +543,32 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     //search usages if it cheap
     //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
-    if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES && !canbeReferencedViaWeirdNames(member)) return true;
+    if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
+      if (member instanceof PsiEnumConstant) {
+        return checkEnumValuesUsages(member, progress);
+      }
+      if (!canbeReferencedViaWeirdNames(member)) return true;
+    }
 
     Query<PsiReference> query = member instanceof PsiMethod
                                 ? MethodReferencesSearch.search((PsiMethod)member, scope, true)
                                 : ReferencesSearch.search(member, scope, true);
-    return query.findFirst() == null;
+    final PsiReference first = query.findFirst();
+    if (first == null && member instanceof PsiEnumConstant) {
+      return checkEnumValuesUsages(member, progress);
+    }
+    return first == null;
+  }
+
+  private boolean checkEnumValuesUsages(PsiMember member, ProgressIndicator progress) {
+    final PsiClassImpl containingClass = (PsiClassImpl)member.getContainingClass();
+    if (containingClass != null) {
+      final PsiMethod valuesMethod = containingClass.getValuesMethod();
+      if (valuesMethod != null && weAreSureThereAreNoUsages(valuesMethod, progress)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean canbeReferencedViaWeirdNames(PsiMember member) {

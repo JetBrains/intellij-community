@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
@@ -661,4 +662,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     return true;
   }
 
+  @Nullable
+  public PsiMethod getValuesMethod() {
+    return myValuesMethod;
+  }
 }

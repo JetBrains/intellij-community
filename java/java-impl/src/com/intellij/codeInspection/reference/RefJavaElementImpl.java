@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IconUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -231,6 +232,21 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
       }
       addOutReference(refWhat);
       ((RefJavaElementImpl)refWhat).markReferenced(this, psiFrom, psiWhat, forWriting, forReading, expression);
+    } else {
+      if (psiWhat instanceof PsiMethod) {
+        final PsiClass containingClass = ((PsiMethod)psiWhat).getContainingClass();
+        if (containingClass != null && containingClass.isEnum() && "values".equals(((PsiMethod)psiWhat).getName())) {
+          for (PsiField enumConstant : containingClass.getFields()) {
+            if (enumConstant instanceof PsiEnumConstant) {
+              final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)getRefManager().getReference(enumConstant);
+              if (enumConstantReference != null) {
+                addOutReference(enumConstantReference);
+                enumConstantReference.markReferenced(this, psiFrom, enumConstant, false, true, expression);
+              }
+            }
+          }
+        }
+      }
     }
   }
 

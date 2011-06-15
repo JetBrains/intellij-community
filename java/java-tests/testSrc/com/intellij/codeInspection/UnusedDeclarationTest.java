@@ -172,4 +172,8 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   public void testenumInstantiation() throws Exception {
     doTest();
   }
+
+  public void testenumValues() throws Exception {
+    doTest();
+  }
 }
