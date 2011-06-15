@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class FinalMethodInFinalClassInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "final.method.in.final.class.display.name");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new FinalMethodInFinalClassVisitor();
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "final.method.in.final.class.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new RemoveModifierFix((String) infos[0]);
     }
@@ -51,12 +55,11 @@ public class FinalMethodInFinalClassInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(@NotNull PsiMethod method) {
-            //no call to super, so we don't drill into anonymous classes
             if (!method.hasModifierProperty(PsiModifier.FINAL)) {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
+            if (containingClass == null || containingClass.isEnum()) {
                 return;
             }
             if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
