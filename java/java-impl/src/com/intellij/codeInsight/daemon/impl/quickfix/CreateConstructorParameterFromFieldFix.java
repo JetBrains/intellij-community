@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
@@ -245,6 +246,12 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
           if (parameter == null) {
             continue;
           }
+        }
+        final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(field.getProject());
+        if (nullableManager.isNotNull(field, false)) {
+          final PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText(
+            "@" + nullableManager.getDefaultNotNull(), field);
+          parameter.getModifierList().addBefore(annotation, null);
         }
         AssignFieldFromParameterAction.addFieldAssignmentStatement(project, field, parameter, editor);
         created = true;
