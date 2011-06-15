@@ -41,7 +41,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -54,9 +53,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -709,7 +710,7 @@ public class CreateFromUsageUtils {
   }
 
   private static void addMemberInfo(PsiMember[] members,
-                                    PsiExpression expression,
+                                    final PsiExpression expression,
                                     List<ExpectedTypeInfo[]> types,
                                     PsiElementFactory factory) {
     Arrays.sort(members, new Comparator<PsiMember>() {
@@ -719,7 +720,16 @@ public class CreateFromUsageUtils {
         final PsiClass aClass = m1.getContainingClass();
         final PsiClass bClass = m2.getContainingClass();
         if (aClass == null || bClass == null) return 0;
-        return JavaStatisticsManager.createInfo(null, bClass).getUseCount() - JavaStatisticsManager.createInfo(null, aClass).getUseCount();
+        result = JavaStatisticsManager.createInfo(null, bClass).getUseCount() - JavaStatisticsManager.createInfo(null, aClass).getUseCount();
+        if (result != 0) return result;
+
+        WeighingComparable<PsiElement,ProximityLocation> proximity1 = PsiProximityComparator.getProximity(m1, expression);
+        WeighingComparable<PsiElement,ProximityLocation> proximity2 = PsiProximityComparator.getProximity(m2, expression);
+        if (proximity1 != null && proximity2 != null) {
+          return proximity2.compareTo(proximity1);
+        }
+
+        return 0;
       }
     });
 

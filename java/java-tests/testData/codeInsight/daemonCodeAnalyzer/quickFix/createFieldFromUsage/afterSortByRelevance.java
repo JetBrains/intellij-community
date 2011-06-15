@@ -1,14 +1,12 @@
+import foo.Foo;
+
 // "Create Field 'field'" "true"
 class A {
 
-    private MyCloserMap field;
+    private Foo field;
 
     void bar() {
         field.put("a", "b");
     }
 
-}
-
-class MyCloserMap {
-    void put(String a, String b) {}
 }

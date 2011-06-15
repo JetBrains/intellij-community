@@ -6,7 +6,3 @@ class A {
     }
 
 }
-
-class MyCloserMap {
-    void put(String a, String b) {}
-}
