@@ -1155,7 +1155,7 @@ public class PluginManager {
   }
 
   public static void dumpPluginClassStatistics() {
-    if (!Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) return;
+    if (!Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue() || ourPluginClasses == null) return;
     Map<String, ClassCounter> pluginToClassMap = new HashMap<String, ClassCounter>();
     synchronized (PLUGIN_CLASSES_LOCK) {
       for (Map.Entry<String, PluginId> entry : ourPluginClasses.entrySet()) {
