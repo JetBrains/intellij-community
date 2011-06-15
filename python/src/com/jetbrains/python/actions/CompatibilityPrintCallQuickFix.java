@@ -3,8 +3,10 @@ package com.jetbrains.python.actions;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -40,9 +42,15 @@ public class CompatibilityPrintCallQuickFix implements LocalQuickFix {
   private static void replacePrint(PsiElement expression, PyElementGenerator elementGenerator) {
     StringBuilder stringBuilder = new StringBuilder("print (");
 
-    PsiElement target = PsiTreeUtil.findChildOfType(expression, PyExpression.class);
-    if (target != null)
-      stringBuilder.append(target.getText());
+    PyExpression[] target = PsiTreeUtil.getChildrenOfType(expression, PyExpression.class);
+    if (target != null) {
+      stringBuilder.append(StringUtil.join(target, new Function<PyExpression, String>() {
+        @Override
+        public String fun(PyExpression o) {
+          return o.getText();
+        }
+      }, ", "));
+    }
 
     stringBuilder.append(")");
     expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
