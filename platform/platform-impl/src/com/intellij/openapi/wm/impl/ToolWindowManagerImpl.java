@@ -892,6 +892,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       WindowInfoImpl info2 = null;
       while (!mySideStack.isEmpty(info.getAnchor())) {
         final WindowInfoImpl storedInfo = mySideStack.pop(info.getAnchor());
+        if (storedInfo.isSplit() != info.isSplit()) {
+          continue;
+        }
+
         final WindowInfoImpl currentInfo = getInfo(storedInfo.getId());
         LOG.assertTrue(currentInfo != null);
         // SideStack contains copies of real WindowInfos. It means that
