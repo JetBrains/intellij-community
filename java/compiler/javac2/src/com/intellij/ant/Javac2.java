@@ -30,9 +30,10 @@ import org.objectweb.asm.commons.EmptyVisitor;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 public class Javac2 extends Javac {
     private ArrayList myFormFiles;
@@ -205,7 +206,7 @@ public class Javac2 extends Javac {
             super.compile();
         }
 
-        ClassLoader loader = buildClasspathClassLoader();
+        PseudoClassLoader loader = buildClasspathClassLoader();
         if (loader == null) return;
         instrumentForms(loader);
 
@@ -219,7 +220,7 @@ public class Javac2 extends Javac {
      *
      * @param loader a classloader to use
      */
-    private void instrumentForms(final ClassLoader loader) {
+    private void instrumentForms(final PseudoClassLoader loader) {
         // we instrument every file, because we cannot find which files should not be instrumented without dependency storage
         final ArrayList formsToInstrument = myFormFiles;
 
@@ -236,7 +237,7 @@ public class Javac2 extends Javac {
             log("compiling form " + formFile.getAbsolutePath(), Project.MSG_VERBOSE);
             final LwRootContainer rootContainer;
             try {
-                rootContainer = Utils.getRootContainer(formFile.toURL(), new CompiledClassPropertiesProvider(loader));
+                rootContainer = Utils.getRootContainer(formFile.toURL(), new CompiledClassPropertiesProvider(loader.getLoader()));
             }
             catch (AlienFormFileException e) {
                 // ignore non-IDEA forms
@@ -282,9 +283,9 @@ public class Javac2 extends Javac {
                 finally {
                     stream.close();
                 }
-                AntNestedFormLoader formLoader = new AntNestedFormLoader(loader, myNestedFormPathList);
+                AntNestedFormLoader formLoader = new AntNestedFormLoader(loader.getLoader(), myNestedFormPathList);
                 AntClassWriter classWriter = new AntClassWriter(getAsmClassWriterFlags(version), loader);
-                final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, formLoader, false, classWriter);
+                final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader.getLoader(), formLoader, false, classWriter);
                 codeGenerator.patchFile(classFile);
                 final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
@@ -321,7 +322,7 @@ public class Javac2 extends Javac {
      *
      * @return a URL classloader
      */
-    private ClassLoader buildClasspathClassLoader() {
+    private PseudoClassLoader buildClasspathClassLoader() {
         final StringBuffer classPathBuffer = new StringBuffer();
         final Path cp = new Path(getProject());
         appendPath(cp, getBootclasspath());
@@ -348,7 +349,7 @@ public class Javac2 extends Javac {
         log("classpath=" + classPath, Project.MSG_VERBOSE);
 
         try {
-            return createClassLoader(classPath);
+            return InstrumentationUtil.createPseudoClassLoader(classPath);
         }
         catch (MalformedURLException e) {
             fireError(e.getMessage());
@@ -375,7 +376,7 @@ public class Javac2 extends Javac {
      * @param loader the classloader to use
      * @return the amount of classes actually affected by instrumentation
      */
-    private int instrumentNotNull(File dir, final ClassLoader loader) {
+    private int instrumentNotNull(File dir, final PseudoClassLoader loader) {
         int instrumented = 0;
         final File[] files = dir.listFiles();
         for (int i = 0; i < files.length; i++) {
@@ -459,16 +460,6 @@ public class Javac2 extends Javac {
         int position = className.lastIndexOf('/');
         if (position == -1) return null;
         return getClassOrInnerName(className.substring(0, position) + '$' + className.substring(position + 1));
-    }
-
-    private static URLClassLoader createClassLoader(final String classPath) throws MalformedURLException {
-        final ArrayList urls = new ArrayList();
-        for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
-            final String s = tokenizer.nextToken();
-            urls.add(new File(s).toURL());
-        }
-        final URL[] urlsArr = (URL[])urls.toArray(new URL[urls.size()]);
-        return new URLClassLoader(urlsArr, null);
     }
 
     protected void resetFileLists() {
