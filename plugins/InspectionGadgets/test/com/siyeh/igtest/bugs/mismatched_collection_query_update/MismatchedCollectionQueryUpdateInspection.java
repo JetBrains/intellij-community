@@ -110,4 +110,16 @@ public class MismatchedCollectionQueryUpdateInspection {
 
         }
     }
+
+    class Test {
+        public String add(final String value) {
+            final List<String> list = getList();
+            list.add(value);
+            return value;
+        }
+
+        private List<String> getList() {
+            return null;
+        }
+    }
 }
