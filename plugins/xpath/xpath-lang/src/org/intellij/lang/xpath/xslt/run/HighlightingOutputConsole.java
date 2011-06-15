@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +53,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
 
         if (fileType != null) {
           EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType);
-          final EditorHighlighter highlighter = provider.getEditorHighlighter(project, null, editorEx.getColorsScheme());
+          final EditorHighlighter highlighter = provider.getEditorHighlighter(project, fileType, null, editorEx.getColorsScheme());
           editorEx.setHighlighter(highlighter);
         }
     }

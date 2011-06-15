@@ -121,4 +121,12 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
 
     return result != null ? result : Collections.<IElementType>emptyList();
   }
+
+  @Override
+  public boolean shouldStopMatch(boolean forward, @NotNull IElementType braceType, @NotNull IElementType contextType) {
+    if (myMatcher instanceof BraceMatcherTerminationAspect) {
+      return ((BraceMatcherTerminationAspect)myMatcher).shouldStopMatch(forward, braceType, contextType);
+    }
+    return false;
+  }
 }

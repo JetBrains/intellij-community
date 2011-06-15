@@ -19,10 +19,17 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import org.jetbrains.annotations.NotNull;
 
 public class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHighlighterFactory> {
   SyntaxHighlighterLanguageFactory() {
     super("com.intellij.lang.syntaxHighlighterFactory", new PlainSyntaxHighlighterFactory());
+  }
+
+  @Override
+  public SyntaxHighlighterFactory forLanguage(@NotNull Language l) {
+    return super.forLanguage(l);    //To change body of overridden methods use File | Settings | File Templates.
   }
 }

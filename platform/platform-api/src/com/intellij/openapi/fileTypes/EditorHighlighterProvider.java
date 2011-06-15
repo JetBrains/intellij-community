@@ -28,13 +28,15 @@ import org.jetbrains.annotations.Nullable;
 public interface EditorHighlighterProvider {
   /**
    * Lower level API for customizing language's file syntax highlighting in editor component.
+   *
    * @param project The project in which the highlighter will work, or null if the highlighter is not tied to any project.
+   * @param fileType the file type of the file to be highlighted
    * @param virtualFile The file to be highlighted
-   * @param colors color scheme highlighter shall be initialized with.
-   * @return EditorHighlighter implementation
+   * @param colors color scheme highlighter shall be initialized with.   @return EditorHighlighter implementation
    */
 
   EditorHighlighter getEditorHighlighter(@Nullable Project project,
+                                         @NotNull FileType fileType,
                                          @Nullable final VirtualFile virtualFile,
                                          @NotNull EditorColorsScheme colors);
 }

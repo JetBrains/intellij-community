@@ -125,6 +125,7 @@ public class BraceMatchingUtil {
           if (!ourBraceStack.isEmpty() && myMatcher != null) {
             boolean shouldContinue;
             if (myMatcher instanceof NontrivialBraceMatcher) {
+              if (((NontrivialBraceMatcher)myMatcher).shouldStopMatch(forward, brace1Token, tokenType)) return false;
               shouldContinue = true;
               List<IElementType> oppositeElementTypes = ((NontrivialBraceMatcher)myMatcher).getOppositeBraceTokenTypes(tokenType);
               for (int i = ourBraceStack.size() - 1; i >= 0; i--) {

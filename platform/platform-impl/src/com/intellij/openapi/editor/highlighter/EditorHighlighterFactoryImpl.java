@@ -39,7 +39,7 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
 
   public EditorHighlighter createEditorHighlighter(final FileType fileType, final EditorColorsScheme settings, final Project project) {
     if (fileType instanceof LanguageFileType) {
-      return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, null, settings);
+      return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, null, settings);
     }
 
     SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, null);
@@ -55,14 +55,16 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
     if (fileType instanceof LanguageFileType) {
       LanguageFileType substFileType = substituteFileType(((LanguageFileType)fileType).getLanguage(), vFile, project);
       if (substFileType != null) {
-        final EditorHighlighter editorHighlighter = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(substFileType).getEditorHighlighter(project, vFile, settings);
+        final EditorHighlighter editorHighlighter = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(substFileType).getEditorHighlighter(project,
+                                                                                                                                                fileType,
+                                                                                                                                                vFile, settings);
         boolean isPlain = editorHighlighter.getClass() == LexerEditorHighlighter.class &&
                           ((LexerEditorHighlighter) editorHighlighter).isPlain();
         if (!isPlain) {
           return editorHighlighter;
         }
       }
-      return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, vFile, settings);
+      return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, vFile, settings);
     }
 
     final ContentBasedClassFileProcessor[] processors = Extensions.getExtensions(ContentBasedClassFileProcessor.EP_NAME);

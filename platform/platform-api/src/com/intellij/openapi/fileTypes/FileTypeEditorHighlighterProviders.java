@@ -43,9 +43,10 @@ public class FileTypeEditorHighlighterProviders extends FileTypeExtension<Editor
       EditorHighlighterProvider defaultProvider = new EditorHighlighterProvider() {
         @Override
         public EditorHighlighter getEditorHighlighter(@Nullable Project project,
+                                                      @NotNull FileType fileType,
                                                       @Nullable VirtualFile virtualFile,
                                                       @NotNull EditorColorsScheme colors) {
-          return EditorHighlighterFactory.getInstance().createEditorHighlighter(SyntaxHighlighter.PROVIDER.create(key, project, virtualFile), colors);
+          return EditorHighlighterFactory.getInstance().createEditorHighlighter(SyntaxHighlighter.PROVIDER.create(fileType, project, virtualFile), colors);
         }
       };
       return Collections.singletonList(defaultProvider);
