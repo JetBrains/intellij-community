@@ -56,7 +56,7 @@ class StatusPanel extends JPanel {
     
     setOpaque(isOpaque() && !SystemInfo.isMac);
 
-    myShowLog.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+    myShowLog.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 5));
 
     myShowLog.addMouseListener(new MouseAdapter() {
       @Override
