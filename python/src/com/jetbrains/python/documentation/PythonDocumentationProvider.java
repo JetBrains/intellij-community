@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
@@ -50,6 +51,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @NonNls private static final String RST_PREFIX = ":";
   @NonNls private static final String EPYDOC_PREFIX = "@";
+
+  @NonNls private static final String UNKNOWN = "unknown";
 
   // provides ctrl+hover info
   public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
@@ -97,7 +100,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   public static String getTypeDescription(@NotNull PyFunction fun) {
-    final String UNKNOWN = "unknown";
     final TypeEvalContext context = TypeEvalContext.slow();
     final PyType returnType = fun.getReturnType(context, null);
     return String.format("(%s) -> %s\n",
@@ -121,6 +123,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   public static String getTypeName(@NotNull PyType type, @NotNull TypeEvalContext context) {
+    if (type instanceof PyTypeReference) {
+      final PyType resolved = ((PyTypeReference)type).resolve(null, context);
+      if (resolved != null) {
+        return getTypeName(resolved, context);
+      }
+      return UNKNOWN;
+    }
     final String name = type.getName();
     if (type instanceof PyCollectionType) {
       final PyType elementType = ((PyCollectionType)type).getElementType(context);
