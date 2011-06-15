@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.lang.BraceMatcherTerminationAspect;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
@@ -120,5 +121,13 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
     }
 
     return result != null ? result : Collections.<IElementType>emptyList();
+  }
+
+  @Override
+  public boolean shouldStopMatch(boolean forward, @NotNull IElementType braceType, @NotNull IElementType contextType) {
+    if (myMatcher instanceof BraceMatcherTerminationAspect) {
+      return ((BraceMatcherTerminationAspect)myMatcher).shouldStopMatch(forward, braceType, contextType);
+    }
+    return false;
   }
 }

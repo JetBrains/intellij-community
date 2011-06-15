@@ -24,4 +24,6 @@ import java.util.List;
 public interface NontrivialBraceMatcher extends BraceMatcher {
   @NotNull
   List<IElementType> getOppositeBraceTokenTypes(@NotNull IElementType type);
+
+  boolean shouldStopMatch(boolean forward, @NotNull IElementType braceType, @NotNull IElementType type);
 }
