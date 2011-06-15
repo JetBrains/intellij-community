@@ -345,8 +345,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyTypeCheckerInspection() {
-    // TODO: Add a Py3K test
-    setLanguageLevel(LanguageLevel.PYTHON27);
+    // TODO: Add a Py3K test. Setting a language level is not enough, setting up a Py3K SDK is required
     doHighlightingTest(PyTypeCheckerInspection.class);
   }
 }

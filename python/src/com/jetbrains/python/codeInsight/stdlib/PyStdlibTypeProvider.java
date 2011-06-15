@@ -23,21 +23,20 @@ import java.util.Properties;
  * @author yole
  */
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
-  private Properties myStdlibTypes = null;
+  private Properties myStdlibTypes2 = new Properties();
+  private Properties myStdlibTypes3 = new Properties();
   private Project myProject = null;
   private Map<String, PyType> myTypeCache = new HashMap<String, PyType>();
-
-  // TODO: Different databases for various Python versions (2.6, 2.7, 3.2, etc.)
 
   @Override
   public PyType getReturnType(PyFunction function, @Nullable PyReferenceExpression callSite, TypeEvalContext context) {
     final String qname = getQualifiedName(function, callSite);
-    final String key = String.format("%s.return", qname);
+    final String key = String.format("Python%d/%s.return", LanguageLevel.forElement(function).getVersion(), qname);
     final PyType cached = getCachedType(function.getProject(), key);
     if (cached != null) {
       return cached;
     }
-    final StructuredDocString docString = getStructuredDocString(qname);
+    final StructuredDocString docString = getStructuredDocString(qname, LanguageLevel.forElement(function));
     if (docString == null) {
       return null;
     }
@@ -51,12 +50,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   public PyType getParameterType(PyNamedParameter param, PyFunction func, TypeEvalContext context) {
     final String name = param.getName();
     final String qname = getQualifiedName(func, param);
-    final String key = String.format("%s.%s", qname, name);
+    final String key = String.format("Python%d/%s.%s", LanguageLevel.forElement(param).getVersion(), qname, name);
     final PyType cached = getCachedType(param.getProject(), key);
     if (cached != null) {
       return cached;
     }
-    final StructuredDocString docString = getStructuredDocString(qname);
+    final StructuredDocString docString = getStructuredDocString(qname, LanguageLevel.forElement(param));
     if (docString == null) {
       return null;
     }
@@ -77,8 +76,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  private StructuredDocString getStructuredDocString(String qualifiedName) {
-    final Properties db = getStdlibTypes();
+  private StructuredDocString getStructuredDocString(String qualifiedName, LanguageLevel level) {
+    final Properties db = getStdlibTypes(level);
     final String docString = db.getProperty(qualifiedName);
     return StructuredDocString.parse(docString);
   }
@@ -106,15 +105,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return myTypeCache.get(key);
   }
 
-  private Properties getStdlibTypes() {
-    if (myStdlibTypes == null) {
-      myStdlibTypes = new Properties();
-      InputStream s = getClass().getResourceAsStream("StdlibTypes.properties");
+  private Properties getStdlibTypes(LanguageLevel level) {
+    final Properties result = level.isPy3K() ? myStdlibTypes3 : myStdlibTypes2;
+    final String name = level.isPy3K() ? "StdlibTypes3" : "StdlibTypes2";
+    if (result.isEmpty()) {
+      InputStream s = getClass().getResourceAsStream(String.format("%s.properties", name));
       try {
-        myStdlibTypes.load(s);
+        result.load(s);
       }
       catch (IOException ignored) {}
     }
-    return myStdlibTypes;
+    return result;
   }
 }
