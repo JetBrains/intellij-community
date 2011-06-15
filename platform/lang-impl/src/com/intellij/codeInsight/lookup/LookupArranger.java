@@ -53,7 +53,7 @@ public abstract class LookupArranger {
   public void itemSelected(LookupElement item, final Lookup lookup) {
   }
 
-  public int suggestPreselectedItem(List<LookupElement> sorted) {
+  public int suggestPreselectedItem(List<LookupElement> sorted, Iterable<List<LookupElement>> groups) {
     return 0;
   }
 

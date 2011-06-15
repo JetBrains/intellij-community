@@ -213,6 +213,15 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "FooOCSomething", "FooObjectCollector");
   }
 
+  public void testPreselectMostRelevantInTheMiddle() {
+    myFixture.addClass("package foo; public class Elaaaaaaaaaaaaaaaaaaaa {}");
+    invokeCompletion(getTestName(false) + ".java");
+    LookupImpl lookup = getLookup();
+    assertPreferredItems(lookup.getList().getSelectedIndex());
+    assertEquals("Elaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
+    assertEquals("ELEMENT_A", lookup.getCurrentItem().getLookupString());
+  }
+
   public void testPreferSamePackageOverImported() {
     myFixture.addClass("package bar; public class Bar1 {}");
     myFixture.addClass("package bar; public class Bar2 {}");
