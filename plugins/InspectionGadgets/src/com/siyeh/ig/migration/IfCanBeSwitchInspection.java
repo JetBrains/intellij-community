@@ -192,41 +192,22 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
             final List<IfStatementBranch> branches =
                     new ArrayList<IfStatementBranch>(20);
-          final PsiExpression switchExpression =
-            SwitchUtils.getSwitchExpression(ifStatement, myMinimumBranches);
-          if (switchExpression == null) return;
-          while (true) {
-              final PsiExpression condition = ifStatement.getCondition();
-
-                final List<PsiExpression> labels =
-                        getValuesFromExpression(condition, switchExpression,
-                                new ArrayList());
+            final PsiExpression switchExpression =
+                    SwitchUtils.getSwitchExpression(ifStatement,
+                            myMinimumBranches);
+            if (switchExpression == null) {
+                return;
+            }
+            while (true) {
+                final PsiExpression condition = ifStatement.getCondition();
                 final PsiStatement thenBranch = ifStatement.getThenBranch();
                 final IfStatementBranch ifBranch =
                         new IfStatementBranch(thenBranch, false);
+                extractCaseExpressions(condition, switchExpression, ifBranch);
                 if (!branches.isEmpty()) {
                     extractIfComments(ifStatement, ifBranch);
                 }
                 extractStatementComments(thenBranch, ifBranch);
-                for (final PsiExpression label : labels) {
-                    if (label instanceof PsiReferenceExpression) {
-                        final PsiReferenceExpression reference =
-                                (PsiReferenceExpression)label;
-                        final PsiElement referent = reference.resolve();
-                        if (referent instanceof PsiEnumConstant) {
-                            final PsiEnumConstant constant =
-                                    (PsiEnumConstant)referent;
-                            final String constantName = constant.getName();
-                            ifBranch.addCondition(constantName);
-                        } else {
-                            final String labelText = label.getText();
-                            ifBranch.addCondition(labelText);
-                        }
-                    } else {
-                        final String labelText = label.getText();
-                        ifBranch.addCondition(labelText);
-                    }
-                }
                 branches.add(ifBranch);
                 final PsiStatement elseBranch = ifStatement.getElseBranch();
                 if (elseBranch instanceof PsiIfStatement) {
@@ -249,6 +230,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
             switchStatementText.append("switch(");
             switchStatementText.append(switchExpression.getText());
             switchStatementText.append("){");
+            final PsiType type = switchExpression.getType();
+            final boolean castToInt = type != null &&
+                    type.equalsToText(CommonClassNames.JAVA_LANG_INTEGER);
             for (IfStatementBranch branch : branches) {
                 boolean hasConflicts = false;
                 for (IfStatementBranch testBranch : branches) {
@@ -259,7 +243,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                         hasConflicts = true;
                     }
                 }
-                dumpBranch(branch, hasConflicts, breaksNeedRelabeled,
+                dumpBranch(branch, castToInt, hasConflicts, breaksNeedRelabeled,
                         labelString, switchStatementText);
             }
             switchStatementText.append('}');
@@ -370,9 +354,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
             }
         }
 
-        private static List<PsiExpression> getValuesFromExpression(
-                PsiExpression expression, PsiExpression caseExpression,
-                List<PsiExpression> values) {
+        private static void extractCaseExpressions(
+                PsiExpression expression, PsiExpression switchExpression,
+                IfStatementBranch values) {
             if (expression instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression methodCallExpression =
                         (PsiMethodCallExpression) expression;
@@ -384,11 +368,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                         methodCallExpression.getMethodExpression();
                 final PsiExpression qualifierExpression =
                         methodExpression.getQualifierExpression();
-                if (EquivalenceChecker.expressionsAreEquivalent(caseExpression,
+                if (EquivalenceChecker.expressionsAreEquivalent(switchExpression,
                         argument)) {
-                    values.add(qualifierExpression);
+                    values.addCaseExpression(qualifierExpression);
                 } else {
-                    values.add(argument);
+                    values.addCaseExpression(argument);
                 }
             } else if (expression instanceof PsiBinaryExpression) {
                 final PsiBinaryExpression binaryExpression =
@@ -398,16 +382,16 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                 final PsiJavaToken sign = binaryExpression.getOperationSign();
                 final IElementType tokenType = sign.getTokenType();
                 if (JavaTokenType.OROR.equals(tokenType)) {
-                    getValuesFromExpression(lhs, caseExpression,
+                    extractCaseExpressions(lhs, switchExpression,
                             values);
-                    getValuesFromExpression(rhs, caseExpression,
+                    extractCaseExpressions(rhs, switchExpression,
                             values);
                 } else {
                     if (EquivalenceChecker.expressionsAreEquivalent(
-                            caseExpression, rhs)) {
-                        values.add(lhs);
+                            switchExpression, rhs)) {
+                        values.addCaseExpression(lhs);
                     } else {
-                        values.add(rhs);
+                        values.addCaseExpression(rhs);
                     }
                 }
             } else if (expression instanceof PsiParenthesizedExpression) {
@@ -415,28 +399,58 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                         (PsiParenthesizedExpression)expression;
                 final PsiExpression contents =
                         parenthesizedExpression.getExpression();
-                getValuesFromExpression(contents, caseExpression, values);
+                extractCaseExpressions(contents, switchExpression, values);
             }
-            return values;
         }
 
         private static void dumpBranch(
-                IfStatementBranch branch, boolean wrap,
+                IfStatementBranch branch, boolean castToInt, boolean wrap,
                 boolean renameBreaks, String breakLabelName,
                 @NonNls StringBuilder switchStatementText) {
             dumpComments(branch.getComments(), switchStatementText);
             if (branch.isElse()) {
                 switchStatementText.append("default: ");
             } else {
-                for (String label : branch.getConditions()) {
+                for (PsiExpression caseExpression : branch.getConditions()) {
                     switchStatementText.append("case ");
-                    switchStatementText.append(label);
+                    switchStatementText.append(getCaseLabelText(caseExpression,
+                            castToInt));
                     switchStatementText.append(": ");
                 }
             }
             dumpComments(branch.getStatementComments(), switchStatementText);
             dumpBody(branch.getStatement(), wrap, renameBreaks, breakLabelName,
                     switchStatementText);
+        }
+
+        @NonNls
+        private static String getCaseLabelText(PsiExpression expression,
+                                               boolean castToInt) {
+            if (expression instanceof PsiReferenceExpression) {
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression) expression;
+                final PsiElement target = referenceExpression.resolve();
+                if (target instanceof PsiEnumConstant) {
+                    final PsiEnumConstant enumConstant =
+                            (PsiEnumConstant) target;
+                    return enumConstant.getName();
+                }
+            }
+            if (castToInt) {
+                final PsiType type = expression.getType();
+                if (!PsiType.INT.equals(type)) {
+                    /*
+                    because
+                    Integer a = 1;
+                    switch (a) {
+                        case (byte)7:
+                    }
+                    does not compile with javac (but does with Eclipse)
+                     */
+                    return "(int)" + expression.getText();
+                }
+            }
+            return expression.getText();
         }
 
         private static void dumpComments(List<String> comments,
@@ -532,8 +546,20 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                 return;
             }
             final PsiType type = switchExpression.getType();
-            if (!suggestIntSwitches && PsiType.INT.equals(type)) {
-                return;
+            if (!suggestIntSwitches) {
+                if (type instanceof PsiClassType) {
+                    if (type.equalsToText(CommonClassNames.JAVA_LANG_INTEGER) ||
+                            type.equalsToText(CommonClassNames.JAVA_LANG_SHORT) ||
+                            type.equalsToText(CommonClassNames.JAVA_LANG_BYTE) ||
+                            type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER)) {
+                        return;
+                    }
+                } else if (PsiType.INT.equals(type) ||
+                        PsiType.SHORT.equals(type) ||
+                        PsiType.BYTE.equals(type) ||
+                        PsiType.CHAR.equals(type)) {
+                    return;
+                }
             }
             if (!suggestEnumSwitches && type instanceof PsiClassType) {
                 final PsiClassType classType = (PsiClassType) type;
