@@ -270,6 +270,12 @@ public class TextChangesStorage {
         clientShift += adjusted.getDiff();
         newChangeEnd -= storedClientEnd - newChangeStart;
         insertionIndex = i + 1;
+        continue;
+      }
+
+      // Check if given change is left-adjacent to the stored change.
+      if (newChangeEnd == storedClientStart) {
+        changeEntry.clientStartOffset += changeDiff;
       }
     }
 

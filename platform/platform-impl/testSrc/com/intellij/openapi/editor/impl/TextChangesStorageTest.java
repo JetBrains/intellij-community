@@ -268,6 +268,14 @@ public class TextChangesStorageTest {
     delete(3, 6);
     checkChanges(c("a", 1), c("efg", 3));
   }
+
+  @Test
+  public void removeAdjacentToInsert() {
+    insert("a", 1);
+    insert("bc", 3);
+    delete(2, 3);
+    checkChanges(c("abc", 1, 2));
+  }
   
   private void checkChanges(TextChangeImpl ... changes) {
     assertEquals(asList(changes), myStorage.getChanges());
