@@ -183,7 +183,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     if (!isTestFile(file)) return null;
 
     final PyFile pyFile = (PyFile)file;
-    final List<PyStatement> testCases = PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile);
+    final List<PyStatement> testCases = getTestCaseClassesFromFile(pyFile);
     if (testCases.isEmpty()) return null;
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from file");
@@ -199,6 +199,10 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     configuration.setName(configuration.suggestedName());
     myPsiElement = pyFile;
     return settings;
+  }
+
+  protected List<PyStatement> getTestCaseClassesFromFile(PyFile pyFile) {
+    return PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile);
   }
 
   protected RunnerAndConfigurationSettings makeConfigurationSettings(Location location, String name) {
