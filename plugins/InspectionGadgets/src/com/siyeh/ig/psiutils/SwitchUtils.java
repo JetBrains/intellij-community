@@ -81,17 +81,17 @@ public class SwitchUtils{
     }
 
     private static boolean canBeMadeIntoCase(
-            PsiExpression expression, PsiExpression caseExpression,
+            PsiExpression expression, PsiExpression switchExpression,
             LanguageLevel languageLevel) {
         while(expression instanceof PsiParenthesizedExpression){
             final PsiParenthesizedExpression parenthesizedExpression =
                     (PsiParenthesizedExpression)expression;
             expression = parenthesizedExpression.getExpression();
         }
-        if (languageLevel.compareTo(LanguageLevel.JDK_1_7) >=0 ) {
+        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
             final PsiExpression stringCaseExpression =
                     determinePossibleStringSwitchExpression(expression);
-            if (EquivalenceChecker.expressionsAreEquivalent(caseExpression,
+            if (EquivalenceChecker.expressionsAreEquivalent(switchExpression,
                     stringCaseExpression)) {
                 return true;
             }
@@ -103,19 +103,19 @@ public class SwitchUtils{
                 (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType operation = sign.getTokenType();
-        final PsiExpression lOperand = binaryExpression.getLOperand();
+        final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         if(operation.equals(JavaTokenType.OROR)){
-            return canBeMadeIntoCase(lOperand, caseExpression, languageLevel) &&
-                    canBeMadeIntoCase(rhs, caseExpression, languageLevel);
+            return canBeMadeIntoCase(lhs, switchExpression, languageLevel) &&
+                    canBeMadeIntoCase(rhs, switchExpression, languageLevel);
         } else if(operation.equals(JavaTokenType.EQEQ)){
-            return (canBeCaseLabel(lOperand, languageLevel) &&
+            return (canBeCaseLabel(lhs, languageLevel) &&
                     EquivalenceChecker.expressionsAreEquivalent(
-                            caseExpression, rhs))
+                            switchExpression, rhs))
                     ||
                     (canBeCaseLabel(rhs, languageLevel) &&
                             EquivalenceChecker.expressionsAreEquivalent(
-                                    caseExpression, lOperand));
+                                    switchExpression, lhs));
         } else {
             return false;
         }
@@ -131,7 +131,7 @@ public class SwitchUtils{
         if (expression == null) {
             return null;
         }
-        if (languageLevel.compareTo(LanguageLevel.JDK_1_7) >= 0) {
+        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
             final PsiExpression jdk17Expression =
                     determinePossibleStringSwitchExpression(expression);
             if (jdk17Expression != null) {
@@ -150,9 +150,11 @@ public class SwitchUtils{
         if(operation.equals(JavaTokenType.OROR)){
             return determinePossibleSwitchExpressions(lhs, languageLevel);
         } else if(operation.equals(JavaTokenType.EQEQ)){
-            if (canBeCaseLabel(lhs, languageLevel) && canBeSwitchExpression(rhs, languageLevel)) {
+            if (canBeCaseLabel(lhs, languageLevel) &&
+                    canBeSwitchExpression(rhs, languageLevel)) {
                 return rhs;
-            } else if (canBeCaseLabel(rhs, languageLevel) && canBeSwitchExpression(lhs, languageLevel)) {
+            } else if (canBeCaseLabel(rhs, languageLevel) &&
+                    canBeSwitchExpression(lhs, languageLevel)) {
                 return lhs;
             }
         }
@@ -160,30 +162,30 @@ public class SwitchUtils{
     }
 
     private static boolean canBeSwitchExpression(PsiExpression expression, LanguageLevel languageLevel) {
-      final PsiType type = expression.getType();
-
-      if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) ||
-          PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
-          return true;
-      }
-      else if (type instanceof PsiClassType) {
-          final PsiClass aClass = ((PsiClassType)type).resolve();
-          if (aClass != null) {
-              final String fqn = aClass.getQualifiedName();
-              if (CommonClassNames.JAVA_LANG_CHARACTER.equals(fqn) || CommonClassNames.JAVA_LANG_BYTE.equals(fqn) ||
-                  CommonClassNames.JAVA_LANG_SHORT.equals(fqn) || CommonClassNames.JAVA_LANG_INTEGER.equals(fqn)) {
-                  return true;
-              }
-              if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && aClass.isEnum()) {
-                  return true;
-              }
-              if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && CommonClassNames.JAVA_LANG_STRING.equals(fqn)) {
-                  return true;
-              }
-          }
-      }
-
-      return false;
+        final PsiType type = expression.getType();
+        if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) ||
+                PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
+            return true;
+        } else if (type instanceof PsiClassType) {
+            if (type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER) ||
+                    type.equalsToText(CommonClassNames.JAVA_LANG_BYTE) ||
+                    type.equalsToText(CommonClassNames.JAVA_LANG_SHORT) ||
+                    type.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
+                return true;
+            }
+            if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
+                final PsiClassType classType = (PsiClassType)type;
+                final PsiClass aClass = classType.resolve();
+                if (aClass != null && aClass.isEnum()) {
+                    return true;
+                }
+            }
+            if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) &&
+                    type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static PsiExpression determinePossibleStringSwitchExpression(
@@ -234,8 +236,8 @@ public class SwitchUtils{
         if(expression == null){
             return false;
         }
-        if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0
-                && expression instanceof PsiReferenceExpression){
+        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) &&
+                expression instanceof PsiReferenceExpression){
             final PsiElement referent = ((PsiReference) expression).resolve();
             if(referent instanceof PsiEnumConstant){
                 return true;
@@ -243,8 +245,8 @@ public class SwitchUtils{
         }
         final PsiType type = expression.getType();
         return type != null &&
-                (type.equals(PsiType.INT) ||
-                        type.equals(PsiType.CHAR)) &&
+                (PsiType.INT.equals(type) || PsiType.CHAR.equals(type) ||
+                PsiType.SHORT.equals(type) || PsiType.BYTE.equals(type)) &&
                 PsiUtil.isConstantExpression(expression);
     }
 

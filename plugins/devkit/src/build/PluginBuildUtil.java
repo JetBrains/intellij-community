@@ -59,14 +59,17 @@ public class PluginBuildUtil {
     return sandboxHome + File.separator + "plugins" + File.separator + module.getName();
   }
 
-  public static void getDependencies(Module module, Set<Module> modules) {
-    for (Module dependency : ModuleRootManager.getInstance(module).getDependencies()) {
-      if (dependency.getModuleType() == StdModuleTypes.JAVA) {
-        if (modules.add(dependency)) {
-          getDependencies(dependency, modules);
+  public static void getDependencies(Module module, final Set<Module> modules) {
+    productionRuntimeDependencies(module).forEachModule(new Processor<Module>() {
+      @Override
+      public boolean process(Module dep) {
+        if (dep.getModuleType() == StdModuleTypes.JAVA && !modules.contains(dep)) {
+          modules.add(dep);
+          getDependencies(dep, modules);
         }
+        return true;
       }
-    }
+    });
   }
 
   public static Module[] getWrongSetDependencies(final Module module) {
@@ -85,12 +88,16 @@ public class PluginBuildUtil {
   }
 
   public static void getLibraries(Module module, final Set<Library> libs) {
-    ModuleRootManager.getInstance(module).orderEntries().productionOnly().runtimeOnly().forEachLibrary(new Processor<Library>() {
+    productionRuntimeDependencies(module).forEachLibrary(new Processor<Library>() {
       @Override
       public boolean process(Library library) {
         libs.add(library);
         return true;
       }
     });
+  }
+
+  private static OrderEnumerator productionRuntimeDependencies(Module module) {
+    return OrderEnumerator.orderEntries(module).productionOnly().runtimeOnly();
   }
 }

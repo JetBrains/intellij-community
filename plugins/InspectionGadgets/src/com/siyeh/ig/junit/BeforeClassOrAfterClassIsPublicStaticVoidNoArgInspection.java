@@ -119,17 +119,10 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
         }
 
         if (method.getReturnType() != PsiType.VOID) {
-          final Runnable runnable = new Runnable() {
-            public void run() {
-              ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID, new ParameterInfoImpl[0]);
-              csp.run();
-            }
-          };
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            runnable.run();
-          } else {
-            ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-          }
+          ChangeSignatureProcessor csp =
+            new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID,
+                                         new ParameterInfoImpl[0]);
+          csp.run();
         }
       }
     }

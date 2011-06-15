@@ -125,19 +125,9 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
         if (method != null) {
           PsiType type = (PsiType)infos[1];
           if (type == null) type = method.getReturnType();
-          final PsiType finalType = type;
-          Runnable runnable = new Runnable() {
-            public void run() {
-              final ChangeSignatureProcessor csp =
-                new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), finalType, new ParameterInfoImpl[0]);
-              csp.run();
-            }
-          };
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            runnable.run();
-          } else {
-            ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-          }
+          final ChangeSignatureProcessor csp =
+            new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), type, new ParameterInfoImpl[0]);
+          csp.run();
         } else {
           final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
           if (psiClass != null) {

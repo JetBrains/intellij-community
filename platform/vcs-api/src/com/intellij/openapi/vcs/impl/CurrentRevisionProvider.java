@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.vcs.impl;
 
-package com.intellij.ide.util.projectWizard;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
-import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.roots.libraries.Library;
+import java.io.IOException;
 
 /**
- * @author nik
+ * @author irengrig
+ *         Date: 6/14/11
+ *         Time: 2:19 PM
  */
-public interface LibraryFilter {
-
-  boolean accept(@NotNull Library library);
-
+public interface CurrentRevisionProvider {
+  VcsRevisionNumber getCurrentRevision() throws VcsException;
+  Pair<VcsRevisionNumber, byte[]> get() throws VcsException, IOException;
 }

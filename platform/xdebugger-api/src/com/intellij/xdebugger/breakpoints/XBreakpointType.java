@@ -19,6 +19,7 @@ package com.intellij.xdebugger.breakpoints;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -164,6 +165,14 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @Nullable @NonNls
   public String getBreakpointsDialogHelpTopic() {
+    return null;
+  }
+
+  /**
+   * Override this method to define source position for a breakpoint. It will be used e.g. by 'Go To' and 'View Source' buttons in 'Breakpoints' dialog
+   */
+  @Nullable
+  public XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
     return null;
   }
 

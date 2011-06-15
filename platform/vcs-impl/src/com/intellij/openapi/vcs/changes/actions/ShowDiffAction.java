@@ -31,12 +31,13 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -211,42 +212,63 @@ public class ShowDiffAction extends AnAction implements DumbAware {
                       }, project, context);
   }
 
-  private static void showBinaryDiff(Project project, Change change) {
-    final ContentRevision bRev = change.getBeforeRevision();
-    final ContentRevision aRev = change.getAfterRevision();
+  private static FileContent createBinaryFileContent(final Project project, final ContentRevision contentRevision, final String fileName)
+    throws VcsException, IOException {
+    final FileContent fileContent;
+    if (contentRevision == null) {
+      fileContent = FileContent.createFromTempFile(project,
+                                              fileName,
+                                              fileName,
+                                              ArrayUtil.EMPTY_BYTE_ARRAY);
+    } else {
+      fileContent = FileContent.createFromTempFile(project,
+                                              contentRevision.getFile().getName(),
+                                              contentRevision.getFile().getName(),
+                                              ((BinaryContentRevision)contentRevision).getBinaryContent());
+    }
+    return fileContent;
+  }
 
-    final VirtualFile vf = change.getVirtualFile();
-    if (vf != null) {
-      try {
-      final FileContent before = FileContent.createFromTempFile(project,
-                                                                "",
-                                                                vf.getName(),
-                                                                ((BinaryContentRevision)bRev).getBinaryContent());
-      final FileContent after = FileContent.createFromTempFile(project,
-                                                               "",
-                                                               vf.getName(),
-                                                               ((BinaryContentRevision)aRev).getBinaryContent());
-        final SimpleDiffRequest request = new SimpleDiffRequest(project,vf.getPath());
-        request.setContents(before, after);
-        if (DiffManager.getInstance().getDiffTool().canShow(request)) {
-          DiffManager.getInstance().getDiffTool().show(request);
-        }
-      } catch (VcsException e){//
+  public static SimpleDiffRequest createBinaryDiffRequest(final Project project, final Change change) throws VcsException {
+    final FilePath filePath = ChangesUtil.getFilePath(change);
+    final SimpleDiffRequest request = new SimpleDiffRequest(project, filePath.getPath());
+    try {
+      request.setContents(createBinaryFileContent(project, change.getBeforeRevision(), filePath.getName()),
+                          createBinaryFileContent(project, change.getAfterRevision(), filePath.getName()));
+      return request;
+    }
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
+  }
+
+  private static void showBinaryDiff(Project project, Change change) {
+    try {
+      final SimpleDiffRequest request = createBinaryDiffRequest(project, change);
+      if (DiffManager.getInstance().getDiffTool().canShow(request)) {
+        DiffManager.getInstance().getDiffTool().show(request);
       }
+    }
+    catch (VcsException e) {
+      Messages.showWarningDialog(e.getMessage(), "Show Diff");
     }
   }
 
   private static boolean isBinaryDiff(Project project, Change[] changes, int index) {
     if (index >= 0 && index < changes.length) {
       final Change change = changes[index];
-      final ContentRevision bRev = change.getBeforeRevision();
-      final ContentRevision aRev = change.getAfterRevision();
-
-      return aRev instanceof BinaryContentRevision
-             && bRev instanceof BinaryContentRevision
-             && BinaryDiffTool.canShow(project, change.getVirtualFile());
+      return isBinaryChange(project, change);
     }
     return false;
+  }
+
+  private static boolean isBinaryChange(Project project, Change change) {
+    final ContentRevision bRev = change.getBeforeRevision();
+    final ContentRevision aRev = change.getAfterRevision();
+
+    return (aRev == null || aRev instanceof BinaryContentRevision)
+           && (bRev == null || bRev instanceof BinaryContentRevision)
+           && (aRev == null || BinaryDiffTool.canShow(project, change.getVirtualFile()));
   }
 
   public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, int index, @NotNull final ShowDiffUIContext context) {

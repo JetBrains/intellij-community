@@ -19,6 +19,7 @@ package com.intellij.ide.todo.nodes;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.todo.HighlightedRegionProvider;
 import com.intellij.ide.todo.TodoTreeBuilder;
@@ -30,14 +31,17 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.file.DirectoryIconProvider;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,6 +96,17 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
       new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
 
     data.setPresentableText(newName);
+  }
+
+  @Override
+  protected void setupIcon(PresentationData data, PsiDirectory psiDirectory) {
+    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
+    if (ProjectRootsUtil.isModuleContentRoot(virtualFile, psiDirectory.getProject())) {
+      data.setOpenIcon(patchIcon(new DirectoryIconProvider().getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN), virtualFile));
+      data.setClosedIcon(patchIcon(new DirectoryIconProvider().getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED), virtualFile));
+    } else {
+      super.setupIcon(data, psiDirectory);
+    }
   }
 
   private TodoTreeStructure getStructure() {

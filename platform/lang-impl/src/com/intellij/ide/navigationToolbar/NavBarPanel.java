@@ -98,7 +98,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myPresentation = new NavBarPresentation(myProject);
     myUpdateQueue = new NavBarUpdateQueue(this);
 
-    PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
+    PopupHandler.installPopupHandler(this, IdeActions.GROUP_NAVBAR_POPUP, ActionPlaces.NAVIGATION_BAR);
 
     setBorder(new NavBarBorder(false, -1));
     setOpaque(false);
