@@ -137,7 +137,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public ActionCallback getReady(final Object requestor) {
+  public ActionCallback getReady(@NotNull final Object requestor) {
     final ActionCallback result = new ActionCallback();
     myShowing.getReady(this).doWhenDone(new Runnable() {
       @Override
@@ -190,7 +190,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myToolWindowManager.getToolWindowAnchor(myId);
   }
 
-  public final void setAnchor(final ToolWindowAnchor anchor, final Runnable runnable) {
+  public final void setAnchor(final ToolWindowAnchor anchor, @Nullable final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.setToolWindowAnchor(myId, anchor);
     if (runnable != null) {
@@ -203,7 +203,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myToolWindowManager.isSplitMode(myId);
   }
 
-  public void setContentUiType(ToolWindowContentUiType type, Runnable runnable) {
+  public void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.setContentUiType(myId, type);
     if (runnable != null) {
@@ -238,17 +238,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myToolWindowManager.isToolWindowAutoHide(myId);
   }
 
-  public final boolean isFloating() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myToolWindowManager.isToolWindowFloating(myId);
-  }
-
   public final ToolWindowType getType() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.getToolWindowType(myId);
   }
 
-  public final void setType(final ToolWindowType type, final Runnable runnable) {
+  public final void setType(final ToolWindowType type, @Nullable final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.setToolWindowType(myId, type);
     if (runnable != null) {
