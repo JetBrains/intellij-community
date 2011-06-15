@@ -24,10 +24,12 @@ public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArg
     return node != null ? node.getText() : null;
   }
 
+  @Override
   public ASTNode getKeywordNode() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
+  @Override
   public PyExpression getValueExpression() {
     return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
@@ -38,6 +40,7 @@ public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArg
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    return null;
+    final PyExpression e = getValueExpression();
+    return e != null ? e.getType(context) : null;
   }
 }

@@ -10,9 +10,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
@@ -20,6 +22,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
@@ -27,6 +30,7 @@ import com.jetbrains.python.toolbox.FP;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -85,13 +89,46 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final String name = fun.getName();
     cat.add("def ").addWith(func_name_wrapper, $(name));
     cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
-    if (!PyNames.INIT.equals(name) && !specifiesReturnType(fun.getDocStringExpression())) {
-      final PyType returnType = fun.getReturnType(TypeEvalContext.slow(), null);
-      cat.add(escaper.apply("\nInferred return type: "));
-      if (returnType == null) cat.add("unknown");
-      else cat.add(returnType.getName());
+    if (!PyNames.INIT.equals(name)) {
+      cat.add(escaper.apply("\nInferred type: "));
+      cat.add(escaper.apply(getTypeDescription(fun)));
     }
     return cat;
+  }
+
+  public static String getTypeDescription(@NotNull PyFunction fun) {
+    final String UNKNOWN = "unknown";
+    final TypeEvalContext context = TypeEvalContext.slow();
+    final PyType returnType = fun.getReturnType(context, null);
+    return String.format("(%s) -> %s\n",
+                         StringUtil.join(fun.getParameterList().getParameters(),
+                                         new Function<PyParameter, String>() {
+                                           @Override
+                                           public String fun(PyParameter p) {
+                                             final PyNamedParameter np = p.getAsNamed();
+                                             if (np != null) {
+                                               String name = UNKNOWN;
+                                               final PyType t = np.getType(context);
+                                               if (t != null) {
+                                                 name = getTypeName(t, context);
+                                               }
+                                               return String.format("%s: %s", np.getName(), name);
+                                             }
+                                             return p.toString();
+                                           }
+                                         }, ", "),
+                         returnType != null ? getTypeName(returnType, context) : UNKNOWN);
+  }
+
+  public static String getTypeName(@NotNull PyType type, @NotNull TypeEvalContext context) {
+    final String name = type.getName();
+    if (type instanceof PyCollectionType) {
+      final PyType elementType = ((PyCollectionType)type).getElementType(context);
+      if (elementType != null) {
+        return String.format("%s of %s", name, elementType.getName());
+      }
+    }
+    return name;
   }
 
   static ChainIterable<String> describeDecorators(

@@ -343,4 +343,10 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyDecoratorInspection() {    //PY-3348
     doHighlightingTest(PyDecoratorInspection.class);
   }
+
+  public void testPyTypeCheckerInspection() {
+    // TODO: Add a Py3K test
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    doHighlightingTest(PyTypeCheckerInspection.class);
+  }
 }
