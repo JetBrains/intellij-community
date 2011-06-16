@@ -41,6 +41,9 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,14 +71,11 @@ import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -549,15 +549,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
       if (!canbeReferencedViaWeirdNames(member)) return true;
     }
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager();
+    boolean used = findUsagesManager.isUsed(member, scope);
 
-    Query<PsiReference> query = member instanceof PsiMethod
-                                ? MethodReferencesSearch.search((PsiMethod)member, scope, true)
-                                : ReferencesSearch.search(member, scope, true);
-    final PsiReference first = query.findFirst();
-    if (first == null && member instanceof PsiEnumConstant) {
+    if (!used && member instanceof PsiEnumConstant) {
       return checkEnumValuesUsages(member, progress);
     }
-    return first == null;
+    return !used;
   }
 
   private boolean checkEnumValuesUsages(PsiMember member, ProgressIndicator progress) {
