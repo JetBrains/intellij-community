@@ -21,7 +21,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
-public abstract class TemplateGenerationInfo extends GenerationInfo {
+public abstract class TemplateGenerationInfo extends GenerationInfoBase implements GenerationInfo {
   private final Expression myExpression;
   private SmartPsiElementPointer<PsiMethod> myElement;
 

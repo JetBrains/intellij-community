@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfo {
+public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase implements GenerationInfo {
   private T myMember;
   private final boolean myMergeIfExists;
   private static final Logger LOG = Logger.getInstance("#" + PsiGenerationInfo.class.getName());

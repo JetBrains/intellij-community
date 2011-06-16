@@ -195,6 +195,8 @@
                                 implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="Groovy"
                                  implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
+
+    <methodImplementor implementation="org.jetbrains.plugins.groovy.overrideImplement.GroovyMethodImplementor"/>
     <codeInsight.parameterInfo language="Groovy"
                                implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
     <refactoring.inlineHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -33,4 +34,7 @@ public interface MethodImplementor {
   @NotNull
   PsiMethod[] createImplementationPrototypes(final PsiClass inClass, PsiMethod method) throws IncorrectOperationException;
 
+  boolean isBodyGenerated();
+
+  GenerationInfo createGenerationInfo(PsiMethod method);
 }

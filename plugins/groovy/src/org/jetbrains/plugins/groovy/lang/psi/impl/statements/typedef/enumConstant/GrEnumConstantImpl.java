@@ -184,6 +184,24 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return findChildByClass(GrEnumConstantInitializer.class);
   }
 
+  @NotNull
+  @Override
+  public PsiEnumConstantInitializer getOrCreateInitializingClass() {
+    final GrEnumConstantInitializer initializingClass = getInitializingClass();
+    if (initializingClass != null) return initializingClass;
+
+    final GrEnumConstantInitializer initializer =
+      GroovyPsiElementFactory.getInstance(getProject()).createEnumConstantFromText("foo{}").getInitializingClass();
+    LOG.assertTrue(initializer != null);
+    final GrArgumentList argumentList = getArgumentList();
+    if (argumentList != null) {
+      return (PsiEnumConstantInitializer)addAfter(initializer, argumentList);
+    }
+    else {
+      return (PsiEnumConstantInitializer)addAfter(initializer, getNameIdentifierGroovy());
+    }
+  }
+
   @Override
   public PsiReference getReference() {
     return myReference;

@@ -73,6 +73,25 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     return (PsiEnumConstantInitializer)getStubOrPsiChild(JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
+  @NotNull
+  @Override
+  public PsiEnumConstantInitializer getOrCreateInitializingClass() {
+    final PsiEnumConstantInitializer initializingClass = getInitializingClass();
+    if (initializingClass != null) return initializingClass;
+
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+    final PsiEnumConstantInitializer initializer = factory.createEnumConstantFromText("foo{}", null).getInitializingClass();
+    LOG.assertTrue(initializer != null);
+
+    final PsiExpressionList argumentList = getArgumentList();
+    if (argumentList != null) {
+      return (PsiEnumConstantInitializer)addAfter(initializer, argumentList);
+    }
+    else {
+      return (PsiEnumConstantInitializer)addAfter(initializer, getNameIdentifier());
+    }
+  }
+
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
     return parent instanceof PsiClass ? (PsiClass)parent : null;

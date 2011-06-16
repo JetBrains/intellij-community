@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.overrideImplement;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -25,6 +26,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,9 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -88,155 +88,117 @@ public class GroovyOverrideImplementUtil {
         aClass = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrTypeDefinition.class, false);
         assert aClass != null;
       }
-      generateImplementation(editor, file, aClass, methodMember.getElement(), methodMember.getSubstitutor());
-    }
-  }
-
-  private static void cleanGroovyObjectMethods(Collection<CandidateInfo> candidates) {
-    for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext();) {
-      CandidateInfo info = iterator.next();
-      final PsiMethod method = (PsiMethod)info.getElement();
-      if (method != null) {
-        final PsiClass psiClass = method.getContainingClass();
-        if (psiClass != null && GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME.equals(psiClass.getQualifiedName())) {
-          iterator.remove();
-        }
-      }
+      generateImplementation(editor, aClass, methodMember.getElement(), methodMember.getSubstitutor());
     }
   }
 
   public static void generateImplementation(@Nullable final Editor editor,
-                                            final PsiFile file,
                                             final GrTypeDefinition aClass,
-                                            final PsiMethod method, final PsiSubstitutor substitutor) {
-    final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-
-//      assert isAbstract == isImplement;
-    String templName = isAbstract ? JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
-
-    final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
-    final Project project = file.getProject();
-    final GrMethod result = createOverrideImplementMethodSignature(project, method, substitutor, aClass);
+                                            final PsiMethod method,
+                                            final PsiSubstitutor substitutor) {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        try {
-          PsiModifierList modifierList = result.getModifierList();
-          modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-          modifierList.setModifierProperty(PsiModifier.NATIVE, false);
+        final PsiElement anchor = findAnchor(aClass, editor);
+        final GrMethod result = generateMethodPrototype(aClass, method, substitutor);
+        final GrMethod addedMethod = aClass.addMemberDeclaration(result, anchor);
 
-          setupOverridingMethodBody(project, method, result, template, substitutor);
-          if (OverrideImplementUtil.isInsertOverride(method, aClass)) {
-            result.getModifierList().addAnnotation(JAVA_LANG_OVERRIDE);
-          }
+        PsiUtil.shortenReferences(addedMethod);
+        PsiFile psiFile = aClass.getContainingFile();
+        FileEditorManager fileEditorManager = FileEditorManager.getInstance(aClass.getProject());
+        Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(psiFile.getProject(), psiFile.getVirtualFile()), false);
+        if (editor == null) return;
 
-          final GrTypeDefinitionBody classBody = aClass.getBody();
-          final PsiMethod[] methods = aClass.getMethods();
-
-          PsiElement anchor = null;
-
-          final PsiElement atCaret;
-          final GrTopLevelDefinition previousTopLevelElement;
-          if (editor == null) {
-            atCaret = null;
-            previousTopLevelElement = null;
-          }
-          else {
-            final int caretPosition = editor.getCaretModel().getOffset();
-            atCaret = file.findElementAt(caretPosition);
-
-            previousTopLevelElement = PsiUtil.findPreviousTopLevelElementByThisElement(atCaret);
-          }
-
-          if (atCaret != null && atCaret.getParent() instanceof GrTypeDefinitionBody) {
-            if (GroovyTokenTypes.mRCURLY.equals(atCaret.getNode().getElementType())) {
-              anchor = atCaret.getPrevSibling();
-            } else {
-              anchor = atCaret;
-            }
-
-            if (GroovyTokenTypes.mLCURLY.equals(anchor.getNode().getElementType())) {
-              anchor = anchor.getNextSibling();
-            }
-
-          } else if (previousTopLevelElement != null && previousTopLevelElement instanceof GrMethod) {
-            final PsiElement nextElement = previousTopLevelElement.getNextSibling();
-            if (nextElement != null) {
-              anchor = nextElement;
-            }
-          } else if (methods.length != 0) {
-            final PsiMethod lastMethod = methods[methods.length - 1];
-            if (lastMethod != null) {
-              final PsiElement nextSibling = lastMethod.getNextSibling();
-              if (nextSibling != null) {
-                anchor = nextSibling;
-              }
-            }
-
-          } else {
-            final PsiElement firstChild = classBody.getFirstChild();
-            assert firstChild != null;
-            final PsiElement nextElement = firstChild.getNextSibling();
-            assert nextElement != null;
-
-            anchor = nextElement;
-          }
-
-          final GrMethod addedMethod = aClass.addMemberDeclaration(result, anchor);
-
-          PsiUtil.shortenReferences(addedMethod);
-            //[GenerateMembersUtil.positionCaret in unsuitable because method.getBody() returns null, it is necessary use method.getBlock() instead.
-            //but it is impossible in common case]
-//            GenerateMembersUtil.positionCaret(editor, result, true);
-          if (editor != null) {
-            positionCaret(editor, addedMethod);
-          }
-        } catch (IncorrectOperationException e) {
-          throw new RuntimeException(e);
-        }
+        GenerateMembersUtil.positionCaret(editor, addedMethod, true);
+        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       }
     });
+  }
+
+  public static GrMethod generateMethodPrototype(GrTypeDefinition aClass,
+                                                 PsiMethod method,
+                                                 PsiSubstitutor substitutor) {
+    final Project project = aClass.getProject();
+    final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+
+    String templName = isAbstract ? JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
+    final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
+    final GrMethod result = createOverrideImplementMethodSignature(project, method, substitutor, aClass);
+    PsiModifierList modifierList = result.getModifierList();
+    modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+    modifierList.setModifierProperty(PsiModifier.NATIVE, false);
+
+    setupOverridingMethodBody(project, method, result, template, substitutor);
+    if (OverrideImplementUtil.isInsertOverride(method, aClass)) {
+      result.getModifierList().addAnnotation(JAVA_LANG_OVERRIDE);
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiElement findAnchor(GrTypeDefinition aClass, Editor editor) {
+    PsiFile file = aClass.getContainingFile();
+    final GrTypeDefinitionBody classBody = aClass.getBody();
+    final PsiMethod[] methods = aClass.getMethods();
+
+    PsiElement anchor = null;
+
+    final PsiElement atCaret;
+    final GrTopLevelDefinition previousTopLevelElement;
+    if (editor == null) {
+      atCaret = null;
+      previousTopLevelElement = null;
+    }
+    else {
+      final int caretPosition = editor.getCaretModel().getOffset();
+      atCaret = file.findElementAt(caretPosition);
+
+      previousTopLevelElement = PsiUtil.findPreviousTopLevelElementByThisElement(atCaret);
+    }
+
+    if (atCaret != null && atCaret.getParent() instanceof GrTypeDefinitionBody) {
+      if (GroovyTokenTypes.mRCURLY.equals(atCaret.getNode().getElementType())) {
+        anchor = atCaret.getPrevSibling();
+      } else {
+        anchor = atCaret;
+      }
+
+      if (GroovyTokenTypes.mLCURLY.equals(anchor.getNode().getElementType())) {
+        anchor = anchor.getNextSibling();
+      }
+
+    } else if (previousTopLevelElement != null && previousTopLevelElement instanceof GrMethod) {
+      final PsiElement nextElement = previousTopLevelElement.getNextSibling();
+      if (nextElement != null) {
+        anchor = nextElement;
+      }
+    } else if (methods.length != 0) {
+      final PsiMethod lastMethod = methods[methods.length - 1];
+      if (lastMethod != null) {
+        final PsiElement nextSibling = lastMethod.getNextSibling();
+        if (nextSibling != null) {
+          anchor = nextSibling;
+        }
+      }
+
+    } else {
+      final PsiElement firstChild = classBody.getFirstChild();
+      assert firstChild != null;
+      final PsiElement nextElement = firstChild.getNextSibling();
+      assert nextElement != null;
+
+      anchor = nextElement;
+    }
+    return anchor;
   }
 
   public static Collection<CandidateInfo> getMethodsToOverrideImplement(GrTypeDefinition aClass, boolean isImplement) {
     return OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
   }
 
-  private static void positionCaret(Editor editor, GrMethod result) {
-    final GrOpenBlock body = result.getBlock();
-    if (body == null) return;
-
-    final PsiElement lBrace = body.getLBrace();
-
-    assert lBrace != null;
-    PsiElement l = lBrace.getNextSibling();
-    assert l != null;
-
-    final PsiElement rBrace = body.getRBrace();
-
-    assert rBrace != null;
-    PsiElement r = rBrace.getPrevSibling();
-    assert r != null;
-
-    LOG.assertTrue(!PsiDocumentManager.getInstance(result.getProject()).isUncommited(editor.getDocument()));
-    String text = editor.getDocument().getText();
-
-    int start = l.getTextRange().getStartOffset();
-    start = CharArrayUtil.shiftForward(text, start, "\n\t ");
-    int end = r.getTextRange().getEndOffset();
-    end = CharArrayUtil.shiftBackward(text, end - 1, "\n\t ") + 1;
-
-    editor.getCaretModel().moveToOffset(Math.min(start, end));
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    if (start < end) {
-      //Not an empty body
-      editor.getSelectionModel().setSelection(start, end);
-    }
-  }
-
   private static boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
     boolean wasAddedModifiers = false;
-    for (String modifierType : modifiers) {
+    for (@Modifier String modifierType : modifiers) {
       if (modifierList.hasModifierProperty(modifierType) && modifierType != PsiModifier.PUBLIC) {
         text.append(modifierType);
         text.append(" ");

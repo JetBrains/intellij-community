@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GenerationInfo;
+import com.intellij.codeInsight.generation.GenerationInfoBase;
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -183,7 +184,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       final PsiMethod method = TestIntegrationUtils.createDummyMethod(file.getProject());
       final PsiMethod[] result = new PsiMethod[1];
 
-      members.add(new GenerationInfo() {
+      members.add(new GenerationInfoBase() {
         @NotNull
         public PsiMember getPsiMember() {
           return method;

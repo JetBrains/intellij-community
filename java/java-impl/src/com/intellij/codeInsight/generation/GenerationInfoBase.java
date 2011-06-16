@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +26,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public abstract class GenerationInfo {
-  public static final GenerationInfo[] EMPTY_ARRAY = new GenerationInfo[0];
-  
+public abstract class GenerationInfoBase implements GenerationInfo {
+
   public abstract void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException;
 
   public abstract PsiMember getPsiMember();

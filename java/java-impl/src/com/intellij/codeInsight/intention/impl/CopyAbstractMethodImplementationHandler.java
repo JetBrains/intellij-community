@@ -150,10 +150,7 @@ public class CopyAbstractMethodImplementationHandler {
     new WriteCommandAction(myProject, getTargetFiles()) {
       protected void run(final Result result) throws Throwable {
         for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
-          PsiClass initializingClass = enumConstant.getInitializingClass();
-          if (initializingClass == null) {
-            initializingClass = ImplementAbstractMethodHandler.addClassInitializer(enumConstant);
-          }
+          PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();
           myTargetClasses.add(initializingClass);
         }
         for(PsiClass psiClass: myTargetClasses) {

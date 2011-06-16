@@ -87,15 +87,28 @@ class Test<T> extends Base<T> {
 """
   }
 
+  public void testImplementIntention() {
+    myFixture.configureByText('a.groovy', '''
+class Base<E> {
+  public <E> E fo<caret>o(E e){}
+}
+
+class Test extends Base<String> {
+}
+''')
+
+    myFixture.getAllQuickFixes('implement method ')
+  }
+
   private def generateImplementation(PsiMethod method) {
     GrTypeDefinition clazz = ((PsiClassOwner) myFixture.file).classes[0]
-    GroovyOverrideImplementUtil.generateImplementation myFixture.editor, myFixture.file, clazz, method, PsiSubstitutor.EMPTY
-    ApplicationManager.getApplication().runWriteAction(new Runnable(){
-                                                       @Override
-                                                       void run() {
-                                                         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
-                                                       }
-                                                       });
+    GroovyOverrideImplementUtil.generateImplementation myFixture.editor, clazz, method, PsiSubstitutor.EMPTY
+    ApplicationManager.application.runWriteAction(new Runnable() {
+      @Override
+      void run() {
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+      }
+    });
     myFixture.editor.selectionModel.removeSelection()
   }
 
