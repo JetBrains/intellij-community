@@ -169,8 +169,6 @@
               text="Test Rebuild Performance"/>
       <action internal="true" id="GenerateDomModel" class="com.intellij.util.dom.generator.GenerateDomModelAction"
               text="Generate Dom Model"/>
-      <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.tmp.SendStatisticsAction" text="Send statistics"/>
-
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
