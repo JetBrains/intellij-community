@@ -21,7 +21,7 @@ import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.editor.EditorOptionsProviderEP;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.notification.EventLog;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -379,7 +379,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       FontEditorPreview previewPanel = new FontEditorPreview(options) {
         @Override
         protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
-          return EventLog.updateConsoleColorScheme(selectedScheme);
+          return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);
         }
       };
       return new NewColorAndFontPanel(new SchemesPanel(options), new ConsoleFontOptions(options), previewPanel, "Font", null, null){

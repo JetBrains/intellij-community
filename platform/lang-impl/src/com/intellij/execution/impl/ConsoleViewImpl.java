@@ -27,7 +27,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -683,7 +682,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected EditorEx createRealEditor() {
-    final EditorEx editor = EventLog.setupConsoleEditor(myProject, true);
+    final EditorEx editor = ConsoleViewUtil.setupConsoleEditor(myProject, true);
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
