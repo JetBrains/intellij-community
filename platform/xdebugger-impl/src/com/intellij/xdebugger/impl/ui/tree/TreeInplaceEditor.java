@@ -85,6 +85,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   public void show() {
     LOG.assertTrue(myInplaceEditorComponent == null, "editor is not released");
     final JTree tree = getTree();
+    tree.scrollPathToVisible(getNodePath());
     final JRootPane rootPane = tree.getRootPane();
     if (rootPane == null) {
       return;

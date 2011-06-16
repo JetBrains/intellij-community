@@ -68,6 +68,6 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
     final String text = getTextToEvaluate(dataContext, session);
     if (text == null) return;
 
-    ((XDebugSessionImpl)session).getSessionTab().getWatchesView().addWatchExpression(text, -1);
+    ((XDebugSessionImpl)session).getSessionTab().getWatchesView().addWatchExpression(text, -1, true);
   }
 }
