@@ -37,7 +37,7 @@ public class ScopeImpl implements Scope {
   }
 
   @NotNull
-  public Collection<ScopeVariable> getDeclaredVariables(@NotNull final PsiElement anchorElement) {
+  public Collection<ScopeVariable> getDeclaredVariables(@NotNull final PsiElement anchorElement) throws DFALimitExceededException {
     computeScopeVariables();
     for (int i = 0; i < myFlow.length; i++) {
       Instruction instruction = myFlow[i];
@@ -50,7 +50,7 @@ public class ScopeImpl implements Scope {
   }
 
   public ScopeVariable getDeclaredVariable(@NotNull final PsiElement anchorElement,
-                                           @NotNull final String name) {
+                                           @NotNull final String name) throws DFALimitExceededException {
     computeScopeVariables();
     for (int i = 0; i < myFlow.length; i++) {
       Instruction instruction = myFlow[i];
@@ -62,18 +62,12 @@ public class ScopeImpl implements Scope {
     return null;
   }
 
-  public List<DFAMap<ScopeVariable>> computeScopeVariables() {
+  public List<DFAMap<ScopeVariable>> computeScopeVariables() throws DFALimitExceededException {
     if (myCachedScopeVariables == null) {
       final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
       final PyReachingDefsSemilattice semilattice = new PyReachingDefsSemilattice();
       final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<ScopeVariable>(myFlow, dfaInstance, semilattice);
-      try {
-        myCachedScopeVariables = engine.performDFA();
-      }
-      catch (DFALimitExceededException e) {
-        LOG.warn(e);
-        myCachedScopeVariables = Collections.emptyList();
-      }
+      myCachedScopeVariables = engine.performDFA();
     }
     return myCachedScopeVariables;
   }
@@ -100,7 +94,7 @@ public class ScopeImpl implements Scope {
   }
 
   @NotNull
-  public Collection<ScopeVariable> getAllDeclaredVariables() {
+  public Collection<ScopeVariable> getAllDeclaredVariables() throws DFALimitExceededException {
     final List<DFAMap<ScopeVariable>> vars = computeScopeVariables();
     final int n = vars.size();
     if (n > 0) {

@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.dataflow.scope;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -76,7 +77,7 @@ public class ScopeUtil {
     return null;
   }
 
-  public static boolean isDeclaredAndBoundInScope(PsiElement anchor, String name) {
+  public static boolean isDeclaredAndBoundInScope(PsiElement anchor, String name) throws DFALimitExceededException {
     if (name != null) {
       final ScopeOwner owner = getScopeOwner(anchor);
       if (owner != null) {
