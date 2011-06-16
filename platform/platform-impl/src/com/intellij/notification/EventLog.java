@@ -230,6 +230,7 @@ public class EventLog implements Notifications {
           for (Notification notification : myProjectModel.getNotifications()) {
             myProjectModel.removeNotification(notification);
           }
+          myProjectModel.setStatusMessage(null);
         }
       });
       group.add(new EditorCopyAction());
