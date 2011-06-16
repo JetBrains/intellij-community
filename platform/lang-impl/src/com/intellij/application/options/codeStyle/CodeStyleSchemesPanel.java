@@ -194,7 +194,7 @@ public class CodeStyleSchemesPanel{
 
 
     if (switchToProject == 0) {
-      myModel.setUsePerProjectSettings(true);
+      myModel.setUsePerProjectSettings(true, true);
     }
   }
 
