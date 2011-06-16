@@ -60,8 +60,8 @@ public class ScopeUtil {
   public static ScopeOwner getDeclarationScopeOwner(PsiElement anchor, String name) {
     PsiElement element = anchor;
     if (name != null) {
-      // References in default values of parameters are defined somewhere in outer scopes
-      if (PsiTreeUtil.getParentOfType(anchor, PyParameter.class) != null) {
+      // References in default values of parameters are defined somewhere in outer scopes, as well as references in decorators
+      if (PsiTreeUtil.getParentOfType(anchor, PyParameter.class, PyDecorator.class) != null) {
         element = getScopeOwner(anchor);
       }
 
