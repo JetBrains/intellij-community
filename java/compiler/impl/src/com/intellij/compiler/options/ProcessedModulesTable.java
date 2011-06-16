@@ -18,7 +18,7 @@ package com.intellij.compiler.options;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
+import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.ScrollPaneFactory;

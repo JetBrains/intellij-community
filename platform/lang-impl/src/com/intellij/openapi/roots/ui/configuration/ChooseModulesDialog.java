@@ -20,7 +20,7 @@
  * Date: 14-Aug-2006
  * Time: 12:13:18
  */
-package com.intellij.openapi.roots.ui.configuration.libraryEditor;
+package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
