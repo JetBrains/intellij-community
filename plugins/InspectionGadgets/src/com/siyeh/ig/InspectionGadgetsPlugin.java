@@ -500,6 +500,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(OverlyComplexBooleanExpressionInspection.class);
         m_inspectionClasses.add(PointlessBooleanExpressionInspection.class);
         m_inspectionClasses.add(PointlessIndexOfComparisonInspection.class);
+        m_inspectionClasses.add(PointlessNullCheckInspection.class);
         m_inspectionClasses.add(SimplifiableConditionalExpressionInspection.class);
         m_inspectionClasses.add(SwitchStatementDensityInspection.class);
         m_inspectionClasses.add(SwitchStatementInspection.class);

@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>This inspection reports a <b>null</b> check followed by an <b>instanceof</b> check.
+Since the <b>instanceof</b> operator always returns <b>false</b> for <b>null</b>,
+there is no need to also have a <b>null</b> check. </p>
+<p>Here is an example of a violation: </p>
+<pre><code>    if (x != null && x instanceof String) { ... }</code></pre>
+<p>The quickfix changes this code to:</p>
+<pre><code>    if (x instanceof String) { ... }</code></pre>
+<p>
+<small>New in 11, Powered by InspectionGadgets</small>
+</body>
+</html>
