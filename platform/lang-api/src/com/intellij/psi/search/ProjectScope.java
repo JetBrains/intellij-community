@@ -26,6 +26,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 public class ProjectScope {
   private static final Key<GlobalSearchScope> ALL_SCOPE_KEY = new Key<GlobalSearchScope>("ALL_SCOPE_KEY");
   private static final Key<GlobalSearchScope> PROJECT_SCOPE_KEY = new Key<GlobalSearchScope>("PROJECT_SCOPE_KEY");
+  private static final Key<GlobalSearchScope> LIBRARIES_SCOPE_KEY = new Key<GlobalSearchScope>("LIBRARIES_SCOPE_KEY");
 
   private ProjectScope() {
   }
@@ -38,5 +39,10 @@ public class ProjectScope {
   public static GlobalSearchScope getProjectScope(final Project project) {
     GlobalSearchScope cached = project.getUserData(PROJECT_SCOPE_KEY);
     return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(PROJECT_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildProjectScope());
+  }
+
+  public static GlobalSearchScope getLibrariesScope(Project project) {
+    GlobalSearchScope cached = project.getUserData(LIBRARIES_SCOPE_KEY);
+    return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(LIBRARIES_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildLibrariesScope());
   }
 }

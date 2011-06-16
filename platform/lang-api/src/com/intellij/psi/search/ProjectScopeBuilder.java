@@ -36,6 +36,20 @@ public class ProjectScopeBuilder {
     myProject = project;
   }
 
+  public GlobalSearchScope buildLibrariesScope() {
+    return new ProjectAndLibrariesScope(myProject) {
+      @Override
+      public boolean contains(VirtualFile file) {
+        return myProjectFileIndex.isInLibrarySource(file) || myProjectFileIndex.isInLibraryClasses(file);
+      }
+
+      @Override
+      public boolean isSearchInModuleContent(@NotNull Module aModule) {
+        return false;
+      }
+    };
+  }
+
   public static ProjectScopeBuilder getInstance(Project project) {
     return ServiceManager.getService(project, ProjectScopeBuilder.class);
   }
