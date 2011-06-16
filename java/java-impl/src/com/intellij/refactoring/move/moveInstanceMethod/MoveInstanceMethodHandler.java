@@ -80,21 +80,24 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     } else if (method.isConstructor()) {
       message = RefactoringBundle.message("move.method.is.not.supported.for.constructors");
     }
-    else if (PsiUtil.typeParametersIterator(method.getContainingClass()).hasNext() && TypeParametersSearcher.hasTypeParameters(method)) {
-      message = RefactoringBundle.message("move.method.is.not.supported.for.generic.classes");
-    }
-    else if (method.findSuperMethods().length > 0 ||
-             OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
-      message = RefactoringBundle.message("move.method.is.not.supported.when.method.is.part.of.inheritance.hierarchy");
-    }
     else {
-      final Set<PsiClass> classes = MoveInstanceMembersUtil.getThisClassesToMembers(method).keySet();
-      for (PsiClass aClass : classes) {
-        if (aClass instanceof JspClass) {
-          message = RefactoringBundle.message("synthetic.jsp.class.is.referenced.in.the.method");
-          Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
-          break;
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && PsiUtil.typeParametersIterator(containingClass).hasNext() && TypeParametersSearcher.hasTypeParameters(method)) {
+        message = RefactoringBundle.message("move.method.is.not.supported.for.generic.classes");
+      }
+      else if (method.findSuperMethods().length > 0 ||
+               OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
+        message = RefactoringBundle.message("move.method.is.not.supported.when.method.is.part.of.inheritance.hierarchy");
+      }
+      else {
+        final Set<PsiClass> classes = MoveInstanceMembersUtil.getThisClassesToMembers(method).keySet();
+        for (PsiClass aClass : classes) {
+          if (aClass instanceof JspClass) {
+            message = RefactoringBundle.message("synthetic.jsp.class.is.referenced.in.the.method");
+            Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+            CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
+            break;
+          }
         }
       }
     }
