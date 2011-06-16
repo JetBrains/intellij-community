@@ -18,11 +18,16 @@ package org.intellij.lang.xpath.xslt.validation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
 
@@ -38,12 +43,21 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
   }
 
   @Override
-  public void visitXmlAttributeValue(XmlAttributeValue value) {
+  public void visitXmlAttributeValue(final XmlAttributeValue value) {
     final String s = value.getValue();
-    if (s == null || s.trim().length() == 0) {
+    if (s == null || s.length() == 0) {
       final PsiElement parent = value.getParent();
       if (parent instanceof XmlAttribute && XsltSupport.isXPathAttribute((XmlAttribute)parent)) {
-        myHolder.createErrorAnnotation(value, "Empty XPath expression");
+        ((PsiLanguageInjectionHost)value).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+          @Override
+          public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+            if (injectedPsi instanceof XPathFile) {
+              if (injectedPsi.getTextLength() == 0) {
+                myHolder.createErrorAnnotation(value, "Empty XPath expression");
+              }
+            }
+          }
+        });
       }
     }
     super.visitXmlAttributeValue(value);

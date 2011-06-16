@@ -111,7 +111,7 @@ public class XPathLanguageInjector implements MultiHostInjector {
                 }
 
                 if (j != -1) {
-                    avtRanges.add(AVTRange.create(attribute, i, j + 1, true));
+                    avtRanges.add(AVTRange.create(attribute, i, j + 1, j > i + 1));
                 } else {
                     // missing '}' error will be flagged by xpath parser
                     avtRanges.add(AVTRange.create(attribute, i, value.length(), false));
