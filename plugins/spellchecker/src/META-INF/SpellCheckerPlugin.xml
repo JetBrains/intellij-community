@@ -1,12 +1,4 @@
-<idea-plugin version="2">
-  <name>SpellChecker</name>
-  <description>Spellchecker plugin</description>
-  <version>1.0</version>
-  <vendor>JetBrains</vendor>
-  <id>com.intellij.spellchecker</id>
-  <depends>com.intellij.modules.xml</depends>
-
-
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <application-components>
     <component>
       <interface-class>com.intellij.spellchecker.state.CachedDictionaryState</interface-class>
@@ -35,8 +27,8 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="support" interface="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
-    <extensionPoint name="bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider"/>
+    <extensionPoint name="spellchecker.support" interface="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
+    <extensionPoint name="spellchecker.bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

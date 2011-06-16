@@ -2,7 +2,6 @@
   <id>com.intellij.java-i18n</id>
   <name>I18n for Java</name>
   <depends>com.intellij.properties</depends>
-  <depends optional="true" config-file="spellchecker-support.xml">com.intellij.spellchecker</depends>
   <description>
     This plugin provides code inspections and corresponding quick fixes for code internationalization.
   </description>
@@ -28,6 +27,7 @@
     <psi.referenceContributor implementation="com.intellij.lang.properties.PropertiesReferenceContributor"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder" />
     <gotoDeclarationHandler implementation="com.intellij.codeInspection.i18n.folding.I18nMessageGotoDeclarationHandler" order="FIRST"/>
+    <spellchecker.support implementation="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">
