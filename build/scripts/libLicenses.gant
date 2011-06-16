@@ -179,7 +179,7 @@ libraryLicense(name: "PicoContainer", libraryName: "picocontainer", version: "1.
 libraryLicense(name: "Plexus Utils", libraryName: "plexus-utils-1.5.5.jar", version: "1.5.5", license: "Apache 2.0", url: "http://plexus.codehaus.org/plexus-utils")
 libraryLicense(name: "Quaqua L&F", attachedTo: "platform-impl", version: "6.2", license: "BSD", url: "http://www.randelshofer.ch/quaqua/", licenseUrl: "http://www.randelshofer.ch/quaqua/license.html")
 libraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patched.jar", license: "MIT", url: "http://java.net/projects/rngom/", licenseUrl: "http://www.opensource.org/licenses/mit-license.php")
-libraryLicense(name: "RMI Stubs", attachedTo: "xslt-debugger-rt", license: "Apache 2.0", url: "http://confluence.jetbrains.net/display/CONTEST/XSLT-Debugger", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "RMI Stubs", attachedTo: "xslt-debugger-engine", license: "Apache 2.0", url: "http://confluence.jetbrains.net/display/CONTEST/XSLT-Debugger", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Saxon-9HE", version: "9", license: "Mozilla Public License", url: "http://saxon.sourceforge.net/", licenseUrl: "http://www.mozilla.org/MPL/")
 libraryLicense(name: "Saxon-6.5.5", version: "6.5.5", license: "Mozilla Public License", url: "http://saxon.sourceforge.net/", licenseUrl: "http://www.mozilla.org/MPL/")
 libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-1.2.3.jar", version: "1.2.3", license: "Eclipse Public License", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
