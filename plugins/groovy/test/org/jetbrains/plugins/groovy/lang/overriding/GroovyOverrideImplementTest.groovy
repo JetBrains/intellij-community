@@ -87,7 +87,7 @@ class Test<T> extends Base<T> {
 """
   }
 
-  public void testImplementIntention() {
+  public void _testImplementIntention() {
     myFixture.configureByText('a.groovy', '''
 class Base<E> {
   public <E> E fo<caret>o(E e){}
@@ -97,7 +97,11 @@ class Test extends Base<String> {
 }
 ''')
 
-    myFixture.getAllQuickFixes('implement method ')
+    def fixes = myFixture.getAvailableIntentions()
+    assertSize(1, fixes)
+
+    def fix = fixes[0]
+    fix.invoke(myFixture.project, myFixture.editor, myFixture.file)
   }
 
   private def generateImplementation(PsiMethod method) {
@@ -106,7 +110,7 @@ class Test extends Base<String> {
     ApplicationManager.application.runWriteAction(new Runnable() {
       @Override
       void run() {
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+        PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()
       }
     });
     myFixture.editor.selectionModel.removeSelection()
