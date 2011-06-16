@@ -56,8 +56,6 @@ class StatusPanel extends JPanel {
     
     setOpaque(isOpaque() && !SystemInfo.isMac);
 
-    myShowLog.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 5));
-
     myShowLog.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -147,8 +145,11 @@ class StatusPanel extends JPanel {
 
           final NotificationType maximumType = count > 0 ? NotificationModel.getMaximumType(notifications) : null;
 
-          myShowLog.setIcon(visible ? ourHideLogIcon : IdeNotificationArea.getPendingNotificationsIcon(ourShowLogIcon, maximumType));
+          Icon icon = visible ? ourHideLogIcon : IdeNotificationArea.getPendingNotificationsIcon(ourShowLogIcon, maximumType);
+          myShowLog.setIcon(icon);
           myShowLog.setToolTipText(visible ? "" : count > 0 ? String.format("%s notifications pending", count) : "Click to open the event log");
+          myShowLog.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 20 - icon.getIconWidth()));
+
 
           myLogAlarm.addRequest(this, 50);
         }
