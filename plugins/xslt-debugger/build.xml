@@ -4,7 +4,8 @@
 
   <dirname file="${ant.file}" property="project.dir"/>
   <property name="src.dir" value="${project.dir}/src"/>
-  <property name="src.rt.dir" value="${project.dir}/rt/src"/>
+  <property name="src.rt.dir" value="${project.dir}/engine/src"/>
+  <property name="src.rt.impl.dir" value="${project.dir}/engine/impl/src"/>
 
   <property name="build.dir" value="${basedir}/build"/>
   <property name="build.classes.dir" value="${build.dir}/classes"/>
@@ -35,7 +36,7 @@
     <fileset dir="${idea.home}/lib">
       <include name="trove4j.jar" />
     </fileset>
-    <fileset dir="rt/lib">
+    <fileset dir="engine/impl/lib">
       <include name="*.jar"/>
     </fileset>
   </path>
@@ -96,6 +97,13 @@
     <mkdir dir="${build.classes.rt.dir}"/>
 
     <javac2 srcdir="${src.rt.dir}" destdir="${build.classes.rt.dir}" source="1.5" target="1.5" debug="${compile.debug}"
+            optimize="${compile.optimize}">
+      <classpath refid="rt.classpath"/>
+      <classpath refid="xpathview.rt.classpath"/>
+      <exclude name="com/**/*"/>
+    </javac2>
+
+    <javac2 srcdir="${src.rt.impl.dir}" destdir="${build.classes.rt.dir}" source="1.5" target="1.5" debug="${compile.debug}"
             optimize="${compile.optimize}">
       <classpath refid="rt.classpath"/>
       <classpath refid="xpathview.rt.classpath"/>
@@ -164,7 +172,7 @@
       <zipfileset dir="build" prefix="xslt-debugger/lib">
         <include name="*.jar"/>
       </zipfileset>
-      <zipfileset dir="rt/lib" prefix="xslt-debugger/lib/rt">
+      <zipfileset dir="engine/impl/lib" prefix="xslt-debugger/lib/rt">
         <include name="saxon*"/>
         <include name="xalan.jar"/>
         <include name="serializer.jar"/>

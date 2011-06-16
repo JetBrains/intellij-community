@@ -233,15 +233,22 @@ public def layoutCommunityPlugins(String home) {
 
     layoutPlugin("xslt-debugger") {
       jar("xslt-debugger-engine.jar") {
-        module("xslt-rt") {
+        module("xslt-debugger-engine") {
           excludes: "lib"
         }
       }
-      fileset(dir: "$home/plugins/xslt-debugger/rt/lib") {
+      fileset(dir: "$home/plugins/xslt-debugger/engine/lib") {
         include(name: "**/rmi-stubs.jar")
       }
       dir("rt") {
-        fileset(dir: "$home/plugins/xslt-debugger/rt/lib") {
+        jar("xslt-debugger-engine-impl.jar") {
+          module("xslt-debugger-engine-impl") {
+            exclude(name: "lib")
+            exclude(name: "**/*.jar")
+            exclude(name: "**/*.html")
+          }
+        }
+        fileset(dir: "$home/plugins/xslt-debugger/engine/impl/lib") {
           include(name: "**/*.jar")
           exclude(name: "**/rmi-stubs.jar")
           include(name: "**/*.html")
