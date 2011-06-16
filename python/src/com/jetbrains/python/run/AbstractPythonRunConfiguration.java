@@ -12,9 +12,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.jetbrains.python.PythonProduct;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -58,7 +58,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 
-    if (PythonProduct.isPyCharm()) {
+    if (PlatformUtils.isPyCharm()) {
       final String path = getInterpreterPath();
       if (path == null) {
         throw new RuntimeConfigurationError("Please select a valid Python interpreter");
