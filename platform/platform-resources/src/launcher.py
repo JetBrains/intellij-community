@@ -58,8 +58,9 @@ port = -1
 try:
     f = open(os.path.join(CONFIG_PATH, 'port'))
     port = int(f.read())
-except Exception, e:
-    print e
+except Exception:
+    type, value, traceback = sys.exc_info()
+    print(value)
     port = -1
 
 if port == -1:
