@@ -94,16 +94,19 @@ class PyDBFrame:
                     self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
                     thread.additionalInfo.message = exception_breakpoint.qname
                 else:
+                    flag = False
                     if mainDebugger.django_exception_break and get_exception_name(exception) in ['django.template.base.VariableDoesNotExist', 'django.template.base.TemplateDoesNotExist', 'django.template.base.TemplateSyntaxError'] and just_raised(frame):
                         render_frame = find_django_render_frame(frame)
                         if render_frame:
                             suspend_frame = suspend_django(self, mainDebugger, thread, render_frame, CMD_ADD_DJANGO_EXCEPTION_BREAK)
-                            thread.additionalInfo.message = 'VariableDoesNotExist'
 
                             if suspend_frame:
+                                flag = True
+                                thread.additionalInfo.message = 'VariableDoesNotExist'
                                 suspend_frame.f_back = frame
                                 frame = suspend_frame
-
+                    if not flag:
+                        return self.trace_dispatch
             elif event == 'call' and info.pydev_state != STATE_SUSPEND and mainDebugger.django_breakpoints \
             and is_django_render_call(frame):
                 flag = False
@@ -118,8 +121,8 @@ class PyDBFrame:
                             frame = suspend_django(self, mainDebugger, thread, frame)
                             flag = True
 
-                #if not flag:
-                #    return self.trace_dispatch
+                if not flag:
+                    return self.trace_dispatch
 
 
             #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
