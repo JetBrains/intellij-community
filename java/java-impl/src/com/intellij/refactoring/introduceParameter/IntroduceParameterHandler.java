@@ -404,6 +404,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       NameSuggestionsGenerator nameSuggestionsGenerator = createNameSuggestionGenerator(myExpr, propName, myProject);
       boolean isInplaceAvailableOnDataContext = myEditor != null && myEditor.getSettings().isVariableInplaceRenameEnabled();
 
+      if (myExpr != null) {
+        isInplaceAvailableOnDataContext &= myExpr.isPhysical();
+      }
+
       if (isInplaceAvailableOnDataContext) {
         myInplaceIntroduceParameterPopup =
           new InplaceIntroduceParameterPopup(myProject, myEditor, classMemberRefs,
