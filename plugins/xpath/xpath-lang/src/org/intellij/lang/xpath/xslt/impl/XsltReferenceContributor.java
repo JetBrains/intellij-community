@@ -34,6 +34,7 @@ import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
 import org.intellij.lang.xpath.xslt.impl.references.PrefixReference;
 import org.intellij.lang.xpath.xslt.impl.references.XsltReferenceProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -108,12 +109,13 @@ public class XsltReferenceContributor {
 
   public static class SchemaTypeReference extends SchemaReferencesProvider.TypeOrElementOrAttributeReference implements
                                                                                                              EmptyResolveMessageProvider {
-    private static final Pattern NAME_PATTERN = Pattern.compile("(?:\\w+:)\\w+");
+    private static final Pattern NAME_PATTERN = Pattern.compile("(?:[\\w-]+:)[\\w-]+");
 
     private SchemaTypeReference(PsiElement element, TextRange range) {
       super(element, range, ReferenceType.TypeReference);
     }
 
+    @Nullable
     private static TextRange getTextRange(PsiElement element) {
       final Matcher matcher = NAME_PATTERN.matcher(element.getText());
       if (matcher.find()) {
@@ -138,6 +140,7 @@ public class XsltReferenceContributor {
       return "Unknown Type";
     }
 
+    @Nullable
     public static SchemaTypeReference create(PsiElement element) {
       final TextRange range = getTextRange(element);
       return range != null ? new SchemaTypeReference(element, range) : null;
