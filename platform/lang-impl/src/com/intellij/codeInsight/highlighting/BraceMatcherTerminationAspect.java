@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,8 +23,8 @@ public interface BraceMatcherTerminationAspect {
    *
    * @param forward   The forward search flag.
    * @param braceType The type of the brace for which an opposite brace is searched for.
-   * @param type      The type of the element to be checked for termination.
+   * @param iterator  The iterator at the current position to be checked.
    * @return  True if the search should be stopped or false if it should continue.
    */
-  boolean shouldStopMatch(boolean forward, @NotNull IElementType braceType, @NotNull IElementType type);
+  boolean shouldStopMatch(boolean forward, @NotNull IElementType braceType, @NotNull HighlighterIterator iterator);
 }

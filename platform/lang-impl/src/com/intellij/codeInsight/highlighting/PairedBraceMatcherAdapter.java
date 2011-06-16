@@ -123,9 +123,9 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
   }
 
   @Override
-  public boolean shouldStopMatch(boolean forward, @NotNull IElementType braceType, @NotNull IElementType contextType) {
+  public boolean shouldStopMatch(boolean forward, @NotNull IElementType braceType, @NotNull HighlighterIterator iterator) {
     if (myMatcher instanceof BraceMatcherTerminationAspect) {
-      return ((BraceMatcherTerminationAspect)myMatcher).shouldStopMatch(forward, braceType, contextType);
+      return ((BraceMatcherTerminationAspect)myMatcher).shouldStopMatch(forward, braceType, iterator);
     }
     return false;
   }
