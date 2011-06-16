@@ -41,8 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,30 +82,6 @@ public class GitMergeUtil {
       default:
         return new String[]{DEFAULT_STRATEGY, "octopus", "ours"};
     }
-  }
-
-  /**
-   * Initialize no commit checkbox (for both merge and pull dialog)
-   *
-   * @param addLogInformationCheckBox a log information checkbox
-   * @param commitMessage             a commit message text field or null
-   * @param noCommitCheckBox          a no commit checkbox to configure
-   */
-  public static void setupNoCommitCheckbox(final JCheckBox addLogInformationCheckBox,
-                                           final JTextField commitMessage,
-                                           final JCheckBox noCommitCheckBox) {
-    noCommitCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final boolean selected = noCommitCheckBox.isSelected();
-        if (commitMessage != null) {
-          commitMessage.setEnabled(!selected);
-        }
-        if (selected) {
-          addLogInformationCheckBox.setSelected(false);
-        }
-        addLogInformationCheckBox.setEnabled(!selected);
-      }
-    });
   }
 
   /**
