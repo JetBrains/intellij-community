@@ -42,6 +42,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyFunction(final PyFunction node) {
     // Create node and stop here
     myBuilder.startNode(node);
+    final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(),
+                                                                                 ReadWriteInstruction.ACCESS.WRITE);
+    myBuilder.addNode(instruction);
+    myBuilder.checkPending(instruction);
   }
 
   @Override

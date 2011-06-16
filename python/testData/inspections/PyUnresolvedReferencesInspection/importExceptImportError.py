@@ -38,3 +38,12 @@ def f():
         import <warning descr="Module 'bar' not found">bar</warning> #fail
     finally:
         pass
+
+# PY-3869
+def f(x):
+    try:
+        from foo import bar
+    except ImportError:
+        def bar(x):
+            return x
+    return bar(x)
