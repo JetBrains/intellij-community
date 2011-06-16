@@ -317,7 +317,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     // The following code is a trick! By default Swing uses lightweight and "medium" weight
     // popups to show JPopupMenu. The code below force the creation of real heavyweight menus -
     // this increases speed of popups and allows to get rid of some drawing artifacts.
-    int popupWeight = OurPopupFactory.WEIGHT_DEFAULT;
+    int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
     String property = System.getProperty("idea.popup.weight");
     if (property != null) property = property.toLowerCase().trim();
     if (SystemInfo.isMacOSLeopard) {
@@ -326,7 +326,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
     else if (property == null) {
       // use defaults if popup weight isn't specified
-      if (SystemInfo.isWindows || UIUtil.isUnderGTKLookAndFeel()) {
+      if (SystemInfo.isWindows) {
         popupWeight = OurPopupFactory.WEIGHT_HEAVY;
       }
     }
@@ -345,16 +345,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
 
-    final OurPopupFactory ourFactory;
-    final PopupFactory oldFactory = PopupFactory.getSharedInstance();
-    if (oldFactory instanceof OurPopupFactory) {
-      ourFactory = (OurPopupFactory)oldFactory;
+    PopupFactory factory = PopupFactory.getSharedInstance();
+    if (!(factory instanceof OurPopupFactory)) {
+      factory = new OurPopupFactory(factory);
+      PopupFactory.setSharedInstance(factory);
     }
-    else {
-      ourFactory = new OurPopupFactory(oldFactory);
-      PopupFactory.setSharedInstance(ourFactory);
-    }
-    ourFactory.setPopupType(popupWeight);
+    PopupUtil.setPopupType(factory, popupWeight);
 
     // update ui for popup menu to get round corners
     if (UIUtil.isUnderAquaLookAndFeel()) {
@@ -730,38 +726,25 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static class OurPopupFactory extends PopupFactory {
-    public static final int WEIGHT_DEFAULT = -1;
     public static final int WEIGHT_LIGHT = 0;
     public static final int WEIGHT_MEDIUM = 1;
     public static final int WEIGHT_HEAVY = 2;
 
     private final PopupFactory myDelegate;
-    private int myPopupType;
 
     public OurPopupFactory(final PopupFactory delegate) {
       myDelegate = delegate;
     }
 
-    public void setPopupType(final int popupType) {
-      myPopupType = popupType;
-    }
-
     public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
       final Point point = fixPopupLocation(contents, x, y);
 
-      int oldType = WEIGHT_DEFAULT;
-      if (myPopupType > WEIGHT_DEFAULT) {
-        oldType = PopupUtil.getPopupType(this);
-        PopupUtil.setPopupType(myDelegate, myPopupType);
+      final int popupType = UIUtil.isUnderGTKLookAndFeel() ? WEIGHT_HEAVY : PopupUtil.getPopupType(this);
+      if (popupType >= 0) {
+        PopupUtil.setPopupType(myDelegate, popupType);
       }
 
-      final Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
-
-      if (oldType > WEIGHT_DEFAULT) {
-        PopupUtil.setPopupType(myDelegate, oldType);
-      }
-
-      return popup;
+      return myDelegate.getPopup(owner, contents, point.x, point.y);
     }
 
     private static Point fixPopupLocation(final Component contents, final int x, final int y) {
