@@ -102,21 +102,75 @@ public abstract class ParserUtils {
    * @param builder Given PsiBuilder
    * @param elems   Array of need elements in order
    * @return true if following sequence is like a given
+   *
+   * Note don't change type of last parameter to "IElementType... elems"! Passed array should be stored in static variable to avoid creation
+   * of new array.
    */
-  public static boolean lookAhead(PsiBuilder builder, IElementType... elems) {
-    if (!elems[0].equals(builder.getTokenType())) return false;
+  public static boolean lookAhead(PsiBuilder builder, IElementType[] elems) {
+    if (elems[0] != builder.getTokenType()) return false;
 
     if (elems.length == 1) return true;
 
     Marker rb = builder.mark();
     builder.advanceLexer();
     int i = 1;
-    while (!builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType())) {
+    while (!builder.eof() && i < elems.length && elems[i] == builder.getTokenType()) {
       builder.advanceLexer();
       i++;
     }
     rb.rollbackTo();
     return i == elems.length;
+  }
+
+  public static boolean lookAhead(PsiBuilder builder, IElementType element1) {
+    return element1 == builder.getTokenType();
+  }
+
+  public static boolean lookAhead(PsiBuilder builder, IElementType element1, IElementType element2) {
+    if (element1 != builder.getTokenType()) return false;
+
+    Marker rb = builder.mark();
+    builder.advanceLexer();
+    boolean res = (!builder.eof() && element2 == builder.getTokenType());
+    rb.rollbackTo();
+    return res;
+  }
+
+  public static boolean lookAhead(PsiBuilder builder, IElementType element1, IElementType element2, IElementType element3) {
+    if (element1 != builder.getTokenType()) return false;
+
+    Marker rb = builder.mark();
+
+    boolean res = false;
+
+    builder.advanceLexer();
+    if (!builder.eof() && element2 == builder.getTokenType()) {
+      builder.advanceLexer();
+      res = (!builder.eof() && element3 == builder.getTokenType());
+    }
+
+    rb.rollbackTo();
+    return res;
+  }
+
+  public static boolean lookAhead(PsiBuilder builder, IElementType element1, IElementType element2, IElementType element3, IElementType element4) {
+    if (element1 != builder.getTokenType()) return false;
+
+    Marker rb = builder.mark();
+
+    boolean res = false;
+
+    builder.advanceLexer();
+    if (!builder.eof() && element2 == builder.getTokenType()) {
+      builder.advanceLexer();
+      if (!builder.eof() && element3 == builder.getTokenType()) {
+        builder.advanceLexer();
+        res = (!builder.eof() && element4 == builder.getTokenType());
+      }
+    }
+
+    rb.rollbackTo();
+    return res;
   }
 
   /**
