@@ -28,12 +28,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
@@ -54,13 +55,16 @@ class EventLogConsole {
 
   EventLogConsole(@NotNull Project project, LogModel model) {
     myProjectModel = model;
-    myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false);
+    myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false, true);
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
         EditorFactory.getInstance().releaseEditor(myLogEditor);
       }
     });
+
+    ((EditorMarkupModel) myLogEditor.getMarkupModel()).setErrorStripeVisible(true);
+
 
     myLogEditor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
@@ -120,7 +124,8 @@ class EventLogConsole {
                                            : ConsoleViewContentType.WARNING_OUTPUT;
 
     int msgStart = document.getTextLength();
-    append(document, pair.first);
+    String message = pair.first;
+    append(document, message);
     myLogEditor.getMarkupModel()
       .addRangeHighlighter(msgStart, document.getTextLength(), HighlighterLayer.CARET_ROW + 1, contentType.getAttributes(),
                            HighlighterTargetArea.EXACT_RANGE);
@@ -158,6 +163,66 @@ class EventLogConsole {
       myLogEditor.getCaretModel().moveToOffset(document.getTextLength());
       myLogEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
+
+    if (notification.isImportant()) {
+      highlightNotification(notification, message, document.getLineCount() - 2);
+    }
+  }
+
+  private void highlightNotification(final Notification notification,
+                                     String message, final int line) {
+    TextAttributes attr = new TextAttributes(null, null, null, null, Font.BOLD);
+    final RangeHighlighter lineHighlighter = myLogEditor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, attr);
+    Color color = notification.getType() == NotificationType.ERROR
+                  ? Color.red
+                  : notification.getType() == NotificationType.WARNING ? Color.yellow : Color.green;
+    lineHighlighter.setErrorStripeMarkColor(color);
+    lineHighlighter.setErrorStripeTooltip(message);
+    lineHighlighter.setGutterIconRenderer(new GutterIconRenderer() {
+      @NotNull
+      @Override
+      public Icon getIcon() {
+        return IconLoader.getIcon("/general/reset.png");
+      }
+
+      @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+      @Override
+      public boolean equals(Object obj) {
+        return this == obj;
+      }
+
+      @Override
+      public int hashCode() {
+        return 0;
+      }
+
+      @Override
+      public String getTooltipText() {
+        return "Mark as read";
+      }
+
+      @Override
+      public boolean isNavigateAction() {
+        return true;
+      }
+
+      @Override
+      public AnAction getClickAction() {
+        return new AnAction() {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            myProjectModel.removeNotification(notification);
+          }
+        };
+      }
+    });
+
+    myProjectModel.removeHandlers.put(notification, new Runnable() {
+      @Override
+      public void run() {
+        myLogEditor.getMarkupModel().removeHighlighter(lineHighlighter);
+      }
+    });
   }
 
   public Editor getConsoleEditor() {

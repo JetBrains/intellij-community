@@ -682,7 +682,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected EditorEx createRealEditor() {
-    final EditorEx editor = ConsoleViewUtil.setupConsoleEditor(myProject, true);
+    final EditorEx editor = ConsoleViewUtil.setupConsoleEditor(myProject, true, false);
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {

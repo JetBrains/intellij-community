@@ -21,11 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -34,6 +36,7 @@ public class LogModel {
   private final List<Notification> myNotifications = new ArrayList<Notification>();
   private Notification myStatusMessage;
   private final Project myProject;
+  final Map<Notification, Runnable> removeHandlers = new THashMap<Notification, Runnable>();
 
   LogModel(@Nullable Project project) {
     myProject = project;
@@ -88,6 +91,12 @@ public class LogModel {
     synchronized (myNotifications) {
       myNotifications.remove(notification);
     }
+
+    Runnable handler = removeHandlers.remove(notification);
+    if (handler != null) {
+      handler.run();
+    }
+
     if (notification == getStatusMessage() && notification.isImportant()) {
       ArrayList<Notification> notifications = getNotifications();
       Collections.reverse(notifications);
@@ -99,4 +108,5 @@ public class LogModel {
       }));
     }
   }
+
 }

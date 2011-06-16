@@ -33,13 +33,13 @@ import java.awt.*;
  * @author peter
  */
 public class ConsoleViewUtil {
-  public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown) {
+  public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     EditorEx editor = (EditorEx) EditorFactory
       .getInstance().createViewer(((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(true), project);
     editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
 
     final EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setLineMarkerAreaShown(lineMarkerAreaShown);
     editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setFoldingOutlineShown(foldingOutlineShown);
