@@ -38,7 +38,6 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
                                      final PsiScopeProcessor processor,
                                      final GroovyPsiElement place,
                                      final ResolveState state) {
-    if (!(qualifierType instanceof PsiClassType)) return;
     if (!GroovyPsiManager.isInheritorCached(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) return;
 
     final PsiType collectionType = PsiUtil.extractIterableTypeParameter(qualifierType, true);
