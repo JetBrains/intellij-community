@@ -54,6 +54,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.packageDependencies.DefaultScopesProvider;
@@ -87,10 +88,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: anna
@@ -116,6 +115,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private final WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
 
   private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, isTreeShowing(), myTree);
+  private ScopeTreeViewPanel.MyChangesListListener myChangesListListener = new MyChangesListListener();
 
   public ScopeTreeViewPanel(final Project project) {
     super(new BorderLayout());
@@ -140,12 +140,14 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
     WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
+    ChangeListManager.getInstance(myProject).addChangeListListener(myChangesListListener);
   }
 
   public void dispose() {
     FileTreeModelBuilder.clearCaches(myProject);
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
+    ChangeListManager.getInstance(myProject).removeChangeListListener(myChangesListListener);
   }
 
   public void selectNode(final PsiElement element, final PsiFile file, final boolean requestFocus) {
@@ -713,48 +715,122 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     public void problemsAppeared(VirtualFile file) {
-      queueUpdate(file, new Function<PsiFile, DefaultMutableTreeNode>() {
-        @Nullable
-        public DefaultMutableTreeNode fun(final PsiFile psiFile) {
-          return myBuilder.addFileNode(psiFile);
-        }
-      });
+      addNode(file, DefaultScopesProvider.getInstance(myProject).getProblemsScope().getName());
     }
 
     public void problemsDisappeared(VirtualFile file) {
-      queueUpdate(file, new Function<PsiFile, DefaultMutableTreeNode>() {
-        @Nullable
-        public DefaultMutableTreeNode fun(final PsiFile psiFile) {
-          return myBuilder.removeNode(psiFile, psiFile.getContainingDirectory());
-        }
-      });
-    }
-
-    private void queueUpdate(final VirtualFile fileToRefresh, final Function<PsiFile, DefaultMutableTreeNode> rootToReloadGetter) {
-      AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
-      if (pane == null || !ScopeViewPane.ID.equals(pane.getId()) ||
-          !DefaultScopesProvider.getInstance(myProject).getProblemsScope().getName().equals(pane.getSubId())) {
-        return;
-      }
-      myUpdateQueue.queue(new Update(fileToRefresh) {
-        public void run() {
-          if (myProject.isDisposed() || !fileToRefresh.isValid()) return;
-          myTreeExpansionMonitor.freeze();
-          final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileToRefresh);
-          if (psiFile != null) {
-            reload(rootToReloadGetter.fun(psiFile));
-          }
-          myTreeExpansionMonitor.restore();
-        }
-
-        public boolean isExpired() {
-          return !isTreeShowing();
-        }
-      });
+      removeNode(file, DefaultScopesProvider.getInstance(myProject).getProblemsScope().getName());
     }
   }
-  
+
+  private void addNode(VirtualFile file, final String scopeName) {
+    queueUpdate(file, new Function<PsiFile, DefaultMutableTreeNode>() {
+      @Nullable
+      public DefaultMutableTreeNode fun(final PsiFile psiFile) {
+        return myBuilder.addFileNode(psiFile);
+      }
+    }, scopeName);
+  }
+
+  private void removeNode(VirtualFile file, final String scopeName) {
+    queueUpdate(file, new Function<PsiFile, DefaultMutableTreeNode>() {
+      @Nullable
+      public DefaultMutableTreeNode fun(final PsiFile psiFile) {
+        return myBuilder.removeNode(psiFile, psiFile.getContainingDirectory());
+      }
+    }, scopeName);
+  }
+
+  private void queueUpdate(final VirtualFile fileToRefresh,
+                           final Function<PsiFile, DefaultMutableTreeNode> rootToReloadGetter, final String scopeName) {
+    AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
+    if (pane == null || !ScopeViewPane.ID.equals(pane.getId()) ||
+        !scopeName.equals(pane.getSubId())) {
+      return;
+    }
+    myUpdateQueue.queue(new Update(fileToRefresh) {
+      public void run() {
+        if (myProject.isDisposed() || !fileToRefresh.isValid()) return;
+        myTreeExpansionMonitor.freeze();
+        final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileToRefresh);
+        if (psiFile != null) {
+          reload(rootToReloadGetter.fun(psiFile));
+        }
+        myTreeExpansionMonitor.restore();
+      }
+
+      public boolean isExpired() {
+        return !isTreeShowing();
+      }
+    });
+  }
+
   private boolean isTreeShowing() {
     return myTree.isShowing() || ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  private class MyChangesListListener extends ChangeListAdapter {
+    @Override
+    public void changeListAdded(ChangeList list) {
+      fireListeners(list, null);
+    }
+
+    @Override
+    public void changeListRemoved(ChangeList list) {
+      fireListeners(list, null);
+    }
+
+    @Override
+    public void changeListRenamed(ChangeList list, String oldName) {
+      fireListeners(list, oldName);
+    }
+
+    private void fireListeners(ChangeList list, @Nullable String oldName) {
+      AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
+      if (pane == null || !ScopeViewPane.ID.equals(pane.getId())) {
+        return;
+      }
+      final String subId = pane.getSubId();
+      if (!list.getName().equals(subId) && (oldName == null || !oldName.equals(subId))) {
+        return;
+      }
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          myDependencyValidationManager.fireScopeListeners();
+        }
+      }, myProject.getDisposed());
+    }
+
+    @Override
+    public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
+      final String name = fromList.getName();
+      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      collectFiles(changes, files);
+      for (VirtualFile file : files) {
+        removeNode(file, name);
+      }
+    }
+
+    @Override
+    public void changesAdded(Collection<Change> changes, ChangeList toList) {
+      final String name = toList.getName();
+      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      collectFiles(changes, files);
+      for (VirtualFile file : files) {
+        addNode(file, name);
+      }
+    }
+
+    private void collectFiles(Collection<Change> changes, Set<VirtualFile> files) {
+      for (Change change : changes) {
+        final ContentRevision afterRevision = change.getAfterRevision();
+        if (afterRevision != null) {
+          final VirtualFile virtualFile = afterRevision.getFile().getVirtualFile();
+          if (virtualFile != null) {
+            files.add(virtualFile);
+          }
+        }
+      }
+    }
   }
 }
