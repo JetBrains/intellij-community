@@ -29,6 +29,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -44,11 +45,11 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
   }
 
   public Icon getIcon() {
-    return ExceptionBreakpoint.ICON;
+    return DebuggerIcons.ENABLED_EXCEPTION_BREAKPOINT_ICON;
   }
 
   public Icon getDisabledIcon() {
-    return ExceptionBreakpoint.DISABLED_ICON;
+    return DebuggerIcons.DISABLED_EXCEPTION_BREAKPOINT_ICON;
   }
 
   public BreakpointPanel createBreakpointPanel(final Project project, DialogWrapper parentDialog) {
