@@ -166,7 +166,10 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
                                                                                    @NotNull PsiReferenceService.Hints hints) {
     final Class<? extends PsiElement> clazz = element.getClass();
     List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> ret = null;
-    for (final Class aClass : myKnownSupers.get(clazz)) {
+    List<Class> classes = myKnownSupers.get(clazz);
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < classes.size(); i++) {
+      Class aClass = classes.get(i);
       final SimpleProviderBinding simpleBinding = myBindingsMap.get(aClass);
       final NamedObjectProviderBinding namedBinding = myNamedBindingsMap.get(aClass);
       if (simpleBinding == null && namedBinding == null) continue;
