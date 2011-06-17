@@ -18,7 +18,19 @@ public class PointlessNullCheck {
         if (arg instanceof String && arg != null) {
             System.out.println("this should trigger a warning");
         }
-    }
+
+        if ((arg instanceof String) && (arg != null)) {
+            System.out.println("this should trigger a warning");
+        }
+
+        if (arg == null || !(arg instanceof String)) {
+            System.out.println("this should trigger a warning");
+        }
+
+        if (((arg) != (null)) && ((arg) instanceof String)) {
+          System.out.println("this should trigger a warning");
+        }
+     }
 
     String arg1 = "foo";
 
