@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -29,7 +28,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +60,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
@@ -75,8 +72,6 @@ import java.util.List;
  * @author ilyas
  */
 public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> implements GrMethod, StubBasedPsiElement<GrMethodStub> {
-
-  private static final Key<SoftReference<PsiCodeBlock>> PSI_CODE_BLOCK = Key.create("Psi_code_block");
 
   protected GrMethodBaseImpl(final GrMethodStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
@@ -300,15 +295,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @Nullable
   public PsiCodeBlock getBody() {
-    final GrOpenBlock block = getBlock();
-    if (block == null) return null;
-
-    final SoftReference<PsiCodeBlock> ref = block.getUserData(PSI_CODE_BLOCK);
-    final PsiCodeBlock body = ref == null ? null : ref.get();
-    if (body != null) return body;
-    final GrSyntheticCodeBlock newBody = new GrSyntheticCodeBlock(block);
-    block.putUserData(PSI_CODE_BLOCK, new SoftReference<PsiCodeBlock>(newBody));
-    return newBody;
+    return PsiImplUtil.getOrCreatePsiCodeBlock(getBlock());
   }
 
   public boolean isConstructor() {

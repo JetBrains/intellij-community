@@ -18,14 +18,12 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -53,9 +51,6 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
 
   @NotNull
   GrField[] getFields();
-
-  @NotNull
-  GrClassInitializer[] getInitializersGroovy();
 
   @NotNull
   GrMembersDeclaration[] getMemberDeclarations();

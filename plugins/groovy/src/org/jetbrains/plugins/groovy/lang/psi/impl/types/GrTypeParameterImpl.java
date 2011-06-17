@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
@@ -70,11 +69,6 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
 
   public GrTypeDefinitionBody getBody() {
     return null;
-  }
-
-  @NotNull
-  public GrClassInitializer[] getInitializersGroovy() {
-    return GrClassInitializer.EMPTY_ARRAY;
   }
 
   @NotNull

@@ -337,16 +337,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @NotNull
-  public GrClassInitializer[] getInitializersGroovy() {
-    GrTypeDefinitionBody body = getBody();
-    if (body != null) {
-      return body.getInitializers();
-    }
-
-    return GrClassInitializer.EMPTY_ARRAY;
-  }
-
-  @NotNull
   public PsiMethod[] getMethods() {
     List<PsiMethod> cached = myMethods;
     if (cached == null) {
@@ -411,7 +401,10 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   public PsiClassInitializer[] getInitializers() {
-    return PsiClassInitializer.EMPTY_ARRAY;
+    GrTypeDefinitionBody body = getBody();
+    if (body == null) return GrClassInitializer.EMPTY_ARRAY;
+
+    return body.getInitializers();
   }
 
   @NotNull

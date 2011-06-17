@@ -18,17 +18,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 /**
@@ -52,7 +54,7 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
   }
 
   public boolean isStatic() {
-    return findChildByType(GroovyElementTypes.kSTATIC) != null;
+    return findChildByType(GroovyTokenTypes.kSTATIC) != null;
   }
 
 
@@ -76,5 +78,11 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
     PsiModifierList list = getModifierList();
     assert list != null;
     return list.hasModifierProperty(name);
+  }
+
+  @NotNull
+  @Override
+  public PsiCodeBlock getBody() {
+    return PsiImplUtil.getOrCreatePsiCodeBlock(getBlock());
   }
 }
