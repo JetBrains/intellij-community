@@ -160,29 +160,17 @@ public class EventLog implements Notifications {
 
     @Override
     public void projectOpened() {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return;
+      myConsole = new EventLogConsole(myProject, myProjectModel);
+
+      for (Notification notification : myInitial) {
+        printNotification(notification);
       }
-
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myProject.isDisposed()) {
-            return;
-          }
-
-          myConsole = new EventLogConsole(myProject, myProjectModel);
-
-          for (Notification notification : myInitial) {
-            printNotification(notification);
-          }
-          myInitial.clear();
-        }
-      });
+      myInitial.clear();
     }
 
     @Override
     public void projectClosed() {
+      myConsole.releaseEditor();
       getApplicationComponent().myModel.setStatusMessage(null);
     }
 

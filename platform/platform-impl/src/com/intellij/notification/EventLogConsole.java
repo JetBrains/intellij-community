@@ -21,7 +21,6 @@ import com.intellij.execution.impl.EditorCopyAction;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -33,7 +32,6 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativePoint;
@@ -56,12 +54,6 @@ class EventLogConsole {
   EventLogConsole(@NotNull Project project, LogModel model) {
     myProjectModel = model;
     myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false, true);
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        EditorFactory.getInstance().releaseEditor(myLogEditor);
-      }
-    });
 
     ((EditorMarkupModel) myLogEditor.getMarkupModel()).setErrorStripeVisible(true);
 
@@ -75,6 +67,10 @@ class EventLogConsole {
       }
     });
     myHyperlinkSupport = new EditorHyperlinkSupport(myLogEditor, project);
+  }
+
+  void releaseEditor() {
+    EditorFactory.getInstance().releaseEditor(myLogEditor);
   }
 
   private DefaultActionGroup createPopupActions(ActionManager actionManager) {
