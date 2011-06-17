@@ -456,6 +456,7 @@
   <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
   <editorOptionsProvider instance="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
   <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
+  <editorRepaintStrategy implementation="com.intellij.openapi.editor.ex.InjectedAwareEditorRepaintStrategy"/>
   <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.HorizontalScrollBarEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.AdditionalPageAtBottomEditorCustomization"/>

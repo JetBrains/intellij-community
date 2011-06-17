@@ -54,6 +54,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -1312,22 +1313,33 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return line * getLineHeight();
   }
 
-  public void repaint(int startOffset, int endOffset) {
+  public void repaint(final int startOffset, final int endOffset) {
     if (!isShowing() || myScrollPane == null || myDocument.isInBulkUpdate()) {
       return;
     }
 
+    int startOffsetToUse = startOffset;
+    int endOffsetToUse = endOffset;
     assertIsDispatchThread();
 
-    if (endOffset > myDocument.getTextLength()) {
-      endOffset = myDocument.getTextLength();
+    if (endOffsetToUse > myDocument.getTextLength()) {
+      endOffsetToUse = myDocument.getTextLength();
+    }
+    
+    for (EditorRepaintStrategy repaintStrategy : Extensions.getExtensions(EditorRepaintStrategy.EP_NAME)) {
+      final TextRange range = repaintStrategy.adjustHighlighterRegion(this, startOffsetToUse, endOffsetToUse);
+      if (range == null) {
+        return;
+      }
+      startOffsetToUse = range.getStartOffset();
+      endOffsetToUse = range.getEndOffset();
     }
     
     // We do repaint in case of equal offsets because there is a possible case that there is a soft wrap at the same offset and
     // it does occupy particular amount of visual space that may be necessary to repaint.
-    if (startOffset <= endOffset) {
-      int startLine = myDocument.getLineNumber(startOffset);
-      int endLine = myDocument.getLineNumber(endOffset);
+    if (startOffsetToUse <= endOffsetToUse) {
+      int startLine = myDocument.getLineNumber(startOffsetToUse);
+      int endLine = myDocument.getLineNumber(endOffsetToUse);
       repaintLines(startLine, endLine);
     }
   }
