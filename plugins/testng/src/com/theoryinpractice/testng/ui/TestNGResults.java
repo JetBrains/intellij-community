@@ -39,6 +39,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -335,7 +336,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     if (start == 0) {
       start = System.currentTimeMillis();
     }
-    tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
+    treeBuilder.select(rootNode);
     rootNode.setInProgress(true);
     rootNode.setStarted(true);
   }
