@@ -4,7 +4,7 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 
@@ -26,7 +26,7 @@ public class FacetDependentToolWindow extends ToolWindowEP {
   }
 
   public List<FacetType> getFacetTypes() {
-    return ContainerUtil.map(getFacetIds(), new Function<String, FacetType>() {
+    return ContainerUtil.mapNotNull(getFacetIds(), new NullableFunction<String, FacetType>() {
       @Override
       public FacetType fun(String facetId) {
         return FacetTypeRegistry.getInstance().findFacetType(facetId);
