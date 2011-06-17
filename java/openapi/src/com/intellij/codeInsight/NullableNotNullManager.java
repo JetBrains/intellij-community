@@ -78,7 +78,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   }
 
   public void setDefaultNullable(@NotNull String defaultNullable) {
-    LOG.assertTrue(myNullables.contains(defaultNullable));
+    LOG.assertTrue(getNullables().contains(defaultNullable));
     myDefaultNullable = defaultNullable;
   }
 
@@ -87,7 +87,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   }
 
   public void setDefaultNotNull(@NotNull String defaultNotNull) {
-    LOG.assertTrue(myNotNulls.contains(defaultNotNull));
+    LOG.assertTrue(getNotNulls().contains(defaultNotNull));
     myDefaultNotNull = defaultNotNull;
   }
 
@@ -122,19 +122,19 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   }
 
   public boolean hasDefaultValues() {
-    if (DEFAULT_NULLABLES.length != myNullables.size() || DEFAULT_NOT_NULLS.length != myNotNulls.size()) {
+    if (DEFAULT_NULLABLES.length != getNullables().size() || DEFAULT_NOT_NULLS.length != getNotNulls().size()) {
       return false;
     }
     if (myDefaultNotNull != AnnotationUtil.NOT_NULL || myDefaultNullable != AnnotationUtil.NULLABLE) {
       return false;
     }
     for (int i = 0; i < DEFAULT_NULLABLES.length; i++) {
-      if (!myNullables.get(i).equals(DEFAULT_NULLABLES[i])) {
+      if (!getNullables().get(i).equals(DEFAULT_NULLABLES[i])) {
         return false;
       }
     }
     for (int i = 0; i < DEFAULT_NOT_NULLS.length; i++) {
-      if (!myNotNulls.get(i).equals(DEFAULT_NOT_NULLS[i])) {
+      if (!getNotNulls().get(i).equals(DEFAULT_NOT_NULLS[i])) {
         return false;
       }
     }
