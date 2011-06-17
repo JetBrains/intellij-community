@@ -15,9 +15,14 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * There are moments when a computation A requires the result of computation B, which in turn requires C, which (unexpectedly) requires A.
@@ -28,7 +33,7 @@ import java.util.*;
  * incorrect to cache the results of B and C, because they all are based on the default incomplete result of the A calculation. If the actual
  * computation sequence were C->A->B->C, the result of the outer C most probably wouldn't be the same as in A->B->C->A, where it depends on
  * the null A result directly. The natural wish is that the program with cache enabled has the same results as the one without cache. In the above
- * situation the result of C would depend on the order of invocations of C and A, which can be hardly predictable in multithreaded environments.
+ * situation the result of C would depend on the order of invocations of C and A, which can be hardly predictable in multi-threaded environments.
  *
  * Therefore if you use any kind of cache, it probably would make your program safer to cache only when it's safe to do this. See
  * {@link com.intellij.openapi.util.RecursionGuard#markStack()} and {@link com.intellij.openapi.util.RecursionGuard.StackStamp#mayCacheNow()}
@@ -40,7 +45,14 @@ import java.util.*;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class RecursionManager {
+  private static final Object NULL = new Object();
   private static final ThreadLocal<Integer> ourStamp = new ThreadLocal<Integer>() {
+    @Override
+    protected Integer initialValue() {
+      return 0;
+    }
+  };
+  private static final ThreadLocal<Integer> ourMemoizationStamp = new ThreadLocal<Integer>() {
     @Override
     protected Integer initialValue() {
       return 0;
@@ -52,6 +64,12 @@ public class RecursionManager {
       return new LinkedHashMap<MyKey, Integer>();
     }
   };
+  private static final ThreadLocal<Map<MyKey, SoftReference>> ourIntermediateCache = new ThreadLocal<Map<MyKey, SoftReference>>() {
+    @Override
+    protected Map<MyKey, SoftReference> initialValue() {
+      return new SoftHashMap<MyKey, SoftReference>();
+    }
+  };
 
   /**
    * @param id just some string to separate different recursion prevention policies from each other
@@ -60,23 +78,44 @@ public class RecursionManager {
   public static RecursionGuard createGuard(@NonNls final String id) {
     return new RecursionGuard() {
       @Override
-      public <T> T doPreventingRecursion(Object key, Computable<T> computation) {
+      public <T> T doPreventingRecursion(Object key, boolean memoize, Computable<T> computation) {
         MyKey realKey = new MyKey(id, key);
         LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
         if (progressMap.containsKey(realKey)) {
-          //todo cache only here
-          prohibitResultCaching(key);
+          _prohibitResultCaching(key);
 
           return null;
         }
 
+        if (memoize) {
+          SoftReference reference = ourIntermediateCache.get().get(realKey);
+          if (reference != null) {
+            Object o = reference.get();
+            if (o != null) {
+              //noinspection unchecked
+              return o == NULL ? null : (T)o;
+            }
+          }
+        }
+
         progressMap.put(realKey, ourStamp.get());
+        int startStamp = ourMemoizationStamp.get();
 
         try {
-          return computation.compute();
+          T result = computation.compute();
+
+          if (memoize && ourMemoizationStamp.get() == startStamp) {
+            ourIntermediateCache.get().put(realKey, new SoftReference<Object>(result == null ? NULL : result));
+          }
+
+          return result;
         }
         finally {
-          ourStamp.set(progressMap.remove(realKey));
+          Integer value = progressMap.remove(realKey);
+          ourStamp.set(value);
+          if (value == 0) {
+            ourIntermediateCache.get().clear();
+          }
         }
       }
 
@@ -105,6 +144,10 @@ public class RecursionManager {
 
       @Override
       public void prohibitResultCaching(Object since) {
+        ourMemoizationStamp.set(_prohibitResultCaching(since));
+      }
+
+      private int _prohibitResultCaching(Object since) {
         int stamp = ourStamp.get() + 1;
         ourStamp.set(stamp);
 
@@ -117,6 +160,7 @@ public class RecursionManager {
             inLoop = true;
           }
         }
+        return stamp;
       }
     };
   }

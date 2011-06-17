@@ -120,7 +120,7 @@ public class ResolveCache {
     };
 
     RecursionGuard.StackStamp stamp = myGuard.markStack();
-    result = needToPreventRecursion ? myGuard.doPreventingRecursion(ref, computable) : computable.compute();
+    result = needToPreventRecursion ? myGuard.doPreventingRecursion(ref, true, computable) : computable.compute();
     if (stamp.mayCacheNow()) {
       cache(ref, result, maps, physical, incompleteCode, clearCountOnStart);
     }
