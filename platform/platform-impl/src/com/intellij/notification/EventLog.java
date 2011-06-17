@@ -93,7 +93,7 @@ public class EventLog implements Notifications {
     return getLogModel(project).getStatusMessage();
   }
 
-  public static Pair<String, Boolean> formatForLog(final Notification notification) {
+  public static Pair<String, Boolean> formatForLog(@NotNull final Notification notification) {
     boolean showLink = notification.getListener() != null;
     String content = notification.getContent();
     String mainText = notification.getTitle();

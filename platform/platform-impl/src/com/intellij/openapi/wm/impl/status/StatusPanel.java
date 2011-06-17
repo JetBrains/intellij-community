@@ -105,7 +105,7 @@ class StatusPanel extends JPanel {
 
     final Project project = getActiveProject();
     final Notification statusMessage = EventLog.getStatusMessage(project);
-    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null && project != null;
+    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && project != null;
 
     myShowLog.setVisible(myLogMode);
 
@@ -113,10 +113,14 @@ class StatusPanel extends JPanel {
       new Runnable() {
         @Override
         public void run() {
-          assert statusMessage != null;
-          String text = EventLog.formatForLog(statusMessage).first;
-          if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
-            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
+          String text;
+          if (statusMessage != null) {
+            text = EventLog.formatForLog(statusMessage).first;
+            if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
+              text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
+            }
+          } else {
+            text = "";
           }
           myTextPanel.setText(text);
           myLogAlarm.addRequest(this, 30000);
