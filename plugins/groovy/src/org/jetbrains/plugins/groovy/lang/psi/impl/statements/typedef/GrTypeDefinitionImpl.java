@@ -400,7 +400,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @NotNull
-  public PsiClassInitializer[] getInitializers() {
+  public GrClassInitializer[] getInitializers() {
     GrTypeDefinitionBody body = getBody();
     if (body == null) return GrClassInitializer.EMPTY_ARRAY;
 
