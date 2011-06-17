@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.lang.TitledHandler;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.List;
 
@@ -41,7 +43,7 @@ import static org.jetbrains.plugins.groovy.refactoring.rename.RenamePropertyUtil
 /**
  * @author ven
  */
-public class PropertyRenameHandler implements RenameHandler {
+public class PropertyRenameHandler implements RenameHandler, TitledHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
     if (element instanceof GrField && ((GrField)element).isProperty()) return true;
@@ -82,5 +84,10 @@ public class PropertyRenameHandler implements RenameHandler {
     final String propertyName = pair.getSecond();
 
     PsiElementRenameHandler.invoke(new PropertyForRename(result, propertyName, element.getManager()), project, element, editor);
+  }
+
+  @Override
+  public String getActionTitle() {
+    return GroovyRefactoringBundle.message("rename.groovy.property");
   }
 }

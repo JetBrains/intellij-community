@@ -52,10 +52,16 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private static HashMap<String, Boolean> myFontNameToIsMonospaced;
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
   private boolean myIsInSchemeChange = false;
+  private String myTitle;
 
   public FontOptions(ColorAndFontOptions options) {
+    this(options, ApplicationBundle.message("group.editor.font"));
+  }
+
+  protected FontOptions(ColorAndFontOptions options, final String title) {
     super(new BorderLayout());
     myOptions = options;
+    myTitle = title;
 
     JPanel schemesGroup = new JPanel(new BorderLayout());
 
@@ -68,9 +74,9 @@ public class FontOptions extends JPanel implements OptionsPanel{
   public void updateOptionsList() {
     myIsInSchemeChange = true;
 
-    myLineSpacingField.setText(Float.toString(getCurrentScheme().getLineSpacing()));
-    myEditorFontSizeField.setText(Integer.toString(getCurrentScheme().getEditorFontSize()));
-    myFontNameField.setText(getCurrentScheme().getEditorFontName());
+    myLineSpacingField.setText(Float.toString(getLineSpacing()));
+    myEditorFontSizeField.setText(Integer.toString(getCurrentFontSize()));
+    myFontNameField.setText(getCurrentFontName());
 
     boolean enabled = !ColorAndFontOptions.isReadOnly(myOptions.getSelectedScheme());
     myLineSpacingField.setEnabled(enabled);
@@ -79,6 +85,31 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
     myIsInSchemeChange = false;
 
+  }
+
+  protected String getCurrentFontName() {
+    return getCurrentScheme().getEditorFontName();
+  }
+
+  protected void setCurrentFontName(String fontName) {
+    getCurrentScheme().setEditorFontName(fontName);
+  }
+
+
+  protected int getCurrentFontSize() {
+    return getCurrentScheme().getEditorFontSize();
+  }
+
+  protected void setCurrentFontSize(int fontSize) {
+    getCurrentScheme().setEditorFontSize(fontSize);
+  }
+
+  protected float getLineSpacing() {
+    return getCurrentScheme().getLineSpacing();
+  }
+
+  protected void setCurrentLineSpacing(float lineSpacing) {
+    getCurrentScheme().setLineSpacing(lineSpacing);
   }
 
   public Runnable showOption(final String option) {
@@ -92,13 +123,13 @@ public class FontOptions extends JPanel implements OptionsPanel{
   public void selectOption(final String typeToSelect) {
   }
 
-  private EditorColorsScheme getCurrentScheme() {
+  protected EditorColorsScheme getCurrentScheme() {
     return myOptions.getSelectedScheme();
   }
 
   private JPanel createEditorFontPanel() {
     JPanel editorFontPanel = new JPanel();
-    editorFontPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("group.editor.font")));
+    editorFontPanel.setBorder(IdeBorderFactory.createTitledBorder(myTitle));
     editorFontPanel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -170,7 +201,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
           if (fontSize < 1) fontSize = 1;
           if (fontSize > OptionsConstants.MAX_EDITOR_FONT_SIZE) fontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
 
-          getCurrentScheme().setEditorFontSize(fontSize);
+          setCurrentFontSize(fontSize);
           updateDescription(true);
         }
       }
@@ -189,8 +220,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
         finally {
           if (lineSpacing <= 0) lineSpacing = 1;
           if (lineSpacing > 30) lineSpacing = 30;
-          if (getCurrentScheme().getLineSpacing() != lineSpacing) {
-            getCurrentScheme().setLineSpacing(lineSpacing);
+          if (getLineSpacing() != lineSpacing) {
+            setCurrentLineSpacing(lineSpacing);
           }
           updateDescription(true);
         }
@@ -199,7 +230,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
     return editorFontPanel;
   }
-  
+
   private void selectFont() {
     initFontTables();
 
@@ -220,7 +251,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     String fontName = selectFontDialog.getFontName();
     if (fontName != null) {
       myFontNameField.setText(fontName);
-      getCurrentScheme().setEditorFontName(fontName);
+      setCurrentFontName(fontName);
       updateDescription(true);
     }
   }

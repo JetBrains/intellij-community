@@ -19,19 +19,18 @@ package com.intellij.xdebugger.breakpoints;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.ui.DebuggerIcons;
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Collections;
 
 /**
  * Implement this class to support new type of line breakpoints. An implementation should be registered in a plugin.xml:
@@ -75,14 +74,17 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return XDebuggerBundle.message("xbreakpoint.default.display.text", breakpoint.getLine() + 1, breakpoint.getPresentableFilePath());
   }
 
-  @NotNull  
-  public Icon getDisabledDependentIcon() {
-    return DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
-  }
-
   @NotNull
   public Comparator<XLineBreakpoint<P>> getBreakpointComparator() {
     return XDebuggerUtil.getInstance().getDefaultLineBreakpointComparator();
+  }
+
+  /**
+   * Source position for line breakpoint is determined by its file and line
+   */
+  @Override
+  public final XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
+    return null;
   }
 
   /**

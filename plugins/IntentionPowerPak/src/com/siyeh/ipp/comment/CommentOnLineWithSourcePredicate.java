@@ -19,8 +19,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -48,7 +48,7 @@ class CommentOnLineWithSourcePredicate implements PsiElementPredicate{
                 !JavaTokenType.END_OF_LINE_COMMENT.equals(type)){
             return false; // can't move JSP comments
         }
-        final PsiElement prevSibling = TreeUtil.getPrevLeaf(element);
+      final PsiElement prevSibling = PsiTreeUtil.prevLeaf(element);
         if(!(prevSibling instanceof PsiWhiteSpace)){
             return true;
         }
@@ -57,7 +57,7 @@ class CommentOnLineWithSourcePredicate implements PsiElementPredicate{
                 prevSiblingText.indexOf((int) '\r') < 0){
             return true;
         }
-        final PsiElement nextSibling = TreeUtil.getNextLeaf(element);
+      final PsiElement nextSibling = PsiTreeUtil.nextLeaf(element);
         if(!(nextSibling instanceof PsiWhiteSpace)){
             return true;
         }

@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -262,5 +263,6 @@ public abstract class ProjectLevelVcsManager {
   protected abstract VcsEnvironmentsProxyCreator getProxyCreator();
 
   public abstract VcsHistoryCache getVcsHistoryCache();
+  public abstract ContentRevisionCache getContentRevisionCache();
   public abstract boolean isFileInContent(final VirtualFile vf);
 }

@@ -189,6 +189,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   @Nullable
+  public String getSeparator() {
+    return mySeparator;
+  }
+
+  @Nullable
   public String getType() {
     return myType;
   }

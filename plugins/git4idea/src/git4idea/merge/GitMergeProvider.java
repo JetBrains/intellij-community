@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider2;
 import com.intellij.openapi.vcs.merge.MergeSession;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsRunnable;
@@ -116,8 +117,8 @@ public class GitMergeProvider implements MergeProvider2 {
             /// This could happen in case if rebasing.
             mergeData.ORIGINAL = file.contentsToByteArray();
           }
-          mergeData.CURRENT = current.getContent();
-          mergeData.LAST = last.getContent();
+          mergeData.CURRENT = loadRevisionCatchingErrors(current);
+          mergeData.LAST = loadRevisionCatchingErrors(last);
           try {
             mergeData.LAST_REVISION_NUMBER = GitRevisionNumber.resolve(myProject, root, myReverse ? "HEAD" : "MERGE_HEAD");
           }
@@ -132,6 +133,22 @@ public class GitMergeProvider implements MergeProvider2 {
     };
     VcsUtil.runVcsProcessWithProgress(runnable, GitBundle.message("merge.load.files"), false, myProject);
     return mergeData;
+  }
+
+  private byte[] loadRevisionCatchingErrors(final GitFileRevision revision) throws VcsException, IOException {
+    try {
+      return revision.getContent();
+    } catch (VcsException e) {
+      String m = e.getMessage().trim();
+      if (m.startsWith("fatal: ambiguous argument ")
+          || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))
+          || (m.contains("is in the index, but not at stage "))) {
+        return ArrayUtil.EMPTY_BYTE_ARRAY;
+      }
+      else {
+        throw e;
+      }
+    }
   }
 
   /**

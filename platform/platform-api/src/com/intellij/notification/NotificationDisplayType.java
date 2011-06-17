@@ -20,10 +20,9 @@ package com.intellij.notification;
  */
 public enum NotificationDisplayType {
 
-  NONE("Ignore"),
+  NONE("No popup"),
   BALLOON("Balloon"),
-  STICKY_BALLOON("Sticky balloon"),
-  BALLOON_ONLY("Balloon only");
+  STICKY_BALLOON("Sticky balloon");
 
   private final String myTitle;
 

@@ -29,6 +29,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -255,8 +256,8 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
           final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
           final long startModificationCount = tracker.getModificationCount();
 
+          if (!psiMethod.isValid()) return;
           removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
-
           if (startModificationCount != tracker.getModificationCount()) {
             myProcessor.ignoreElement(refMethod);
           }

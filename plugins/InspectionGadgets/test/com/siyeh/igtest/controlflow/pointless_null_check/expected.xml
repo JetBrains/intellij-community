@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>PointlessNullCheck.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless null check</problem_class>
+    <description>Pointless null check can be removed</description>
+  </problem>
+  <problem>
+     <file>PointlessNullCheck.java</file>
+     <line>10</line>
+     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless null check</problem_class>
+     <description>Pointless null check can be removed</description>
+   </problem>
+  <problem>
+     <file>PointlessNullCheck.java</file>
+     <line>14</line>
+     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless null check</problem_class>
+     <description>Pointless null check can be removed</description>
+   </problem>
+  <problem>
+     <file>PointlessNullCheck.java</file>
+     <line>18</line>
+     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless null check</problem_class>
+     <description>Pointless null check can be removed</description>
+   </problem>
+  <problem>
+    <file>PointlessNullCheck.java</file>
+    <line>22</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless null check</problem_class>
+    <description>Pointless null check can be removed</description>
+  </problem>
+  <problem>
+    <file>PointlessNullCheck.java</file>
+    <line>26</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless null check</problem_class>
+    <description>Pointless null check can be removed</description>
+  </problem>
+  <problem>
+    <file>PointlessNullCheck.java</file>
+    <line>30</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless null check</problem_class>
+    <description>Pointless null check can be removed</description>
+  </problem>
+</problems>

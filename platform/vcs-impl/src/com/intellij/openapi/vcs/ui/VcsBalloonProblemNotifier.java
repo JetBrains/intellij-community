@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -98,6 +99,8 @@ public class VcsBalloonProblemNotifier implements Runnable {
   }
 
   private void doForProject(@NotNull final Project project) {
+    AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(myMessage, myMessageType).notify(project);
+
     final ToolWindowManager manager = ToolWindowManager.getInstance(project);
     final String toolWindowId = (myShowOverChangesView ? ChangesViewContentManager.TOOLWINDOW_ID : ToolWindowId.VCS);
     final boolean haveWindow = (! project.isDefault()) && (manager.getToolWindow(toolWindowId) != null);

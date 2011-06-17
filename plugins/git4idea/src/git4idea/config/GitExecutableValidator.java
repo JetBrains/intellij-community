@@ -36,7 +36,7 @@ public class GitExecutableValidator extends ExecutableValidator {
   private GitVcs myVcs;
 
   public GitExecutableValidator(Project project) {
-    super(project, GitVcs.NOTIFICATION_GROUP_ID);
+    super(project, GitVcs.NOTIFICATION_GROUP_ID.getDisplayId());
     myVcs = GitVcs.getInstance(project);
     setMessagesAndTitles(GitBundle.message("git.executable.notification.title"),
                          GitBundle.message("git.executable.notification.description"),

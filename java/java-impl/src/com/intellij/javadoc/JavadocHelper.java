@@ -44,6 +44,8 @@ import java.util.List;
  * @since 5/27/11 2:35 PM
  */
 public class JavadocHelper {
+
+  private static final String PARAM_TEXT = "param";
   
   private static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
     = new Pair<JavadocParameterInfo, List<JavadocParameterInfo>>(null, Collections.<JavadocParameterInfo>emptyList());
@@ -187,7 +189,7 @@ public class JavadocHelper {
   @Nullable
   private static JavadocParameterInfo parse(@NotNull PsiElement element, @NotNull Editor editor) {
     final PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class, false);
-    if (tag == null) {
+    if (tag == null || !PARAM_TEXT.equals(tag.getName())) {
       return null;
     }
 

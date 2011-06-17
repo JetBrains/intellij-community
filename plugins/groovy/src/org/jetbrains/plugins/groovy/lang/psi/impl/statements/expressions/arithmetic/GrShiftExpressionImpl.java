@@ -29,21 +29,23 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
  */
 public class GrShiftExpressionImpl extends GrBinaryExpressionImpl {
 
-  private final Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
+  private static class MyTypeCalculator implements Function<GrBinaryExpressionImpl, PsiType> {
+    private static final Function<GrBinaryExpressionImpl, PsiType> INSTANCE = new MyTypeCalculator();
+
     @Nullable
     @Override
     public PsiType fun(GrBinaryExpressionImpl binary) {
-      PsiType lopType = getLeftOperand().getType();
+      PsiType lopType = binary.getLeftOperand().getType();
       if (lopType == null) return null;
       if (lopType.equalsToText(CommonClassNames.JAVA_LANG_BYTE) ||
           lopType.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER) ||
           lopType.equalsToText(CommonClassNames.JAVA_LANG_SHORT) ||
           lopType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
-        return getTypeByFQName(CommonClassNames.JAVA_LANG_INTEGER);
+        return binary.getTypeByFQName(CommonClassNames.JAVA_LANG_INTEGER);
       }
       return null;
     }
-  };
+  }
 
   public GrShiftExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -55,6 +57,6 @@ public class GrShiftExpressionImpl extends GrBinaryExpressionImpl {
 
   @Override
   protected Function<GrBinaryExpressionImpl, PsiType> getTypeCalculator() {
-    return TYPE_CALCULATOR;
+    return MyTypeCalculator.INSTANCE;
   }
 }

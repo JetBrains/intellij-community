@@ -20,10 +20,9 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 
 /**
  * @author ilyas
@@ -34,5 +33,4 @@ public interface GrCodeBlock extends GrControlFlowOwner, GrVariableDeclarationOw
 
   @Nullable
   PsiElement getRBrace();
-
 }

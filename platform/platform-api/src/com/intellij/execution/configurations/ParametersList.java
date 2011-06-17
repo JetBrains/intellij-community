@@ -269,6 +269,7 @@ public class ParametersList implements Cloneable{
     private final StringBuffer myBuffer = new StringBuffer(128);
     private boolean myTokenStarted = false;
     private boolean myUnquotedSlash = false;
+    private boolean mySplittedQuotingStarted = false;
 
     public ParametersTokenizer(final String parmsString) {
       myParamsString = parmsString;
@@ -303,18 +304,23 @@ public class ParametersList implements Cloneable{
           }
         }
         else {
-          inQuotes = processNotQuoted(c);
+          inQuotes = processNotQuoted(c, myBuffer.length() == 0 || myBuffer.charAt(myBuffer.length() - 1) == ' ');
         }
       }
       tokenFinished();
       return ArrayUtil.toStringArray(myArray);
     }
 
-    private boolean processNotQuoted(final char c) {
+    private boolean processNotQuoted(final char c, final boolean isPreviousSpace) {
       if (c == '"') {
         if (myUnquotedSlash) {
           append(c);
           myUnquotedSlash = false;
+          return false;
+        }
+        else if (!isPreviousSpace || mySplittedQuotingStarted) {
+          append(c);
+          mySplittedQuotingStarted = !mySplittedQuotingStarted;
           return false;
         }
         myTokenStarted = true;
@@ -348,5 +354,10 @@ public class ParametersList implements Cloneable{
       myBuffer.setLength(0);
       myTokenStarted = false;
     }
+  }
+
+  @Override
+  public String toString() {
+    return myParameters.toString();
   }
 }

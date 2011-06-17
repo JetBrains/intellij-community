@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
@@ -56,7 +57,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     super.cancelEditing();
     int index = myRootNode.removeChildNode(getNode());
     if (myOldNode != null) {
-      getWatchesView().addWatchExpression(myOldNode.getExpression(), index);
+      getWatchesView().addWatchExpression(myOldNode.getExpression(), index, false);
     }
   }
 
@@ -66,7 +67,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     super.doOKAction();
     int index = myRootNode.removeChildNode(getNode());
     if (!StringUtil.isEmpty(expression)) {
-      getWatchesView().addWatchExpression(expression, index);
+      getWatchesView().addWatchExpression(expression, index, false);
     }
   }
 
@@ -88,7 +89,12 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
 
     private void cancel() {
       mySession.removeSessionListener(this);
-      cancelEditing();
+      DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+        @Override
+        public void run() {
+          cancelEditing();
+        }
+      });
     }
 
     @Override

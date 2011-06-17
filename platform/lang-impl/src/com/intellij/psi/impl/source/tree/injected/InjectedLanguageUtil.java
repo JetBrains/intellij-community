@@ -302,7 +302,7 @@ public class InjectedLanguageUtil {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     PsiFile hostPsiFile = documentManager.getPsiFile(hostDocument);
-    assert hostPsiFile != null;
+    if (hostPsiFile == null) return;
     for (RangeMarker rangeMarker : injected) {
       ProgressManager.checkCanceled();
       PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
@@ -311,7 +311,7 @@ public class InjectedLanguageUtil {
         continue;
       }
       ProgressManager.checkCanceled();
-      // it is here reparse happens and old file contents replaced
+      // it is here where the reparse happens and old file contents replaced
       enumerate(element, hostPsiFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           PsiDocumentManagerImpl.checkConsistency(injectedPsi, injectedPsi.getViewProvider().getDocument());
@@ -326,7 +326,7 @@ public class InjectedLanguageUtil {
   public static void clearCaches(@NotNull PsiFile injected, @NotNull DocumentWindowImpl documentWindow) {
     VirtualFileWindow virtualFile = (VirtualFileWindow)injected.getVirtualFile();
     PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
-    if (psiManagerEx.isDisposed()) return;
+    if (psiManagerEx.getProject().isDisposed()) return;
     psiManagerEx.getFileManager().setViewProvider((VirtualFile)virtualFile, null);
     PsiElement context = injected.getContext();
     PsiFile hostFile;
@@ -429,6 +429,7 @@ public class InjectedLanguageUtil {
   }
 
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
+    if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);
     host.processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {

@@ -16,8 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-
 /**
  * @author ilyas
  */

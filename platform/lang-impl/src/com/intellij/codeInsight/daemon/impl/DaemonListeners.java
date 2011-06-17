@@ -96,7 +96,7 @@ class DaemonListeners implements Disposable {
   private final DaemonCodeAnalyzer.DaemonListener myDaemonEventPublisher;
 
   private static final Key<Boolean> DAEMON_INITIALIZED = Key.create("DAEMON_INITIALIZED");
-  public DaemonListeners(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, EditorTracker editorTracker) {
+  public DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer, @NotNull EditorTracker editorTracker) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
     LOG.assertTrue(((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE), "Daemon listeners already initialized for the project "+myProject);
@@ -284,7 +284,7 @@ class DaemonListeners implements Disposable {
   }
 
   public void dispose() {
-    LOG.assertTrue(((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, null), "Daemon listeners already disposed for the project "+myProject);
+    LOG.assertTrue(((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, Boolean.FALSE), "Daemon listeners already disposed for the project "+myProject);
   }
 
   boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {

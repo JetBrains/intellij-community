@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="library" name="Guava" level="project" />
   </component>
   <component name="copyright">

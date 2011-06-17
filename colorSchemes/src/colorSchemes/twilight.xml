@@ -216,6 +216,14 @@
         <option name="EFFECT_COLOR" value="D2A8A1" />
       </value>
     </option>
+    <option name="LOCAL_VARIABLE_ATTRIBUTES">
+      <value />
+    </option>
+    <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="fda5ff" />
+      </value>
+    </option>
     <option name="INSTANCE_FIELD_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="fda5ff" />
@@ -232,6 +240,12 @@
       <value>
         <option name="FONT_TYPE" value="2" />
       </value>
+    </option>
+    <option name="PARAMETER_ATTRIBUTES">
+      <value />
+    </option>
+    <option name="CLASS_NAME_ATTRIBUTES">
+      <value />
     </option>
     <option name="JAVA_LINE_COMMENT">
       <value>
@@ -395,14 +409,9 @@
         <option name="FOREGROUND" value="CDA869" />
       </value>
     </option>
-    <option name="PY.STRING.B">
+    <option name="PY.STRING">
       <value>
-        <option name="FOREGROUND" value="979d6a" />
-      </value>
-    </option>
-    <option name="PY.STRING.U">
-      <value>
-        <option name="FOREGROUND" value="6a9d7c" />
+        <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
     <option name="PY.NUMBER">
@@ -438,7 +447,7 @@
     </option>
     <option name="PY.DOC_COMMENT">
       <value>
-        <option name="FOREGROUND" value="89a19d" />
+        <option name="FOREGROUND" value="5F5A60" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -564,6 +573,175 @@
     <option name="BUILDOUT.KEY_VALUE_SEPARATOR">
       <value>
         <option name="FOREGROUND" value="AFC4DB" />
+      </value>
+    </option>
+    <option name="LOCALE.LINE_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="5F5A60" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGCTXT_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGID_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGID_PLURAL_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGSTR_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="LOCALE.MSGSTR_PLURAL_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="LOCALE.STRING_LITERAL">
+      <value>
+        <option name="FOREGROUND" value="8F9D6A" />
+      </value>
+    </option>
+    <option name="REST.LINE_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="5F5A60" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="REST.SECTION.HEADER">
+      <value>
+        <option name="FOREGROUND" value="CA7840" />
+      </value>
+    </option>
+    <option name="REST.BOLD">
+      <value>
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="REST.ITALIC">
+      <value>
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="REST.FIXED">
+      <value>
+        <option name="BACKGROUND" value="48485f" />
+      </value>
+    </option>
+    <option name="REST.INTERPRETED">
+      <value>
+        <option name="BACKGROUND" value="4d5d3d" />
+      </value>
+    </option>
+    <option name="REST.REF.NAME">
+      <value>
+        <option name="FOREGROUND" value="8F9D6A" />
+      </value>
+    </option>
+    <option name="REST.EXPLICIT">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="REST.FIELD">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="REST.INLINE">
+      <value>
+        <option name="BACKGROUND" value="273627" />
+      </value>
+    </option>
+    <option name="SQL_BAD_CHARACTER">
+      <value>
+        <option name="FOREGROUND" value="D2A8A1" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="SQL_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="5F5A60" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="SQL_IDENT_DELIMITED">
+      <value />
+    </option>
+    <option name="SQL_IDENT">
+      <value />
+    </option>
+    <option name="SQL_SEMICOLON">
+      <value />
+    </option>
+    <option name="SQL_COMMA">
+      <value />
+    </option>
+    <option name="SQL_DOT">
+      <value />
+    </option>
+    <option name="SQL_STRING">
+      <value>
+        <option name="FOREGROUND" value="8F9D6A" />
+      </value>
+    </option>
+    <option name="SQL_PARENS">
+      <value />
+    </option>
+    <option name="SQL_BRACKETS">
+      <value />
+    </option>
+    <option name="SQL_BRACES">
+      <value />
+    </option>
+    <option name="SQL_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="CA7840" />
+      </value>
+    </option>
+    <option name="SQL_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="SQL_PROCEDURE">
+      <value>
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="SQL_PARAMETER">
+      <value />
+    </option>
+    <option name="SQL_LOCAL_ALIAS">
+      <value />
+    </option>
+    <option name="SQL_TABLE">
+      <value />
+    </option>
+    <option name="SQL_COLUMN">
+      <value>
+        <option name="FOREGROUND" value="fda5ff" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="SQL_SCHEMA">
+      <value />
+    </option>
+    <option name="SQL_DATABASE_OBJECT">
+      <value />
+    </option>
+    <option name="SQL_SYNTETIC_ENTITY">
+      <value>
+        <option name="FOREGROUND" value="fda5ff" />
       </value>
     </option>
     <option name="REGEXP.META">
@@ -909,7 +1087,9 @@
       </value>
     </option>
     <option name="RUBY_HEREDOC_ID">
-      <value />
+      <value>
+        <option name="FOREGROUND" value="494949" />
+      </value>
     </option>
     <option name="RUBY_NUMBER">
       <value>
@@ -1042,6 +1222,131 @@
         <option name="FOREGROUND" value="DAD085" />
       </value>
     </option>
+    <option name="HAML_TEXT">
+      <value />
+    </option>
+    <option name="HAML_TAG">
+      <value>
+        <option name="FOREGROUND" value="AC885B" />
+      </value>
+    </option>
+    <option name="HAML_CLASS">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="HAML_ID">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
+    <option name="HAML_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="5F5A60" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="HAML_XHTML">
+      <value />
+    </option>
+    <option name="HAML_RUBY_CODE">
+      <value />
+    </option>
+    <option name="HAML_RUBY_START">
+      <value />
+    </option>
+    <option name="HAML_LINE_CONTINUATION">
+      <value />
+    </option>
+    <option name="HAML_FILTER">
+      <value />
+    </option>
+    <option name="HAML_FILTER_CONTENT">
+      <value />
+    </option>
+    <option name="GHERKIN_TEXT">
+      <value />
+    </option>
+    <option name="GHERKIN_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="5F5A60" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="GHERKIN_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="AFC4DB" />
+      </value>
+    </option>
+    <option name="GHERKIN_TAG">
+      <value>
+        <option name="FOREGROUND" value="F9EE98" />
+      </value>
+    </option>
+    <option name="GHERKIN_PYSTRING">
+      <value>
+        <option name="FOREGROUND" value="494949" />
+      </value>
+    </option>
+    <option name="GHERKIN_TABLE_HEADER_CELL">
+      <value>
+        <option name="FOREGROUND" value="8A9A95" />
+      </value>
+    </option>
+    <option name="GHERKIN_TABLE_CELL">
+      <value>
+        <option name="FOREGROUND" value="DAEFA3" />
+      </value>
+    </option>
+    <option name="PIPE">
+      <value>
+        <option name="FOREGROUND" value="AFC4DB" />
+      </value>
+    </option>
+    <option name="GHERKIN_OUTLINE_PARAMETER_SUBSTITUTION">
+      <value>
+        <option name="FOREGROUND" value="8A9A95" />
+      </value>
+    </option>
+    <option name="GHERKIN_REGEXP_PARAMETER">
+      <value>
+        <option name="FOREGROUND" value="494949" />
+      </value>
+    </option>
+    <option name="RHTML_SCRIPTLET_START_ID">
+      <value>
+        <option name="FOREGROUND" value="494949" />
+      </value>
+    </option>
+    <option name="RHTML_SCRIPTLET_END_ID">
+      <value>
+        <option name="FOREGROUND" value="494949" />
+      </value>
+    </option>
+    <option name="RHTML_EXPRESSION_START_ID">
+      <value>
+        <option name="FOREGROUND" value="494949" />
+      </value>
+    </option>
+    <option name="RHTML_EXPRESSION_END_ID">
+      <value>
+        <option name="FOREGROUND" value="494949" />
+      </value>
+    </option>
+    <option name="RHTML_COMMENT_ID">
+      <value>
+        <option name="FOREGROUND" value="5F5A60" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="RHTML_OMIT_NEW_LINE_ID">
+      <value>
+        <option name="FOREGROUND" value="494949" />
+      </value>
+    </option>
+    <option name="RHTML_SCRIPTING_BACKGROUND_ID">
+      <value />
+    </option>
     <option name="CUSTOM_NUMBER_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="CA7840" />
@@ -1075,47 +1380,6 @@
       <value>
         <option name="FOREGROUND" value="D2A8A1" />
         <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-        <option name="GHERKIN_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="5F5A60" />
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="GHERKIN_KEYWORD">
-      <value>
-        <option name="FOREGROUND" value="CDA869" />
-      </value>
-    </option>
-    <option name="GHERKIN_TAG">
-      <value>
-        <option name="FOREGROUND" value="8A9A95" />
-      </value>
-    </option>
-    <option name="GHERKIN_PYSTRING">
-      <value>
-        <option name="FOREGROUND" value="8F9D6A" />
-      </value>
-    </option>
-    <option name="GHERKIN_TABLE_HEADER_CELL">
-      <value>
-        <option name="FOREGROUND" value="8A9A95" />
-      </value>
-    </option>
-    <option name="GHERKIN_TABLE_CELL">
-      <value>
-        <option name="FOREGROUND" value="494949" />
-      </value>
-    </option>
-    <option name="GHERKIN_OUTLINE_PARAMETER_SUBSTITUTION">
-      <value>
-        <option name="FOREGROUND" value="8A9A95" />
-      </value>
-    </option>
-    <option name="GHERKIN_REGEXP_PARAMETER">
-      <value>
-        <option name="FOREGROUND" value="494949" />
       </value>
     </option>
   </attributes>

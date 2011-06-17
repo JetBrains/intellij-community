@@ -235,4 +235,8 @@ public class StringScanner {
     }
     return myText.charAt(myPosition);
   }
+
+  public String getAllText() {
+    return myText;
+  }
 }

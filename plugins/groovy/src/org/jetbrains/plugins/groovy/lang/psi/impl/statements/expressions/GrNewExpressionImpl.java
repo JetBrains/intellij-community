@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
@@ -139,8 +140,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     if (argumentList == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     if (argumentList.getNamedArguments().length > 0 && argumentList.getExpressionArguments().length == 0) {
-      GroovyResolveResult[] constructorResults = PsiUtil.getConstructorCandidates(ref, classResults, new PsiType[]{PsiUtil.createMapType(
-        getResolveScope())}); //one Map parameter, actually
+      PsiType mapType = new GrMapType(argumentList, getNamedArguments());
+      GroovyResolveResult[] constructorResults = PsiUtil.getConstructorCandidates(ref, classResults, new PsiType[]{mapType}); //one Map parameter, actually
       for (GroovyResolveResult result : constructorResults) {
         final PsiElement resolved = result.getElement();
         if (resolved instanceof PsiMethod) {

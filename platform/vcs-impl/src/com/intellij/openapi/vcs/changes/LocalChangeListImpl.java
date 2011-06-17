@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.OpenTHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +28,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   private boolean myIsDefault = false;
   private boolean myIsReadOnly = false;
-  private ChangeHashSet myChangesBeforeUpdate;
+  private OpenTHashSet<Change> myChangesBeforeUpdate;
 
   public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String name) {
     return new LocalChangeListImpl(project, name);
@@ -131,7 +131,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   synchronized Collection<Change> startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
     createReadChangesCache();
     final Collection<Change> result = new ArrayList<Change>();
-    myChangesBeforeUpdate = new ChangeHashSet(myChanges);
+    myChangesBeforeUpdate = new OpenTHashSet<Change>(myChanges);
     final ExcludedFileIndex fileIndex = ExcludedFileIndex.getInstance(project);
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
@@ -198,7 +198,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   @Nullable
   private Change findOldChange(final Change newChange) {
-    Change oldChange = myChangesBeforeUpdate.getEqualChange(newChange);
+    Change oldChange = myChangesBeforeUpdate.get(newChange);
     if (oldChange != null && sameBeforeRevision(oldChange, newChange) &&
         newChange.getFileStatus().equals(oldChange.getFileStatus())) {
       return oldChange;
@@ -252,7 +252,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     }
 
     if (myChangesBeforeUpdate != null) {
-      copy.myChangesBeforeUpdate = new ChangeHashSet(myChangesBeforeUpdate);
+      copy.myChangesBeforeUpdate = new OpenTHashSet<Change>((Collection<Change>)myChangesBeforeUpdate);
     }
 
     if (myReadChangesCache != null) {
@@ -269,18 +269,5 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   public void setId(String id) {
     myId = id;
-  }
-
-  private static class ChangeHashSet extends THashSet<Change> {
-    public ChangeHashSet(final Collection<? extends Change> changes) {
-      super(changes);
-    }
-
-    @Nullable
-    Change getEqualChange(Change other) {
-      int aIndex = index(other);
-      if (aIndex >= 0) return (Change)_set [aIndex];
-      return null;
-    }
   }
 }

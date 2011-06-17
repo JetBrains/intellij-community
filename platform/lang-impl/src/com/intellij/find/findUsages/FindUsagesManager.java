@@ -38,6 +38,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -71,6 +72,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FindUsagesManager implements JDOMExternalizable {
@@ -134,6 +136,9 @@ public class FindUsagesManager implements JDOMExternalizable {
           return true;
         }
       }
+      catch (IndexNotReadyException e) {
+        throw e;
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -143,6 +148,9 @@ public class FindUsagesManager implements JDOMExternalizable {
         if (factory.canFindUsages(element)) {
           return true;
         }
+      }
+      catch (IndexNotReadyException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error(e);
@@ -301,6 +309,24 @@ public class FindUsagesManager implements JDOMExternalizable {
     if (handler == null) return null;
     FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
     return findUsagesOptions.searchScope;
+  }
+
+  public boolean isUsed(@NotNull PsiElement element, @NotNull SearchScope scope) {
+    FindUsagesHandler handler = getFindUsagesHandler(element, false);
+    if (handler == null) return false;
+    final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
+      new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
+    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
+    findUsagesOptions.searchScope = scope;
+    UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
+    final AtomicBoolean used = new AtomicBoolean();
+    usageSearcher.generate(new Processor<Usage>() {
+      public boolean process(final Usage usage) {
+        used.set(true);
+        return false;
+      }
+    });
+    return used.get();
   }
 
   // return null on failure or cancel

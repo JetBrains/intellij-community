@@ -55,6 +55,10 @@ public class XsltAnnotator extends XPath2ElementVisitor implements Annotator {
     if (context != null) {
       if (XsltSupport.isPatternAttribute(context)) {
         XsltPatternValidator.validate(myHolder, file);
+      } else {
+        if (file.getText().trim().length() == 0 && file.getExpression() == null) {
+          myHolder.createErrorAnnotation(file, "Empty XPath expression");
+        }
       }
       if (XsltSupport.isXsltAttribute(context) && !XsltSupport.mayBeAVT(context)) {
         final ASTNode node = file.getNode();

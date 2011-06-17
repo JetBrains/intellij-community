@@ -81,7 +81,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
         if (!info.getMethod().equals(method)) return null;
         if (!info.equals(fromMethod)) {
-          createParametersInfo(element, parameterInfos, info);
+          if (!createParametersInfo(element, parameterInfos, info)) return null;
           if (info.isReturnTypeChanged()) {
             final String visibility = info.getNewVisibility();
             if (Comparing.strEqual(visibility, PsiModifier.PRIVATE) &&
@@ -138,9 +138,9 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     return null;
   }
 
-  private static void createParametersInfo(PsiElement element,
-                                           ParameterInfoImpl[] parameterInfos,
-                                           MyJavaChangeInfo info) {
+  private static boolean createParametersInfo(PsiElement element,
+                                              ParameterInfoImpl[] parameterInfos,
+                                              MyJavaChangeInfo info) {
 
     final JavaParameterInfo[] oldParameters = info.getNewParameters();
     final String[] oldParameterNames = info.getOldParameterNames();
@@ -178,12 +178,15 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
             }
           }
         }
+        final CanonicalTypes.Type typeWrapper = parameterInfo.getTypeWrapper();
+        if (!typeWrapper.isValid()) return false;
         parameterInfos[i] = new ParameterInfoImpl(oldParameter != null ? oldParameter.getOldIndex() : - 1,
                                                   parameterInfo.getName(),
-                                                  parameterInfo.getTypeWrapper().getType(element, element.getManager()),
+                                                  typeWrapper.getType(element, element.getManager()),
                                                   null);
       }
     }
+    return true;
   }
 
 
@@ -318,7 +321,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
           final PsiModifierList modifierList = parameters[i].getModifierList();
           if (modifierList != null && !Comparing.strEqual(modifier, modifierList.getText())) {
             final PsiModifierList newModifierList =
-              elementFactory.createParameterFromText(modifier + " type name", method).getModifierList();
+              elementFactory.createParameterFromText((modifier.isEmpty() ? "" : modifier + " ") + "type name", method).getModifierList();
             if (newModifierList != null) {
               modifierList.replace(newModifierList);
             }

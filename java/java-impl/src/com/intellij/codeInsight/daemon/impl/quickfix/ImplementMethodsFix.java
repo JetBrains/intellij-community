@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
@@ -96,7 +95,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
       new WriteCommandAction(project, file) {
         protected void run(final Result result) throws Throwable {
-          final PsiClass psiClass = ImplementAbstractMethodHandler.addClassInitializer((PsiEnumConstant)myPsiElement);
+          final PsiClass psiClass = ((PsiEnumConstant)myPsiElement).getOrCreateInitializingClass();
           OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.isCopyJavadoc(),
                                                                        chooser.isInsertOverrideAnnotation());
         }

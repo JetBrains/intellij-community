@@ -7,6 +7,7 @@ package org.jetbrains.plugins.groovy.lang.actions.generate;
 
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.PsiFieldMember
+import com.intellij.codeInsight.generation.PsiMethodMember
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.RunResult
 import com.intellij.openapi.command.WriteCommandAction
@@ -16,7 +17,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.actions.generate.constructors.ConstructorGenerateHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.generation.PsiMethodMember
 
 /**
  * @author peter
@@ -67,6 +67,35 @@ class Foo extends Super {
     }
 }
 """
+  }
+
+  void testSubstitutionInConstructor() {
+    myFixture.configureByText("a.groovy", '''
+class Super<E> {
+  def Super(Collection<E> c) {}
+}
+
+class X {}
+
+class Foo extends Super<X> {
+  <caret>
+}
+''')
+    generateConstructor()
+    myFixture.checkResult('''
+class Super<E> {
+  def Super(Collection<E> c) {}
+}
+
+class X {}
+
+class Foo extends Super<X> {
+
+    Foo(Collection<X> c) {
+        super(c)
+    }
+}
+''')
   }
 
   private void doTest() throws Throwable {

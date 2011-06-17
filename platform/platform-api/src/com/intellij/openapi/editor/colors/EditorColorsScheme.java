@@ -54,4 +54,13 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Schem
   void setLineSpacing(float lineSpacing);
 
   Object clone();
+
+  String getConsoleFontName();
+  void setConsoleFontName(String fontName);
+
+  int getConsoleFontSize();
+  void setConsoleFontSize(int fontSize);
+
+  float getConsoleLineSpacing();
+  void setConsoleLineSpacing(float lineSpacing);
 }

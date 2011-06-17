@@ -67,19 +67,18 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
 
   protected JavaClassReferenceProvider createClassReferenceProvider(final GenericDomValue<PsiClass> genericDomValue, ConvertContext context,
                                                                     ExtendClass extendClass) {
-    return createJavaClassReferenceProvider(genericDomValue, extendClass);
+    return createJavaClassReferenceProvider(genericDomValue, extendClass, new JavaClassReferenceProvider() {
+
+      @Override
+      public GlobalSearchScope getScope(Project project) {
+        return PsiClassConverter.this.getScope(genericDomValue);
+      }
+    });
   }
 
   public static JavaClassReferenceProvider createJavaClassReferenceProvider(final GenericDomValue genericDomValue,
-                                                                            ExtendClass extendClass) {
-    final JavaClassReferenceProvider provider =
-      new JavaClassReferenceProvider() {
-
-        @Override
-        public GlobalSearchScope getScope(Project project) {
-          return PsiClassConverter.getSearchScope(genericDomValue);
-        }
-      };
+                                                                            ExtendClass extendClass,
+                                                                            final JavaClassReferenceProvider provider) {
 
     if (extendClass != null) {
       if (StringUtil.isNotEmpty(extendClass.value())) {
@@ -116,7 +115,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     return provider;
   }
 
-  protected static GlobalSearchScope getSearchScope(GenericDomValue domValue) {
+  public static GlobalSearchScope getSearchScope(GenericDomValue domValue) {
     final Module module = domValue.getModule();
     if (module == null) return null;
     XmlElement element = domValue.getXmlElement();

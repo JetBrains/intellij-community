@@ -1,5 +1,5 @@
 class LonelyConstructor {
 
-    <caret>LonelyConstructor() {
+    LonelyConstructor() {<caret>
     }
 }

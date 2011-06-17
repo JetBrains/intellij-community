@@ -825,20 +825,23 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
             public void run() {
               final List<VcsException> exceptions = process.getExceptions();
               String op = (process.isModify() ? "Modification" : "Checkout") + " of " + name;
+              String message;
+              MessageType type;
               if (!exceptions.isEmpty()) {
                 GitUIUtil.showTabErrors(myProject, title, exceptions);
-                ToolWindowManager.getInstance(myProject).notifyByBalloon(
-                  ChangesViewContentManager.TOOLWINDOW_ID, MessageType.ERROR, op + " failed.");
+                message = op + " failed";
+                type = MessageType.ERROR;
               }
               else if (process.isCancelled()) {
-                ToolWindowManager.getInstance(myProject).notifyByBalloon(
-                  ChangesViewContentManager.TOOLWINDOW_ID, MessageType.WARNING, op + " was cancelled by user.");
-
+                message = op + " was cancelled by user";
+                type = MessageType.WARNING;
               }
               else {
-                ToolWindowManager.getInstance(myProject).notifyByBalloon(
-                  ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO, op + " complete.");
+                message = op + " complete";
+                type = MessageType.INFO;
               }
+              ToolWindowManager.getInstance(myProject).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, type, message);
+              GitVcs.NOTIFICATION_GROUP_ID.createNotification(message, type).notify(myProject);
             }
           });
         }

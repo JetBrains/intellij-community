@@ -272,8 +272,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   @Override
-  public void setSelection(@Nullable final VisualPosition startPosition, int startOffset, @Nullable final VisualPosition endPosition,
-                           int endOffset) 
+  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset)
   {
     VisualPosition startPositionToUse = startPosition == null ? myEditor.offsetToVisualPosition(startOffset) : startPosition;
     VisualPosition endPositionToUse = endPosition == null ? myEditor.offsetToVisualPosition(endOffset) : endPosition;
@@ -283,10 +282,37 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   private void doSetSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition,
                               int endOffset, boolean visualPositionAware)
   {
+
+    final Document doc = myEditor.getDocument();
+    final Pair<String, String> markers = myEditor.getUserData(EditorImpl.EDITABLE_AREA_MARKER);
+    if (markers != null) {
+      final String text = doc.getText();
+      final int start = text.indexOf(markers.first) + markers.first.length();
+      final int end = text.indexOf(markers.second);
+      if (startOffset < endOffset) {
+        if (startOffset < start) {
+          startOffset = start;
+          startPosition = myEditor.offsetToVisualPosition(startOffset);
+        }
+        if (endOffset > end) {
+          endOffset = end;
+          endPosition = myEditor.offsetToVisualPosition(endOffset);
+        }
+      } else {
+        if (endOffset < start) {
+          endOffset = start;
+          endPosition = myEditor.offsetToVisualPosition(startOffset);
+        }
+        if (startOffset > end) {
+          startOffset = end;
+          startPosition = myEditor.offsetToVisualPosition(endOffset);
+        }
+      }
+    }
+
     validateContext(true);
 
     removeBlockSelection();
-    Document doc = myEditor.getDocument();
 
     int textLength = doc.getTextLength();
     if (startOffset < 0 || startOffset > textLength) {

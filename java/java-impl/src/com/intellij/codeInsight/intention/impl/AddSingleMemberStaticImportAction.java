@@ -118,15 +118,16 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
             expression.getParameterList().getFirstChild() != null) return;
 
         if (refExpr.getReferenceName().equals(expression.getReferenceName())) {
+          final PsiExpression qualifierExpression = expression.getQualifierExpression();
+          PsiElement referent = expression.getUserData(TEMP_REFERENT_USER_DATA);
           if (!expression.isQualified()) {
-            PsiElement referent = expression.getUserData(TEMP_REFERENT_USER_DATA);
 
             if (referent instanceof PsiMember && referent != expression.resolve()) {
               PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
               try {
                 PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + expression.getReferenceName(), null);
                 expression = (PsiReferenceExpression)expression.replace(copy);
-                ((PsiReferenceExpression)expression.getQualifierExpression()).bindToElement(((PsiMember)referent).getContainingClass());
+                ((PsiReferenceExpression)qualifierExpression).bindToElement(((PsiMember)referent).getContainingClass());
               }
               catch (IncorrectOperationException e) {
                 LOG.error (e);
@@ -134,14 +135,25 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
             }
             expression.putUserData(TEMP_REFERENT_USER_DATA, null);
           } else {
-            if (expression.getQualifierExpression() instanceof PsiReferenceExpression) {
-              PsiElement aClass = ((PsiReferenceExpression)expression.getQualifierExpression()).resolve();
+            if (qualifierExpression instanceof PsiReferenceExpression) {
+              PsiElement aClass = ((PsiReferenceExpression)qualifierExpression).resolve();
               if (aClass == ((PsiMember)resolved).getContainingClass()) {
-                try {
-                  expression.getQualifierExpression().delete();
+                boolean foundMemberByName = false;
+                if (referent instanceof PsiMember) {
+                  final String memberName = ((PsiMember)referent).getName();
+                  final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                  if (containingClass != null) {
+                    foundMemberByName |= containingClass.findFieldByName(memberName, true) != null;
+                    foundMemberByName |= containingClass.findMethodsByName(memberName, true).length > 0;
+                  }
                 }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
+                if (!foundMemberByName) {
+                  try {
+                    qualifierExpression.delete();
+                  }
+                  catch (IncorrectOperationException e) {
+                    LOG.error(e);
+                  }
                 }
               }
             }

@@ -88,10 +88,15 @@
     </reference>
 
     <!-- Analyze -->
-    <group id="AnalyzeMenu" popup="true">
-      <separator/>
+    <group id="AnalyzeActions">
       <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
       <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
+      <action id="ShowDependenciesOnTarget" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetAction"/>
+    </group>
+
+    <group id="AnalyzeMenu" popup="true">
+      <separator/>
+      <reference ref="AnalyzeActions"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
@@ -120,6 +125,9 @@
       <action id="CleanArtifact" class="com.intellij.compiler.actions.CleanArtifactAction"/>
 
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+    </group>
+
+    <group id="CompilerErrorViewPopupMenu">
     </group>
 
     <!-- Tools -->
@@ -161,8 +169,6 @@
               text="Test Rebuild Performance"/>
       <action internal="true" id="GenerateDomModel" class="com.intellij.util.dom.generator.GenerateDomModelAction"
               text="Generate Dom Model"/>
-      <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.tmp.SendStatisticsAction" text="Send statistics"/>
-
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 

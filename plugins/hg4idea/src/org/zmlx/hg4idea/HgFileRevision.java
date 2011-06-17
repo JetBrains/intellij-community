@@ -13,8 +13,10 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.zmlx.hg4idea.command.HgCatCommand;
@@ -39,7 +41,6 @@ public class HgFileRevision implements VcsFileRevision {
   private final Set<String> filesModified;
   private final Set<String> filesAdded;
   private final Set<String> filesDeleted;
-  private byte[] content;
   private Map<String,String> filesCopied;
 
   public HgFileRevision(Project project, HgFile hgFile, HgRevisionNumber vcsRevisionNumber,
@@ -94,24 +95,30 @@ public class HgFileRevision implements VcsFileRevision {
     return filesCopied;
   }
 
-  public void loadContent() throws VcsException {
+  public byte[] loadContent() throws IOException, VcsException {
     try {
       Charset charset = hgFile.toFilePath().getCharset();
 
       HgFile fileToCat = HgUtil.getFileNameInTargetRevision(project, vcsRevisionNumber, hgFile);
       String result = new HgCatCommand(project).execute(fileToCat, vcsRevisionNumber, charset);
       if (result == null) {
-        content = new byte[0];
+        return new byte[0];
       } else {
-        content = result.getBytes(charset.name());
+        return result.getBytes(charset.name());
       }
     } catch (UnsupportedEncodingException e) {
       throw new VcsException(e);
     }
   }
 
-  public byte[] getContent() throws IOException {
-    return content;
+  public byte[] getContent() throws IOException, VcsException {
+    return ContentRevisionCache.getOrLoadAsBytes(project, hgFile.toFilePath(), getRevisionNumber(), HgVcs.getKey(),
+                                                 ContentRevisionCache.UniqueType.REPOSITORY_CONTENT, new Throwable2Computable<byte[], VcsException, IOException>() {
+      @Override
+      public byte[] compute() throws VcsException, IOException {
+        return loadContent();
+      }
+    });
   }
 
   @Override

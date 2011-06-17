@@ -18,7 +18,6 @@ package git4idea.stash;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -161,9 +160,9 @@ public class GitStashChangesSaver extends GitChangesSaver {
       }
 
       @Override protected void onCancel() {
-        Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "Unstash cancelled",
+        GitVcs.NOTIFICATION_GROUP_ID.createNotification("Unstash cancelled",
                                                   "You may view the stashed changes <a href='saver'>here</a>", WARNING,
-                                                  new ShowSavedChangesNotificationListener()), myProject);
+                                                  new ShowSavedChangesNotificationListener()).notify(myProject);
       }
 
       @Override protected void onFailure() {
@@ -224,7 +223,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     @Override
     protected void notifyUnresolvedRemain(final Collection<VirtualFile> roots) {
-      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Local changes were restored with conflicts",
+      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Local changes were restored with conflicts",
                                                 "Before update your uncommitted changes were saved to <a href='saver'>" +
                                                 getSaverName() +
                                                 "</a><br/>" +
@@ -243,7 +242,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
               }
             }
           }
-      }));
+      }).notify(myProject);
     }
 
   }

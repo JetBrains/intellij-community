@@ -608,7 +608,7 @@ public class PluginManagerMain implements Disposable {
     }
 
     public void filter() {
-      if (installedPluginTable.isShowing()) {
+      if (getPluginTable() == installedPluginTable) {
         filter(installedPluginsModel, myFilteredInstalled);
         if (pluginsList != null) {
           installedPluginsModel.modifyData(pluginsList);

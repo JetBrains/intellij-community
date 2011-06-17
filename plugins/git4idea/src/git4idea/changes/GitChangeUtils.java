@@ -31,6 +31,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.history.browser.SHAHash;
@@ -237,7 +238,7 @@ public class GitChangeUtils {
     if (!stk.hasMoreTokens()) {
       throw new VcsException("The string '" + revisionNumber + "' does not represents a revision number.");
     }
-    Date timestamp = GitUtil.parseTimestamp(stk.nextToken());
+    Date timestamp = GitUtil.parseTimestampWithNFEReport(stk.nextToken(), handler, output);
     return new GitRevisionNumber(stk.nextToken(), timestamp);
   }
 
@@ -274,7 +275,7 @@ public class GitChangeUtils {
     String output = h.run();
     StringScanner s = new StringScanner(output);
     try {
-      return parseChangeList(project, root, s, skipDiffsForMerge);
+      return parseChangeList(project, root, s, skipDiffsForMerge, h);
     }
     catch (RuntimeException e) {
       throw e;
@@ -361,13 +362,14 @@ public class GitChangeUtils {
    * @param root    the git root
    * @param s       the scanner for log or show command output
    * @param skipDiffsForMerge
+   * @param handler the handler that produced the output to parse. - for debugging purposes.
    * @return the parsed changelist
    * @throws VcsException if there is a problem with running git
    */
-  public static CommittedChangeList parseChangeList(Project project, VirtualFile root, StringScanner s, boolean skipDiffsForMerge) throws VcsException {
+  public static CommittedChangeList parseChangeList(Project project, VirtualFile root, StringScanner s, boolean skipDiffsForMerge, GitHandler handler) throws VcsException {
     ArrayList<Change> changes = new ArrayList<Change>();
     // parse commit information
-    final Date commitDate = GitUtil.parseTimestamp(s.line());
+    final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
     final String revisionNumber = s.line();
     final String parentsLine = s.line();
     final String[] parents = parentsLine.length() == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : parentsLine.split(" ");

@@ -17,7 +17,6 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
-import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
@@ -41,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -283,17 +283,7 @@ public class LibraryDownloader {
         indicator.setText2(IdeBundle.message("progress.download.jar.text", getExpectedFileName(libraryInfo), presentableUrl));
         indicator.setIndeterminate(size == -1);
 
-        int len;
-        final byte[] buf = new byte[1024];
-        int count = 0;
-        while ((len = input.read(buf)) > 0) {
-          indicator.checkCanceled();
-          count += len;
-          if (size > 0) {
-            indicator.setFraction((double)count / size);
-          }
-          output.write(buf, 0, len);
-        }
+        NetUtils.copyStreamContent(indicator, input, output, size);
 
         deleteFile = false;
         downloadedFiles.add(Pair.create(libraryInfo, tempFile));
@@ -312,16 +302,5 @@ public class LibraryDownloader {
       }
     }
     return true;
-  }
-
-  public static LibraryDownloadInfo[] getDownloadingInfos(final LibraryInfo[] libraries) {
-    List<LibraryDownloadInfo> downloadInfos = new ArrayList<LibraryDownloadInfo>();
-    for (LibraryInfo library : libraries) {
-      LibraryDownloadInfo downloadInfo = library.getDownloadingInfo();
-      if (downloadInfo != null) {
-        downloadInfos.add(downloadInfo);
-      }
-    }
-    return downloadInfos.toArray(new LibraryDownloadInfo[downloadInfos.size()]);
   }
 }

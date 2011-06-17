@@ -23,10 +23,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.SuppressAllForClassFix;
-import com.intellij.codeInsight.daemon.impl.actions.SuppressByJavaCommentFix;
-import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
-import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
+import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -58,6 +55,7 @@ public class SuppressManagerImpl extends SuppressManager {
   public SuppressIntentionAction[] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
     return new SuppressIntentionAction[]{
         new SuppressByJavaCommentFix(displayKey),
+        new SuppressParameterFix(displayKey),
         new SuppressFix(displayKey),
         new SuppressForClassFix(displayKey),
         new SuppressAllForClassFix()
@@ -171,7 +169,7 @@ public class SuppressManagerImpl extends SuppressManager {
           return statement;
         }
 
-        PsiLocalVariable local = PsiTreeUtil.getParentOfType(place, PsiLocalVariable.class);
+        PsiVariable local = PsiTreeUtil.getParentOfType(place, PsiVariable.class);
         if (local != null && getAnnotationMemberSuppressedIn(local, toolId) != null) {
           PsiModifierList modifierList = local.getModifierList();
           return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;

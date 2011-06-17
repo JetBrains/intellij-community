@@ -3,7 +3,7 @@
 -----
 Groovy script
   Call expression
-    Literal
+    Reference expression
       PsiElement(regexp)('/asd\n/')
     Command arguments
       Reference expression

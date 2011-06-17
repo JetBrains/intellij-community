@@ -549,14 +549,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
 
     @NonNls final String name = getTitle();
-    final LightVirtualFile newVFile = new LightVirtualFile(name, language, myEditorDocument.getText());
-    FileDocumentManagerImpl.registerDocument(myEditorDocument, newVFile);
-    myFile = ((PsiFileFactoryImpl)PsiFileFactory.getInstance(myProject)).trySetupPsiForFile(newVFile, language, true, false);
-    if (myFile == null) {
-      throw new AssertionError("file=null, name=" + name + ", language=" + language.getDisplayName());
-    }
-    PsiDocumentManagerImpl.cachePsi(myEditorDocument, myFile);
-    FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singletonList(newVFile), false);
+    final LightVirtualFile newVFile = new LightVirtualFile(name, language, "");
+    myFile = setDocumentFileAndInitPsi(myProject, myEditorDocument, newVFile);
 
     if (prevFile != null) {
       final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(getProject());
@@ -626,6 +620,19 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
       }, ModalityState.stateForComponent(console.getComponent()));
     }
+  }
+
+  // hack-utility method for setting PSI for existing document
+  public static PsiFile setDocumentFileAndInitPsi(final Project project, final Document document, final LightVirtualFile newVFile) {
+    newVFile.setContent(document, document.getText(), false);
+    FileDocumentManagerImpl.registerDocument(document, newVFile);
+    final PsiFile psiFile = ((PsiFileFactoryImpl)PsiFileFactory.getInstance(project)).trySetupPsiForFile(newVFile, newVFile.getLanguage(), true, false);
+    if (psiFile == null) {
+      throw new AssertionError("PSI=null for light file: name=" + newVFile.getName() + ", language=" + newVFile.getLanguage().getDisplayName());
+    }
+    PsiDocumentManagerImpl.cachePsi(document, psiFile);
+    FileContentUtil.reparseFiles(project, Collections.<VirtualFile>singletonList(newVFile), false);
+    return psiFile;
   }
 
   private class MyLayout extends AbstractLayoutManager {

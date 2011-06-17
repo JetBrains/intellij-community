@@ -17,10 +17,7 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class UpdatedFilesReverseSide {
   // just list of same groups = another presentation/container of same
@@ -136,6 +133,12 @@ public class UpdatedFilesReverseSide {
       myGroupHolder.put(fromGroup.getId(), ownGroup);
     }
     return ownGroup;
+  }
+
+  public static Set<String> getPathsFromUpdatedFiles(final UpdatedFiles from) {
+    UpdatedFilesReverseSide helper = new UpdatedFilesReverseSide(UpdatedFiles.create());
+    helper.accomulateFiles(from, DuplicateLevel.DUPLICATE_ERRORS);
+    return helper.myFileIdx.keySet();
   }
 
   public void accomulateFiles(final UpdatedFiles from, final DuplicateLevel duplicateLevel) {

@@ -17,6 +17,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.LinkedList;
 import java.util.concurrent.locks.Condition;
@@ -50,6 +51,7 @@ public class EventQueue<E> {
 
     myLock.lock();
     try {
+      assertOpen();
       getEventsList(priority).addFirst(event);
       myEventsAvailable.signalAll();
     }
@@ -65,6 +67,7 @@ public class EventQueue<E> {
 
     myLock.lock();
     try {
+      assertOpen();
       getEventsList(priority).offer(event);
       myEventsAvailable.signalAll();
     }
@@ -80,12 +83,17 @@ public class EventQueue<E> {
   public void close(){
     myLock.lock();
     try {
+      assertOpen();
       myIsClosed = true;
       myEventsAvailable.signalAll();
     }
     finally {
       myLock.unlock();
     }
+  }
+
+  private void assertOpen() {
+    if (myIsClosed) throw new AssertionError("Already closed");
   }
 
   private E getEvent() throws EventQueueClosedException {
@@ -119,5 +127,13 @@ public class EventQueue<E> {
 
   public E getCurrentEvent() {
     return myCurrentEvent;
+  }
+
+  @TestOnly
+  public void clearQueue() {
+    myCurrentEvent = null;
+    for (LinkedList event : myEvents) {
+      event.clear();
+    }
   }
 }

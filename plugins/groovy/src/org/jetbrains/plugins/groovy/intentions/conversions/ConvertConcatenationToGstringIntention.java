@@ -66,8 +66,13 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     else {
       return;
     }
+
+    String text = builder.toString();
+    if (builder.indexOf("\n") < 0 && builder.indexOf("\r") < 0) {
+      text = GrStringUtil.escapeSymbols(builder.toString(), "\"");
+    }
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
-    final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(builder.toString(), true));
+    final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(text, true));
     final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
     if (expression instanceof GrString) {
       GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
@@ -87,7 +92,6 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
     else if (operand instanceof GrLiteral) {
       String text = GrStringUtil.escapeSymbolsForGString(GrStringUtil.removeQuotes(operand.getText()), false);
-      if (text.contains("\n")) text = GrStringUtil.escapeSymbolsForGString(text, true);
       builder.append(text);
     }
     else if (MyPredicate.satisfiedBy(operand, false)) {

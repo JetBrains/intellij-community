@@ -118,7 +118,10 @@ public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer
           return;
         }
         LOG.assertTrue(psiVariable.isValid());
-        saveSettings(psiVariable);
+        TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultType.getType());
+        if (myCanBeFinalCb != null) {
+          JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
+        }
         adjustLine(psiVariable, document);
 
         int startOffset = getExprMarker() != null && getExprMarker().isValid() ? getExprMarker().getStartOffset() : psiVariable.getTextOffset();
@@ -176,11 +179,6 @@ public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer
       myEditor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
       if (getExprMarker() != null) getExprMarker().dispose();
     }
-  }
-
-  protected void saveSettings(PsiVariable psiVariable) {
-    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultType.getType());
-    JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
   }
 
 

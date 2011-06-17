@@ -16,10 +16,16 @@
 package com.intellij.ide.structureView;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 public interface StructureViewExtension {
+
+  ExtensionPointName<StructureViewExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.lang.structureViewExtension");
+
+  Class<? extends PsiElement> getType();
+
   StructureViewTreeElement[] getChildren(PsiElement parent);
   @Nullable
   Object getCurrentEditorElement(Editor editor, PsiElement parent);

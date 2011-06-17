@@ -246,12 +246,6 @@ public class SpellCheckerManager {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<String> getVariants(@NotNull String prefix) {
-
-    return Collections.emptyList();
-  }
-
 
   public void restartInspections() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {

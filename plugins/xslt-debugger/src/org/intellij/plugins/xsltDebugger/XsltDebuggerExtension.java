@@ -144,22 +144,37 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     File rtClasspath = new File(pluginPath, "lib" + c + "xslt-debugger-engine.jar");
     if (rtClasspath.exists()) {
       parameters.getClassPath().addTail(rtClasspath.getAbsolutePath());
+
+      final File rmiStubs = new File(pluginPath, "lib" + c + "rmi-stubs.jar");
+      assert rmiStubs.exists() : rmiStubs.getAbsolutePath();
+      parameters.getClassPath().addTail(rmiStubs.getAbsolutePath());
+
+      final File engineImpl = new File(pluginPath, "lib" + c + "rt" + c + "xslt-debugger-engine-impl.jar");
+      assert engineImpl.exists() : engineImpl.getAbsolutePath();
+      parameters.getClassPath().addTail(engineImpl.getAbsolutePath());
     } else {
       if (!(rtClasspath = new File(pluginPath, "classes")).exists()) {
         if (ApplicationManagerEx.getApplicationEx().isInternal() && new File(pluginPath, "org").exists()) {
           rtClasspath = pluginPath;
+          final File engineImplInternal = new File(pluginPath, ".." + c + "xslt-debugger-engine-impl");
+          assert engineImplInternal.exists() : engineImplInternal.getAbsolutePath();
+          parameters.getClassPath().addTail(engineImplInternal.getAbsolutePath());
         } else {
           throw new CantRunException("Runtime classes not found");
         }
       }
 
       parameters.getClassPath().addTail(rtClasspath.getAbsolutePath());
-      parameters.getClassPath().addTail(new File(rtClasspath, "rmi-stubs.jar").getAbsolutePath());
+
+      final File rmiStubs = new File(rtClasspath, "rmi-stubs.jar");
+      assert rmiStubs.exists() : rmiStubs.getAbsolutePath();
+      parameters.getClassPath().addTail(rmiStubs.getAbsolutePath());
     }
 
     File trove4j = new File(PathManager.getLibPath() + c + "trove4j.jar");
     if (!trove4j.exists()) {
       trove4j = new File(PathManager.getHomePath() + c + "community" + c + "lib" + c + "trove4j.jar");
+      assert trove4j.exists() : trove4j.getAbsolutePath();
     }
     parameters.getClassPath().addTail(trove4j.getAbsolutePath());
 
@@ -247,27 +262,27 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   }
 
   private static void addXalan(SimpleJavaParameters parameters, File pluginPath) {
-    final char c = File.separatorChar;
-    File xalan = new File(pluginPath, "lib" + c + "rt" + c + "xalan.jar");
-    if (!xalan.exists()) {
-      if (!(xalan = new File(pluginPath, "lib" + c + "xalan.jar")).exists()) {
-        xalan = new File(pluginPath, "xalan.jar");
-        assert xalan.exists();
-      }
-    }
+    final File xalan = findTransformerJar(pluginPath, "xalan.jar");
     parameters.getClassPath().addTail(xalan.getAbsolutePath());
     parameters.getClassPath().addTail(new File(xalan.getParentFile(), "serializer.jar").getAbsolutePath());
   }
 
   private static void addSaxon(SimpleJavaParameters parameters, File pluginPath, final String saxonJar) {
+    final File saxon = findTransformerJar(pluginPath, saxonJar);
+    parameters.getClassPath().addTail(saxon.getAbsolutePath());
+  }
+
+  private static File findTransformerJar(File pluginPath, String jarFile) {
     final char c = File.separatorChar;
-    File saxon = new File(pluginPath, "lib" + c + "rt" + c + saxonJar);
-    if (!saxon.exists()) {
-      if (!(saxon = new File(pluginPath, "lib" + c + saxonJar)).exists()) {
-        saxon = new File(pluginPath, saxonJar);
-        assert saxon.exists();
+    File transformerFile = new File(pluginPath, "lib" + c + "rt" + c + jarFile);
+    if (!transformerFile.exists()) {
+      if (!(transformerFile = new File(pluginPath, "lib" + c + jarFile)).exists()) {
+        if (!(transformerFile = new File(new File(pluginPath, ".." + c + "xslt-debugger-engine-impl"), jarFile)).exists()) {
+          transformerFile = new File(pluginPath, jarFile);
+          assert transformerFile.exists() : transformerFile.getAbsolutePath();
+        }
       }
     }
-    parameters.getClassPath().addTail(saxon.getAbsolutePath());
+    return transformerFile;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,41 +22,56 @@ import org.jetbrains.annotations.NonNls;
 
 class AppendUtil{
 
-	private AppendUtil(){
-        super();
-    }
+    private AppendUtil(){}
 
     public static boolean isAppendCall(PsiElement element){
-	    if (!(element instanceof PsiMethodCallExpression)) {
-		    return false;
-	    }
-	    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
-	    final PsiReferenceExpression methodExpression =
-			    methodCallExpression.getMethodExpression();
-	    @NonNls final String callName = methodExpression.getReferenceName();
+        if (!(element instanceof PsiMethodCallExpression)) {
+            return false;
+        }
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression)element;
+        final PsiReferenceExpression methodExpression =
+                methodCallExpression.getMethodExpression();
+        @NonNls final String callName = methodExpression.getReferenceName();
         if(!"append".equals(callName)){
             return false;
         }
         final PsiMethod method = methodCallExpression.resolveMethod();
+        final PsiClass containingClass;
         if(method == null){
-            return false;
+            // if the argument has no type because of invalid code
+            // this uses the qualifier as type, so the conversion too
+            // append sequence is still applicable
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            if (qualifierExpression == null) {
+                return false;
+            }
+            final PsiType type = qualifierExpression.getType();
+            if (!(type instanceof PsiClassType)) {
+                return false;
+            }
+            final PsiClassType classType = (PsiClassType) type;
+            containingClass = classType.resolve();
+        } else {
+            containingClass = method.getContainingClass();
         }
-        final PsiClass containingClass = method.getContainingClass();
         if(containingClass == null){
             return false;
         }
         final String name = containingClass.getQualifiedName();
-	    if ("java.lang.StringBuffer".equals(name) ||
-	        "java.lang.StringBuilder".equals(name)) {
-		    return true;
-	    }
-	    final PsiManager manager = containingClass.getManager();
-	    final Project project = containingClass.getProject();
-      final PsiClass appendableClass =
-        JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Appendable", GlobalSearchScope.allScope(project));
-	    if (appendableClass == null) {
-		    return false;
-	    }
-	    return containingClass.isInheritor(appendableClass, true);
+        if ("java.lang.StringBuffer".equals(name) ||
+                "java.lang.StringBuilder".equals(name)) {
+            return true;
+        }
+        final Project project = containingClass.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiClass appendableClass =
+                psiFacade.findClass("java.lang.Appendable",
+                        GlobalSearchScope.allScope(project));
+        if (appendableClass == null) {
+            return false;
+        }
+        return containingClass.isInheritor(appendableClass, true);
     }
 }

@@ -95,6 +95,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   private static class NotificationsTable extends StripeTable {
     private static final int ID_COLUMN = 0;
     private static final int DISPLAY_TYPE_COLUMN = 1;
+    private static final int LOG_COLUMN = 2;
 
     public NotificationsTable() {
       super(new NotificationsTableModel());
@@ -127,6 +128,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
           return value.getTitle();
         }
       });
+
+      final TableColumn logColumn = getColumnModel().getColumn(LOG_COLUMN);
+      logColumn.setMaxWidth(new JComboBox().getPreferredSize().width);
 
       getEmptyText().setText("No notifications configured");
     }
@@ -187,12 +191,12 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private boolean myRemoved = false;
 
     private SettingsWrapper(@NotNull final NotificationSettings original) {
-      super(original.getGroupId(), original.getDisplayType());
+      super(original.getGroupId(), original.getDisplayType(), original.isShouldLog());
       myOriginal = original;
     }
 
     public boolean hasChanged() {
-      return !getDisplayType().equals(myOriginal.getDisplayType()) || myRemoved;
+      return !getDisplayType().equals(myOriginal.getDisplayType()) || isShouldLog() != myOriginal.isShouldLog() || myRemoved;
     }
 
     public void remove() {
@@ -205,11 +209,12 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     public void apply() {
       if (myRemoved) {
-        NotificationsConfiguration.remove(new NotificationSettings[]{myOriginal});
+        NotificationsConfiguration.remove(myOriginal.getGroupId());
       }
       else {
         if (hasChanged()) {
           myOriginal.setDisplayType(getDisplayType());
+          myOriginal.setShouldLog(isShouldLog());
         }
       }
     }
@@ -247,6 +252,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         case NotificationsTable.DISPLAY_TYPE_COLUMN:
           settings.setDisplayType((NotificationDisplayType)value);
           break;
+        case NotificationsTable.LOG_COLUMN:
+          settings.setShouldLog((Boolean)value);
+          break;
       }
     }
 
@@ -259,13 +267,16 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     }
 
     public int getColumnCount() {
-      return 2;
+      return 3;
     }
 
     @Override
     public Class<?> getColumnClass(final int columnIndex) {
       if (NotificationsTable.DISPLAY_TYPE_COLUMN == columnIndex) {
         return NotificationDisplayType.class;
+      }
+      if (NotificationsTable.LOG_COLUMN == columnIndex) {
+        return Boolean.class;
       }
 
       return String.class;
@@ -276,20 +287,24 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       switch (column) {
         case NotificationsTable.ID_COLUMN:
           return "Group";
+        case NotificationsTable.LOG_COLUMN:
+          return "Log";
         default:
-          return "Display";
+          return "Popup";
       }
     }
 
     @Override
     public boolean isCellEditable(final int rowIndex, final int columnIndex) {
-      return columnIndex == NotificationsTable.DISPLAY_TYPE_COLUMN;
+      return columnIndex > 0;
     }
 
     public Object getValueAt(final int rowIndex, final int columnIndex) {
       switch (columnIndex) {
         case NotificationsTable.ID_COLUMN:
           return getSettings().get(rowIndex).getGroupId();
+        case NotificationsTable.LOG_COLUMN:
+          return getSettings().get(rowIndex).isShouldLog();
         case NotificationsTable.DISPLAY_TYPE_COLUMN:
         default:
           return getSettings().get(rowIndex).getDisplayType();

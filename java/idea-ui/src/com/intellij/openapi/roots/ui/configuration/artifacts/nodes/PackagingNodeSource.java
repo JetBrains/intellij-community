@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 
-import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,14 +44,6 @@ public class PackagingNodeSource {
   @NotNull
   public ComplexPackagingElement<?> getSourceElement() {
     return mySourceElement;
-  }
-
-  @Nullable
-  public Artifact getSourceArtifact() {
-    if (mySourceElement instanceof ArtifactPackagingElement) {
-      return ((ArtifactPackagingElement)mySourceElement).findArtifact(mySourceParentNode.getContext());
-    }
-    return null;
   }
 
   @NotNull

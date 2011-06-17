@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -42,7 +43,7 @@ public abstract class DependenciesBuilder {
     this(project, scope, null);
   }
 
-  public DependenciesBuilder(final Project project, final AnalysisScope scope, final AnalysisScope scopeOfInterest) {
+  public DependenciesBuilder(final Project project, final AnalysisScope scope, final @Nullable AnalysisScope scopeOfInterest) {
     myProject = project;
     myScope = scope;
     myScopeOfInterest = scopeOfInterest;

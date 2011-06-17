@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.PsiTreeDebugBuilder;
@@ -35,14 +34,6 @@ import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class XPathElementImpl extends ASTWrapperPsiElement implements XPathElement {
-
-  private final NotNullLazyValue<ContextProvider> myContext = new NotNullLazyValue<ContextProvider>() {
-    @NotNull
-    @Override
-    protected synchronized ContextProvider compute() {
-      return ContextProvider.getContextProvider(XPathElementImpl.this);
-    }
-  };
 
   public XPathElementImpl(ASTNode node) {
     super(node);
@@ -123,7 +114,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
 
   @Override
   public ContextProvider getXPathContext() {
-    return myContext.getValue();
+    return ContextProvider.getContextProvider(super.getContainingFile());
   }
 
   @Override

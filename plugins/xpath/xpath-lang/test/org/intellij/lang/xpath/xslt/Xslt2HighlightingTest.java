@@ -31,6 +31,7 @@ public class Xslt2HighlightingTest extends TestBase {
     super.setUp();
     myFixture.enableInspections(XsltStuffProvider.INSPECTION_CLASSES);
     ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:my");
+    ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("nsx");
   }
 
   public void testCurrentMode() throws Throwable {
@@ -61,9 +62,13 @@ public class Xslt2HighlightingTest extends TestBase {
     doXsltHighlighting();
   }
 
+  public void testSchemaTypeWithDashes() throws Throwable {
+    doXsltHighlighting("move-def.xsd");
+  }
+
   private void doXsltHighlighting(String... moreFiles) throws Throwable {
     final String name = getTestFileName();
-    myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xsl"));
+    myFixture.testHighlighting(true, false, false, ArrayUtil.mergeArrays(new String[]{ name + ".xsl" }, moreFiles));
   }
 
   @Override

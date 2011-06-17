@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -39,12 +40,14 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   /**
    * @return <code>ID</code> of tool window that was activated last time.
    */
+  @Nullable
   public abstract String getLastActiveToolWindowId();
 
   /**
    * @return <code>ID</code> of tool window which was last activated among tool windows satisfying the current condition
    */
-  public abstract String getLastActiveToolWindowId(Condition<JComponent> condition);
+  @Nullable
+  public abstract String getLastActiveToolWindowId(@Nullable Condition<JComponent> condition);
 
   /**
    * @return layout of tool windows.

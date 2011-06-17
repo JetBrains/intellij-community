@@ -17,11 +17,11 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,6 +50,11 @@ public abstract class WindowAction extends AnAction implements DumbAware {
     }
 
     if (noActions != null && "true".equalsIgnoreCase(noActions.toString())) {
+      e.getPresentation().setEnabled(false);
+    }
+
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    if (editor != null && editor.getContentComponent().hasFocus()) {
       e.getPresentation().setEnabled(false);
     }
 

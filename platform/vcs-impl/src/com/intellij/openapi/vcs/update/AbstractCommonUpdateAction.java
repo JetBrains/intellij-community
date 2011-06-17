@@ -19,8 +19,9 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,6 +62,7 @@ import java.io.File;
 import java.util.*;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
+  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Common Version Control Messages", NotificationDisplayType.NONE, true);
   private final boolean myAlwaysVisible;
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.AbstractCommonUpdateAction");
 
@@ -193,14 +195,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     return result;
-  }
-
-  private static boolean containsParent(FilePath[] array, FilePath file) {
-    for (FilePath virtualFile : array) {
-      if (virtualFile == file) continue;
-      if (VfsUtil.isAncestor(virtualFile.getIOFile(), file.getIOFile(), false)) return true;
-    }
-    return false;
   }
 
   @NotNull
@@ -350,7 +344,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     public void run(@NotNull final ProgressIndicator indicator) {
       suspendIfNeeded();
       try {
-        runImpl(indicator);
+        runImpl();
       } catch (Throwable t) {
         releaseIfNeeded();
         if (t instanceof Error) {
@@ -362,7 +356,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
-    private void runImpl(@NotNull final ProgressIndicator indicator) {
+    private void runImpl() {
       ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
@@ -404,6 +398,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
           }
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
+          myProject.getMessageBus().syncPublisher(UpdatedFilesListener.UPDATED_FILES).
+            consume(UpdatedFilesReverseSide.getPathsFromUpdatedFiles(myUpdatedFiles));
         }
       }
     }
@@ -462,7 +458,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       if (text.length() > 0) {
         log += ": " + text.toString();
       }
-      Notifications.Bus.logEvent(log, NotificationType.INFORMATION, myProject);
+      NOTIFICATION_GROUP.createNotification(log, NotificationType.INFORMATION).notify(myProject);
+
       return new NotificationInfo("VCS Update", title, log, true);
     }
 

@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -31,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,22 +75,22 @@ public class CompletionLookupArranger extends LookupArranger {
 
   }
 
-  public int suggestPreselectedItem(List<LookupElement> sorted) {
+  public int suggestPreselectedItem(List<LookupElement> sorted, Iterable<List<LookupElement>> groups) {
     final CompletionPreselectSkipper[] skippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
 
-    nextItem: for (int i = 0; i < sorted.size(); i++){
-      LookupElement item = sorted.get(i);
-      final Object obj = item.getObject();
-      if (obj instanceof PsiElement && !((PsiElement)obj).isValid()) continue;
-
-      for (final CompletionPreselectSkipper skipper : skippers) {
-        if (skipper.skipElement(item, myLocation)) {
-          continue nextItem;
+    Set<LookupElement> model = new THashSet<LookupElement>(sorted);
+    for (List<LookupElement> group : groups) {
+      for (LookupElement element : group) {
+        if (model.contains(element)) {
+          for (final CompletionPreselectSkipper skipper : skippers) {
+            if (!skipper.skipElement(element, myLocation)) {
+              return sorted.indexOf(element);
+            }
+          }
         }
       }
-
-      return i;
     }
+
     return sorted.size() - 1;
   }
 

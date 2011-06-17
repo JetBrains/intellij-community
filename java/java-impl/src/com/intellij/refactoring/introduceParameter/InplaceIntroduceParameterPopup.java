@@ -41,9 +41,6 @@ import java.util.List;
 public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
   private static final Logger LOG = Logger.getInstance("#" + InplaceIntroduceParameterPopup.class.getName());
 
-  private final Project myProject;
-  private final Editor myEditor;
-  private final PsiLocalVariable myLocalVar;
   private final PsiMethod myMethod;
   private final PsiMethod myMethodToSearchFor;
   private final boolean myMustBeFinal;
@@ -64,11 +61,8 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
                                  final PsiExpression[] occurrences,
                                  final TIntArrayList parametersToRemove,
                                  final boolean mustBeFinal) {
-    super(project, editor, expr, localVar, occurrences, typeSelectorManager.getDefaultType(), typeSelectorManager, IntroduceParameterHandler.REFACTORING_NAME
+    super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.REFACTORING_NAME
     );
-    myProject = project;
-    myEditor = editor;
-    myLocalVar = localVar;
     myMethod = method;
     myMethodToSearchFor = methodToSearchFor;
     myMustBeFinal = mustBeFinal;
@@ -91,6 +85,11 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       }
     };
     myPanel.append2MainPanel(myWholePanel);
+    JComponent typeChooser = typeComponent();
+    if (typeChooser != null) {
+      myWholePanel.add(typeChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                                             new Insets(0,0,0,0), 0,0));
+    }
   }
 
   @Override
@@ -150,9 +149,9 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     boolean isDeleteLocalVariable = false;
 
     PsiExpression parameterInitializer = myExpr;
-    if (myLocalVar != null) {
+    if (getLocalVariable() != null) {
       if (myPanel.isUseInitializer()) {
-        parameterInitializer = myLocalVar.getInitializer();
+        parameterInitializer = getLocalVariable().getInitializer();
       }
       isDeleteLocalVariable = myPanel.isDeleteLocalVariable();
     }
@@ -162,11 +161,11 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     final IntroduceParameterProcessor processor =
       new IntroduceParameterProcessor(myProject, myMethod,
                                       myMethodToSearchFor, parameterInitializer, myExpr,
-                                      myLocalVar, isDeleteLocalVariable, getInputName(),
+                                      (PsiLocalVariable)getLocalVariable(), isDeleteLocalVariable, getInputName(),
                                       myPanel.isReplaceAllOccurences(),
                                       myPanel.getReplaceFieldsWithGetters(), myMustBeFinal || myPanel.isGenerateFinal(),
                                       myPanel.isGenerateDelegate(),
-                                      myTypePointer.getType(),
+                                      getType(),
                                       parametersToRemove);
     final Runnable runnable = new Runnable() {
       public void run() {
@@ -182,7 +181,10 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
             processor.run();
             normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
             InplaceIntroduceParameterPopup.super.moveOffsetAfter(!conflictsFound[0]);
-            InplaceIntroduceParameterPopup.super.saveSettings(getParameter());
+            final PsiParameter parameter = getParameter();
+            if (parameter != null) {
+              InplaceIntroduceParameterPopup.super.saveSettings(parameter);
+            }
           }
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {

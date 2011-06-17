@@ -17,6 +17,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.converters.values.ClassValueConverter;
@@ -28,8 +29,8 @@ import javax.swing.table.TableCellEditor;
 /**
  * @author peter
  */
-public class JavaDomApplicationComponent {
-  public JavaDomApplicationComponent(DomUIFactory factory, ConverterManager converterManager) {
+public class JavaDomApplicationComponent implements Consumer<DomUIFactory> {
+  public JavaDomApplicationComponent(ConverterManager converterManager) {
     converterManager.addConverter(PsiClass.class, new PsiClassConverter());
     converterManager.addConverter(PsiType.class, new CanonicalPsiTypeConverterImpl());
     converterManager.registerConverterImplementation(JvmPsiTypeConverter.class, new JvmPsiTypeConverterImpl());
@@ -40,6 +41,10 @@ public class JavaDomApplicationComponent {
     final ClassArrayConverter classArrayConverter = ClassArrayConverter.getClassArrayConverter();
     converterManager.registerConverterImplementation(ClassArrayConverter.class, classArrayConverter);
 
+  }
+
+  @Override
+  public void consume(DomUIFactory factory) {
     factory.registerCustomControl(PsiClass.class, new Function<DomWrapper<String>, BaseControl>() {
       public BaseControl fun(final DomWrapper<String> wrapper) {
         return new PsiClassControl(wrapper, false);
@@ -57,5 +62,4 @@ public class JavaDomApplicationComponent {
       }
     });
   }
-
 }

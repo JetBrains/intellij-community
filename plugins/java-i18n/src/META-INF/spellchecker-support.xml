@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-
-<idea-plugin version="2">
-  <extensions defaultExtensionNs="com.intellij.spellchecker">
-    <support implementation="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
-  </extensions>
-</idea-plugin>

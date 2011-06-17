@@ -15,16 +15,19 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.notification.EventLog;
+import com.intellij.notification.LogModel;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.IdeNotificationArea;
+import com.intellij.notification.impl.NotificationModel;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
@@ -34,18 +37,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Date;
+import java.util.ArrayList;
 
 /**
  * @author peter
  */
 class StatusPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusPanel");
   private static final Icon ourShowLogIcon = IconLoader.getIcon("/general/hideSideUp.png");
   private static final Icon ourHideLogIcon = IconLoader.getIcon("/general/hideSideDown.png");
   private boolean myLogMode;
-  private String myLogMessage;
-  private Date myLogTime;
   private boolean myDirty;
   private final Alarm myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final TextPanel myTextPanel = new TextPanel();
@@ -56,8 +56,6 @@ class StatusPanel extends JPanel {
     
     setOpaque(isOpaque() && !SystemInfo.isMac);
 
-    myShowLog.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-
     myShowLog.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -65,6 +63,7 @@ class StatusPanel extends JPanel {
         if (eventLog != null) {
           if (!eventLog.isVisible()) {
             eventLog.activate(null, true);
+            EventLog.getLogModel(getActiveProject()).logShown();
           } else {
             eventLog.hide(null);
           }
@@ -77,22 +76,25 @@ class StatusPanel extends JPanel {
   }
 
   @Nullable
-  private ToolWindow getEventLog() {
+  private Project getActiveProject() {
     // a better way of finding a project would be great
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       final JComponent frame = WindowManager.getInstance().getIdeFrame(project).getComponent();
       if (SwingUtilities.isDescendingFrom(this, frame)) {
-        return ToolWindowManager.getInstance(project).getToolWindow(NotificationsManagerImpl.LOG_TOOL_WINDOW_ID);
+        return project;
       }
     }
     return null;
   }
 
+  @Nullable
+  private ToolWindow getEventLog() {
+    return EventLog.getEventLog(getActiveProject());
+  }
+
   public void setLogMessage(String text) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myLogMessage = text;
-    myLogTime = new Date();
     myDirty = false;
 
     updateText(StringUtil.isNotEmpty(text), "");
@@ -101,18 +103,20 @@ class StatusPanel extends JPanel {
   public boolean updateText(boolean logAllowed, @Nullable String nonLogText) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && myLogMessage != null;
+    final Project project = getActiveProject();
+    final Notification statusMessage = EventLog.getStatusMessage(project);
+    myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null && project != null;
 
     myShowLog.setVisible(myLogMode);
 
     if (myLogMode) {
-      LOG.assertTrue(myLogTime != null);
       new Runnable() {
         @Override
         public void run() {
-          String text = myLogMessage;
-          if (myDirty || System.currentTimeMillis() - myLogTime.getTime() >= DateFormatUtil.MINUTE) {
-            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(myLogTime)) + ")";
+          assert statusMessage != null;
+          String text = EventLog.formatForLog(statusMessage).first;
+          if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
+            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
           }
           myTextPanel.setText(text);
           myLogAlarm.addRequest(this, 30000);
@@ -127,9 +131,25 @@ class StatusPanel extends JPanel {
             return;
           }
 
+          assert project != null;
+
           final boolean visible = eventLog.isVisible();
-          myShowLog.setIcon(visible ? ourHideLogIcon : ourShowLogIcon);
-          myShowLog.setToolTipText(visible ? "" : "Click to open the event log");
+          LogModel logModel = EventLog.getLogModel(project);
+          if (visible) {
+            logModel.logShown();
+          }
+
+          ArrayList<Notification> notifications = logModel.getNotifications();
+
+          final int count = notifications.size();
+
+          final NotificationType maximumType = count > 0 ? NotificationModel.getMaximumType(notifications) : null;
+
+          Icon icon = visible ? ourHideLogIcon : IdeNotificationArea.getPendingNotificationsIcon(ourShowLogIcon, maximumType);
+          myShowLog.setIcon(icon);
+          myShowLog.setToolTipText(visible ? "" : count > 0 ? String.format("%s notifications pending", count) : "Click to open the event log");
+          myShowLog.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 20 - icon.getIconWidth()));
+
 
           myLogAlarm.addRequest(this, 50);
         }

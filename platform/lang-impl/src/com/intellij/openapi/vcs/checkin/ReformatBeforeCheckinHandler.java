@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,9 @@ import java.awt.*;
 import java.util.Collection;
 
 public class ReformatBeforeCheckinHandler extends CheckinHandler implements CheckinMetaHandler {
+
+  public static final String COMMAND_NAME = CodeInsightBundle.message("process.reformat.code.before.commit");
+  
   protected final Project myProject;
   private final CheckinProjectPanel myPanel;
 
@@ -80,7 +84,7 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
     };
 
     if (reformat(configuration, true)) {
-      new ReformatCodeProcessor(myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, files), performCheckoutAction).run();
+      new ReformatCodeProcessor(myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, files), COMMAND_NAME, performCheckoutAction).run();
     }
     else {
       performCheckoutAction.run();

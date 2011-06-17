@@ -79,7 +79,7 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
                                        TypeSelectorManagerImpl typeSelectorManager,
                                        PsiElement anchorElement,
                                        PsiElement anchorElementIfAll, OccurenceManager occurenceManager) {
-    super(project, editor, expr, localVariable, occurrences, typeSelectorManager.getDefaultType(), typeSelectorManager, IntroduceConstantHandler.REFACTORING_NAME);
+    super(project, editor, expr, localVariable, occurrences, typeSelectorManager, IntroduceConstantHandler.REFACTORING_NAME);
     myParentClass = parentClass;
     myTypeSelectorManager = typeSelectorManager;
     myAnchorElement = anchorElement;
@@ -110,6 +110,14 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
     gc.gridx = 1;
     gc.insets.left = 6;
     myWholePanel.add(createRightPanel(), gc);
+
+    gc.gridy = 2;
+    gc.gridx = 0;
+    gc.gridwidth = 2;
+    JComponent typeChooser = typeComponent();
+    if (typeChooser != null) {
+      myWholePanel.add(typeChooser, gc);
+    }
   }
 
   @Nullable
@@ -138,7 +146,7 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
     myCbDeleteVariable = new StateRestoringCheckBox("Delete variable declaration");
     myCbDeleteVariable.setMnemonic('d');
     myCbDeleteVariable.setFocusable(false);
-    if (myLocalVariable != null) {
+    if (getLocalVariable() != null) {
       if (myReplaceAllCb != null) {
         myReplaceAllCb.setEnabled(false);
         myReplaceAllCb.setSelected(true);
@@ -154,8 +162,8 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
     myAnnotateNonNls = new JCheckBox("Annotate field as @NonNls");
     myAnnotateNonNls.setMnemonic('f');
     myAnnotateNonNls.setFocusable(false);
-    if ((myTypeSelectorManager.isSuggestedType("java.lang.String") || (myLocalVariable != null && AnnotationUtil
-      .isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, false))) &&
+    if ((myTypeSelectorManager.isSuggestedType("java.lang.String") || (getLocalVariable() != null && AnnotationUtil
+      .isAnnotated(getLocalVariable(), AnnotationUtil.NON_NLS, false))) &&
         LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().hasEnumKeywordAndAutoboxing() &&
         JavaPsiFacade.getInstance(myProject).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
@@ -277,16 +285,16 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
                                                 isReplaceAllOccurrences(), true,
                                                 true,
                                                 BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
-                                                getSelectedVisibility(), (PsiLocalVariable)myLocalVariable,
-                                                myTypePointer.getType(),
+                                                getSelectedVisibility(), (PsiLocalVariable)getLocalVariable(),
+                                                getType(),
                                                 isDeleteVariable(),
                                                 myParentClass, isAnnotateNonNls(), false);
     new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
       @Override
       protected void run(Result result) throws Throwable {
-        if (myLocalVariable != null) {
+        if (getLocalVariable() != null) {
           final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)myLocalVariable, myParentClass, settings, true, myOccurrences);
+            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), myParentClass, settings, true, myOccurrences);
           fieldRunnable.run();
         }
         else {

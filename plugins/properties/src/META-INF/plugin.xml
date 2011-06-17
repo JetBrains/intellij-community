@@ -2,7 +2,6 @@
   <id>com.intellij.properties</id>
   <name>Properties Support</name>
   <depends>com.intellij.modules.xml</depends>
-  <depends optional="true" config-file="spellchecker.xml">com.intellij.spellchecker</depends>
   <description>
     This plugin enables smart editing of properties files.
   </description>
@@ -55,6 +54,7 @@
     <projectService serviceInterface="com.intellij.lang.properties.PropertiesReferenceManager" serviceImplementation="com.intellij.lang.properties.PropertiesReferenceManager"/>
 
     <fileEditorProvider implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
+    <spellchecker.support implementation="com.intellij.lang.properties.spellchecker.PropertiesSpellcheckingStrategy"/>
   </extensions>
 
   <project-components>

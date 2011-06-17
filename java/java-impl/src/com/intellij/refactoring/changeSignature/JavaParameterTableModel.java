@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.EditorTextField;
@@ -45,7 +46,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
 
   public JavaParameterTableModel(final PsiElement typeContext,
                                  PsiElement defaultValueContext,
-                                 final ChangeSignatureDialogBase dialog) {
+                                 final RefactoringDialog dialog) {
     this(typeContext, defaultValueContext,
          new JavaTypeColumn(typeContext.getProject()),
          new JavaNameColumn(typeContext.getProject()),
@@ -57,7 +58,11 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
          }, new AnyVarColumn<ParameterInfoImpl>() {
         @Override
         public boolean isCellEditable(ParameterTableModelItemBase<ParameterInfoImpl> item) {
-          return !dialog.isGenerateDelegate() && super.isCellEditable(item);
+          boolean isGenerateDelegate = dialog instanceof ChangeSignatureDialogBase
+                                       ? ((ChangeSignatureDialogBase)dialog).isGenerateDelegate()
+                                       : dialog instanceof AbstractChangeSignatureDialog &&
+                                         ((AbstractChangeSignatureDialog)dialog).isGenerateDelegate();
+          return !isGenerateDelegate && super.isCellEditable(item);
         }
       });
   }

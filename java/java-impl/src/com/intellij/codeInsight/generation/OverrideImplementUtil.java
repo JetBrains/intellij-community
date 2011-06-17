@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,12 +113,14 @@ public class OverrideImplementUtil {
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
       PsiClass hisClass = method.getContainingClass();
       if (hisClass == null) continue;
-      //Filter non-immediate super constructors
+      // filter non-immediate super constructors
       if (method.isConstructor() && (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass || aClass.isEnum())) {
         continue;
       }
-
-      if (MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) continue;
+      // filter already implemented
+      if (MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) {
+        continue;
+      }
 
       if (method.hasModifierProperty(PsiModifier.FINAL)) {
         finals.put(signature, method);
@@ -211,8 +213,10 @@ public class OverrideImplementUtil {
   @NotNull
   public static Collection<PsiMethod> overrideOrImplementMethod(PsiClass aClass, PsiMethod method, boolean toCopyJavaDoc) throws IncorrectOperationException {
     final PsiClass containingClass = method.getContainingClass();
-    PsiSubstitutor substitutor = aClass.isInheritor(containingClass, true) ?
-                                 TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY) : PsiSubstitutor.EMPTY;
+    LOG.assertTrue(containingClass != null);
+    PsiSubstitutor substitutor = aClass.isInheritor(containingClass, true)
+                                 ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY)
+                                 : PsiSubstitutor.EMPTY;
     return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, true);
   }
 
@@ -240,7 +244,15 @@ public class OverrideImplementUtil {
 
     List<PsiMethod> results = new ArrayList<PsiMethod>();
     for (final MethodImplementor implementor : getImplementors()) {
-      ContainerUtil.addAll(results, implementor.createImplementationPrototypes(aClass, method));
+      final PsiMethod[] prototypes = implementor.createImplementationPrototypes(aClass, method);
+      if (implementor.isBodyGenerated()) {
+        ContainerUtil.addAll(results, prototypes);
+      }
+      else {
+        for (PsiMethod prototype : prototypes) {
+          results.add(decorateMethod(aClass, method, toCopyJavaDoc, insertOverrideIfPossible, prototype));
+        }
+      }
     }
     if (results.isEmpty()) {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor);
@@ -258,50 +270,56 @@ public class OverrideImplementUtil {
           defaultValue.getParent().deleteChildRange(defaultKeyword, defaultValue);
         }
       }
-      results.add(result);
+      results.add(decorateMethod(aClass, method, toCopyJavaDoc, insertOverrideIfPossible, result));
     }
 
     for (Iterator<PsiMethod> iterator = results.iterator(); iterator.hasNext();) {
-      PsiMethod result = iterator.next();
-      PsiUtil.setModifierProperty(result, PsiModifier.ABSTRACT, aClass.isInterface());
-      PsiUtil.setModifierProperty(result, PsiModifier.NATIVE, false);
-
-      if (!toCopyJavaDoc){
-        PsiDocComment comment = result.getDocComment();
-        if (comment != null){
-          comment.delete();
-        }
-      }
-
-      annotateOnOverrideImplement(result, aClass, method, insertOverrideIfPossible);
-      
-      final PsiCodeBlock body = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlockFromText("{}", null);
-      PsiCodeBlock oldbody = result.getBody();
-      if (oldbody != null){
-        oldbody.replace(body);
-      }
-      else{
-        result.add(body);
-      }
-
-      setupMethodBody(result, method, aClass);
-
-      // probably, it's better to reformat the whole method - it can go from other style sources
-      final Project project = method.getProject();
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-      boolean keepBreaks = settings.KEEP_LINE_BREAKS;
-      settings.KEEP_LINE_BREAKS = false;
-      result = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
-      result = (PsiMethod)codeStyleManager.reformat(result);
-      settings.KEEP_LINE_BREAKS = keepBreaks;
-
-      if (aClass.findMethodBySignature(result, false) != null) {
+      if (aClass.findMethodBySignature(iterator.next(), false) != null) {
         iterator.remove();
       }
     }
 
     return results;
+  }
+
+  private static PsiMethod decorateMethod(PsiClass aClass,
+                                          PsiMethod method,
+                                          boolean toCopyJavaDoc,
+                                          boolean insertOverrideIfPossible,
+                                          PsiMethod result) {
+    PsiUtil.setModifierProperty(result, PsiModifier.ABSTRACT, aClass.isInterface());
+    PsiUtil.setModifierProperty(result, PsiModifier.NATIVE, false);
+
+    if (!toCopyJavaDoc){
+      PsiDocComment comment = result.getDocComment();
+      if (comment != null){
+        comment.delete();
+      }
+    }
+
+    annotateOnOverrideImplement(result, aClass, method, insertOverrideIfPossible);
+
+    final PsiCodeBlock body = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlockFromText("{}", null);
+    PsiCodeBlock oldbody = result.getBody();
+    if (oldbody != null){
+      oldbody.replace(body);
+    }
+    else{
+      result.add(body);
+    }
+
+    setupMethodBody(result, method, aClass);
+
+    // probably, it's better to reformat the whole method - it can go from other style sources
+    final Project project = method.getProject();
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    boolean keepBreaks = settings.KEEP_LINE_BREAKS;
+    settings.KEEP_LINE_BREAKS = false;
+    result = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
+    result = (PsiMethod)codeStyleManager.reformat(result);
+    settings.KEEP_LINE_BREAKS = keepBreaks;
+    return result;
   }
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden) {
@@ -373,6 +391,10 @@ public class OverrideImplementUtil {
   public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(final Collection<PsiMethod> methods) {
     return ContainerUtil.map2List(methods, new Function<PsiMethod, PsiGenerationInfo<PsiMethod>>() {
       public PsiGenerationInfo<PsiMethod> fun(final PsiMethod s) {
+        for (MethodImplementor implementor : getImplementors()) {
+          final GenerationInfo info = implementor.createGenerationInfo(s);
+          if (info instanceof PsiGenerationInfo) return (PsiGenerationInfo<PsiMethod>)info;
+        }
         return new PsiGenerationInfo<PsiMethod>(s);
       }
     });

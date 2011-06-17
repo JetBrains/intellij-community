@@ -23,8 +23,9 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
@@ -51,7 +52,8 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         assert editorEx != null;
 
         if (fileType != null) {
-          final EditorHighlighter highlighter = ((LanguageFileType)fileType).getEditorHighlighter(project, null, editorEx.getColorsScheme());
+          EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType);
+          final EditorHighlighter highlighter = provider.getEditorHighlighter(project, fileType, null, editorEx.getColorsScheme());
           editorEx.setHighlighter(highlighter);
         }
     }

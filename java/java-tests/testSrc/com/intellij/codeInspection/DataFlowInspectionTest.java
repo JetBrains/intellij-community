@@ -140,5 +140,5 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testIDEADEV13156() throws Exception { doTest15(); }
 
   //public void testIDEADEV11033() throws Exception { doTest15(); }
-  public void testSwitchEnum() throws Exception { doTest15(); }
+  public void testSwitchEnumCases() throws Exception { doTest15(); }
 }

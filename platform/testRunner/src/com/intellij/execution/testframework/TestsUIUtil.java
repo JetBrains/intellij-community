@@ -18,7 +18,8 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RuntimeConfiguration;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
@@ -31,7 +32,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SystemNotifications;
@@ -45,6 +45,7 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 
 public class TestsUIUtil {
+  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Test Runner", NotificationDisplayType.NONE, true);
   @NonNls private static final String ICONS_ROOT = "/runConfigurations/";
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
@@ -124,9 +125,9 @@ public class TestsUIUtil {
 
     if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
       toolWindowManager.notifyByBalloon(testRunDebugId, type, balloonText, null, null);
-    } else {
-      Notifications.Bus.logEvent(balloonText, type.toNotificationType(), project);
     }
+
+    NOTIFICATION_GROUP.createNotification(balloonText, type).notify(project);
     SystemNotifications.getInstance().notify("TestRunner", title, text);
   }
 

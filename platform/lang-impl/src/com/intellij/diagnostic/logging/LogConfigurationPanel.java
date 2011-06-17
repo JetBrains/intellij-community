@@ -57,6 +57,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   private JButton myAddButton;
   private JButton myRemoveButton;
   private JPanel myScrollPanel;
+  private JButton myEditButton;
   private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<LogFileOptions, PredefinedLogFile>();
   private final List<PredefinedLogFile> myUnresolvedPredefined = new ArrayList<PredefinedLogFile>();
 
@@ -122,9 +123,23 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     myRemoveButton.setEnabled(false);
     myFilesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-         myRemoveButton.setEnabled(myFilesTable.getSelectedRowCount() >=1);
+        final boolean enabled = myFilesTable.getSelectedRowCount() >= 1 &&
+                                !myLog2Predefined.containsKey(myFilesTable.getSelectedObject());
+        myRemoveButton.setEnabled(enabled);
+        myEditButton.setEnabled(enabled && myFilesTable.getSelectedObject() != null);
       }
     });
+    myEditButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final int selectedRow = myFilesTable.getSelectedRow();
+        final LogFileOptions selectedOptions = myFilesTable.getSelectedObject();
+        showEditorDialog(selectedOptions);
+        myModel.fireTableDataChanged();
+        myFilesTable.setRowSelectionInterval(selectedRow, selectedRow);
+      }
+    });
+    myEditButton.setEnabled(false);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myFilesTable);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     myScrollPanel.add(scrollPane, BorderLayout.CENTER);

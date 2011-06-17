@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.ProjectScope;
 import org.jetbrains.annotations.NotNull;
 
 public class HighlightLevelUtil {
@@ -56,9 +57,8 @@ public class HighlightLevelUtil {
     if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if ((fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile)) && !fileIndex.isInContent(virtualFile)) {
-      return false;
-    }
+    if (ProjectScope.getLibrariesScope(project).contains(virtualFile) && !fileIndex.isInContent(virtualFile)) return false;
+
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(project);
     if (component == null) return true;
 

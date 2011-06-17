@@ -15,9 +15,7 @@
  */
 package git4idea.commands;
 
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
 
@@ -38,14 +36,14 @@ public class GitTaskResultNotificationHandler extends GitTaskResultHandlerAdapte
   }
 
   @Override protected void onSuccess() {
-    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "", mySuccessMessage, NotificationType.INFORMATION), myProject);
+    GitVcs.NOTIFICATION_GROUP_ID.createNotification(mySuccessMessage, NotificationType.INFORMATION).notify(myProject);
   }
 
   @Override protected void onCancel() {
-    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "", myCancelMessage, NotificationType.INFORMATION), myProject);
+    GitVcs.NOTIFICATION_GROUP_ID.createNotification(myCancelMessage, NotificationType.INFORMATION).notify(myProject);
   }
 
   @Override protected void onFailure() {
-    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "", myErrorMessage, NotificationType.ERROR), myProject);
+    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(myErrorMessage, NotificationType.ERROR).notify(myProject);
   }
 }

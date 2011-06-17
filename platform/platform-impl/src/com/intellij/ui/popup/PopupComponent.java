@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public interface PopupComponent {
-
   Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupComponent");
 
   void hide(boolean dispose);
@@ -43,7 +42,9 @@ public interface PopupComponent {
 
     class AwtDefault implements Factory {
       public PopupComponent getPopup(Component owner, Component content, int x, int y) {
-        return new AwtPopupWrapper(PopupFactory.getSharedInstance().getPopup(owner, content, x, y));
+        final PopupFactory factory = PopupFactory.getSharedInstance();
+        final Popup popup = factory.getPopup(owner, content, x, y);
+        return new AwtPopupWrapper(popup);
       }
 
       public boolean isNativePopup() {
@@ -71,7 +72,9 @@ public interface PopupComponent {
     class Dialog implements Factory {
       public PopupComponent getPopup(Component owner, Component content, int x, int y) {
         return new DialogPopupWrapper(owner, content, x, y);
-      }public boolean isNativePopup() {
+      }
+
+      public boolean isNativePopup() {
         return false;
       }
     }
@@ -150,6 +153,10 @@ public interface PopupComponent {
         JRootPane rootPane = ((JWindow)wnd).getRootPane();
         if (rootPane != null) {
           ReflectionUtil.resetField(rootPane, "clientProperties");
+          final Container cp = rootPane.getContentPane();
+          if (cp != null) {
+            cp.removeAll();
+          }
         }
       }
     }
@@ -166,5 +173,4 @@ public interface PopupComponent {
     public void setRequestFocus(boolean requestFocus) {
     }
   }
-
 }

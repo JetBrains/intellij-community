@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -99,7 +100,7 @@ public class MoveClassesOrPackagesImpl {
           return null;
         }
         if (!checkNesting(project, aPackage, targetElement, true)) return null;
-        if (!checkMovePackage(project, aPackage)) return null;
+        if (!isAlreadyChecked(psiElements, idx, aPackage) && !checkMovePackage(project, aPackage)) return null;
         element = aPackage;
       }
       else if (element instanceof PsiPackage) {
@@ -140,6 +141,15 @@ public class MoveClassesOrPackagesImpl {
     }
 
     return psiElements;
+  }
+
+  private static boolean isAlreadyChecked(PsiElement[] psiElements, int idx, PsiPackage aPackage) {
+    for (int i = 0; i < idx; i++) {
+      if (Comparing.equal(psiElements[i], aPackage)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean checkMovePackage(Project project, PsiPackage aPackage) {

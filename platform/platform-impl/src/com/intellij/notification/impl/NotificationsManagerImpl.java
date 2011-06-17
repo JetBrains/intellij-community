@@ -22,11 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
@@ -46,7 +43,6 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
-  public static final String LOG_TOOL_WINDOW_ID = "Event log";
 
   private final NotificationModel myModel = new NotificationModel();
 
@@ -64,7 +60,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public void notify(@NotNull Notification notification) {
-    doNotify(notification, NotificationDisplayType.STICKY_BALLOON);
+    doNotify(notification, NotificationDisplayType.BALLOON);
   }
 
   @Override
@@ -73,6 +69,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   @Override
   public void expire(@NotNull Notification notification) {
+    EventLog.expire(notification);
     remove(notification);
   }
 
@@ -126,11 +123,13 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   public void doNotify(@NotNull final Notification notification, @Nullable NotificationDisplayType displayType, @Nullable final Project project) {
     final NotificationsConfiguration configuration = NotificationsConfiguration.getNotificationsConfiguration();
     if (!configuration.isRegistered(notification.getGroupId())) {
-      configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.STICKY_BALLOON : displayType);
+      configuration.registerDefaultSettings(new NotificationSettings(notification.getGroupId(),
+                                                                     displayType == null ? NotificationDisplayType.BALLOON : displayType,
+                                                                     true));
     }
 
-    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY &&
-        !LOG_ONLY_GROUP_ID.equals(notification.getGroupId())) {
+    final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
+    if (settings.isShouldLog() && settings.getDisplayType() != NotificationDisplayType.NONE) {
       myModel.add(notification, project);
     }
 
@@ -138,7 +137,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public static void showNotification(final Notification notification, @Nullable final Project project) {
-    if (isEventLogVisible(project)) {
+    if (EventLog.isEventLogVisible(project)) {
       return;
     }
 
@@ -151,18 +150,46 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       //  break;
       case STICKY_BALLOON:
       case BALLOON:
-      case BALLOON_ONLY:
       default:
         notifyByBalloon(notification, settings.getDisplayType(), project);
         break;
     }
   }
 
-  public static void notifyByBalloon(final Notification notification,
+  private static void notifyByBalloon(final Notification notification,
                                       final NotificationDisplayType displayType,
                                       @Nullable final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
+    final Balloon balloon = createBalloon(notification, false, NotificationDisplayType.BALLOON == displayType,
+                                          NotificationDisplayType.BALLOON == displayType);
+
+
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (balloon.isDisposed()) return;
+        Window window = findWindowForBalloon(project);
+        if (window instanceof IdeFrameImpl) {
+          ((IdeFrameImpl)window).getBalloonLayout().add(balloon);
+        }
+      }
+    });
+  }
+
+  public static Window findWindowForBalloon(Project project) {
+    Window window = null;
+    if (project != null) {
+      window = WindowManager.getInstance().getFrame(project);
+    }
+
+    if (window == null) {
+      window = JOptionPane.getRootFrame();
+    }
+    return window;
+  }
+
+  public static Balloon createBalloon(final Notification notification, final boolean showCallout, final boolean hideOnClickOutside, final boolean fadeOut) {
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
 
@@ -199,11 +226,11 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     content.setBorder(new EmptyBorder(2, 4, 2, 4));
 
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
-    builder.setFillColor(NotificationsUtil.getBackground(notification)).setCloseButtonEnabled(true).setShowCallout(false)
-      .setHideOnClickOutside(NotificationDisplayType.BALLOON == displayType)
-      .setHideOnKeyOutside(NotificationDisplayType.BALLOON == displayType).setHideOnFrameResize(false);
+    builder.setFillColor(NotificationsUtil.getBackground(notification)).setCloseButtonEnabled(true).setShowCallout(showCallout)
+      .setHideOnClickOutside(hideOnClickOutside)
+      .setHideOnKeyOutside(hideOnClickOutside).setHideOnFrameResize(false);
 
-    if (NotificationDisplayType.BALLOON == displayType || NotificationDisplayType.BALLOON_ONLY == displayType) {
+    if (fadeOut) {
       builder.setFadeoutTime(3000);
     }
 
@@ -216,41 +243,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     });
 
     notification.setBalloon(balloon);
-
-    final Runnable show = new Runnable() {
-      public void run() {
-        Window window = null;
-        if (project != null) {
-          window = WindowManager.getInstance().getFrame(project);
-        }
-
-        if (window == null) {
-          window = JOptionPane.getRootFrame();
-        }
-
-        if (window instanceof IdeFrameImpl) {
-          final BalloonLayout balloonLayout = ((IdeFrameImpl)window).getBalloonLayout();
-          balloonLayout.add(balloon);
-        }
-      }
-    };
-
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (balloon.isDisposed()) return;
-        show.run();
-      }
-    });
-  }
-
-  public static boolean isEventLogVisible(Project project) {
-    if (project == null) {
-      return false;
-    }
-
-    final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
-    return window != null && window.isVisible();
+    return balloon;
   }
 
   private static PairFunction<Notification, Project, Boolean> createFilter(@Nullable final Project project, final boolean strict) {
@@ -292,14 +285,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   @Nullable
   public NotificationType getMaximumType(@Nullable final Project project) {
     return myModel.getMaximumType(createFilter(project, false));
-  }
-
-  public boolean hasUnread(@Nullable final Project project) {
-    return myModel.hasUnread(createFilter(project, false));
-  }
-
-  public boolean hasRead(@Nullable final Project project) {
-    return myModel.hasRead(createFilter(project, false));
   }
 
   public boolean wasRead(@NotNull final Notification notification) {

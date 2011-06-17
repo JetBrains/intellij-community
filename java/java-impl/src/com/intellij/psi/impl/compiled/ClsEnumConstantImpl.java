@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -70,6 +71,12 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
 
   public PsiEnumConstantInitializer getInitializingClass() {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public PsiEnumConstantInitializer getOrCreateInitializingClass() {
+    throw new IncorrectOperationException("cannot create initializing class in cls enum constant");
   }
 
   public PsiMethod resolveConstructor() {

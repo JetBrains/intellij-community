@@ -40,8 +40,6 @@ class UrlUtil {
   private static final String URL_PATH_SEPARATOR = "/";
   private static final String FILE_PROTOCOL = "file";
   private static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + ":";
-  private static final String JAR_PROTOCOL = "jar";
-  private static final String JAR_PROTOCOL_PREFIX = JAR_PROTOCOL + ":";
 
   public static String loadText(URL url) throws IOException {
     final InputStream stream = new BufferedInputStream(URLUtil.openStream(url));

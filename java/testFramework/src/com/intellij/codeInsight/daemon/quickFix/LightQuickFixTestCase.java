@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
@@ -90,7 +89,6 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         }
       }
     }, "", "");
-    System.out.println(testFile.getPath());
   }
 
   protected void afterActionCompleted(final String testName, final String contents) {
@@ -196,12 +194,21 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     for (File file : files) {
       final String testName = file.getName().substring(BEFORE_PREFIX.length());
       doTestFor(testName, testCase);
+      System.out.println(file.getPath());
     }
     assertTrue("Test files not found in "+testDirPath,files.length != 0);
   }
 
+  protected void doSingleTest(String fileSuffix) {
+    doTestFor(fileSuffix, createWrapper());
+  }
+
   protected void doAllTests() throws Exception {
-    doAllTests(new QuickFixTestCase() {
+    doAllTests(createWrapper());
+  }
+
+  private QuickFixTestCase createWrapper() {
+    return new QuickFixTestCase() {
       @Override
       public String getBasePath() {
         return LightQuickFixTestCase.this.getBasePath();
@@ -281,7 +288,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       public void bringRealEditorBack() {
         LightQuickFixTestCase.bringRealEditorBack();
       }
-    });
+    };
   }
 
   protected List<IntentionAction> getAvailableActions() {

@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
@@ -54,9 +55,6 @@ public class ExceptionBreakpoint extends Breakpoint {
   private String myQualifiedName;
   private String myPackageName;
 
-  public static Icon ICON = IconLoader.getIcon("/debugger/db_exception_breakpoint.png");
-  public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
-  public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_exception_breakpoint.png");
   protected final static String READ_NO_CLASS_NAME = DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   public static final @NonNls Key<ExceptionBreakpoint> CATEGORY = BreakpointCategory.lookup("exception_breakpoints");
 
@@ -110,9 +108,9 @@ public class ExceptionBreakpoint extends Breakpoint {
   public Icon getIcon() {
     if (!ENABLED) {
       final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-      return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+      return master == null? DebuggerIcons.DISABLED_EXCEPTION_BREAKPOINT_ICON : DebuggerIcons.DISABLED_DEPENDENT_EXCEPTION_BREAKPOINT_ICON;
     }
-    return ICON;
+    return DebuggerIcons.ENABLED_EXCEPTION_BREAKPOINT_ICON;
   }
 
   public void reload() {

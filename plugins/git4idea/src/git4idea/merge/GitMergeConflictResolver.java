@@ -18,7 +18,6 @@ package git4idea.merge;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -129,9 +128,11 @@ public class GitMergeConflictResolver {
         } else {
           LOG.info("mergeFiles unmerged files remain: " + unmergedFiles);
           if (mergeDialogInvokedFromNotification) {
-            Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Not all conflicts resolved",
-                                                      "You should <a href='resolve'>resolve</a> all conflicts before update. <br/>" + myErrorNotificationAdditionalDescription, NotificationType.WARNING,
-                                                      new ResolveNotificationListener(roots)), myProject);
+            GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Not all conflicts resolved",
+                                                                   "You should <a href='resolve'>resolve</a> all conflicts before update. <br>" +
+                                                                   myErrorNotificationAdditionalDescription,
+                                                                   NotificationType.WARNING,
+                                                                   new ResolveNotificationListener(roots)).notify(myProject);
 
           } else {
             notifyUnresolvedRemain(roots);
@@ -143,9 +144,11 @@ public class GitMergeConflictResolver {
       final String description = mergeDialogInvokedFromNotification
                                  ? "Be sure to resolve all conflicts before update. <br/>"
                                  : "Be sure to resolve all conflicts first. ";
-      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Not all conflicts resolved",
-                                                description + myErrorNotificationAdditionalDescription + "<br/>" +
-                                                e.getLocalizedMessage(), NotificationType.ERROR), myProject);
+      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Not all conflicts resolved",
+                                                             description + myErrorNotificationAdditionalDescription + "<br/>" +
+                                                             e.getLocalizedMessage(),
+                                                             NotificationType.ERROR,
+                                                             new ResolveNotificationListener(roots)).notify(myProject);
     }
     return false;
 
@@ -156,9 +159,9 @@ public class GitMergeConflictResolver {
    * @param roots             Roots that were merged.
    */
   protected void notifyUnresolvedRemain(Collection<VirtualFile> roots) {
-    Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myErrorNotificationTitle,
+    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(myErrorNotificationTitle,
                                               "You have to <a href='resolve'>resolve</a> all conflicts first." + myErrorNotificationAdditionalDescription, NotificationType.WARNING,
-                                              new ResolveNotificationListener(roots)), myProject);
+                                              new ResolveNotificationListener(roots)).notify(myProject);
   }
 
   private class ResolveNotificationListener implements NotificationListener {

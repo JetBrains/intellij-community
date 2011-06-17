@@ -22,25 +22,26 @@ import org.jetbrains.annotations.NonNls;
  */
 public final class GroovyCommonClassNames {
 
-  public static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
-  public static final String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
-  public static final String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObject";
-  public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";
-  public static final String DEFAULT_GROOVY_METHODS = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
-  public static final String GROOVY_LANG_SCRIPT = "groovy.lang.Script";
-  public static final String GROOVY_LANG_INT_RANGE = "groovy.lang.IntRange";
-  public static final String GROOVY_LANG_OBJECT_RANGE = "groovy.lang.ObjectRange";
-  public static final String GROOVY_LANG_DELEGATE = "groovy.lang.Delegate";
-  public static final String JAVA_UTIL_REGEX_PATTERN = "java.util.regex.Pattern";
-  public static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
-  public static final String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
+  @NonNls public static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
+  @NonNls public static final String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
+  @NonNls public static final String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObject";
+  @NonNls public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";
+  @NonNls public static final String DEFAULT_GROOVY_METHODS = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
+  @NonNls public static final String GROOVY_LANG_SCRIPT = "groovy.lang.Script";
+  @NonNls public static final String GROOVY_LANG_INT_RANGE = "groovy.lang.IntRange";
+  @NonNls public static final String GROOVY_LANG_OBJECT_RANGE = "groovy.lang.ObjectRange";
+  @NonNls public static final String GROOVY_LANG_DELEGATE = "groovy.lang.Delegate";
+  @NonNls public static final String JAVA_UTIL_REGEX_PATTERN = "java.util.regex.Pattern";
+  @NonNls public static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
+  @NonNls public static final String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
   @NonNls public static final String ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE = "org.codehaus.groovy.runtime.MethodClosure";
   @NonNls public static final String JAVA_UTIL_REGEX_MATCHER = "java.util.regex.Matcher";
-  public static final String GROOVY_TRANSFORM_FIELD = "groovy.transform.Field";
-  public static final String GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR = "groovy.transform.TupleConstructor";
-  public static final String GROOVY_TRANSFORM_IMMUTABLE = "groovy.transform.Immutable";
-  public static final String GROOVY_TRANSFORM_CANONICAL = "groovy.transform.Canonical";
+  @NonNls public static final String GROOVY_TRANSFORM_FIELD = "groovy.transform.Field";
+  @NonNls public static final String GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR = "groovy.transform.TupleConstructor";
+  @NonNls public static final String GROOVY_TRANSFORM_IMMUTABLE = "groovy.transform.Immutable";
+  @NonNls public static final String GROOVY_TRANSFORM_CANONICAL = "groovy.transform.Canonical";
   @NonNls public static final String GROOVY_LANG_REFERENCE = "groovy.lang.Reference";
+  @NonNls public static final String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
 
 
   private GroovyCommonClassNames() {

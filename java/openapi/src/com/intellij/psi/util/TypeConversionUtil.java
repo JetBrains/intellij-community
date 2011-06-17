@@ -207,7 +207,7 @@ public class TypeConversionUtil {
     final LanguageLevel languageLevel = toClassType.getLanguageLevel();
     if (!fromClass.isInterface()) {
       if (toClass.isInterface()) {
-        return !fromClass.hasModifierProperty(PsiModifier.FINAL) &&
+        return (!fromClass.hasModifierProperty(PsiModifier.FINAL) || fromClass.isInheritor(toClass, true))&&
                checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), null, languageLevel);
       }
       else {
@@ -337,6 +337,13 @@ public class TypeConversionUtil {
       PsiType typeArg2 = substitutor2.substitute(typeParameter);
       if (typeArg1 == null || typeArg2 == null) return true;
       if (TypesDistinctProver.provablyDistinct(typeArg1, typeArg2)) return false;
+
+      final PsiClass class1 = PsiUtil.resolveClassInType(typeArg1);
+      if (class1 instanceof PsiTypeParameter) {
+        for (PsiType type : class1.getExtendsListTypes()) {
+          if (TypesDistinctProver.provablyDistinct(type, typeArg2)) return false;
+        }
+      }
     }
 
     return true;
@@ -815,6 +822,7 @@ public class TypeConversionUtil {
     PsiSubstitutor leftSubstitutor = leftResult.getSubstitutor();
 
     if (!leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
+      if (!allowUncheckedConversion && PsiUtil.isRawSubstitutor(leftClass, leftSubstitutor) && !rightClass.hasTypeParameters()) return false;
       rightSubstitutor = getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
       rightClass = leftClass;
     }
@@ -833,12 +841,12 @@ public class TypeConversionUtil {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;
       }
-      if (!typesAgree(typeLeft, typeRight)) return false;
+      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) return false;
     }
     return true;
   }
 
-  private static boolean typesAgree(PsiType typeLeft, PsiType typeRight) {
+  private static boolean typesAgree(PsiType typeLeft, PsiType typeRight, boolean allowUncheckedConversion) {
     if (typeLeft instanceof PsiWildcardType) {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
       final PsiType leftBound = leftWildcard.getBound();
@@ -851,30 +859,22 @@ public class TypeConversionUtil {
       if (typeRight instanceof PsiWildcardType) {
         final PsiWildcardType rightWildcard = (PsiWildcardType)typeRight;
         if (leftWildcard.isExtends()) {
-          return rightWildcard.isExtends() && isAssignable(leftBound, rightWildcard.getBound(), false);
+          return rightWildcard.isExtends() && isAssignable(leftBound, rightWildcard.getBound(), allowUncheckedConversion);
         }
         else { //isSuper
-          return rightWildcard.isSuper() && isAssignable(rightWildcard.getBound(), leftBound, false);
+          return rightWildcard.isSuper() && isAssignable(rightWildcard.getBound(), leftBound, allowUncheckedConversion);
         }
       }
       else {
         if (leftWildcard.isExtends()) {
-          return isAssignable(leftBound, typeRight, false);
+          return isAssignable(leftBound, typeRight, allowUncheckedConversion);
         }
         else { // isSuper
-          return isAssignable(typeRight, leftBound, false);
+          return isAssignable(typeRight, leftBound, allowUncheckedConversion);
         }
       }
     }
     else {
-      final PsiClass leftClass = PsiUtil.resolveClassInType(typeLeft);
-      if (leftClass instanceof PsiTypeParameter) {
-        for (PsiClassType leftClassType : leftClass.getExtendsListTypes()) {
-          if (TypesDistinctProver.provablyDistinct(leftClassType, typeRight)) return false;
-        }
-        if (!(typeRight instanceof PsiCapturedWildcardType || typeRight instanceof PsiWildcardType)) return true;
-      }
-
       return typeLeft.equals(typeRight);
     }
   }

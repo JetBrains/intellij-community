@@ -22,6 +22,8 @@ public class StreamUtil {
   }
 
   /**
+   * Copy stream. Use NetUtils.copyStreamContent(ProgressIndicator, ...) if you want use ProgressIndicator.
+   *
    * @param inputStream source stream
    * @param outputStream destination stream
    * @return bytes copied

@@ -249,7 +249,7 @@ public class CompleteReferenceExpression {
               javaLangClass.processDeclarations(processor, state, null, refExpr);
               PsiType javaLangClassType =
                 JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(javaLangClass, substitutor);
-              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr, state);
+              ResolveUtil.processNonCodeMembers(javaLangClassType, processor, refExpr, state);
             }
           }
         }
@@ -319,7 +319,7 @@ public class CompleteReferenceExpression {
       }
       return;
     }
-    ResolveUtil.processNonCodeMethods(qualifierType, processor, refExpr, state);
+    ResolveUtil.processNonCodeMembers(qualifierType, processor, refExpr, state);
   }
 
   private static Set<String> addAllRestrictedProperties(GrReferenceExpression place) {

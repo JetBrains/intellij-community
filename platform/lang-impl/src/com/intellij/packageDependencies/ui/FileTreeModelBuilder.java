@@ -256,10 +256,10 @@ public class FileTreeModelBuilder {
           myModuleDirNodes.put((PsiDirectory)((DirectoryNode)node).getPsiElement(), null);
           node = ((DirectoryNode)node).getCompactedDirNode();
         }
-      } else if (parentNode instanceof ModuleNode) {
-        myModuleNodes.put(((ModuleNode)parentNode).getModule(), null);
-      } else if (parentNode instanceof ModuleGroupNode) {
-        myModuleGroupNodes.put(((ModuleGroupNode)parentNode).getModuleGroupName(), null);
+      } else if (node instanceof ModuleNode) {
+        myModuleNodes.put(((ModuleNode)node).getModule(), null);
+      } else if (node instanceof ModuleGroupNode) {
+        myModuleGroupNodes.put(((ModuleGroupNode)node).getModuleGroupName(), null);
       }
       node = parentNode;
       parent = directory;

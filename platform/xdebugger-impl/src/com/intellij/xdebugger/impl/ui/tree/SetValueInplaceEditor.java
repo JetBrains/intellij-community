@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -26,6 +27,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author nik
@@ -41,14 +43,18 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myModifier = myValueNode.getValueContainer().getModifier();
 
     myEditorPanel = new JPanel();
-    myEditorPanel.setLayout(new BoxLayout(myEditorPanel, BoxLayout.X_AXIS));
+    myEditorPanel.setLayout(new BorderLayout(0, 0));
     SimpleColoredComponent nameLabel = new SimpleColoredComponent();
     nameLabel.setIcon(getNode().getIcon());
     nameLabel.append(nodeName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
+    final String separator = node.getSeparator();
+    if (separator != null) {
+      nameLabel.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
 
-    myEditorPanel.add(nameLabel);
+    myEditorPanel.add(nameLabel, BorderLayout.WEST);
 
-    myEditorPanel.add(myExpressionEditor.getComponent());
+    myEditorPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
     final String value = myModifier != null ? myModifier.getInitialValueEditorText() : null;
     myExpressionEditor.setText(value != null ? value : "");
     myExpressionEditor.selectAll();

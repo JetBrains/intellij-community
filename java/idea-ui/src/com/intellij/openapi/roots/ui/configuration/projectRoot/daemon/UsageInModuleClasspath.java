@@ -43,10 +43,6 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
     return myModule.getName();
   }
 
-  public String getModuleName() {
-    return myModule.getName();
-  }
-
   @Override
   public void navigate() {
     ModulesConfigurator modulesConfigurator = myContext.getModulesConfigurator();

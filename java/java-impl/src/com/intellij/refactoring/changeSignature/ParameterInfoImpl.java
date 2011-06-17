@@ -35,8 +35,9 @@ public class ParameterInfoImpl implements JavaParameterInfo {
   public final int oldParameterIndex;
   boolean useAnySingleVariable;
   private String name = "";
-  private CanonicalTypes.Type myType;
+  public static final ParameterInfoImpl[] EMPTY_ARRAY = new ParameterInfoImpl[0];
 
+  private CanonicalTypes.Type myType;
   String defaultValue = "";
 
   public ParameterInfoImpl(int oldParameterIndex) {

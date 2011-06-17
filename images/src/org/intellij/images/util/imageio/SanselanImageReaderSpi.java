@@ -24,10 +24,7 @@ import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Locale;
+import java.util.*;
 
 public class SanselanImageReaderSpi extends ImageReaderSpi {
 
@@ -38,15 +35,19 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     vendorName = "JetBrains, s.r.o.";
     version = "1.0";
 
-    // todo standard PNG/TIFF/JEPG/GIF/BMP formats can be optionally skipped as well
-    final ImageFormat[] allFormats = ArrayUtil.remove(ImageFormat.getAllFormats(), ImageFormat.IMAGE_FORMAT_UNKNOWN);
-    names = new String[allFormats.length * 2];
-    suffixes = new String[allFormats.length];
-    MIMETypes = new String[allFormats.length];
+    // todo standard PNG/TIFF/GIF/BMP formats can be optionally skipped as well
+    // JPEG is skipped due to Exception: Sanselan cannot read or write JPEG images. (JpegImageParser.java:92)
+    final ArrayList<ImageFormat> imageFormats = new ArrayList<ImageFormat>(Arrays.asList(ImageFormat.getAllFormats()));
+    imageFormats.removeAll(Arrays.asList(ImageFormat.IMAGE_FORMAT_UNKNOWN,
+                                         ImageFormat.IMAGE_FORMAT_JPEG));
+
+    names = new String[imageFormats.size() * 2];
+    suffixes = new String[imageFormats.size()];
+    MIMETypes = new String[imageFormats.size()];
     pluginClassName = MyImageReader.class.getName();
     inputTypes = new Class[] {ImageInputStream.class};
-    for (int i = 0, allFormatsLength = allFormats.length; i < allFormatsLength; i++) {
-      final ImageFormat format = allFormats[i];
+    for (int i = 0, allFormatsLength = imageFormats.size(); i < allFormatsLength; i++) {
+      final ImageFormat format = imageFormats.get(i);
       names[2 * i] = format.extension.toLowerCase();
       names[2 * i + 1] = format.extension.toUpperCase();
       suffixes[i] = names[2 * i];
@@ -65,7 +66,7 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     final ImageInputStream stream = (ImageInputStream)input;
     try {
       final ImageFormat imageFormat = Sanselan.guessFormat(new MyByteSource(stream));
-      if (imageFormat != null) {
+      if (imageFormat != null && imageFormat != ImageFormat.IMAGE_FORMAT_JPEG) {
         myFormat.set(imageFormat);
         return true;
       }

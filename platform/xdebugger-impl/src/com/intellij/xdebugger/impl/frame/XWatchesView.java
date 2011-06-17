@@ -80,13 +80,13 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
 
   }
 
-  public void addWatchExpression(@NotNull String expression, int index) {
+  public void addWatchExpression(@NotNull String expression, int index, final boolean navigateToWatchNode) {
     XDebuggerEvaluator evaluator = null;
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     if (stackFrame != null) {
       evaluator = stackFrame.getEvaluator();
     }
-    myRootNode.addWatchExpression(evaluator, expression, index);
+    myRootNode.addWatchExpression(evaluator, expression, index, navigateToWatchNode);
     updateSessionData();
   }
 
@@ -190,14 +190,14 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
       for (XValueNodeImpl node : nodes) {
         String expression = node.getValueContainer().getEvaluationExpression();
         if (expression != null) {
-          addWatchExpression(expression, -1);
+          addWatchExpression(expression, -1, false);
         }
       }
     }
     else if (object instanceof EventInfo) {
       String text = ((EventInfo)object).getTextForFlavor(DataFlavor.stringFlavor);
       if (text != null) {
-        addWatchExpression(text, -1);
+        addWatchExpression(text, -1, false);
       }
     }
   }

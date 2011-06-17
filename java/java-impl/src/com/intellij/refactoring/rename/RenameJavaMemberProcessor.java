@@ -114,7 +114,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
 
     final PsiClass fieldClass = member.getContainingClass();
-    for (PsiClass aClass = fieldClass.getContainingClass(); aClass != null; aClass = aClass.getContainingClass()) {
+    for (PsiClass aClass = fieldClass != null ? fieldClass.getContainingClass() : null; aClass != null; aClass = aClass.getContainingClass()) {
       final PsiMember conflict;
       if (member instanceof PsiMethod) {
         conflict = aClass.findMethodBySignature((PsiMethod)patternMember, true);

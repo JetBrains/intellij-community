@@ -78,7 +78,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
       }
 
       public void schemeChanged(final CodeStyleScheme scheme) {
-        ensurePanel(scheme).resetFromClone();
+        ensurePanel(scheme).reset();
       }
     });
 

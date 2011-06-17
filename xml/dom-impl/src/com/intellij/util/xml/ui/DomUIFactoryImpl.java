@@ -23,12 +23,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ClassMap;
@@ -49,6 +51,7 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public class DomUIFactoryImpl extends DomUIFactory {
+
   private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<Function<DomWrapper<String>, BaseControl>>();
   private final ClassMap<Function<DomElement, TableCellEditor>> myCustomCellEditorCreators = new ClassMap<Function<DomElement, TableCellEditor>>();
 
@@ -65,6 +68,10 @@ public class DomUIFactoryImpl extends DomUIFactory {
         return new DefaultCellEditor(removeBorder(new JTextField()));
       }
     });
+    Consumer<DomUIFactory>[] extensions = Extensions.getExtensions(EXTENSION_POINT_NAME);
+    for (Consumer<DomUIFactory> extension : extensions) {
+      extension.consume(this);
+    }
   }
 
   protected TableCellEditor createCellEditor(DomElement element, Class type) {

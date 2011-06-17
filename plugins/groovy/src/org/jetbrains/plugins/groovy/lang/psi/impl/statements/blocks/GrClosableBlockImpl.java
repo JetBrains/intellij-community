@@ -103,7 +103,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
       if (place instanceof GroovyPsiElement &&
           !ResolveUtil
-            .processNonCodeMethods(GrClosureType.create(this, false /*if it is 'true' need-to-prevent-recursion triggers*/), processor,
+            .processNonCodeMembers(GrClosureType.create(this, false /*if it is 'true' need-to-prevent-recursion triggers*/), processor,
                                    (GroovyPsiElement)place, state)) {
         return false;
       }

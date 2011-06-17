@@ -25,11 +25,13 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.ui.*;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -101,11 +103,6 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
 
   public Module getModule() {
     return myModule;
-  }
-
-  public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer.append(myModule.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    renderer.setIcon(myModule.getModuleType().getNodeIcon(false));
   }
 
   private static class ModuleSourceItemPresentation extends SourceItemPresentation {

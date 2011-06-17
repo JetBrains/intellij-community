@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
@@ -222,18 +222,14 @@ public class FilePatchInProgress implements Strippable {
     @Nullable
     public DiffRequestPresentable createDiffRequestPresentable(final Project project) {
       return new DiffRequestPresentableProxy() {
+        @NotNull
         @Override
-        protected DiffRequestPresentable init() {
+        protected DiffRequestPresentable init() throws VcsException {
           if (myPatchInProgress.isConflictingChange()) {
             final ApplyPatchForBaseRevisionTexts texts = ApplyPatchForBaseRevisionTexts
-              .create(project, myPatchInProgress.getCurrentBase(), new FilePathImpl(myPatchInProgress.getCurrentBase()),
-                      myPatchInProgress.getPatch());
-            if ((texts != null) &&
-                (ApplyPatchStatus.SUCCESS.equals(texts.getStatus()) || ApplyPatchStatus.ALREADY_APPLIED.equals(texts.getStatus()))) {
-              return new MergedDiffRequestPresentable(project, texts,
-                      myPatchInProgress.getCurrentBase(), myPatchInProgress.getPatch().getAfterVersionId());
-            }
-            return null;
+              .create(project, myPatchInProgress.getCurrentBase(), new FilePathImpl(myPatchInProgress.getCurrentBase()), myPatchInProgress.getPatch());
+            return new MergedDiffRequestPresentable(project, texts,
+                                                    myPatchInProgress.getCurrentBase(), myPatchInProgress.getPatch().getAfterVersionId());
           } else {
             return new ChangeDiffRequestPresentable(project, PatchChange.this);
           }

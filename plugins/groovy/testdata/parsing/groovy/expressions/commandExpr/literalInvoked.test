@@ -1,0 +1,14 @@
+'foo' 2, 3
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(string)(''foo'')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Literal
+        PsiElement(Integer)('2')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Integer)('3')

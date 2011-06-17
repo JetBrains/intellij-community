@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.overrideImplement;
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -32,7 +34,10 @@ public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHa
   }
 
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    GroovyOverrideImplementUtil.invokeOverrideImplement(editor, file, false);
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
+    if (aClass != null) {
+      OverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
+    }
   }
 
   public boolean startInWriteAction() {

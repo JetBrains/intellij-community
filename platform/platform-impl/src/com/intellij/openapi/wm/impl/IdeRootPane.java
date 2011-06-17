@@ -25,7 +25,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -153,7 +152,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    * If <code>toolWindowsPane</code> is <code>null</code> then the method just removes
    * the current tool windows pane.
    */
-  final void setToolWindowsPane(final ToolWindowsPane toolWindowsPane) {
+  final void setToolWindowsPane(@Nullable final ToolWindowsPane toolWindowsPane) {
     final JComponent contentPane = (JComponent)getContentPane();
     if(myToolWindowsPane != null){
       contentPane.remove(myToolWindowsPane);
@@ -223,7 +222,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     myMemoryWidget = new MemoryUsagePanel();
     myStatusBar.addWidget(myMemoryWidget);
-    myStatusBar.addWidget(new IdeNotificationArea(), "before Memory");
     myStatusBar.addWidget(new IdeMessagePanel(MessagePool.getInstance()), "before Memory");
 
     if (myStatusBarCustomComponentFactories != null) {

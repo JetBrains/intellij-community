@@ -21,6 +21,7 @@ import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.editor.EditorOptionsProviderEP;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -336,6 +337,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private List<ColorAndFontPanelFactory> createPanelFactories() {
     ArrayList<ColorAndFontPanelFactory> result = new ArrayList<ColorAndFontPanelFactory>();
     result.add(new FontConfigurableFactory());
+    result.add(new ConsoleFontConfigurableFactory());
 
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (final ColorSettingsPage page : pages) {
@@ -369,6 +371,27 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     public String getPanelDisplayName() {
       return "Font";
+    }
+  }
+
+   private static class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactory {
+    public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
+      FontEditorPreview previewPanel = new FontEditorPreview(options) {
+        @Override
+        protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
+          return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);
+        }
+      };
+      return new NewColorAndFontPanel(new SchemesPanel(options), new ConsoleFontOptions(options), previewPanel, "Font", null, null){
+        @Override
+        public boolean containsFontOptions() {
+          return true;
+        }
+      };
+    }
+
+    public String getPanelDisplayName() {
+      return "Console Font";
     }
   }
 
@@ -850,6 +873,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private int myFontSize;
     private float myLineSpacing;
     private String myFontName;
+
+    private int myConsoleFontSize;
+    private float myConsoleLineSpacing;
+    private String myConsoleFontName;
+
     private EditorSchemeAttributeDescriptor[] myDescriptors;
     private String myName;
     private boolean myIsNew = false;
@@ -859,6 +887,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       myFontSize = parentScheme.getEditorFontSize();
       myLineSpacing = parentScheme.getLineSpacing();
       myFontName = parentScheme.getEditorFontName();
+
+      myConsoleFontSize = parentScheme.getConsoleFontSize();
+      myConsoleLineSpacing = parentScheme.getConsoleLineSpacing();
+      myConsoleFontName = parentScheme.getConsoleFontName();
+
       setQuickDocFontSize(parentScheme.getQuickDocFontSize());
       myName = parentScheme.getName();
       if (parentScheme instanceof ExternalizableScheme) {
@@ -892,7 +925,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public boolean isModified() {
-      if (isFontModified()) return true;
+      if (isFontModified() || isConsoleFontModified()) return true;
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         if (descriptor.isModified()) {
@@ -911,6 +944,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return false;
     }
 
+    private boolean isConsoleFontModified() {
+      if (myConsoleFontSize != myParentScheme.getConsoleFontSize()) return true;
+      if (myConsoleLineSpacing != myParentScheme.getConsoleLineSpacing()) return true;
+      if (!myConsoleFontName.equals(myParentScheme.getConsoleFontName())) return true;
+      return false;
+    }
+
     public void apply() {
       apply(myParentScheme);
     }
@@ -920,6 +960,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       scheme.setEditorFontName(myFontName);
       scheme.setLineSpacing(myLineSpacing);
       scheme.setQuickDocFontSize(getQuickDocFontSize());
+      scheme.setConsoleFontSize(myConsoleFontSize);
+      scheme.setConsoleFontName(myConsoleFontName);
+      scheme.setConsoleLineSpacing(myConsoleLineSpacing);
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         descriptor.apply(scheme);
@@ -950,6 +993,38 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     public void setEditorFontName(String fontName) {
       myFontName = fontName;
       initFonts();
+    }
+
+    @Override
+    public String getConsoleFontName() {
+      return myConsoleFontName;
+    }
+
+    @Override
+    public void setConsoleFontName(String fontName) {
+      myConsoleFontName = fontName;
+      initFonts();
+    }
+
+    @Override
+    public int getConsoleFontSize() {
+      return myConsoleFontSize;
+    }
+
+    @Override
+    public void setConsoleFontSize(int fontSize) {
+      myConsoleFontSize = fontSize;
+      initFonts();
+    }
+
+    @Override
+    public float getConsoleLineSpacing() {
+      return myConsoleLineSpacing;
+    }
+
+    @Override
+    public void setConsoleLineSpacing(float lineSpacing) {
+      myConsoleLineSpacing = lineSpacing;
     }
 
     public Object clone() {
@@ -1063,7 +1138,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       createPanel();
       for (MyColorScheme scheme : mySchemes.values()) {
         if (mySubPanel.containsFontOptions()) {
-          if (scheme.isFontModified()) {
+          if (scheme.isFontModified() || scheme.isConsoleFontModified()) {
             myRevertChangesCompleted = false;
             return true;
           }

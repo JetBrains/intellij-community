@@ -83,11 +83,11 @@ public class CharArrayUtil {
         return;
       }
       else if (src instanceof StringBuffer) {
-        ((StringBuffer)src).getChars(srcOffset, len, dst, dstOffset);
+        ((StringBuffer)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
         return;
       }
       else if (src instanceof StringBuilder) {
-        ((StringBuilder)src).getChars(srcOffset, len, dst, dstOffset);
+        ((StringBuilder)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
         return;
       }
     }

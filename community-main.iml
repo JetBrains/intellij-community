@@ -78,6 +78,7 @@
     <orderEntry type="module" module-name="IntelliLang-xml" />
     <orderEntry type="module" module-name="xpath" />
     <orderEntry type="module" module-name="xslt-debugger" />
+    <orderEntry type="module" module-name="xslt-debugger-engine" />
     <orderEntry type="module" module-name="tasks-core" />
     <orderEntry type="module" module-name="jira-connector" />
     <orderEntry type="module" module-name="tasks-api" />

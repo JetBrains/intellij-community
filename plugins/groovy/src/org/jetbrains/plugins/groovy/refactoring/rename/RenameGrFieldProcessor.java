@@ -21,6 +21,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
@@ -31,11 +32,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -161,8 +160,18 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     final PsiReference ref = info.getReference();
     final PsiElement renamed = ref.handleElementRename(nameToUse);
     PsiElement newly_resolved = ref.resolve();
-    if (shouldCheckForCorrectResolve && !(manager.areElementsEquivalent(element, newly_resolved))) {
-      qualify((PsiMember)element, renamed, nameToUse);
+    if (shouldCheckForCorrectResolve) {
+      if (element instanceof GrAccessorMethod && newly_resolved instanceof GrAccessorMethod) {
+        final GrAccessorMethod oldAccessor = (GrAccessorMethod)element;
+        final GrAccessorMethod newAccessor = (GrAccessorMethod)newly_resolved;
+        if (!manager.areElementsEquivalent(oldAccessor.getProperty(), newAccessor.getProperty()) &&
+            oldAccessor.isSetter() == newAccessor.isSetter()) {
+          qualify(oldAccessor, renamed, nameToUse);
+        }
+      }
+      else if (!manager.areElementsEquivalent(element, newly_resolved)) {
+        qualify((PsiMember)element, renamed, nameToUse);
+      }
     }
   }
 
@@ -197,7 +206,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     if (refExpr.getQualifierExpression() != null) return;
 
     final PsiElement replaced;
-    if (member.hasModifierProperty(GrModifier.STATIC)) {
+    if (member.hasModifierProperty(PsiModifier.STATIC)) {
       final GrReferenceExpression newRefExpr = GroovyPsiElementFactory.getInstance(member.getProject())
         .createReferenceExpressionFromText(clazz.getQualifiedName() + "." + name);
       replaced = refExpr.replace(newRefExpr);
@@ -234,29 +243,32 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
       if (!(info instanceof MoveRenameUsageInfo)) continue;
       final PsiElement infoElement = info.getElement();
       final PsiElement referencedElement = ((MoveRenameUsageInfo)info).getReferencedElement();
-      if (infoElement instanceof GrReferenceExpression &&
-          (referencedElement instanceof GrField || ((GrReferenceExpression)infoElement).advancedResolve().isInvokedOnProperty()) &&
-          infoElement.getParent() instanceof GrCall) {
-        final PsiType[] argTypes = PsiUtil.getArgumentTypes(infoElement, false);
-        final PsiMethod resolved = ResolveUtil.resolveExistingElement(((GrReferenceExpression)infoElement),
-                                                                      new MethodResolverProcessor(newName, ((GroovyPsiElement)infoElement),
-                                                                                                  false, null, argTypes,
-                                                                                                  ((GrReferenceExpression)infoElement)
-                                                                                                    .getTypeArguments()), PsiMethod.class);
-        if (resolved != null) {
-          collisions.add(new UnresolvableCollisionUsageInfo(resolved, infoElement) {
-            @Override
-            public String getDescription() {
-              return GroovyRefactoringBundle.message("usage.will.be.overriden.by.method", infoElement.getParent().getText(), PsiFormatUtil
-                .formatMethod(resolved, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME, PsiFormatUtil.SHOW_TYPE));
-            }
-          });
+
+      if (!(infoElement instanceof GrReferenceExpression)) continue;
+
+      final GrReferenceExpression refExpr = (GrReferenceExpression)infoElement;
+
+      if (!(referencedElement instanceof GrField || refExpr.advancedResolve().isInvokedOnProperty())) continue;
+
+      if (!(refExpr.getParent() instanceof GrCall)) continue;
+
+      final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false);
+      final PsiType[] typeArguments = refExpr.getTypeArguments();
+      final MethodResolverProcessor processor =
+        new MethodResolverProcessor(newName, refExpr, false, null, argTypes, typeArguments);
+      final PsiMethod resolved = ResolveUtil.resolveExistingElement(refExpr, processor, PsiMethod.class);
+      if (resolved == null) continue;
+
+      collisions.add(new UnresolvableCollisionUsageInfo(resolved, refExpr) {
+        @Override
+        public String getDescription() {
+          return GroovyRefactoringBundle.message("usage.will.be.overriden.by.method", refExpr.getParent().getText(), PsiFormatUtil
+            .formatMethod(resolved, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_TYPE));
         }
-      }
+      });
     }
     result.addAll(collisions);
-    super
-      .findCollisions(element, newName, allRenames, result);
+    super.findCollisions(element, newName, allRenames, result);
   }
 
   @Override
@@ -270,7 +282,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     final PsiMethod getter = findGetterForField(field);
     if (getter instanceof GrAccessorMethod) {
       final PsiMethod newGetter =
-        PropertyUtil.findPropertyGetter(containingClass, newName, field.hasModifierProperty(GrModifier.STATIC), true);
+        PropertyUtil.findPropertyGetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);
       if (newGetter != null && !(newGetter instanceof GrAccessorMethod)) {
         conflicts.putValue(newGetter, GroovyRefactoringBundle
           .message("implicit.getter.will.by.overriden.by.method", field.getName(), newGetter.getName()));
@@ -279,36 +291,11 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     final PsiMethod setter = findSetterForField(field);
     if (setter instanceof GrAccessorMethod) {
       final PsiMethod newSetter =
-        PropertyUtil.findPropertySetter(containingClass, newName, field.hasModifierProperty(GrModifier.STATIC), true);
+        PropertyUtil.findPropertySetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);
       if (newSetter != null && !(newSetter instanceof GrAccessorMethod)) {
         conflicts.putValue(newSetter, GroovyRefactoringBundle
           .message("implicit.setter.will.by.overriden.by.method", field.getName(), newSetter.getName()));
       }
     }
-  }
-
-  protected interface ImplicitMember {
-    /**
-     * identifiers type of implicit member (e.g. getter, setter, tagLibVariable). Should be equal for all members of one type.
-     * @return identifier
-     */
-    @NotNull
-    Object getIdentifier();
-
-    /**
-     * generates name of member by field.
-     * may be null, if member is not available for field
-     * @param field
-     * @return
-     */
-    @Nullable
-    String getName(GrField field);
-
-    /**
-     * may be null, if member is not available for field
-     * @return an instance of member for field
-     */
-    @Nullable
-    PsiElement getMember(GrField field);
   }
 }

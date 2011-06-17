@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -32,6 +33,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -45,16 +48,17 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
-import org.junit.Assert;
 import junit.framework.AssertionFailedError;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.junit.Assert;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -181,6 +185,8 @@ public class PlatformTestUtil {
   @TestOnly
   public static void waitForAlarm(final int delay) throws InterruptedException {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
+    assert ApplicationManager.getApplication().isDispatchThread();
+
     final AtomicBoolean invoked = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     alarm.addRequest(new Runnable() {
@@ -378,27 +384,143 @@ public class PlatformTestUtil {
     final double acceptableChangeFactor = 1.1;
 
     // Allow 10% more in case of test machine is busy.
-    final int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
-    String logMessage = message + ".";
+    String logMessage = message;
     if (actual > expectedOnMyMachine) {
-      logMessage += " Operation took " + percentage + "% longer than expected.";
+      int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
+      logMessage += ". Operation took " + percentage + "% longer than expected";
     }
-    logMessage += " Expected on my machine: " + expectedOnMyMachine + "." +
+    logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
                   " Actual: " + actual + "." +
                   " Expected on Etalon machine: " + expected + ";" +
                   " Actual on Etalon: " + actual * Timings.ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
-                  " Timings: CPU=" + Timings.CPU_TIMING + ", I/O=" + Timings.IO_TIMING + ".";
-
+                  " Timings: CPU=" + Timings.CPU_TIMING +
+                  ", I/O=" + Timings.IO_TIMING + "." +
+                  " (" + (int)(Timings.MACHINE_TIMING*1.0/Timings.ETALON_TIMING*100) + "% of the etalon)" +
+                  ".";
     if (actual < expectedOnMyMachine) {
       TeamCityLogger.info(logMessage);
     }
     else if (actual < expectedOnMyMachine * acceptableChangeFactor) {
-      TeamCityLogger.warning(logMessage);
+      TeamCityLogger.warning(logMessage, null);
     }
     else {
-      TeamCityLogger.error(logMessage);
+      // throw AssertionFailedError to try one more time
+      throw new AssertionFailedError(logMessage);
     }
   }
+
+  /**
+   * example usage: startPerformanceTest(100, testRunnable).cpuBound().assertTiming();
+   */
+  public static TestInfo startPerformanceTest(int expected, @NotNull ThrowableRunnable test) {
+    return startPerformanceTest("",expected, test);
+  }
+  public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expected, @NotNull ThrowableRunnable test) {
+    return new TestInfo(test, expected,message);
+  }
+
+  // calculates average of the median values in the selected part of the array. E.g. for part=3 returns average in the middle third.
+  public static long averageAmongMedians(@NotNull long[] time, int part) {
+    assert part >= 1;
+    int n = time.length;
+    Arrays.sort(time);
+    long total = 0;
+    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
+      total += time[i];
+    }
+    return total/(n / part);
+  }
+
+  public static class TestInfo {
+    private final ThrowableRunnable test; // runnable to measure
+    private final int expected;           // millis the test is expected to run
+    private ThrowableRunnable setup;      // to run before each test
+    private boolean usesAllCPUCores;      // true if the test runs faster on multicore
+    private int attempts = 4;             // number of retries if performance failed
+    private final String message;         // to print on fail
+    private boolean adjustForIO = true;   // true if test uses IO, timings need to be recalibrated according to this agent disk performance
+    private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be recalibrated according to this agent CPU speed
+
+    private TestInfo(@NotNull ThrowableRunnable test, int expected, String message) {
+      this.test = test;
+      this.expected = expected;
+      this.message = message;
+    }
+
+    public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
+    public TestInfo usesAllCPUCores() { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usesAllCPUCores = true; return this; }
+    public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
+    public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }
+    public TestInfo attempts(int attempts) { this.attempts = attempts; return this; }
+
+    public void assertTiming() {
+      assert expected != 0 : "Must call .expect() before run test";
+      if (COVERAGE_ENABLED_BUILD) return;
+
+      while (true) {
+        attempts--;
+        long start;
+        try {
+          if (setup != null) setup.run();
+          start = System.currentTimeMillis();
+          test.run();
+        }
+        catch (Throwable throwable) {
+          throw new RuntimeException(throwable);
+        }
+        long finish = System.currentTimeMillis();
+        long duration = finish - start;
+
+        int expectedOnMyMachine = expected;
+        if (adjustForCPU) {
+          // most of our algorithms are quadratic. sad but true.
+          double speed = 1.0 * Timings.CPU_TIMING / Timings.ETALON_CPU_TIMING;
+          double delta = speed < 1
+                     ? 0.9 + Math.pow(speed - 0.7, 2)
+                     : 0.45 + Math.pow(speed - 0.25, 2);
+          expectedOnMyMachine *= delta;
+          expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 / JobSchedulerImpl.CORES_COUNT : expectedOnMyMachine;
+        }
+        if (adjustForIO) {
+          expectedOnMyMachine = Math.max(1, (int)(1.0 * expectedOnMyMachine * (1 + Math.pow(1.0 * Timings.IO_TIMING / Timings.ETALON_IO_TIMING - 1,2))));
+        }
+        final double acceptableChangeFactor = 1.1;
+
+        // Allow 10% more in case of test machine is busy.
+        String logMessage = message;
+        if (duration > expectedOnMyMachine) {
+          int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
+          logMessage += ". (" + percentage + "% longer).";
+        }
+        logMessage += " Expected: " + expectedOnMyMachine + "." +
+                      " Actual: " + duration + "." + Timings.getStatistics() ;
+        if (duration < expectedOnMyMachine) {
+          int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
+          logMessage = "(" + percentage + "% faster). " + logMessage;
+
+          TeamCityLogger.info(logMessage);
+          System.out.println("SUCCESS: "+logMessage);
+        }
+        else if (duration < expectedOnMyMachine * acceptableChangeFactor) {
+          TeamCityLogger.warning(logMessage, null);
+          System.out.println("WARNING: " + logMessage);
+        }
+        else {
+          // try one more time
+          if (attempts == 0) throw new AssertionFailedError(logMessage);
+          System.gc();
+          System.gc();
+          System.gc();
+          String s = "Another epic fail (remaining attempts: " + attempts + "): " + logMessage;
+          TeamCityLogger.warning(s, null);
+          System.err.println(s);
+          continue;
+        }
+        break;
+      }
+    }
+  }
+
 
   public static void assertTiming(String message, long expected, @NotNull Runnable actionToMeasure) {
     assertTiming(message, expected, 4, actionToMeasure);
@@ -424,7 +546,9 @@ public class PlatformTestUtil {
         System.gc();
         System.gc();
         System.gc();
-        TeamCityLogger.info("Another epic fail: "+e.getMessage() +"; Attempts remained: "+attempts);
+        String s = "Another epic fail (remaining attempts: " + attempts + "): " + e.getMessage();
+        TeamCityLogger.warning(s, null);
+        System.err.println(s);
       }
     }
   }
@@ -501,24 +625,41 @@ public class PlatformTestUtil {
     catch (IOException e) {
       FileDocumentManager manager = FileDocumentManager.getInstance();
       Document docBefore = manager.getDocument(fileBefore);
+      boolean canLoadBeforeText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
+      String textB = docBefore == null ? !canLoadBeforeText ? null : LoadTextUtil.getTextByBinaryPresentation(fileBefore.contentsToByteArray(false), fileBefore).toString() : docBefore.getText();
       Document docAfter = manager.getDocument(fileAfter);
-      if (docBefore != null && docAfter != null) {
-        Assert.assertEquals(fileAfter.getPath(), docAfter.getText(), docBefore.getText());
-      } else {
+      boolean canLoadAfterText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
+      String textA = docAfter == null ? !canLoadAfterText ? null : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString() : docAfter.getText();
+      if (textA != null && textB != null) {
+        Assert.assertEquals(fileAfter.getPath(), textA, textB);
+      }
+      else {
         Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
       }
     }
   }
 
   public static void assertJarFilesEqual(File file1, File file2) throws IOException {
-    final JarFile jarFile1 = new JarFile(file1);
-    final JarFile jarFile2 = new JarFile(file2);
-    final File tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
-    final File tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
-    ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
-    ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
-    jarFile1.close();
-    jarFile2.close();
+    JarFile jarFile1 = null;
+    JarFile jarFile2 = null;
+    final File tempDirectory1;
+    final File tempDirectory2;
+    try {
+      jarFile2 = new JarFile(file2);
+      jarFile1 = new JarFile(file1);
+      tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
+      tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
+      ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
+      ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
+    }
+    finally {
+      if (jarFile1 != null) {
+        jarFile1.close();
+      }
+      if (jarFile2 != null) {
+        jarFile2.close();
+      }
+    }
     final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -551,7 +692,7 @@ public class PlatformTestUtil {
 
     @Override
     public boolean accept(File dir, String name) {
-      return name.indexOf("CVS") == -1;
+      return !name.contains("CVS");
     }
   }
 }

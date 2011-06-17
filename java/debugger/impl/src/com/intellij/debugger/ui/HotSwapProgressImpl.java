@@ -20,6 +20,9 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -29,7 +32,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.MessageCategory;
 import gnu.trove.TIntObjectHashMap;
@@ -41,6 +43,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class HotSwapProgressImpl extends HotSwapProgress{
+  static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("HotSwap", NotificationDisplayType.NONE, true);
+
   TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<List<String>>();
   private final ProgressIndicator myProgressIndicator;
   private final ProgressWindow myProgressWindow;
@@ -73,14 +77,16 @@ public class HotSwapProgressImpl extends HotSwapProgress{
         final List<String> errors = getMessages(MessageCategory.ERROR);
         final List<String> warnings = getMessages(MessageCategory.WARNING);
         if (errors.size() > 0) {
-          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.ERROR, buildMessage(errors), null,
-                                                                      null);
-          WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.errors"));
+          final String message = buildMessage(errors);
+          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.ERROR, message, null, null);
+          NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.errors"), message,
+                                                                  NotificationType.ERROR, null).notify(getProject());
         }
         else if (warnings.size() > 0){
-          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.WARNING, buildMessage(warnings),
-                                                                      Messages.getWarningIcon(), null);
-          WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.warnings"));
+          final String message = buildMessage(warnings);
+          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.WARNING, message, Messages.getWarningIcon(), null);
+          NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.warnings"),
+                                                                  message, NotificationType.WARNING, null).notify(getProject());
         }
         else if (myMessages.size() > 0){
           final StringBuilder msg = StringBuilderSpinAllocator.alloc();
@@ -99,7 +105,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
             }
             final String message = msg.toString();
             ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message, null, null);
-            WindowManager.getInstance().getStatusBar(getProject()).setInfo(message);
+            NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(getProject());
           }
           finally {
             StringBuilderSpinAllocator.dispose(msg);

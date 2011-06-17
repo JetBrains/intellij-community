@@ -1,15 +1,14 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil
 
 /**
  * @author peter
@@ -87,15 +86,32 @@ class Test<T> extends Base<T> {
 """
   }
 
+  public void _testImplementIntention() {
+    myFixture.configureByText('a.groovy', '''
+class Base<E> {
+  public <E> E fo<caret>o(E e){}
+}
+
+class Test extends Base<String> {
+}
+''')
+
+    def fixes = myFixture.getAvailableIntentions()
+    assertSize(1, fixes)
+
+    def fix = fixes[0]
+    fix.invoke(myFixture.project, myFixture.editor, myFixture.file)
+  }
+
   private def generateImplementation(PsiMethod method) {
-    GrTypeDefinition clazz = ((PsiClassOwner) myFixture.file).classes[0]
-    GroovyOverrideImplementUtil.generateImplementation myFixture.editor, myFixture.file, clazz, method, PsiSubstitutor.EMPTY
-    ApplicationManager.getApplication().runWriteAction(new Runnable(){
-                                                       @Override
-                                                       void run() {
-                                                         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
-                                                       }
-                                                       });
+    ApplicationManager.application.runWriteAction(new Runnable() {
+      @Override
+      void run() {
+        GrTypeDefinition clazz = ((PsiClassOwner) myFixture.file).classes[0]
+        OverrideImplementUtil.overrideOrImplement(clazz, method);
+        PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()
+      }
+    });
     myFixture.editor.selectionModel.removeSelection()
   }
 

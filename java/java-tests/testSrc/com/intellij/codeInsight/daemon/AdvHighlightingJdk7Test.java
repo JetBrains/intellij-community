@@ -52,4 +52,8 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
   public void testStaticOnDemandImportConflict() throws Exception {
     doTest(BASE_PATH + "staticImportConflict/UsageOnDemand.java", BASE_PATH + "/staticImportConflict", false, false);
   }
+
+  public void testStaticImportMethodShadowing() throws Exception {
+    doTest(BASE_PATH + "staticImports/P1/MethodShadowing.java", BASE_PATH + "/staticImports", false, false);
+  }
 }

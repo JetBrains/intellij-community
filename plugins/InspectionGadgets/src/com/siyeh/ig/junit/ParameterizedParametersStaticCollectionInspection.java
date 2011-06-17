@@ -23,6 +23,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -118,7 +119,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   protected InspectionGadgetsFix buildFix(final Object... infos) {
     return new InspectionGadgetsFix() {
       @Override
-      protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
         final PsiElement element = descriptor.getPsiElement();
         final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
         if (method != null) {

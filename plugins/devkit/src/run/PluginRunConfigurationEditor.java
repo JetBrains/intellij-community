@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.configurations.LogFileOptions;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -24,7 +24,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.Computable;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,18 +121,13 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   public JComponent createEditor() {
     myModulesModel = new DefaultComboBoxModel(myPRC.getModules());
     myModules.setModel(myModulesModel);
-    myModules.setRenderer(new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(JList list, final Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value != null) {
-          setText(ApplicationManager.getApplication().runReadAction(new Computable<String >() {
-            public String compute() {
-              return ((Module)value).getName();
-            }
-          }));
-          setIcon(((Module)value).getModuleType().getNodeIcon(true));
+    myModules.setRenderer(new ListCellRendererWrapper<Module>(myModules.getRenderer()) {
+      @Override
+      public void customize(JList list, final Module module, int index, boolean selected, boolean hasFocus) {
+        if (module != null) {
+          setText(module.getName());
+          setIcon(module.getModuleType().getNodeIcon(true));
         }
-        return this;
       }
     });
     JPanel wholePanel = new JPanel(new GridBagLayout());

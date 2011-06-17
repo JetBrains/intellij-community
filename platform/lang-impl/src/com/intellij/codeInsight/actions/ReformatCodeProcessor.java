@@ -61,7 +61,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   public ReformatCodeProcessor(Project project, PsiFile[] files, Runnable postRunnable) {
-    super(project, files, PROGRESS_TEXT, COMMAND_NAME, postRunnable);
+    this(project, files, COMMAND_NAME, postRunnable);
+  }
+  
+  public ReformatCodeProcessor(Project project, PsiFile[] files, String commandName, Runnable postRunnable) {
+    super(project, files, PROGRESS_TEXT, commandName, postRunnable);
     myRange = null;
   }
 

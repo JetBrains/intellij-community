@@ -431,14 +431,14 @@ public class PluginManager {
     }
 
     if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
-      BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild());
+      BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild(), descriptor.getName());
       if (sinceBuild.compareTo(buildNumber) > 0) {
         return true;
       }
     }
 
     if (!StringUtil.isEmpty(descriptor.getUntilBuild()) && !buildNumber.isSnapshot()) {
-      BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild());
+      BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild(), descriptor.getName());
       if (untilBuild.compareTo(buildNumber) < 0) return true;
     }
 
@@ -1155,7 +1155,7 @@ public class PluginManager {
   }
 
   public static void dumpPluginClassStatistics() {
-    if (!Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) return;
+    if (!Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue() || ourPluginClasses == null) return;
     Map<String, ClassCounter> pluginToClassMap = new HashMap<String, ClassCounter>();
     synchronized (PLUGIN_CLASSES_LOCK) {
       for (Map.Entry<String, PluginId> entry : ourPluginClasses.entrySet()) {

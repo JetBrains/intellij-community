@@ -23,6 +23,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * User: cdr
  */
 public final class StripedReentrantLocks extends StripedLockHolder<ReentrantLock> {
+  private StripedReentrantLocks() {
+    super(ReentrantLock.class);
+  }
+
   @NotNull
   @Override
   protected ReentrantLock create() {
@@ -32,5 +36,12 @@ public final class StripedReentrantLocks extends StripedLockHolder<ReentrantLock
   private static final StripedReentrantLocks INSTANCE = new StripedReentrantLocks();
   public static StripedReentrantLocks getInstance() {
     return INSTANCE;
+  }
+
+  public void lock(int index) {
+    ourLocks[index].lock();
+  }
+  public void unlock(int index) {
+    ourLocks[index].unlock();
   }
 }

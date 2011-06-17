@@ -104,7 +104,7 @@ public abstract class ElementPresentationManager {
 
   /**
    * @deprecated
-   * @see com.intellij.ide.presentation.Presentation#nameProviderClass()
+   * @see com.intellij.ide.presentation.Presentation#provider()
    */
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
 
@@ -113,18 +113,6 @@ public abstract class ElementPresentationManager {
    * @see Documentation
    */
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
-  public static void registerIconProvider(Function<Object, Icon> function) { ourIconProviders.add(function); }
-
-  /**
-   * @deprecated
-   * @see com.intellij.ide.presentation.Presentation#icon()
-   */
-  public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
-  /**
-   * @deprecated
-   * @see com.intellij.ide.presentation.Presentation#icon()
-   */
-  public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 
 
   public static final NullableFunction<Object, String> NAMER = new NullableFunction<Object, String>() {
@@ -185,20 +173,15 @@ public abstract class ElementPresentationManager {
   public static String getTypeNameForObject(Object o) {
     final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
     o = firstImpl != null ? firstImpl : o;
-    final Class<? extends Object> aClass = o.getClass();
-    String s = TypeNameManager._getTypeName(aClass);
-    if (s != null) {
-      return s;
-    }
-
+    String typeName = TypePresentationService.getService().getTypeName(o);
+    if (typeName != null) return typeName;
     if (o instanceof DomElement) {
       final DomElement element = (DomElement)o;
       return StringUtil.capitalizeWords(element.getNameStrategy().splitIntoWords(element.getXmlElementName()), true);
     }
-    return TypeNameManager.getDefaultTypeName(aClass);
+    return TypePresentationService.getDefaultTypeName(o.getClass());
   }
 
-  @Nullable
   public static Icon getIcon(Object o) {
     for (final Function<Object, Icon> function : ourIconProviders) {
       final Icon icon = function.fun(o);
@@ -224,7 +207,7 @@ public abstract class ElementPresentationManager {
       }
     }
 
-    final Icon[] icons = getIconsForClass(o.getClass());
+    final Icon[] icons = getIconsForClass(o.getClass(), o);
     if (icons != null && icons.length > 0) {
       return icons[0];
     }
@@ -239,7 +222,7 @@ public abstract class ElementPresentationManager {
         return icon;
       }
     }
-    final Icon[] icons = getIconsForClass(o.getClass());
+    final Icon[] icons = getIconsForClass(o.getClass(), o);
     if (icons != null && icons.length > 0) {
       return icons[0];
     }
@@ -254,12 +237,13 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   public static Icon getIconForClass(Class clazz) {
-    return getFirst(getIconsForClass(clazz));
+    return getFirst(getIconsForClass(clazz, null));
   }
 
   @Nullable
-  private static Icon[] getIconsForClass(final Class clazz) {
-    final Icon icon = TypePresentationService.getService().getTypeIcon(clazz);
+  private static Icon[] getIconsForClass(final Class clazz, @Nullable Object o) {
+    TypePresentationService service = TypePresentationService.getService();
+    final Icon icon = o == null ? service.getTypeIcon(clazz) : service.getIcon(o);
     if (icon != null) {
       return new Icon[]{icon};
     }

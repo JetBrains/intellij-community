@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -72,6 +73,21 @@ public class IdeaProjectSettingsService extends ProjectSettingsService {
 
   public void openContentEntriesSettings(final Module module) {
     ModulesConfigurator.showDialog(myProject, module.getName(), ContentEntriesEditor.NAME, false);
+  }
+
+  @Override
+  public boolean canOpenModuleDependenciesSettings() {
+    return true;
+  }
+
+  @Override
+  public void openModuleDependenciesSettings(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, ProjectStructureConfigurable.getInstance(myProject), new Runnable() {
+      @Override
+      public void run() {
+        ModuleStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry);
+      }
+    });
   }
 
   @Override

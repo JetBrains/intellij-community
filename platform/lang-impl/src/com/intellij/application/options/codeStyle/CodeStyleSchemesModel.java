@@ -119,12 +119,26 @@ public class CodeStyleSchemesModel {
   }
 
   public void setUsePerProjectSettings(final boolean usePerProjectSettings) {
+    setUsePerProjectSettings(usePerProjectSettings, false);
+  }
+
+  /**
+   * Updates 'use per-project settings' value within the current model and optionally at the project settings.
+   * 
+   * @param usePerProjectSettings  defines whether 'use per-project settings' are in use
+   * @param commit                 flag that defines if current project settings should be applied as well
+   */
+  public void setUsePerProjectSettings(final boolean usePerProjectSettings, final boolean commit) {
+    if (commit) {
+      final CodeStyleSettingsManager projectSettings = getProjectSettings();
+      projectSettings.USE_PER_PROJECT_SETTINGS = usePerProjectSettings;
+    } 
+    
     if (myUsePerProjectSettings != usePerProjectSettings) {
       myUsePerProjectSettings = usePerProjectSettings;
       myDispatcher.getMulticaster().usePerProjectSettingsOptionChanged();
       myDispatcher.getMulticaster().currentSchemeChanged(this);
     }
-
   }
 
   private CodeStyleSettingsManager getProjectSettings() {
@@ -161,6 +175,11 @@ public class CodeStyleSchemesModel {
     }
 
     CodeStyleSchemes.getInstance().setCurrentScheme(myGlobalSelected);
+    
+    // We want to avoid the situation when 'real code style' differs from the copy stored here (e.g. when 'real code style' changes
+    // are 'committed' by pressing 'Apply' button). So, we reset the copies here assuming that this method is called on 'Apply'
+    // button processing
+    mySettingsToClone.clear();
   }
 
   static SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemesManager() {
@@ -184,15 +203,16 @@ public class CodeStyleSchemesModel {
   }
 
   public void copyToProject(final CodeStyleScheme selectedScheme) {
-    if (mySettingsToClone.containsKey(myProjectScheme)) {
-      CodeStyleSettings projectSettings = mySettingsToClone.get(myProjectScheme);
-      projectSettings.copyFrom(getEditedSchemeSettings(selectedScheme));
-      myDispatcher.getMulticaster().schemeChanged(myProjectScheme);
-    }
-    else {
-      mySettingsToClone.put(myProjectScheme, getEditedSchemeSettings(selectedScheme).clone());
-      myDispatcher.getMulticaster().schemeChanged(myProjectScheme);
-    }
+    myProjectScheme.getCodeStyleSettings().copyFrom(selectedScheme.getCodeStyleSettings());
+    myDispatcher.getMulticaster().schemeChanged(myProjectScheme);
+    //if (mySettingsToClone.containsKey(myProjectScheme)) {
+    //  CodeStyleSettings projectSettings = mySettingsToClone.get(myProjectScheme);
+    //  projectSettings.copyFrom(getEditedSchemeSettings(selectedScheme));
+    //}
+    //else {
+    //  mySettingsToClone.put(myProjectScheme, getEditedSchemeSettings(selectedScheme).clone());
+    //}
+    //myDispatcher.getMulticaster().schemeChanged(myProjectScheme);
   }
 
   private CodeStyleSettings getEditedSchemeSettings(final CodeStyleScheme selectedScheme) {

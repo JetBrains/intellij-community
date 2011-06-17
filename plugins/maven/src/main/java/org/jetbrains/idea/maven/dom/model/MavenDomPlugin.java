@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ import org.jetbrains.idea.maven.dom.MavenDomElement;
  * 4.0.0
  * </pre>
  */
+@Presentation(typeName = "Plugin", icon = "/images/mavenPlugin.png")
 public interface MavenDomPlugin extends MavenDomElement, MavenDomArtifactCoordinates {
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getGroupId();

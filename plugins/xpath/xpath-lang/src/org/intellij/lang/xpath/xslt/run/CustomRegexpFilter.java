@@ -19,11 +19,16 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.InvalidExpressionException;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -207,7 +212,7 @@ public class CustomRegexpFilter implements Filter {
     return info != null ? new Result(highlightStartOffset, highlightEndOffset, info) : null;
   }
 
-  protected HyperlinkInfo createOpenFileHyperlink(String fileName, final int line, final int column) {
+  protected HyperlinkInfo createOpenFileHyperlink(String fileName, final int line, int column) {
     if ((fileName == null || fileName.length() == 0)) {
         if (myBase != null) {
             fileName = myBase.getPresentableUrl();
@@ -231,6 +236,15 @@ public class CustomRegexpFilter implements Filter {
     if (file == null) {
       //noinspection ConstantConditions
       return null;
+    }
+
+    final FileType fileType = file.getFileType();
+    if (fileType != null && column > 0) {
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+
+      final int start = document.getLineStartOffset(line);
+      final int tabSize = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().getTabSize(fileType);
+      column = EditorUtil.calcColumnNumber(null, document.getCharsSequence(), start, start + column, tabSize);
     }
     return new OpenFileHyperlinkInfo(myProject, file, line, column);
   }

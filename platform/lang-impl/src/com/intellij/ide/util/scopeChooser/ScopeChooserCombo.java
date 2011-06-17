@@ -29,8 +29,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packageDependencies.ChangeListsScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -170,6 +170,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     DefaultComboBoxModel model = new DefaultComboBoxModel();
     createPredefinedScopeDescriptors(model);
 
+    List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(myProject).getCustomScopes();
+    for (NamedScope changeListScope : changeLists) {
+      model.addElement(new ScopeDescriptor(GlobalSearchScope.filterScope(myProject, changeListScope)));
+    }
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {
       NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
@@ -254,32 +258,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
           }
         }
       }
-    }
-
-    if (!ChangeListManager.getInstance(project).getAffectedFiles().isEmpty()) {
-      GlobalSearchScope modified = new GlobalSearchScope(project) {
-        public String getDisplayName() {
-          return IdeBundle.message("scope.modified.files");
-        }
-
-        public boolean contains(VirtualFile file) {
-          return ChangeListManager.getInstance(project).getChange(file) != null;
-        }
-
-        public int compare(VirtualFile file1, VirtualFile file2) {
-          return 0;
-        }
-
-        public boolean isSearchInModuleContent(@NotNull Module aModule) {
-          return true;
-        }
-
-        public boolean isSearchInLibraries() {
-          return false;
-        }
-      };
-
-      result.add(modified);
     }
 
     if (usageView) {

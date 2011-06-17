@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class CvsAnnotationProvider implements AnnotationProvider{
@@ -185,10 +186,11 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       return null;
     }
 
-    public void loadContent() throws VcsException {
+    public byte[] loadContent() throws IOException, VcsException {
+      return getContent();
     }
 
-    public byte[] getContent() {
+    public byte[] getContent() throws IOException, VcsException {
       return new byte[0];
     }
   }

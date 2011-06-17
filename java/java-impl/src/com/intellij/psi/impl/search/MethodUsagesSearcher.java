@@ -19,7 +19,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
   }
 
   @Override
-  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     final PsiMethod method = p.getMethod();
     final SearchRequestCollector collector = p.getOptimizer();
 
@@ -35,6 +35,13 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     if (method.isConstructor()) {
       new ConstructorReferencesSearchHelper(psiManager).
         processConstructorReferences(consumer, method, searchScope, !strictSignatureSearch, strictSignatureSearch, collector);
+    }
+
+    if (method instanceof PsiAnnotationMethod &&
+        PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) &&
+        method.getParameterList().getParametersCount() == 0) {
+      ReferencesSearch.search(method.getContainingClass(), p.getScope()).forEach(PsiAnnotationMethodReferencesSearcher.createImplicitDefaultAnnotationMethodConsumer(
+        consumer));
     }
 
     boolean needStrictSignatureSearch = strictSignatureSearch && (aClass instanceof PsiAnonymousClass

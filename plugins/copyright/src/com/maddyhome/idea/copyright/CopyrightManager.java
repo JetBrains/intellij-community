@@ -100,7 +100,10 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
                     public void run() {
                       if (file.isValid() && file.isWritable()) {
-                        new UpdateCopyrightProcessor(myProject, module, file).run();
+                        final CopyrightProfile opts = CopyrightManager.getInstance(myProject).getCopyrightOptions(file);
+                        if (opts != null) {
+                          new UpdateCopyrightProcessor(myProject, module, file).run();
+                        }
                       }
                     }
                   }, ModalityState.NON_MODAL);

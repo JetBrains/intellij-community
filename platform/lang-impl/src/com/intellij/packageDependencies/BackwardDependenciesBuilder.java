@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementVisitor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -37,21 +38,17 @@ import java.util.Set;
  * Date: Jan 16, 2005
  */
 public class BackwardDependenciesBuilder extends DependenciesBuilder {
-  private final AnalysisScope[] myForwardScopes;
+  private final AnalysisScope myForwardScope;
 
   public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope) {
     this(project, scope, null);
   }
 
-  public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope, final AnalysisScope scopeOfInterest) {
+  public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope, final @Nullable AnalysisScope scopeOfInterest) {
     super(project, scope, scopeOfInterest);
-    myForwardScopes = getScope().getNarrowedComplementaryScope(getProject());
-    int totalCount = 0;
-    for (AnalysisScope forwardScope : myForwardScopes) {
-      totalCount += forwardScope.getFileCount();
-    }
-    myFileCount = totalCount;
-    myTotalFileCount = totalCount + scope.getFileCount();
+    myForwardScope = getScope().getNarrowedComplementaryScope(getProject());
+    myFileCount = myForwardScope.getFileCount();
+    myTotalFileCount = myFileCount + scope.getFileCount();
   }
 
   public String getRootNodeNameInUsageView() {
@@ -67,18 +64,12 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
   }
 
   public void analyze() {
-    final DependenciesBuilder[] builders = new DependenciesBuilder[myForwardScopes.length];
-    int totalCount = 0;
-    for (int i = 0; i < myForwardScopes.length; i++) {
-      AnalysisScope scope = myForwardScopes[i];
-      builders[i] = new ForwardDependenciesBuilder(getProject(), scope, getScopeOfInterest());
-      builders[i].setInitialFileCount(totalCount);
-      builders[i].setTotalFileCount(myTotalFileCount);
-      builders[i].analyze();
-      totalCount += scope.getFileCount();
+    AnalysisScope scope = myForwardScope;
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), scope, getScopeOfInterest());
+    builder.setTotalFileCount(myTotalFileCount);
+    builder.analyze();
 
-      subtractScope(builders[i], getScope());
-    }
+    subtractScope(builder, getScope());
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     psiManager.startBatchFilesProcessingMode();
     try {
@@ -99,17 +90,15 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
               indicator.setFraction(((double)++myFileCount) / myTotalFileCount);
             }
           }
-          for (DependenciesBuilder builder : builders) {
-            final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
-            for (final PsiFile psiFile : dependencies.keySet()) {
-              if (dependencies.get(psiFile).contains(file)) {
-                Set<PsiFile> fileDeps = getDependencies().get(file);
-                if (fileDeps == null) {
-                  fileDeps = new HashSet<PsiFile>();
-                  getDependencies().put(file, fileDeps);
-                }
-                fileDeps.add(psiFile);
+          final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
+          for (final PsiFile psiFile : dependencies.keySet()) {
+            if (dependencies.get(psiFile).contains(file)) {
+              Set<PsiFile> fileDeps = getDependencies().get(file);
+              if (fileDeps == null) {
+                fileDeps = new HashSet<PsiFile>();
+                getDependencies().put(file, fileDeps);
               }
+              fileDeps.add(psiFile);
             }
           }
           psiManager.dropResolveCaches();

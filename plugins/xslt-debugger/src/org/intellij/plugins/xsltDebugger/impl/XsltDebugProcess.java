@@ -20,7 +20,7 @@ import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
-import org.intellij.plugins.xsltDebugger.rt.engine.local.BreakpointManagerImpl;
+import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

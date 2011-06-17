@@ -275,9 +275,10 @@ public class AnnotationUtil {
     if (owner == null || (modList = owner.getModifierList()) == null) return false;
 
     for (String fqn : annotations) {
-      if (! fqn.endsWith("*") && isAnnotated(owner, fqn, false)) {
+      boolean isPattern = fqn.endsWith("*");
+      if (!isPattern && isAnnotated(owner, fqn, false)) {
         return true;
-      } else {
+      } else if (isPattern) {
         if (fqns == null) {
           fqns = new ArrayList<String>();
           final PsiAnnotation[] annos = modList.getAnnotations();

@@ -24,21 +24,30 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.TitledBorderWithMnemonic;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 public class MemberSelectionPanel extends JPanel {
   private final MemberSelectionTable myTable;
 
+  /**
+   * @param title if title contains 'm' - it would look and feel as mnemonic
+   */
   public MemberSelectionPanel(String title, List<MemberInfo> memberInfo, String abstractColumnHeader) {
     super();
-    Border titledBorder = IdeBorderFactory.createTitledBorder(title);
+    TitledBorderWithMnemonic titledBorder = new TitledBorderWithMnemonic(appendTitledBorderMnemonic(title));
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
     setBorder(border);
@@ -47,8 +56,28 @@ public class MemberSelectionPanel extends JPanel {
     myTable = createMemberSelectionTable(memberInfo, abstractColumnHeader);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
-
     add(scrollPane, BorderLayout.CENTER);
+
+    registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        TableUtil.ensureSelectionExists(myTable);
+        myTable.requestFocus();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_M, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.ALT_DOWN_MASK),
+                              JComponent.WHEN_IN_FOCUSED_WINDOW);
+  }
+
+  private static String appendTitledBorderMnemonic(String title) {
+    int membersIdx = title.indexOf('M');
+    if (membersIdx >= 0) {
+      title = title.replaceFirst("M", "&M");
+    } else {
+      membersIdx = title.indexOf('m');
+      if (membersIdx >= 0) {
+        title = title.replaceFirst("m", "&m");
+      }
+    }
+    return title;
   }
 
   protected MemberSelectionTable createMemberSelectionTable(List<MemberInfo> memberInfo, String abstractColumnHeader) {

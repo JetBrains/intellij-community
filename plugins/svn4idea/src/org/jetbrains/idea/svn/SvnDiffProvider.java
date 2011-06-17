@@ -72,8 +72,8 @@ public class SvnDiffProvider implements DiffProvider {
     final SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
 
     if (! SVNRevision.HEAD.equals(svnRevision)) {
-      if (getCurrentRevision(selectedFile).equals(selectedFile)) {
-        return SvnContentRevision.create(myVcs, filePath, svnRevision);
+      if (revisionNumber.equals(getCurrentRevision(selectedFile))) {
+        return SvnContentRevision.createBaseRevision(myVcs, filePath, svnRevision);
       }
     }
     // not clear why we need it, with remote check..
@@ -81,7 +81,7 @@ public class SvnDiffProvider implements DiffProvider {
     try {
       final SVNStatus svnStatus = client.doStatus(new File(selectedFile.getPresentableUrl()), false, false);
       if (svnRevision.equals(svnStatus.getCommittedRevision())) {
-        return SvnContentRevision.create(myVcs, filePath, svnRevision);
+        return SvnContentRevision.createBaseRevision(myVcs, filePath, svnRevision);
       }
     }
     catch (SVNException e) {

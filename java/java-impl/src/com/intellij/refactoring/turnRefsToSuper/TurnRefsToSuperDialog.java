@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 06.06.2002
- * Time: 11:30:13
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.refactoring.turnRefsToSuper;
 
@@ -37,11 +28,16 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * @author dsl
+ * Date: 06.06.2002
+ */
 public class TurnRefsToSuperDialog extends RefactoringDialog {
   @NotNull private final PsiClass mySubClass;
   private final List mySuperClasses;
@@ -59,6 +55,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     init();
   }
 
+  @Nullable
   public PsiClass getSuperClass() {
     if(mySuperClassesList != null) {
       return (PsiClass) mySuperClassesList.getSelectedValue();
@@ -99,7 +96,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     panel.add(classListLabel, gbConstraints);
 
     mySuperClassesList = new JBList(mySuperClasses.toArray());
-    mySuperClassesList.setCellRenderer(new ClassCellRenderer());
+    mySuperClassesList.setCellRenderer(new ClassCellRenderer(mySuperClassesList.getCellRenderer()));
     mySuperClassesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     classListLabel.setText(RefactoringBundle.message("turnRefsToSuper.change.usages.to", mySubClass.getQualifiedName()));
 
@@ -127,9 +124,10 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
 
   protected void doAction() {
     JavaRefactoringSettings.getInstance().TURN_REFS_TO_SUPER_PREVIEW_USAGES = isPreviewUsages();
-    final TurnRefsToSuperProcessor processor = new TurnRefsToSuperProcessor(
-      getProject(), mySubClass, getSuperClass(), isUseInInstanceOf());
-    invokeRefactoring(processor);
+    final PsiClass superClass = getSuperClass();
+    if (superClass != null) {
+      invokeRefactoring(new TurnRefsToSuperProcessor(getProject(), mySubClass, superClass, isUseInInstanceOf()));
+    }
   }
 
   protected JComponent createCenterPanel() {

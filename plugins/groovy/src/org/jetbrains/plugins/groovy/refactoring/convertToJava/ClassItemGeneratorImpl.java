@@ -78,7 +78,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       );
     }
 
-    final GrEnumConstantInitializer anonymousBlock = constant.getConstantInitializer();
+    final GrEnumConstantInitializer anonymousBlock = constant.getInitializingClass();
     if (anonymousBlock != null) {
       builder.append("{\n");
       new ClassGenerator(classNameProvider, this).writeMembers(builder, anonymousBlock, true);

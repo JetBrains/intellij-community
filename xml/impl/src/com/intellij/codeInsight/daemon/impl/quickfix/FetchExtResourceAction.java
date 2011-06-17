@@ -40,6 +40,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
+import com.intellij.util.net.NetUtils;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -502,23 +503,14 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       InputStream in = urlConnection.getInputStream();
-      String contentType = urlConnection.getContentType();
-
-      byte[] buffer = new byte[256];
-
-      while (true) {
-        int read = in.read(buffer);
-        if (read < 0) break;
-
-        out.write(buffer, 0, read);
-        bytesRead += read;
-        if (contentLength > 0) {
-          indicator.setFraction((double)bytesRead / (double)contentLength);
-        }
+      String contentType;
+      try {
+        contentType = urlConnection.getContentType();
+        NetUtils.copyStreamContent(indicator, in, out, contentLength);
       }
-
-      in.close();
-      out.close();
+      finally {
+        in.close();
+      }
 
       FetchResult result = new FetchResult();
       result.bytes = out.toByteArray();

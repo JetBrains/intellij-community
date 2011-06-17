@@ -33,12 +33,9 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,16 +50,17 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -82,10 +80,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private final IdeView myIdeView;
   private final CopyPasteDelegator myCopyPasteDelegator;
   private LightweightHint myHint = null;
-  private NavBarPopup myNodeHint = null;
-
-  private ListPopupImpl myNodePopup = null;
-
+  private NavBarPopup myNodePopup = null;
   private JComponent myHintContainer;
   private Component myContextComponent;
 
@@ -94,7 +89,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private NavBarItem myContextObject;
   private boolean myDisposed = false;
   private RelativePoint myLocationCache;
-  private boolean initialized = false;
 
   public NavBarPanel(final Project project) {
     super(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -104,7 +98,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myPresentation = new NavBarPresentation(myProject);
     myUpdateQueue = new NavBarUpdateQueue(this);
 
-    PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
+    PopupHandler.installPopupHandler(this, IdeActions.GROUP_NAVBAR_POPUP, ActionPlaces.NAVIGATION_BAR);
 
     setBorder(new NavBarBorder(false, -1));
     setOpaque(false);
@@ -123,8 +117,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   public boolean isNodePopupActive() {
-    return (myNodePopup != null && myNodePopup.isVisible() && myNodePopup.isFocused())
-           || (myNodeHint != null && myNodeHint.isVisible());
+    return myNodePopup != null && myNodePopup.isVisible();
   }
 
   public LightweightHint getHint() {
@@ -207,7 +200,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   boolean isSelectedInPopup(Object object) {
     if (isNodePopupActive()) {
-      return myNodeHint.getSelectedValue() == object;
+      return myNodePopup.getSelectedValue() == object;
     }
     return false;
   }
@@ -416,7 +409,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
 
     final Object object = myModel.getElement(index);
-    final java.util.List<Object> objects = myModel.getChildren(object);
+    final List<Object> objects = myModel.getChildren(object);
 
     if (!objects.isEmpty()) {
       final Object[] siblings = new Object[objects.size()];
@@ -426,74 +419,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         icons[i] = NavBarPresentation.getIcon(siblings[i], false);
       }
       final NavBarItem item = getItem(index);
-      final BaseListPopupStep<Object> step;
-      if (Registry.is("navbar.newpopup")) {
-        myNodePopup = null;
-        myNodeHint = new NavBarPopup(this, siblings, index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
-        if (item != null && item.isShowing()) {
-          myNodeHint.show(item);
-        }
-      } else {
-        myNodeHint = null;
-        step = new BaseListPopupStep<Object>("", siblings, icons) {
-          public boolean isSpeedSearchEnabled() {
-            return true;
-          }
 
-          @NotNull
-          public String getTextFor(final Object value) {
-            return NavBarPresentation.getPresentableText(value, null);
-          }
-
-          public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
-            return doFinalStep(new Runnable() {
-              public void run() {
-                navigateInsideBar(selectedValue);
-              }
-            });
-          }
-        };
-        step.setDefaultOptionIndex(index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
-        myNodePopup = new ListPopupImpl(step) {
-          protected ListCellRenderer getListElementRenderer() {
-            return new NavBarListCellRenderer(myProject, NavBarPanel.this);
-          }
-
-          @Override
-          public void cancel(InputEvent e) {
-            super.cancel(e);
-          }
-        };
-        myNodePopup.registerAction("left", KeyEvent.VK_LEFT, 0, new AbstractAction() {
-          public void actionPerformed(ActionEvent e) {
-            myNodePopup.goBack();
-            shiftFocus(-1);
-            restorePopup();
-          }
-        });
-        myNodePopup.registerAction("right", KeyEvent.VK_RIGHT, 0, new AbstractAction() {
-          public void actionPerformed(ActionEvent e) {
-            myNodePopup.goBack();
-            shiftFocus(1);
-            restorePopup();
-          }
-        });
-
-
-      if (!isValid()) {
-        validate();
-      }
-
-      if (item != null && item.isShowing() && step.getValues().size() > 0) {
-        myNodePopup.showUnderneathOf(item);
-      }
+      myNodePopup = new NavBarPopup(this, siblings, index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
+      if (item != null && item.isShowing()) {
+        myNodePopup.show(item);
       }
     }
   }
 
   boolean isNodePopupShowing() {
-    return (myNodePopup != null && myNodePopup.isVisible())
-      || (myNodeHint != null && myNodeHint.isVisible());
+    return myNodePopup != null && myNodePopup.isVisible();
   }
 
   void navigateInsideBar(final Object object) {
@@ -538,12 +473,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   void cancelPopup() {
-    if (myNodeHint != null) {
-      myNodeHint.hide();
-      myNodeHint = null;
-    }
     if (myNodePopup != null) {
-      myNodePopup.cancel();
+      myNodePopup.hide();
       myNodePopup = null;
     }
   }
@@ -628,8 +559,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @SuppressWarnings({"unchecked"})
   <T> T getSelectedElement(Class<T> klass) {
     Object value = null;
-    if (myNodeHint != null) {
-      value = myNodeHint.getSelectedValue();
+    if (myNodePopup != null) {
+      value = myNodePopup.getSelectedValue();
     }
     if (value == null) value =  myModel.getSelectedValue();
     if (value == null) {
@@ -687,80 +618,52 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   // ------ popup NavBar ----------
   public void showHint(@Nullable final Editor editor, final DataContext dataContext) {
-    myUpdateQueue.queueModelUpdate(dataContext);
-    myUpdateQueue.queueAfterAll(new Runnable() {
-      @Override
-      public void run() {
-        if (myModel.isEmpty()) return;
-        final JPanel panel = new JPanel(new BorderLayout());
-        panel.add(NavBarPanel.this);
-        panel.setOpaque(true);
-        panel.setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
+    myModel.updateModel(dataContext);
+    if (myModel.isEmpty()) return;
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(this);
+    panel.setOpaque(true);
+    panel.setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
 
-        myHint = new LightweightHint(panel) {
-          public void hide() {
-            super.hide();
-            cancelPopup();
-            Disposer.dispose(NavBarPanel.this);
+    myHint = new LightweightHint(panel) {
+      public void hide() {
+        super.hide();
+        cancelPopup();
+        Disposer.dispose(NavBarPanel.this);
+      }
+    };
+    myHint.setForceShowAsPopup(true);
+    myHint.setFocusRequestor(this);
+    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    myUpdateQueue.rebuildUi();
+    if (editor == null) {
+      myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
+        @Override
+        public void run(RelativePoint relativePoint) {
+          final Component owner = focusManager.getFocusOwner();
+          final Component cmp = relativePoint.getComponent();
+          if (cmp instanceof JComponent && cmp.isShowing()) {
+            myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
+                        owner instanceof JComponent ? (JComponent)owner : null,
+                        new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
           }
-        };
-        myHint.setForceShowAsPopup(true);
-        myHint.setFocusRequestor(NavBarPanel.this);
-        final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-
-        if (editor == null) {
-          myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-          getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
-            @Override
-            public void run(RelativePoint relativePoint) {
-              final Component owner = focusManager.getFocusOwner();
-              final Component cmp = relativePoint.getComponent();
-              if (cmp instanceof JComponent && cmp.isShowing()) {
-                myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
-                            owner instanceof JComponent ? (JComponent)owner : null,
-                            new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
-              }
-            }
-          });
-        } else {
-          myHintContainer = editor.getContentComponent();
-          getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
-            @Override
-            public void run(RelativePoint rp) {
-              Point p = rp.getPointOn(myHintContainer).getPoint();
-              final HintHint hintInfo = new HintHint(editor, p);
-              HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
-            }
-          });
         }
-        selectTail();
-      }
-    }, NavBarUpdateQueue.ID.SHOW_HINT);
-
-  }
-
-  public void activatePopupOnLastElement() {
-    activatePopupOnLastElement(null);
-  }
-
-  public void activatePopupOnLastElement(@Nullable DataContext context) {
-    if (context != null) {
-      myUpdateQueue.queueModelUpdate(context);
+      });
     }
-    myUpdateQueue.queueRebuildUi();
-    myUpdateQueue.queueSelect(new Runnable() {
-      @Override
-      public void run() {
-        if (!myList.isEmpty()) {
-          myModel.setSelectedIndex(Math.max(myList.size() - 2, 0));
-          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
-          restorePopup();
-          initialized = true;
+    else {
+      myHintContainer = editor.getContentComponent();
+      getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
+        @Override
+        public void run(RelativePoint rp) {
+          Point p = rp.getPointOn(myHintContainer).getPoint();
+          final HintHint hintInfo = new HintHint(editor, p);
+          HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
         }
-      }
-    });
+      });
+    }
 
-    myUpdateQueue.flush();
+    selectTail();
   }
 
   AsyncResult<RelativePoint> getHintContainerShowPoint() {

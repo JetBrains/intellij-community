@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.NetUtils;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -69,21 +70,25 @@ public abstract class DownloadManager {
             final URLConnection urlConnection = url.openConnection();
             urlConnection.connect();
             final InputStream in = urlConnection.getInputStream();
+
+          final OutputStream out;
+          try {
             final int total = urlConnection.getContentLength();
 
             final String name = Integer.toHexString(System.identityHashCode(this)) + "_" + Integer.toHexString(location.hashCode()) + "_" + location.substring(location.lastIndexOf('/') + 1);
             file = new File(myResourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name);
-            final OutputStream out = new FileOutputStream(file);
+            out = new FileOutputStream(file);
 
-            byte[] buf = new byte[128];
-            int n;
-            while ((n = in.read(buf)) != -1) {
-                myProgress.checkCanceled();
-                myProgress.setFraction(total / (double)n);
-                out.write(buf, 0, n);
+            try {
+              NetUtils.copyStreamContent(myProgress, in, out, total);
             }
+            finally {
+              out.close();
+            }
+          }
+          finally {
             in.close();
-            out.close();
+          }
 
             try {
               final File _file = file;

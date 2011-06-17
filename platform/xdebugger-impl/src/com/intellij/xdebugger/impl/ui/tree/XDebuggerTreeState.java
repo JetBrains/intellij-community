@@ -113,21 +113,12 @@ public class XDebuggerTreeState {
       return myExpanded;
     }
 
-    public String getName() {
-      return myName;
-    }
-
     public boolean isSelected() {
       return mySelected;
     }
 
     public String getValue() {
       return myValue;
-    }
-
-    @Nullable
-    public NodeInfo getChild(@NotNull String name) {
-      return myChidlren != null ? myChidlren.get(name) : null;
     }
 
     @Nullable

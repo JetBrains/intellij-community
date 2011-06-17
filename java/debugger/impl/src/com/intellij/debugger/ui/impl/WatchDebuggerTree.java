@@ -78,8 +78,9 @@ public class WatchDebuggerTree extends DebuggerTree {
     root.add(node);
 
     treeChanged();
-    getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
-
+    final TreePath path = new TreePath(node.getPath());
+    getSelectionModel().setSelectionPath(path);
+    scrollPathToVisible(path);
     return node;
   }
 

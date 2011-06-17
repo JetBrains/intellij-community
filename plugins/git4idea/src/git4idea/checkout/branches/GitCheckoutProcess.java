@@ -15,6 +15,7 @@
  */
 package git4idea.checkout.branches;
 
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,6 +41,7 @@ import com.intellij.util.continuation.GatheringContinuationContext;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.checkout.branches.GitBranchConfigurations.BranchChanges;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeInfo;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeListInfo;
@@ -583,10 +585,11 @@ public class GitCheckoutProcess {
       @Override
       public void consume(VcsException e) {
         GitUIUtil.showTabErrors(myProject, "Failed to restore shelved lists", Collections.singletonList(e));
-        ToolWindowManager.getInstance(myProject).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.ERROR,
-                                                                 "Failed to process restore shelved change list: " +
-                                                                 finalShelve.DESCRIPTION +
-                                                                 ". Please restore it manually.");
+        final String message = "Failed to process restore shelved change list: " +
+                                finalShelve.DESCRIPTION +
+                                ". Please restore it manually.";
+        ToolWindowManager.getInstance(myProject).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.ERROR, message);
+        GitVcs.NOTIFICATION_GROUP_ID.createNotification(message, NotificationType.ERROR).notify(myProject);
       }
     };
     continuation.addExceptionHandler(VcsException.class, exceptionConsumer);

@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -158,7 +159,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
         infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
       }
 
-      ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,
+      final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,
                                                                   psiMethod,
                                                                   false, null, psiMethod.getName(),
                                                                   PsiType.VOID,

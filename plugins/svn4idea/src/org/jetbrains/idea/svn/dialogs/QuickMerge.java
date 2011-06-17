@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.RunBackgroundable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
@@ -29,7 +30,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.progress.RunBackgroundable;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -271,8 +271,10 @@ public class QuickMerge {
         return;
       }
       final boolean reintegrate = myData.isInvertedSense();
-      if (reintegrate && (! prompt("You are going to reintegrate changes.\nThis will make " + mySourceUrl + " no longer usable for further work." +
-                   "\nAre you sure?"))) {
+      if (reintegrate && (! prompt("<html><body>You are going to reintegrate changes.<br><br>This will make branch '" + mySourceUrl +
+                    "' <b>no longer usable for further work</b>." +
+                   "<br>It will not be able to correctly absorb new trunk (" + myData.inverted().getTarget() +
+                   ") changes,<br>nor can this branch be properly reintegrated to trunk again.<br><br>Are you sure?</body></html>"))) {
         context.cancelEverything();
         return;
       }

@@ -16,14 +16,8 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.Patches;
-import com.intellij.facet.ProjectFacetManager;
-import com.intellij.facet.ProjectWideFacetListenersRegistry;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.Notifications;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -72,11 +66,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -123,8 +116,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private final Set<String> myRestoredToolWindowIds = new HashSet<String>();
   private final FileEditorManager myFileEditorManager;
-  private final ProjectWideFacetListenersRegistry myFacetListenersRegistry;
-  private final ProjectFacetManager myFacetManager;
 
   private final Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
 
@@ -157,14 +148,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindowManagerImpl(final Project project,
                                WindowManagerEx windowManagerEx,
                                final FileEditorManager fem,
-                               ActionManager actionManager,
-                               ProjectWideFacetListenersRegistry facetListenersRegistry,
-                               ProjectFacetManager facetManager) {
+                               ActionManager actionManager) {
     myProject = project;
     myWindowManager = windowManagerEx;
     myFileEditorManager = fem;
-    myFacetListenersRegistry = facetListenersRegistry;
-    myFacetManager = facetManager;
     myListenerList = new EventListenerList();
 
     if (!project.isDefault()) {
@@ -283,7 +270,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       boolean pressed = e.getID() == KeyEvent.KEY_PRESSED;
       int modifiers = e.getModifiers();
 
-      int mouseMask = MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK | MouseEvent.BUTTON3_DOWN_MASK;
+      int mouseMask = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK;
       if ((e.getModifiersEx() & mouseMask) == 0) {
         if (SwitchManager.areAllModifiersPressed(modifiers, vks) || !pressed) {
           processState(pressed);
@@ -321,10 +308,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     processHoldState();
   }
 
-  private void resetState() {
-    myCurrentState = KeyState.waiting;
-  }
-
   private void processState(boolean pressed) {
     if (pressed) {
       if (myCurrentState == KeyState.waiting) {
@@ -339,9 +322,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (myCurrentState == KeyState.pressed) {
         myCurrentState = KeyState.released;
         restartWaitingForSecondPressAlarm();
-      }
-      else if (myCurrentState == KeyState.hold) {
-        resetHoldState();
       }
       else {
         resetHoldState();
@@ -362,7 +342,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return myFileEditorManager.getOpenFiles().length > 0;
   }
 
-  FocusManagerImpl getFocusManagerImpl() {
+  private static FocusManagerImpl getFocusManagerImpl() {
     return FocusManagerImpl.getInstance();
   }
 
@@ -464,7 +444,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       LOG.error(e);
       return;
     }
-    JLabel label = new JLabel("Initializing...", JLabel.CENTER);
+    JLabel label = new JLabel("Initializing...", SwingConstants.CENTER);
     label.setOpaque(true);
     final Color treeBg = UIManager.getColor("Tree.background");
     label.setBackground(new Color(treeBg.getRed(), treeBg.getGreen(), treeBg.getBlue(), 180));
@@ -640,7 +620,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     });
   }
 
-  private void deactivateWindows(final ArrayList<FinalizableCommand> postExecute, String idToIgnore) {
+  private void deactivateWindows(final ArrayList<FinalizableCommand> postExecute, @Nullable String idToIgnore) {
     final WindowInfoImpl[] infos = myLayout.getInfos();
     for (final WindowInfoImpl info : infos) {
       final boolean shouldHide = isToHide(info);
@@ -784,7 +764,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return getLastActiveToolWindowId(null);
   }
 
-  public String getLastActiveToolWindowId(Condition<JComponent> condition) {
+  @Nullable
+  public String getLastActiveToolWindowId(@Nullable Condition<JComponent> condition) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     String lastActiveToolWindowId = null;
     for (int i = 0; i < myActiveStack.getPersistentSize(); i++) {
@@ -890,28 +871,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       activateEditorComponentImpl(getSplittersFromFocus(), commandList, true);
     }
     else {
-
-      // first of all we have to find tool window that was located at the same side and
-      // was hidden.
-
-      WindowInfoImpl info2 = null;
-      while (!mySideStack.isEmpty(info.getAnchor())) {
-        final WindowInfoImpl storedInfo = mySideStack.pop(info.getAnchor());
-        final WindowInfoImpl currentInfo = getInfo(storedInfo.getId());
-        LOG.assertTrue(currentInfo != null);
-        // SideStack contains copies of real WindowInfos. It means that
-        // these stored infos can be invalid. The following loop removes invalid WindowInfos.
-        if (storedInfo.getAnchor() == currentInfo.getAnchor() &&
-            storedInfo.getType() == currentInfo.getType() &&
-            storedInfo.isAutoHide() == currentInfo.isAutoHide()) {
-          info2 = storedInfo;
-          break;
-        }
-      }
-      if (info2 != null) {
-        showToolWindowImpl(info2.getId(), false, commandList);
-      }
-
       // If we hide currently active tool window then we should activate the previous
       // one which is located in the tool window stack.
       // Activate another tool window if no active tool window exists and
@@ -930,7 +889,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
         else {
           final String toBeActivatedId = myActiveStack.pop();
-          if (toBeActivatedId != null) {
+          if (toBeActivatedId != null && getInfo(toBeActivatedId).isVisible()) {
             activateToolWindowImpl(toBeActivatedId, commandList, false, true);
           }
           else {
@@ -1280,11 +1239,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (existing != null) {
       existing.hide();
     }
-    Notifications.Bus.notify(createNotification(type, text, listener), myProject);
-
-    if (NotificationsManagerImpl.isEventLogVisible(myProject)) {
-      return;
-    }
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
     final ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
@@ -1335,6 +1289,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (button.isShowing()) {
           PositionTracker tracker = new PositionTracker<Balloon>(button) {
             @Override
+            @Nullable
             public RelativePoint recalculateLocation(Balloon object) {
               Stripe twStripe = myToolWindowsPane.getStripeFor(toolWindowId);
               StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
@@ -1387,16 +1342,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       show.run();
     }
 
-  }
-
-  public static Notification createNotification(MessageType type, String text, @Nullable final HyperlinkListener listener) {
-    final NotificationListener notificationListener = listener == null ? null : new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        listener.hyperlinkUpdate(event);
-      }
-    };
-    return new Notification(Notifications.LOG_ONLY_GROUP_ID, "", text, type.toNotificationType(), notificationListener);
   }
 
   @Override
@@ -1565,12 +1510,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return getInfo(id).isAutoHide();
   }
 
-  public boolean isToolWindowFloating(final String id) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    checkId(id);
-    return getInfo(id).isFloating();
-  }
-
   boolean isToolWindowVisible(final String id) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
@@ -1700,7 +1639,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   /**
    * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createSetEditorComponentCmd
    */
-  private void appendSetEditorComponentCmd(final JComponent component, final List<FinalizableCommand> commandsList) {
+  private void appendSetEditorComponentCmd(@Nullable final JComponent component, final List<FinalizableCommand> commandsList) {
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final FinalizableCommand command = myToolWindowsPane.createSetEditorComponentCmd(component, commandProcessor);
     commandsList.add(command);
@@ -2094,10 +2033,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return "ToolWindowManager";
   }
 
-  public ToolWindowsPane getToolWindowsPane() {
-    return myToolWindowsPane;
-  }
-
   public ActionCallback requestDefaultFocus(final boolean forced) {
     return getFocusManagerImpl().requestFocus(new FocusCommand() {
       public ActionCallback run() {
@@ -2106,7 +2041,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }, forced);
   }
 
-  private void focusToolWinowByDefault(String idToIngore) {
+  private void focusToolWinowByDefault(@Nullable String idToIngore) {
     String toFocus = null;
 
     for (String each : myActiveStack.getStack()) {
@@ -2148,16 +2083,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
 
-  private boolean isProjectComponent(Component c) {
-    final Component frame = UIUtil.findUltimateParent(c);
-    if (frame instanceof IdeFrame) {
-      return frame == myWindowManager.getFrame(myProject);
-    }
-    else {
-      return false;
-    }
-  }
-
   /**
    * Delegate method for compatibility with older versions of IDEA
    */
@@ -2171,28 +2096,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return IdeFocusManager.getInstance(myProject).requestFocus(command, forced);
   }
 
-  public JComponent getFocusTargetFor(@NotNull JComponent comp) {
-    return IdeFocusManager.getInstance(myProject).getFocusTargetFor(comp);
-  }
-
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable) {
     IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(runnable);
   }
 
-  public Component getFocusedDescendantFor(Component comp) {
-    return IdeFocusManager.getInstance(myProject).getFocusedDescendantFor(comp);
-  }
-
   public boolean dispatch(KeyEvent e) {
     return IdeFocusManager.getInstance(myProject).dispatch(e);
-  }
-
-  public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
-    IdeFocusManager.getInstance(myProject).suspendKeyProcessingUntil(done);
-  }
-
-  public boolean isFocusBeingTransferred() {
-    return IdeFocusManager.getInstance(myProject).isFocusBeingTransferred();
   }
 
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {

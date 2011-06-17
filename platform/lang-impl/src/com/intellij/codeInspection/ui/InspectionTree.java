@@ -296,11 +296,12 @@ public class InspectionTree extends Tree {
     }
   }
 
-  private static void sortChildren(InspectionTreeNode node) {
+  private void sortChildren(InspectionTreeNode node) {
     final List<TreeNode> children = TreeUtil.childrenToArray(node);
     Collections.sort(children, InspectionResultsViewComparator.getInstance());
     node.removeAllChildren();
     TreeUtil.addChildrenTo(node, children);
+    ((DefaultTreeModel)getModel()).reload(node);
   }
 
   private class SelectionPath {

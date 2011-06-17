@@ -115,6 +115,10 @@ public class XsltHighlightingTest extends TestBase {
         doXsltHighlighting();
     }
 
+    public void testEmptyAVT() throws Throwable {
+        doXsltHighlighting();
+    }
+
     public void testEscapedXPathString() throws Throwable {
         doXsltHighlighting();
     }
@@ -144,9 +148,9 @@ public class XsltHighlightingTest extends TestBase {
       });
     }
 
-    private void doXsltHighlighting(String... moreFiles) throws Throwable {
+    private void doXsltHighlighting() throws Throwable {
         final String name = getTestFileName();
-        myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xsl"));
+        myFixture.testHighlighting(true, false, false, name + ".xsl");
     }
 
     @Override

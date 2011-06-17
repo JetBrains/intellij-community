@@ -47,10 +47,8 @@ public class ArtifactsGenerator {
   private final PackagingElementResolvingContext myResolvingContext;
   private final ArtifactAntGenerationContextImpl myContext;
   private final List<Artifact> myAllArtifacts;
-  private final GenerationOptions myGenOptions;
 
   public ArtifactsGenerator(Project project, GenerationOptions genOptions) {
-    myGenOptions = genOptions;
     myResolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
 
     myAllArtifacts = new ArrayList<Artifact>(Arrays.asList(ArtifactManager.getInstance(project).getSortedArtifacts()));

@@ -347,7 +347,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myStartCompletionWhenNothingMatches = startCompletionWhenNothingMatches;
   }
 
-  private void ensureSelectionVisible() {
+  public void ensureSelectionVisible() {
     ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
   }
 
@@ -426,7 +426,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getAdComponent().getPreferredSize().width));
 
       if (isFocused() && (!isExactPrefixItem(model.iterator().next(), true) || mySelectionTouched)) {
-        restoreSelection(oldSelected, hasPreselected, oldInvariant);
+        restoreSelection(oldSelected, hasPreselected, oldInvariant, snapshot.second);
       }
       else {
         myList.setSelectedIndex(0);
@@ -469,7 +469,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     updateLookupStart(minPrefixLength);
   }
 
-  private void restoreSelection(@Nullable LookupElement oldSelected, boolean choosePreselectedItem, @Nullable String oldInvariant) {
+  private void restoreSelection(@Nullable LookupElement oldSelected, boolean choosePreselectedItem, @Nullable String oldInvariant, Iterable<List<LookupElement>> groups) {
     if (oldSelected != null) {
       if (oldSelected.isValid()) {
         myList.setSelectedValue(oldSelected, false);
@@ -493,7 +493,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (choosePreselectedItem) {
       myList.setSelectedValue(myPreselectedItem, false);
     } else {
-      myList.setSelectedIndex(doSelectMostPreferableItem(getItems()));
+      myList.setSelectedIndex(doSelectMostPreferableItem(getItems(), groups));
     }
 
     if (myPreselectedItem != null && myShown) {
@@ -1218,7 +1218,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     disposeTrace = DebugUtil.currentStackTrace();
   }
 
-  private int doSelectMostPreferableItem(List<LookupElement> items) {
+  private int doSelectMostPreferableItem(List<LookupElement> items, Iterable<List<LookupElement>> groups) {
     if (items.isEmpty()) {
       return -1;
     }
@@ -1234,7 +1234,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     }
 
-    final int index = getActualArranger().suggestPreselectedItem(items);
+    final int index = getActualArranger().suggestPreselectedItem(items, groups);
     assert index >= 0 && index < items.size();
     return index;
   }

@@ -41,6 +41,9 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,20 +64,18 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -542,12 +543,30 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     //search usages if it cheap
     //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
-    if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES && !canbeReferencedViaWeirdNames(member)) return true;
+    if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
+      if (member instanceof PsiEnumConstant) {
+        return checkEnumValuesUsages(member, progress);
+      }
+      if (!canbeReferencedViaWeirdNames(member)) return true;
+    }
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager();
+    boolean used = findUsagesManager.isUsed(member, scope);
 
-    Query<PsiReference> query = member instanceof PsiMethod
-                                ? MethodReferencesSearch.search((PsiMethod)member, scope, true)
-                                : ReferencesSearch.search(member, scope, true);
-    return query.findFirst() == null;
+    if (!used && member instanceof PsiEnumConstant) {
+      return checkEnumValuesUsages(member, progress);
+    }
+    return !used;
+  }
+
+  private boolean checkEnumValuesUsages(PsiMember member, ProgressIndicator progress) {
+    final PsiClassImpl containingClass = (PsiClassImpl)member.getContainingClass();
+    if (containingClass != null) {
+      final PsiMethod valuesMethod = containingClass.getValuesMethod();
+      if (valuesMethod != null && weAreSureThereAreNoUsages(valuesMethod, progress)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean canbeReferencedViaWeirdNames(PsiMember member) {

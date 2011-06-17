@@ -16,8 +16,11 @@
 
 package com.intellij.util.xmlb;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
@@ -25,11 +28,9 @@ import com.intellij.util.xmlb.annotations.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
 import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -110,7 +111,6 @@ class BeanBinding implements Binding {
     }
   }
 
-
   public void deserializeInto(final Object bean, final Element element) {
     _deserializeInto(bean, element);
   }
@@ -134,11 +134,11 @@ class BeanBinding implements Binding {
 
     ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
 
-
     MultiMap<Binding, Object> data = new MultiMap<Binding, Object>();
 
     final Object[] children = JDOMUtil.getChildNodesWithAttrs(e);
-    nextNode: for (Object child : children) {
+    nextNode:
+    for (Object child : children) {
       if (XmlSerializerImpl.isIgnoredNode(child)) continue;
 
       for (Binding binding : bindings) {
@@ -188,57 +188,73 @@ class BeanBinding implements Binding {
     return Element.class;
   }
 
-
   private static String getTagName(Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
     if (tag != null && tag.value().length() != 0) return tag.value();
-
     return aClass.getSimpleName();
   }
 
   @NotNull
   static List<Accessor> getAccessors(Class<?> aClass) {
-    try {
-      List<Accessor> accessors = new ArrayList<Accessor>();
+    final List<Accessor> accessors = Lists.newArrayList();
 
-      BeanInfo info = Introspector.getBeanInfo(aClass);
+    final Map<String, Pair<Method, Method>> candidates = Maps.newTreeMap();  // (name,(getter,setter))
+    for (Method method : aClass.getMethods()) {
+      if (!Modifier.isPublic(method.getModifiers())) continue;
+      final Pair<String, Boolean> propertyData = getPropertyData(method.getName());  // (name,isSetter)
+      if (propertyData == null || propertyData.first.equals(CLASS_PROPERTY)) continue;
+      if (method.getParameterTypes().length != (propertyData.second ? 1 : 0)) continue;
 
-      PropertyDescriptor[] propertyDescriptors = info.getPropertyDescriptors();
-      for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-        if (propertyDescriptor.getName().equals(CLASS_PROPERTY)) continue;
-        final Method readMethod = propertyDescriptor.getReadMethod();
-        final Method writeMethod = propertyDescriptor.getWriteMethod();
-
-        if (readMethod == null) continue;
-        if (writeMethod == null) continue;
-
-        if (XmlSerializerImpl.findAnnotation(readMethod.getAnnotations(), Transient.class) != null ||
-            XmlSerializerImpl.findAnnotation(writeMethod.getAnnotations(), Transient.class) != null) continue;
-
-        accessors.add(new PropertyAccessor(propertyDescriptor));
-      }
-
-      Field[] fields = aClass.getFields();
-      for (Field field : fields) {
-        int modifiers = field.getModifiers();
-        if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers) &&
-            XmlSerializerImpl.findAnnotation(field.getAnnotations(), Transient.class) == null) {
-          accessors.add(new FieldAccessor(field));
-        }
-      }
-
-      return accessors;
+      Pair<Method, Method> candidate = candidates.get(propertyData.first);
+      if (candidate == null) candidate = Pair.empty();
+      if ((propertyData.second ? candidate.second : candidate.first) != null) continue;
+      candidate = Pair.create(propertyData.second ? candidate.first : method, propertyData.second ? method : candidate.second);
+      candidates.put(propertyData.first, candidate);
     }
-    catch (IntrospectionException e) {
-      throw new XmlSerializationException(e);
+    for (Map.Entry<String, Pair<Method, Method>> candidate: candidates.entrySet()) {
+      final Pair<Method, Method> methods = candidate.getValue();  // (getter,setter)
+      if (methods.first != null && methods.second != null &&
+          methods.first.getReturnType().equals(methods.second.getParameterTypes()[0]) &&
+          XmlSerializerImpl.findAnnotation(methods.first.getAnnotations(), Transient.class) == null &&
+          XmlSerializerImpl.findAnnotation(methods.second.getAnnotations(), Transient.class) == null) {
+        accessors.add(new PropertyAccessor(candidate.getKey(), methods.first.getReturnType(), methods.first, methods.second));
+      }
     }
+
+    for (Field field : aClass.getFields()) {
+      final int modifiers = field.getModifiers();
+      if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) &&
+          !Modifier.isFinal(modifiers) && !Modifier.isTransient(modifiers) &&
+          XmlSerializerImpl.findAnnotation(field.getAnnotations(), Transient.class) == null) {
+        accessors.add(new FieldAccessor(field));
+      }
+    }
+
+    return accessors;
+  }
+
+  @Nullable
+  private static Pair<String, Boolean> getPropertyData(final String methodName) {
+    String part = "";
+    boolean isSetter = false;
+    if (methodName.startsWith("get")) {
+      part = methodName.substring(3, methodName.length());
+    }
+    else if (methodName.startsWith("is")) {
+      part = methodName.substring(2, methodName.length());
+    }
+    else if (methodName.startsWith("set")) {
+      part = methodName.substring(3, methodName.length());
+      isSetter = true;
+    }
+    return part.length() > 0 ? Pair.create(Introspector.decapitalize(part), isSetter) : null;
   }
 
   public String toString() {
     return "BeanBinding[" + myBeanClass.getName() + ", tagName=" + myTagName + "]";
   }
 
-  private static Binding createBindingByAccessor(final XmlSerializerImpl xmlSerializer, Accessor accessor) {
+  private static Binding createBindingByAccessor(final XmlSerializerImpl xmlSerializer, final Accessor accessor) {
     final Binding binding = _createBinding(accessor, xmlSerializer);
     binding.init();
     return binding;
@@ -260,7 +276,6 @@ class BeanBinding implements Binding {
       return new AttributeBinding(accessor, attribute, xmlSerializer);
     }
 
-
     if (tag != null) {
       if (tag.value().length() > 0) return new TagBinding(accessor, tag, xmlSerializer);
     }
@@ -281,5 +296,4 @@ class BeanBinding implements Binding {
     OptionTag optionTag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), OptionTag.class);
     return new OptionTagBinding(accessor, xmlSerializer, optionTag);
   }
-
 }

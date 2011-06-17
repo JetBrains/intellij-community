@@ -17,9 +17,14 @@
 package com.intellij.util.net;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
@@ -90,4 +95,40 @@ public class NetUtils {
     }
     return localHostString;
   }
+
+  /**
+   * @param indicator Progress indicator.
+   * @param inputStream source stream
+   * @param outputStream destination stream
+   * @param expectedContentSize expected content size, used in progress indicator. can be -1.
+   * @return bytes copied
+   * @throws IOException
+   */
+  public static int copyStreamContent(@Nullable ProgressIndicator indicator,
+                                      InputStream inputStream,
+                                      OutputStream outputStream,
+                                      int expectedContentSize) throws IOException, ProcessCanceledException {
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
+
+    final byte[] buffer = new byte[4 * 1024];
+    int count;
+    int total = 0;
+    while ((count = inputStream.read(buffer)) > 0) {
+      outputStream.write(buffer, 0, count);
+      total += count;
+
+      if (indicator != null) {
+        indicator.checkCanceled();
+
+        if (expectedContentSize > 0) {
+          indicator.setFraction((double)total / expectedContentSize);
+        }
+      }
+    }
+
+    return total;
+  }
+
 }

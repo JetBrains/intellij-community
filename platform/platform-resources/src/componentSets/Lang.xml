@@ -29,21 +29,12 @@
       <implementation-class>com.intellij.psi.stubs.SerializationManagerImpl</implementation-class>
     </component>
 
-    <component>
-      <implementation-class>com.intellij.notification.EventLog</implementation-class>
-    </component>
-
   </application-components>
 
   <project-components>
     <component>
       <interface-class>com.intellij.codeInsight.highlighting.HighlightManager</interface-class>
       <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerImpl</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.notification.EventLog$ProjectTracker</implementation-class>
-      <skipForDefaultProject/>
     </component>
 
     <component>

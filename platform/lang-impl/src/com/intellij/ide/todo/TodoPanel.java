@@ -30,9 +30,12 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -41,12 +44,11 @@ import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Icons;
@@ -56,6 +58,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -64,12 +68,15 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Vladimir Kondratyev
  */
 abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoPanel");
+  private static final Icon PREVIEW_ICON = IconLoader.getIcon("/actions/preview.png");
 
   protected Project myProject;
   private final TodoPanelSettings mySettings;
@@ -81,6 +88,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   private final MyOccurenceNavigator myOccurenceNavigator;
   protected final TodoTreeBuilder myTodoTreeBuilder;
   private MyVisibilityWatcher myVisibilityWatcher;
+  private UsagePreviewPanel myUsagePreviewPanel;
 
   /**
    * @param currentFileMode if <code>true</code> then view doesn't have "Group By Packages" and "Flatten Packages"
@@ -145,7 +153,30 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         }
       }
     );
-    setContent(ScrollPaneFactory.createScrollPane(myTree));
+
+
+    myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+    myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
+    Disposer.register(this, myUsagePreviewPanel);
+    myUsagePreviewPanel.setVisible(mySettings.isShowPreview());
+
+    final Splitter splitter = new Splitter(false);
+    splitter.setSecondComponent(myUsagePreviewPanel);
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    setContent(splitter);
+
+    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(final TreeSelectionEvent e) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (myUsagePreviewPanel.isVisible()) {
+              updatePreviewPanel();
+            }
+          }
+        });
+      }
+    });
+
 
     // Create tool bars and register custom shortcuts
 
@@ -198,10 +229,35 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       }
     });
     rightGroup.add(setTodoFilterAction);
+    rightGroup.add(new MyPreviewAction());
     toolBarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, rightGroup, false).getComponent());
 
     setToolbar(toolBarPanel);
+  }
+
+  private void updatePreviewPanel() {
+    if (myProject.isDisposed()) return;
+    List<UsageInfo> infos = new ArrayList<UsageInfo>();
+    final TreePath path = myTree.getSelectionPath();
+    if (path != null) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
+      if (userObject != null) {
+        Object element = userObject.getElement();
+        TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
+        if (pointer != null) {
+          final SmartTodoItemPointer value = pointer.getValue();
+          final Document document = value.getDocument();
+          final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+          final RangeMarker rangeMarker = value.getRangeMarker();
+          if (psiFile != null) {
+            infos.add(new UsageInfo(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+          }
+        }
+      }
+    }
+    myUsagePreviewPanel.updateLayout(infos.isEmpty() ? null : infos);
   }
 
   public void dispose() {
@@ -573,4 +629,28 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       myTodoTreeBuilder.setUpdatable(isShowing());
     }
   }
+
+  private final class MyPreviewAction extends ToggleAction {
+
+    MyPreviewAction() {
+      super("Preview Usages", null, PREVIEW_ICON);
+    }
+
+    public void update(AnActionEvent e) {
+      super.update(e);
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return mySettings.isShowPreview();
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      mySettings.setShowPreview(state);
+      myUsagePreviewPanel.setVisible(state);
+      if (state) {
+        updatePreviewPanel();
+      }
+    }
+  }
+
 }

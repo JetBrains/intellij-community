@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -34,15 +36,14 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -50,6 +51,7 @@ import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUti
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -129,7 +131,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
     int result = 0;
     for (GroovyResolveResult method : methods) {
       final PsiElement el = method.getElement();
-      if (el instanceof PsiMethod && !((PsiMethod)el).hasModifierProperty(GrModifier.ABSTRACT)) result++;
+      if (el instanceof PsiMethod && !((PsiMethod)el).hasModifierProperty(PsiModifier.ABSTRACT)) result++;
       else if (el instanceof PsiField) result++;
     }
     return result;
@@ -143,7 +145,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
       case 2:
         return GroovyInspectionBundle.message("type.doesnt.contain.method", args);
       default:
-        throw new IncorrectOperationException("incorrect args:" + args);
+        throw new IncorrectOperationException("incorrect args:" + Arrays.toString(args));
     }
   }
 
@@ -301,14 +303,16 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
         }
 
 
-        final PsiElement ref =
-          list
-            .add(factory.createReferenceElementFromText(myInterfaceName + (addTypeParam ? "<" + generateTypeText(myPsiClass) + ">" : "")));
-        PsiUtil.shortenReference((GrReferenceElement)ref);
+        final GrCodeReferenceElement _ref =
+          factory.createReferenceElementFromText(myInterfaceName + (addTypeParam ? "<" + generateTypeText(myPsiClass) + ">" : ""));
+        final GrCodeReferenceElement ref = (GrCodeReferenceElement)list.add(_ref);
+        PsiUtil.shortenReference(ref);
       }
       if (comparable != null && !myPsiClass.isInterface()) {
-        GroovyOverrideImplementUtil
-          .generateImplementation(null, myPsiClass.getContainingFile(), myPsiClass, comparable.getMethods()[0], substitutor);
+        final PsiMethod baseMethod = comparable.getMethods()[0];
+        final GrMethod prototype = GroovyOverrideImplementUtil.generateMethodPrototype(myPsiClass, baseMethod, substitutor);
+        final PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(myPsiClass, baseMethod, substitutor);
+        GenerateMembersUtil.insert(myPsiClass, prototype, anchor, true);
       }
     }
 

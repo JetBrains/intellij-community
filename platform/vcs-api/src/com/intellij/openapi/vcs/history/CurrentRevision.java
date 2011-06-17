@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 
@@ -40,14 +41,15 @@ public class CurrentRevision implements VcsFileRevision {
     return "[" + CURRENT + "]";
   }
 
-  public void loadContent() {
+  public byte[] loadContent() throws IOException, VcsException {
+    return getContent();
   }
 
   public Date getRevisionDate() {
     return new Date(myFile.getTimeStamp());
   }
 
-  public byte[] getContent() {
+  public byte[] getContent() throws IOException, VcsException {
     try {
       Document document = FileDocumentManager.getInstance().getDocument(myFile);
       if (document != null) {

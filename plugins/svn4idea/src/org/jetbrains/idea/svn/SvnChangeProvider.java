@@ -231,7 +231,7 @@ public class SvnChangeProvider implements ChangeProvider {
       }
       if (status != null && status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
         final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
-        final SvnContentRevision beforeRevision = SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision());
+        final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getCommittedRevision());
         final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
         builder.processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status), changeListNameFromStatus(status),
                                     SvnVcs.getKey());
@@ -247,9 +247,10 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private SvnContentRevision createBeforeRevision(final SvnChangedFile changedFile, final boolean forDeleted) {
-    return SvnContentRevision.create(myVcs,
-        forDeleted ? FilePathImpl.createForDeletedFile(changedFile.getStatus().getFile(), changedFile.getFilePath().isDirectory()) :
-                   changedFile.getFilePath(), changedFile.getStatus().getCommittedRevision());
+    return SvnContentRevision.createBaseRevision(myVcs,
+                                                 forDeleted ? FilePathImpl.createForDeletedFile(changedFile.getStatus().getFile(),
+                                                                                                changedFile.getFilePath().isDirectory()) :
+                                                 changedFile.getFilePath(), changedFile.getStatus().getCommittedRevision());
   }
 
   private static File guessWorkingCopyPath(final File file, @NotNull final SVNURL url, final String copyFromURL) throws SVNException {

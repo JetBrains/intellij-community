@@ -50,6 +50,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -1101,6 +1102,15 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
           }
         }
         return files.size() > 0 ? VfsUtil.toVirtualFileArray(files) : null;
+      }
+      if (LangDataKeys.MODULE.is(dataId)) {
+        VirtualFile[] virtualFiles = (VirtualFile[])getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName());
+        if (virtualFiles == null || virtualFiles.length <= 1) return null;
+        final Set<Module> modules = new HashSet<Module>();
+        for (VirtualFile virtualFile : virtualFiles) {
+          modules.add(ModuleUtil.findModuleForFile(virtualFile, myProject));
+        }
+        return modules.size() == 1 ? modules.iterator().next() : null;
       }
       if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
         return null;

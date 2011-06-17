@@ -125,9 +125,11 @@ public class UsageViewUtil {
             TextRange rangeInElement = usage.getRangeInElement();
             assert rangeInElement != null : usage;
             TextRange range = rangeInElement.shiftRight(injectionOffsetInMasterFile);
+            PsiFile containingFile = context.getContainingFile();
+            if (containingFile == null) continue; //move package to another package
             set.remove(
               NonCodeUsageInfo.create(
-                context.getContainingFile(), 
+                containingFile,
                 range.getStartOffset(),
                 range.getEndOffset(),
                 ((MoveRenameUsageInfo)usage).getReferencedElement(), 

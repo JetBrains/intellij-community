@@ -26,23 +26,32 @@ import java.math.BigInteger;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class Timings {
-  private static final int CPU_PROBES = 1000000;
   private static final int IO_PROBES = 42;
 
   public static final long CPU_TIMING;
   public static final long IO_TIMING;
   public static final long MACHINE_TIMING;
 
+  /**
+   * Measured on dual core p4 3HZ 1gig ram
+   */
+  public static final long ETALON_TIMING = 438;
+  public static final long ETALON_CPU_TIMING = 200;
+  public static final long ETALON_IO_TIMING = 100;
+
+
   static {
+    int N = 20;
+    for (int i=0; i<N; i++) {
+      measureCPU(); //warmup
+    }
+    long[] elapsed=new long[N];
+    for (int i=0; i< N; i++) {
+      elapsed[i] = measureCPU();
+    }
+    CPU_TIMING = PlatformTestUtil.averageAmongMedians(elapsed, 2);
 
     long start = System.currentTimeMillis();
-    BigInteger k = new BigInteger("1");
-    for (int i = 0; i < CPU_PROBES; i++) {
-      k = k.add(new BigInteger("1"));
-    }
-    CPU_TIMING = System.currentTimeMillis() - start;
-
-    start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {
       try {
         final File tempFile = FileUtil.createTempFile("test", "test" + i);
@@ -89,18 +98,30 @@ public class Timings {
     MACHINE_TIMING = CPU_TIMING + IO_TIMING;
   }
 
-  /**
-   * Measured on dual core p4 3HZ 1gig ram
-   */
-  public static final long ETALON_TIMING = 438;
+  private static long measureCPU() {
+    long start = System.currentTimeMillis();
+
+    BigInteger k = new BigInteger("1");
+    for (int i = 0; i < 1000000; i++) {
+      k = k.add(new BigInteger("1"));
+    }
+
+    return System.currentTimeMillis() - start;
+  }
 
   /**
    * @param value
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
    */
   public static int adjustAccordingToMySpeed(int value) {
-    //System.out.println("ETALON_TIMING = " + ETALON_TIMING);
-    //System.out.println("MACHINE_TIMING = " + MACHINE_TIMING);
     return Math.max(1, (int)(1.0 * value * ETALON_TIMING / MACHINE_TIMING) / 8 * JobSchedulerImpl.CORES_COUNT);
+  }
+
+  public static String getStatistics() {
+    return
+      " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
+      ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
+      ", total=" + MACHINE_TIMING + " ("+(int)(MACHINE_TIMING*1.0/ ETALON_TIMING*100) + "% of the etalon)" +
+      ".";
   }
 }

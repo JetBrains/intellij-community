@@ -122,7 +122,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     setupIcon(data, psiDirectory);
   }
 
-  private void setupIcon(PresentationData data, PsiDirectory psiDirectory) {
+  protected void setupIcon(PresentationData data, PsiDirectory psiDirectory) {
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
     if (PlatformUtils.isCidr()) {
       final Icon openIcon = IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_OPEN, myProject);
@@ -256,7 +256,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     return super.getTitle();
   }
 
-  private Icon patchIcon(Icon original, VirtualFile file) {
+  protected Icon patchIcon(Icon original, VirtualFile file) {
     Bookmark bookmarkAtFile = BookmarkManager.getInstance(myProject).findFileBookmark(file);
     if (bookmarkAtFile != null) {
       RowIcon composite = new RowIcon(2);

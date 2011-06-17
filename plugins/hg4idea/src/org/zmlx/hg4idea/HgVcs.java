@@ -27,10 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.RepositoryChangeListener;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -83,6 +80,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public static final String VCS_NAME = "hg4idea";
   public static final String NOTIFICATION_GROUP_ID = "Mercurial";
   public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
+  private final static VcsKey ourKey = createKey(VCS_NAME);
 
   private static final String ORIG_FILE_PATTERN = "*.orig";
 
@@ -394,4 +392,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor);
   }
 
+  public static VcsKey getKey() {
+    return ourKey;
+  }
 }

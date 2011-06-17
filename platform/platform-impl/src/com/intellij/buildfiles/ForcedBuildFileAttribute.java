@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import java.io.IOException;
  */
 public class ForcedBuildFileAttribute {
   private static final Logger LOG = Logger.getInstance("#" + ForcedBuildFileAttribute.class.getName());
+  private static final Object LOCK = new Object();
 
   private static final FileAttribute FRAMEWORK_FILE_ATTRIBUTE = new FileAttribute("forcedBuildFileFrameworkAttribute", 1, false);
   private static final Key<String> FRAMEWORK_FILE_MARKER = Key.create("forcedBuildFileFrameworkAttribute");
@@ -51,43 +53,38 @@ public class ForcedBuildFileAttribute {
   @Nullable
   public static String getFrameworkIdOfBuildFile(VirtualFile file) {
     if (file instanceof NewVirtualFile) {
-      final DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readAttribute(file);
-      if (is != null) {
-        try {
+      synchronized (LOCK) {
+        final DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readAttribute(file);
+        if (is != null) {
           try {
-            /*
-        //todo[lene] IOUtil throws   java.io.EOFException
-	at java.io.DataInputStream.readFully(DataInputStream.java:180)
-	at java.io.DataInputStream.readFully(DataInputStream.java:152)
-	at com.intellij.util.io.IOUtil.readString(IOUtil.java:40)
-	at com.intellij.buildfiles.ForcedBuildFileAttribute.getFrameworkIdOfBuildFile(ForcedBuildFileAttribute.java:59)
-             */
-            if (is.available() == 0) {
-              return null;
+            try {
+              if (is.available() == 0) {
+                return null;
+              }
+              return IOUtil.readString(is);
             }
-            return is.readUTF();
+            finally {
+              is.close();
+            }
           }
-          finally {
-            is.close();
+          catch (IOException e) {
+            LOG.error(file.getPath(), e);
           }
         }
-        catch (IOException e) {
-          LOG.error(file.getPath(), e);
-        }
+        return "";
       }
-      return "";
     }
     return file.getUserData(FRAMEWORK_FILE_MARKER);
   }
 
 
   public static void forceFileToFramework(VirtualFile file, String frameworkId, boolean value) {
-    if (value) {//belongs to other framework
-      String existingFrameworkId = getFrameworkIdOfBuildFile(file);
-      if (!StringUtil.isEmpty(existingFrameworkId) && !frameworkId.equals(existingFrameworkId)) {
-        return;
-      }
+    //belongs to other framework - do not override!
+    String existingFrameworkId = getFrameworkIdOfBuildFile(file);
+    if (!StringUtil.isEmpty(existingFrameworkId) && !frameworkId.equals(existingFrameworkId)) {
+      return;
     }
+
     if (value) {//write framework
       forceBuildFile(file, frameworkId);
     }
@@ -99,17 +96,19 @@ public class ForcedBuildFileAttribute {
 
   private static void forceBuildFile(VirtualFile file, @Nullable String value) {
     if (file instanceof NewVirtualFile) {
-      final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
-      try {
+      synchronized (LOCK) {
+        final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
         try {
-          os.writeUTF(StringUtil.notNullize(value));
+          try {
+            IOUtil.writeString(StringUtil.notNullize(value), os);
+          }
+          finally {
+            os.close();
+          }
         }
-        finally {
-          os.close();
+        catch (IOException e) {
+          LOG.error(e);
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
       }
     }
     else {

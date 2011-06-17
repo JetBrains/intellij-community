@@ -24,7 +24,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author peter
@@ -37,6 +39,11 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
   @Override
   public void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
     super.insert(aClass, anchor, before);
+    final T member = getPsiMember();
+    if (member != null) {
+      assert member instanceof GroovyPsiElement;
+      PsiUtil.shortenReferences((GroovyPsiElement)member);
+    }
   }
 
   @Override

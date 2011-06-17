@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
+public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
   private final PairedBraceMatcher myMatcher;
   private final Language myLanguage;
 
@@ -47,22 +47,22 @@ class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
     return -1;
   }
 
-  public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  @Nullable
+  public BracePair findPair(boolean left, HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
-      if (tokenType == pair.getLeftBraceType()) return true;
+      if (tokenType == (left? pair.getLeftBraceType() : pair.getRightBraceType())) return pair;
     }
-    return false;
+    return null;
+  }
+
+  public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+    return findPair(true, iterator, fileText, fileType) != null;
   }
 
   public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
-    final IElementType tokenType = iterator.getTokenType();
-    final BracePair[] pairs = myMatcher.getPairs();
-    for (BracePair pair : pairs) {
-      if (tokenType == pair.getRightBraceType()) return true;
-    }
-    return false;
+    return findPair(false, iterator, fileText, fileType) != null;
   }
 
   public IElementType getOppositeBraceTokenType(@NotNull final IElementType type) {
@@ -120,5 +120,13 @@ class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
     }
 
     return result != null ? result : Collections.<IElementType>emptyList();
+  }
+
+  @Override
+  public boolean shouldStopMatch(boolean forward, @NotNull IElementType braceType, @NotNull HighlighterIterator iterator) {
+    if (myMatcher instanceof BraceMatcherTerminationAspect) {
+      return ((BraceMatcherTerminationAspect)myMatcher).shouldStopMatch(forward, braceType, iterator);
+    }
+    return false;
   }
 }

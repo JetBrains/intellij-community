@@ -9,8 +9,8 @@ import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -20,7 +20,11 @@ import com.intellij.psi.*
 /**
  * @author ven
  */
-public class RenameTest extends LightCodeInsightFixtureTestCase {
+public class RenameTest extends LightGroovyTestCase {
+  @Override
+  protected String getBasePath() {
+    TestUtils.testDataPath + 'groovy/refactoring/rename/'
+  }
 
   public void testClosureIt() throws Throwable { doTest(); }
   public void testTo_getter() throws Throwable { doTest(); }
@@ -290,7 +294,7 @@ def foo(p) {
 }
 """
     def method = PsiTreeUtil.findElementOfClassAtOffset(myFixture.file, myFixture.editor.caretModel.offset, GrMethod.class, false)
-    def usages = RenameUtil.findUsages(method, "project", false, false, [method:"project"])
+    def usages = RenameUtil.findUsages(method, "project", false, false, [(method):"project"])
     assert !usages[0].isNonCodeUsage
     assert usages[1].isNonCodeUsage
   }
@@ -440,8 +444,41 @@ print new Foo(anotherOneName: 2)
 """
   }
 
+  void testRenameProp() {
+    myFixture.configureByText("Foo.groovy", """
+class Book {
+    String title
+}
+
+class Test {
+ def testBook(){
+      def book = new Book()
+
+      book.with {
+          title = 'Test'
+      }
+  }
+}""")
+    new PropertyRenameHandler().invoke(project, [myFixture.findClass('Book').fields[0]] as PsiElement[], null);
+    myFixture.checkResult """
+class Book {
+    String s
+}
+
+class Test {
+ def testBook(){
+      def book = new Book()
+
+      book.with {
+          s = 'Test'
+      }
+  }
+}"""
+  }
+
+
   private def doInplaceRenameTest() {
-    String prefix = TestUtils.getTestDataPath() + "groovy/refactoring/rename/" + getTestName(false)
+    String prefix = "/${getTestName(false)}"
     myFixture.configureByFile prefix + ".groovy";
     CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), "foo", myFixture);
     myFixture.checkResultByFile prefix + "_after.groovy"

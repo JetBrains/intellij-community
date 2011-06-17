@@ -27,7 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.*;
 
 public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
 
@@ -40,20 +40,28 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
     myIndex = index;
   }
 
-  @Nullable
-  private PsiPackage getContext() {
-    return myIndex == 0 ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") :
-           (PsiPackage)myReferenceSet.getReference(myIndex - 1).resolve();
+  @NotNull
+  private Set<PsiPackage> getContext() {
+    if (myIndex == 0) return Collections.singleton(JavaPsiFacade.getInstance(getElement().getProject()).findPackage(""));
+    Set<PsiPackage> psiPackages = new HashSet<PsiPackage>();
+    for (ResolveResult resolveResult : myReferenceSet.getReference(myIndex - 1).multiResolve(false)) {
+      PsiElement psiElement = resolveResult.getElement();
+      if (psiElement instanceof PsiPackage) {
+        psiPackages.add((PsiPackage)psiElement);
+      }
+    }
+    ;
+    return psiPackages;
   }
 
   @NotNull
   public Object[] getVariants() {
-    final PsiPackage psiPackage = getContext();
-    if (psiPackage == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    final PsiPackage[] psiPackages = psiPackage.getSubPackages();
-    final Object[] variants = new Object[psiPackages.length];
-    System.arraycopy(psiPackages, 0, variants, 0, variants.length);
-    return variants;
+    Set<PsiPackage> subPackages = new HashSet<PsiPackage>();
+    for (PsiPackage psiPackage : getContext()) {
+         subPackages.addAll(Arrays.asList(psiPackage.getSubPackages()));
+    }
+
+    return subPackages.toArray();
   }
 
   public String getUnresolvedMessagePattern() {
@@ -62,12 +70,11 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
 
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    final PsiPackage parentPackage = getContext();
-    if (parentPackage != null) {
-      final Collection<PsiPackage> packages = myReferenceSet.resolvePackageName(parentPackage, getValue());
-      return PsiElementResolveResult.createResults(packages);
+    final Collection<PsiPackage> packages = new HashSet<PsiPackage>();
+    for (PsiPackage parentPackage : getContext()) {
+      packages.addAll(myReferenceSet.resolvePackageName(parentPackage, getValue()));
     }
-    return ResolveResult.EMPTY_ARRAY;
+    return PsiElementResolveResult.createResults(packages);
   }
 
   @Override
@@ -77,7 +84,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
     }
     final String newName = ((PsiPackage)element).getQualifiedName();
     final TextRange range =
-        new TextRange(getReferenceSet().getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+      new TextRange(getReferenceSet().getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
     final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(getElement());
     return manipulator.handleContentChange(getElement(), range, newName);
   }

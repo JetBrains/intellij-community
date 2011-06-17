@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.DebuggerStatementEditor;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -190,7 +191,7 @@ public abstract class BreakpointPropertiesPanel {
     
     final JComboBox baseBreakpointCombo = new ComboBox();
     myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, baseBreakpointCombo);
-    baseBreakpointCombo.setRenderer(new BreakpointComboRenderer());
+    baseBreakpointCombo.setRenderer(new BreakpointComboRenderer(baseBreakpointCombo.getRenderer()));
     baseBreakpointCombo.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
         ComboboxItem item = (ComboboxItem)baseBreakpointCombo.getSelectedItem();
@@ -674,29 +675,29 @@ public abstract class BreakpointPropertiesPanel {
     }
   }
 
-  private static class BreakpointComboRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list,
-                                                  Object value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      setPreferredSize(new Dimension(MAX_COMBO_WIDTH, getPreferredSize().height));
+  private static class BreakpointComboRenderer extends ListCellRendererWrapper {
+    public BreakpointComboRenderer(final ListCellRenderer listCellRenderer) {
+      super(listCellRenderer);
+    }
+
+    @Override
+    public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       Breakpoint breakpoint = ((ComboboxItem)value).getBreakpoint();
       final String text = breakpoint != null ? breakpoint.getDisplayName() : DebuggerBundle.message("value.none");
       setText(text);
+
       final Icon icon;
       if (breakpoint != null) {
-        icon = breakpoint instanceof BreakpointWithHighlighter ?
-                          breakpoint.ENABLED? ((BreakpointWithHighlighter)breakpoint).getSetIcon(false) : ((BreakpointWithHighlighter)breakpoint)
-                            .getDisabledIcon(false) : breakpoint.getIcon();
+        icon = breakpoint instanceof BreakpointWithHighlighter
+               ? breakpoint.ENABLED
+                 ? ((BreakpointWithHighlighter)breakpoint).getSetIcon(false)
+                 : ((BreakpointWithHighlighter)breakpoint).getDisabledIcon(false)
+               : breakpoint.getIcon();
       }
       else {
         icon = null;
       }
       setIcon(icon);
-      setDisabledIcon(icon);
-      return this;
     }
   }
 

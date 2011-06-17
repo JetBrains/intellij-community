@@ -302,10 +302,6 @@ public abstract class AbstractValueHint {
     }
   }
 
-  protected Point getPoint() {
-    return myPoint;
-  }
-
   protected TextRange getCurrentRange() {
     return myCurrentRange;
   }

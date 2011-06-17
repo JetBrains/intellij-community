@@ -25,8 +25,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -102,7 +100,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     }
 
     public boolean execute(PsiElement element) {
-      if (element instanceof PsiClass && StdLanguages.JAVA.equals(element.getLanguage())) {
+      if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass) element;
         final PsiMethod existingImplementation = findExistingImplementation(aClass, myMethod);
         if (existingImplementation != null && !existingImplementation.hasModifierProperty(PsiModifier.ABSTRACT)) {

@@ -27,12 +27,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -43,6 +44,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 public class SvnRepositoryContentRevision implements ContentRevision {
@@ -51,7 +53,6 @@ public class SvnRepositoryContentRevision implements ContentRevision {
   private final String myPath;
   @NotNull private final FilePath myFilePath;
   private final long myRevision;
-  private String myContent;
 
   SvnRepositoryContentRevision(final SvnVcs vcs, final String repositoryRoot, final String path, @Nullable final FilePath localPath,
                                       final long revision) {
@@ -69,11 +70,19 @@ public class SvnRepositoryContentRevision implements ContentRevision {
 
   @Nullable
   public String getContent() throws VcsException {
-    if (myContent == null) {
-      final ByteArrayOutputStream buffer = loadContent();
-      myContent = CharsetToolkit.bytesToString(buffer.toByteArray(), myFilePath.getCharset());
+    try {
+      return ContentRevisionCache.getOrLoadAsString(myVcs.getProject(), myFilePath, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
+                                             ContentRevisionCache.UniqueType.REPOSITORY_CONTENT, new Throwable2Computable<byte[], VcsException, IOException>() {
+        @Override
+        public byte[] compute() throws VcsException, IOException {
+          final ByteArrayOutputStream buffer = loadContent();
+          return buffer.toByteArray();
+        }
+      });
     }
-    return myContent;
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
   }
 
   protected ByteArrayOutputStream loadContent() throws VcsException {

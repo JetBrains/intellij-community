@@ -54,13 +54,11 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
@@ -70,7 +68,6 @@ import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.testng.CommandLineArgs;
 import org.testng.IDEATestNGListener;
 import org.testng.RemoteTestNGStarter;
@@ -159,13 +156,14 @@ public class TestNGRunnableState extends JavaCommandLineState {
             final TestNGResults resultsView = console.getResultsView();
             final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
             if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
-              toolWindowManager.notifyByBalloon(testRunDebugId,
-                                                resultsView == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
-                                                ? MessageType.WARNING
-                                                : (resultsView.getStatus() == MessageHelper.FAILED_TEST
-                                                   ? MessageType.ERROR
-                                                   : MessageType.INFO),
-                                                resultsView == null ? "Tests were not started" : resultsView.getStatusLine(), null, null);
+              final MessageType type = resultsView == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
+                                       ? MessageType.WARNING
+                                       : (resultsView.getStatus() == MessageHelper.FAILED_TEST
+                                          ? MessageType.ERROR
+                                          : MessageType.INFO);
+              final String message = resultsView == null ? "Tests were not started" : resultsView.getStatusLine();
+              toolWindowManager.notifyByBalloon(testRunDebugId, type, message, null, null);
+              TestsUIUtil.NOTIFICATION_GROUP.createNotification(message, type).notify(project);
             }
           }
         });

@@ -178,8 +178,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
 
     public void valueChanged(final TreeSelectionEvent e) {
       final TestProxy test = TestProxyClient.from(e.getPath());
-      if (myTreeView.isFocusOwner())
-        myNotifier.fireTestSelected(test);
+      myNotifier.fireTestSelected(test);
     }
 
     public void focusGained(final FocusEvent e) {

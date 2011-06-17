@@ -18,7 +18,6 @@ package git4idea.ui;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -453,7 +452,7 @@ public class GitUnstashDialog extends DialogWrapper {
 
     @Override
     protected void notifyUnresolvedRemain(final Collection<VirtualFile> roots) {
-      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Conflicts were not resolved during unstash",
+      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Conflicts were not resolved during unstash",
                                                 "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
                                                 "<a href='resolve'>Resolve</a> conflicts.",
                                                 NotificationType.WARNING, new NotificationListener() {
@@ -465,7 +464,7 @@ public class GitUnstashDialog extends DialogWrapper {
               }
             }
           }
-      }));
+      }).notify(myProject);
     }
   }
 

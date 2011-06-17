@@ -318,6 +318,7 @@
 
   <patternDialectProvider implementation="com.intellij.packageDependencies.ui.ProjectPatternProvider" id="file"/>
   <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider"/>
+  <customScopesProvider implementation="com.intellij.packageDependencies.ChangeListsScopesProvider"/>
   <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
 
   <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor"/>
@@ -344,7 +345,7 @@
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />
   <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
-  <fileBasedIndex implementation="com.intellij.psi.search.PropertyFileIndex"/>
+  <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndex"/>
   <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
 
   <fileBasedIndex implementation="com.intellij.find.ngrams.TrigramIndex"/> 
@@ -574,8 +575,6 @@
               factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
   <toolWindow id="Structure" anchor="left" icon="/general/toolWindowStructure.png" secondary="true"
               factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
-  <toolWindow id="Event log" anchor="bottom" secondary="true"
-              factoryClass="com.intellij.notification.EventLog$FactoryItself"/>
 
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
@@ -617,6 +616,7 @@
 
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.ModuleTypeUsagesCollector"/>
+  <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
 
   <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
   <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>

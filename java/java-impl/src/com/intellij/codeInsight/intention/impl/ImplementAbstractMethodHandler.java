@@ -29,10 +29,10 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -135,7 +135,9 @@ public class ImplementAbstractMethodHandler {
 
   private void implementInClass(final PsiElement psiClassOrEnumConstant) {
     if (!psiClassOrEnumConstant.isValid()) return;
-    if (!FileDocumentManager.getInstance().requestWriting(PsiDocumentManager.getInstance(myProject).getDocument(psiClassOrEnumConstant.getContainingFile()), myProject)) {
+
+    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClassOrEnumConstant.getContainingFile());
+    if (!FileDocumentManager.getInstance().requestWriting(document, myProject)) {
       MessagesEx.fileIsReadOnly(myProject, psiClassOrEnumConstant.getContainingFile().getVirtualFile()).showNow();
       return;
     }
@@ -147,7 +149,7 @@ public class ImplementAbstractMethodHandler {
             try {
               PsiClass psiClass;
               if (psiClassOrEnumConstant instanceof PsiEnumConstant) {
-                psiClass = addClassInitializer((PsiEnumConstant)psiClassOrEnumConstant);
+                psiClass = ((PsiEnumConstant)psiClassOrEnumConstant).getOrCreateInitializingClass();
               } else {
                 psiClass = (PsiClass)psiClassOrEnumConstant;
               }
@@ -163,19 +165,10 @@ public class ImplementAbstractMethodHandler {
     }, CodeInsightBundle.message("intention.implement.abstract.method.command.name"), null);
   }
 
-  public static PsiClass addClassInitializer(PsiEnumConstant enumConstant) {
-    final PsiExpressionList argumentList = enumConstant.getArgumentList();
-    final PsiEnumConstant constantFromText = JavaPsiFacade.getElementFactory(enumConstant.getProject()).createEnumConstantFromText(
-      enumConstant.getName() + (argumentList != null ? argumentList.getText() : "") + "{}", enumConstant);
-    final PsiEnumConstant replace = (PsiEnumConstant)enumConstant.replace(constantFromText);
-
-    return replace.getInitializingClass();
-  }
-
   private PsiClass[] getClassImplementations(final PsiClass psiClass) {
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true)) {
-      if (!inheritor.isInterface() && StdLanguages.JAVA.equals(inheritor.getLanguage())) {
+      if (!inheritor.isInterface()) {
         PsiMethod method = inheritor.findMethodBySignature(myMethod, true);
         if (method == null || !method.getContainingClass().equals(psiClass)) continue;
         list.add(inheritor);

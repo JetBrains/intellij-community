@@ -2,6 +2,7 @@
 
   <xsl:template match="/">
     <xsl:value-of select=<error descr="Empty XPath expression">""</error> />
+    <xsl:value-of select="<error descr="Empty XPath expression">  </error>" />
   </xsl:template>
 
 </xsl:stylesheet>

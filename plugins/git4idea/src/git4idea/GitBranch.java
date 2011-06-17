@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
+import git4idea.history.GitHistoryUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -323,17 +324,7 @@ public class GitBranch extends GitReference {
   @Nullable
   public GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitBranch branch)
     throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.MERGE_BASE);
-    h.setNoSSH(true);
-    h.setSilent(true);
-    h.addParameters(this.getFullName(), branch.getFullName());
-    String output = h.run().trim();
-    if (output.length() == 0) {
-      return null;
-    }
-    else {
-      return GitRevisionNumber.resolve(project, root, output);
-    }
+    return GitHistoryUtils.getMergeBase(project, root, this.getFullName(), branch.getFullName());
   }
 
   public void setActive(boolean active) {

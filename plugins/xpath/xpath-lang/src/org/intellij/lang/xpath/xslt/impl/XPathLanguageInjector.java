@@ -22,6 +22,7 @@ import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -37,14 +38,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-class XPathLanguageInjector implements MultiHostInjector {
+public class XPathLanguageInjector implements MultiHostInjector {
     private static final Key<Pair<String, TextRange[]>> CACHED_FILES = Key.create("CACHED_FILES");
     private static final TextRange[] EMPTY_ARRAY = new TextRange[0];
 
-    private final ParserDefinition myParserDefinition;
+    private final NotNullLazyValue<ParserDefinition> myParserDefinition;
 
     public XPathLanguageInjector() {
-        myParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage());
+        myParserDefinition = new NotNullLazyValue<ParserDefinition>() {
+          @NotNull
+          @Override
+          protected ParserDefinition compute() {
+            return LanguageParserDefinitions.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage());
+          }
+        };
     }
 
     @Nullable
@@ -90,7 +97,7 @@ class XPathLanguageInjector implements MultiHostInjector {
 
           int i;
           int j = 0;
-          final Lexer lexer = myParserDefinition.createLexer(attribute.getProject());
+          final Lexer lexer = myParserDefinition.getValue().createLexer(attribute.getProject());
             while ((i = XsltSupport.getAVTOffset(value, j)) != -1) {
                 // "A right curly brace inside a Literal in an expression is not recognized as terminating the expression."
               lexer.start(value, i, value.length());
@@ -104,7 +111,7 @@ class XPathLanguageInjector implements MultiHostInjector {
                 }
 
                 if (j != -1) {
-                    avtRanges.add(AVTRange.create(attribute, i, j + 1, true));
+                    avtRanges.add(AVTRange.create(attribute, i, j + 1, j > i + 1));
                 } else {
                     // missing '}' error will be flagged by xpath parser
                     avtRanges.add(AVTRange.create(attribute, i, value.length(), false));

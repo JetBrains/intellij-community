@@ -55,6 +55,7 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.fs.IFile;
@@ -242,8 +243,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return message;
   }
 
-  private ProjectImpl
-  createAndInitProject(String projectName, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed,
+  private ProjectImpl createAndInitProject(String projectName, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed,
                                            @Nullable Project template) throws IOException {
     final ProjectImpl project = isDefault ? new DefaultProject(this, filePath, isOptimiseTestLoadSpeed, projectName) :
                                 new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
@@ -348,29 +348,32 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @NotNull
   public Project[] getOpenProjects() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final Project currentTestProject = myCurrentTestProject;
-      if (myOpenProjects.isEmpty() && currentTestProject != null && !currentTestProject.isDisposed()) {
-        return new Project[] {currentTestProject};
-      }
-    }
     if (myOpenProjectsArrayCache.length != myOpenProjects.size()) {
       LOG.error("Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
     }
     if (myOpenProjectsArrayCache.length > 0 && myOpenProjectsArrayCache[0] != myOpenProjects.get(0)) {
       LOG.error("Open projects cache corrupted. Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
     }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Project currentTestProject = myCurrentTestProject;
+      if (currentTestProject != null && !currentTestProject.isDisposed()) {
+        return ArrayUtil.append(myOpenProjectsArrayCache, currentTestProject);
+      }
+    }
     return myOpenProjectsArrayCache;
   }
 
   public boolean isProjectOpened(Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && myOpenProjects.isEmpty() && myCurrentTestProject != null) {
-      return project == myCurrentTestProject;
+    if (ApplicationManager.getApplication().isUnitTestMode() && myCurrentTestProject != null) {
+      return project == myCurrentTestProject || myOpenProjects.contains(project);
     }
     return myOpenProjects.contains(project);
   }
 
   public boolean openProject(final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("lighttemp")) {
+      throw new AssertionError("must not open light project");
+    }
     if (myOpenProjects.contains(project)) return false;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectEx)project).getStateStore().checkVersion()) return false;
 
@@ -891,9 +894,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private boolean closeProject(final Project project, final boolean save, final boolean dispose) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("lighttemp")) {
+      throw new AssertionError("must not close light project");
+    }
     if (!isProjectOpened(project)) return true;
     if (!canClose(project)) return false;
-
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
@@ -912,6 +917,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         public void run() {
           myOpenProjects.remove(project);
           cacheOpenProjects();
+          myCurrentTestProject = null;
 
           myChangedProjectFiles.remove(project);
 

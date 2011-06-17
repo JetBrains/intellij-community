@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,7 +70,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     });
   }
 
-  public void setEnvs(Map<String, String> envs) {
+  public void setEnvs(@NotNull Map<String, String> envs) {
     myEnvs = envs;
     @NonNls final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {

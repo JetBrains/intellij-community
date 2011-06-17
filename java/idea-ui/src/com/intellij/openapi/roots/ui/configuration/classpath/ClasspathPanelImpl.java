@@ -28,7 +28,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
+import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -630,10 +630,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       if (value instanceof ClasspathTableItem<?>) {
         final ClasspathTableItem<?> tableItem = (ClasspathTableItem<?>)value;
         getCellAppearance(tableItem, myContext, selected).customize(this);
-        String tooltip = tableItem.getTooltipText();
-        if (tooltip != null) {
-          setToolTipText(tooltip);
-        }
+        setToolTipText(tableItem.getTooltipText());
       }
     }
   }

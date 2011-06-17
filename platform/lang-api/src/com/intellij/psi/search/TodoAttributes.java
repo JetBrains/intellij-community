@@ -74,7 +74,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
   }
 
   public static TodoAttributes createDefault() {
-    final TextAttributes textAttributes = getDefaultColorSchemeTextAttributes();
+    final TextAttributes textAttributes = getDefaultColorSchemeTextAttributes().clone();
     return new TodoAttributes(DEFAULT_ICON, textAttributes);
   }
 

@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
@@ -77,6 +76,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   @NonNls public static final String ourHelpId = "ideaInterface.changes";
   @NonNls public static final DataKey<List<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
+  @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
   @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
 
   private ActionGroup myMenuGroup;
@@ -195,8 +195,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     }
     else if (key == VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY) {
       sink.put(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing());
-    }
-    else if (key == MISSING_FILES_DATA_KEY) {
+    } else if (key == LOCALLY_DELETED_CHANGES) {
+      sink.put(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges());
+    } else if (key == MISSING_FILES_DATA_KEY) {
       sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles());
     } else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
       sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, haveLocallyDeleted());
@@ -263,6 +264,24 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
       }
     }
     return new ArrayList<FilePath>(files);
+  }
+
+  private List<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
+    Set<LocallyDeletedChange> files = new HashSet<LocallyDeletedChange>();
+    final TreePath[] paths = getSelectionPaths();
+    if (paths != null) {
+      for (TreePath path : paths) {
+        if (path.getPathCount() > 1) {
+          ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
+          if (firstNode.getUserObject() == TreeModelBuilder.LOCALLY_DELETED_NODE) {
+            ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+            final List<LocallyDeletedChange> objectsUnder = node.getAllObjectsUnder(LocallyDeletedChange.class);
+            files.addAll(objectsUnder);
+          }
+        }
+      }
+    }
+    return new ArrayList<LocallyDeletedChange>(files);
   }
 
   private List<FilePath> getSelectedMissingFiles() {
@@ -361,11 +380,12 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
       if (selectedModifiedWithoutEditing != null && selectedModifiedWithoutEditing.size() > 0) {
         for(VirtualFile file: selectedModifiedWithoutEditing) {
           AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-          final DiffProvider diffProvider = vcs == null ? null : vcs.getDiffProvider();
-          if (diffProvider != null) {
-            ContentRevision beforeRevision = new VcsCurrentRevisionProxy(diffProvider, file);
+          if (vcs == null) continue;
+          final VcsCurrentRevisionProxy before =
+            VcsCurrentRevisionProxy.create(file, myProject, vcs.getKeyInstanceMethod());
+          if (before != null) {
             ContentRevision afterRevision = new CurrentContentRevision(new FilePathImpl(file));
-            changes.add(new Change(beforeRevision, afterRevision, FileStatus.HIJACKED));
+            changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
           }
         }
       }

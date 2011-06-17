@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,4 +41,8 @@ public interface PsiEnumConstant extends PsiField, PsiConstructorCall {
    */
   @Nullable
   PsiEnumConstantInitializer getInitializingClass();
+
+  @NotNull
+  PsiEnumConstantInitializer getOrCreateInitializingClass();
+
 }

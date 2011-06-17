@@ -36,17 +36,12 @@ public interface Notifications {
   Topic<Notifications> TOPIC = Topic.create("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
 
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
-  String LOG_ONLY_GROUP_ID = "Log Only";
 
   void notify(@NotNull Notification notification);
   void register(@NotNull final String groupDisplayType, @NotNull final NotificationDisplayType defaultDisplayType);
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {
-
-    static {
-      register(LOG_ONLY_GROUP_ID, NotificationDisplayType.NONE);
-    }
 
     /**
      * Registration is OPTIONAL: STICKY_BALLOON display type will be used by default.
@@ -68,10 +63,6 @@ public interface Notifications {
 
     public static void notify(@NotNull final Notification notification) {
       notify(notification, null);
-    }
-
-    public static void logEvent(@NotNull String text, NotificationType type, @Nullable final Project project) {
-      notify(new Notification(LOG_ONLY_GROUP_ID, "", text, type), project);
     }
 
     public static void notify(@NotNull final Notification notification, @Nullable final Project project) {

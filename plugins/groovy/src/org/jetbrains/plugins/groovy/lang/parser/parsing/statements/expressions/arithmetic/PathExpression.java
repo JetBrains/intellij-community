@@ -43,17 +43,26 @@ public class PathExpression implements GroovyElementTypes {
     return parsePathExprQualifierForExprStatement(builder, parser) != PathExpression.Result.WRONG_WAY;
   }
 
-  public enum Result {INVOKED_EXPR, METHOD_CALL, WRONG_WAY}
+  public enum Result {INVOKED_EXPR, METHOD_CALL, WRONG_WAY, LITERAL}
 
   /**
    * parses method calls with parentheses, property index access, etc
    */
   public static Result parsePathExprQualifierForExprStatement(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    final IElementType qualifierType = PrimaryExpression.parsePrimaryExpression(builder, parser);
+    final PsiBuilder.Marker marker1 = builder.mark();
+    IElementType qualifierType = PrimaryExpression.parsePrimaryExpression(builder, parser);
     if (qualifierType != WRONGWAY) {
       Result result;
       if (isPathElementStart(builder)) {
+        if ((builder.getTokenType() == mLPAREN || builder.getTokenType() == mLCURLY) && qualifierType == LITERAL) {
+          marker1.rollbackTo();
+          qualifierType = PrimaryExpression.parsePrimaryExpression(builder, parser, true);
+          assert qualifierType != WRONGWAY;
+        }
+        else {
+          marker1.drop();
+        }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.drop();
         if (checkForLCurly(builder)) {
@@ -67,12 +76,15 @@ public class PathExpression implements GroovyElementTypes {
         }
       }
       else {
+        marker1.drop();
         marker.drop();
-        result = INVOKED_EXPR;
+        if (qualifierType == LITERAL) return Result.LITERAL;
+        return INVOKED_EXPR;
       }
       return result;
     }
     else {
+      marker1.drop();
       marker.drop();
       return WRONG_WAY;
     }

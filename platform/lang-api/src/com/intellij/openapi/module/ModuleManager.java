@@ -130,7 +130,16 @@ public abstract class ModuleManager {
    * @return the module dependency graph.
    */
   @NotNull public abstract Graph<Module> moduleGraph();
-  
+
+  /**
+   * Returns the graph of dependencies between modules in the project.
+   *
+   * @param includeTests whether test-only dependencies should be included
+   * @return the module dependency graph.
+   * @since 11.0
+   */
+  @NotNull public abstract Graph<Module> moduleGraph(boolean includeTests);
+
   /**
    * Adds a listener for receiving notifications to the module structure of the project.
    *

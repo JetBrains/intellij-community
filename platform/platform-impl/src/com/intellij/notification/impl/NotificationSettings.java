@@ -24,13 +24,18 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public class NotificationSettings {
-
-  private NotificationDisplayType myDisplayType;
   private final String myGroupId;
+  private NotificationDisplayType myDisplayType;
+  private boolean myShouldLog;
 
-  public NotificationSettings(final String groupId, final NotificationDisplayType displayType) {
+  public NotificationSettings(String groupId, NotificationDisplayType displayType, boolean shouldLog) {
     myGroupId = groupId;
     myDisplayType = displayType;
+    myShouldLog = shouldLog;
+  }
+
+  public NotificationSettings(final String groupId, final NotificationDisplayType displayType) {
+    this(groupId, displayType, true);
   }
 
  @NotNull
@@ -43,21 +48,33 @@ public class NotificationSettings {
     return myDisplayType;
   }
 
+  public boolean isShouldLog() {
+    return myShouldLog;
+  }
+
+  public void setShouldLog(boolean shouldLog) {
+    myShouldLog = shouldLog;
+  }
+
   @Nullable
   public static NotificationSettings load(@NotNull final Element element) {
     final String displayTypeString = element.getAttributeValue("displayType");
     NotificationDisplayType displayType = NotificationDisplayType.BALLOON;
-    if (displayTypeString != null) {
+    boolean shouldLog = !"false".equals(element.getAttributeValue("shouldLog"));
+    if ("BALLOON_ONLY".equals(displayTypeString)) {
+      shouldLog = false;
+      displayType = NotificationDisplayType.BALLOON;
+    }
+    else if (displayTypeString != null) {
       try {
         displayType = NotificationDisplayType.valueOf(displayTypeString.toUpperCase());
       }
-      catch (IllegalArgumentException e) {
-        displayType = NotificationDisplayType.BALLOON;
+      catch (IllegalArgumentException ignored) {
       }
     }
 
     final String groupId = element.getAttributeValue("groupId");
-    return groupId != null ? new NotificationSettings(groupId, displayType) : null;
+    return groupId != null ? new NotificationSettings(groupId, displayType, shouldLog) : null;
   }
 
   @NotNull
@@ -65,7 +82,13 @@ public class NotificationSettings {
     final Element result = new Element("notification");
 
     result.setAttribute("groupId", getGroupId());
-    result.setAttribute("displayType", getDisplayType().toString());
+    final NotificationDisplayType displayType = getDisplayType();
+    if (displayType != NotificationDisplayType.BALLOON) {
+      result.setAttribute("displayType", displayType.toString());
+    }
+    if (!myShouldLog) {
+      result.setAttribute("shouldLog", "false");
+    }
 
     return result;
   }

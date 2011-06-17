@@ -467,6 +467,7 @@
       <separator/>
       <reference ref="MaintenanceGroup"/>
 
+      <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.tmp.SendStatisticsAction" text="Send statistics"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 

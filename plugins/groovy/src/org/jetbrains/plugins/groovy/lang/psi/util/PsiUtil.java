@@ -175,10 +175,6 @@ public class PsiUtil {
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, context);
   }
 
-  public static PsiClassType createMapType(GlobalSearchScope scope) {
-    return new GrMapType(scope);
-  }
-
   @Nullable
   public static GrArgumentList getArgumentsList(PsiElement methodRef) {
     if (methodRef instanceof GrEnumConstant) return ((GrEnumConstant)methodRef).getArgumentList();
@@ -227,7 +223,7 @@ public class PsiUtil {
     List<PsiType> result = new ArrayList<PsiType>();
 
     if (namedArgs.length > 0) {
-      result.add(createMapType(namedArgs[0].getResolveScope()));
+      result.add(new GrMapType(namedArgs[0], namedArgs));
     }
 
     for (GrExpression expression : expressions) {
@@ -390,99 +386,110 @@ public class PsiUtil {
     return isStaticsOK(owner, place, null);
   }
 
-  public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place, @Nullable PsiElement resolveContext) {
-    if (owner instanceof PsiMember) {
-      if (place instanceof GrReferenceExpression) {
-        GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
-        if (qualifier != null) {
-          PsiClass containingClass = ((PsiMember)owner).getContainingClass();
-          final boolean isStatic = owner.hasModifierProperty(PsiModifier.STATIC) && !(ResolveUtil.isInUseScope(resolveContext, owner));
-          if (qualifier instanceof GrReferenceExpression) {
-            if ("class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
-              //invoke static members of class from A.class.foo()
-              final PsiType type = qualifier.getType();
-              if (type instanceof PsiClassType) {
-                final PsiClass psiClass = ((PsiClassType)type).resolve();
-                if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-                  final PsiType[] params = ((PsiClassType)type).getParameters();
-                  if (params.length == 1 && params[0] instanceof PsiClassType) {
-                    if (place.getManager().areElementsEquivalent(containingClass, ((PsiClassType)params[0]).resolve())) {
-                      return owner.hasModifierProperty(GrModifier.STATIC);
-                    }
-                  }
+  public static boolean isStaticsOK(PsiModifierListOwner member, PsiElement place, @Nullable PsiElement resolveContext) {
+    if (!(member instanceof PsiMember)) return true;
+
+    if (!(place instanceof GrReferenceExpression)) return true;
+
+    GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
+    final PsiClass containingClass = ((PsiMember)member).getContainingClass();
+    if (qualifier != null) {
+      final boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC) && !(ResolveUtil.isInUseScope(resolveContext, member));
+      if (qualifier instanceof GrReferenceExpression) {
+        if ("class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
+          //invoke static members of class from A.class.foo()
+          final PsiType type = qualifier.getType();
+          if (type instanceof PsiClassType) {
+            final PsiClass psiClass = ((PsiClassType)type).resolve();
+            if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
+              final PsiType[] params = ((PsiClassType)type).getParameters();
+              if (params.length == 1 && params[0] instanceof PsiClassType) {
+                if (place.getManager().areElementsEquivalent(containingClass, ((PsiClassType)params[0]).resolve())) {
+                  return member.hasModifierProperty(GrModifier.STATIC);
                 }
               }
-
-            }
-            PsiElement qualifierResolved = ((GrReferenceExpression)qualifier).resolve();
-            if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) { //static context
-              if (owner instanceof PsiClass) {
-                return true;
-              }
-
-              //non-physical method, e.g. gdk
-              if (containingClass == null) {
-                return true;
-              }
-
-              if (isStatic) {
-                return true;
-              }
-
-              //members from java.lang.Class can be invoked without ".class"
-              final String qname = containingClass.getQualifiedName();
-              if (qname != null && qname.startsWith("java.")) {
-                if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname) || CommonClassNames.JAVA_LANG_CLASS.equals(qname)) {
-                  return true;
-                }
-
-                if (containingClass.isInterface()) {
-                  PsiClass javaLangClass =
-                    JavaPsiFacade.getInstance(place.getProject()).findClass(CommonClassNames.JAVA_LANG_CLASS, place.getResolveScope());
-                  if (javaLangClass != null && javaLangClass.isInheritor(containingClass, true)) {
-                    return true;
-                  }
-                }
-              }
-
-              return false;
             }
           }
-          else if (qualifier instanceof GrThisReferenceExpression && ((GrThisReferenceExpression)qualifier).getQualifier() == null) {
-            //static members may be invoked from this.<...>
-            final boolean isInStatic = isInStaticContext((GrThisReferenceExpression)qualifier);
-            if (containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName())) {
-              return !(owner.hasModifierProperty(GrModifier.STATIC) && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
-            }
-            else if (isInStatic) return owner.hasModifierProperty(GrModifier.STATIC);
-          }
 
-          //instance context
-          if (owner instanceof PsiClass) {
-            return false;
-          }
-          return !(isStatic && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
         }
-        else {
-          if (((PsiMember)owner).getContainingClass() == null) return true;
-          if (owner instanceof GrVariable && !(owner instanceof GrField)) return true;
-          if (owner.hasModifierProperty(GrModifier.STATIC)) return true;
+        PsiElement qualifierResolved = ((GrReferenceExpression)qualifier).resolve();
+        if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) { //static context
+          if (member instanceof PsiClass) {
+            return true;
+          }
 
-          PsiElement stopAt = resolveContext != null ? PsiTreeUtil.findCommonParent(place, resolveContext) : null;
-          while (place != null && place != stopAt && !(place instanceof GrMember)) {
-            if (place instanceof PsiFile) break;
-            place = place.getParent();
+          //non-physical method, e.g. gdk
+          if (containingClass == null) {
+            return true;
           }
-          if (place == null || place instanceof PsiFile || place == stopAt) return true;
-          if (place instanceof GrTypeDefinition) {
-            return !(((GrTypeDefinition)place).hasModifierProperty(GrModifier.STATIC) ||
-                     ((GrTypeDefinition)place).getContainingClass() == null);
+
+          if (isStatic) {
+            return true;
           }
-          return !((GrMember)place).hasModifierProperty(GrModifier.STATIC);
+
+          //members from java.lang.Class can be invoked without ".class"
+          final String qname = containingClass.getQualifiedName();
+          if (qname != null && qname.startsWith("java.")) {
+            if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname) || CommonClassNames.JAVA_LANG_CLASS.equals(qname)) {
+              return true;
+            }
+
+            if (containingClass.isInterface()) {
+              PsiClass javaLangClass =
+                JavaPsiFacade.getInstance(place.getProject()).findClass(CommonClassNames.JAVA_LANG_CLASS, place.getResolveScope());
+              if (javaLangClass != null && javaLangClass.isInheritor(containingClass, true)) {
+                return true;
+              }
+            }
+          }
+
+          return false;
         }
       }
+      else if (qualifier instanceof GrThisReferenceExpression && ((GrThisReferenceExpression)qualifier).getQualifier() == null) {
+        //static members may be invoked from this.<...>
+        final boolean isInStatic = isInStaticContext((GrThisReferenceExpression)qualifier);
+        if (containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName())) {
+          return !(member.hasModifierProperty(GrModifier.STATIC) && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
+        }
+        else if (isInStatic) return member.hasModifierProperty(GrModifier.STATIC);
+      }
+
+      //instance context
+      if (member instanceof PsiClass) {
+        return false;
+      }
+      return !(isStatic && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
     }
-    return true;
+    else {
+      if (containingClass == null) return true;
+      if (member instanceof GrVariable && !(member instanceof GrField)) return true;
+      if (member.hasModifierProperty(GrModifier.STATIC)) return true;
+
+      if (resolveContext != null) {
+        PsiElement stopAt = PsiTreeUtil.findCommonParent(place, resolveContext);
+        while (place != null && place != stopAt && !(place instanceof GrMember)) {
+          if (place instanceof PsiFile) break;
+          place = place.getParent();
+        }
+        if (place == null || place instanceof PsiFile || place == stopAt) return true;
+        if (place instanceof GrTypeDefinition) {
+          return !(((GrTypeDefinition)place).hasModifierProperty(GrModifier.STATIC) ||
+                   ((GrTypeDefinition)place).getContainingClass() == null);
+        }
+        return !((GrMember)place).hasModifierProperty(GrModifier.STATIC);
+      }
+      else {
+        while (place != null) {
+          place = place.getParent();
+          if (place instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)place, containingClass, true)) return true;
+          if (place instanceof PsiMember && ((PsiMember)place).hasModifierProperty(PsiModifier.STATIC)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }
   }
 
   public static boolean isAccessible(PsiElement place, PsiMember member) {
@@ -532,6 +539,7 @@ public class PsiUtil {
     else {
       PsiElement run = refExpression;
       while (run != null && run != targetClass) {
+        if (targetClass == null && run instanceof PsiClass) return false;
         if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner)run).hasModifierProperty(PsiModifier.STATIC)) return true;
         run = run.getParent();
       }
@@ -727,7 +735,7 @@ public class PsiUtil {
         qClass.processDeclarations(processor, state, null, expr);
       }
 
-      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr, state);
+      ResolveUtil.processNonCodeMembers(qualifierType, processor, expr, state);
       final GroovyResolveResult[] candidates = processor.getCandidates();
       PsiType type = null;
       if (candidates.length == 1) {

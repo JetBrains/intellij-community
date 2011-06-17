@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -23,6 +24,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -238,6 +240,26 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     finally {
       point.unregisterExtension(extension);
     }
+  }
+  public void testUnusedNonPrivateMembersReferencedFromText() throws Exception {
+    UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
+    enableInspectionTool(deadCodeInspection);
+
+    doTest(true, false);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        PsiFile txt = myFile.getParent().createFile("x.txt");
+        try {
+          VfsUtil.saveText(txt.getVirtualFile(), "XXX");
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+
+    List<HighlightInfo> infos = filter(doHighlighting(), HighlightSeverity.WARNING);
+    assertEmpty(infos);
   }
 
   public void testNamesHighlighting() throws Exception {

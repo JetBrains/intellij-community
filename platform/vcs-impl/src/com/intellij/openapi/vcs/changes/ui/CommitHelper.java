@@ -18,9 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,12 +29,14 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
@@ -124,14 +124,16 @@ public class CommitHelper {
           @Override
           public NotificationInfo notifyFinished() {
             final List<Change> changesFailedToCommit = processor.getChangesFailedToCommit();
-            
-            String text = (myIncludedChanges.size() - changesFailedToCommit.size()) + " Change(s) Commited";
-            if (changesFailedToCommit.size() > 0) {
-              text += ", " + changesFailedToCommit.size() + " Change(s) Failed To Commit";
+
+            int failed = changesFailedToCommit.size();
+            int committed = myIncludedChanges.size() - failed;
+
+            String text = committed + " " + StringUtil.pluralize("change", committed) + " committed";
+            if (failed > 0) {
+              text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
             }
-            final String title = "VCS Commit Finished";
-            Notifications.Bus.notify(new Notification(Notifications.LOG_ONLY_GROUP_ID, title + ", " + text, myCommitMessage, NotificationType.INFORMATION), myProject);
-            return new NotificationInfo("VCS Commit", title, text, true);
+            AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(text, myCommitMessage, NotificationType.INFORMATION, null).notify( myProject);
+            return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
           }
         };
       ProgressManager.getInstance().run(task);

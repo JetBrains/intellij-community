@@ -61,10 +61,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyValidationUtil;
 
 import java.util.ArrayList;
@@ -394,7 +394,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   private static boolean firstOwnerParameterMustBeMap(final GrParametersOwner owner) {
     final GrParameter first = getFirstParameter(owner);
     final PsiType type = first.getTypeGroovy();
-    final PsiClassType mapType = PsiUtil.createMapType(GlobalSearchScope.allScope(owner.getProject()));
+    final PsiClassType mapType = new GrMapType(GlobalSearchScope.allScope(owner.getProject()));
     // First parameter may be used as map
     return type == null || type.isConvertibleFrom(mapType);
   }

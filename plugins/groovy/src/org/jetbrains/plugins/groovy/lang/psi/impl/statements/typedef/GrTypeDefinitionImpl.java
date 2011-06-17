@@ -29,6 +29,9 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -281,12 +284,22 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    return GrClassImplUtil.getExtendsListTypes(this);
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
+      @Override
+      public Result<PsiClassType[]> compute() {
+        return Result.create(GrClassImplUtil.getExtendsListTypes(GrTypeDefinitionImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @NotNull
   public PsiClassType[] getImplementsListTypes() {
-    return GrClassImplUtil.getImplementsListTypes(this);
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
+      @Override
+      public Result<PsiClassType[]> compute() {
+        return Result.create(GrClassImplUtil.getImplementsListTypes(GrTypeDefinitionImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @Nullable
@@ -295,7 +308,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   public PsiClass[] getInterfaces() {
-    return GrClassImplUtil.getInterfaces(this);
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClass[]>() {
+      @Override
+      public Result<PsiClass[]> compute() {
+        return Result.create(GrClassImplUtil.getInterfaces(GrTypeDefinitionImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @NotNull

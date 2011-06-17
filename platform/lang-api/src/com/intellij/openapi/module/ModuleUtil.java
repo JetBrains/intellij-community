@@ -110,7 +110,7 @@ public class ModuleUtil {
     Project project = element.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    if (element instanceof PsiFileSystemItem) {
+    if (element instanceof PsiFileSystemItem && (!(element instanceof PsiFile) || element.getContext() == null)) {
       VirtualFile vFile = ((PsiFileSystemItem)element).getVirtualFile();
       if (vFile == null) {
         PsiFile containingFile = element.getContainingFile();

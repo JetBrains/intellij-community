@@ -16,23 +16,29 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
 import com.intellij.refactoring.ui.DelegationPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanelBase;
@@ -42,7 +48,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -53,10 +59,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M extends PsiElement, D extends MethodDescriptor<P>>
   extends RefactoringDialog {
 
@@ -68,7 +77,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   protected EditorTextField myReturnTypeField;
   protected TableView<ParameterTableModelItemBase<P>> myParametersTable;
   protected final ParameterTableModelBase<P> myParametersTableModel;
-  private JTextArea mySignatureArea;
+  private EditorTextField mySignatureArea;
   private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   protected VisibilityPanelBase myVisibilityPanel;
@@ -93,6 +102,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   protected abstract CallerChooserBase<M> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<M>> callback);
 
   protected abstract String validateAndCommitData();
+
+  protected abstract String calculateSignature();
+
+  protected abstract VisibilityPanelBase createVisibilityControl();
 
   public ChangeSignatureDialogBase(Project project, final D method, boolean allowDelegation, PsiElement defaultValueContext) {
     super(project, true);
@@ -155,11 +168,116 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
+    final JPanel methodPanel = new JPanel(new BorderLayout());
+    final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
+    final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
 
-    JPanel top = new JPanel(new BorderLayout());
+    final DocumentListener documentListener = new DocumentAdapter() {
+      public void documentChanged(DocumentEvent event) {
+        updateSignature();
+      }
+    };
+
+    createVisibilityPanel();
+
+    if (myMethod.canChangeName()) {
+      final JLabel nameLabel = new JLabel(RefactoringBundle.message("name.prompt"));
+      myNameField = new EditorTextField(myMethod.getName());
+      nameLabel.setLabelFor(myNameField);
+      namePanel.add(nameLabel);
+      namePanel.add(myNameField);
+      myNameField.setEnabled(myMethod.canChangeName());
+      myNameField.addDocumentListener(documentListener);
+    }
+
+    if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
+      final JLabel typeLabel = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
+      typePanel.add(typeLabel);
+      myReturnTypeCodeFragment = createReturnTypeCodeFragment();
+      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
+      myReturnTypeField = createReturnTypeTextField(document);
+      typeLabel.setLabelFor(myReturnTypeField);
+      typePanel.add(myReturnTypeField);
+
+      if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
+        typePanel.setPreferredSize(new Dimension(200, -1));
+        myReturnTypeField.addDocumentListener(documentListener);
+      }
+      else {
+        myReturnTypeField.setEnabled(false);
+      }
+    }
+
+    final JPanel p = new JPanel(new BorderLayout());
+    if (myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
+      p.add(myVisibilityPanel, BorderLayout.WEST);
+    }
+    p.add(typePanel, BorderLayout.EAST);
+    methodPanel.add(p, BorderLayout.WEST);
+    methodPanel.add(namePanel, BorderLayout.CENTER);
+    panel.add(methodPanel);
+
+    return panel;
+  }
+
+  protected EditorTextField createReturnTypeTextField(Document document) {
+    return new EditorTextField(document, myProject, getFileType());
+  }
+
+  private DelegationPanel createDelegationPanel() {
+    return new DelegationPanel() {
+      protected void stateModified() {
+        myParametersTableModel.fireTableDataChanged();
+        myParametersTable.repaint();
+      }
+    };
+  }
+
+  protected JComponent createCenterPanel() {
+    final JPanel panel = new JPanel(new BorderLayout());
+
+    //Should be called from here to initialize fields !!!
+    final JComponent optionsPanel = createOptionsPanel();
+
+    final JPanel subPanel = new JPanel(new BorderLayout());
+    final List<Pair<String, JPanel>> panels = createAdditionalPanels();
+    if (myMethod.canChangeParameters()) {
+      final JPanel parametersPanel = createParametersPanel();
+      if (!panels.isEmpty()) {
+        parametersPanel.setBorder(IdeBorderFactory.createEmptyBorder(0));
+      }
+      subPanel.add(parametersPanel, BorderLayout.CENTER);
+    }
+
+    if (myMethod.canChangeVisibility() && !(myVisibilityPanel instanceof ComboBoxVisibilityPanel)) {
+      subPanel.add(myVisibilityPanel, myMethod.canChangeParameters() ? BorderLayout.EAST : BorderLayout.CENTER);
+    }
+
+    panel.add(subPanel, BorderLayout.CENTER);
+    final JPanel main;
+    if (panels.isEmpty()) {
+      main = panel;
+    } else {
+      final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(getDisposable());
+      tabbedPane.addTab(RefactoringBundle.message("parameters.border.title"), panel);
+      for (Pair<String, JPanel> extraPanel : panels) {
+        tabbedPane.addTab(extraPanel.first, extraPanel.second);
+      }
+      main = new JPanel(new BorderLayout());
+      main.add(tabbedPane.getComponent(), BorderLayout.CENTER);
+    }
+    final JPanel bottom = new JPanel(new BorderLayout());
+    bottom.add(optionsPanel, BorderLayout.NORTH);
+    bottom.add(createSignaturePanel(), BorderLayout.SOUTH);
+    main.add(bottom, BorderLayout.SOUTH);
+    return main;
+  }
+
+  protected JComponent createOptionsPanel() {
+    final JPanel panel = new JPanel(new BorderLayout());
     if (myAllowDelegation) {
       myDelegationPanel = createDelegationPanel();
-      top.add(myDelegationPanel, BorderLayout.WEST);
+      panel.add(myDelegationPanel, BorderLayout.WEST);
     }
 
     myPropagateParamChangesButton = new JButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"));
@@ -187,91 +305,13 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myPropagatePanel = new JPanel();
     myPropagatePanel.add(myPropagateParamChangesButton);
 
-    top.add(myPropagatePanel, BorderLayout.EAST);
-
-    panel.add(top);
-    final DocumentListener documentListener = new DocumentAdapter() {
-      public void documentChanged(DocumentEvent event) {
-        updateSignature();
-      }
-    };
-
-    if (myMethod.canChangeName()) {
-      JLabel namePrompt = new JLabel();
-      myNameField = new EditorTextField(myMethod.getName());
-      namePrompt.setText(RefactoringBundle.message("name.prompt"));
-      namePrompt.setLabelFor(myNameField);
-      panel.add(namePrompt);
-      panel.add(myNameField);
-      myNameField.addDocumentListener(documentListener);
-    }
-
-    if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
-      JLabel typePrompt = new JLabel();
-      panel.add(typePrompt);
-      myReturnTypeCodeFragment = createReturnTypeCodeFragment();
-      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
-      myReturnTypeField = createReturnTypeTextField(document);
-      typePrompt.setText(RefactoringBundle.message("changeSignature.return.type.prompt"));
-      typePrompt.setLabelFor(myReturnTypeField);
-      panel.add(myReturnTypeField);
-
-      if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
-        myReturnTypeField.addDocumentListener(documentListener);
-      }
-      else {
-        myReturnTypeField.setEnabled(false);
-      }
-    }
-
-    return panel;
+    panel.add(myPropagatePanel, BorderLayout.EAST);
+    final JPanel result = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
+    result.add(panel);
+    return result;
   }
 
-  protected EditorTextField createReturnTypeTextField(Document document) {
-    return new EditorTextField(document, myProject, getFileType());
-  }
-
-  private DelegationPanel createDelegationPanel() {
-    return new DelegationPanel() {
-      protected void stateModified() {
-        myParametersTableModel.fireTableDataChanged();
-        myParametersTable.repaint();
-      }
-    };
-  }
-
-  protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    JPanel subPanel = new JPanel(new BorderLayout());
-    if (myMethod.canChangeParameters()) {
-      subPanel.add(createParametersPanel(), BorderLayout.CENTER);
-    }
-
-    if (myMethod.canChangeVisibility()) {
-      JPanel visibilityPanel = createVisibilityPanel(subPanel);
-      subPanel.add(visibilityPanel, myMethod.canChangeParameters() ? BorderLayout.EAST : BorderLayout.CENTER);
-    }
-
-    panel.add(subPanel, BorderLayout.CENTER);
-
-    JPanel subPanel1 = new JPanel(new GridBagLayout());
-    JPanel additionalPanel = createAdditionalPanel();
-    int gridX = 0;
-    if (additionalPanel != null) {
-      subPanel1.add(additionalPanel,
-                    new GridBagConstraints(gridX++, 0, 1, 1, 0.5, 0.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                           new Insets(4, 4, 4, 0), 0, 0));
-    }
-
-    subPanel1.add(createSignaturePanel(),
-                  new GridBagConstraints(gridX, 0, 1, 1, 0.5, 0.0, GridBagConstraints.EAST, GridBagConstraints.BOTH, new Insets(4, 0, 4, 4),
-                                         0, 0));
-    panel.add(subPanel1, BorderLayout.SOUTH);
-
-    return panel;
-  }
-
-  protected JPanel createVisibilityPanel(JPanel subPanel) {
+  protected JPanel createVisibilityPanel() {
     myVisibilityPanel = createVisibilityControl();
     myVisibilityPanel.setVisibility(myMethod.getVisibility());
     myVisibilityPanel.addListener(new ChangeListener() {
@@ -283,11 +323,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     return myVisibilityPanel;
   }
 
-  protected abstract VisibilityPanelBase createVisibilityControl();
 
-  @Nullable
-  protected JPanel createAdditionalPanel() {
-    return null;
+  @NotNull
+  protected List<Pair<String, JPanel>> createAdditionalPanels() {
+    return Collections.emptyList();
   }
 
   protected String getDimensionServiceKey() {
@@ -320,7 +359,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
     myParametersTable.setSurrendersFocusOnKeystroke(true);
 
-    JPanel buttonsPanel = EditableRowTable.createButtonsTable(myParametersTable, myParametersTableModel, true);
+    JPanel buttonsPanel = EditableRowTable.createButtonsTable(myParametersTable, myParametersTableModel, false, true);
 
     panel.add(buttonsPanel, BorderLayout.EAST);
 
@@ -336,23 +375,17 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   private JComponent createSignaturePanel() {
+    mySignatureArea = new EditorTextField(EditorFactory.getInstance().createDocument(calculateSignature()),
+                                          getProject(),
+                                          getFileType(),
+                                          true,
+                                          false);
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createCompoundBorder(
-      IdeBorderFactory.createTitledBorder(RefactoringBundle.message("signature.preview.border.title")),
-      IdeBorderFactory.createEmptyBorder(new Insets(4, 4, 4, 4))));
-
-    String s = calculateSignature();
-    s = StringUtil.convertLineSeparators(s);
-    int height = new StringTokenizer(s, "\n\r").countTokens() + 2;
-    if (height > 10) height = 10;
-    mySignatureArea = new JTextArea(height, 50);
-    mySignatureArea.setEditable(false);
-    mySignatureArea.setBackground(getContentPane().getBackground());
-    //mySignatureArea.setFont(myTableFont);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(mySignatureArea);
-    scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(0, 0, 0, 0)));
-    panel.add(scrollPane, BorderLayout.CENTER);
-
+    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("signature.preview.border.title")));
+    panel.add(mySignatureArea, BorderLayout.CENTER);
+    mySignatureArea.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
+    mySignatureArea.setPreferredSize(new Dimension(-1, 130));
+    mySignatureArea.setBackground(Color.WHITE);
     updateSignature();
     return panel;
   }
@@ -368,7 +401,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
             doUpdateSignature();
             updatePropagateButtons();
           }
-        }, 100, ModalityState.stateForComponent(mySignatureArea));
+        }, 100);
       }
     };
     SwingUtilities.invokeLater(updateRunnable);
@@ -378,6 +411,13 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     String signature = calculateSignature();
     mySignatureArea.setText(signature);
+    final Editor editor = mySignatureArea.getEditor();
+    if (editor != null) {
+      ((EditorEx)editor).setHorizontalScrollbarVisible(true);
+      ((EditorEx)editor).setVerticalScrollbarVisible(true);
+      editor.getScrollingModel().scrollVertically(0);
+      editor.getScrollingModel().scrollHorizontally(0);
+    }
   }
 
   protected void updatePropagateButtons() {
@@ -392,8 +432,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
     return true;
   }
-
-  protected abstract String calculateSignature();
 
   protected void doAction() {
     if (myParametersTable != null) {

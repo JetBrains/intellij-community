@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
@@ -418,6 +419,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myModifier.clearQueue();
         // update member from copy
         if (takeChanges) {
+          clearCurrentRevisionsCache(invalidated);
           myWorker = dataHolder.getChangeListWorker();
           myModifier.setWorker(myWorker);
           if (LOG.isDebugEnabled()) {
@@ -453,6 +455,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
       }
+    }
+  }
+
+  private void clearCurrentRevisionsCache(final VcsInvalidated invalidated) {
+    final ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(myProject).getContentRevisionCache();
+    if (invalidated.isEverythingDirty()) {
+      cache.clearAllCurrent();
+    } else {
+      cache.clearScope(invalidated.getScopes());
     }
   }
 

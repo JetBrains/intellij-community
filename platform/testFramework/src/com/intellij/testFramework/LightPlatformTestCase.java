@@ -29,6 +29,7 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -101,10 +102,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -408,13 +406,29 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
 
     assertFalse(getPsiManager().isDisposed());
-    assertTrue(getProject().isInitialized());
+    Boolean passed = null;
+    try {
+      passed = StartupManagerEx.getInstanceEx(getProject()).startupActivityPassed();
+    }
+    catch (Exception e) {
+
+    }
+    assertTrue("open: "+getProject().isOpen()+"; disposed:"+getProject().isDisposed()+"; startup passed:"+ passed+"; testProjectIsOurProject:"+(getProject() == ProjectManagerEx.getInstanceEx().getCurrentTestProject())+"; all open projects: "+
+               Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
 
-    FileDocumentManager manager = FileDocumentManager.getInstance();
+    final FileDocumentManager manager = FileDocumentManager.getInstance();
     if (manager instanceof FileDocumentManagerImpl) {
-      assertEmpty(manager.getUnsavedDocuments());
+      Document[] unsavedDocuments = manager.getUnsavedDocuments();
+      manager.saveAllDocuments();
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
+        }
+      });
+
+      assertEmpty(unsavedDocuments);
     }
   }
 
@@ -451,7 +465,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
   }
 
-  public static void doTearDown(Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
+  public static void doTearDown(final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkAllTimersAreDisposed();
     UsefulTestCase.doPostponedFormatting(project);
@@ -506,6 +520,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       @Override
       public void run() {
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
+        ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
       }
     });
 

@@ -534,8 +534,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (TextRange editable : editables) {
       TextRange hostRange = ((DocumentWindow)documentRange).injectedToHost(editable);
       HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, element, hostRange.getStartOffset(),
-                                                                 hostRange.getEndOffset(), info.description, info.toolTip);
-      if (patched != null) {
+                                                                hostRange.getEndOffset(), info.description, info.toolTip);
+      if (patched != null &&
+          (patched.startOffset != patched.endOffset ||
+           info.startOffset == info.endOffset)) {
         registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
         outInfos.add(patched);
       }
@@ -556,7 +558,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(message.replaceAll("<[^>]*>", "")) : message;
-    @NonNls final String link = "<a href=\"#inspection/" + tool.getShortName() + "\"> " + DaemonBundle.message("inspection.extended.description") +
+    @NonNls final String link = " <a href=\"#inspection/" + tool.getShortName() + "\">" + DaemonBundle.message("inspection.extended.description") +
                                 "</a>" + myShortcutText;
 
     @NonNls String tooltip = null;

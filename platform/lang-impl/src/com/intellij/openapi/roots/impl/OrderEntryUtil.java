@@ -58,16 +58,6 @@ public class OrderEntryUtil {
     return null;
   }
 
-  public static void detachModuleLibrary(@NotNull ModifiableRootModel model, @Nullable OrderEntry entry) {
-    if (entry == null) {
-      model.dispose();
-    }
-    else {
-      model.removeOrderEntry(entry);
-      model.commit();
-    }
-  }
-
   @Nullable
   public static ModuleOrderEntry findModuleOrderEntry(@NotNull ModuleRootModel model, @Nullable Module module) {
     if (module == null) return null;

@@ -79,7 +79,7 @@ public class StubGenerator implements ClassItemGenerator {
       text.append(')');
     }
 
-    GrEnumConstantInitializer initializer = enumConstant.getConstantInitializer();
+    GrEnumConstantInitializer initializer = enumConstant.getInitializingClass();
     if (initializer != null) {
       text.append("{\n");
       for (PsiMethod method : initializer.getMethods()) {

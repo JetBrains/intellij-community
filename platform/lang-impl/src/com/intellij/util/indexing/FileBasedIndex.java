@@ -21,10 +21,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -284,8 +281,8 @@ public class FileBasedIndex implements ApplicationComponent {
         rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";
       }
       if (rebuildNotification != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        Notifications.Bus.register("Indexing", NotificationDisplayType.BALLOON_ONLY);
-        Notifications.Bus.notify(new Notification("Indexing", "Index Rebuild", rebuildNotification, NotificationType.INFORMATION), null);
+        new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, true)
+          .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
       }
       dropUnregisteredIndices();
 

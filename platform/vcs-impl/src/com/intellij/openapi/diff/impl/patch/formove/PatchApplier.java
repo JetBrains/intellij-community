@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -384,17 +385,14 @@ public class PatchApplier<BinaryType extends FilePatch> {
     else if (status == ApplyPatchStatus.PARTIAL) {
       showError(project, VcsBundle.message("patch.apply.partially.applied"), false);
     } else if (ApplyPatchStatus.SUCCESS.equals(status)) {
-      ToolWindowManager.getInstance(project).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO,
-                                                               VcsBundle.message("patch.apply.success.applied.text"));
+      final String message = VcsBundle.message("patch.apply.success.applied.text");
+      ToolWindowManager.getInstance(project).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO, message);
+      AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
     }
   }
 
   public List<FilePatch> getRemainingPatches() {
     return myRemainingPatches;
-  }
-
-  public boolean hasRemainingPatches() {
-    return ! myRemainingPatches.isEmpty();
   }
 
   private boolean makeWritable(final List<VirtualFile> filesToMakeWritable) {

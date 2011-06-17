@@ -123,6 +123,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
+  public static final Key<Pair<String, String>> EDITABLE_AREA_MARKER = Key.create("editable.area.marker");
   private final DocumentImpl myDocument;
 
   private final JPanel myPanel;
@@ -267,6 +268,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   
   private boolean myStickySelection;
   private int myStickySelectionStart;
+  private boolean myScrollToCaret = true;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -1447,6 +1449,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  public boolean isScrollToCaret() {
+    return myScrollToCaret;
+  }
+
+  public void setScrollToCaret(boolean scrollToCaret) {
+    myScrollToCaret = scrollToCaret;
+  }
+
   private static int countLineFeeds(CharSequence c) {
     return StringUtil.countNewLines(c);
   }
@@ -1660,7 +1670,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private Color getBackgroundColor(final TextAttributes attributes) {
     final Color attrColor = attributes.getBackgroundColor();
-    return attrColor == myScheme.getDefaultBackground() ? getBackgroundColor() : attrColor;
+    return Comparing.equal(attrColor, myScheme.getDefaultBackground()) ? getBackgroundColor() : attrColor;
   }
 
   private Color getBackgroundIgnoreForced() {
@@ -5181,6 +5191,36 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                     :  EditorColorsManager.getInstance().getGlobalScheme();
       int globalFontSize = getGlobal().getEditorFontSize();
       myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
+    }
+
+    @Override
+    public String getConsoleFontName() {
+      return getGlobal().getConsoleFontName();
+    }
+
+    @Override
+    public void setConsoleFontName(String fontName) {
+      getGlobal().setConsoleFontName(fontName);
+    }
+
+    @Override
+    public int getConsoleFontSize() {
+      return getGlobal().getConsoleFontSize();
+    }
+
+    @Override
+    public void setConsoleFontSize(int fontSize) {
+      getGlobal().setConsoleFontSize(fontSize);
+    }
+
+    @Override
+    public float getConsoleLineSpacing() {
+      return getGlobal().getConsoleLineSpacing();
+    }
+
+    @Override
+    public void setConsoleLineSpacing(float lineSpacing) {
+      getGlobal().setConsoleLineSpacing(lineSpacing);
     }
   }
 

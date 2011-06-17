@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -82,8 +83,8 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+  public void invoke(@NotNull final Project project,
+                     @NotNull final PsiFile file,
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -96,12 +97,13 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
         if (method == null) method = myMethod;
       }
 
+      final PsiMethod finalMethod = method;
       ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project,
-                                                                        method,
+                                                                        finalMethod,
                                                                         false, null,
-                                                                        method.getName(),
-                                                                        method.getReturnType(),
-                                                                        getNewParametersInfo(method));
+                                                                        finalMethod.getName(),
+                                                                        finalMethod.getReturnType(),
+                                                                        getNewParametersInfo(finalMethod));
 
       processor.run();
 

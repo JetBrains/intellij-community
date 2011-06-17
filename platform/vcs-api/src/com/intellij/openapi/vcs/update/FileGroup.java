@@ -16,10 +16,7 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcsUtil.VcsUtil;
@@ -247,7 +244,12 @@ public class FileGroup implements JDOMExternalizable {
     if (vcsName != null && revision != null) {
       AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
       if (vcs != null) {
-        return vcs.parseRevisionNumber(revision, VcsUtil.getFilePath(file.getPath()));
+        try {
+          return vcs.parseRevisionNumber(revision, VcsUtil.getFilePath(file.getPath()));
+        }
+        catch (VcsException e) {
+          //
+        }
       }
     }
     return null;

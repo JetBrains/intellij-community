@@ -21,6 +21,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
@@ -229,6 +230,9 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
 
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {
       customPanel.saveTo(myBreakpoint);
+    }
+    if (!myCustomPanels.isEmpty()) {
+      ((XBreakpointBase)myBreakpoint).fireBreakpointChanged();
     }
   }
 

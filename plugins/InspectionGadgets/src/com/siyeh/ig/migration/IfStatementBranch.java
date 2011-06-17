@@ -24,7 +24,7 @@ class IfStatementBranch {
     private final Set<String> topLevelVariables = new HashSet<String>(3);
     private final LinkedList<String> comments = new LinkedList<String>();
     private final LinkedList<String> statementComments = new LinkedList<String>();
-    private final List<String> conditions = new ArrayList<String>(3);
+    private final List<PsiExpression> conditions = new ArrayList<PsiExpression>(3);
     private final PsiStatement statement;
     private final boolean elseBranch;
 
@@ -42,15 +42,15 @@ class IfStatementBranch {
         statementComments.addFirst(comment);
     }
 
-    public void addCondition(String conditionString) {
-        conditions.add(conditionString);
+    public void addCaseExpression(PsiExpression expression) {
+        conditions.add(expression);
     }
 
     public PsiStatement getStatement() {
         return statement;
     }
 
-    public List<String> getConditions() {
+    public List<PsiExpression> getConditions() {
         return Collections.unmodifiableList(conditions);
     }
 

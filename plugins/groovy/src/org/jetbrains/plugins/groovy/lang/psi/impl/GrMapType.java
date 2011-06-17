@@ -19,20 +19,18 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 import java.util.*;
-import java.util.HashSet;
+
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP;
 
 /**
  * @author peter
@@ -42,10 +40,7 @@ public class GrMapType extends GrLiteralClassType {
   
   private final Map<String, PsiType> myStringEntries;
   private final List<Pair<PsiType, PsiType>> myOtherEntries;
-  @NonNls
-  private static final String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
   private final String myJavaClassName;
-
 
   public GrMapType(GlobalSearchScope scope) {
     this(JavaPsiFacade.getInstance(scope.getProject()), scope, Collections.<String, PsiType>emptyMap(), Collections.<Pair<PsiType, PsiType>>emptyList(), LanguageLevel.JDK_1_5);
@@ -68,15 +63,13 @@ public class GrMapType extends GrLiteralClassType {
     myStringEntries = stringEntries;
     myOtherEntries = otherEntries;
 
-    myJavaClassName =
-      facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : CommonClassNames.JAVA_UTIL_MAP;
+    myJavaClassName = facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : JAVA_UTIL_MAP;
   }
 
-  public GrMapType(JavaPsiFacade facade, GlobalSearchScope scope, GrNamedArgument[] args) {
-    super(LanguageLevel.JDK_1_5, scope, facade);
+  public GrMapType(@NotNull PsiElement context, GrNamedArgument[] args) {
+    super(LanguageLevel.JDK_1_5, context.getResolveScope(), JavaPsiFacade.getInstance(context.getProject()));
 
-    myJavaClassName =
-      facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : CommonClassNames.JAVA_UTIL_MAP;
+    myJavaClassName = myFacade.findClass(JAVA_UTIL_LINKED_HASH_MAP, myScope) != null ? JAVA_UTIL_LINKED_HASH_MAP : JAVA_UTIL_MAP;
 
     myStringEntries = new HashMap<String, PsiType>();
     myOtherEntries=new ArrayList<Pair<PsiType, PsiType>>();
@@ -148,7 +141,12 @@ public class GrMapType extends GrLiteralClassType {
   }
 
   public String getInternalCanonicalText() {
-    if (myStringEntries.size() == 0) return "[:]";
+    if (myStringEntries.size() == 0) {
+      if (myOtherEntries.size() == 0) return "[:]";
+      String name = getJavaClassName();
+      final PsiType[] params = getParameters();
+      return name + "<" + params[0].getInternalCanonicalText() + ", " + params[1].getInternalCanonicalText() + ">";
+    }
 
     List<String> components = new ArrayList<String>();
     for (String s : myStringEntries.keySet()) {

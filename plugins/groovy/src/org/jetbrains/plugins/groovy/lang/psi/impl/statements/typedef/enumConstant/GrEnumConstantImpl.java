@@ -47,7 +47,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, PsiPolyVariantReference {
+public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
+  private final MyReference myReference = new MyReference();
+
   public GrEnumConstantImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -130,11 +132,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
     return findChildByClass(GrArgumentList.class);
   }
 
-  @Override
-  public PsiEnumConstantInitializer getInitializingClass() {
-    return null;
-  }
-
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
     GrArgumentList list = getArgumentList();
     assert list != null;
@@ -183,30 +180,31 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
   }
 
   @Nullable
-  public GrEnumConstantInitializer getConstantInitializer() {
+  public GrEnumConstantInitializer getInitializingClass() {
     return findChildByClass(GrEnumConstantInitializer.class);
+  }
+
+  @NotNull
+  @Override
+  public PsiEnumConstantInitializer getOrCreateInitializingClass() {
+    final GrEnumConstantInitializer initializingClass = getInitializingClass();
+    if (initializingClass != null) return initializingClass;
+
+    final GrEnumConstantInitializer initializer =
+      GroovyPsiElementFactory.getInstance(getProject()).createEnumConstantFromText("foo{}").getInitializingClass();
+    LOG.assertTrue(initializer != null);
+    final GrArgumentList argumentList = getArgumentList();
+    if (argumentList != null) {
+      return (PsiEnumConstantInitializer)addAfter(initializer, argumentList);
+    }
+    else {
+      return (PsiEnumConstantInitializer)addAfter(initializer, getNameIdentifierGroovy());
+    }
   }
 
   @Override
   public PsiReference getReference() {
-    return this;
-  }
-
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
-    return multiResolveConstructor();
-  }
-
-  public PsiElement getElement() {
-    return this;
-  }
-
-  public TextRange getRangeInElement() {
-    return getNameIdentifierGroovy().getTextRange().shiftRight(-getTextOffset());
-  }
-
-  public PsiElement resolve() {
-    return resolveMethod();
+    return myReference;
   }
 
   @NotNull
@@ -215,34 +213,58 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
     return resolveConstructorGenerics();
   }
 
-  @NotNull
-  public String getCanonicalText() {
-    return getText(); //todo
-  }
-
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return getElement();
-  }
-
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("invalid operation");
-  }
-
-  public boolean isReferenceTo(PsiElement element) {
-    return element instanceof GrMethod && ((GrMethod)element).isConstructor() && getManager().areElementsEquivalent(resolve(), element);
-  }
-
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  public boolean isSoft() {
-    return false;
-  }
-
   @Override
   public PsiMethod resolveConstructor() {
     return resolveMethod();
+  }
+
+  private class MyReference implements PsiPolyVariantReference {
+    @NotNull
+    public ResolveResult[] multiResolve(boolean incompleteCode) {
+      return multiResolveConstructor();
+    }
+
+    public PsiElement getElement() {
+      return GrEnumConstantImpl.this;
+    }
+
+    public TextRange getRangeInElement() {
+      return getNameIdentifierGroovy().getTextRange().shiftRight(-getTextOffset());
+    }
+
+    public PsiElement resolve() {
+      return resolveMethod();
+    }
+
+    @NotNull
+    public GroovyResolveResult advancedResolve() {
+      return resolveConstructorGenerics();
+    }
+
+    @NotNull
+    public String getCanonicalText() {
+      return getContainingClass().getName();
+    }
+
+    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      return getElement();
+    }
+
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+      throw new IncorrectOperationException("invalid operation");
+    }
+
+    public boolean isReferenceTo(PsiElement element) {
+      return element instanceof GrMethod && ((GrMethod)element).isConstructor() && getManager().areElementsEquivalent(resolve(), element);
+    }
+
+    @NotNull
+    public Object[] getVariants() {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    public boolean isSoft() {
+      return false;
+    }
   }
 }

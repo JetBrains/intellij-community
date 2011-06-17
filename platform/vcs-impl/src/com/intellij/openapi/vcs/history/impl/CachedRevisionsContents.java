@@ -102,6 +102,9 @@ public class CachedRevisionsContents {
               catch (ProcessCanceledException ex) {
                 return;
               }
+              catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+              }
               String content = null;
               try {
                 final byte[] byteContent = vcsFileRevision.getContent();
@@ -111,6 +114,9 @@ public class CachedRevisionsContents {
               }
               catch (IOException e) {
                 LOG.info(e);
+              }
+              catch (VcsException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
               }
               myCachedContents.put(vcsFileRevision.getRevisionNumber(), content);
 

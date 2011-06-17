@@ -70,5 +70,8 @@ public class JavaIdentifier extends LightIdentifier {
     return myElement.getNextSibling();
   }
 
-  
+  @Override
+  public PsiElement copy() {
+    return new JavaIdentifier(myManager, myElement);
+  }
 }

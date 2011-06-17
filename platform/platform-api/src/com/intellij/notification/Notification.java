@@ -16,6 +16,7 @@
 package com.intellij.notification;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,21 +35,28 @@ public class Notification {
   private final NotificationType myType;
   private final NotificationListener myListener;
   private final String myTitle;
+  private final long myCreationTime;
   private boolean myExpired;
   private WeakReference<Balloon> myBalloonRef;
 
-  public Notification(@NotNull final String groupId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type) {
-    this(groupId, title, content, type, null);
+  public Notification(@NotNull final String groupDisplayId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type) {
+    this(groupDisplayId, title, content, type, null);
   }
 
-  public Notification(@NotNull final String groupId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type, @Nullable NotificationListener listener) {
-    myGroupId = groupId;
+  public Notification(@NotNull final String groupDisplayId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type, @Nullable NotificationListener listener) {
+    myGroupId = groupDisplayId;
     myTitle = title;
     myContent = content;
     myType = type;
     myListener = listener;
 
+    myCreationTime = System.currentTimeMillis();
+
     LOG.assertTrue(myContent.trim().length() > 0, "Notification should have content, groupId: " + myGroupId);
+  }
+
+  public long getCreationTime() {
+    return myCreationTime;
   }
 
   @Nullable
@@ -108,5 +116,13 @@ public class Notification {
   @Nullable
   public Balloon getBalloon() {
     return myBalloonRef == null ? null : myBalloonRef.get();
+  }
+
+  public void notify(@Nullable Project project) {
+    Notifications.Bus.notify(this, project);
+  }
+
+  public boolean isImportant() {
+    return getListener() != null;
   }
 }

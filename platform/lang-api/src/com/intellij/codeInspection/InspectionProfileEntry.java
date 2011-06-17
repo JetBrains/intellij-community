@@ -46,6 +46,7 @@ public abstract class InspectionProfileEntry {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionProfileEntry");
 
+  private static final SkipDefaultValuesSerializationFilters DEFAULT_FILTER = new SkipDefaultValuesSerializationFilters();
   private static Set<String> myBlackList = null;
   private Boolean myUseNewSerializer = null;
 
@@ -189,7 +190,7 @@ public abstract class InspectionProfileEntry {
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   protected SerializationFilter getSerializationFilter() {
-    return new SkipDefaultValuesSerializationFilters();
+    return DEFAULT_FILTER;
   }
 
   /**

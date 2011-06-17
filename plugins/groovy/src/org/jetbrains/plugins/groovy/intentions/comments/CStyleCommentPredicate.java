@@ -17,11 +17,10 @@ package org.jetbrains.plugins.groovy.intentions.comments;
 
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.intentions.utils.TreeUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 class CStyleCommentPredicate implements PsiElementPredicate {
@@ -38,7 +37,7 @@ class CStyleCommentPredicate implements PsiElementPredicate {
     if (!GroovyTokenTypes.mML_COMMENT.equals(type)) {
       return false;
     }
-    final PsiElement sibling = TreeUtil.getNextLeaf(comment);
+    final PsiElement sibling = PsiTreeUtil.nextLeaf(comment);
     if(sibling == null)
     {
       return true;

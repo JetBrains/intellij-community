@@ -15,31 +15,42 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
+import com.intellij.refactoring.introduceField.InplaceCombosUtil;
+import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * User: anna
  */
 public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntroducer<PsiVariable, PsiExpression> {
-  protected SmartTypePointer myTypePointer;
   protected TypeSelectorManagerImpl myTypeSelectorManager;
-  protected final SmartTypePointer myDefaultType;
-  protected final TypeExpression myExpression;
-
+  protected TypeSelector myTypeSelector;
 
   public AbstractJavaInplaceIntroducer(Project project,
                                        Editor editor,
                                        PsiExpression expr,
                                        PsiVariable localVariable,
                                        PsiExpression[] occurrences,
-                                       PsiType defaultType, TypeSelectorManagerImpl typeSelectorManager, String title) {
+                                       TypeSelectorManagerImpl typeSelectorManager, String title) {
     super(project, editor, expr, localVariable, occurrences, title);
     myTypeSelectorManager = typeSelectorManager;
-    myExpression = new TypeExpression(project, typeSelectorManager.getTypesForOne());
-    myDefaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(defaultType);
-    setAdvertisementText(getAdvertisementText(myExpression.hasSuggestions()));
+    myTypeSelector = myTypeSelectorManager.getTypeSelector();
+    JComponent component = myTypeSelector.getComponent();
+    if (component instanceof JCheckBox) {
+      ((JCheckBox)component).addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          getVariable().getTypeElement().replace(JavaPsiFacade.getElementFactory(myProject).createTypeElement(myTypeSelector.getSelectedType()));
+        }
+      });
+    }
   }
 
   protected abstract PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType);
@@ -59,21 +70,8 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   @Override
   protected PsiVariable createFieldToStartTemplateOn(boolean replaceAll, String[] names) {
-    final PsiType fieldDefaultType = myTypePointer != null ? myTypePointer.getType() : null;
-
     myTypeSelectorManager.setAllOccurences(replaceAll);
-    PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
-    if (fieldDefaultType != null) {
-      if (replaceAll) {
-        if (ArrayUtil.find(myTypeSelectorManager.getTypesForAll(), fieldDefaultType) != -1) {
-          defaultType = fieldDefaultType;
-        }
-      }
-      else if (ArrayUtil.find(myTypeSelectorManager.getTypesForOne(), fieldDefaultType) != -1) {
-        defaultType = fieldDefaultType;
-      }
-    }
-    return createFieldToStartTemplateOn(names, defaultType);
+    return createFieldToStartTemplateOn(names, myTypeSelector.getSelectedType());
   }
 
   @Override
@@ -83,19 +81,31 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   @Override
   protected void restoreState(PsiVariable psiField) {
-    myTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(psiField.getType());
     super.restoreState(psiField);
-    myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultType.getType(), null, myExpr, myOccurrences);
   }
 
   @Override
   protected void saveSettings(PsiVariable psiVariable) {
-    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultType.getType());
+    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myTypeSelectorManager.getDefaultType());//myDefaultType.getType());
   }
 
-  protected void addAdditionalVariables(TemplateBuilderImpl builder) {
-    final PsiTypeElement typeElement = getVariable().getTypeElement();
-    builder.replaceElement(typeElement, "Variable_Type", createExpression(myExpression, typeElement.getText()), true, true);
+  protected PsiType getType() {
+    return myTypeSelector.getSelectedType();
+  }
+
+  @Nullable
+  protected JComponent typeComponent() {
+    JComponent component = myTypeSelector.getComponent();
+    if (component instanceof JLabel) return null;
+    LOG.assertTrue(component instanceof JComboBox);
+    InplaceCombosUtil.appendActions((JComboBox)component, myProject);
+    JPanel panel = new JPanel(new BorderLayout());
+    JLabel label = new JLabel("Type: ");
+    label.setLabelFor(component);
+    label.setDisplayedMnemonic('T');
+    panel.add(label, BorderLayout.WEST);
+    panel.add(component, BorderLayout.CENTER);
+    return panel;
   }
 
   @Nullable
@@ -117,18 +127,6 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     }
     return expression != null && expression.isValid() && expression.getText().equals(exprText) ? expression : null;
   }
-
-  @Nullable
-   private static String getAdvertisementText(final boolean hasTypeSuggestion) {
-     final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-     if (hasTypeSuggestion) {
-       final Shortcut[] shortcuts = keymap.getShortcuts("PreviousTemplateVariable");
-       if (shortcuts.length > 0) {
-         return "Press " + shortcuts[0] + " to change type";
-       }
-     }
-     return null;
-   }
 
    public static Expression createExpression(final TypeExpression expression, final String defaultType) {
      return new Expression() {

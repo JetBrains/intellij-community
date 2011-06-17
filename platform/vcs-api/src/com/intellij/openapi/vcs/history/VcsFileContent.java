@@ -21,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 public interface VcsFileContent {
-  void loadContent() throws VcsException;
+  byte[] loadContent() throws IOException, VcsException;
 
   @Nullable
-  byte[] getContent() throws IOException;
+  byte[] getContent() throws IOException, VcsException;
 }
