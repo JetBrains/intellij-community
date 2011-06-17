@@ -1670,7 +1670,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private Color getBackgroundColor(final TextAttributes attributes) {
     final Color attrColor = attributes.getBackgroundColor();
-    return attrColor == myScheme.getDefaultBackground() ? getBackgroundColor() : attrColor;
+    return Comparing.equal(attrColor, myScheme.getDefaultBackground()) ? getBackgroundColor() : attrColor;
   }
 
   private Color getBackgroundIgnoreForced() {
