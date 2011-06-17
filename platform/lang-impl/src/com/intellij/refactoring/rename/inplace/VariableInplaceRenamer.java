@@ -116,7 +116,7 @@ public class VariableInplaceRenamer {
     myElementToRename = elementToRename;
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
     myProject = project;
-    myRenameOffset = myElementToRename != null ? myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange()) : null;
+    myRenameOffset = myElementToRename != null && myElementToRename.getTextRange() != null ? myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange()) : null;
   }
 
   public boolean performInplaceRename() {
