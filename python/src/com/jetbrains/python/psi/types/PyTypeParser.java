@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -43,8 +44,17 @@ public class PyTypeParser {
 
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
 
+    if (type.equals("unknown")) {
+      return null;
+    }
     if (type.equals("string")) {
+      return builtinCache.getStringType(LanguageLevel.forElement(anchor));
+    }
+    if (type.equals("str")) {
       return builtinCache.getStrType();
+    }
+    if (type.equals("bytes")) {
+      return builtinCache.getBytesType(LanguageLevel.forElement(anchor));
     }
     if (type.equals("boolean")) {
       return builtinCache.getBoolType();
@@ -83,13 +93,18 @@ public class PyTypeParser {
         return new PyClassType(classes.iterator().next(), false);
       }
     }
-    if (CharMatcher.JAVA_LETTER_OR_DIGIT.or(CharMatcher.is('.')).matchesAllOf(type)) {
+    if (CharMatcher.JAVA_LETTER_OR_DIGIT.or(CharMatcher.is('.')).or(CharMatcher.is('_')).matchesAllOf(type)) {
       int pos = type.lastIndexOf('.');
       if (pos > 0) {
         String shortName = type.substring(pos+1);
         final Collection<PyClass> classes = PyClassNameIndex.find(shortName, anchor.getProject(), true);
         for (PyClass aClass : classes) {
           if (type.equals(aClass.getQualifiedName())) {
+            return new PyClassType(aClass, false);
+          }
+        }
+        for (PyClass aClass : classes) {
+          if (shortName.equals(aClass.getName())) {
             return new PyClassType(aClass, false);
           }
         }

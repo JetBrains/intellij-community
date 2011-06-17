@@ -395,6 +395,19 @@ public class ResolveImportUtil {
     visitModuleSdkRoots(visitor, module);
   }
 
+  /**
+   * Visits module content, sdk roots and libraries
+   */
+  public static void visitRoots(@NotNull Module module, @NotNull Sdk sdk, RootVisitor visitor) {
+    if (visitModuleContentEntries(module, visitor)) return;
+    // else look in SDK roots
+    if (visitSdkRoots(visitor, sdk)) return;
+
+    //look in libraries
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    rootManager.orderEntries().process(new LibraryRootVisitingPolicy(visitor), null);
+  }
+
   private static void visitSdkRoots(PsiElement elt, RootVisitor visitor) {
     // no module, another way to look in SDK roots
     final PsiFile elt_psifile = elt.getContainingFile();
@@ -412,16 +425,21 @@ public class ResolveImportUtil {
           // out-of-project file - use roots of SDK assigned to project
           final Sdk sdk = PyBuiltinCache.findSdkForFile(elt_psifile);
           if (sdk != null) {
-            final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-            for (VirtualFile root : roots) {
-              if (!visitor.visitRoot(root)) {
-                break;
-              }
-            }
+            visitSdkRoots(visitor, sdk);
           }
         }
       }
     }
+  }
+
+  private static boolean visitSdkRoots(@NotNull RootVisitor visitor, @NotNull Sdk sdk) {
+    final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    for (VirtualFile root : roots) {
+      if (!visitor.visitRoot(root)) {
+        return true;
+      }
+    }
+    return false;
   }
 
 
@@ -507,7 +525,9 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveForeignImport(final PyElement importElement, final PyQualifiedName importText, final PyQualifiedName importFrom) {
+  private static PsiElement resolveForeignImport(final PyElement importElement,
+                                                 final PyQualifiedName importText,
+                                                 final PyQualifiedName importFrom) {
     for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
       PsiElement result = resolver.resolveImportReference(importElement, importText, importFrom);
       if (result != null) {
@@ -856,7 +876,7 @@ public class ResolveImportUtil {
           toplevel = containingClass;
         }
       }
-      PsiDirectory dir = ((PsiFile) srcfile).getContainingDirectory();
+      PsiDirectory dir = ((PsiFile)srcfile).getContainingDirectory();
       while (dir != null) {
         PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
         if (initPy == null) {
@@ -882,6 +902,27 @@ public class ResolveImportUtil {
     public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
       if (value != null) return value;  // for chaining in processOrder()
       visitOrderEntryRoots(myVisitor, jdkOrderEntry);
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, PsiElement value) {
+      if (value != null) return value;  // for chaining in processOrder()
+      visitOrderEntryRoots(myVisitor, libraryOrderEntry);
+      return null;
+    }
+  }
+
+  public static class LibraryRootVisitingPolicy extends RootPolicy<PsiElement> {
+    private final RootVisitor myVisitor;
+
+    public LibraryRootVisitingPolicy(RootVisitor visitor) {
+      myVisitor = visitor;
+    }
+
+    @Nullable
+    public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
       return null;
     }
 

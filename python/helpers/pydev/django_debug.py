@@ -52,7 +52,7 @@ def is_django_render_call(frame):
 def is_django_suspended(thread):
     return thread.additionalInfo.suspend_type == DJANGO_SUSPEND
 
-def suspend_django(py_db_frame, mainDebugger, thread, frame):
+def suspend_django(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     frame = DjangoTemplateFrame(frame)
 
     if frame.f_lineno is None:
@@ -67,7 +67,7 @@ def suspend_django(py_db_frame, mainDebugger, thread, frame):
     mainDebugger.additional_frames.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
 
 
-    py_db_frame.setSuspend(thread, CMD_SET_BREAK)
+    py_db_frame.setSuspend(thread, cmd)
     thread.additionalInfo.suspend_type = DJANGO_SUSPEND
 
     thread.additionalInfo.filename = frame.f_code.co_filename

@@ -99,6 +99,7 @@ def excepthook(exctype, value, tb):
     thread = threadingCurrentThread()
     frames_byid = dict([(id(frame),frame) for frame in frames])
     frame = frames[-1]
+    thread.additionalInfo.exception = (exctype, value, tb)
     thread.additionalInfo.pydev_force_stop_at_exception = (frame, frames_byid)
     thread.additionalInfo.message = exception_breakpoint.name
     #sys.exc_info = lambda : (exctype, value, traceback)

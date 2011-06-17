@@ -12,6 +12,7 @@ import os
 import sys
 
 target = os.getenv("PYCHARM_ENGULF_SCRIPT")
+print("Running script through buildout: " + target)
 
 assert target, "PYCHARM_ENGULF_SCRIPT must be set"
 

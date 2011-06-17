@@ -37,12 +37,12 @@
   </problem>
   <problem>
     <file>test.py</file>
-    <line>140</line>
+    <line>141</line>
     <description>"Local variable 'os' might be referenced before assignment"</description>
   </problem>
   <problem>
     <file>test.py</file>
-    <line>147</line>
+    <line>148</line>
     <description>"Local variable 'x' might be referenced before assignment"</description>
   </problem>
 </problems>

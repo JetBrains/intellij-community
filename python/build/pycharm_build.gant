@@ -28,13 +28,11 @@ setProperty("pluginFilter", [
             "CSS", "css-api",
             "JSInspections",
             "JSIntentionPowerPack",
-            "SpellChecker", "spellchecker",
             "less", "sass",
             "haml", "haml-plugin",
             "hg4idea",
             "tasks", "tasks-core", "tasks-api", "jira-connector",
             "github",
-            "python-spellchecker-common", "pycharm-spellchecker",
             "webDeployment",
             "jdbc-console", "django-db-config",
             "database-impl", "DatabaseSupport",
@@ -57,6 +55,7 @@ private List platformImplementationModules() {
           "xml",
           "lvcs-impl",
           "images",
+          "spellchecker",
           "dom-impl",
           "yaml"
   ]
@@ -153,7 +152,7 @@ def forceDelete(String dirPath) {
 target('default': "Build artifacts") {
 
   def modules = [
-          "python", "python-ide", "python-pydev", "colorSchemes", platformApiModules(), platformImplementationModules(), pluginFilter
+          "python", "python-ide", "python-pydev", "colorSchemes", "python-spellchecker-common", platformApiModules(), platformImplementationModules(), pluginFilter
   ].flatten()
 
   loadProject()
@@ -502,14 +501,6 @@ def layoutFull(String target, Set usedJars) {
     }
 
     dir("plugins") {
-      dir("pycharm-spellchecker") {
-        dir("lib") {
-          jar("pycharm-spellchecker.jar") {
-            module("python-spellchecker-common")
-            module("pycharm-spellchecker")
-          }
-        }
-      }
       dir("django-db-config") {
         dir("lib") {
           jar("django-db-config.jar") {

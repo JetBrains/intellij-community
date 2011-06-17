@@ -138,7 +138,7 @@ public class PyUtil {
       else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
         _unfoldParenExprs(new PyExpression[] { ((PyStarExpression) exp).getExpression() }, receiver, unfoldListLiterals, unfoldStarExpressions);
       }
-      else {
+      else if (exp != null) {
         receiver.add(exp);
       }
     }
