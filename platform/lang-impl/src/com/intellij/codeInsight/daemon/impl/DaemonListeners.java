@@ -71,6 +71,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -270,7 +271,7 @@ class DaemonListeners implements Disposable {
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
   }
 
-  static boolean isUnderIgnoredAction(Object action) {
+  static boolean isUnderIgnoredAction(@Nullable Object action) {
     if (action instanceof DocumentRunnable.IgnoreDocumentRunnable) return true;
     return ApplicationManager.getApplication().hasWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
   }
@@ -358,6 +359,7 @@ class DaemonListeners implements Disposable {
       stopDaemon(false);
     }
 
+    @Nullable
     private Document extractDocumentFromCommand(CommandEvent event) {
       Document affectedDocument = event.getDocument();
       if (affectedDocument != null) return affectedDocument;

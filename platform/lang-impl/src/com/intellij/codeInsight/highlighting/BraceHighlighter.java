@@ -20,6 +20,7 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
@@ -30,6 +31,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -61,9 +63,19 @@ public class BraceHighlighter extends AbstractProjectComponent {
       public void caretPositionChanged(CaretEvent e) {
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
-        if (editor.getProject() == myProject) {
-          updateBraces(editor, myAlarm);
+        final SelectionModel selectionModel = editor.getSelectionModel();
+        // Don't update braces in case of the active selection.
+        if (editor.getProject() != myProject || selectionModel.hasSelection() || selectionModel.hasBlockSelection()) {
+          return;
         }
+
+        final Document document = editor.getDocument();
+        int line = e.getNewPosition().line;
+        // Don't update braces for virtual space navigation.
+        if (line < 0 || line >= document.getLineCount() || editor.getCaretModel().getOffset() >= document.getLineEndOffset(line)) {
+          return;
+        }
+        updateBraces(editor, myAlarm);
       }
     };
     eventMulticaster.addCaretListener(myCaretListener, myProject);
@@ -72,9 +84,17 @@ public class BraceHighlighter extends AbstractProjectComponent {
       public void selectionChanged(SelectionEvent e) {
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
-        if (editor.getProject() == myProject) {
-          updateBraces(editor, myAlarm);
+        if (editor.getProject() != myProject) {
+          return;
         }
+        
+        final TextRange oldRange = e.getOldRange();
+        final TextRange newRange = e.getNewRange();
+        if (oldRange != null && newRange != null && !(oldRange.isEmpty() ^ newRange.isEmpty())) {
+          // Don't perform braces update in case of active/absent selection.
+          return;
+        }
+        updateBraces(editor, myAlarm);
       }
     };
     eventMulticaster.addSelectionListener(mySelectionListener, myProject);

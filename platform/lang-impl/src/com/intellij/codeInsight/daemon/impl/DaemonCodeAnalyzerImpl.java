@@ -496,7 +496,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-    MarkupModelEx model = (MarkupModelEx)((DocumentEx)document).getMarkupModel(project);
+    MarkupModelEx model = (MarkupModelEx)document.getMarkupModel(project);
     return model.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx marker) {
         Object tt = marker.getErrorStripeTooltip();
