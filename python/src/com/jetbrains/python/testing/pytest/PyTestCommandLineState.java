@@ -26,10 +26,13 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     myConfiguration = configuration;
   }
 
-  protected void addTestRunnerParameters(GeneralCommandLine cmd) {
+  protected void addTestRunnerParameters(GeneralCommandLine cmd) throws ExecutionException {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
-    script_params.addParameter(myConfiguration.getRunnerScriptPath());
+    String runner = myConfiguration.getRunnerScriptPath();
+    if (runner == null)
+      throw new ExecutionException("No py.test runner found in selected interpreter");
+    script_params.addParameter(runner);
     script_params.addParameters("-p", "pytest_teamcity");
     script_params.addParameters(getTestSpecs());
 
