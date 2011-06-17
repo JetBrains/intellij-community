@@ -83,6 +83,9 @@ public class SphinxDocString extends StructuredDocString {
     if (tagEnd < 0) return index;
     String tagName = line.substring(1, tagEnd);
     String tagValue = line.substring(tagEnd).trim();
+    tagValue = tagValue.replaceAll(":py:class:", "");
+    tagValue = tagValue.replaceAll(":class:", "");
+    tagValue = tagValue.replaceAll("`(\\w+)`", "$1");
     int pos = tagValue.indexOf(':');
     if (pos < 0) return index;
     String value = tagValue.substring(pos+1).trim();
