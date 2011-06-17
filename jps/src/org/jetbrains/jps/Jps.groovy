@@ -58,7 +58,22 @@ final class Jps {
       }
       binding.setVariable("jar", {Object[] args ->
         if (args.length == 2) {
-          binding.ant.jar(name: args[0], compress: project.builder.compressJars, args[1])
+          def param0 = args[0]
+          String name;
+          String duplicate = null;
+          if (param0 instanceof Map) {
+            name = param0.name;
+            duplicate = param0.duplicate;
+          }
+          else {
+            name = (String)param0;
+          }
+          if (duplicate != null) {
+            binding.ant.jar(name: name, compress: project.builder.compressJars, duplicate: duplicate, args[1])
+          }
+          else {
+            binding.ant.jar(name: name, compress: project.builder.compressJars, args[1])
+          }
         }
         else {
           project.error("unexpected number of parameters for 'jar' task: $args.length")
