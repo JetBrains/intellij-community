@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -178,15 +179,17 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, PsiElement context);
 
-  public abstract GrMethod createConstructorFromText(@NotNull String constructorName,
+  public abstract GrConstructor createConstructorFromText(@NotNull String constructorName,
                                                      String[] paramTypes,
                                                      String[] paramNames,
                                                      String body,
                                                      @Nullable PsiElement context);
 
-  public GrMethod createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
+  public GrConstructor createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
     return createConstructorFromText(constructorName, paramTypes, paramNames, body, null);
   }
+
+  public abstract GrConstructor createConstructorFromText(String constructorName, String text, @Nullable PsiElement context);
 
   public abstract GrLabel createLabel(@NotNull String name);
 

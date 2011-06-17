@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
@@ -98,7 +99,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
 import java.util.ArrayList;
@@ -919,7 +919,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
-    Collection<CandidateInfo> collection = GroovyOverrideImplementUtil.getMethodsToImplement(typeDefinition);
+    Collection<CandidateInfo> collection = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
     if (collection.isEmpty()) return;
 
     final PsiElement element = collection.iterator().next().getElement();

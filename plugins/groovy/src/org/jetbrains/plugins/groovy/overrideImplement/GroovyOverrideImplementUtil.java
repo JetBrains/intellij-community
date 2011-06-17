@@ -15,40 +15,31 @@
  */
 package org.jetbrains.plugins.groovy.overrideImplement;
 
-import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator;
 
 import java.io.IOException;
 import java.util.*;
@@ -67,52 +58,27 @@ public class GroovyOverrideImplementUtil {
   public static void invokeOverrideImplement(final Editor editor, final PsiFile file, final boolean isImplement) {
     final int offset = editor.getCaretModel().getOffset();
 
-    GrTypeDefinition aClass = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrTypeDefinition.class, false);
-    if (aClass == null) {
-      return;
-    }
+    final GrTypeDefinition aClass = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrTypeDefinition.class, false);
+    if (aClass == null) return;
 
     if (isImplement && aClass.isInterface()) return;
 
-    Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, isImplement);
-    Collection<CandidateInfo> secondary = isImplement ? Collections.<CandidateInfo>emptyList() : getMethodsToOverrideImplement(aClass, !isImplement);
+    Collection<CandidateInfo> candidates = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
+    Collection<CandidateInfo> secondary = isImplement ? Collections.<CandidateInfo>emptyList() : OverrideImplementUtil.getMethodsToOverrideImplement(aClass, !isImplement);
 
-    MemberChooser<PsiMethodMember> chooser = OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, isImplement, candidates, secondary);
+    final MemberChooser<PsiMethodMember> chooser = OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, isImplement, candidates, secondary);
     if (chooser == null) return;
 
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null || selectedElements.size() == 0) return;
 
-    for (PsiMethodMember methodMember : selectedElements) {
-      if (!aClass.isValid()) {
-        aClass = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrTypeDefinition.class, false);
-        assert aClass != null;
+    new WriteCommandAction(aClass.getProject(), aClass.getContainingFile()) {
+      protected void run(final Result result) throws Throwable {
+        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
       }
-      generateImplementation(editor, aClass, methodMember.getElement(), methodMember.getSubstitutor());
-    }
-  }
+    }.execute();
 
-  public static void generateImplementation(@Nullable final Editor editor,
-                                            final GrTypeDefinition aClass,
-                                            final PsiMethod method,
-                                            final PsiSubstitutor substitutor) {
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final PsiElement anchor = findAnchor(aClass, editor);
-        final GrMethod result = generateMethodPrototype(aClass, method, substitutor);
-        final GrMethod addedMethod = aClass.addMemberDeclaration(result, anchor);
-
-        PsiUtil.shortenReferences(addedMethod);
-        PsiFile psiFile = aClass.getContainingFile();
-        FileEditorManager fileEditorManager = FileEditorManager.getInstance(aClass.getProject());
-        Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(psiFile.getProject(), psiFile.getVirtualFile()), false);
-        if (editor == null) return;
-
-        GenerateMembersUtil.positionCaret(editor, addedMethod, true);
-        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-      }
-    });
   }
 
   public static GrMethod generateMethodPrototype(GrTypeDefinition aClass,
@@ -135,82 +101,8 @@ public class GroovyOverrideImplementUtil {
     return result;
   }
 
-  @Nullable
-  private static PsiElement findAnchor(GrTypeDefinition aClass, Editor editor) {
-    PsiFile file = aClass.getContainingFile();
-    final GrTypeDefinitionBody classBody = aClass.getBody();
-    final PsiMethod[] methods = aClass.getMethods();
-
-    PsiElement anchor = null;
-
-    final PsiElement atCaret;
-    final GrTopLevelDefinition previousTopLevelElement;
-    if (editor == null) {
-      atCaret = null;
-      previousTopLevelElement = null;
-    }
-    else {
-      final int caretPosition = editor.getCaretModel().getOffset();
-      atCaret = file.findElementAt(caretPosition);
-
-      previousTopLevelElement = PsiUtil.findPreviousTopLevelElementByThisElement(atCaret);
-    }
-
-    if (atCaret != null && atCaret.getParent() instanceof GrTypeDefinitionBody) {
-      if (GroovyTokenTypes.mRCURLY.equals(atCaret.getNode().getElementType())) {
-        anchor = atCaret.getPrevSibling();
-      } else {
-        anchor = atCaret;
-      }
-
-      if (GroovyTokenTypes.mLCURLY.equals(anchor.getNode().getElementType())) {
-        anchor = anchor.getNextSibling();
-      }
-
-    } else if (previousTopLevelElement != null && previousTopLevelElement instanceof GrMethod) {
-      final PsiElement nextElement = previousTopLevelElement.getNextSibling();
-      if (nextElement != null) {
-        anchor = nextElement;
-      }
-    } else if (methods.length != 0) {
-      final PsiMethod lastMethod = methods[methods.length - 1];
-      if (lastMethod != null) {
-        final PsiElement nextSibling = lastMethod.getNextSibling();
-        if (nextSibling != null) {
-          anchor = nextSibling;
-        }
-      }
-
-    } else {
-      final PsiElement firstChild = classBody.getFirstChild();
-      assert firstChild != null;
-      final PsiElement nextElement = firstChild.getNextSibling();
-      assert nextElement != null;
-
-      anchor = nextElement;
-    }
-    return anchor;
-  }
-
-  public static Collection<CandidateInfo> getMethodsToOverrideImplement(GrTypeDefinition aClass, boolean isImplement) {
-    return OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
-  }
-
-  private static boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
-    boolean wasAddedModifiers = false;
-    for (@Modifier String modifierType : modifiers) {
-      if (modifierList.hasModifierProperty(modifierType) && modifierType != PsiModifier.PUBLIC) {
-        text.append(modifierType);
-        text.append(" ");
-        wasAddedModifiers = true;
-      }
-    }
-    return wasAddedModifiers;
-  }
-
-
   private static final String[] GROOVY_MODIFIERS = new String[]{
-      PsiModifier.PUBLIC,
+      //PsiModifier.PUBLIC,
       PsiModifier.PROTECTED,
       PsiModifier.PRIVATE,
       PsiModifier.STATIC,
@@ -221,8 +113,8 @@ public class GroovyOverrideImplementUtil {
 
 
   private static GrMethod createOverrideImplementMethodSignature(Project project, PsiMethod superMethod, PsiSubstitutor substitutor, PsiClass aClass) {
-    StringBuffer buffer = new StringBuffer();
-    final boolean hasModifiers = writeMethodModifiers(buffer, superMethod.getModifierList(), GROOVY_MODIFIERS);
+    StringBuilder buffer = new StringBuilder();
+    final boolean hasModifiers = ModifierListGenerator.writeModifiers(buffer, superMethod.getModifierList(), GROOVY_MODIFIERS, false);
 
     final PsiTypeParameter[] superTypeParameters = superMethod.getTypeParameters();
     final List<PsiTypeParameter> typeParameters = new ArrayList<PsiTypeParameter>();
@@ -247,16 +139,19 @@ public class GroovyOverrideImplementUtil {
       buffer.replace(buffer.length() - 2, buffer.length(), ">");
     }
 
+    final String name;
     if (superMethod.isConstructor()) {
-      buffer.append(aClass.getName());
+      name = aClass.getName();
     }
     else {
       if (returnType != null) {
         buffer.append(returnType.getCanonicalText()).append(" ");
       }
 
-      buffer.append(superMethod.getName());
+      name = superMethod.getName();
     }
+    buffer.append(name);
+
     buffer.append("(");
     final PsiParameter[] parameters = superMethod.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
@@ -276,7 +171,11 @@ public class GroovyOverrideImplementUtil {
 
     buffer.append(") {}");
 
-    return (GrMethod) GroovyPsiElementFactory.getInstance(project).createTopElementFromText(buffer.toString());
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+    if (superMethod.isConstructor()) {
+      return factory.createConstructorFromText(name, buffer.toString(), null);
+    }
+    return (GrMethod) factory.createTopElementFromText(buffer.toString());
   }
 
   @Nullable
@@ -339,16 +238,4 @@ public class GroovyOverrideImplementUtil {
     buffer.append(")");
     return buffer.toString();
   }
-
-  public static Collection<CandidateInfo> getMethodsToImplement(PsiClass typeDefinition) {
-    Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
-    methodsToImplement = ContainerUtil.findAll(methodsToImplement, new Condition<CandidateInfo>() {
-      public boolean value(CandidateInfo candidateInfo) {
-        //noinspection ConstantConditions
-        return !GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME
-          .equals(((PsiMethod)candidateInfo.getElement()).getContainingClass().getQualifiedName());
-      }
-    });
-    return methodsToImplement;
-  }  
 }

@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.intentions.style;
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
 import java.util.*;
@@ -86,7 +86,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
     }
 
     final PsiClass iface = (PsiClass)resolved;
-    final Collection<CandidateInfo> collection = GroovyOverrideImplementUtil.getMethodsToImplement(anonymous);
+    final Collection<CandidateInfo> collection = OverrideImplementUtil.getMethodsToOverrideImplement(anonymous, true);
     for (CandidateInfo info : collection) {
       myMethodToBodyMap.put((PsiMethod)info.getElement(), Collections.<PsiElement>emptyList());
     }

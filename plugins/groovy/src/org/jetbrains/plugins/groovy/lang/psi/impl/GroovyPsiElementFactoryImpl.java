@@ -57,7 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -380,20 +379,23 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createReferenceExpressionFromText("a" + newDot + "b").getDotToken();
   }
 
-  public GrConstructorImpl createConstructorFromText(@NotNull String constructorName,
+  public GrConstructor createConstructorFromText(@NotNull String constructorName,
                                                      @Nullable String[] paramTypes,
                                                      String[] paramNames,
                                                      String body,
                                                      PsiElement context) {
     final String text = generateMethodText(null, constructorName, null, paramTypes, paramNames, body, true);
+    return createConstructorFromText(constructorName, text, context);
+  }
 
+  public GrConstructor createConstructorFromText(String constructorName, String text, @Nullable PsiElement context) {
     GroovyFileImpl file = createDummyFile("class " + constructorName + "{" + text + "}");
     file.setContext(context);
     GrTopLevelDefinition definition = file.getTopLevelDefinitions()[0];
     assert definition != null && definition instanceof GrClassDefinition;
     final PsiMethod constructor = ((GrClassDefinition) definition).getMethods()[0];
-    assert constructor instanceof GrConstructorImpl;
-    return ((GrConstructorImpl) constructor);
+    assert constructor instanceof GrConstructor;
+    return ((GrConstructor) constructor);
   }
 
   @Override

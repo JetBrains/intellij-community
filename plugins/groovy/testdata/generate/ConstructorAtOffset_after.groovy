@@ -4,7 +4,7 @@ class ConstructorAtOffset {
 
   }
 
-    <caret>ConstructorAtOffset() {
+    ConstructorAtOffset() {<caret>
     }
 
     def bar() {

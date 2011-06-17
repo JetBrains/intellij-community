@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.navigation.GotoImplementationHandler
 import com.intellij.openapi.module.Module
@@ -16,11 +17,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.*
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
 
 /**
  * @author peter
@@ -302,13 +300,13 @@ class Bar implements Intf {
 class BarImpl extends Bar {}
 """
     def facade = JavaPsiFacade.getInstance(getProject())
-    assertOneElement(GroovyOverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("Foo"), true))
+    assertOneElement(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("Foo"), true))
 
     GrTypeDefinition barClass = facade.findClass("Bar")
-    assertEmpty(GroovyOverrideImplementUtil.getMethodsToOverrideImplement(barClass, true))
-    assertTrue "bar" in GroovyOverrideImplementUtil.getMethodsToOverrideImplement(barClass, false).collect { ((PsiMethod) it.element).name }
+    assertEmpty(OverrideImplementUtil.getMethodsToOverrideImplement(barClass, true))
+    assertTrue "bar" in OverrideImplementUtil.getMethodsToOverrideImplement(barClass, false).collect { ((PsiMethod) it.element).name }
 
-    assertEmpty(GroovyOverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("BarImpl"), true))
+    assertEmpty(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("BarImpl"), true))
 
     def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).targets
     assertEquals Arrays.toString(implementations), 3, implementations.size()
