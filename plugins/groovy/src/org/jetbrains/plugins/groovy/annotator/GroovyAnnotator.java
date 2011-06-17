@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.annotator;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -99,7 +100,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -947,7 +947,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static void registerImplementsMethodsFix(GrTypeDefinition typeDefinition, Annotation annotation) {
-    annotation.registerFix(new ImplementMethodsQuickFix(typeDefinition));
+    annotation.registerFix(QuickFixFactory.getInstance().createImplementMethodsFix(typeDefinition));
   }
 
   private static void checkInnerMethod(AnnotationHolder holder, GrMethod grMethod) {

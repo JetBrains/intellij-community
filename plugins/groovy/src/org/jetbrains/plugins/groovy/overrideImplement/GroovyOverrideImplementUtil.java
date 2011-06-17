@@ -16,20 +16,13 @@
 package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +35,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -52,33 +48,16 @@ public class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil");
   private static final String JAVA_LANG_OVERRIDE = "java.lang.Override";
 
+  private static final String[] GROOVY_MODIFIERS = new String[]{
+    PsiModifier.PROTECTED,
+    PsiModifier.PRIVATE,
+    PsiModifier.STATIC,
+    PsiModifier.ABSTRACT,
+    PsiModifier.FINAL,
+    PsiModifier.SYNCHRONIZED,
+  };
+
   private GroovyOverrideImplementUtil() {
-  }
-
-  public static void invokeOverrideImplement(final Editor editor, final PsiFile file, final boolean isImplement) {
-    final int offset = editor.getCaretModel().getOffset();
-
-    final GrTypeDefinition aClass = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrTypeDefinition.class, false);
-    if (aClass == null) return;
-
-    if (isImplement && aClass.isInterface()) return;
-
-    Collection<CandidateInfo> candidates = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
-    Collection<CandidateInfo> secondary = isImplement ? Collections.<CandidateInfo>emptyList() : OverrideImplementUtil.getMethodsToOverrideImplement(aClass, !isImplement);
-
-    final MemberChooser<PsiMethodMember> chooser = OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, isImplement, candidates, secondary);
-    if (chooser == null) return;
-
-    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
-    if (selectedElements == null || selectedElements.size() == 0) return;
-
-    new WriteCommandAction(aClass.getProject(), aClass.getContainingFile()) {
-      protected void run(final Result result) throws Throwable {
-        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
-      }
-    }.execute();
-
-
   }
 
   public static GrMethod generateMethodPrototype(GrTypeDefinition aClass,
@@ -100,16 +79,6 @@ public class GroovyOverrideImplementUtil {
     }
     return result;
   }
-
-  private static final String[] GROOVY_MODIFIERS = new String[]{
-      //PsiModifier.PUBLIC,
-      PsiModifier.PROTECTED,
-      PsiModifier.PRIVATE,
-      PsiModifier.STATIC,
-      PsiModifier.ABSTRACT,
-      PsiModifier.FINAL,
-      PsiModifier.SYNCHRONIZED,
-  };
 
 
   private static GrMethod createOverrideImplementMethodSignature(Project project, PsiMethod superMethod, PsiSubstitutor substitutor, PsiClass aClass) {
