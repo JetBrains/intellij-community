@@ -17,11 +17,14 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * @author Konstantin Bulenkov
@@ -38,7 +41,7 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase implements Shor
       }
     };
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP));
-    myLabel = new JLabel(name);
+    myLabel = new JLabel(name, EmptyIcon.create(2), SwingConstants.LEFT);
     myGroup = new ComboBoxVisibilityGroup(options, presentableNames, callback) {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -47,15 +50,24 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase implements Shor
         }
       }
     };
+
     add(myLabel);
     final JComponent panel = myGroup.createCustomComponent(myGroup.getTemplatePresentation());
     add(panel);
     myButton = UIUtil.findComponentOfType(panel, JButton.class);
-    DialogUtil.registerMnemonic(myLabel, null);
+    DialogUtil.registerMnemonic(myLabel, this);
   }
 
   public ComboBoxVisibilityPanel(String name, String[] options) {
     this(name, options, options);
+  }
+
+  public ComboBoxVisibilityPanel(String[] options) {
+    this(RefactoringBundle.message("visibility.combo.title"), options);
+  }
+
+  public ComboBoxVisibilityPanel(String[] options, String[] presentableNames) {
+    this(RefactoringBundle.message("visibility.combo.title"), options, presentableNames);
   }
 
   public void setDisplayedMnemonicIndex(int index) {
@@ -65,6 +77,10 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase implements Shor
   @Override
   public String getVisibility() {
     return myGroup.getValue();
+  }
+
+  public void addListener(ChangeListener listener) {
+    myEventDispatcher.addListener(listener);
   }
 
   @Override

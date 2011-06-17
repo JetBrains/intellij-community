@@ -16,7 +16,6 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.psi.PsiModifier;
-import com.intellij.refactoring.RefactoringBundle;
 
 import static com.intellij.util.VisibilityUtil.toPresentableText;
 
@@ -34,6 +33,6 @@ public class JavaComboBoxVisibilityPanel extends ComboBoxVisibilityPanel impleme
   };
 
   public JavaComboBoxVisibilityPanel() {
-    super(RefactoringBundle.message("visibility.combo.title"), MODIFIERS, PRESENTABLE_NAMES);
+    super(MODIFIERS, PRESENTABLE_NAMES);
   }
 }

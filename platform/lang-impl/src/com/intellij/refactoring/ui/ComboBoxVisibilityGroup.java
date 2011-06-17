@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,12 +31,15 @@ import javax.swing.*;
 class ComboBoxVisibilityGroup extends ComboBoxAction {
   private String myValue;
   private DefaultActionGroup myGroup;
+  private Map<String, String> myMap = new HashMap<String, String>();
 
   protected ComboBoxVisibilityGroup(final String[] options, String[] presentableNames, final Runnable run) {
     final AnAction[] myActions = new AnAction[options.length];
     for (int i = 0; i < options.length; i++) {
       final String value = options[i];
-      myActions[i] = new AnAction(presentableNames[i]) {
+      final String name = presentableNames[i];
+      myMap.put(value, name);
+      myActions[i] = new AnAction(name) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           setValue(value);
@@ -56,7 +61,7 @@ class ComboBoxVisibilityGroup extends ComboBoxAction {
   }
 
   public void setValue(String value) {
-    getTemplatePresentation().setText(value);
+    getTemplatePresentation().setText(myMap.get(value));
     myValue = value;
   }
 }
