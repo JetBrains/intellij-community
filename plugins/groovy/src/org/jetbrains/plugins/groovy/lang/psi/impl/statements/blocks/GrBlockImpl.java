@@ -180,7 +180,6 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return text.contains("\n") || text.contains("\r");
   }
 
-  @NotNull
   public PsiElement getLBrace() {
     return findPsiChildByType(GroovyTokenTypes.mLCURLY);
   }

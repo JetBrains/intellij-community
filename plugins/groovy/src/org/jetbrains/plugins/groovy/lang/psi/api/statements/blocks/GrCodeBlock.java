@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
  * @author ilyas
  */
 public interface GrCodeBlock extends GrControlFlowOwner, GrVariableDeclarationOwner, GrStatementOwner, GrDeclarationHolder {
-  @NotNull
+  @Nullable
   PsiElement getLBrace();
 
   @Nullable
