@@ -137,7 +137,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     assert page != null;
     myPreviewEditor = new SimpleEditorPreview(myPreviewOptions, page.getSettingsPage());
     myPreviewEditor.updateView();
-    myColorPreviewPanel.add(myPreviewEditor.getPanel());
+    myColorPreviewPanel.add(myPreviewEditor.getPanel(), BorderLayout.CENTER);
     myColorPreviewPanel.revalidate();
     myColorPreviewPanel.repaint();
   }
