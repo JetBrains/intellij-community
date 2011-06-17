@@ -16,16 +16,16 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 21.03.2007
  */
 public interface GrStatement extends GrTopStatement, GrCondition {
-  public static final GrStatement[] EMPTY_ARRAY = new GrStatement[0];
+  GrStatement[] EMPTY_ARRAY = new GrStatement[0];
   
   <T extends GrStatement> T replaceWithStatement (T statement);
 

@@ -40,8 +40,10 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
   public void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
     super.insert(aClass, anchor, before);
     final T member = getPsiMember();
-    assert member instanceof GroovyPsiElement;
-    PsiUtil.shortenReferences((GroovyPsiElement)member);
+    if (member != null) {
+      assert member instanceof GroovyPsiElement;
+      PsiUtil.shortenReferences((GroovyPsiElement)member);
+    }
   }
 
   @Override
