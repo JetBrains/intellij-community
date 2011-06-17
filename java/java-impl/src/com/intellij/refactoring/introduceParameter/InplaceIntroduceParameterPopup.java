@@ -85,8 +85,11 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       }
     };
     myPanel.append2MainPanel(myWholePanel);
-    myWholePanel.add(typeComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                                           new Insets(0,0,0,0), 0,0));
+    JComponent typeChooser = typeComponent();
+    if (typeChooser != null) {
+      myWholePanel.add(typeChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                                             new Insets(0,0,0,0), 0,0));
+    }
   }
 
   @Override

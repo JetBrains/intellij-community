@@ -111,7 +111,10 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
     myWholePanel.add(myIntroduceFieldPanel.createCenterPanel(), gc);
     gc.gridy++ ;
-    myWholePanel.add(typeComponent(), gc);
+    JComponent typeChooser = typeComponent();
+    if (typeChooser != null) {
+      myWholePanel.add(typeChooser, gc);
+    }
     myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
 
 

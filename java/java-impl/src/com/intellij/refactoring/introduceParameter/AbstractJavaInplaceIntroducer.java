@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
+import com.intellij.refactoring.introduceField.InplaceCombosUtil;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.ArrayUtil;
@@ -92,10 +93,17 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     return myTypeSelector.getSelectedType();
   }
 
+  @Nullable
   protected JComponent typeComponent() {
     JComponent component = myTypeSelector.getComponent();
+    if (component instanceof JLabel) return null;
+    LOG.assertTrue(component instanceof JComboBox);
+    InplaceCombosUtil.appendActions((JComboBox)component, myProject);
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel("Type: "), BorderLayout.WEST);
+    JLabel label = new JLabel("Type: ");
+    label.setLabelFor(component);
+    label.setDisplayedMnemonic('T');
+    panel.add(label, BorderLayout.WEST);
     panel.add(component, BorderLayout.CENTER);
     return panel;
   }
