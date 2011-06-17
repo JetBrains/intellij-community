@@ -398,6 +398,7 @@ public class PlatformTestUtil {
                   " (" + (int)(Timings.MACHINE_TIMING*1.0/Timings.ETALON_TIMING*100) + "% of the etalon)" +
                   ".";
     if (actual < expectedOnMyMachine) {
+      System.out.println(logMessage);
       TeamCityLogger.info(logMessage);
     }
     else if (actual < expectedOnMyMachine * acceptableChangeFactor) {
