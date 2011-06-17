@@ -166,7 +166,10 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
                 return;
             }
             read = true;
-            final PsiElement parent = expression.getParent();
+            PsiElement parent = expression.getParent();
+            while (parent instanceof PsiParenthesizedExpression) {
+                parent = parent.getParent();
+            }
             if (!(parent instanceof PsiPrefixExpression)) {
                 alwaysNegated = false;
                 return;
