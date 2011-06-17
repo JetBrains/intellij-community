@@ -542,6 +542,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
    * </ol>
    </pre>
    */
+  @SuppressWarnings("ForLoopReplaceableByForEach")
   private void applyStateChange(int offsetsDiff) {
     if (myNotAffectedByUpdateTailCacheEntries.isEmpty()) {
       return;
@@ -565,7 +566,10 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
                         offsetsDiff));
     }
 
-    for (CacheEntry cacheEntry : myNotAffectedByUpdateTailCacheEntries) {
+    // 'For-each' loop is not used here because this code is called quite often and profile shows the Iterator usage here
+    // produces performance drawback.
+    for (int i = 0; i < myNotAffectedByUpdateTailCacheEntries.size(); i++) {
+      CacheEntry cacheEntry = myNotAffectedByUpdateTailCacheEntries.get(i);
       cacheEntry.visualLine += visualLinesDiff;
       cacheEntry.startLogicalLine += logicalLinesDiff;
       cacheEntry.endLogicalLine += logicalLinesDiff;
@@ -574,7 +578,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       cacheEntry.endSoftWrapLinesBefore += softWrappedLinesDiff;
       cacheEntry.startFoldedLines += foldedLinesDiff;
       cacheEntry.endFoldedLines += foldedLinesDiff;
-    }
+    } 
   }
 
   @Override

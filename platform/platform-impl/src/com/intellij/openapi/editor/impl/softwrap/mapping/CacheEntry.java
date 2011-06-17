@@ -180,13 +180,22 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     myTabPositions.add(tabData);
   }
 
+  @SuppressWarnings("ForLoopReplaceableByForEach")
   public void advance(final int offsetDiff) {
     startOffset += offsetDiff;
     endOffset += offsetDiff;
-    for (TabData tabData : myTabPositions) {
-      tabData.offset += offsetDiff;
+
+    // 'For-each' loop is not used here because this code is called quite often and profile shows the Iterator usage here
+    // produces performance drawback. 
+    for (int i = 0; i < myTabPositions.size(); i++) {
+      myTabPositions.get(i).offset += offsetDiff;
     }
-    final TIntObjectHashMap<FoldingData> newFoldingData = new TIntObjectHashMap<FoldingData>();
+
+    if (myFoldingData.isEmpty()) {
+      return;
+    }
+    
+    final TIntObjectHashMap<FoldingData> newFoldingData = new TIntObjectHashMap<FoldingData>(myFoldingData.size());
     myFoldingData.forEachEntry(new TIntObjectProcedure<FoldingData>() {
       @Override
       public boolean execute(int offset, FoldingData foldingData) {
