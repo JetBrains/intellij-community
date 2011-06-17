@@ -37,6 +37,7 @@ import java.io.IOException;
  */
 public class ForcedBuildFileAttribute {
   private static final Logger LOG = Logger.getInstance("#" + ForcedBuildFileAttribute.class.getName());
+  private static final Object LOCK = new Object();
 
   private static final FileAttribute FRAMEWORK_FILE_ATTRIBUTE = new FileAttribute("forcedBuildFileFrameworkAttribute", 1, false);
   private static final Key<String> FRAMEWORK_FILE_MARKER = Key.create("forcedBuildFileFrameworkAttribute");
@@ -52,24 +53,26 @@ public class ForcedBuildFileAttribute {
   @Nullable
   public static String getFrameworkIdOfBuildFile(VirtualFile file) {
     if (file instanceof NewVirtualFile) {
-      final DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readAttribute(file);
-      if (is != null) {
-        try {
+      synchronized (LOCK) {
+        final DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readAttribute(file);
+        if (is != null) {
           try {
-            if (is.available() == 0) {
-              return null;
+            try {
+              if (is.available() == 0) {
+                return null;
+              }
+              return IOUtil.readString(is);
             }
-            return IOUtil.readString(is);
+            finally {
+              is.close();
+            }
           }
-          finally {
-            is.close();
+          catch (IOException e) {
+            LOG.error(file.getPath(), e);
           }
         }
-        catch (IOException e) {
-          LOG.error(file.getPath(), e);
-        }
+        return "";
       }
-      return "";
     }
     return file.getUserData(FRAMEWORK_FILE_MARKER);
   }
@@ -93,17 +96,19 @@ public class ForcedBuildFileAttribute {
 
   private static void forceBuildFile(VirtualFile file, @Nullable String value) {
     if (file instanceof NewVirtualFile) {
-      final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
-      try {
+      synchronized (LOCK) {
+        final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
         try {
-          IOUtil.writeString(StringUtil.notNullize(value), os);
+          try {
+            IOUtil.writeString(StringUtil.notNullize(value), os);
+          }
+          finally {
+            os.close();
+          }
         }
-        finally {
-          os.close();
+        catch (IOException e) {
+          LOG.error(e);
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
       }
     }
     else {
