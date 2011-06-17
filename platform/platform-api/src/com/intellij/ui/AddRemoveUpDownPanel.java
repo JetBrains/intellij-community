@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -75,7 +76,7 @@ public class AddRemoveUpDownPanel extends JPanel {
   }
 
   private Map<Buttons, TableActionButton> myButtons = new HashMap<Buttons, TableActionButton>();
-  public AddRemoveUpDownPanel(Listener listener, Buttons...buttons) {
+  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, Buttons... buttons) {
     super(new VerticalFlowLayout(VerticalFlowLayout.TOP));
     AnAction[] actions = new AnAction[buttons.length];
     for (int i = 0; i < buttons.length; i++) {
@@ -83,6 +84,10 @@ public class AddRemoveUpDownPanel extends JPanel {
       final TableActionButton b = button.createButton(listener);
       actions[i] = b;
       myButtons.put(button, b);
+      final Shortcut shortcut = b.getShortcut();
+      if (contentPane != null && shortcut != null) {
+        b.registerCustomShortcutSet(new CustomShortcutSet(shortcut), contentPane);
+      }
     }
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(actions), false).getComponent());
   }
@@ -94,11 +99,11 @@ public class AddRemoveUpDownPanel extends JPanel {
     }
   }
 
-  public AddRemoveUpDownPanel(Listener listener) {
-    this(listener, Buttons.ADD, Buttons.REMOVE, Buttons.UP, Buttons.DOWN);
+  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane) {
+    this(listener, contentPane, Buttons.ADD, Buttons.REMOVE, Buttons.UP, Buttons.DOWN);
   }
 
-  static class TableActionButton extends AnAction {
+  static class TableActionButton extends AnAction implements ShortcutProvider {
     private boolean enabled = true;
     private final Buttons myButton;
     private final Listener myListener;
@@ -121,6 +126,17 @@ public class AddRemoveUpDownPanel extends JPanel {
 
     public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+    }
+
+    @Override
+    public Shortcut getShortcut() {
+      switch (myButton) {
+        case ADD: return KeyboardShortcut.fromString("alt A");
+        case REMOVE: return KeyboardShortcut.fromString("alt DELETE");
+        case UP: return KeyboardShortcut.fromString("alt UP");
+        case DOWN: return KeyboardShortcut.fromString("alt DOWN");
+      }
+      return null;
     }
   }
 }

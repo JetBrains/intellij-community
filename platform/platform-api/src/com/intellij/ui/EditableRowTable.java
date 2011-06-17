@@ -158,7 +158,7 @@ public class EditableRowTable {
       gbConstraints.weighty = 1;
       panel.add(new JPanel(), gbConstraints);
     } else {
-      p.set(new AddRemoveUpDownPanel(listener));
+      p.set(new AddRemoveUpDownPanel(listener, table));
       panel.add(p.get(), BorderLayout.NORTH);
     }
 
