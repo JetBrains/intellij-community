@@ -347,7 +347,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myStartCompletionWhenNothingMatches = startCompletionWhenNothingMatches;
   }
 
-  private void ensureSelectionVisible() {
+  public void ensureSelectionVisible() {
     ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
   }
 
@@ -493,7 +493,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (choosePreselectedItem) {
       myList.setSelectedValue(myPreselectedItem, false);
     } else {
-      ListScrollingUtil.selectItem(myList, doSelectMostPreferableItem(getItems(), groups));
+      myList.setSelectedIndex(doSelectMostPreferableItem(getItems(), groups));
     }
 
     if (myPreselectedItem != null && myShown) {

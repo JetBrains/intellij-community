@@ -335,6 +335,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isOutdated()) return;
 
+    boolean justShown = false;
     if (!myLookup.isShown() && (!isAutopopupCompletion() || !myLookup.isCalculating())) {
       if (hideAutopopupIfMeaningless()) {
         return;
@@ -348,10 +349,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       myLookup.show();
+      justShown = true;
     }
     myLookup.refreshUi();
     hideAutopopupIfMeaningless();
     updateFocus();
+    if (justShown) {
+      myLookup.ensureSelectionVisible();
+    }
   }
 
   final boolean isInsideIdentifier() {
