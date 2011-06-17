@@ -228,14 +228,14 @@ public class VariableInplaceRenamer {
 
     PsiElement nameIdentifier = myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
     int offset = myEditor.getCaretModel().getOffset();
-    PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, offset);
+    PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, stringUsages, offset);
 
     if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder, nameSuggestions);
     for (PsiReference ref : refs) {
       addVariable(ref, selectedElement, builder, offset, nameSuggestions);
     }
     for (Pair<PsiElement, TextRange> usage : stringUsages) {
-      addVariable(usage.first, usage.second, builder);
+      addVariable(usage.first, selectedElement, builder, nameSuggestions);
     }
     addAdditionalVariables(builder);
 
@@ -488,7 +488,10 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private static PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier, final Collection<PsiReference> refs, final int offset) {
+  private static PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier,
+                                                       final Collection<PsiReference> refs,
+                                                       Collection<Pair<PsiElement, TextRange>> stringUsages,
+                                                       final int offset) {
     if (nameIdentifier != null) {
       final TextRange range = nameIdentifier.getTextRange()/*.shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(nameIdentifier))*/;
       if (contains(range, offset)) return nameIdentifier;
@@ -497,6 +500,11 @@ public class VariableInplaceRenamer {
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
       if (contains(ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset()), offset)) return element;
+    }
+
+    for (Pair<PsiElement, TextRange> stringUsage : stringUsages) {
+      final PsiElement element = stringUsage.first;
+      if (contains(stringUsage.second.shiftRight(element.getTextRange().getStartOffset()), offset)) return element;
     }
 
     LOG.assertTrue(false);

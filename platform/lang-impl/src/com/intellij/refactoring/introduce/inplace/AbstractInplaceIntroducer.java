@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,8 +43,9 @@ import java.util.*;
  * User: anna
  * Date: 3/15/11
  */
-public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E extends PsiElement> extends AbstractInplaceVariableIntroducer<E> {
+public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner, E extends PsiElement> extends AbstractInplaceVariableIntroducer<E> {
   protected final V myLocalVariable;
+  protected RangeMarker myLocalMarker;
 
   private final String myExprText;
   private final String myLocalName;
@@ -58,6 +60,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
                                    String title) {
     super(null, editor, project, title, occurrences, expr);
     myLocalVariable = localVariable;
+    if (localVariable != null) {
+      final PsiElement nameIdentifier = localVariable.getNameIdentifier();
+      if (nameIdentifier != null) {
+        myLocalMarker = editor.getDocument().createRangeMarker(nameIdentifier.getTextRange());
+      }
+    }
+    else {
+      myLocalMarker = null;
+    }
     myExprText = expr != null ? expr.getText() : null;
     myLocalName = localVariable != null ? localVariable.getName() : null;
   }
@@ -84,11 +95,12 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
     final Ref<Boolean> result = new Ref<Boolean>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        final String[] names = suggestNames(replaceAllOccurrences, myLocalVariable);
+        final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
+        RangeMarker r = myLocalMarker != null ? myLocalMarker : myExprMarker;
         final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
         boolean started = false;
         if (variable != null) {
-          myEditor.getCaretModel().moveToOffset(variable.getTextOffset());
+          myEditor.getCaretModel().moveToOffset(r.getStartOffset());
           myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
           final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
@@ -174,6 +186,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
       for (E expression : getOccurrences()) {
         stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
       }
+
+      final V localVariable = getLocalVariable();
+      if (localVariable != null) {
+        final PsiElement nameIdentifier = localVariable.getNameIdentifier();
+        if (nameIdentifier != null) {
+          int length = nameIdentifier.getTextLength();
+          stringUsages.add(Pair.<PsiElement, TextRange>create(nameIdentifier, new TextRange(0, length)));
+        }
+      }
     }
     else if (getExpr() != null) {
       stringUsages.add(Pair.<PsiElement, TextRange>create(getExpr(), new TextRange(0, getExpr().getTextLength())));
@@ -227,7 +248,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
             continue;
           }
           final E psiExpression =
-             restoreExpression(containingFile, psiField, marker, myLocalVariable != null ? myLocalName : myExprText);
+             restoreExpression(containingFile, psiField, marker, getLocalVariable() != null ? myLocalName : myExprText);
           if (psiExpression != null) {
             myOccurrences[i] = psiExpression;
           }
@@ -245,9 +266,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
   @Override
   protected void moveOffsetAfter(boolean success) {
     if (success) {
-      if (myLocalVariable == null && myExpr == null ||
+      if (getLocalVariable() == null && myExpr == null ||
           getInputName() == null ||
-          myLocalVariable != null && !myLocalVariable.isValid() ||
+          getLocalVariable() != null && !getLocalVariable().isValid() ||
           myExpr != null && !myExpr.isValid()) {
         super.moveOffsetAfter(false);
         return;
@@ -255,8 +276,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
       performIntroduce();
       saveSettings(getVariable());
     }
-    if (myLocalVariable != null && myLocalVariable.isValid()) {
-      myEditor.getCaretModel().moveToOffset(myLocalVariable.getTextOffset());
+    if (getLocalVariable() != null && getLocalVariable().isValid()) {
+      myEditor.getCaretModel().moveToOffset(getLocalVariable().getTextOffset());
       myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
     else if (getExprMarker() != null) {
@@ -267,5 +288,25 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNamedElement, E ext
     if (success) {
       performPostIntroduceTasks();
     }
+  }
+
+  protected V getLocalVariable() {
+    if (myLocalVariable != null && myLocalVariable.isValid()) {
+      return myLocalVariable;
+    }
+    if (myLocalMarker != null) {
+      V variable = getVariable();
+      PsiFile containingFile;
+      if (variable != null) {
+        containingFile = variable.getContainingFile();
+      } else {
+        containingFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      }
+      PsiNameIdentifierOwner identifierOwner = PsiTreeUtil.getParentOfType(containingFile.findElementAt(myLocalMarker.getStartOffset()),
+                                                                           PsiNameIdentifierOwner.class, false);
+      return identifierOwner.getClass() == myLocalVariable.getClass() ? (V)identifierOwner : null;
+
+    }
+    return myLocalVariable;
   }
 }

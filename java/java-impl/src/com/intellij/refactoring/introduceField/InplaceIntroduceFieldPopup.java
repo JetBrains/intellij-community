@@ -46,7 +46,6 @@ import java.awt.event.ItemListener;
  */
 public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
-  private PsiLocalVariable myLocalVariable;
   private PsiClass myParentClass;
   private boolean myStatic;
   private final Editor myEditor;
@@ -75,9 +74,8 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
                                     boolean allowInitInMethodIfAll, final PsiElement anchorElement,
                                     final PsiElement anchorElementIfAll,
                                     final OccurenceManager occurenceManager, Project project) {
-    super(project, editor, initializerExpression, localVariable, occurrences, typeSelectorManager.getDefaultType(), typeSelectorManager,
+    super(project, editor, initializerExpression, localVariable, occurrences, typeSelectorManager,
           IntroduceFieldHandler.REFACTORING_NAME);
-    myLocalVariable = localVariable;
     myParentClass = parentClass;
     myStatic = aStatic;
     myAnchorElement = anchorElement;
@@ -88,7 +86,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       if (parent == myAnchorElement) {
         myAnchorIdx = i;
       }
-      if (parent == myAnchorElementIfAll) {
+      if (parent == anchorElementIfAll) {
         myAnchorIdxIfAll = i;
       }
     }
@@ -112,6 +110,8 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
     gc.insets.top = 5;
 
     myWholePanel.add(myIntroduceFieldPanel.createCenterPanel(), gc);
+    gc.gridy++ ;
+    myWholePanel.add(typeComponent(), gc);
     myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
 
 
@@ -138,7 +138,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
   @Override
   protected String[] suggestNames(PsiType defaultType, String propName) {
-    return IntroduceFieldDialog.createGenerator(myStatic, myLocalVariable, myExpr, myLocalVariable != null)
+    return IntroduceFieldDialog.createGenerator(myStatic, (PsiLocalVariable)getLocalVariable(), myExpr, getLocalVariable() != null)
             .getSuggestedNameInfo(defaultType).names;
   }
 
@@ -261,16 +261,16 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
         new BaseExpressionToFieldHandler.Settings(getInputName(), myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
                                                   myIntroduceFieldPanel.isDeclareFinal(),
                                                   myIntroduceFieldPanel.getInitializerPlace(),
-                                                  myIntroduceFieldPanel.getFieldVisibility(), myLocalVariable,
-                                                  myTypePointer.getType(),
+                                                  myIntroduceFieldPanel.getFieldVisibility(), (PsiLocalVariable)getLocalVariable(),
+                                                  getType(),
                                                   myIntroduceFieldPanel.isDeleteVariable(),
                                                   myParentClass, false, false);
       new WriteCommandAction(myProject, getCommandName(), getCommandName()){
         @Override
         protected void run(Result result) throws Throwable {
-          if (myLocalVariable != null) {
+          if (getLocalVariable() != null) {
             final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-              new LocalToFieldHandler.IntroduceFieldRunnable(false, myLocalVariable, myParentClass, settings, myStatic, myOccurrences);
+              new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), myParentClass, settings, myStatic, myOccurrences);
             fieldRunnable.run();
           }
           else {
@@ -285,6 +285,4 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
         }
       }.execute();
     }
-
-
 }
