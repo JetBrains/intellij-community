@@ -91,16 +91,18 @@ class PyDBFrame:
                 exception_breakpoint = get_exception_breakpoint(exception, dict(mainDebugger.exception_set), NOTIFY_ALWAYS)
                 if exception_breakpoint is not None:
                     curr_func_name = frame.f_code.co_name
+                    add_exception_to_frame(frame, (exception, value, trace))
                     self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
                     thread.additionalInfo.message = exception_breakpoint.qname
                 else:
                     flag = False
-                    if mainDebugger.django_exception_break and get_exception_name(exception) in ['django.template.base.VariableDoesNotExist', 'django.template.base.TemplateDoesNotExist', 'django.template.base.TemplateSyntaxError'] and just_raised(frame):
+                    if mainDebugger.django_exception_break and get_exception_name(exception) in ['django.template.base.VariableDoesNotExist', 'django.template.base.TemplateDoesNotExist', 'django.template.base.TemplateSyntaxError'] and just_raised(frame, trace):
                         render_frame = find_django_render_frame(frame)
                         if render_frame:
                             suspend_frame = suspend_django(self, mainDebugger, thread, render_frame, CMD_ADD_DJANGO_EXCEPTION_BREAK)
 
                             if suspend_frame:
+                                add_exception_to_frame(suspend_frame, (exception, value, trace))
                                 flag = True
                                 thread.additionalInfo.message = 'VariableDoesNotExist'
                                 suspend_frame.f_back = frame
@@ -257,3 +259,6 @@ class PyDBFrame:
             if hasattr(sys, 'exc_clear'): #jython does not have it
                 sys.exc_clear() #don't keep the traceback
             pass #ok, psyco not available
+
+def add_exception_to_frame(frame, exception_info):
+    frame.f_locals['__exception__'] = exception_info

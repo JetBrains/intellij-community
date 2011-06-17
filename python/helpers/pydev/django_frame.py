@@ -92,9 +92,9 @@ class FCode:
         self.co_name = name
         self.co_filename = filename
 
-def just_raised(frame):
+def just_raised(frame, trace):
     name = frame.f_code.co_name
-    return name in ['_resolve_lookup', 'load_template_source']
+    return name in ['_resolve_lookup', 'find_template'] and trace.tb_next is None
 
 
   

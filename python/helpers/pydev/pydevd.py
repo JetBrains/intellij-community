@@ -1,5 +1,6 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 from django_debug import DjangoLineBreakpoint
+from pydevd_frame import add_exception_to_frame
 from pydevd_constants import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
 
@@ -838,6 +839,7 @@ class PyDB:
                     thread_id = GetThreadId(t)
                     used_id = pydevd_vars.additional_frames_container.addAdditionalFrameById(thread_id, frames_byid)
                     try:
+                        add_exception_to_frame(frame, additionalInfo.exception)
                         self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
                         self.doWaitSuspend(t, frame, 'exception', None)
                     finally:
