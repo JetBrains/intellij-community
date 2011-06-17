@@ -17,7 +17,9 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -25,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -53,7 +56,10 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase implements Shor
 
     add(myLabel);
     final JComponent panel = myGroup.createCustomComponent(myGroup.getTemplatePresentation());
-    add(panel);
+    final JPanel p = new JPanel(new BorderLayout());
+    p.add(panel, BorderLayout.SOUTH);
+    p.setBorder(IdeBorderFactory.createEmptyBorder(SystemInfo.isMac ? 3 : 2 ,0,0,0));
+    add(p);
     myButton = UIUtil.findComponentOfType(panel, JButton.class);
     DialogUtil.registerMnemonic(myLabel, this);
   }
@@ -95,6 +101,10 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase implements Shor
     if (shortcut != null) {
       myGroup.registerCustomShortcutSet(new CustomShortcutSet(shortcut), UIUtil.getRootPane(this));
     }
+  }
+
+  public JButton getButton() {
+    return myButton;
   }
 
   @Override

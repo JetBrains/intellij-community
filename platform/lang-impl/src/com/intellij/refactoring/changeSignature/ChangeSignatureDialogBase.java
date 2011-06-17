@@ -200,7 +200,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       typePanel.add(myReturnTypeField);
 
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
-        myReturnTypeField.setPreferredSize(new Dimension(200, 24));
+        typePanel.setPreferredSize(new Dimension(200, -1));
         myReturnTypeField.addDocumentListener(documentListener);
       }
       else {
