@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="xslt-debugger-engine" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library">
-      <library name="Saxon-6.3">
+      <library name="Saxon-6.5.5">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/saxon.jar!/" />
         </CLASSES>
