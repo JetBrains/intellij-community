@@ -1,10 +1,5 @@
 <components>
   <project-components>
-    <component>
-      <implementation-class>com.intellij.openapi.roots.ui.configuration.ModuleEditorState</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-
     <!--
     <component>
       <implementation-class>com.intellij.openapi.roots.ui.configuration.ProjectLibrariesConfigurable</implementation-class>

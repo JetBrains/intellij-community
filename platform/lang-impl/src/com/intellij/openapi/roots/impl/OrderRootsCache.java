@@ -18,16 +18,13 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author nik
@@ -66,17 +63,6 @@ public class OrderRootsCache {
       container.killAll();
     }
     myRoots.clear();
-  }
-
-  public static Set<VirtualFile> convertPointersToFiles(Set<VirtualFilePointer> cachedFiles) {
-    final LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>();
-    for (VirtualFilePointer cachedFile : cachedFiles) {
-      final VirtualFile virtualFile = cachedFile.getFile();
-      if (virtualFile != null) {
-        result.add(virtualFile);
-      }
-    }
-    return result;
   }
 
   private static final class CacheKey {

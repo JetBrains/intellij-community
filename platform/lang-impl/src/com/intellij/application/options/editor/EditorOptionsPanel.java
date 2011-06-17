@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -420,10 +419,6 @@ public class EditorOptionsPanel {
 
   public JComponent getComponent() {
     return myBehaviourPanel;
-  }
-
-  public Configurable getConfigurable() {
-    return myConfigurable;
   }
 
   public class MyConfigurable implements SearchableConfigurable {

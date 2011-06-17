@@ -146,11 +146,6 @@ public class FacetDetectionIndex extends AbstractFileIndex<FacetDetectionIndexEn
   }
 
   @Nullable
-  public Set<String> getFiles(final FacetPointer pointer) {
-    return myFacets.getKeys(pointer);
-  }
-
-  @Nullable
   public Set<String> getFiles(final Facet facet) {
     return myFacets.getKeys(myFacetPointersManager.create(facet));
   }

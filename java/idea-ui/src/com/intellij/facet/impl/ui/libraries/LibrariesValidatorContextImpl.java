@@ -16,18 +16,16 @@
 
 package com.intellij.facet.impl.ui.libraries;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -49,10 +47,6 @@ public class LibrariesValidatorContextImpl implements LibrariesValidatorContext 
   @Nullable
   public ModifiableRootModel getModifiableRootModel() {
     return null;
-  }
-
-  private LibraryTable getProjectLibraryTable() {
-    return ProjectLibraryTable.getInstance(myModule.getProject());
   }
 
   @NotNull

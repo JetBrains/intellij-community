@@ -20,9 +20,9 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.autodetecting.DetectedFacetPresentation;
 import com.intellij.facet.impl.autodetecting.FacetDetectorRegistryEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.CheckboxTreeBase;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -30,7 +30,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -56,12 +55,6 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
       root.add(node);
     }
     return root;
-  }
-
-  @Nullable
-  public CheckedTreeNode getSelectedNode() {
-    TreePath path = getSelectionPath();
-    return path != null ? (CheckedTreeNode)path.getLastPathComponent() : null;
   }
 
   private static class FacetsCheckboxTreeCellRenderer extends CheckboxTreeCellRendererBase {

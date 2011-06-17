@@ -63,11 +63,6 @@ public class LibrariesContainerFactory {
     return new LibrariesContainerImpl(module.getProject(), module, rootModel);
   }
 
-  @NotNull
-  public static LibrariesContainer createContainer() {
-    return new LibrariesContainerImpl(null, null, null);
-  }
-
   public static LibrariesContainer createContainer(StructureConfigurableContext context) {
     return new StructureConfigurableLibrariesContainer(context);
   }

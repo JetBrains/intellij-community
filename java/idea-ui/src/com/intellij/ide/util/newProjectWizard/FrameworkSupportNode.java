@@ -17,7 +17,6 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
-import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.util.frameworkSupport.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.openapi.Disposable;
@@ -119,11 +118,6 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   private boolean isObsolete(@NotNull LibraryCompositionSettings settings) {
     return !settings.getBaseDirectoryPath().equals(myBaseDirForLibrariesGetter.compute())
            || !Comparing.equal(settings.getLibraryDescription(), getOrCreateLibraryDescription());
-  }
-
-  public LibraryInfo[] getLibraries() {
-    final FrameworkVersion version = myConfigurable.getSelectedVersion();
-    return version != null ? version.getLibraries() : LibraryInfo.EMPTY_ARRAY;
   }
 
   public boolean isSettingsObsolete() {

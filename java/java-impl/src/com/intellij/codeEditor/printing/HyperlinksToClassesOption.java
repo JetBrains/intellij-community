@@ -36,19 +36,11 @@ public class HyperlinksToClassesOption extends PrintOption {
   private JCheckBox myCbGenerateHyperlinksToClasses;
   private boolean isGenerateHyperlinksToClasses = false;
 
-  public boolean isGenerateHyperlinksToClasses() {
-    return isGenerateHyperlinksToClasses;
-  }
-
-  public void setGenerateHyperlinksToClasses(boolean generateHyperlinksToClasses) {
-    isGenerateHyperlinksToClasses = generateHyperlinksToClasses;
-  }
-
   @Nullable
   public TreeMap<Integer, PsiReference> collectReferences(PsiFile psiFile, Map<PsiFile, PsiFile> filesMap) {
-    if (isGenerateHyperlinksToClasses()) {
+    if (isGenerateHyperlinksToClasses) {
       FileType fileType = psiFile.getFileType();
-      if(StdFileTypes.JAVA == fileType || StdFileTypes.JSP == fileType) {
+      if (StdFileTypes.JAVA == fileType || StdFileTypes.JSP == fileType) {
         final TreeMap<Integer, PsiReference> refMap = new TreeMap<Integer, PsiReference>();
         findClassReferences(psiFile, refMap, filesMap, psiFile);
         return refMap;

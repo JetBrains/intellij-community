@@ -41,11 +41,6 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   private @Nullable ConfigFileContainerImpl myContainer;
   private final ConfigFileMetaDataProvider myMetaDataProvider;
 
-  public ConfigFileInfoSetImpl(final @NotNull ConfigFileContainerImpl container) {
-    myContainer = container;
-    myMetaDataProvider = container.getMetaDataProvider();
-  }
-
   public ConfigFileInfoSetImpl(final ConfigFileMetaDataProvider metaDataProvider) {
     myMetaDataProvider = metaDataProvider;
   }
@@ -82,12 +77,6 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
       myConfigFiles.removeAll(data);
     }
     onChange();
-  }
-
-  @NotNull
-  public Collection<ConfigFileInfo> getDescriptors(ConfigFileMetaData metaData) {
-    final Collection<ConfigFileInfo> collection = myConfigFiles.get(metaData);
-    return collection != null ? Collections.unmodifiableCollection(collection) : Collections.<ConfigFileInfo>emptyList();
   }
 
   @Nullable

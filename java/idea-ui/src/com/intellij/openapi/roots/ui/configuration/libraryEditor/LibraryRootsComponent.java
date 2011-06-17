@@ -172,10 +172,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     Disposer.register(this, myTreeBuilder);
   }
 
-  public Tree getTree() {
-    return myTree;
-  }
-
   public JComponent getComponent() {
     return myPanel;
   }

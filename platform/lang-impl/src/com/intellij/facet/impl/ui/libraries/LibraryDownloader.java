@@ -17,7 +17,6 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
-import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
@@ -303,16 +302,5 @@ public class LibraryDownloader {
       }
     }
     return true;
-  }
-
-  public static LibraryDownloadInfo[] getDownloadingInfos(final LibraryInfo[] libraries) {
-    List<LibraryDownloadInfo> downloadInfos = new ArrayList<LibraryDownloadInfo>();
-    for (LibraryInfo library : libraries) {
-      LibraryDownloadInfo downloadInfo = library.getDownloadingInfo();
-      if (downloadInfo != null) {
-        downloadInfos.add(downloadInfo);
-      }
-    }
-    return downloadInfos.toArray(new LibraryDownloadInfo[downloadInfos.size()]);
   }
 }

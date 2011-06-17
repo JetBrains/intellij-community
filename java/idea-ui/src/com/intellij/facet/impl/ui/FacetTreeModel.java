@@ -79,14 +79,6 @@ public class FacetTreeModel {
     return getChildren(null);
   }
 
-  public void deleteFacetWithChildren(final FacetInfo info) {
-    final List<FacetInfo> children = getChildren(info);
-    for (FacetInfo child : children) {
-      deleteFacetWithChildren(child);
-    }
-    removeFacetInfo(info);
-  }
-
   @Nullable
   public FacetInfo findNearestFacet(@NotNull FacetInfo info) {
     final FacetInfo parent = getParent(info);
