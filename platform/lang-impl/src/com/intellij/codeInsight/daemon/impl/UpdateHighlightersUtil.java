@@ -28,10 +28,8 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.editor.impl.RedBlackTree;
 import com.intellij.openapi.editor.markup.*;
@@ -591,18 +589,11 @@ public class UpdateHighlightersUtil {
     final MarkupModel markup = document.getMarkupModel(project);
     assertMarkupConsistent(markup, project);
 
-    int offset = e.getOffset();
     Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
-    if (editors.length == 0) return;
-    Editor editor = editors[0]; // use any editor - just to fetch SelectInEditorManager
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(Math.max(0, offset - 1));
-    if (iterator.atEnd()) return;
-    final int start = iterator.getStart();
-    while (iterator.getEnd() < e.getOffset() + Math.max(e.getOldLength(), e.getNewLength())) {
-      iterator.advance();
-      if (iterator.atEnd()) return;
-    }
-    final int end = iterator.getEnd();
+    if (editors.length <= 0) return;
+    
+    final int start = e.getOffset();
+    final int end = start + Math.max(e.getOldLength(), e.getNewLength());
 
     final boolean[] highlightersChanged = {false};
     final List<HighlightInfo> removed = new ArrayList<HighlightInfo>();
