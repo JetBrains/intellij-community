@@ -142,7 +142,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
-    private void registerDefaultConstructorProblem(PsiClass superClass, PsiIdentifier nameIdentifier) {
+    private void registerDefaultConstructorProblem(PsiClass superClass, PsiElement nameIdentifier) {
       myHolder.registerProblem(nameIdentifier, "Default constructor in " + superClass.getQualifiedName() + " is deprecated", ProblemHighlightType.LIKE_DEPRECATED);
     }
 
@@ -152,7 +152,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
       if (currentConstructors.length == 0) {
         final PsiClass superClass = aClass.getSuperClass();
         if (hasDefaultDeprecatedConstructor(superClass)) {
-          registerDefaultConstructorProblem(superClass, aClass.getNameIdentifier());
+          registerDefaultConstructorProblem(superClass, aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier());
         }
       }
     }
