@@ -48,7 +48,7 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
     if (project == null) return;
 
     if (myInitialBreakpoint == null) {
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
       if (editor != null) {
         myInitialBreakpoint = findSelectedBreakpoint(project, editor);
       }

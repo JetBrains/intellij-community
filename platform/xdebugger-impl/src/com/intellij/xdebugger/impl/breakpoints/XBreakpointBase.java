@@ -32,13 +32,13 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -368,7 +368,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
         group.add(action);
       }
       group.add(new Separator());
-      group.add(new ViewBreakpointsAction(XDebuggerBundle.message("xdebugger.view.breakpoint.properties.action"), XBreakpointBase.this));
+
+      group.add(new EditBreakpointAction(XDebuggerBundle.message("xdebugger.view.breakpoint.properties.action"), XBreakpointBase.this, this));
       return group;
     }
 

@@ -1273,6 +1273,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
+  @Nullable
+  public Point getPoint(GutterIconRenderer renderer) {
+    for (int line : myLineToGutterRenderers.keys()) {
+      for (GutterIconRenderer gutterIconRenderer : myLineToGutterRenderers.get(line)) {
+        if (gutterIconRenderer == renderer) {
+          int x = getLineMarkerAreaOffset() + 1;
+          final int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
+          return new Point(x, y);
+        }
+      }
+    }
+    return null;
+  }
+
   private void invokePopup(MouseEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {

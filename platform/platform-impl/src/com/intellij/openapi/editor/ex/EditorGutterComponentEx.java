@@ -17,6 +17,8 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,4 +49,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract int getLineMarkerAreaOffset();
 
   public abstract int getIconsAreaWidth();
+
+  @Nullable
+  public abstract Point getPoint(GutterIconRenderer renderer);
 }

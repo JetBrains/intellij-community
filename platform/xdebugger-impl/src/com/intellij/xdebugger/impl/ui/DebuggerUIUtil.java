@@ -20,14 +20,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,6 +133,48 @@ public class DebuggerUIUtil {
     final Component parentComponent = event.getComponent();
     RelativePoint point = new RelativePoint(parentComponent, new Point(event.getX()-size.width, event.getY()-size.height));
     popup.show(point);
+  }
+
+  public static void showBreakpointEditorBalloon(final Project project,
+                                                 @Nullable final Point point, final JComponent gutterComponent,
+                                                 final boolean showAllOptions,
+                                                 final XBreakpoint breakpoint) {
+    final XLightBreakpointPropertiesPanel propertiesPanel =
+      new XLightBreakpointPropertiesPanel(project, XDebuggerManager.getInstance(project).getBreakpointManager(),
+                                          breakpoint, showAllOptions);
+
+    final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(propertiesPanel.getMainPanel()).
+      setHideOnAction(false).
+      setHideOnClickOutside(false).
+      setHideOnKeyOutside(false).
+      setCloseButtonEnabled(true).
+      setDialogMode(true).
+      setFillColor(propertiesPanel.getMainPanel().getBackground()).
+      setTitle(breakpoint.getType().getDisplayText(breakpoint)).
+      setHideOnFrameResize(false).createBalloon();
+    balloon.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(LightweightWindowEvent event) {
+      }
+
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        propertiesPanel.saveProperties();
+      }
+    });
+    propertiesPanel.setDelegate(new XLightBreakpointPropertiesPanel.Delegate() {
+      @Override
+      public void showMoreOptions() {
+        balloon.hide();
+        showBreakpointEditorBalloon(project, point, gutterComponent, true, breakpoint);
+      }
+    });
+
+    if (point == null) {
+      balloon.showInCenterOf(gutterComponent);
+    } else {
+      balloon.show(new RelativePoint(gutterComponent, point), Balloon.Position.atRight);
+    }
   }
 
   private static class FullValueEvaluationCallbackImpl implements XFullValueEvaluator.XFullValueEvaluationCallback {
