@@ -9,6 +9,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,9 +80,9 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
       if (callee instanceof PyReferenceExpression) {
         // hardwired special cases
         if (PyNames.SUPER.equals(callee.getText())) {
-          final PyType superCallType = getSuperCallType(callee, context);
-          if (superCallType != null) {
-            return superCallType;
+          final Maybe<PyType> superCallType = getSuperCallType(callee, context);
+          if (superCallType.isDefined()) {
+            return superCallType.value();
           }
         }
         // normal cases
@@ -132,8 +133,8 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     }
   }
 
-  @Nullable
-  private PyType getSuperCallType(PyExpression callee, TypeEvalContext context) {
+  @NotNull
+  private Maybe<PyType> getSuperCallType(PyExpression callee, TypeEvalContext context) {
     PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
     if (must_be_super_init instanceof PyFunction) {
       PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
@@ -153,24 +154,24 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
                 if (element instanceof PyParameter) {
                   final PyParameterList parameterList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
                   if (parameterList != null && element == parameterList.getParameters()[0]) {
-                    return getSuperCallType(context, containingClass, args[1]);
+                    return new Maybe<PyType>(getSuperCallType(context, containingClass, args[1]));
                   }
                 }
               }
               PsiElement possible_class = firstArgRef.getReference().resolve();
               if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
                 final PyClass first_class = (PyClass)possible_class;
-                return getSuperCallType(context, first_class, args[1]);
+                return new Maybe<PyType>(getSuperCallType(context, first_class, args[1]));
               }
             }
           }
           else if (((PyFile)getContainingFile()).getLanguageLevel().isPy3K() && containingClass != null) {
-            return getSuperClassUnionType(containingClass);
+            return new Maybe<PyType>(getSuperClassUnionType(containingClass));
           }
         }
       }
     }
-    return null;
+    return new Maybe<PyType>();
   }
 
   @Nullable

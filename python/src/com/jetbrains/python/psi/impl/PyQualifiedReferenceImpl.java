@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -20,6 +21,7 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -66,7 +68,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         if (addAssignedAttributes(ret, referencedName, qualifier)) return ret;
       }
     }
-    else if (myContext.allowImplicits()) {
+    else if (myContext.allowImplicits() && canQualifyAnImplicitName(qualifier, qualifierType)) {
       final Collection functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
       for (Object function : functions) {
         if (!(function instanceof PyFunction)) {
@@ -85,6 +87,19 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       addDocReference(ret, qualifier, qualifierType);
     }
     return ret;
+  }
+
+  private static boolean canQualifyAnImplicitName(@NotNull PyExpression qualifier, @Nullable PyType qualType) {
+    if (qualType == null) {
+      if (qualifier instanceof PyCallExpression) {
+        PyExpression callee = ((PyCallExpression)qualifier).getCallee();
+        if (callee instanceof PyReferenceExpression && PyNames.SUPER.equals(callee.getName())) {
+          PsiElement target = ((PyReferenceExpression)callee).getReference().resolve();
+          if (target != null && PyBuiltinCache.getInstance(qualifier).hasInBuiltins(target)) return false; // super() of unresolved type
+        }
+      }
+    }
+    return true;
   }
 
   private static boolean addAssignedAttributes(ResolveResultList ret, String referencedName, PyExpression qualifier) {
