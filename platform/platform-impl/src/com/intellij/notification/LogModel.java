@@ -61,6 +61,8 @@ public class LogModel {
 
   void setStatusMessage(@Nullable Notification statusMessage) {
     synchronized (myNotifications) {
+      if (myStatusMessage == statusMessage) return;
+
       myStatusMessage = statusMessage;
     }
     StatusBar.Info.set("", myProject, EventLog.LOG_REQUESTOR);
@@ -78,6 +80,7 @@ public class LogModel {
         removeNotification(notification);
       }
     }
+    setStatusToImportant();
   }
 
   public ArrayList<Notification> getNotifications() {
@@ -98,15 +101,18 @@ public class LogModel {
     }
 
     if (notification == getStatusMessage() && notification.isImportant()) {
-      ArrayList<Notification> notifications = getNotifications();
-      Collections.reverse(notifications);
-      setStatusMessage(ContainerUtil.find(notifications, new Condition<Notification>() {
-        @Override
-        public boolean value(Notification notification) {
-          return notification.isImportant();
-        }
-      }));
+      setStatusToImportant();
     }
   }
 
+  private void setStatusToImportant() {
+    ArrayList<Notification> notifications = getNotifications();
+    Collections.reverse(notifications);
+    setStatusMessage(ContainerUtil.find(notifications, new Condition<Notification>() {
+      @Override
+      public boolean value(Notification notification) {
+        return notification.isImportant();
+      }
+    }));
+  }
 }
