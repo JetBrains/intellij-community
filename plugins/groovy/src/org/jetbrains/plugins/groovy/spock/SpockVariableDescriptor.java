@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.spoc;
+package org.jetbrains.plugins.groovy.spock;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author Sergey Evdokimov
  */
-public class SpocVariableDescriptor {
+public class SpockVariableDescriptor {
 
   private final String myName;
 
@@ -29,20 +29,20 @@ public class SpocVariableDescriptor {
 
   private PsiVariable myVariable;
 
-  private static final RecursionGuard guard = RecursionManager.createGuard("SpocVariableDescriptor");
+  private static final RecursionGuard guard = RecursionManager.createGuard("SpockVariableDescriptor");
 
-  public SpocVariableDescriptor(PsiElement navigationElement, String name) {
+  public SpockVariableDescriptor(PsiElement navigationElement, String name) {
     myName = name;
     myNavigationElement = navigationElement;
     myExpressions = new ArrayList<GrExpression>();
   }
 
-  public SpocVariableDescriptor addExpression(@Nullable GrExpression expression) {
+  public SpockVariableDescriptor addExpression(@Nullable GrExpression expression) {
     myExpressions.add(expression);
     return this;
   }
 
-  public SpocVariableDescriptor addExpressionOfCollection(@Nullable GrExpression expression) {
+  public SpockVariableDescriptor addExpressionOfCollection(@Nullable GrExpression expression) {
     if (myExpressionsOfCollection == null) {
       myExpressionsOfCollection = new ArrayList<GrExpression>();
     }

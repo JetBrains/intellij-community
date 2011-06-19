@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.spoc;
+package org.jetbrains.plugins.groovy.spock;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,17 +26,17 @@ import java.util.*;
 /**
  * @author Sergey Evdokimov
  */
-public class SpocUtils {
+public class SpockUtils {
 
   public static final String SPEC_CLASS_NAME = "spock.lang.Specification";
 
-  private static final LightCacheKey<Map<String, SpocVariableDescriptor>> KEY = LightCacheKey.create();
+  private static final LightCacheKey<Map<String, SpockVariableDescriptor>> KEY = LightCacheKey.create();
 
-  private SpocUtils() {
+  private SpockUtils() {
 
   }
 
-  public static Map<String, SpocVariableDescriptor> getVariableMap(@NotNull GrMethod method) {
+  public static Map<String, SpockVariableDescriptor> getVariableMap(@NotNull GrMethod method) {
     GrMethod originalMethod;
 
     PsiFile containingFile = method.getContainingFile();
@@ -49,7 +49,7 @@ public class SpocUtils {
       originalMethod = method;
     }
 
-    Map<String, SpocVariableDescriptor> cachedValue = KEY.getCachedValue(originalMethod);
+    Map<String, SpockVariableDescriptor> cachedValue = KEY.getCachedValue(originalMethod);
     if (cachedValue == null) {
       cachedValue = createVariableMap(originalMethod);
 
@@ -60,7 +60,7 @@ public class SpocUtils {
   }
 
   // See org.spockframework.compiler.WhereBlockRewriter
-  public static Map<String, SpocVariableDescriptor> createVariableMap(GrMethod method) {
+  public static Map<String, SpockVariableDescriptor> createVariableMap(GrMethod method) {
     GrOpenBlock block = method.getBlock();
     if (block == null) return Collections.emptyMap();
 
@@ -94,7 +94,7 @@ public class SpocUtils {
 
     if (elementUnderLabel == null) return Collections.emptyMap();
 
-    Map<String, SpocVariableDescriptor> res = new HashMap<String, SpocVariableDescriptor>();
+    Map<String, SpockVariableDescriptor> res = new HashMap<String, SpockVariableDescriptor>();
 
     PsiElement e = elementUnderLabel;
 
@@ -109,7 +109,7 @@ public class SpocUtils {
           if (leftOperand instanceof GrReferenceExpression) {
             String name = getNameByReference(leftOperand);
             if (name != null) {
-              SpocVariableDescriptor descriptor = new SpocVariableDescriptor(leftOperand, name);
+              SpockVariableDescriptor descriptor = new SpockVariableDescriptor(leftOperand, name);
               descriptor.addExpressionOfCollection(rightOperand);
               res.put(name, descriptor);
             }
@@ -117,7 +117,7 @@ public class SpocUtils {
           else if (leftOperand instanceof GrListOrMap) {
             GrExpression[] variableDefinitions = ((GrListOrMap)leftOperand).getInitializers();
 
-            SpocVariableDescriptor[] variables = createVariables(res, Arrays.asList(variableDefinitions));
+            SpockVariableDescriptor[] variables = createVariables(res, Arrays.asList(variableDefinitions));
 
             if (rightOperand instanceof GrListOrMap) {
               for (GrExpression expression : ((GrListOrMap)rightOperand).getInitializers()) {
@@ -125,7 +125,7 @@ public class SpocUtils {
                   add(variables, Arrays.asList(((GrListOrMap)expression).getInitializers()));
                 }
                 else {
-                  for (SpocVariableDescriptor variable : variables) {
+                  for (SpockVariableDescriptor variable : variables) {
                     if (variable != null) {
                       variable.addExpressionOfCollection(expression);
                     }
@@ -141,7 +141,7 @@ public class SpocUtils {
         GrExpression lValue = assExpr.getLValue();
         String name = getNameByReference(lValue);
         if (name != null) {
-          res.put(name, new SpocVariableDescriptor(lValue, name).addExpression(assExpr.getRValue()));
+          res.put(name, new SpockVariableDescriptor(lValue, name).addExpression(assExpr.getRValue()));
         }
       }
       else if (isOrStatement(e)) {
@@ -149,7 +149,7 @@ public class SpocUtils {
         List<GrExpression> variableDefinitions = new ArrayList<GrExpression>();
         splitOr(variableDefinitions, (GrExpression)e);
 
-        SpocVariableDescriptor[] variables = createVariables(res, variableDefinitions);
+        SpockVariableDescriptor[] variables = createVariables(res, variableDefinitions);
 
         List<GrExpression> row = new ArrayList<GrExpression>();
 
@@ -173,15 +173,15 @@ public class SpocUtils {
     return res;
   }
 
-  private static SpocVariableDescriptor[] createVariables(Map<String, SpocVariableDescriptor> map, List<GrExpression> variableDefinitions) {
-    SpocVariableDescriptor[] variables = new SpocVariableDescriptor[variableDefinitions.size()];
+  private static SpockVariableDescriptor[] createVariables(Map<String, SpockVariableDescriptor> map, List<GrExpression> variableDefinitions) {
+    SpockVariableDescriptor[] variables = new SpockVariableDescriptor[variableDefinitions.size()];
 
     for (int i = 0; i < variableDefinitions.size(); i++) {
       GrExpression expression = variableDefinitions.get(i);
       String name = getNameByReference(expression);
       if (name == null) continue;
 
-      SpocVariableDescriptor variableDescriptor = new SpocVariableDescriptor(expression, name);
+      SpockVariableDescriptor variableDescriptor = new SpockVariableDescriptor(expression, name);
       map.put(name, variableDescriptor);
       variables[i] = variableDescriptor;
     }
@@ -189,7 +189,7 @@ public class SpocUtils {
     return variables;
   }
 
-  private static void add(SpocVariableDescriptor[] variables, List<GrExpression> expressions) {
+  private static void add(SpockVariableDescriptor[] variables, List<GrExpression> expressions) {
     for (int i = 0, end = Math.min(variables.length, expressions.size()); i < end; i++) {
       if (variables[i] != null) { // variables[i] can be null.
         variables[i].addExpression(expressions.get(i));

@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
-import org.jetbrains.plugins.groovy.spoc.SporUnrollReferenceProvider;
+import org.jetbrains.plugins.groovy.spock.SpockUnrollReferenceProvider;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -36,6 +36,6 @@ public class GroovyReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(psiElement(GroovyDocPsiElement.class), new GroovyDocReferenceProvider());
 
     registrar.registerReferenceProvider(GroovyPatterns.stringLiteral().withParent(GrAnnotationNameValuePair.class),
-                                        new SporUnrollReferenceProvider());
+                                        new SpockUnrollReferenceProvider());
   }
 }

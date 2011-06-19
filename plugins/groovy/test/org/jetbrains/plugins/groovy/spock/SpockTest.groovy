@@ -1,18 +1,17 @@
-package org.jetbrains.plugins.groovy.spoc
+package org.jetbrains.plugins.groovy.spock
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.ui.TableUtil.MyFocusAction
+
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.CommonClassNames
 
 /**
  * @author Sergey Evdokimov
  */
-class SpocTest extends LightCodeInsightFixtureTestCase {
+class SpockTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() {

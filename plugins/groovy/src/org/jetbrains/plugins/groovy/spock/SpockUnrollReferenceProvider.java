@@ -1,8 +1,7 @@
-package org.jetbrains.plugins.groovy.spoc;
+package org.jetbrains.plugins.groovy.spock;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
@@ -23,7 +22,7 @@ import java.util.regex.Pattern;
 /**
  * @author Sergey Evdokimov
  */
-public class SporUnrollReferenceProvider extends PsiReferenceProvider {
+public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
 
   private static final Pattern PATTERN = Pattern.compile("\\#([\\w_]+)");
 
@@ -49,7 +48,7 @@ public class SporUnrollReferenceProvider extends PsiReferenceProvider {
     PsiClass aClass = PsiTreeUtil.getParentOfType(annotation, PsiClass.class);
     if (aClass == null) return PsiReference.EMPTY_ARRAY;
 
-    if (!GroovyPsiManager.isInheritorCached(aClass, SpocUtils.SPEC_CLASS_NAME)) return PsiReference.EMPTY_ARRAY;
+    if (!GroovyPsiManager.isInheritorCached(aClass, SpockUtils.SPEC_CLASS_NAME)) return PsiReference.EMPTY_ARRAY;
 
     PsiElement modifierList = annotation.getParent();
     if (!(modifierList instanceof GrModifierList)) return PsiReference.EMPTY_ARRAY;
@@ -91,9 +90,9 @@ public class SporUnrollReferenceProvider extends PsiReferenceProvider {
 
     @Override
     public PsiElement resolve() {
-      Map<String, SpocVariableDescriptor> variableMap = SpocUtils.getVariableMap(myMethod);
+      Map<String, SpockVariableDescriptor> variableMap = SpockUtils.getVariableMap(myMethod);
       String value = getValue();
-      SpocVariableDescriptor descriptor = variableMap.get(value);
+      SpockVariableDescriptor descriptor = variableMap.get(value);
       if (descriptor == null) return null;
       return descriptor.getVariable();
     }
@@ -101,12 +100,12 @@ public class SporUnrollReferenceProvider extends PsiReferenceProvider {
     @NotNull
     @Override
     public Object[] getVariants() {
-      Map<String, SpocVariableDescriptor> variableMap = SpocUtils.getVariableMap(myMethod);
+      Map<String, SpockVariableDescriptor> variableMap = SpockUtils.getVariableMap(myMethod);
 
       Object[] res = new Object[variableMap.size()];
 
       int i = 0;
-      for (SpocVariableDescriptor descriptor : variableMap.values()) {
+      for (SpockVariableDescriptor descriptor : variableMap.values()) {
         res[i++] = descriptor.getVariable();
       }
 
