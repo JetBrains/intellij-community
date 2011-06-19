@@ -63,6 +63,7 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.LoggingContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.spoc.SpocMemberContributor"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>
 
@@ -240,6 +241,8 @@
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
 
     <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.lang.psi.GroovyDeclarationSearcher"/>
+
+    <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.spoc.SpocPomDeclarationSearcher"/>
 
     <typeDeclarationProvider implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTypeDeclarationProvider" order="first"/>
 

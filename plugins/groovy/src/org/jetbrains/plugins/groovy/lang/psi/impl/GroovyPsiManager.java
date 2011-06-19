@@ -97,12 +97,15 @@ public class GroovyPsiManager {
     myCalculatedTypes.clear();
   }
 
+  public static boolean isInheritorCached(@Nullable PsiClass aClass, @NotNull String baseClassName) {
+    if (aClass == null) return false;
+
+    return InheritanceUtil.isInheritorOrSelf(aClass, getInstance(aClass.getProject()).findClassWithCache(baseClassName, aClass.getResolveScope()), true);
+  }
+
   public static boolean isInheritorCached(@Nullable PsiType type, @NotNull String baseClassName) {
     if (type instanceof PsiClassType) {
-      PsiClass resolve = ((PsiClassType)type).resolve();
-      if (resolve != null) {
-        return InheritanceUtil.isInheritorOrSelf(resolve, getInstance(resolve.getProject()).findClassWithCache(baseClassName, resolve.getResolveScope()), true);
-      }
+      return isInheritorCached(((PsiClassType)type).resolve(), baseClassName);
     }
     return false;
   }
