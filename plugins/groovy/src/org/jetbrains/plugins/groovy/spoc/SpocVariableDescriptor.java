@@ -5,6 +5,8 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -99,10 +101,26 @@ public class SpocVariableDescriptor {
         type = PsiType.getJavaLangObject(manager, myNavigationElement.getResolveScope());
       }
 
-      myVariable = new GrLightVariable(null, manager, myName, type, myNavigationElement);
+      myVariable = new SpockVariable(null, manager, myName, type, myNavigationElement);
     }
 
     return myVariable;
+  }
+
+  private static class SpockVariable extends GrLightVariable {
+    public SpockVariable(@Nullable PsiModifierList modifierList,
+                         PsiManager manager,
+                         @NonNls String name,
+                         @NotNull PsiType type,
+                         @NotNull PsiElement navigationElement) {
+      super(modifierList, manager, name, type, navigationElement);
+    }
+
+    @Override
+    public boolean isEquivalentTo(PsiElement another) {
+      return super.isEquivalentTo(another)
+             || (another instanceof SpockVariable && getNavigationElement() == another.getNavigationElement());
+    }
   }
 
   @Override

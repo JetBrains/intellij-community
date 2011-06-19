@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.groovy.spoc;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -35,11 +37,23 @@ public class SpocUtils {
   }
 
   public static Map<String, SpocVariableDescriptor> getVariableMap(@NotNull GrMethod method) {
-    Map<String, SpocVariableDescriptor> cachedValue = KEY.getCachedValue(method);
-    if (cachedValue == null) {
-      cachedValue = createVariableMap(method);
+    GrMethod originalMethod;
 
-      KEY.putCachedValue(method, cachedValue);
+    PsiFile containingFile = method.getContainingFile();
+    if (containingFile != containingFile.getOriginalFile()) {
+      PsiElement originalPlace = containingFile.getOriginalFile().findElementAt(method.getTextOffset());
+      originalMethod = PsiTreeUtil.getParentOfType(originalPlace, GrMethod.class);
+      assert originalMethod != null;
+    }
+    else {
+      originalMethod = method;
+    }
+
+    Map<String, SpocVariableDescriptor> cachedValue = KEY.getCachedValue(originalMethod);
+    if (cachedValue == null) {
+      cachedValue = createVariableMap(originalMethod);
+
+      KEY.putCachedValue(originalMethod, cachedValue);
     }
 
     return cachedValue;
@@ -103,7 +117,7 @@ public class SpocUtils {
           else if (leftOperand instanceof GrListOrMap) {
             GrExpression[] variableDefinitions = ((GrListOrMap)leftOperand).getInitializers();
 
-            SpocVariableDescriptor[] variables = createVariables(method, res, Arrays.asList(variableDefinitions));
+            SpocVariableDescriptor[] variables = createVariables(res, Arrays.asList(variableDefinitions));
 
             if (rightOperand instanceof GrListOrMap) {
               for (GrExpression expression : ((GrListOrMap)rightOperand).getInitializers()) {
@@ -135,7 +149,7 @@ public class SpocUtils {
         List<GrExpression> variableDefinitions = new ArrayList<GrExpression>();
         splitOr(variableDefinitions, (GrExpression)e);
 
-        SpocVariableDescriptor[] variables = createVariables(method, res, variableDefinitions);
+        SpocVariableDescriptor[] variables = createVariables(res, variableDefinitions);
 
         List<GrExpression> row = new ArrayList<GrExpression>();
 
@@ -159,7 +173,7 @@ public class SpocUtils {
     return res;
   }
 
-  private static SpocVariableDescriptor[] createVariables(GrMethod method, Map<String, SpocVariableDescriptor> map, List<GrExpression> variableDefinitions) {
+  private static SpocVariableDescriptor[] createVariables(Map<String, SpocVariableDescriptor> map, List<GrExpression> variableDefinitions) {
     SpocVariableDescriptor[] variables = new SpocVariableDescriptor[variableDefinitions.size()];
 
     for (int i = 0; i < variableDefinitions.size(); i++) {

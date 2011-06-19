@@ -59,13 +59,6 @@ public class SpocMemberContributor extends NonCodeMembersContributor {
 
     if (aClass != method.getContainingClass()) return;
 
-    PsiFile containingFile = aClass.getContainingFile();
-    if (containingFile != containingFile.getOriginalFile()) {
-      PsiElement originalPlace = containingFile.getOriginalFile().findElementAt(place.getTextOffset());
-      method = PsiTreeUtil.getParentOfType(originalPlace, GrMethod.class);
-      if (method == null) return;
-    }
-
     Map<String, SpocVariableDescriptor> cachedValue = SpocUtils.getVariableMap(method);
 
     String nameHint = ResolveUtil.getNameHint(processor);

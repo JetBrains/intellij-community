@@ -139,6 +139,7 @@ class FooSpec extends spock.lang.Specification {
   public void testRename() {
     myFixture.configureByText("FooSpec.groovy", """
 class FooSpec extends spock.lang.Specification {
+  @spock.lang.Unroll("xxx #name a #name #name    #name")
   def "foo test"() {
     expect:
     name == null || name.length() == 1
@@ -149,19 +150,36 @@ class FooSpec extends spock.lang.Specification {
 }
 """)
 
-    myFixture.renameElementAtCaret("fff")
+    myFixture.renameElementAtCaret("n")
 
     myFixture.checkResult("""
 class FooSpec extends spock.lang.Specification {
+  @spock.lang.Unroll("xxx #n a #n #n    #n")
   def "foo test"() {
     expect:
-    fff == null || fff.length() == 1
+    n == null || n.length() == 1
 
     where:
-    [x1, _, fff] << [['x', 'y', 'x'], ['x', 'y', null]]
+    [x1, _, n] << [['x', 'y', 'x'], ['x', 'y', null]]
   }
 }
 """)
+
+    myFixture.renameElementAtCaret("z1234567890")
+
+    myFixture.checkResult("""
+class FooSpec extends spock.lang.Specification {
+  @spock.lang.Unroll("xxx #z1234567890 a #z1234567890 #z1234567890    #z1234567890")
+  def "foo test"() {
+    expect:
+    z1234567890 == null || z1234567890.length() == 1
+
+    where:
+    [x1, _, z1234567890] << [['x', 'y', 'x'], ['x', 'y', null]]
+  }
+}
+""")
+
   }
 
 
