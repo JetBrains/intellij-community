@@ -147,6 +147,11 @@ public class TitlePanel extends CaptionPanel {
         contentSize = new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
       } else {
         contentSize = myContentComponent.getPreferredSize();
+
+        final Dimension preferredSize = super.getPreferredSize();
+        if (preferredSize.width <= 300) {
+          contentSize = preferredSize;
+        }
       }
 
       myPane.setText(getText());
