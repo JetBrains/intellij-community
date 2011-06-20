@@ -94,6 +94,10 @@ public class PullUpTest extends LightCodeInsightTestCase {
     doTest(new RefactoringTestUtil.MemberDescriptor("method", PsiMethod.class, true));
   }
 
+  public void testReplaceDuplicatesInInheritors() throws Exception {
+    doTest(new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, false));
+  }
+
   public void testGenericsInImplements() throws Exception {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("I", PsiClass.class));
   }

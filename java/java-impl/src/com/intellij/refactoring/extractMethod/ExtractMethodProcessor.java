@@ -1236,6 +1236,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     return null;
   }
 
+  @Override
+  public String getReplaceDuplicatesTitle(int idx, int size) {
+    return RefactoringBundle.message("process.duplicates.title", idx, size);
+  }
+
   public InputVariables getInputVariables() {
     return myInputVariables;
   }

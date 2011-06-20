@@ -33,4 +33,6 @@ public interface MatchProvider {
   boolean hasDuplicates();
 
   @Nullable String getConfirmDuplicatePrompt(Match match);
+
+  String getReplaceDuplicatesTitle(int idx, int size);
 }

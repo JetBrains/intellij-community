@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -31,10 +32,12 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
@@ -48,10 +51,12 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -94,6 +99,28 @@ public class PullUpHelper extends BaseRefactoringProcessor{
   protected void performRefactoring(UsageInfo[] usages) {
     moveMembersToBase();
     moveFieldInitializations();
+    processMethodsDuplicates();
+  }
+
+  private void processMethodsDuplicates() {
+    final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
+    final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
+    for (PsiClass aClass : search) {
+      final PsiFile containingFile = aClass.getContainingFile();
+      if (containingFile != null) {
+        final VirtualFile virtualFile = containingFile.getVirtualFile();
+        if (virtualFile != null) {
+          hierarchyFiles.add(virtualFile);
+        }
+      }
+    }
+    final Set<PsiMethod> methodsToSearchDuplicates = new HashSet<PsiMethod>();
+    for (PsiMember psiMember : myMembersAfterMove) {
+      if (psiMember instanceof PsiMethod && ((PsiMethod)psiMember).getBody() != null) {
+        methodsToSearchDuplicates.add((PsiMethod)psiMember);
+      }
+    }
+    MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
   }
 
   protected String getCommandName() {

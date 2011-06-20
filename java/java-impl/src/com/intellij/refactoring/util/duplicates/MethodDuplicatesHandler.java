@@ -54,9 +54,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author dsl
@@ -109,32 +107,60 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   }
 
   public static void invokeOnScope(final Project project, final PsiMethod method, final AnalysisScope scope) {
-    final List<Match> duplicates = new ArrayList<Match>();
+    invokeOnScope(project, Collections.singleton(method), scope, false);
+  }
+
+  public static void invokeOnScope(final Project project, final Set<PsiMethod> methods, final AnalysisScope scope, boolean silent) {
+    final Map<PsiMethod, List<Match>> duplicates = new HashMap<PsiMethod, List<Match>>();
     scope.accept(new PsiRecursiveElementVisitor() {
       @Override public void visitFile(final PsiFile file) {
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         if (progressIndicator != null && progressIndicator.isCanceled()) return;
-        duplicates.addAll(hasDuplicates(file, method));
-      }
-    });
-    replaceDuplicate(project, duplicates, method);
-    final Runnable nothingFoundRunnable = new Runnable() {
-      public void run() {
-        if (duplicates.isEmpty()) {
-          final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
-                                                           ApplicationNamesInfo.getInstance().getProductName());
-          Messages.showInfoMessage(project, message, REFACTORING_NAME);
+        for (PsiMethod method : methods) {
+          final List<Match> matchList = hasDuplicates(file, method);
+          for (Iterator<Match> iterator = matchList.iterator(); iterator.hasNext(); ) {
+            Match match = iterator.next();
+            final PsiElement matchStart = match.getMatchStart();
+            final PsiElement matchEnd = match.getMatchEnd();
+            for (PsiMethod psiMethod : methods) {
+              if (PsiTreeUtil.isAncestor(psiMethod, matchStart, false) ||
+                  PsiTreeUtil.isAncestor(psiMethod, matchEnd, false)) {
+                iterator.remove();
+                break;
+              }
+            }
+          }
+          if (!matchList.isEmpty()) {
+            List<Match> matches = duplicates.get(method);
+            if (matches == null) {
+              matches = new ArrayList<Match>();
+              duplicates.put(method, matches);
+            }
+            matches.addAll(matchList);
+          }
         }
       }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      nothingFoundRunnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
+    });
+    replaceDuplicate(project, duplicates, methods);
+    if (!silent) {
+      final Runnable nothingFoundRunnable = new Runnable() {
+        public void run() {
+          if (duplicates.isEmpty()) {
+            final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
+                                                             ApplicationNamesInfo.getInstance().getProductName());
+            Messages.showInfoMessage(project, message, REFACTORING_NAME);
+          }
+        }
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        nothingFoundRunnable.run();
+      } else {
+        ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
+      }
     }
   }
 
-  private static void replaceDuplicate(final Project project, final List<Match> duplicates, final PsiMethod method) {
+  private static void replaceDuplicate(final Project project, final Map<PsiMethod, List<Match>> duplicates, final Set<PsiMethod> methods) {
     LocalHistoryAction a = LocalHistory.getInstance().startAction(REFACTORING_NAME);
     try {
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -142,19 +168,23 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
 
       final Runnable replaceRunnable = new Runnable() {
         public void run() {
-          final int duplicatesNo = duplicates.size();
-          WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            public void run() {
-              PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
-                public void run() {
-                  DuplicatesImpl.invoke(project, new MethodDuplicatesMatchProvider(method, duplicates));
-                }
-              });
-            }
-          }, REFACTORING_NAME, REFACTORING_NAME);
+          for (final PsiMethod method : methods) {
+            final List<Match> matches = duplicates.get(method);
+            if (matches == null) continue;
+            final int duplicatesNo = matches.size();
+            WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
+            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+              public void run() {
+                PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
+                  public void run() {
+                    DuplicatesImpl.invoke(project, new MethodDuplicatesMatchProvider(method, matches));
+                  }
+                });
+              }
+            }, REFACTORING_NAME, REFACTORING_NAME);
 
-          WindowManager.getInstance().getStatusBar(project).setInfo("");
+            WindowManager.getInstance().getStatusBar(project).setInfo("");
+          }
         }
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -347,6 +377,11 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
       }
       return null;
+    }
+
+    @Override
+    public String getReplaceDuplicatesTitle(int idx, int size) {
+      return RefactoringBundle.message("process.methods.duplicates.title", idx, size, myMethod.getName());
     }
   }
 }
