@@ -32,7 +32,7 @@ import java.util.Map;
  *
  * @see com.intellij.psi.JavaPsiFacade#getElementFactory()
  */
-public interface PsiElementFactory extends PsiJavaParserFacade {
+public interface PsiElementFactory extends PsiJavaParserFacade, PsiTopLevelElementFactory {
   /**
    * Creates an empty class with the specified name.
    *

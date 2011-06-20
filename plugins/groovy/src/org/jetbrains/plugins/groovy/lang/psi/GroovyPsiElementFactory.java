@@ -56,7 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author dimaskin
  */
-public abstract class GroovyPsiElementFactory {
+public abstract class GroovyPsiElementFactory implements PsiTopLevelElementFactory {
 
   @NonNls public static final String DUMMY_FILE_NAME = "DUMMY__";
 
@@ -136,7 +136,7 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrParameter createParameter(String name,
                                               @Nullable String typeText,
                                               @Nullable String initializer,
-                                              GroovyPsiElement context) throws IncorrectOperationException;
+                                              @Nullable GroovyPsiElement context) throws IncorrectOperationException;
 
   public abstract GrCodeReferenceElement createTypeOrPackageReference(String qName);
 

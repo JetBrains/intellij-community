@@ -333,6 +333,8 @@
 
     <sourceRootFinder implementation="org.jetbrains.plugins.groovy.GroovySourceRootFinder"/>
 
+    <generation.topLevelFactory language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.Provider" />
+
     <!-- control flow -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

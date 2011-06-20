@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -273,7 +274,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createDummyFile(s, false);
   }
 
-  public GrParameter createParameter(String name, @Nullable String typeText, @Nullable String initializer, GroovyPsiElement context)
+  public GrParameter createParameter(String name, @Nullable String typeText, @Nullable String initializer, @Nullable GroovyPsiElement context)
     throws IncorrectOperationException {
     StringBuilder fileText = new StringBuilder();
     fileText.append("def foo(");
@@ -728,4 +729,85 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
     throw new IncorrectOperationException("Can not create literal from type: " + value.getClass().getName());
   }
+
+  @NotNull
+  @Override
+  public PsiClass createClass(@NonNls @NotNull String name) throws IncorrectOperationException {
+    return createTypeDefinition("class " + name + "{}");
+  }
+
+  @NotNull
+  @Override
+  public PsiClass createInterface(@NonNls @NotNull String name) throws IncorrectOperationException {
+    return createTypeDefinition("interface " + name + "{}");
+  }
+
+  @NotNull
+  @Override
+  public PsiClass createEnum(@NotNull @NonNls String name) throws IncorrectOperationException {
+    return createTypeDefinition("enum " + name + "{}");
+  }
+
+  @NotNull
+  @Override
+  public PsiField createField(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException {
+    final GrVariableDeclaration fieldDeclaration = createFieldDeclaration(new String[]{PsiModifier.PRIVATE}, name, null, type);
+    return (PsiField)fieldDeclaration.getVariables()[0];
+  }
+
+  @NotNull
+  @Override
+  public PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType) throws IncorrectOperationException {
+    StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    builder.append("public");
+    if (returnType != null) {
+      builder.append(' ');
+      builder.append(returnType.getCanonicalText());
+    }
+    builder.append(' ').append(name).append("(){}");
+    return createMethodFromText(builder.toString());
+  }
+
+  @NotNull
+  @Override
+  public PsiMethod createConstructor() {
+    return createConstructorFromText("Foo", "", null);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassInitializer createClassInitializer() throws IncorrectOperationException {
+    final GrTypeDefinition typeDefinition = createTypeDefinition("class X {{}}");
+    return typeDefinition.getInitializers()[0];
+  }
+
+  @NotNull
+  @Override
+  public PsiParameter createParameter(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException {
+    return createParameter(name, type.getCanonicalText(), null, null);
+  }
+
+  @NotNull
+  @Override
+  public PsiParameterList createParameterList(@NotNull @NonNls String[] names, @NotNull PsiType[] types) throws IncorrectOperationException {
+    StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    builder.append("def foo(");
+    for (int i = 0; i < names.length; i++) {
+      String name = names[i];
+      final PsiType type = types[i];
+      if (type != null) {
+        builder.append(type.getCanonicalText());
+        builder.append(' ');
+      }
+      builder.append(name);
+      builder.append(',');
+    }
+    if (names.length > 0) {
+      builder.delete(builder.length() - 1, builder.length());
+    }
+    builder.append("){}");
+    final GrMethod method = createMethodFromText(builder.toString());
+    return method.getParameterList();
+  }
+
 }

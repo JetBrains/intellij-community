@@ -127,6 +127,8 @@
     <extensionPoint name="java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache"/>
 
     <extensionPoint name="allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension"/>
+
+    <extensionPoint name="generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -902,6 +904,8 @@
     <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
+
+    <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.Provider"/>
   </extensions>
 
 </idea-plugin>
