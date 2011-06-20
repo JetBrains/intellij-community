@@ -891,4 +891,8 @@ public class MvcModuleStructureUtil {
       return LocalFileSystem.getInstance().findFileByIoFile(file);
     }
   }
+
+  public static boolean isEnabledStructureUpdate() {
+    return !Boolean.parseBoolean(System.getProperty("grails.disable.structure.update"));
+  }
 }
