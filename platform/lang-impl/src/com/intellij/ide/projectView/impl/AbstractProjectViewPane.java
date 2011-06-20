@@ -367,18 +367,16 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     ArrayList<Object> list = new ArrayList<Object>(paths.length);
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
-      if (lastPathComponent instanceof TreeNode) {
-        Object element = getElement((TreeNode)lastPathComponent);
-        if (element != null) {
-          list.add(element);
-        }
+      Object element = getElementFromTreeNode(lastPathComponent);
+      if (element != null) {
+        list.add(element);
       }
     }
     return ArrayUtil.toObjectArray(list);
   }
 
   @Nullable
-  private Object getElement(@Nullable final TreeNode treeNode) {
+  public Object getElementFromTreeNode(@Nullable final Object treeNode) {
     if (treeNode instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)treeNode;
       return exhumeElementFromNode(node);
@@ -558,12 +556,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       myDropTarget = new ProjectViewDropTarget(myTree, new Retriever(){
         @Override
         public PsiElement getPsiElement(@Nullable TreeNode node) {
-          return getPSIElement(getElement(node));
+          return getPSIElement(getElementFromTreeNode(node));
         }
 
         @Override
         public Module getModule(TreeNode treeNode) {
-          return getNodeModule(getElement(treeNode));
+          return getNodeModule(getElementFromTreeNode(treeNode));
         }
       }, myProject);
       myDragSource = new MyDragSource();
