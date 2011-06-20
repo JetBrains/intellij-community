@@ -123,26 +123,28 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   private volatile PsiMethod[] defMethods = null;
-  private static final Object lock = new Object();
 
-  private PsiMethod[] generateDefEnumMethods() {
-    synchronized (lock) {
-      if (defMethods == null) {
-        defMethods = new PsiMethod[3];
-        final PsiManagerEx manager = getManager();
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-        defMethods[0] =
-          new LightMethodBuilder(manager, GROOVY_LANGUAGE, "values", new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
-                                 new LightModifierList(manager, GROOVY_LANGUAGE, "public", "static")).setReturnType(
-            factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", this)).setContainingClass(this);
-        defMethods[1] = new LightMethodBuilder(manager, GROOVY_LANGUAGE, "next", new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
-                                               new LightModifierList(manager, GROOVY_LANGUAGE, "public")).setReturnType(
-          factory.createType(this)).setContainingClass(this);
-        defMethods[2] =
-          new LightMethodBuilder(manager, GROOVY_LANGUAGE, "previous", new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
-                                 new LightModifierList(manager, GROOVY_LANGUAGE, "public")).setContainingClass(this)
-            .setReturnType(factory.createType(this));
-      }
+  private synchronized PsiMethod[] generateDefEnumMethods() {
+    if (defMethods == null) {
+      defMethods = new PsiMethod[3];
+      final PsiManagerEx manager = getManager();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+      defMethods[0] = new LightMethodBuilder(manager, GROOVY_LANGUAGE,
+                                             "values",
+                                             new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
+                                             new LightModifierList(manager, GROOVY_LANGUAGE, "public", "static")
+      ).setReturnType(factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", this)).setContainingClass(this);
+
+      defMethods[1] = new LightMethodBuilder(manager, GROOVY_LANGUAGE,
+                                             "next",
+                                             new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
+                                             new LightModifierList(manager, GROOVY_LANGUAGE, "public")
+      ).setReturnType(factory.createType(this)).setContainingClass(this);
+      defMethods[2] = new LightMethodBuilder(manager, GROOVY_LANGUAGE,
+                                             "previous",
+                                             new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
+                                             new LightModifierList(manager, GROOVY_LANGUAGE, "public")
+      ).setReturnType(factory.createType(this)).setContainingClass(this);
     }
     return defMethods;
   }
