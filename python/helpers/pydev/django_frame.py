@@ -1,3 +1,5 @@
+from pydevd_file_utils import GetFileNameAndBaseFromFile
+
 def read_file(filename):
     f = open(filename, "r")
     s =  f.read()
@@ -50,7 +52,9 @@ def get_source(frame):
 def get_template_file_name(frame):
     try:
         source = get_source(frame)
-        return source[0].name
+        fname = source[0].name
+        filename, base = GetFileNameAndBaseFromFile(fname)
+        return filename
     except:
         return None
 

@@ -243,11 +243,9 @@ else:
     #no translation step needed (just inline the calls)
     NormFileToClient = _NormFile
     NormFileToServer = _NormFile
-    
 
-def GetFilenameAndBase(frame):
-    #This one is just internal (so, does not need any kind of client-server translation)
-    f = frame.f_code.co_filename
+
+def GetFileNameAndBaseFromFile(f):
     try:
         return NORM_FILENAME_AND_BASE_CONTAINER[f]
     except KeyError:
@@ -255,3 +253,9 @@ def GetFilenameAndBase(frame):
         base = basename(filename)
         NORM_FILENAME_AND_BASE_CONTAINER[f] = filename, base
         return filename, base
+
+
+def GetFilenameAndBase(frame):
+    #This one is just internal (so, does not need any kind of client-server translation)
+    f = frame.f_code.co_filename
+    return GetFileNameAndBaseFromFile(f)
