@@ -222,6 +222,6 @@
   <virtualFileSystem key="https" implementationClass="com.intellij.openapi.vfs.impl.http.HttpsFileSystem"/>
 
   <toolWindow id="Event Log" anchor="bottom" secondary="true"
-              factoryClass="com.intellij.notification.EventLog$FactoryItself"/>
+              factoryClass="com.intellij.notification.EventLog$FactoryItself" icon="/general/toolWindowProject.png"/>
 
 </extensions>
