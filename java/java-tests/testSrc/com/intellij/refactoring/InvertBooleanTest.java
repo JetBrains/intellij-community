@@ -28,6 +28,7 @@ public class InvertBooleanTest extends LightCodeInsightTestCase {
   public void testUnusedReturnValue() throws Exception { doTest(); }
 
   public void testInnerClasses() throws Exception {doTest();}
+  public void testAnonymousClasses() throws Exception {doTest();}
 
   private void doTest() throws Exception {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");

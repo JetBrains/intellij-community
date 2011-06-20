@@ -110,8 +110,12 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       final Query<PsiReference> methodQuery = MethodReferencesSearch.search(method);
       final Collection<PsiReference> methodRefs = methodQuery.findAll();
       for (PsiReference ref : methodRefs) {
-        if (ref.getElement().getParent() instanceof PsiCall) {
-          final PsiCall call = (PsiCall)ref.getElement().getParent();
+        PsiElement parent = ref.getElement().getParent();
+        if (parent instanceof PsiAnonymousClass) {
+          parent = parent.getParent();
+        }
+        if (parent instanceof PsiCall) {
+          final PsiCall call = (PsiCall)parent;
           final PsiReferenceExpression methodExpression = call instanceof PsiMethodCallExpression ?
                                                           ((PsiMethodCallExpression)call).getMethodExpression() :
                                                           null;
