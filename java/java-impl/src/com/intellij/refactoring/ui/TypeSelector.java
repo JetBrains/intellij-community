@@ -15,8 +15,12 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.SmartTypePointer;
+import com.intellij.psi.SmartTypePointerManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,14 +34,17 @@ public class TypeSelector {
   private final PsiType myType;
   private final JComponent myComponent;
   private final MyComboBoxModel myComboBoxModel;
+  private final Project myProject;
 
-  public TypeSelector(PsiType type) {
+  public TypeSelector(PsiType type, Project project) {
     myType = type;
+    myProject = project;
     myComponent = new JLabel(myType.getPresentableText());
     myComboBoxModel = null;
   }
 
-  public TypeSelector() {
+  public TypeSelector(Project project) {
+    myProject = project;
     myComboBoxModel = new MyComboBoxModel();
     myComponent = new ComboBox();
     ((ComboBox) myComponent).setModel(myComboBoxModel);
@@ -52,7 +59,7 @@ public class TypeSelector {
     } else {
       oldType = null;
     }
-    myComboBoxModel.setSuggestions(wrapToItems(types));
+    myComboBoxModel.setSuggestions(wrapToItems(types, myProject));
     if(oldType != null) {
       for (int i = 0; i < types.length; i++) {
         PsiType type = types[i];
@@ -67,10 +74,10 @@ public class TypeSelector {
     }
   }
 
-  private static PsiTypeItem[] wrapToItems(final PsiType[] types) {
+  private static PsiTypeItem[] wrapToItems(final PsiType[] types, Project project) {
     PsiTypeItem[] result = new PsiTypeItem[types.length];
     for (int i = 0; i < result.length; i++) {
-      result [i] = new PsiTypeItem(types [i]);
+      result [i] = new PsiTypeItem(types [i], project);
     }
     return result;
   }
@@ -120,7 +127,7 @@ public class TypeSelector {
 
   public void selectType(@NotNull PsiType type) {
     if (myComponent instanceof JComboBox) {
-      ((JComboBox)myComponent).setSelectedItem(new PsiTypeItem(type));
+      ((JComboBox)myComponent).setSelectedItem(new PsiTypeItem(type, myProject));
     }
   }
 
@@ -150,13 +157,16 @@ public class TypeSelector {
 
   private static class PsiTypeItem {
     private final PsiType myType;
+    private final SmartTypePointer myTypePointer;
 
-    private PsiTypeItem(final PsiType type) {
+    private PsiTypeItem(final PsiType type, Project project) {
       myType = type;
+      myTypePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(type);
     }
 
+    @Nullable
     public PsiType getType() {
-      return myType;
+      return myTypePointer.getType();
     }
 
     @Override
@@ -166,14 +176,15 @@ public class TypeSelector {
 
       PsiTypeItem that = (PsiTypeItem)o;
 
-      if (!myType.equals(that.myType)) return false;
+      if (!Comparing.equal(getType(), that.getType())) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      return myType.hashCode();
+      PsiType type = getType();
+      return type != null ? type.hashCode() : 0;
     }
 
     @Override

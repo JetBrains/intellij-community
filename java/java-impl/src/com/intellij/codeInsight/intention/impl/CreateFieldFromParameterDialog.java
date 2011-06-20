@@ -191,10 +191,10 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     panel.add(typeLabel, gbConstraints);
     gbConstraints.gridx = 1;
     if (myTypes.length > 1) {
-      myTypeSelector = new TypeSelector();
+      myTypeSelector = new TypeSelector(myProject);
       myTypeSelector.setTypes(myTypes);
     } else {
-      myTypeSelector = new TypeSelector(myTypes[0]);
+      myTypeSelector = new TypeSelector(myTypes[0], myProject);
     }
     panel.add(myTypeSelector.getComponent(), gbConstraints);
 

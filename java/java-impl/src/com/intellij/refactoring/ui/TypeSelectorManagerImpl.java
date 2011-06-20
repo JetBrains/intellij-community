@@ -67,10 +67,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     myIsOneSuggestion = myTypesForAll.length == 1;
     if (myIsOneSuggestion) {
-      myTypeSelector = new TypeSelector(myTypesForAll[0]);
+      myTypeSelector = new TypeSelector(myTypesForAll[0], project);
     }
     else {
-      myTypeSelector = new TypeSelector();
+      myTypeSelector = new TypeSelector(project);
       setTypesAndPreselect(myTypesForAll);
     }
   }
@@ -104,10 +104,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       myTypesForMain.length == 1 && myTypesForAll.length == 1 &&
       myTypesForAll[0].equals(myTypesForMain[0]);
     if (myIsOneSuggestion) {
-      myTypeSelector = new TypeSelector(myTypesForAll[0]);
+      myTypeSelector = new TypeSelector(myTypesForAll[0], project);
     }
     else {
-      myTypeSelector = new TypeSelector();
+      myTypeSelector = new TypeSelector(project);
     }
   }
 

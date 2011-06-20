@@ -95,7 +95,7 @@ public class ParameterTablePanel extends JPanel {
 //      final GrExpression[] occurrences = ExtractMethodUtil.findVariableOccurrences(helper.getStatements(), myParameterInfos[i].getName());
 //      final TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, myParameterInfos[i].getType(), occurrences, areTypesDirected());
       PsiType type = myParameterInfos[i].getType();
-      myParameterTypeSelectors[i] = new TypeSelector(type != null ? type : PsiType.getJavaLangObject(manager, scope));
+      myParameterTypeSelectors[i] = new TypeSelector(type != null ? type : PsiType.getJavaLangObject(manager, scope), myProject);
 //      myParameterInfos[i].setTypeName(myParameterTypeSelectors[i].getSelectedType());
     }
 
