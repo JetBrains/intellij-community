@@ -391,13 +391,21 @@ public class OverrideImplementUtil {
   public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(final Collection<PsiMethod> methods) {
     return ContainerUtil.map2List(methods, new Function<PsiMethod, PsiGenerationInfo<PsiMethod>>() {
       public PsiGenerationInfo<PsiMethod> fun(final PsiMethod s) {
-        for (MethodImplementor implementor : getImplementors()) {
-          final GenerationInfo info = implementor.createGenerationInfo(s);
-          if (info instanceof PsiGenerationInfo) return (PsiGenerationInfo<PsiMethod>)info;
-        }
-        return new PsiGenerationInfo<PsiMethod>(s);
+        return createGenerationInfo(s);
       }
     });
+  }
+
+  public static PsiGenerationInfo<PsiMethod> createGenerationInfo(PsiMethod s) {
+    return createGenerationInfo(s, true);
+  }
+
+  public static PsiGenerationInfo<PsiMethod> createGenerationInfo(PsiMethod s, boolean mergeIfExists) {
+    for (MethodImplementor implementor : getImplementors()) {
+      final GenerationInfo info = implementor.createGenerationInfo(s, mergeIfExists);
+      if (info instanceof PsiGenerationInfo) return (PsiGenerationInfo<PsiMethod>)info;
+    }
+    return new PsiGenerationInfo<PsiMethod>(s);
   }
 
   @NotNull

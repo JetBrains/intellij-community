@@ -32,6 +32,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author peter
  */
 public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo<T>{
+  public GroovyGenerationInfo(@NotNull T member, boolean mergeIfExists) {
+    super(member, mergeIfExists);
+  }
+
   public GroovyGenerationInfo(@NotNull T member) {
     super(member);
   }

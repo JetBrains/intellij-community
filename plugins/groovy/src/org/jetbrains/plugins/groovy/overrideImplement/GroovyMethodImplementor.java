@@ -54,9 +54,9 @@ public class GroovyMethodImplementor implements MethodImplementor {
   }
 
   @Override
-  public GenerationInfo createGenerationInfo(PsiMethod method) {
+  public GenerationInfo createGenerationInfo(PsiMethod method, boolean mergeIfExists) {
     if (method instanceof GrMethod) {
-      return new GroovyGenerationInfo<GrMethod>((GrMethod)method);
+      return new GroovyGenerationInfo<GrMethod>((GrMethod)method, mergeIfExists);
     }
     return null;
   }

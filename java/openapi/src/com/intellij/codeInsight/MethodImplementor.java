@@ -36,5 +36,5 @@ public interface MethodImplementor {
 
   boolean isBodyGenerated();
 
-  GenerationInfo createGenerationInfo(PsiMethod method);
+  GenerationInfo createGenerationInfo(PsiMethod method, boolean mergeIfExists);
 }
