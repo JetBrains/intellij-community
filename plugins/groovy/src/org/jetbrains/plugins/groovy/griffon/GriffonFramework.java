@@ -54,7 +54,7 @@ import java.util.Map;
  * @author peter
  */
 public class GriffonFramework extends MvcFramework {
-  public static final Icon GRIFFON_ICON = IconLoader.getIcon("/images/griffon/griffon.png");
+  public static final Icon GRIFFON_ICON = IconLoader.getIcon("/icons/griffon/griffon.png");
   @NonNls private static final String GRIFFON_COMMON_PLUGINS = "-griffonPlugins";
   private static final String GLOBAL_PLUGINS_MODULE_NAME = "GriffonGlobalPlugins";
 
