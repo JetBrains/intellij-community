@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -54,6 +55,7 @@ public class MvcModuleStructureUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.mvc.MvcModuleStructureUtil");
   @NonNls public static final String PLUGINS_DIRECTORY = "plugins";
   @NonNls public static final String APPLICATION_PROPERTIES = "application.properties";
+  public static final Key<String> LAST_MVC_VERSION = Key.create("LAST_MVC_VERSION");
 
   private MvcModuleStructureUtil() {
   }

@@ -643,6 +643,11 @@
     </action>
 
     <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup">
+      <action id="Mvc.Upgrade"
+              class="org.jetbrains.plugins.groovy.mvc.MvcUpgradeAction"
+              text="Change SDK version" description="Change Grails/Griffon SDK version">
+      </action>
+
       <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.MvcRunTarget"
               text="Run Target" description="Run arbitrary Grails/Griffon target">
         <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
