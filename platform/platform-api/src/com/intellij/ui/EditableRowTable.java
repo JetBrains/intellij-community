@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Ref;
 
 import javax.swing.*;
@@ -34,7 +35,9 @@ public class EditableRowTable {
     return createButtonsTable(table, tableModel, addMnemonics, false);
   }
 
-  public static JPanel createButtonsTable(final JTable table, final RowEditableTableModel tableModel, boolean addMnemonics, boolean iconsOnly) {
+  public static JPanel createButtonsTable(final JTable table, final RowEditableTableModel tableModel,
+                                          boolean addMnemonics, boolean iconsOnly,
+                                          AnAction...actions) {
     JPanel panel = new JPanel();
     panel.setBorder(iconsOnly ? IdeBorderFactory.createEmptyBorder(0) : BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
@@ -158,7 +161,7 @@ public class EditableRowTable {
       gbConstraints.weighty = 1;
       panel.add(new JPanel(), gbConstraints);
     } else {
-      p.set(new AddRemoveUpDownPanel(listener, table));
+      p.set(new AddRemoveUpDownPanel(listener, table, actions));
       panel.add(p.get(), BorderLayout.NORTH);
     }
 

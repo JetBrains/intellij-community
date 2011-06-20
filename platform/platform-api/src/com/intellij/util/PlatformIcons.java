@@ -89,6 +89,7 @@ public interface PlatformIcons {
   Icon VARIABLE_RW_ACCESS = IconLoader.getIcon("/nodes/rw-access.png");
   Icon CUSTOM_FILE_ICON = IconLoader.getIcon("/fileTypes/custom.png");
   Icon PROPERTY_ICON = IconLoader.getIcon("/nodes/property.png");
+  Icon NEW_PARAMETER = IconLoader.getIcon("/nodes/newParameter.png");
   Icon ASPECT_ICON = IconLoader.getIcon("/nodes/aspect.png");
   Icon POINTCUT_ICON = IconLoader.getIcon("/nodes/pointcut.png");
   Icon ADVICE_ICON = IconLoader.getIcon("/nodes/advice.png");

@@ -17,11 +17,13 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,10 +36,10 @@ public class AddRemoveUpDownPanel extends JPanel {
 
     Icon getIcon() {
       switch (this) {
-        case ADD: return IconLoader.getIcon("/actions/addBig.png");
-        case REMOVE: return IconLoader.getIcon("/actions/removeBig.png");
-        case UP: return IconLoader.getIcon("/actions/upBig.png");
-        case DOWN: return IconLoader.getIcon("/actions/downBig.png");
+        case ADD: return PlatformIcons.ADD_BIG;
+        case REMOVE: return PlatformIcons.REMOVE_BIG;
+        case UP: return PlatformIcons.UP_BIG;
+        case DOWN: return PlatformIcons.DOWN_BIG;
       }
       return null;
     }
@@ -76,7 +78,9 @@ public class AddRemoveUpDownPanel extends JPanel {
   }
 
   private Map<Buttons, TableActionButton> myButtons = new HashMap<Buttons, TableActionButton>();
-  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, Buttons... buttons) {
+
+  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane,
+                              @Nullable AnAction[] additionalActions, Buttons... buttons) {
     super(new VerticalFlowLayout(VerticalFlowLayout.TOP));
     AnAction[] actions = new AnAction[buttons.length];
     for (int i = 0; i < buttons.length; i++) {
@@ -89,6 +93,19 @@ public class AddRemoveUpDownPanel extends JPanel {
         b.registerCustomShortcutSet(new CustomShortcutSet(shortcut), contentPane);
       }
     }
+    if (additionalActions != null && additionalActions.length > 0) {
+      final ArrayList<AnAction> allActions = new ArrayList<AnAction>(Arrays.asList(actions));
+      allActions.addAll(Arrays.asList(additionalActions));
+      actions = allActions.toArray(new AnAction[allActions.size()]);
+      for (final AnAction action : additionalActions) {
+        if (action instanceof ShortcutProvider && contentPane != null) {
+          final Shortcut shortcut = ((ShortcutProvider)action).getShortcut();
+          if (shortcut != null) {
+            action.registerCustomShortcutSet(new CustomShortcutSet(shortcut), contentPane);
+          }
+        }
+      }
+    }
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(actions), false).getComponent());
   }
 
@@ -99,8 +116,8 @@ public class AddRemoveUpDownPanel extends JPanel {
     }
   }
 
-  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane) {
-    this(listener, contentPane, Buttons.ADD, Buttons.REMOVE, Buttons.UP, Buttons.DOWN);
+  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, @Nullable AnAction[] additionalActions) {
+    this(listener, contentPane, additionalActions,  Buttons.ADD, Buttons.REMOVE, Buttons.UP, Buttons.DOWN);
   }
 
   static class TableActionButton extends AnAction implements ShortcutProvider {

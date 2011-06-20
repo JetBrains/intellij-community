@@ -15,7 +15,10 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -33,21 +36,20 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
-import com.intellij.refactoring.ui.DelegationPanel;
-import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.ui.VisibilityPanelBase;
+import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,8 +58,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -83,11 +85,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   protected VisibilityPanelBase myVisibilityPanel;
   protected PsiCodeFragment myReturnTypeCodeFragment;
   private DelegationPanel myDelegationPanel;
-  protected JButton myPropagateParamChangesButton;
+  protected AnActionButton myPropagateParamChangesButton;
   protected Set<M> myMethodsToPropagateParameters = null;
 
   private Tree myParameterPropagationTreeToReuse;
-  protected JPanel myPropagatePanel;
 
   protected final PsiElement myDefaultValueContext;
 
@@ -280,9 +281,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       panel.add(myDelegationPanel, BorderLayout.WEST);
     }
 
-    myPropagateParamChangesButton = new JButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"));
-    myPropagateParamChangesButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+    myPropagateParamChangesButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null,
+                                                       PlatformIcons.NEW_PARAMETER) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
         final Ref<CallerChooserBase<M>> chooser = new Ref<CallerChooserBase<M>>();
         Consumer<Set<M>> callback = new Consumer<Set<M>>() {
           @Override
@@ -294,18 +296,16 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         try {
           chooser.set(
             createCallerChooser(RefactoringBundle.message("changeSignature.parameter.caller.chooser"), myParameterPropagationTreeToReuse,
-                              callback));
-        } catch (ProcessCanceledException ex) {
+                                callback));
+        }
+        catch (ProcessCanceledException ex) {
           // user cancelled initial callers search, don't show dialog
           return;
         }
         chooser.get().show();
       }
-    });
-    myPropagatePanel = new JPanel();
-    myPropagatePanel.add(myPropagateParamChangesButton);
+    };
 
-    panel.add(myPropagatePanel, BorderLayout.EAST);
     final JPanel result = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
     result.add(panel);
     return result;
@@ -333,7 +333,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     return "refactoring.ChangeSignatureDialog";
   }
 
-  private JPanel createParametersPanel() {
+  protected JPanel createParametersPanel() {
     myParametersTable = new TableView<ParameterTableModelItemBase<P>>(myParametersTableModel) {
       @Override
       public void editingStopped(ChangeEvent e) {
@@ -358,9 +358,11 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
     myParametersTable.setSurrendersFocusOnKeystroke(true);
-
-    JPanel buttonsPanel = EditableRowTable.createButtonsTable(myParametersTable, myParametersTableModel, false, true);
-
+    myPropagateParamChangesButton.setShortcut(KeyboardShortcut.fromString("alt G"));
+    final JPanel buttonsPanel = EditableRowTable.createButtonsTable(myParametersTable, myParametersTableModel,
+                                                              false, true, myPropagateParamChangesButton);
+    myPropagateParamChangesButton.setEnabled(false);
+    myPropagateParamChangesButton.setVisible(false);
     panel.add(buttonsPanel, BorderLayout.EAST);
 
     myParametersTableModel.addTableModelListener(
@@ -385,13 +387,19 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     panel.add(mySignatureArea, BorderLayout.CENTER);
     mySignatureArea.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
     mySignatureArea.setPreferredSize(new Dimension(-1, 130));
-    mySignatureArea.setBackground(Color.WHITE);
+    mySignatureArea.setBackground(HintUtil.INFORMATION_COLOR);
+    mySignatureArea.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        IdeFocusManager.findInstance().requestFocus(myNameField, true);
+      }
+    });
     updateSignature();
     return panel;
   }
 
   protected void updateSignature() {
-    if (mySignatureArea == null) return;
+    if (mySignatureArea == null || myPropagateParamChangesButton == null) return;
 
     final Runnable updateRunnable = new Runnable() {
       public void run() {
@@ -421,7 +429,9 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   protected void updatePropagateButtons() {
-    myPropagateParamChangesButton.setEnabled(!isGenerateDelegate() && mayPropagateParameters());
+    if (myPropagateParamChangesButton != null) {
+      myPropagateParamChangesButton.setEnabled(!isGenerateDelegate() && mayPropagateParameters());
+    }
   }
 
   private boolean mayPropagateParameters() {
