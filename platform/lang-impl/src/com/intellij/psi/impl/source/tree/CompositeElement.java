@@ -301,7 +301,7 @@ public class CompositeElement extends TreeElement {
     return false;
   }
 
-  protected int textMatches(CharSequence buffer, int start) {
+  protected int textMatches(@NotNull CharSequence buffer, int start) {
     int curOffset = start;
     for (TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       curOffset = child.textMatches(buffer, curOffset);
@@ -309,6 +309,36 @@ public class CompositeElement extends TreeElement {
     }
     return curOffset;
   }
+
+  /*
+  protected int textMatches(final CharSequence buffer, final int start) {
+    final int[] curOffset = {start};
+    acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      public void visitLeaf(LeafElement leaf) {
+        matchText(leaf);
+      }
+
+      private void matchText(TreeElement leaf) {
+        curOffset[0] = leaf.textMatches(buffer, curOffset[0]);
+        if (curOffset[0] == -1) {
+          stopWalking();
+        }
+      }
+
+      @Override
+      public void visitComposite(CompositeElement composite) {
+        if (composite instanceof LazyParseableElement && !((LazyParseableElement)composite).isParsed()) {
+          matchText(composite);
+        }
+        else {
+          super.visitComposite(composite);
+        }
+      }
+    });
+    return curOffset[0];
+  }
+  */
 
   @Nullable
   public final PsiElement findChildByRoleAsPsiElement(int role) {
@@ -635,7 +665,7 @@ public class CompositeElement extends TreeElement {
   public void replaceAllChildrenToChildrenOf(final ASTNode anotherParent) {
     TreeUtil.ensureParsed(getFirstChildNode());
     TreeUtil.ensureParsed(anotherParent.getFirstChildNode());
-    final ASTNode firstChild1 = anotherParent.getFirstChildNode();
+    final ASTNode firstChild = anotherParent.getFirstChildNode();
     ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
       public void makeChange(TreeChangeEvent destinationTreeChange) {
         destinationTreeChange.addElementaryChange(anotherParent, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, anotherParent));
@@ -643,7 +673,7 @@ public class CompositeElement extends TreeElement {
       }
     }, (TreeElement)anotherParent);
 
-    if (firstChild1 != null) {
+    if (firstChild != null) {
       ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
         public void makeChange(TreeChangeEvent destinationTreeChange) {
           if(getTreeParent() != null){
@@ -651,12 +681,12 @@ public class CompositeElement extends TreeElement {
             changeInfo.setOldLength(getTextLength());
             destinationTreeChange.addElementaryChange(CompositeElement.this, changeInfo);
             rawRemoveAllChildren();
-            rawAddChildren((TreeElement)firstChild1);
+            rawAddChildren((TreeElement)firstChild);
           }
           else{
             final TreeElement first = getFirstChildNode();
             remove(destinationTreeChange, first, null);
-            add(destinationTreeChange, CompositeElement.this, (TreeElement)firstChild1);
+            add(destinationTreeChange, CompositeElement.this, (TreeElement)firstChild);
             repairRemovedElement(CompositeElement.this, first);
           }
         }
@@ -702,7 +732,7 @@ public class CompositeElement extends TreeElement {
     return LeafElement.getPsi(clazz, getPsi(), LOG);
   }
 
-  final PsiElement createAndStorePsi() {
+  private PsiElement createAndStorePsi() {
     PsiElement psi = createPsiNoLock();
     myWrapper = psi;
     return psi;
@@ -741,7 +771,7 @@ public class CompositeElement extends TreeElement {
       last.rawInsertAfterMe(first);
     }
 
-    if (DebugUtil.CHECK) DebugUtil.checkTreeStructure(this);
+    DebugUtil.checkTreeStructure(this);
   }
 
   public void rawRemoveAllChildren() {
@@ -750,6 +780,23 @@ public class CompositeElement extends TreeElement {
       first.rawRemoveUpToLast();
     }
   }
+
+  void createAllChildrenPsi() {
+    synchronized (PsiLock.LOCK) { // guard for race condition with getPsi()
+      acceptTree(CREATE_CHILDREN_PSI);
+    }
+  }
+  private static final RecursiveTreeElementWalkingVisitor CREATE_CHILDREN_PSI = new RecursiveTreeElementWalkingVisitor(false) {
+    @Override
+    public void visitLeaf(LeafElement leaf) {
+    }
+
+    @Override
+    public void visitComposite(CompositeElement composite) {
+      composite.createAndStorePsi();
+      super.visitComposite(composite);
+    }
+  };
 
   private static void repairRemovedElement(final CompositeElement oldParent, final TreeElement oldChild) {
     if(oldChild == null) return;
@@ -797,7 +844,7 @@ public class CompositeElement extends TreeElement {
                               final TreeElement oldChild,
                               final TreeElement newChild) {
     oldChild.rawReplaceWithList(newChild);
-    final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newChild);
+    final ReplaceChangeInfoImpl change = new ReplaceChangeInfoImpl(newChild);
     sourceTreeChange.addElementaryChange(newChild, change);
     change.setReplaced(oldChild);
   }
