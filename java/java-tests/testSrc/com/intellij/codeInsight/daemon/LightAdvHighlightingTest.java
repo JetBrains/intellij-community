@@ -82,7 +82,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInstantiateAbstract() throws Exception { doTest(false, false); }
   public void testDuplicateClassMethod() throws Exception { doTest(false, false); }
   public void testStringLiterals() throws Exception { doTest(false, false); }
-  public void testa11() throws Exception { doTest(false, false); }
+  public void testStaticInInner() throws Exception { doTest(false, false); }
   public void testInvalidExpressions() throws Exception { doTest(false, false); }
   public void testIllegalVoidType() throws Exception { doTest(false, false); }
   public void testIllegalType() throws Exception { doTest(false, false); }
@@ -90,64 +90,64 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIncompatibleTypes() throws Exception { doTest(false, false); }
   public void testCtrCallIsFirst() throws Exception { doTest(false, false); }
   public void testAccessLevelClash() throws Exception { doTest(false, false); }
-  public void testa16() throws Exception { doTest(false, false); }
+  public void testCasts() throws Exception { doTest(false, false); }
   public void testOverrideConflicts() throws Exception { doTest(false, false); }
   public void testOverriddenMethodIsFinal() throws Exception { doTest(false, false); }
-  public void testa18() throws Exception { doTest(false, false); }
+  public void testMissingReturn() throws Exception { doTest(false, false); }
   public void testUnreachable() throws Exception { doTest(false, false); }
   public void testFinalFieldInit() throws Exception { doTest(false, false); }
   public void testLocalVariableInitialization() throws Exception { doTest(false, false); }
-  public void testa22() throws Exception { doTest(false, false); }
-  public void testa22_1() throws Exception { doTest(false, false); }
+  public void testVarDoubleInitialization() throws Exception { doTest(false, false); }
+  public void testFieldDoubleInitialization() throws Exception { doTest(false, false); }
   public void testAssignToFinal() throws Exception { doTest(false, false); }
-  public void testa24() throws Exception { doTest(false, false); }
-  public void testa25() throws Exception { doTest(false, false); }
+  public void testUnhandledExceptionsInSuperclass() throws Exception { doTest(false, false); }
+  public void testAssignmentCompatible () throws Exception { doTest(false, false); }
   public void testMustBeBoolean() throws Exception { doTest(false, false); }
 
   public void testNumericLiterals() throws Exception { doTest(false, false); }
   public void testInitializerCompletion() throws Exception { doTest(false, false); }
 
-  public void testa28() throws Exception { doTest(false, false); }
+  public void testUndefinedLabel() throws Exception { doTest(false, false); }
   public void testDuplicateSwitchLabels() throws Exception { doTest(false, false); }
   public void testStringSwitchLabels() throws Exception { doTest(false, false); }
-  public void testa30() throws Exception { doTest(false, false); }
+  public void testIllegalForwardReference() throws Exception { doTest(false, false); }
   public void testStaticOverride() throws Exception { doTest(false, false); }
-  public void testa32() throws Exception { doTest(false, false); }
+  public void testCyclicInheritance() throws Exception { doTest(false, false); }
   public void testReferenceMemberBeforeCtrCalled() throws Exception { doTest(false, false); }
-  public void testa34() throws Exception { doTest(false, false); }
-  public void testa35() throws Exception { doTest(false, false); }
-  public void testa35_1() throws Exception { doTest(false, false); }
-  public void testa35_2() throws Exception { doTest(false, false); }
+  public void testLabels() throws Exception { doTest(false, false); }
+  public void testUnclosedBlockComment() throws Exception { doTest(false, false); }
+  public void testUnclosedComment() throws Exception { doTest(false, false); }
+  public void testUnclosedDecl() throws Exception { doTest(false, false); }
   public void testSillyAssignment() throws Exception { doTest(true, false); }
-  public void testa37() throws Exception { doTest(false, false); }
-  public void testa38() throws Exception { doTest(false, false); }
-  public void testa39() throws Exception { doTest(false, false); }
+  public void testTernary() throws Exception { doTest(false, false); }
+  public void testDuplicateClass() throws Exception { doTest(false, false); }
+  public void testCatchType() throws Exception { doTest(false, false); }
   public void testMustBeThrowable() throws Exception { doTest(false, false); }
   public void testUnhandledMessingWithFinally() throws Exception { doTest(false, false); }
   public void testSerializableStuff() throws Exception { doTest(true, false); }
   public void testDeprecated() throws Exception { doTest(true, false); }
   public void testJavadoc() throws Exception { enableInspectionTool(new JavaDocLocalInspection()); doTest(true, false); }
-  public void testa44() throws Exception { doTest(false, false); }
-  public void testa45() throws Exception { doTest(false, false); }
+  public void testExpressionsInSwitch () throws Exception { doTest(false, false); }
+  public void testAccessInner () throws Exception { doTest(false, false); }
 
   public void testExceptionNeverThrown() throws Exception { doTest(true, false); }
   public void testExceptionNeverThrownInTry() throws Exception { doTest(false, false); }
 
-  public void testa47() throws Exception { doTest(false, false); }
-  public void testa48() throws Exception { doTest(false, false); }
+  public void testSwitchStatement() throws Exception { doTest(false, false); }
+  public void testAssertExpression() throws Exception { doTest(false, false); }
 
-  public void testa49() throws Exception { doTest(false, false); }
-  public void testa50() throws Exception { doTest(false, false); }
-  public void testa52() throws Exception { doTest(false, false); }
+  public void testSynchronizedExpression() throws Exception { doTest(false, false); }
+  public void testExtendMultipleClasses() throws Exception { doTest(false, false); }
+  public void testRecursiveConstructorInvocation() throws Exception { doTest(false, false); }
   public void testMethodCalls() throws Exception { doTest(false, false); }
-  public void testa54() throws Exception { doTest(false, false); }
-  public void testa54_1() throws Exception { doTest(true, false); } //duplicate imports
-  public void testa55() throws Exception { doTest(false, false); }
+  public void testSingleTypeImportConflicts() throws Exception { doTest(false, false); }
+  public void testMultipleSingleTypeImports() throws Exception { doTest(true, false); } //duplicate imports
+  public void testNotAllowedInInterface() throws Exception { doTest(false, false); }
   public void testQualifiedNew() throws Exception { doTest(false, false); }
   public void testEnclosingInstance() throws Exception { doTest(false, false); }
 
-  public void testa59() throws Exception { doTest(true, false); } // static via instabnce
-  public void testa60() throws Exception { doTest(true, false); } //illegal qualified this or super
+  public void testStaticViaInstance() throws Exception { doTest(true, false); } // static via instabnce
+  public void testQualifiedThisSuper() throws Exception { doTest(true, false); } //illegal qualified this or super
 
   public void testAmbiguousMethodCall() throws Exception { doTest(false, false); }
 

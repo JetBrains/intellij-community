@@ -48,9 +48,11 @@ public class a12 {
     ++<error descr="Variable expected">5</error>;
     <error descr="Variable expected">5</error> += 5;
 
-    foo123Unresolved(<error descr="Expression expected">String</error>);
-    foo123Unresolved(<error descr="Cannot resolve symbol 'xxxx'">xxxx</error>);
-    
+    <error descr="Cannot resolve method 'foo123Unresolved(?)'">foo123Unresolved</error>(<error descr="Expression expected">String</error>);
+    <error descr="Cannot resolve method 'foo123Unresolved(?)'">foo123Unresolved</error>(<error descr="Cannot resolve symbol 'xxxx'">xxxx</error>);
+
+    <error descr="Cannot resolve method 'xxxxxx(?)'">xxxxxx</error>(<error descr="Cannot resolve symbol 'xxxxxx'">xxxxxx</error>);
+
     // incomplete code should not cause 'expr expected'
     Object<error descr="';' expected"> </error>
 

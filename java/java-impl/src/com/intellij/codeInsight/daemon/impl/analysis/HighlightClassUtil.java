@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,14 +60,13 @@ public class HighlightClassUtil {
   /**
    * new ref(...) or new ref(..) { ... } where ref is abstract class
    */
-  static HighlightInfo checkAbstractInstantiation(PsiJavaCodeReferenceElement ref) {
+  static HighlightInfo checkAbstractInstantiation(PsiJavaCodeReferenceElement ref, PsiElement resolved) {
     PsiElement parent = ref.getParent();
     HighlightInfo highlightInfo = null;
     if (parent instanceof PsiNewExpression && !PsiUtilBase.hasErrorElementChild(parent)) {
       if (((PsiNewExpression)parent).getType() instanceof PsiArrayType) return null;
-      PsiElement refElement = ref.resolve();
-      if (refElement instanceof PsiClass) {
-        highlightInfo = checkInstantiationOfAbstractClass((PsiClass)refElement, ref);
+      if (resolved instanceof PsiClass) {
+        highlightInfo = checkInstantiationOfAbstractClass((PsiClass)resolved, ref);
       }
     }
     else if (parent instanceof PsiAnonymousClass
@@ -113,12 +113,12 @@ public class HighlightClassUtil {
   }
 
 
-  public static HighlightInfo checkInstantiationOfAbstractClass(PsiClass aClass, PsiElement highlighElement) {
+  public static HighlightInfo checkInstantiationOfAbstractClass(PsiClass aClass, PsiElement highlightElement) {
     HighlightInfo errorResult = null;
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       String baseClassName = aClass.getName();
       String message = JavaErrorMessages.message("abstract.cannot.be.instantiated", baseClassName);
-      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlighElement, message);
+      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlightElement, message);
       if (!aClass.isInterface() && ClassUtil.getAnyAbstractMethod(aClass) == null) {
         // suggest to make not abstract only if possible
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, false, false);
@@ -819,7 +819,7 @@ public class HighlightClassUtil {
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, expression);
   }
 
-  public static HighlightInfo checkSuperQualifierType(PsiMethodCallExpression superCall) {
+  public static HighlightInfo checkSuperQualifierType(@NotNull Project project, @NotNull PsiMethodCallExpression superCall) {
     if (!HighlightUtil.isSuperMethodCall(superCall)) return null;
     PsiMethod ctr = PsiTreeUtil.getParentOfType(superCall, PsiMethod.class, true, PsiMember.class);
     if (ctr == null) return null;
@@ -828,7 +828,7 @@ public class HighlightClassUtil {
     PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
     if (qualifier != null && PsiUtil.isInnerClass(targetClass)) {
       PsiClass outerClass = targetClass.getContainingClass();
-      PsiClassType outerType = JavaPsiFacade.getInstance(superCall.getProject()).getElementFactory().createType(outerClass);
+      PsiClassType outerType = JavaPsiFacade.getInstance(project).getElementFactory().createType(outerClass);
       return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
     }
     return null;

@@ -1308,9 +1308,9 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkExpressionRequired(PsiReferenceExpression expression) {
+  public static HighlightInfo checkExpressionRequired(PsiReferenceExpression expression, JavaResolveResult resultForIncompleteCode) {
     if (expression.getNextSibling() instanceof PsiErrorElement) return null;
-    PsiElement resolved = expression.advancedResolve(true).getElement();
+    PsiElement resolved = resultForIncompleteCode.getElement();
     if (resolved == null) return null;
     PsiElement parent = expression.getParent();
     // String.class or String() are both correct
@@ -2088,10 +2088,11 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkReference(PsiJavaCodeReferenceElement ref, JavaResolveResult result, PsiElement resolved) {
+  public static HighlightInfo checkReference(PsiJavaCodeReferenceElement ref, JavaResolveResult result) {
     PsiElement refName = ref.getReferenceNameElement();
 
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
+    PsiElement resolved = result.getElement();
     HighlightInfo highlightInfo = checkMemberReferencedBeforeConstructorCalled(ref, resolved);
     if (highlightInfo != null) return highlightInfo;
 

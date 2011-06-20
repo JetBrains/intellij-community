@@ -302,24 +302,16 @@ public class HighlightMethodUtil {
   static HighlightInfo checkMethodCall(PsiMethodCallExpression methodCall, PsiResolveHelper resolveHelper) {
     PsiExpressionList list = methodCall.getArgumentList();
     PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
-    JavaResolveResult resolveResult = referenceToMethod.advancedResolve(true);
-    PsiElement element = resolveResult.getElement();
+    JavaResolveResult[] results = referenceToMethod.multiResolve(true);
+    JavaResolveResult resolveResult = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+    PsiElement resolved = resolveResult.getElement();
 
-    boolean isDummy = false;
-    boolean isThisOrSuper = referenceToMethod.getReferenceNameElement() instanceof PsiKeyword;
-    if (isThisOrSuper) {
-      // super(..) or this(..)
-      if (list.getExpressions().length == 0) { // implicit ctr call
-        CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
-        if (candidates.length == 1 && !candidates[0].getElement().isPhysical()) {
-          isDummy = true;// dummy constructor
-        }
-      }
-    }
+    boolean isDummy = isDummyConstructorCall(methodCall, resolveHelper, list, referenceToMethod);
     if (isDummy) return null;
     HighlightInfo highlightInfo;
 
-    if (element instanceof PsiMethod && resolveResult.isValidResult()) {
+    PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    if (resolved instanceof PsiMethod && resolveResult.isValidResult()) {
       TextRange fixRange = getFixRange(methodCall);
       highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, fixRange);
     }
@@ -332,13 +324,14 @@ public class HighlightMethodUtil {
       }
 
       if (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect()) {
-        highlightInfo = checkAmbiguousMethodCall(referenceToMethod, list, element, resolveResult, methodCall, resolveHelper);
+        //highlightInfo = checkAmbiguousMethodCall(referenceToMethod, results, list, element, resolveResult, methodCall, resolveHelper);
+        highlightInfo = null;
       }
       else if (candidateInfo != null && !candidateInfo.isApplicable()) {
         if (candidateInfo.isTypeArgumentsApplicable()) {
-          String methodName = HighlightMessageUtil.getSymbolName(element, resolveResult.getSubstitutor());
-          PsiElement parent = element.getParent();
-          String containerName = parent == null ? "" : HighlightMessageUtil.getSymbolName(parent, resolveResult.getSubstitutor());
+          String methodName = HighlightMessageUtil.getSymbolName(resolved, substitutor);
+          PsiElement parent = resolved.getParent();
+          String containerName = parent == null ? "" : HighlightMessageUtil.getSymbolName(parent, substitutor);
           String argTypes = buildArgTypesList(list);
           String description = JavaErrorMessages.message("wrong.method.arguments", methodName, containerName, argTypes);
           String toolTip = parent instanceof PsiClass && !ApplicationManager.getApplication().isUnitTestMode() ?
@@ -350,19 +343,18 @@ public class HighlightMethodUtil {
         else {
           PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
           PsiReferenceParameterList typeArgumentList = methodCall.getTypeArgumentList();
-          if (typeArgumentList.getTypeArguments().length == 0 && resolvedMethod.hasTypeParameters()) {
-            highlightInfo = GenericsHighlightUtil.checkInferredTypeArguments(resolvedMethod, methodCall, resolveResult.getSubstitutor());
+          if (typeArgumentList.getTypeArguments().length == 0 && resolvedMethod != null && resolvedMethod.hasTypeParameters()) {
+            highlightInfo = GenericsHighlightUtil.checkInferredTypeArguments(resolvedMethod, methodCall, substitutor);
           }
           else {
-            highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(element, methodExpression,
-                                                                                           resolveResult.getSubstitutor());
+            highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, methodExpression, substitutor);
           }
         }
       }
       else {
         highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, methodCall, JavaErrorMessages.message("method.call.expected"));
-        if (element instanceof PsiClass) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new InsertNewFix(methodCall, (PsiClass)element));
+        if (resolved instanceof PsiClass) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, new InsertNewFix(methodCall, (PsiClass)resolved));
         }
         else {
           TextRange range = getFixRange(methodCall);
@@ -373,17 +365,35 @@ public class HighlightMethodUtil {
       }
     }
     if (highlightInfo == null) {
-      highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(element, referenceToMethod, resolveResult.getSubstitutor());
+      highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor);
     }
     return highlightInfo;
   }
 
-  private static HighlightInfo checkAmbiguousMethodCall(final PsiReferenceExpression referenceToMethod,
+  static boolean isDummyConstructorCall(PsiMethodCallExpression methodCall,
+                                        PsiResolveHelper resolveHelper,
+                                        PsiExpressionList list,
+                                        PsiReferenceExpression referenceToMethod) {
+    boolean isDummy = false;
+    boolean isThisOrSuper = referenceToMethod.getReferenceNameElement() instanceof PsiKeyword;
+    if (isThisOrSuper) {
+      // super(..) or this(..)
+      if (list.getExpressions().length == 0) { // implicit ctr call
+        CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
+        if (candidates.length == 1 && !candidates[0].getElement().isPhysical()) {
+          isDummy = true;// dummy constructor
+        }
+      }
+    }
+    return isDummy;
+  }
+
+  static HighlightInfo checkAmbiguousMethodCall(final PsiReferenceExpression referenceToMethod,
+                                                        JavaResolveResult[] resolveResults,
                                                         final PsiExpressionList list,
                                                         final PsiElement element,
                                                         final JavaResolveResult resolveResult,
                                                         final PsiMethodCallExpression methodCall, final PsiResolveHelper resolveHelper) {
-    JavaResolveResult[] resolveResults = referenceToMethod.multiResolve(true);
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
     for (JavaResolveResult result : resolveResults) {

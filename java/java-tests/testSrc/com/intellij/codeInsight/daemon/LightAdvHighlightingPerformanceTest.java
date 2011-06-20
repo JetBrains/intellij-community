@@ -91,14 +91,14 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
         List<HighlightInfo> h = doHighlighting();
         infos.addAll(h);
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().usesAllCPUCores().assertTiming();
     return DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR);
   }
 
   public void testaThinlet() throws Exception {
     List<HighlightInfo> errors = doTest(24000 - JobSchedulerImpl.CORES_COUNT * 1000);
     dump("thinlet", errors);
-    assertEquals(1157, errors.size());
+    assertEquals(1230, errors.size());
   }
 
   private static void dump(String msg, List<HighlightInfo> errors) {
@@ -118,6 +118,6 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   public void testaClassLoader() throws Exception {
     List<HighlightInfo> errors = doTest(10000 - JobSchedulerImpl.CORES_COUNT * 1000);
     dump("classloader", errors);
-    assertEquals(176, errors.size());
+    assertEquals(178, errors.size());
   }
 }
