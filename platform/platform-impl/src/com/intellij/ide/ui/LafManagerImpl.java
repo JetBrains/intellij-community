@@ -55,10 +55,14 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.synth.Region;
 import javax.swing.plaf.synth.SynthLookAndFeel;
 import javax.swing.plaf.synth.SynthStyle;
+import javax.swing.plaf.synth.SynthStyleFactory;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -77,15 +81,14 @@ import java.util.HashMap;
     id = "other",
     file = "$APP_CONFIG$/options.xml")})
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG=Logger.getInstance("#com.intellij.ide.ui.LafManager");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
-  @NonNls private static final String IDEA_LAF_CLASSNAME = "idea.laf.classname";
+  @NonNls private static final String IDEA_LAF_CLASS_NAME = "idea.laf.classname";
+  @NonNls private static final String ELEMENT_LAF = "laf";
+  @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
+  @NonNls private static final String GNOME_THEME_PROPERTY_NAME = "gnome.Net/ThemeName";
 
-  private final EventListenerList myListenerList;
-  private final UIManager.LookAndFeelInfo[] myLafs;
-  private UIManager.LookAndFeelInfo myCurrentLaf;
-
-  @NonNls private static final String[] ourPatcheableFontResources = new String[]{
+  @NonNls private static final String[] ourPatchableFontResources = new String[]{
     "Button.font", "ToggleButton.font", "RadioButton.font", "CheckBox.font", "ColorChooser.font", "ComboBox.font",
     "Label.font", "List.font", "MenuBar.font", "MenuItem.font", "MenuItem.acceleratorFont", "RadioButtonMenuItem.font",
     "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font", "Panel.font", "ProgressBar.font",
@@ -101,13 +104,14 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     "OptionPane.errorIcon", "OptionPane.informationIcon", "OptionPane.warningIcon", "OptionPane.questionIcon"
   };
 
+  private final EventListenerList myListenerList;
+  private final UIManager.LookAndFeelInfo[] myLafs;
+  private UIManager.LookAndFeelInfo myCurrentLaf;
   private final HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>>();
   private final UISettings myUiSettings;
-
-  @NonNls private static final String ELEMENT_LAF = "laf";
-  @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
-
   private String myLastWarning = null;
+  private PropertyChangeListener myThemeChangeListener = null;
+
 
   /**
    * invoked by reflection
@@ -140,18 +144,18 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Adds specified listener
    */
-  public void addLafManagerListener(@NotNull final LafManagerListener l){
+  public void addLafManagerListener(@NotNull final LafManagerListener l) {
     myListenerList.add(LafManagerListener.class, l);
   }
 
   /**
    * Removes specified listener
    */
-  public void removeLafManagerListener(@NotNull final LafManagerListener l){
+  public void removeLafManagerListener(@NotNull final LafManagerListener l) {
     myListenerList.remove(LafManagerListener.class, l);
   }
 
-  private void fireLookAndFeelChanged(){
+  private void fireLookAndFeelChanged() {
     LafManagerListener[] listeners = myListenerList.getListeners(LafManagerListener.class);
     for (LafManagerListener listener : listeners) {
       listener.lookAndFeelChanged(this);
@@ -159,19 +163,41 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @NotNull
-  public String getComponentName(){
+  public String getComponentName() {
     return "LafManager";
   }
 
   public void initComponent() {
     setCurrentLookAndFeel(findLaf(myCurrentLaf.getClassName())); // setup default LAF or one specified by readExternal.
     updateUI();
+
+    if (SystemInfo.isLinux) {
+      myThemeChangeListener = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(final PropertyChangeEvent evt) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              fixGtkPopupStyle();
+              patchOptionPaneIcons(UIManager.getLookAndFeelDefaults());
+            }
+          });
+        }
+      };
+      Toolkit.getDefaultToolkit().addPropertyChangeListener(GNOME_THEME_PROPERTY_NAME, myThemeChangeListener);
+    }
   }
 
-  public void disposeComponent(){}
+  public void disposeComponent() {
+    if (myThemeChangeListener != null) {
+      Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, myThemeChangeListener);
+      myThemeChangeListener = null;
+    }
+  }
 
   public void loadState(final Element element) {
-    String className=null;
+    String className = null;
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
       if (ELEMENT_LAF.equals(child.getName())) {
@@ -180,10 +206,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
 
-    UIManager.LookAndFeelInfo laf=findLaf(className);
+    UIManager.LookAndFeelInfo laf = findLaf(className);
     // If LAF is undefined (wrong class name or something else) we have set default LAF anyway.
-    if(laf==null){
-      laf=getDefaultLaf();
+    if (laf == null) {
+      laf = getDefaultLaf();
     }
 
     if (myCurrentLaf != null && !laf.getClassName().equals(myCurrentLaf.getClassName())) {
@@ -191,7 +217,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       updateUI();
     }
 
-    myCurrentLaf=laf;
+    myCurrentLaf = laf;
   }
 
   public Element getState() {
@@ -248,7 +274,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         return defaultLaf;
       }
     }
-    UIManager.LookAndFeelInfo ideaLaf = findLaf(IDEA_LAF_CLASSNAME);
+    UIManager.LookAndFeelInfo ideaLaf = findLaf(IDEA_LAF_CLASS_NAME);
     if (ideaLaf != null) {
       return ideaLaf;
     }
@@ -278,7 +304,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       return;
     }
     // Set L&F
-    if (IDEA_LAF_CLASSNAME.equals(lookAndFeelInfo.getClassName())) { // that is IDEA default LAF
+    if (IDEA_LAF_CLASS_NAME.equals(lookAndFeelInfo.getClassName())) { // that is IDEA default LAF
       IdeaLaf laf = new IdeaLaf();
       MetalLookAndFeel.setCurrentTheme(new IdeaBlueMetalTheme());
       try {
@@ -313,53 +339,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     myCurrentLaf = lookAndFeelInfo;
 
     checkLookAndFeel(lookAndFeelInfo, false);
-
-    // The following code is a trick! By default Swing uses lightweight and "medium" weight
-    // popups to show JPopupMenu. The code below force the creation of real heavyweight menus -
-    // this increases speed of popups and allows to get rid of some drawing artifacts.
-    int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
-    String property = System.getProperty("idea.popup.weight");
-    if (property != null) property = property.toLowerCase().trim();
-    if (SystemInfo.isMacOSLeopard) {
-      // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
-      popupWeight = OurPopupFactory.WEIGHT_HEAVY;
-    }
-    else if (property == null) {
-      // use defaults if popup weight isn't specified
-      if (SystemInfo.isWindows) {
-        popupWeight = OurPopupFactory.WEIGHT_HEAVY;
-      }
-    }
-    else {
-      if ("light".equals(property)) {
-        popupWeight = OurPopupFactory.WEIGHT_LIGHT;
-      }
-      else if ("medium".equals(property)) {
-        popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
-      }
-      else if ("heavy".equals(property)) {
-        popupWeight = OurPopupFactory.WEIGHT_HEAVY;
-      }
-      else {
-        LOG.error("Illegal value of property \"idea.popup.weight\": " + property);
-      }
-    }
-
-    PopupFactory factory = PopupFactory.getSharedInstance();
-    if (!(factory instanceof OurPopupFactory)) {
-      factory = new OurPopupFactory(factory);
-      PopupFactory.setSharedInstance(factory);
-    }
-    PopupUtil.setPopupType(factory, popupWeight);
-
-    // update ui for popup menu to get round corners
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-      final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
-      uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
-      uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
-      uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
-    }
   }
 
   @Nullable
@@ -436,25 +415,114 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * as it's configured in <code>UISettings</code>.
    */
   public void updateUI() {
-    UIDefaults lookAndFeelDefaults=UIManager.getLookAndFeelDefaults();
-    initInputMapDefaults(lookAndFeelDefaults);
-    initActionMapDefaults(lookAndFeelDefaults);
+    fixPopupWeight();
+
+    fixGtkPopupStyle();
+
+    final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      // update ui for popup menu to get round corners
+      uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
+      uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
+      uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
+    }
+
+    initInputMapDefaults(uiDefaults);
+    initActionMapDefaults(uiDefaults);
+
     UIManager.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
-    patchFileChooserStrings(lookAndFeelDefaults);
+
+    patchFileChooserStrings(uiDefaults);
     if (shouldPatchLAFFonts()) {
-      storeOriginalFontDefaults(lookAndFeelDefaults);
-      initFontDefaults(lookAndFeelDefaults);
+      storeOriginalFontDefaults(uiDefaults);
+      initFontDefaults(uiDefaults);
     }
     else {
-      restoreOriginalFontDefaults(lookAndFeelDefaults);
+      restoreOriginalFontDefaults(uiDefaults);
     }
-    patchOptionPaneIcons(lookAndFeelDefaults);
 
-    Frame[] frames=Frame.getFrames();
+    patchOptionPaneIcons(uiDefaults);
+
+    Frame[] frames = Frame.getFrames();
     for (Frame frame : frames) {
       updateUI(frame);
     }
     fireLookAndFeelChanged();
+  }
+
+  /**
+   * The following code is a trick! By default Swing uses lightweight and "medium" weight
+   * popups to show JPopupMenu. The code below force the creation of real heavyweight menus -
+   * this increases speed of popups and allows to get rid of some drawing artifacts.
+   */
+  private static void fixPopupWeight() {
+    int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
+    String property = System.getProperty("idea.popup.weight");
+    if (property != null) property = property.toLowerCase().trim();
+    if (SystemInfo.isMacOSLeopard) {
+      // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
+      popupWeight = OurPopupFactory.WEIGHT_HEAVY;
+    }
+    else if (property == null) {
+      // use defaults if popup weight isn't specified
+      if (SystemInfo.isWindows) {
+        popupWeight = OurPopupFactory.WEIGHT_HEAVY;
+      }
+    }
+    else {
+      if ("light".equals(property)) {
+        popupWeight = OurPopupFactory.WEIGHT_LIGHT;
+      }
+      else if ("medium".equals(property)) {
+        popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
+      }
+      else if ("heavy".equals(property)) {
+        popupWeight = OurPopupFactory.WEIGHT_HEAVY;
+      }
+      else {
+        LOG.error("Illegal value of property \"idea.popup.weight\": " + property);
+      }
+    }
+
+    PopupFactory factory = PopupFactory.getSharedInstance();
+    if (!(factory instanceof OurPopupFactory)) {
+      factory = new OurPopupFactory(factory);
+      PopupFactory.setSharedInstance(factory);
+    }
+    PopupUtil.setPopupType(factory, popupWeight);
+  }
+
+  private static void fixGtkPopupStyle() {
+    if (!UIUtil.isUnderGTKLookAndFeel()) return;
+
+    final SynthStyleFactory original = SynthLookAndFeel.getStyleFactory();
+
+    SynthLookAndFeel.setStyleFactory(new SynthStyleFactory() {
+        @Override
+        public SynthStyle getStyle(final JComponent c, final Region id) {
+          final SynthStyle style = original.getStyle(c, id);
+          if (id == Region.POPUP_MENU) {
+            try {
+              Field f = style.getClass().getDeclaredField("xThickness");
+              f.setAccessible(true);
+              final Object x = f.get(style);
+              if (x instanceof Integer && (Integer)x == 0) {
+                // workaround for Sun bug #6636964
+                f.set(style, 1);
+                f = style.getClass().getDeclaredField("yThickness");
+                f.setAccessible(true);
+                f.set(style, 3);
+              }
+            }
+            catch (Exception ignore) { }
+          }
+          return style;
+        }
+      });
+
+    new JPopupMenu();  // invokes updateUI() -> updateStyle()
+
+    SynthLookAndFeel.setStyleFactory(original);
   }
 
   private static void patchFileChooserStrings(final UIDefaults defaults) {
@@ -483,7 +551,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults != null) {
-      for (String resource : ourPatcheableFontResources) {
+      for (String resource : ourPatchableFontResources) {
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
@@ -494,7 +562,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults == null) {
       lfDefaults = new HashMap<String, Object>();
-      for (String resource : ourPatcheableFontResources) {
+      for (String resource : ourPatchableFontResources) {
         lfDefaults.put(resource, defaults.get(resource));
       }
       myStoredDefaults.put(lf, lfDefaults);
@@ -594,7 +662,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     FontUIResource font1 = new FontUIResource("Serif", Font.PLAIN, uiFontSize);
     FontUIResource font3 = new FontUIResource("Monospaced", Font.PLAIN, uiFontSize);
 
-    for (String fontResource : ourPatcheableFontResources) {
+    for (String fontResource : ourPatchableFontResources) {
       defaults.put(fontResource, font);
     }
 
@@ -607,7 +675,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   private static final class IdeaLookAndFeelInfo extends UIManager.LookAndFeelInfo{
     public IdeaLookAndFeelInfo(){
-      super(IdeBundle.message("idea.default.look.and.feel"), IDEA_LAF_CLASSNAME);
+      super(IdeBundle.message("idea.default.look.and.feel"), IDEA_LAF_CLASS_NAME);
     }
 
     public boolean equals(Object obj){
