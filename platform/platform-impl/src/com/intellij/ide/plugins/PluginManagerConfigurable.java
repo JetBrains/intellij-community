@@ -80,10 +80,9 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
       if (column >= 0) {
         final int orderOrdinal = available ? myUISettings.AVAILABLE_SORT_COLUMN_ORDER : myUISettings.INSTALLED_SORT_COLUMN_ORDER;
         for (final SortOrder sortOrder : SortOrder.values()) {
-          if (sortOrder.ordinal() == orderOrdinal) {
+          if (sortOrder.ordinal() == orderOrdinal && column < table.getColumnCount()) {
             rowSorter.setSortKeys(Arrays.asList(new RowSorter.SortKey(column, sortOrder)));
           }
-
         }
       }
     }
