@@ -54,12 +54,13 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   @Attribute("canCloseContents")
   public boolean canCloseContents;
 
+  private Class<? extends ToolWindowFactory> myFactoryClass;
   private ToolWindowFactory myFactory;
 
   public ToolWindowFactory getToolWindowFactory() {
     if (myFactory == null) {
       try {
-        myFactory = instantiate(factoryClass, ApplicationManager.getApplication().getPicoContainer());
+        myFactory = instantiate(getFactoryClass(), ApplicationManager.getApplication().getPicoContainer());
       }
       catch(Exception e) {
         LOG.error(e);
@@ -67,6 +68,19 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
       }
     }
     return myFactory;
+  }
+
+  public Class<? extends ToolWindowFactory> getFactoryClass() {
+    if (myFactoryClass == null) {
+      try {
+        myFactoryClass = findClass(factoryClass);
+      }
+      catch(Exception e) {
+        LOG.error(e);
+        return null;
+      }
+    }
+    return myFactoryClass;
   }
 
   @Nullable
