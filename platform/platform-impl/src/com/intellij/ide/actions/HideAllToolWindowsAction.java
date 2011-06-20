@@ -42,11 +42,6 @@ public class HideAllToolWindowsAction extends AnAction implements DumbAware {
     DesktopLayout layout = new DesktopLayout();
     layout.copyFrom(toolWindowManager.getLayout());
 
-    // to clear windows stack
-    toolWindowManager.clearSideStack();
-    //toolWindowManager.activateEditorComponent();
-
-
     String[] ids = toolWindowManager.getToolWindowIds();
     boolean hasVisible = false;
     for (String id : ids) {

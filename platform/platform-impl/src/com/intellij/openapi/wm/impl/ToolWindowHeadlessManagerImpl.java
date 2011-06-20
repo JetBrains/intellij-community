@@ -382,9 +382,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public void setLayout(@NotNull DesktopLayout layout) {
   }
 
-  public void clearSideStack() {
-  }
-
   public void hideToolWindow(@NotNull final String id, final boolean hideSide) {
   }
 
