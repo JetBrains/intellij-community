@@ -235,7 +235,7 @@ public class VariableInplaceRenamer {
       addVariable(ref, selectedElement, builder, offset, nameSuggestions);
     }
     for (Pair<PsiElement, TextRange> usage : stringUsages) {
-      addVariable(usage.first, selectedElement, builder, nameSuggestions);
+      addVariable(usage.first, usage.second, selectedElement, builder, nameSuggestions);
     }
     addAdditionalVariables(builder);
 
@@ -534,19 +534,23 @@ public class VariableInplaceRenamer {
                            final PsiElement selectedElement,
                            final TemplateBuilderImpl builder,
                            final LinkedHashSet<String> names) {
+    addVariable(element, null, selectedElement, builder, names);
+  }
+
+  private void addVariable(final PsiElement element,
+                           @Nullable final TextRange textRange,
+                           final PsiElement selectedElement,
+                           final TemplateBuilderImpl builder,
+                           final LinkedHashSet<String> names) {
     if (element == selectedElement) {
       Expression expression = new MyExpression(myElementToRename.getName(), names);
       builder.replaceElement(element, PRIMARY_VARIABLE_NAME, expression, true);
+    } else if (textRange != null) {
+      builder.replaceElement(element, textRange, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
     }
     else {
       builder.replaceElement(element, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
     }
-  }
-
-  private static void addVariable(PsiElement element,
-                                  TextRange textRange,
-                                  TemplateBuilderImpl builder) {
-    builder.replaceElement(element, textRange, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
   }
 
   protected LookupElement[] createLookupItems(final LookupElement[] lookupItems, final String name) {
