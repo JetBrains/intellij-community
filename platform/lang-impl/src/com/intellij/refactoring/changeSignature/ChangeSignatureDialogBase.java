@@ -391,7 +391,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     mySignatureArea.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        IdeFocusManager.findInstance().requestFocus(myNameField, true);
+        IdeFocusManager.findInstance().requestFocus(getContentPane().getFocusCycleRootAncestor(), true);
       }
     });
     updateSignature();
