@@ -142,19 +142,19 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
   }
 
   private static void addMarkerInfo(@NotNull final PsiElement element, @NotNull Collection<LineMarkerInfo> result) {
-    PsiFile containingFile = element.getContainingFile();
     if (element instanceof PsiFile) {
       PsiField[] fields = AndroidResourceUtil.findResourceFieldsForFileResource((PsiFile)element, false);
       if (fields.length > 0) result.add(createLineMarkerInfo(element, fields));
     }
-    else if (containingFile != null) {
+    else
       if (element instanceof PsiClass) {
         PsiClass c = (PsiClass)element;
         if (AndroidUtils.R_CLASS_NAME.equals(c.getName())) {
-          AndroidFacet facet = AndroidFacet.getInstance(element);
-          if (facet != null && AndroidUtils.isRClassFile(facet, containingFile)) {
-            LocalResourceManager manager = facet.getLocalResourceManager();
-            annotateRClass((PsiClass)element, result, manager);
+          PsiFile containingFile = element.getContainingFile();
+            AndroidFacet facet = AndroidFacet.getInstance(containingFile);
+            if (facet != null && AndroidUtils.isRClassFile(facet, containingFile)) {
+              LocalResourceManager manager = facet.getLocalResourceManager();
+              annotateRClass((PsiClass)element, result, manager);
           }
         }
       }
@@ -171,7 +171,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
           }
         }
       }*/
-    }
+
   }
 
   @NotNull
