@@ -407,6 +407,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return ((GrLabeledStatement)definition).getLabel();
   }
 
+  @NotNull
   public GrMethod createMethodFromText(@NotNull String methodText, @Nullable PsiElement context) {
     GroovyFileImpl file = createDummyFile(methodText);
     if (context != null) {
@@ -421,6 +422,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
     return ((GrMethod)definition);
+  }
+
+  @NotNull
+  @Override
+  public GrAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException {
+    return createMethodFromText(annotationText + " void foo() {}", context).getModifierList().getAnnotations()[0];
   }
 
   @Override
@@ -457,7 +464,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrAnnotation createAnnotationFromText(String annoText) {
-    return createMethodFromText(annoText + " void foo() {}", null).getModifierList().getAnnotations()[0];
+    return createAnnotationFromText(annoText, null);
   }
 
   public PsiFile createGroovyFile(String idText) {

@@ -165,7 +165,12 @@ public abstract class GroovyPsiElementFactory implements PsiTopLevelElementFacto
 
   public abstract PsiElement createDotToken(String newDot);
 
+  @NotNull
   public abstract GrMethod createMethodFromText(String methodText, @Nullable PsiElement context);
+
+  @NotNull
+  @Override
+  public abstract GrAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
 
   public abstract GrMethod createMethodFromSignature(String name, GrClosureSignature signature);
 

@@ -16,6 +16,7 @@
 package org.jetbrains.generate.tostring.config;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
@@ -41,7 +42,7 @@ public class InsertAtCaretStrategy implements InsertNewMethodStrategy {
 
   public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
     int offset = editor != null ? editor.getCaretModel().getOffset() : clazz.getTextRange().getEndOffset() - 1;
-    final PsiGenerationInfo<PsiMethod> generationInfo = new PsiGenerationInfo<PsiMethod>(newMethod, false);
+    final PsiGenerationInfo<PsiMethod> generationInfo = OverrideImplementUtil.createGenerationInfo(newMethod, false);
     GenerateMembersUtil.insertMembersAtOffset(clazz.getContainingFile(), offset, Arrays.asList(generationInfo));
     return generationInfo.getPsiMember();
   }

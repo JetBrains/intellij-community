@@ -119,5 +119,9 @@ public interface PsiTopLevelElementFactory {
   @NotNull
   PsiParameterList createParameterList(@NotNull @NonNls String[] names, @NotNull PsiType[] types) throws IncorrectOperationException;
 
+  @NotNull
   PsiMethod createMethodFromText(String text, @Nullable PsiElement context);
+
+  @NotNull
+  PsiAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
 }

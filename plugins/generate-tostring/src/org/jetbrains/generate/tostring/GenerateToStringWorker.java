@@ -51,6 +51,7 @@ public class GenerateToStringWorker {
   private static final Logger logger = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringWorker");
 
   private final PsiElementFactory elementFactory;
+  private final PsiTopLevelElementFactory topLevelFactory;
   private final CodeStyleManager codeStyleManager;
   private final Editor editor;
   private final PsiFile containingFile;
@@ -66,6 +67,7 @@ public class GenerateToStringWorker {
     this.psi = PsiAdapterFactory.getPsiAdapter();
     this.editor = editor;
     this.elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    this.topLevelFactory = PsiTopLevelElementFactories.getFactory(clazz.getLanguage(), project);
     this.codeStyleManager = CodeStyleManager.getInstance(project);
     this.containingFile = clazz.getContainingFile();
     this.config = GenerateToStringContext.getConfig();
@@ -170,7 +172,7 @@ public class GenerateToStringWorker {
     body = StringUtil.convertLineSeparators(body);
 
     // create psi newMethod named toString()
-    PsiMethod newMethod = elementFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", null);
+    PsiMethod newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", null);
     codeStyleManager.reformat(newMethod);
 
     // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
@@ -190,7 +192,7 @@ public class GenerateToStringWorker {
       // must reverse loop to add annotations in the same order as in the template (when inserting it would insert in top)
       for (int i = annotations.length - 1; i > -1; i--) {
         String text = annotations[i];
-        psi.addAnnotationToMethod(elementFactory, toStringMethod, text);
+        psi.addAnnotationToMethod(topLevelFactory, toStringMethod, text);
       }
     }
 
