@@ -178,6 +178,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
     protected void saveSettings(PsiVariable psiVariable) {
       super.saveSettings(psiVariable);
       JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = myIntroduceFieldPanel.getFieldVisibility();
+      myIntroduceFieldPanel.saveFinalState();
     }
 
     @Override
@@ -259,7 +260,6 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
     protected void performIntroduce() {
       ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
-      myIntroduceFieldPanel.saveFinalState();
       final BaseExpressionToFieldHandler.Settings settings =
         new BaseExpressionToFieldHandler.Settings(getInputName(), myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
                                                   myIntroduceFieldPanel.isDeclareFinal(),
