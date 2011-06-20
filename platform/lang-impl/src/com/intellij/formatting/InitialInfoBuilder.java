@@ -120,9 +120,9 @@ class InitialInfoBuilder {
    */
   private AbstractBlockWrapper buildFrom(final Block rootBlock,
                                          final int index,
-                                         final CompositeBlockWrapper parent,
-                                         WrapImpl currentWrapParent,
-                                         final Block parentBlock,
+                                         @Nullable final CompositeBlockWrapper parent,
+                                         @Nullable WrapImpl currentWrapParent,
+                                         @Nullable final Block parentBlock,
                                          boolean rootBlockIsRightBlock
   ) {
     final WrapImpl wrap = (WrapImpl)rootBlock.getWrap();
@@ -325,10 +325,6 @@ class InitialInfoBuilder {
       return false;
     }
 
-    if (!block.isIncomplete()) {
-      return true;
-    }
-    
     // There is a possible case that particular sub-block has an alignment and we don't want to loose information about it by
     // excluding that sub-block from the processing.
     List<Block> blocks = block.getSubBlocks();
