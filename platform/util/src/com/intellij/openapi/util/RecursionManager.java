@@ -17,10 +17,7 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * There are moments when a computation A requires the result of computation B, which in turn requires C, which (unexpectedly) requires A.
@@ -49,10 +46,10 @@ public class RecursionManager {
       return 0;
     }
   };
-  private static final ThreadLocal<LinkedHashMap<Pair<String, Object>, Integer>> ourProgress = new ThreadLocal<LinkedHashMap<Pair<String, Object>, Integer>>() {
+  private static final ThreadLocal<LinkedHashMap<MyKey, Integer>> ourProgress = new ThreadLocal<LinkedHashMap<MyKey, Integer>>() {
     @Override
-    protected LinkedHashMap<Pair<String, Object>, Integer> initialValue() {
-      return new LinkedHashMap<Pair<String, Object>, Integer>();
+    protected LinkedHashMap<MyKey, Integer> initialValue() {
+      return new LinkedHashMap<MyKey, Integer>();
     }
   };
 
@@ -64,9 +61,10 @@ public class RecursionManager {
     return new RecursionGuard() {
       @Override
       public <T> T doPreventingRecursion(Object key, Computable<T> computation) {
-        Pair<String, Object> realKey = Pair.create(id, key);
-        LinkedHashMap<Pair<String, Object>, Integer> progressMap = ourProgress.get();
+        MyKey realKey = new MyKey(id, key);
+        LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
         if (progressMap.containsKey(realKey)) {
+          //todo cache only here
           prohibitResultCaching(key);
 
           return null;
@@ -96,8 +94,8 @@ public class RecursionManager {
       @Override
       public List<Object> currentStack() {
         ArrayList<Object> result = new ArrayList<Object>();
-        LinkedHashMap<Pair<String, Object>, Integer> map = ourProgress.get();
-        for (Pair<String, Object> pair : map.keySet()) {
+        LinkedHashMap<MyKey, Integer> map = ourProgress.get();
+        for (MyKey pair : map.keySet()) {
           if (pair.first == id) {
             result.add(pair.second);
           }
@@ -111,7 +109,7 @@ public class RecursionManager {
         ourStamp.set(stamp);
 
         boolean inLoop = false;
-        for (Map.Entry<Pair<String, Object>, Integer> entry: ourProgress.get().entrySet()) {
+        for (Map.Entry<MyKey, Integer> entry: ourProgress.get().entrySet()) {
           if (inLoop) {
             entry.setValue(stamp);
           }
@@ -121,6 +119,12 @@ public class RecursionManager {
         }
       }
     };
+  }
+  
+  private static class MyKey extends Pair<String, Object> {
+    public MyKey(String first, Object second) {
+      super(first, second);
+    }
   }
 
 }
