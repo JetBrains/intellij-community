@@ -195,6 +195,18 @@ public class GrClassImplUtil {
     return allMethods.toArray(new PsiMethod[allMethods.size()]);
   }
 
+  @NotNull
+  public static List<PsiMethod> getAllMethods(Collection<? extends PsiClass> classes) {
+    List<PsiMethod> allMethods = new ArrayList<PsiMethod>();
+    HashSet<PsiClass> visited = new HashSet<PsiClass>();
+
+    for (PsiClass psiClass : classes) {
+      getAllMethodsInner(psiClass, allMethods, visited);
+    }
+
+    return allMethods;
+  }
+
   private static void getAllMethodsInner(PsiClass clazz, List<PsiMethod> allMethods, HashSet<PsiClass> visited) {
     if (visited.contains(clazz)) return;
     visited.add(clazz);

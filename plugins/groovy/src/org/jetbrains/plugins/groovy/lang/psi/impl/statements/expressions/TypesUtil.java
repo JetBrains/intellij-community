@@ -511,7 +511,7 @@ public class TypesUtil {
     return type;
   }
 
-  public static boolean isClassType(@NotNull PsiType type, @NotNull String qName) {
+  public static boolean isClassType(@Nullable PsiType type, @NotNull String qName) {
     if (type instanceof PsiClassType) {
       final PsiClass psiClass = ((PsiClassType)type).resolve();
       return psiClass != null && qName.equals(psiClass.getQualifiedName());
