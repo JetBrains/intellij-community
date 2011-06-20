@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -47,6 +48,16 @@ public class TreeUtil {
 
   public static void ensureParsedRecursively(@NotNull ASTNode node) {
     ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() { });
+  }
+  public static void ensureParsedRecursivelyCheckingProgress(@NotNull ASTNode node, final ProgressIndicator indicator) {
+    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      public void visitLeaf(LeafElement leaf) {
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
+      }
+    });
   }
 
   public static boolean isCollapsedChameleon(ASTNode node) {

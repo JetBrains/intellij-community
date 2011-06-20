@@ -21,7 +21,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author yole
@@ -31,23 +30,28 @@ public abstract class PsiBuilderFactory {
     return ServiceManager.getService(PsiBuilderFactory.class);
   }
 
+  @NotNull
   public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode chameleon);
 
+  @NotNull
   public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull LighterLazyParseableNode chameleon);
 
   /**
    * @deprecated consider using {@link #createBuilder(com.intellij.openapi.project.Project, ASTNode)} instead.
    */
+  @NotNull
   public PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree, @NotNull Language lang, @NotNull CharSequence seq) {
     return createBuilder(project, tree, null, lang, seq);
   }
 
+  @NotNull
   public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode chameleon, @Nullable Lexer lexer,
                                            @NotNull Language lang, @NotNull CharSequence seq);
 
+  @NotNull
   public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull LighterLazyParseableNode chameleon, @Nullable Lexer lexer,
                                            @NotNull Language lang, @NotNull CharSequence seq);
 
-  @TestOnly
-  public abstract PsiBuilder createBuilder(@NotNull Lexer lexer, @NotNull Language lang, @NotNull CharSequence seq);
+  @NotNull
+  public abstract PsiBuilder createBuilder(@NotNull ParserDefinition parserDefinition, @NotNull Lexer lexer, @NotNull CharSequence seq);
 }

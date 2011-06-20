@@ -26,111 +26,39 @@ import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.NotNull;
 
 public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
   private final TreeChangeEventImpl myEvent;
-  private final PsiFileImpl myFile;
-  private final PsiManagerEx myPsiManager;
-  private final boolean myIsPhysicalScope;
 
-
-  public ASTDiffBuilder(final PsiFileImpl fileImpl) {
-    myFile = fileImpl;
-    myIsPhysicalScope = fileImpl.isPhysical();
-    myPsiManager = (PsiManagerEx)fileImpl.getManager();
-    myEvent = new TreeChangeEventImpl(PomManager.getModel(fileImpl.getProject()).getModelAspect(TreeAspect.class), fileImpl.getTreeElement());
+  public ASTDiffBuilder(@NotNull PsiFileImpl fileImpl) {
+    TreeAspect modelAspect = PomManager.getModel(fileImpl.getProject()).getModelAspect(TreeAspect.class);
+    myEvent = new TreeChangeEventImpl(modelAspect, fileImpl.getTreeElement());
   }
 
   public void nodeReplaced(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
     if (oldNode instanceof FileElement && newNode instanceof FileElement) {
-      BlockSupportImpl.replaceFileElement(myFile, (FileElement)oldNode, (FileElement)newNode, myPsiManager);
     }
     else {
-      final ASTNode parent = oldNode.getTreeParent();
-      assert parent != null : "old:" + oldNode + " new:" + newNode;
-
-      TreeUtil.ensureParsed(oldNode);
-
-      final PsiElement psiParent = parent.getPsi();
-      final PsiElement psiChild = myIsPhysicalScope ? oldNode.getPsi() : null;
-      if (psiParent != null && psiChild != null) {
-        final PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myPsiManager);
-        event.setParent(psiParent);
-        event.setChild(psiChild);
-        myPsiManager.beforeChildReplacement(event);
-      }
-
-      ((TreeElement)newNode).rawRemove();
-      ((TreeElement)oldNode).rawReplaceWithList((TreeElement)newNode);
-
-      final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newNode);
-
+      final ReplaceChangeInfoImpl change = new ReplaceChangeInfoImpl(newNode);
       change.setReplaced(oldNode);
-      myEvent.addElementaryChange(newNode, change);
-      ((TreeElement)newNode).clearCaches();
-      if (!(newNode instanceof FileElement)) {
-        ((CompositeElement)newNode.getTreeParent()).subtreeChanged();
-      }
 
-      DebugUtil.checkTreeStructureIfConfigured(parent);
+      myEvent.addElementaryChange(newNode, change);
     }
   }
 
   public void nodeDeleted(@NotNull ASTNode parent, @NotNull final ASTNode child) {
-    PsiElement psiParent = parent.getPsi();
-    PsiElement psiChild = myIsPhysicalScope ? child.getPsi() : null;
-
-    if (psiParent != null && psiChild != null) {
-      PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myPsiManager);
-      event.setParent(psiParent);
-      event.setChild(psiChild);
-      myPsiManager.beforeChildRemoval(event);
-    }
-
     myEvent.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child));
-    ((TreeElement)child).rawRemove();
-    ((CompositeElement)parent).subtreeChanged();
-
-    DebugUtil.checkTreeStructureIfConfigured(parent);
   }
 
-  public void nodeInserted(@NotNull final ASTNode oldParent, @NotNull ASTNode node, final int pos) {
-    ASTNode anchor = null;
-    for (int i = 0; i < pos; i++) {
-      anchor = anchor == null ? oldParent.getFirstChildNode() : anchor.getTreeNext();
-    }
-
-    ((TreeElement)node).rawRemove();
-    if (anchor != null) {
-      ((TreeElement)anchor).rawInsertAfterMe((TreeElement)node);
-    }
-    else {
-      if (oldParent.getFirstChildNode() != null) {
-        ((TreeElement)oldParent.getFirstChildNode()).rawInsertBeforeMe((TreeElement)node);
-      }
-      else {
-        ((CompositeElement)oldParent).rawAddChildren((TreeElement)node);
-      }
-    }
-
-    myEvent.addElementaryChange(node, ChangeInfoImpl.create(ChangeInfo.ADD, node));
-    ((TreeElement)node).clearCaches();
-    ((CompositeElement)oldParent).subtreeChanged();
-
-    DebugUtil.checkTreeStructureIfConfigured(oldParent);
+  public void nodeInserted(@NotNull final ASTNode oldParent, @NotNull ASTNode newNode, final int pos) {
+    myEvent.addElementaryChange(newNode, ChangeInfoImpl.create(ChangeInfo.ADD, newNode));
   }
 
+  @NotNull
   public TreeChangeEventImpl getEvent() {
     return myEvent;
   }

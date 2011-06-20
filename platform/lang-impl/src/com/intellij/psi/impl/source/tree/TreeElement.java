@@ -143,11 +143,11 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     return getStartOffset();
   }
 
-  public boolean textMatches(CharSequence buffer, int startOffset, int endOffset) {
+  public boolean textMatches(@NotNull CharSequence buffer, int startOffset, int endOffset) {
     return textMatches(buffer, startOffset) == endOffset;
   }
 
-  protected abstract int textMatches(CharSequence buffer, int start);
+  protected abstract int textMatches(@NotNull CharSequence buffer, int start);
 
   public boolean textMatches(@NotNull CharSequence seq) {
     return textMatches(seq, 0, seq.length());
@@ -236,9 +236,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     }
     else anchorPrev.rawInsertAfterMe(firstNew);
 
-    if (DebugUtil.CHECK){
-      DebugUtil.checkTreeStructure(this);
-    }
+    DebugUtil.checkTreeStructure(this);
   }
 
   public void rawInsertAfterMe(@NotNull TreeElement firstNew) {
@@ -265,41 +263,31 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       firstNew.setTreeNext(treeNext);
       treeNext.setTreePrev(firstNew);
     }
-    if (DebugUtil.CHECK){
-      DebugUtil.checkTreeStructure(this);
-    }
+    DebugUtil.checkTreeStructure(this);
   }
 
   public void rawRemove() {
-    final TreeElement nxt = getTreeNext();
-    final CompositeElement p = getTreeParent();
-    final TreeElement prv = getTreePrev();
+    final TreeElement next = getTreeNext();
+    final CompositeElement parent = getTreeParent();
+    final TreeElement prev = getTreePrev();
 
-    if(prv != null){
-      prv.setTreeNext(nxt);
+    if(prev != null){
+      prev.setTreeNext(next);
     }
-    else if(p != null) {
-      p.setFirstChildNode(nxt);
-    }
-
-    if(nxt != null){
-      nxt.setTreePrev(prv);
-    }
-    else if(p != null) {
-      p.setLastChildNode(prv);
+    else if(parent != null) {
+      parent.setFirstChildNode(next);
     }
 
-    if (DebugUtil.CHECK){
-      if (getTreeParent() != null){
-        DebugUtil.checkTreeStructure(getTreeParent());
-      }
-      if (getTreePrev() != null){
-        DebugUtil.checkTreeStructure(getTreePrev());
-      }
-      if (getTreeNext() != null){
-        DebugUtil.checkTreeStructure(getTreeNext());
-      }
+    if(next != null){
+      next.setTreePrev(prev);
     }
+    else if(parent != null) {
+      parent.setLastChildNode(prev);
+    }
+
+    DebugUtil.checkTreeStructure(parent);
+    DebugUtil.checkTreeStructure(prev);
+    DebugUtil.checkTreeStructure(next);
 
     invalidate();
   }
@@ -360,12 +348,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       }
     }
 
-    if (DebugUtil.CHECK){
-      if (parent != null){
-        DebugUtil.checkTreeStructure(parent);
-      }
-      DebugUtil.checkTreeStructure(this);
-    }
+    DebugUtil.checkTreeStructure(parent);
+    DebugUtil.checkTreeStructure(this);
   }
 
   public IElementType getElementType() {

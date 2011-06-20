@@ -86,12 +86,14 @@ public abstract class LeafElement extends TreeElement {
     return false;
   }
 
-  protected int textMatches(CharSequence buffer, int start) {
+  protected int textMatches(@NotNull CharSequence buffer, int start) {
+    assert start >= 0 : start;
     final CharSequence text = myText;
     return leafTextMatches(text, buffer, start);
   }
 
   public static int leafTextMatches(@NotNull CharSequence text, @NotNull CharSequence buffer, int start) {
+    assert start >= 0 : start;
     final int length = text.length();
     if(buffer.length() - start < length) {
       return start == 0 ? Integer.MIN_VALUE : -start;
@@ -124,7 +126,7 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
-  public boolean textMatches(final CharSequence buf, int start, int end) {
+  public boolean textMatches(@NotNull final CharSequence buf, int start, int end) {
     final CharSequence text = getChars();
     final int len = text.length();
 

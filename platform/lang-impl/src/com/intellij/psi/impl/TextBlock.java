@@ -19,10 +19,11 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class TextBlock extends DocumentAdapter {
   @SuppressWarnings({"UnusedDeclaration"})
-  private Document myDocument; // Will hold a document on a hard reference until there's uncommited PSI for this document.
+  private Document myDocument; // Will hold a document on a hard reference until there's uncommitted PSI for this document.
 
   private int myStartOffset = -1;
   private int myTextEndOffset = -1;
@@ -46,11 +47,11 @@ public class TextBlock extends DocumentAdapter {
     return myTextEndOffset;
   }
 
-  public void lock() {
+  private void lock() {
     myIsLocked = true;
   }
 
-  public void unlock() {
+  private void unlock() {
     myIsLocked = false;
   }
 
@@ -84,6 +85,21 @@ public class TextBlock extends DocumentAdapter {
       }
 
       myStartOffset = Math.min(myStartOffset, offset);
+    }
+  }
+
+  public void performAtomically(@NotNull Runnable runnable) {
+    boolean wasLocked = isLocked();
+    if (!wasLocked) {
+      lock();
+    }
+    try {
+      runnable.run();
+    }
+    finally {
+      if (!wasLocked) {
+        unlock();
+      }
     }
   }
 }

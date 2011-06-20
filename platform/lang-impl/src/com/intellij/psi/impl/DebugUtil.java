@@ -330,7 +330,7 @@ public class DebugUtil {
     }
   }
 
-  public static void checkTreeStructure(@Nullable ASTNode anyElement) {
+  public static void doCheckTreeStructure(@Nullable ASTNode anyElement) {
     if (anyElement == null) return;
     ASTNode root = anyElement;
     while (root.getTreeParent() != null) {
@@ -493,9 +493,9 @@ public class DebugUtil {
       LOG.error(e);
     }
   }
-  public static void checkTreeStructureIfConfigured(ASTNode element) {
+  public static void checkTreeStructure(ASTNode element) {
     if (CHECK){
-      checkTreeStructure(element);
+      doCheckTreeStructure(element);
     }
   }
 

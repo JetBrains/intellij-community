@@ -17,25 +17,38 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTNode> {
+  private final ProgressIndicator myIndicator;
+
+  public ASTShallowComparator(@NotNull ProgressIndicator indicator) {
+    myIndicator = indicator;
+  }
+
   public ThreeState deepEqual(final ASTNode oldNode, final ASTNode newNode) {
     return textMatches(oldNode, newNode);
   }
 
-  private static ThreeState textMatches(final ASTNode oldNode, final ASTNode newNode) {
-    if (TreeUtil.isCollapsedChameleon(oldNode)) {
-      return ((TreeElement)newNode).textMatches(oldNode.getText()) ? ThreeState.YES : ThreeState.UNSURE;
+  private ThreeState textMatches(ASTNode oldNode, ASTNode newNode) {
+    myIndicator.checkCanceled();
+    String oldText = TreeUtil.isCollapsedChameleon(oldNode) ? oldNode.getText() : null;
+    String newText = TreeUtil.isCollapsedChameleon(newNode) ? newNode.getText() : null;
+    if (oldText != null && newText != null) return oldText.equals(newText) ? ThreeState.YES : ThreeState.UNSURE;
+
+    if (oldText != null) {
+      return compareTreeToText((TreeElement)newNode, oldText) ? ThreeState.YES : ThreeState.UNSURE;
     }
-    if (TreeUtil.isCollapsedChameleon(newNode)) {
-      return ((TreeElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.UNSURE;
+    if (newText != null) {
+      return compareTreeToText((TreeElement)oldNode, newText) ? ThreeState.YES : ThreeState.UNSURE;
     }
 
     if (oldNode instanceof LeafElement) {
@@ -52,6 +65,36 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     }
 
     return ThreeState.UNSURE;
+  }
+
+  // have to perform tree walking by hand here to be able to interrupt ourselves
+  private boolean compareTreeToText(@NotNull TreeElement root, @NotNull final String text) {
+    final int[] curOffset = {0};
+    root.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      public void visitLeaf(LeafElement leaf) {
+        matchText(leaf);
+      }
+
+      private void matchText(TreeElement leaf) {
+        curOffset[0] = leaf.textMatches(text, curOffset[0]);
+        if (curOffset[0] < 0) {
+          stopWalking();
+        }
+      }
+
+      @Override
+      public void visitComposite(CompositeElement composite) {
+        myIndicator.checkCanceled();
+        if (composite instanceof LazyParseableElement && !((LazyParseableElement)composite).isParsed()) {
+          matchText(composite);
+        }
+        else {
+          super.visitComposite(composite);
+        }
+      }
+    });
+    return curOffset[0] == text.length();
   }
 
   public boolean typesEqual(final ASTNode n1, final ASTNode n2) {

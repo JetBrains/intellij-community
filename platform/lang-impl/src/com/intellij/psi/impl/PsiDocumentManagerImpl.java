@@ -20,8 +20,8 @@ import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,18 +38,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,31 +67,29 @@ import java.util.*;
 public class PsiDocumentManagerImpl extends PsiDocumentManager implements ProjectComponent, DocumentListener, SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
-  private static final Key<Boolean> KEY_COMMITTING = new Key<Boolean>("Committing");
+  private static final Key<CommitStage> COMMIT_STAGE = new Key<CommitStage>("Commit stage");
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
   private final Project myProject;
   private final PsiManager myPsiManager;
-  private final Key<TextBlock> KEY_TEXT_BLOCK = Key.create("KEY_TEXT_BLOCK");
+  private static final Key<TextBlock> KEY_TEXT_BLOCK = Key.create("KEY_TEXT_BLOCK");
   private final Set<Document> myUncommittedDocuments = Collections.synchronizedSet(new HashSet<Document>());
 
-  private final BlockSupportImpl myBlockSupport;
   private volatile boolean myIsCommitInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
 
   private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
   private final SmartPointerManagerImpl mySmartPointerManager;
 
-  public PsiDocumentManagerImpl(Project project,
-                                PsiManager psiManager,
-                                SmartPointerManager smartPointerManager,
-                                BlockSupport blockSupport,
-                                EditorFactory editorFactory,
-                                MessageBus bus) {
+  public PsiDocumentManagerImpl(@NotNull Project project,
+                                @NotNull PsiManager psiManager,
+                                @NotNull SmartPointerManager smartPointerManager,
+                                @NotNull EditorFactory editorFactory,
+                                @NotNull MessageBus bus,
+                                @NotNull final DocumentCommitThread documentCommitThread) {
     myProject = project;
     myPsiManager = psiManager;
     mySmartPointerManager = (SmartPointerManagerImpl)smartPointerManager;
-    myBlockSupport = (BlockSupportImpl)blockSupport;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
     editorFactory.getEventMulticaster().addDocumentListener(this, myProject);
@@ -106,6 +104,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         fireDocumentCreated(document, psiFile);
       }
     });
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+      @Override
+      public void beforeWriteActionStart(Object action) {
+        documentCommitThread.cancel();
+      }
+    }, myProject);
   }
 
   public void projectOpened() {
@@ -143,16 +147,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     psiFile = getPsiFile(virtualFile);
     if (psiFile == null) return null;
 
-    //psiFile.setModificationStamp(document.getModificationStamp());
     fireFileCreated(document, psiFile);
 
     return psiFile;
   }
-
-  Project getProject() {
-    return myProject;
-  }
-
 
   public static void cachePsi(@NotNull Document document, @NotNull PsiFile file) {
     document.putUserData(HARD_REF_TO_PSI, file);
@@ -220,26 +218,44 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void commitAllDocuments() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myUncommittedDocuments.isEmpty()) return;
-    //long time1 = System.currentTimeMillis();
 
     final Document[] documents = getUncommittedDocuments();
     for (Document document : documents) {
       commitDocument(document);
     }
 
-    //long time2 = System.currentTimeMillis();
-    //Statistics.commitTime += (time2 - time1);
+    LOG.assertTrue(!hasUncommitedDocuments(), myUncommittedDocuments);
   }
 
   @Override
   public void performForCommittedDocument(@NotNull final Document doc, @NotNull final Runnable action) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
-    if (isUncommited(document)) {
-      addRunOnCommit(document, action);
-    }
-    else {
+    if (isCommitted(document)) {
       action.run();
     }
+    else {
+      addRunOnCommit(document, action);
+    }
+  }
+
+  private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<Object, Runnable>(); //accessed from EDT only
+
+  // returns true if action has been run immediately
+  @Override
+  public boolean performWhenAllDocumentsAreCommitted(@NotNull Object key, @NotNull final Runnable action) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject.isDisposed()) {
+      action.run();
+      return true;
+    }
+    if (hasUncommitedDocuments()) {
+      actionsWhenAllDocumentsAreCommitted.put(key, action);
+      return false;
+    }
+
+    action.run();
+    assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted;
+    return true;
   }
 
   public static void addRunOnCommit(@NotNull Document document, @NotNull Runnable action) {
@@ -254,49 +270,75 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public void commitDocument(@NotNull final Document doc) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
-    if (isUncommited(document)) {
+    if (!isCommitted(document)) {
       doCommit(document, null);
     }
   }
 
-  private void doCommit(final Document document, final PsiFile excludeFile) {
+  boolean finishCommit(@NotNull final Document document, final List<Processor<Document>> finishRunnables, boolean synchronously) {
+    if (myProject.isDisposed()) return false;
+
     assert !(document instanceof DocumentWindow);
+    final boolean[] result = {true};
     ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document,myProject) {
       public void run() {
-        if (isCommittingDocument(document)) return;
-        document.putUserData(KEY_COMMITTING, Boolean.TRUE);
-
+        CommitStage stage = getCommitStage(document);
+        if (stage != CommitStage.QUEUED_TO_COMMIT) {
+          result[0] = false;
+          return; // there must be a synchronous commit sneaked in between queued commit and finish commit, or just document changed meanwhile
+        }
+        myIsCommitInProgress = true;
+        boolean success = true;
         try {
-          boolean hasCommits = false;
-          try {
-            final FileViewProvider viewProvider = getCachedViewProvider(document);
-            if (viewProvider != null) {
-              final List<PsiFile> psiFiles = viewProvider.getAllFiles();
-              for (PsiFile file : psiFiles) {
-                if (file.isValid() && file != excludeFile) {
-                  hasCommits |= commit(document, file);
-                }
+          final FileViewProvider viewProvider = getCachedViewProvider(document);
+          if (viewProvider != null) {
+            for (Processor<Document> finishRunnable : finishRunnables) {
+              success = finishRunnable.process(document);
+              if (!success) {
+                result[0] = false;
+                return;
               }
-              viewProvider.contentsSynchronized();
             }
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-          finally {
-            myUncommittedDocuments.remove(document);
-          }
-
-          if (hasCommits) {
-            InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
+            viewProvider.contentsSynchronized();
           }
         }
         finally {
-          document.putUserData(KEY_COMMITTING, null);
+          if (success) {
+            myUncommittedDocuments.remove(document);
+
+            boolean changed = changeCommitStage(document, CommitStage.QUEUED_TO_COMMIT, CommitStage.COMMITTED);
+            assert changed;
+
+            ((DocumentImpl)document).normalizeRangeMarkers();
+            InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
+          }
+          myIsCommitInProgress = false;
         }
       }
     });
 
+    if (result[0]) {
+      runAfterCommitActions(document);
+    }
+    return result[0];
+  }
+
+  private void doCommit(@NotNull final Document document, final PsiFile excludeFile) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()
+        if (getSynchronizer().isDocumentAffectedByTransactions(document) && excludeFile == null) return;
+
+        myIsCommitInProgress = true;
+        //setCommitStage(document, CommitStage.QUEUED_TO_COMMIT);
+        DocumentCommitThread.getInstance(myProject).commitSynchronously(myProject, document, excludeFile);
+        myIsCommitInProgress = false;
+        assert !myUncommittedDocuments.contains(document);
+      }
+    });
+  }
+
+  private void runAfterCommitActions(@NotNull Document document) {
     List<Runnable> list;
     synchronized (ACTION_AFTER_COMMIT) {
       list = document.getUserData(ACTION_AFTER_COMMIT);
@@ -310,6 +352,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         runnable.run();
       }
     }
+
+    if (!hasUncommitedDocuments() && !actionsWhenAllDocumentsAreCommitted.isEmpty()) {
+      List<Object> keys = new ArrayList<Object>(actionsWhenAllDocumentsAreCommitted.keySet());
+      for (Object key : keys) {
+        Runnable action = actionsWhenAllDocumentsAreCommitted.remove(key);
+        action.run();
+      }
+    }
   }
 
   public void commitOtherFilesAssociatedWithDocument(final Document document, final PsiFile psiFile) {
@@ -321,7 +371,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         }
       });
     }
-  }  
+  }
 
   public <T> T commitAndRunReadAction(@NotNull final Computable<T> computation) {
     final Ref<T> ref = Ref.create(null);
@@ -340,7 +390,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       runnable.run();
     }
     else{
-      LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(), "Don't call commitAndRunReadAction inside ReadAction it may cause a deadlock.");
+      LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(), "Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise.");
 
       final Semaphore s1 = new Semaphore();
       final Semaphore s2 = new Semaphore();
@@ -421,137 +471,19 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
-  @SuppressWarnings({"ALL"})
-  private ASTNode myTreeElementBeingReparsedSoItWontBeCollected;
-
-  private boolean commit(@NotNull Document document, @NotNull PsiFile file) {
-    document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
-
-    TextBlock textBlock = getTextBlock(document, file);
-    if (textBlock.isEmpty()) return false;
-    ((DocumentImpl)document).normalizeRangeMarkers();
-    myIsCommitInProgress = true;
-    try {
-      myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
-
-      if (textBlock.isEmpty()) return false ; // if tree was just loaded above textBlock will be cleared by contentsLoaded
-
-      textBlock.lock();
-      final CharSequence chars = document.getCharsSequence();
-      final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
-      if (data != null) {
-        document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
-        file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
-      }
-
-      final String oldPsiText =
-        ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManagerEx.getApplicationEx().isUnitTestMode()
-        ? myTreeElementBeingReparsedSoItWontBeCollected.getText()
-        : null;
-
-      int startOffset;
-      int endOffset;
-      int lengthShift;
-      if (file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
-        startOffset = textBlock.getStartOffset();
-        int psiEndOffset = textBlock.getPsiEndOffset();
-        endOffset = psiEndOffset;
-        lengthShift = textBlock.getTextEndOffset() - psiEndOffset;
-      }
-      else {
-        startOffset = 0;
-        endOffset = document.getTextLength();
-        lengthShift = document.getTextLength() - myTreeElementBeingReparsedSoItWontBeCollected.getTextLength();
-      }
-      assertBeforeCommit(document, file, textBlock, chars, oldPsiText);
-      myBlockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars);
-      assertAfterCommit(document, file, oldPsiText);
-    }
-    finally {
-      textBlock.unlock();
-      textBlock.clear();
-
-      myTreeElementBeingReparsedSoItWontBeCollected = null;
-      myIsCommitInProgress = false;
-
-      if (mySmartPointerManager != null) { // mock tests
-        SmartPointerManagerImpl.synchronizePointers(file);
-      }
-    }
-    return true;
-  }
-
-  private void assertAfterCommit(final Document document, final PsiFile file, final String oldPsiText) {
-    if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
-      final String documentText = document.getText();
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        String fileText = file.getText();
-        LOG.error("commitDocument left PSI inconsistent; file len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
-                  "; doc len=" + document.getTextLength() +
-                  "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText) +
-                  ";\n file psi text=" + fileText +
-                  ";\n doc text=" + documentText +
-                  ";\n old psi file text=" + oldPsiText);
-      }
-      else {
-        LOG.error("commitDocument left PSI inconsistent: " + file);
-      }
-
-      file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
-      try {
-        myBlockSupport.reparseRange(file, 0, documentText.length(), 0, documentText);
-        if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
-          LOG.error("PSI is broken beyond repair in: " + file);
-        }
-      }
-      finally {
-        file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
-      }
-    }
-  }
-
-  private void assertBeforeCommit(Document document,
-                                  PsiFile file,
-                                  TextBlock textBlock,
-                                  CharSequence chars,
-                                  String oldPsiText) {
-    int startOffset = textBlock.getStartOffset();
-    int psiEndOffset = textBlock.getPsiEndOffset();
-    if (oldPsiText != null) {
-      String msg = "PSI/document inconsistency before reparse: ";
-      if (startOffset >= oldPsiText.length()) {
-        msg += "startOffset=" + oldPsiText + " while text length is " + oldPsiText.length() + "; ";
-        startOffset = oldPsiText.length();
-      }
-
-      String psiPrefix = oldPsiText.substring(0, startOffset);
-      String docPrefix = chars.subSequence(0, startOffset).toString();
-      String psiSuffix = oldPsiText.substring(psiEndOffset);
-      String docSuffix = chars.subSequence(textBlock.getTextEndOffset(), chars.length()).toString();
-      if (!psiPrefix.equals(docPrefix) || !psiSuffix.equals(docSuffix)) {
-        if (!psiPrefix.equals(docPrefix)) {
-          msg = msg + "psiPrefix=" + psiPrefix + "; docPrefix=" + docPrefix + ";";
-        }
-        if (!psiSuffix.equals(docSuffix)) {
-          msg = msg + "psiSuffix=" + psiSuffix + "; docSuffix=" + docSuffix + ";";
-        }
-        throw new AssertionError(msg);
-      }
-    }
-    else if (document.getTextLength() - textBlock.getTextEndOffset() !=
-             myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() - psiEndOffset) {
-      throw new AssertionError("PSI/document inconsistency before reparse: file=" + file);
-    }
-  }
-
   @NotNull
   public Document[] getUncommittedDocuments() {
     return myUncommittedDocuments.toArray(new Document[myUncommittedDocuments.size()]);
   }
 
   public boolean isUncommited(@NotNull Document document) {
-    if(getSynchronizer().isInSynchronization(document)) return false;
-    return ((DocumentEx)document).isInEventsHandling() || myUncommittedDocuments.contains(document);
+    return !isCommitted(document);
+  }
+
+  @Override
+  public boolean isCommitted(@NotNull Document document) {
+    if (getSynchronizer().isInSynchronization(document)) return true;
+    return !((DocumentEx)document).isInEventsHandling() && !myUncommittedDocuments.contains(document);
   }
 
   public boolean hasUncommitedDocuments() {
@@ -559,6 +491,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private final Key<ASTNode> TEMP_TREE_IN_DOCUMENT_KEY = Key.create("TEMP_TREE_IN_DOCUMENT_KEY");
+  void clearTreeHardRef(@NotNull Document document) {
+    document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
+  }
 
   public void beforeDocumentChange(DocumentEvent event) {
     final Document document = event.getDocument();
@@ -571,7 +506,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (virtualFile.getFileType().isBinary()) return;
 
     final List<PsiFile> files = viewProvider.getAllFiles();
-    boolean hasLockedBlocks = false;                                                      
+    boolean hasLockedBlocks = false;
     for (PsiFile file : files) {
       if (file == null) continue;
 
@@ -579,7 +514,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         SmartPointerManagerImpl.fastenBelts(file, event.getOffset());
       }
 
-      final TextBlock textBlock = getTextBlock(document, file);
+      final TextBlock textBlock = getTextBlock(file);
       if (textBlock.isLocked()) {
         hasLockedBlocks = true;
         continue;
@@ -601,6 +536,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (!hasLockedBlocks) {
       ((SingleRootFileViewProvider)viewProvider).beforeDocumentChanged();
     }
+
+    DocumentCommitThread.getInstance(myProject).cancelCommit(document);
   }
 
   public void documentChanged(DocumentEvent event) {
@@ -609,6 +546,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (viewProvider == null) return;
     if (!isRelevant(viewProvider)) return;
 
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     final List<PsiFile> files = viewProvider.getAllFiles();
     boolean commitNecessary = false;
     for (PsiFile file : files) {
@@ -616,14 +554,21 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       if (mySmartPointerManager != null) { // mock tests
         SmartPointerManagerImpl.unfastenBelts(file, event.getOffset());
       }
-      final TextBlock textBlock = getTextBlock(document, file);
+      final TextBlock textBlock = getTextBlock(file);
       if (textBlock.isLocked()) continue;
-
 
       textBlock.documentChanged(event);
       assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() : event + "; file="+file+"; allFiles="+files+"; viewProvider="+viewProvider;
-      myUncommittedDocuments.add(document);
+
       commitNecessary = true;
+    }
+
+    if (commitNecessary) {
+      myUncommittedDocuments.add(document);
+      // irrespective of prev value
+      setCommitStage(document, CommitStage.DIRTY);
+
+      DocumentCommitThread.getInstance(myProject).queueCommit(document);
     }
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and
@@ -632,7 +577,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (event.isWholeTextReplaced() && document.getTextLength() > 100000) {
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
     }
-    
+
     if (commitNecessary && ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)){
       commitDocument(document);
     }
@@ -642,17 +587,16 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
-
   private boolean isRelevant(FileViewProvider viewProvider) {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     return !virtualFile.getFileType().isBinary() && viewProvider.getManager() == myPsiManager && !myPsiManager.getProject().isDisposed();
   }
 
-  public TextBlock getTextBlock(Document document, PsiFile file) {
+  @NotNull
+  public static TextBlock getTextBlock(@NotNull PsiFile file) {
     TextBlock textBlock = file.getUserData(KEY_TEXT_BLOCK);
     if (textBlock == null){
-      textBlock = new TextBlock();
-      file.putUserData(KEY_TEXT_BLOCK, textBlock);
+      textBlock = ((UserDataHolderEx)file).putUserDataIfAbsent(KEY_TEXT_BLOCK, new TextBlock());
     }
 
     return textBlock;
@@ -724,7 +668,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public void contentsLoaded(PsiFileImpl file) {
     final Document document = getCachedDocument(file);
-    if (document != null) getTextBlock(document, file).clear();
+    if (document != null) getTextBlock(file).clear();
   }
 
   @TestOnly
@@ -737,12 +681,27 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return mySynchronizer;
   }
 
-  private static boolean isCommittingDocument(final Document doc) {
-    return doc.getUserData(KEY_COMMITTING) == Boolean.TRUE;
+  static CommitStage getCommitStage(@NotNull Document doc) {
+    CommitStage stage = doc.getUserData(COMMIT_STAGE);
+    if (stage == null) {
+      stage = ((UserDataHolderEx)doc).putUserDataIfAbsent(COMMIT_STAGE, CommitStage.DIRTY);
+    }
+    return stage;
+  }
+  static void setCommitStage(@NotNull Document document, @NotNull CommitStage stage) {
+    document.putUserData(COMMIT_STAGE, stage);
+  }
+  static boolean changeCommitStage(@NotNull Document document, CommitStage expected, @NotNull CommitStage stage) {
+    return ((UserDataHolderEx)document).replace(COMMIT_STAGE, expected, stage);
   }
 
+
   public void save() {
-    // Ensure all documents are commited on save so file content dependent indicies, that use PSI to build have consistent content.
+    // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
     commitAllDocuments();
+  }
+
+  static enum CommitStage {
+    DIRTY, QUEUED_TO_COMMIT, COMMITTED
   }
 }

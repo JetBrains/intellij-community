@@ -18,20 +18,15 @@ package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomManager;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -48,7 +43,11 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.diff.DiffTree;
+import com.intellij.util.diff.DiffTreeChangeBuilder;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import com.intellij.util.diff.ShallowNodeComparator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BlockSupportImpl extends BlockSupport {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
@@ -70,20 +69,23 @@ public class BlockSupportImpl extends BlockSupport {
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
   }
 
-  public void reparseRange(final PsiFile file,
-                           final int startOffset,
-                           final int endOffset,
-                           final int lengthShift,
-                           final CharSequence newFileText) {
-    // adjust editor offsets to damage area markers
-    file.getManager().performActionWithFormatterDisabled(new Runnable() {
-      public void run() {
-        reparseRangeInternal(file, startOffset > 0 ? startOffset - 1 : 0, endOffset, lengthShift, newFileText);
-      }
-    });
+  @NotNull
+  public DiffLog reparseRange(@NotNull final PsiFile file,
+                              final int startOffset,
+                              final int endOffset,
+                              final int lengthShift,
+                              @NotNull final CharSequence newFileText,
+                              @NotNull final ProgressIndicator indicator) {
+    return reparseRangeInternal(file, startOffset > 0 ? startOffset - 1 : 0, endOffset, lengthShift, newFileText, indicator);
   }
 
-  private static void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, CharSequence newFileText) {
+  @NotNull
+  private static DiffLog reparseRangeInternal(@NotNull PsiFile file,
+                                              int startOffset,
+                                              int endOffset,
+                                              int lengthShift,
+                                              @NotNull CharSequence newFileText,
+                                              @NotNull ProgressIndicator indicator) {
     file.getViewProvider().beforeContentsSynchronized();
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     Project project = fileImpl.getProject();
@@ -94,8 +96,7 @@ public class BlockSupportImpl extends BlockSupport {
 
     if (treeFileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
       // unable to perform incremental reparse for template data in JSP, or in exceptionally deep trees
-      makeFullParse(treeFileElement, newFileText, textLength, fileImpl);
-      return;
+      return makeFullParse(treeFileElement, newFileText, textLength, fileImpl, indicator);
     }
 
     final ASTNode leafAtStart = treeFileElement.findLeafElementAt(startOffset);
@@ -123,15 +124,13 @@ public class BlockSupportImpl extends BlockSupport {
               holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
 
               if (holder.getTextLength() != newTextStr.length()) {
-                if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-                  LOG.error("Inconsistent reparse: text=" + newTextStr + "; treeText=" + holder.getText() + "; type=" + elementType);
-                } else {
-                  LOG.error("Inconsistent reparse: type=" + elementType);
-                }
+                String details = ApplicationManagerEx.getApplicationEx().isInternal()
+                           ? "text=" + newTextStr + "; treeText=" + holder.getText() + ";"
+                           : "";
+                LOG.error("Inconsistent reparse: " + details + " type=" + elementType);
               }
 
-              mergeTrees(fileImpl, node, chameleon);
-              return;
+              return mergeTrees(fileImpl, node, chameleon, indicator);
             }
           }
         }
@@ -139,7 +138,7 @@ public class BlockSupportImpl extends BlockSupport {
       node = node.getTreeParent();
     }
 
-    makeFullParse(node, newFileText, textLength, fileImpl);
+    return makeFullParse(node, newFileText, textLength, fileImpl, indicator);
   }
 
   private static void assertFileLength(PsiFile file, CharSequence newFileText, ASTNode node, IElementType elementType, int start, int end) {
@@ -160,26 +159,36 @@ public class BlockSupportImpl extends BlockSupport {
     }
   }
 
-  private static void makeFullParse(final ASTNode parent, final CharSequence newFileText, final int textLength, final PsiFileImpl fileImpl) {
+  @NotNull
+  private static DiffLog makeFullParse(ASTNode parent,
+                                       @NotNull CharSequence newFileText,
+                                       int textLength,
+                                       @NotNull PsiFileImpl fileImpl,
+                                       @NotNull ProgressIndicator indicator) {
     if (fileImpl instanceof PsiCodeFragment) {
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
       holderElement.rawAddChildren(fileImpl.createContentLeafElement(holderElement.getCharTable().intern(newFileText, 0, textLength)));
-      replaceFileElement(fileImpl, (FileElement)parent, (FileElement)holderElement.getFirstChildNode(), (PsiManagerEx)fileImpl.getManager());
+      DiffLog diffLog = new DiffLog();
+      diffLog.appendReplaceFileElement((FileElement)parent, (FileElement)holderElement.getFirstChildNode());
+
+      return diffLog;
     }
     else {
-      final FileViewProvider viewProvider = fileImpl.getViewProvider();
+      FileViewProvider viewProvider = fileImpl.getViewProvider();
+      viewProvider.getLanguages();
       FileType fileType = viewProvider.getVirtualFile().getFileType();
       final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), fileType, newFileText, viewProvider.getVirtualFile().getCharset(),
                                                               fileImpl.getModificationStamp());
       lightFile.setOriginalFile(viewProvider.getVirtualFile());
 
-      final FileViewProvider copy = viewProvider.createCopy(lightFile);
+      FileViewProvider copy = viewProvider.createCopy(lightFile);
+      copy.getLanguages();
       final PsiFileImpl newFile = (PsiFileImpl)copy.getPsi(fileImpl.getLanguage());
 
       if (newFile == null) {
         LOG.error("View provider " + viewProvider + " refused to parse text with " + fileImpl.getLanguage() +
                   "; base: " + viewProvider.getBaseLanguage() + "; copy: " + copy.getBaseLanguage() + "; fileType: " + fileType);
-        return;
+        return null;
       }
 
       newFile.setOriginalFile(fileImpl);
@@ -187,108 +196,105 @@ public class BlockSupportImpl extends BlockSupport {
       final FileElement newFileElement = (FileElement)newFile.getNode();
       final FileElement oldFileElement = (FileElement)fileImpl.getNode();
                                                             
-      final Boolean data = fileImpl.getUserData(DO_NOT_REPARSE_INCREMENTALLY);
-      if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
+      assert oldFileElement != null && newFileElement != null;
+      DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator);
 
-      if (Boolean.TRUE.equals(data) || isTooDeep(fileImpl)) {
-        // TODO: Just to switch off incremental tree patching for certain conditions (like languages) if necessary.
-        replaceElementWithEvents(fileImpl, oldFileElement, newFileElement);
-      }
-      else {
-        assert oldFileElement != null && newFileElement != null;
-        mergeTrees(fileImpl, oldFileElement, newFileElement);
-      }
       ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
+      return diffLog;
     }
   }
 
-  private static void replaceElementWithEvents(final PsiFileImpl file, final CompositeElement oldRoot, final CompositeElement newRoot) {
+  @NotNull
+  private static DiffLog replaceElementWithEvents(final CompositeElement oldRoot,
+                                                  final CompositeElement newRoot) {
+    DiffLog diffLog = new DiffLog();
+    diffLog.appendReplaceElementWithEvents(oldRoot, newRoot);
+    return diffLog;
+  }
+
+  @NotNull
+  public static DiffLog mergeTrees(@NotNull final PsiFileImpl fileImpl,
+                                   @NotNull final ASTNode oldRoot,
+                                   @NotNull final ASTNode newRoot,
+                                   @NotNull ProgressIndicator indicator) {
     if (newRoot instanceof FileElement) {
-      file.getTreeElement().setCharTable(((FileElement)newRoot).getCharTable());
+      ((FileElement)newRoot).setCharTable(fileImpl.getTreeElement().getCharTable());
     }
-    oldRoot.replaceAllChildrenToChildrenOf(newRoot);
-  }
 
-  static void replaceFileElement(final PsiFileImpl fileImpl,
-                                 final FileElement fileElement,
-                                 final FileElement newFileElement,
-                                 final PsiManagerEx manager) {
-    final int oldLength = fileElement.getTextLength();
-    sendPsiBeforeEvent(fileImpl);
-    if (fileElement.getFirstChildNode() != null) fileElement.rawRemoveAllChildren();
-    final ASTNode firstChildNode = newFileElement.getFirstChildNode();
-    if (firstChildNode != null) fileElement.rawAddChildren((TreeElement)firstChildNode);
-    fileImpl.getTreeElement().setCharTable(newFileElement.getCharTable());
-    manager.invalidateFile(fileImpl);
-    fileElement.subtreeChanged();
-    sendPsiAfterEvent(fileImpl, oldLength);
-  }
-
-  public static void mergeTrees(@NotNull final PsiFileImpl file, @NotNull final ASTNode oldRoot, @NotNull final ASTNode newRoot) {
-    synchronized (PsiLock.LOCK) {
-      if (newRoot instanceof FileElement) {
-        ((FileElement)newRoot).setCharTable(file.getTreeElement().getCharTable());
+    try {
+      if (isReplaceWholeNode(fileImpl, newRoot)) {
+        DiffLog treeChangeEvent = replaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
+        fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+        return treeChangeEvent;
       }
-
-      try {
-        newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
-
-        final ASTNode childNode;
-        try {
-          childNode = newRoot.getFirstChildNode(); // Ensure parsed
-        }
-        catch (ReparsedSuccessfullyException e) {
-          return; // Successfully merged in PsiBuilderImpl
-        }
-
-        final boolean childTooDeep = isTooDeep(childNode);
-        if (isTooDeep(file) || childTooDeep) {
-          replaceElementWithEvents(file, (CompositeElement)oldRoot, (CompositeElement)newRoot);
-
-          if (childTooDeep) {
-            childNode.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, null);
-            file.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
-          }
-          return;
-        }
-
-        TreeUtil.ensureParsedRecursively(oldRoot);
-
-        final PomModel model = PomManager.getModel(file.getProject());
-        model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
-          public PomModelEvent runInner() {
-            final ASTDiffBuilder builder = new ASTDiffBuilder(file);
-            DiffTree.diff(new ASTStructure(oldRoot), new ASTStructure(newRoot), new ASTShallowComparator(), builder);
-            file.subtreeChanged();
-
-            return new TreeAspectEvent(model, builder.getEvent());
-          }
-        });
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-      catch (Throwable th) {
-        LOG.error(th);
-      }
-      finally {
-        ((PsiManagerEx)file.getManager()).invalidateFile(file);
-      }
+      newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
+      newRoot.getFirstChildNode();  // maybe reparsed in PsiBuilderImpl and have thrown exception here
     }
+    catch (ReparsedSuccessfullyException e) {
+      // reparsed in PsiBuilderImpl
+      return e.getDiffLog();
+    }
+
+    final ASTShallowComparator comparator = new ASTShallowComparator(indicator);
+    final ASTStructure treeStructure = createInterruptibleASTStructure(newRoot, indicator);
+
+    DiffLog diffLog = new DiffLog();
+    diffTrees(oldRoot, diffLog, comparator, treeStructure, indicator);
+    return diffLog;
   }
 
-  private static void sendPsiBeforeEvent(final PsiFile scope) {
-    if (!scope.isPhysical()) return;
+  public static <T> void diffTrees(@NotNull final ASTNode oldRoot,
+                                   @NotNull final DiffTreeChangeBuilder<ASTNode, T> builder,
+                                   @NotNull final ShallowNodeComparator<ASTNode, T> comparator,
+                                   @NotNull final FlyweightCapableTreeStructure<T> newTreeStructure,
+                                   final ProgressIndicator indicator) {
+    TreeUtil.ensureParsedRecursivelyCheckingProgress(oldRoot, indicator);
+    DiffTree.diff(createInterruptibleASTStructure(oldRoot, indicator), newTreeStructure, comparator, builder);
+  }
+
+  private static ASTStructure createInterruptibleASTStructure(@NotNull final ASTNode oldRoot, @Nullable final ProgressIndicator indicator) {
+    return new ASTStructure(oldRoot) {
+      @Override
+      public int getChildren(@NotNull ASTNode astNode, @NotNull Ref<ASTNode[]> into) {
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
+        return super.getChildren(astNode, into);
+      }
+    };
+  }
+
+  private static boolean isReplaceWholeNode(@NotNull PsiFileImpl fileImpl, @NotNull ASTNode newRoot) throws ReparsedSuccessfullyException{
+    final Boolean data = fileImpl.getUserData(DO_NOT_REPARSE_INCREMENTALLY);
+    if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
+
+    boolean explicitlyMarkedDeep = Boolean.TRUE.equals(data);
+
+    if (explicitlyMarkedDeep || isTooDeep(fileImpl)) {
+      return true;
+    }
+
+    final ASTNode childNode = newRoot.getFirstChildNode();  // maybe reparsed in PsiBuilderImpl and have thrown exception here
+    boolean childTooDeep = isTooDeep(childNode);
+    if (childTooDeep) {
+      childNode.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, null);
+      fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+    }
+    return childTooDeep;
+  }
+
+  public static void sendPsiBeforeEvent(final PsiElement scope) {
+    if(!scope.isPhysical()) return;
     final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
     event.setParent(scope);
-    event.setFile(scope);
-    event.setOffset(0);
+    event.setFile(scope.getContainingFile());
+    event.setOffset(scope.getTextRange().getStartOffset());
     event.setOldLength(scope.getTextLength());
     manager.beforeChildrenChange(event);
   }
 
-  private static void sendPsiAfterEvent(final PsiFileImpl scope, int oldLength) {
+  public static void sendPsiAfterFileEvent(final PsiFileImpl scope, int oldLength) {
     if (!scope.isPhysical()) return;
     final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);

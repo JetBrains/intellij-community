@@ -16,9 +16,11 @@
 
 package com.intellij.util.lang;
 
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.List;
 
 /**
  * @author mike
@@ -45,5 +47,14 @@ public class CompoundRuntimeException extends RuntimeException {
     for (Throwable throwable : myThrowables) {
       throwable.printStackTrace(s);
     }
+  }
+
+  public static void doThrow(@NotNull List<Throwable> throwables) {
+    if (throwables.size()== 1) {
+      Throwable throwable = throwables.get(0);
+      if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
+      if (throwable instanceof Error) throw (Error)throwable;
+    }
+    throw new CompoundRuntimeException(throwables);
   }
 }

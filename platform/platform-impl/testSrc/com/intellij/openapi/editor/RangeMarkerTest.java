@@ -359,7 +359,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     StringBuilder buffer = new StringBuilder("0123456789");
     RangeMarker marker = createMarker("0123456789", 2, 5);
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(marker.getDocument(), null);
+    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
 
     synchronizer.insertString(marker.getDocument(), 3, "a");
     buffer.insert(3, "a");
@@ -380,7 +380,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
                                       "import java.util.Map;");
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
     Document document = marker.getDocument();
-    synchronizer.startTransaction(document, null);
+    synchronizer.startTransaction(getProject(), document, null);
 
     String newText = StringUtil.replaceSubstring(document.getText(), TextRange.create(marker), "");
     synchronizer.replaceString(document, 0, document.getTextLength(), newText);
@@ -403,7 +403,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     StringBuilder buffer = new StringBuilder("0123456789");
     RangeMarker marker = createMarker("0123456789", 2, 5);
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(marker.getDocument(), null);
+    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
 
     synchronizer.insertString(marker.getDocument(), 1, "a");
     buffer.insert(1, "a");
@@ -424,7 +424,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     StringBuilder buffer = new StringBuilder("0123456789");
     RangeMarker marker = createMarker("0123456789", 2, 5);
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(marker.getDocument(), null);
+    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
 
     synchronizer.insertString(marker.getDocument(), 1, "a");
     buffer.insert(1, "a");
@@ -451,7 +451,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     StringBuilder buffer = new StringBuilder("0123456789");
     RangeMarker marker = createMarker("0123456789", 2, 5);
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(marker.getDocument(), null);
+    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
 
     synchronizer.replaceString(marker.getDocument(), 0, 10, "0");
     buffer.replace(0, 10, "0");
@@ -477,7 +477,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     StringBuilder buffer = new StringBuilder("0123456789");
     RangeMarker marker = createMarker("0123456789", 2, 5);
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(marker.getDocument(), null);
+    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
     final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(marker.getDocument());
     final Set<Pair<PsiToDocumentSynchronizer.MutableTextRange, StringBuffer>> affectedFragments = transaction.getAffectedFragments();
 
@@ -506,7 +506,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     StringBuilder buffer = new StringBuilder("0123456789");
     RangeMarker marker = createMarker("0123456789", 2, 5);
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(marker.getDocument(), null);
+    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
 
     synchronizer.replaceString(marker.getDocument(), 3, 5, "3a4");
     buffer.replace(3, 5, "3a4");
@@ -535,7 +535,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarker marker = createMarker("0123456789", 2, 5);
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
     Document document = marker.getDocument();
-    synchronizer.startTransaction(document, null);
+    synchronizer.startTransaction(getProject(), document, null);
 
     synchronizer.replaceString(document, 4, 5, "3a4");
     buffer.replace(4, 5, "3a4");

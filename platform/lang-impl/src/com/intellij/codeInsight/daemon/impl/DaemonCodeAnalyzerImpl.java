@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -685,19 +686,31 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         if (myDisposed || !myProject.isInitialized()) return;
         final Collection<FileEditor> activeEditors = myDaemonListeners.getSelectedEditors();
         if (activeEditors.isEmpty()) return;
-        Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());
-        for (FileEditor fileEditor : activeEditors) {
-          BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
-          if (highlighter != null) {
-            HighlightingPass[] highlightingPasses = highlighter.createPassesForEditor();
-            passes.put(fileEditor, highlightingPasses);
+        Editor active = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+
+        Runnable runnable = new Runnable() {
+          public void run() {
+            Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());
+            for (FileEditor fileEditor : activeEditors) {
+              BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
+              if (highlighter != null) {
+                HighlightingPass[] highlightingPasses = highlighter.createPassesForEditor();
+                passes.put(fileEditor, highlightingPasses);
+              }
+            }
+            // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
+            cancelUpdateProgress(true, "Cancel by alarm");
+            myAlarm.cancelAllRequests();
+            DaemonProgressIndicator progress = createUpdateProgress();
+            myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
           }
+        };
+        if (active == null) {
+          runnable.run();
         }
-        // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
-        cancelUpdateProgress(true, "Cancel by alarm");
-        myAlarm.cancelAllRequests();
-        DaemonProgressIndicator progress = createUpdateProgress();
-        myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
+        else {
+          PsiDocumentManager.getInstance(myProject).performWhenAllDocumentsAreCommitted("start daemon when all committed", runnable);
+        }
       }
     };
   }

@@ -35,9 +35,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -189,7 +188,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       }
     }
 
-    if (!throwables.isEmpty()) throw new CompoundRuntimeException(throwables); 
+    if (!throwables.isEmpty()) CompoundRuntimeException.doThrow(throwables);
   }
 
   @Nullable
@@ -232,7 +231,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
-    sendPsiBeforeEvent(transaction.getChangeScope());
+    BlockSupportImpl.sendPsiBeforeEvent(transaction.getChangeScope());
     LOG.assertTrue(changeScope != null);
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
 
@@ -241,7 +240,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       document = manager.getCachedDocument(containingFileByTree);
     }
     if(document != null) {
-      synchronizer.startTransaction(document, transaction.getChangeScope());
+      synchronizer.startTransaction(myProject, document, transaction.getChangeScope());
     }
   }
 
@@ -263,17 +262,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       psiFile = (PsiFile)fileElement.getPsi();
     }
     return psiFile.getNode() != null ? psiFile : null;
-  }
-
-  private static void sendPsiBeforeEvent(final PsiElement scope) {
-    if(!scope.isPhysical()) return;
-    final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    event.setParent(scope);
-    event.setFile(scope.getContainingFile());
-    event.setOffset(scope.getTextRange().getStartOffset());
-    event.setOldLength(scope.getTextLength());
-    manager.beforeChildrenChange(event);
   }
 
   private PomModelListener[] myListenersArray = null;

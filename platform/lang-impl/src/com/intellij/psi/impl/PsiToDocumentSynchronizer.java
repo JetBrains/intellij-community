@@ -23,10 +23,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -66,28 +68,27 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     void syncDocument(Document document, PsiTreeChangeEventImpl event);
   }
 
-  private void doSync(PsiTreeChangeEvent event, DocSyncAction syncAction) {
+  private void doSync(final PsiTreeChangeEvent event, final DocSyncAction syncAction) {
     if (!toProcessPsiEvent()) return;
     PsiFile psiFile = event.getFile();
     if (psiFile == null || psiFile.getNode() == null) return;
 
-    DocumentEx document = getCachedDocument(psiFile);
+    final DocumentEx document = (DocumentEx)myPsiDocumentManager.getCachedDocument(psiFile);
     if (document == null || document instanceof DocumentWindow) return;
 
-    TextBlock textBlock = getTextBlock(document, psiFile);
+    TextBlock textBlock = PsiDocumentManagerImpl.getTextBlock(psiFile);
 
     if (!textBlock.isEmpty()) {
       LOG.error("Attempt to modify PSI for non-committed Document!");
       textBlock.clear();
     }
 
-    textBlock.lock();
-    try {
-      syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
-    }
-    finally {
-      textBlock.unlock();
-    }
+    textBlock.performAtomically(new Runnable() {
+      @Override
+      public void run() {
+        syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
+      }
+    });
 
     myPsiDocumentManager.commitOtherFilesAssociatedWithDocument(document, psiFile);
 
@@ -160,17 +161,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
-  @Nullable
-  private DocumentEx getCachedDocument(PsiFile file) {
-    return (DocumentEx)myPsiDocumentManager.getCachedDocument(file);
-  }
-
-  private TextBlock getTextBlock(Document document, PsiFile file) {
-    return myPsiDocumentManager.getTextBlock(document, file);
-  }
-
-  public void startTransaction(Document doc, PsiElement scope) {
-    LOG.assertTrue(!myPsiDocumentManager.getProject().isDisposed());
+  public void startTransaction(@NotNull Project project, Document doc, PsiElement scope) {
+    LOG.assertTrue(!project.isDisposed());
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if (pair == null) {
       final PsiFile psiFile = scope != null ? scope.getContainingFile() : null;

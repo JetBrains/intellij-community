@@ -103,11 +103,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     treeElement.subtreeChanged();
     TreeElement childNode = treeElement.getFirstChildNode();
 
-    DebugUtil.checkTreeStructureIfConfigured(parsed);
-    DebugUtil.checkTreeStructureIfConfigured(treeElement);
-    DebugUtil.checkTreeStructureIfConfigured(chameleon);
-    DebugUtil.checkTreeStructureIfConfigured(file.getNode());
-    DebugUtil.checkTreeStructureIfConfigured(originalFile.getNode());
+    DebugUtil.checkTreeStructure(parsed);
+    DebugUtil.checkTreeStructure(treeElement);
+    DebugUtil.checkTreeStructure(chameleon);
+    DebugUtil.checkTreeStructure(file.getNode());
+    DebugUtil.checkTreeStructure(originalFile.getNode());
 
     return childNode;
   }

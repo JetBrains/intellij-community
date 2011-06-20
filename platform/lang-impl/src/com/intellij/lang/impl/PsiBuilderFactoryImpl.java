@@ -21,39 +21,47 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author yole
  */
 public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
+  @NotNull
   @Override
   public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final ASTNode chameleon) {
     return createBuilder(project, chameleon, null, chameleon.getElementType().getLanguage(), chameleon.getChars());
   }
 
+  @NotNull
   @Override
   public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final LighterLazyParseableNode chameleon) {
     final Language language = chameleon.getTokenType().getLanguage();
-    return new PsiBuilderImpl(project, language, createLexer(project, language), chameleon, chameleon.getText());
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+
+    return new PsiBuilderImpl(project, parserDefinition, createLexer(project, language), chameleon, chameleon.getText());
   }
 
+  @NotNull
   @Override
   public PsiBuilder createBuilder(@NotNull final Project project,
                                   @NotNull final ASTNode chameleon,
                                   @Nullable final Lexer lexer,
                                   @NotNull final Language lang,
                                   @NotNull final CharSequence seq) {
-    return new PsiBuilderImpl(project, lang, (lexer != null ? lexer : createLexer(project, lang)), chameleon, seq);
+    return new PsiBuilderImpl(project, LanguageParserDefinitions.INSTANCE.forLanguage(lang), lexer != null ? lexer : createLexer(project, lang), chameleon, seq);
   }
 
+  @NotNull
   @Override
   public PsiBuilder createBuilder(@NotNull final Project project,
                                   @NotNull final LighterLazyParseableNode chameleon,
                                   @Nullable final Lexer lexer,
                                   @NotNull final Language lang,
                                   @NotNull final CharSequence seq) {
-    return new PsiBuilderImpl(project, lang, (lexer != null ? lexer : createLexer(project, lang)), chameleon, seq);
+    final Language language = chameleon.getTokenType().getLanguage();
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+
+    return new PsiBuilderImpl(project, parserDefinition, lexer != null ? lexer : createLexer(project, lang), chameleon, seq);
   }
 
   private static Lexer createLexer(final Project project, final Language lang) {
@@ -62,10 +70,10 @@ public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
     return parserDefinition.createLexer(project);
   }
 
-  @TestOnly
+  @NotNull
   @Override
-  public PsiBuilder createBuilder(@NotNull final Lexer lexer, @NotNull final Language lang, @NotNull final CharSequence seq) {
-    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-    return new PsiBuilderImpl(lexer, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), seq);
+  public PsiBuilder createBuilder(@NotNull ParserDefinition parserDefinition, @NotNull final Lexer lexer,
+                                  @NotNull final CharSequence seq) {
+    return new PsiBuilderImpl(null, null, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer, null, seq, null, null);
   }
 }

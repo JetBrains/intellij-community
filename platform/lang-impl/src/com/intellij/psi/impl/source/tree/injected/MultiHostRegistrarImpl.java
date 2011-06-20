@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -42,6 +43,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
+import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -397,7 +399,16 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         assert shreds.isValid();
         oldViewProvider.performNonPhysically(new Runnable() {
           public void run() {
-            BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode);
+            //todo
+            final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator());
+            hostPsiFile.getManager().performActionWithFormatterDisabled(new Runnable() {
+              @Override
+              public void run() {
+                synchronized (PsiLock.LOCK) {
+                  diffLog.doActualPsiChange(oldFile);
+                }
+              }
+            });
           }
         });
         assert shreds.isValid();

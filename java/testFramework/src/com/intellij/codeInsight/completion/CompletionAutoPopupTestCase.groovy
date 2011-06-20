@@ -16,9 +16,11 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -39,6 +41,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
 
   @Override protected void tearDown() {
     CompletionAutoPopupHandler.ourTestingAutopopup = false
+    ((DocumentEx) myFixture.editor.document).setModificationStamp(0)  // to not let autopopup handler sneak in
     edt { superTearDown() }
   }
 
@@ -56,6 +59,16 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
   }
 
   protected void joinCompletion() {
+        for (i in 0.1000) {
+          if (i==999) {
+            printThreadDump()
+            fail("Could not wait for committed doc")
+          }
+          CompletionPhase phase = CompletionServiceImpl.getCompletionPhase()
+          if (phase != com.intellij.codeInsight.completion.CompletionPhase.NoCompletion) break;
+          Thread.sleep(10)
+        }
+
     for (j in 1..4000) {
       LookupImpl l = null
       edt {

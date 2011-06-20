@@ -23,14 +23,17 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -108,8 +111,51 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
   }
 
-  public static void invokeAutoPopupCompletion(Project project, final Editor editor) {
-    new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invokeCompletion(project, editor, 0, false);
-  }
+    public static void invokeAutoPopupCompletion(final Project project, final Editor editor) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
 
+      completeWhenAllDocumentsCommitted(project, editor, CompletionType.BASIC, false, true, 0, false);
+     }
+
+  public static void completeWhenAllDocumentsCommitted(@NotNull final Project project, @NotNull final Editor editor,
+                                                       final CompletionType completionType,
+                                                       final boolean invokedExplicitly,
+                                                       final boolean autopopup,
+                                                       final int time,
+                                                       final boolean hasModifiers) {
+    //if (true) {
+    //  new CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup)
+    //    .invokeCompletion(project, editor, time, hasModifiers);
+    //  return;
+    //}
+    final Document document = editor.getDocument();
+    final long beforeStamp = document.getModificationStamp();
+    PsiDocumentManager.getInstance(project).performWhenAllDocumentsAreCommitted("start completion when all docs committed", new Runnable() {
+      @Override
+      public void run() {
+        long afterStamp = document.getModificationStamp();
+        if (beforeStamp != afterStamp) {
+          // no luck, will try later
+          return;
+        }
+        // later because we may end up in write action here if there was a synchronous commit
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            long afterStamp = document.getModificationStamp();
+            if (beforeStamp != afterStamp) {
+              // no luck, will try later
+              return;
+            }
+            try {
+              new CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup)
+                .invokeCompletion(project, editor, time, hasModifiers);
+            }
+            catch (IndexNotReadyException ignored) {
+            }
+          }
+        }, project.getDisposed());
+      }
+    });
+  }
 }

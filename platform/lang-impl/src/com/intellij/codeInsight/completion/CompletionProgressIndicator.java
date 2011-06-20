@@ -647,12 +647,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
         closeAndFinish(false);
 
-        final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, isAutopopupCompletion());
-        try {
-          newHandler.invokeCompletion(project, myEditor, myParameters.getInvocationCount(), false);
-        }
-        catch (IndexNotReadyException ignored) {
-        }
+        CompletionAutoPopupHandler.completeWhenAllDocumentsCommitted(project, myEditor, myParameters.getCompletionType(), false,
+                                                                     isAutopopupCompletion(), myParameters.getInvocationCount(), false);
       }
     });
   }

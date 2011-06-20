@@ -25,6 +25,7 @@ import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -38,7 +39,7 @@ public class TreeChangeImpl implements TreeChange {
     myParent = parent;
   }
 
-  public void addChange(ASTNode child, ChangeInfo changeInfo) {
+  public void addChange(ASTNode child, @NotNull ChangeInfo changeInfo) {
     LOG.assertTrue(child.getTreeParent() == myParent);
 
     final ChangeInfo current = myChanges.get(child);
@@ -53,7 +54,6 @@ public class TreeChangeImpl implements TreeChange {
       final ChangeInfo replacedInfo = myChanges.get(replaced);
 
       if(replacedInfo == null){
-        //myChanges.put(replaced, ChangeInfo.create(ChangeInfo.REMOVED, replaced, SharedImplUtil.findCharTableByTree(myParent)));
         addChangeInternal(child, changeInfo);
       }
       else{
@@ -87,6 +87,7 @@ public class TreeChangeImpl implements TreeChange {
       return;
     }
 
+    // add + remove == no op
     if(current != null && current.getChangeType() == ChangeInfo.ADD){
       if(changeInfo.getChangeType() == ChangeInfo.REMOVED){
         removeChangeInternal(child);
@@ -167,6 +168,7 @@ public class TreeChangeImpl implements TreeChange {
     return false;
   }
 
+  @NotNull
   public TreeElement[] getAffectedChildren() {
     final TreeElement[] treeElements = new TreeElement[myChanges.size()];
     int index = 0;
@@ -180,12 +182,12 @@ public class TreeChangeImpl implements TreeChange {
     return myChanges.get(child);
   }
 
-  public int getChildOffsetInNewTree(ASTNode child) {
+  public int getChildOffsetInNewTree(@NotNull ASTNode child) {
     return myParent.getStartOffset() + getNewOffset(child);
   }
 
 
-  public void composite(TreeChange treeChange) {
+  public void composite(@NotNull TreeChange treeChange) {
     final TreeChangeImpl change = (TreeChangeImpl)treeChange;
     final Set<Map.Entry<ASTNode,ChangeInfo>> entries = change.myChanges.entrySet();
     for (final Map.Entry<ASTNode, ChangeInfo> entry : entries) {
@@ -201,9 +203,10 @@ public class TreeChangeImpl implements TreeChange {
     removeChangeInternal(beforeEqualDepth);
   }
 
-  public void add(final TreeChange value) {
+  public void add(@NotNull final TreeChange value) {
     final TreeChangeImpl impl = (TreeChangeImpl)value;
     LOG.assertTrue(impl.myParent == myParent);
+
     for (final Pair<ASTNode, Integer> pair : impl.myOffsets) {
       final ASTNode child = pair.getFirst();
       ChangeInfo change = impl.getChangeByChild(child);
@@ -246,8 +249,10 @@ public class TreeChangeImpl implements TreeChange {
               break;
             case ChangeInfo.REPLACE:
               final ASTNode oldReplaced = ((ReplaceChangeInfo)oldChange).getReplaced();
-              change = ChangeInfoImpl.create(ChangeInfo.REPLACE, child);
-              ((ReplaceChangeInfoImpl)change).setReplaced(oldReplaced);
+              ReplaceChangeInfoImpl rep = new ReplaceChangeInfoImpl(child);
+              rep.setReplaced(oldReplaced);
+              change = rep;
+
               break;
           }
           removeChangeInternal(replaced);
@@ -289,6 +294,7 @@ public class TreeChangeImpl implements TreeChange {
 
   private int getNodeOffset(ASTNode child){
     LOG.assertTrue(child.getTreeParent() == myParent);
+
     int oldOffsetInParent = 0;
 
     // find last changed element before child

@@ -27,6 +27,18 @@ import java.util.EventListener;
  * Manages the relationship between documents and PSI trees.
  */
 public abstract class PsiDocumentManager {
+  public abstract boolean isCommitted(@NotNull Document document);
+
+  /**
+   * Defer action until all documents are committed
+   * must be called from EDT only
+   *
+   * @param key unique key for this action. Subsequent call with the same key overwrites previous associated action.
+   * @param action to run when all documents committed
+   * @return true if action was run immediately (i.e. all documents are already committed)
+   */
+  public abstract boolean performWhenAllDocumentsAreCommitted(@NotNull Object key, @NotNull Runnable action);
+
   /**
    * Returns the document manager instance for the specified project.
    *

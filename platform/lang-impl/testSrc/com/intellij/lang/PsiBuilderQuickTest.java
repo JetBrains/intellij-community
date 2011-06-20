@@ -16,14 +16,17 @@
 package com.intellij.lang;
 
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
 import com.intellij.psi.tree.*;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
@@ -31,8 +34,6 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -40,12 +41,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
-
-public class PsiBuilderQuickTest {
+public class PsiBuilderQuickTest extends LightPlatformTestCase {
   private static final IFileElementType ROOT = new IFileElementType("ROOT", Language.ANY);
 
   private static final IElementType LETTER = new IElementType("LETTER", Language.ANY);
@@ -60,30 +57,6 @@ public class PsiBuilderQuickTest {
 
   private static final TokenSet WHITESPACE_SET = TokenSet.create(TokenType.WHITE_SPACE);
   private static final TokenSet COMMENT_SET = TokenSet.create(COMMENT);
-
-  private static ApplicationEx myMockApp = null;
-
-  @BeforeClass
-  public static void setUp() {
-    if (ApplicationManager.getApplication() == null) {
-      if (myMockApp == null) {
-        myMockApp = createMock(ApplicationEx.class);
-        expect(myMockApp.isInternal()).andReturn(true);
-        expect(myMockApp.isUnitTestMode()).andReturn(true);
-        myMockApp.assertReadAccessAllowed();
-        expectLastCall().asStub();
-        replay(myMockApp);
-      }
-      ApplicationManagerEx.setApplication(myMockApp);
-    }
-  }
-
-  @AfterClass
-  public static void tearDown() {
-    if (myMockApp != null) {
-      ApplicationManagerEx.setApplication(null);
-    }
-  }
 
   @Test
   public void testPlain() {
@@ -478,14 +451,14 @@ public class PsiBuilderQuickTest {
     final IElementType CHAMELEON_2 = new MyLazyElementType("CHAMELEON_2") {
       @Override
       public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
-        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        final PsiBuilder builder = createBuilder(chameleon.getText());
         parse(builder);
         return builder.getLightTree();
       }
 
       @Override
       public ASTNode parseContents(ASTNode chameleon) {
-        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        final PsiBuilder builder = createBuilder(chameleon.getText());
         parse(builder);
         return builder.getTreeBuilt().getFirstChildNode();
       }
@@ -509,14 +482,14 @@ public class PsiBuilderQuickTest {
     final IElementType CHAMELEON_1 = new MyLazyElementType("CHAMELEON_1") {
       @Override
       public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
-        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        final PsiBuilder builder = createBuilder(chameleon.getText());
         parse(builder);
         return builder.getLightTree();
       }
 
       @Override
       public ASTNode parseContents(ASTNode chameleon) {
-        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        final PsiBuilder builder = createBuilder(chameleon.getText());
         parse(builder);
         return builder.getTreeBuilt().getFirstChildNode();
       }
@@ -581,12 +554,67 @@ public class PsiBuilderQuickTest {
            "    PsiElement(OTHER)('}')\n");
   }
 
+  private static PsiBuilderImpl createBuilder(CharSequence text) {
+    ParserDefinition parserDefinition = new ParserDefinition() {
+      @NotNull
+      @Override
+      public Lexer createLexer(Project project) {
+        return new MyTestLexer();
+      }
+
+      @Override
+      public PsiParser createParser(Project project) {
+        return null;
+      }
+
+      @Override
+      public IFileElementType getFileNodeType() {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public TokenSet getWhitespaceTokens() {
+        return WHITESPACE_SET;
+      }
+
+      @NotNull
+      @Override
+      public TokenSet getCommentTokens() {
+        return COMMENT_SET;
+      }
+
+      @NotNull
+      @Override
+      public TokenSet getStringLiteralElements() {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public PsiElement createElement(ASTNode node) {
+        return null;
+      }
+
+      @Override
+      public PsiFile createFile(FileViewProvider viewProvider) {
+        return null;
+      }
+
+      @Override
+      public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+        return null;
+      }
+    };
+    return new PsiBuilderImpl(getProject(), null, parserDefinition, parserDefinition.createLexer(getProject()), null, text, null, null);
+  }
+
   private interface Parser {
     void parse(PsiBuilder builder);
   }
 
-  private static void doTest(final String text, final Parser parser, final String expected) {
-    final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, text);
+  private static void doTest(@NonNls final String text, final Parser parser, @NonNls final String expected) {
+    final PsiBuilder builder = createBuilder(text);
     final PsiBuilder.Marker rootMarker = builder.mark();
     parser.parse(builder);
     rootMarker.done(ROOT);
@@ -603,7 +631,7 @@ public class PsiBuilderQuickTest {
     assertEquals(expected, DebugUtil.nodeTreeToString(root, false));
 
     // check heavy vs. light tree merging
-    final PsiBuilder builder2 = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, text);
+    final PsiBuilder builder2 = createBuilder(text);
     final PsiBuilder.Marker rootMarker2 = builder2.mark();
     parser.parse(builder2);
     rootMarker2.done(ROOT);
@@ -640,13 +668,64 @@ public class PsiBuilderQuickTest {
     );
   }
 
-  private static void doFailTest(final String text, final Parser parser, final String expected) {
+  private static void doFailTest(@NonNls final String text, final Parser parser, @NonNls final String expected) {
     final PrintStream std = System.err;
     //noinspection IOResourceOpenedButNotSafelyClosed
     System.setErr(new PrintStream(new NullStream()));
     try {
       try {
-        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), TokenSet.EMPTY, TokenSet.EMPTY, text);
+        ParserDefinition parserDefinition = new ParserDefinition() {
+          @NotNull
+          @Override
+          public Lexer createLexer(Project project) {
+            return null;
+          }
+
+          @Override
+          public PsiParser createParser(Project project) {
+            return null;
+          }
+
+          @Override
+          public IFileElementType getFileNodeType() {
+            return null;
+          }
+
+          @NotNull
+          @Override
+          public TokenSet getWhitespaceTokens() {
+            return TokenSet.EMPTY;
+          }
+
+          @NotNull
+          @Override
+          public TokenSet getCommentTokens() {
+            return TokenSet.EMPTY;
+          }
+
+          @NotNull
+          @Override
+          public TokenSet getStringLiteralElements() {
+            return null;
+          }
+
+          @NotNull
+          @Override
+          public PsiElement createElement(ASTNode node) {
+            return null;
+          }
+
+          @Override
+          public PsiFile createFile(FileViewProvider viewProvider) {
+            return null;
+          }
+
+          @Override
+          public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+            return null;
+          }
+        };
+        final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(parserDefinition, new MyTestLexer(),text);
         builder.setDebugMode(true);
         parser.parse(builder);
         builder.getLightTree();
