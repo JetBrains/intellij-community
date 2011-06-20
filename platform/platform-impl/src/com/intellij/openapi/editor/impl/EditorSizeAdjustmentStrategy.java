@@ -84,16 +84,20 @@ public class EditorSizeAdjustmentStrategy {
     }
 
     boolean increaseWidth = newPreferredSize.width > oldPreferredSize.width;
+    Dimension result;
     if (increaseWidth) {
       final int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
       newPreferredSize.width += myReserveColumns * spaceWidth;
       myReserveColumns += 3;
-      
-    } 
-    // Don't reduce preferred size on frequent reduce of the longest document line.
+      result = newPreferredSize;
+    }
+    else {
+      // Don't reduce preferred size on frequent reduce of the longest document line.
+      result = oldPreferredSize;
+    }
 
     scheduleSizeUpdate(editor);
-    return newPreferredSize;
+    return result;
   }
 
   /**
