@@ -27,8 +27,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
@@ -67,6 +69,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     return getParentByStub();
   }
 
+  @Nullable
   public GrTypeDefinitionBody getBody() {
     return null;
   }
@@ -110,14 +113,6 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   @NotNull
   public PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
-  }
-
-  public PsiElement getLBraceGroovy() {
-    return null;
-  }
-
-  public PsiElement getRBraceGroovy() {
-    return null;
   }
 
   public <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, PsiElement anchorBefore) throws IncorrectOperationException {
@@ -212,8 +207,8 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @NotNull
-  public PsiClassInitializer[] getInitializers() {
-    return PsiClassInitializer.EMPTY_ARRAY;
+  public GrClassInitializer[] getInitializers() {
+    return GrClassInitializer.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -325,7 +320,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
 
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
-    PsiElement result = findChildByType(GroovyElementTypes.mIDENT);
+    PsiElement result = findChildByType(GroovyTokenTypes.mIDENT);
     assert result != null;
     return result;
   }
