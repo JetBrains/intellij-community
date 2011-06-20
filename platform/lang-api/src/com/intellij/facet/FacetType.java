@@ -130,7 +130,8 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   public abstract F createFacet(@NotNull Module module, final String name, @NotNull C configuration, @Nullable Facet underlyingFacet);
 
   /**
-   * @return <code>true</code> if only one facet of this type is allowed in single module
+   * @return <code>true</code> if only one facet of this type is allowed within the containing module (if this type doesn't have the underlying
+   * facet type) or within the underlying facet
    */
   public boolean isOnlyOneFacetAllowed() {
     return true;
