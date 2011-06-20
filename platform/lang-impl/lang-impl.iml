@@ -24,6 +24,7 @@
     <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
     <orderEntry type="library" exported="" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="library" name="http-client-3.1" level="project" />
   </component>
 </module>
 

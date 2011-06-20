@@ -49,7 +49,10 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
     }
     final TextRange range = manipulator.getRangeInElement(psiElement);
     final String s = range.substring(psiElement.getText());
-    if (s.contains("://") || s.startsWith("//") || startsWithAllowedPrefix(s)) {
+    if (s.startsWith("http://")) {
+      references.add(new WebReference(psiElement, range));
+    }
+    else if (s.contains("://") || s.startsWith("//") || startsWithAllowedPrefix(s)) {
       final PsiReference reference = PsiReferenceBase.createSelfReference(psiElement, psiElement);
       references.add(reference);
       return true;
