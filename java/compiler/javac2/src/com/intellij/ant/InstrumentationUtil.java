@@ -243,22 +243,26 @@ public class InstrumentationUtil {
     }
   }
 
-  public static byte[] instrumentNotNull(final ClassReader reader, final PseudoClassLoader loader) {
-    int version = getClassFileVersion(reader);
-
-    if (version >= Opcodes.V1_5) {
-      ClassWriter writer = new AntClassWriter(getAsmClassWriterFlags(version), loader);
-
-      final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-      reader.accept(instrumenter, 0);
-
-      if (instrumenter.isModification()) {
-        return writer.toByteArray();
-      }
-    }
-
-    return null;
+  public static byte[] instrumentNotNull(final byte[] buffer, final PseudoClassLoader loader) {
+    return instrumentNotNull(new ClassReader (buffer), loader);
   }
+
+  private static byte[] instrumentNotNull(final ClassReader reader, final PseudoClassLoader loader) {
+      int version = getClassFileVersion(reader);
+
+      if (version >= Opcodes.V1_5) {
+        ClassWriter writer = new AntClassWriter(getAsmClassWriterFlags(version), loader);
+
+        final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
+        reader.accept(instrumenter, 0);
+
+        if (instrumenter.isModification()) {
+          return writer.toByteArray();
+        }
+      }
+
+      return null;
+    }
 
   public static int instrumentNotNull(final File file, final PseudoClassLoader loader) throws IOException {
     int instrumented = 0;

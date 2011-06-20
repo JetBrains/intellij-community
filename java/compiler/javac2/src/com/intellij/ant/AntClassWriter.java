@@ -43,9 +43,11 @@ public class AntClassWriter extends ClassWriter {
 
       return p1.getCommonSuperClassName(p2);
     } catch (ClassNotFoundException e) {
+        e.printStackTrace();
         throw new RuntimeException(e.getMessage());
     }
     catch (IOException e) {
+      e.printStackTrace();
       throw new RuntimeException(e.getMessage());
     }
   }

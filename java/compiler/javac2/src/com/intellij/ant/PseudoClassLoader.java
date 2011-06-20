@@ -15,7 +15,6 @@
  */
 package com.intellij.ant;
 
-import com.sun.tools.javac.util.Pair;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
@@ -31,11 +30,8 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author db
  * Date: 06.06.11
- * Time: 15:02
- * To change this template use File | Settings | File Templates.
  */
 public class PseudoClassLoader {
   static final WeakHashMap myCache = new WeakHashMap();
@@ -47,6 +43,21 @@ public class PseudoClassLoader {
     final String mySuperClass;
     final String[] myInterfaces;
     final boolean isInterface;
+
+    private PseudoClass(final Class repr) {
+      final Class superclass = repr.getSuperclass();
+      final Class[] interfaces = repr.getInterfaces();
+
+      myName = repr.getName().replace('.', '/');
+      mySuperClass = superclass == null ? null : superclass.getName().replace('.', '/');
+      myInterfaces = interfaces.length == 0 ? null : new String[interfaces.length];
+
+      for (int i=0; i<interfaces.length; i++) {
+        myInterfaces[i] = interfaces[i].getName().replace('.', '/');
+      }
+
+      isInterface = repr.isInterface();
+    }
 
     private PseudoClass(final String name, final String superClass, final String[] interfaces, final boolean anInterface) {
       myName = name;
@@ -194,6 +205,16 @@ public class PseudoClassLoader {
     return new PseudoClass(visitor.name, visitor.superName, visitor.interfaces, visitor.isInterface);
   }
 
+  private class Tag {
+    final PseudoClass myClass;
+    final long myStamp;
+
+    private Tag(PseudoClass aClass, long stamp) {
+      myClass = aClass;
+      myStamp = stamp;
+    }
+  }
+
   public PseudoClass loadClass(final String internalName) throws IOException, ClassNotFoundException {
     final PseudoClass defined = (PseudoClass) myDefinedClasses.get(internalName);
 
@@ -204,7 +225,8 @@ public class PseudoClassLoader {
     final URL resource = myLoader.findResource(internalName + ".class");
 
     if (resource == null) {
-      throw new ClassNotFoundException(internalName);
+      final Class lastResort = myLoader.loadClass(internalName.replace('/', '.'));
+      return new PseudoClass(lastResort);
     }
 
     final String fileName = resource.getFile();
@@ -212,10 +234,10 @@ public class PseudoClassLoader {
     final File file = new File(fileName);
 
     if (isFile) {
-      final Pair cached = (Pair)myCache.get(internalName);
+      final Tag cached = (Tag)myCache.get(internalName);
 
-      if (cached != null && ((Long)cached.snd).longValue() == file.lastModified()) {
-        return (PseudoClass)cached.fst;
+      if (cached != null && cached.myStamp == file.lastModified()) {
+        return cached.myClass;
       }
     }
 
@@ -224,7 +246,7 @@ public class PseudoClassLoader {
     final PseudoClass result = createPseudoClass(reader);
 
     if (isFile) {
-      myCache.put(internalName, new Pair(result, new Long(file.lastModified())));
+      myCache.put(internalName, new Tag(result, file.lastModified()));
     }
 
     return result;
