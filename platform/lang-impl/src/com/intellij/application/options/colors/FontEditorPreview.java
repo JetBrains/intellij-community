@@ -51,7 +51,10 @@ public class FontEditorPreview implements PreviewPanel{
       ApplicationNamesInfo.getInstance().getFullProductName() +
       " is a full-featured IDE\n" +
       "with a high level of usability and outstanding\n" +
-      "advanced code editing and refactoring support.\n";
+      "advanced code editing and refactoring support.\n" +
+      "\n" +
+      "abcdefghijklmnopqrstuvwxyz 0123456789 (){}[]\n" +
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ +-*/= .,;:!? #&$%@|^";
   }
 
   static void installTrafficLights(EditorEx editor) {
