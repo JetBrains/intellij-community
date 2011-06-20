@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +64,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    if (!isTypingInsideJavadoc(editor, file)) {
+    if (!isAppropriatePlace(editor, file)) {
       return false;
     }
 
@@ -128,7 +130,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
     return null;
   }
   
-  private static boolean isTypingInsideJavadoc(Editor editor, PsiFile file) {
+  private static boolean isAppropriatePlace(Editor editor, PsiFile file) {
     FileViewProvider provider = file.getViewProvider();
     int offset = editor.getCaretModel().getOffset();
 
@@ -149,6 +151,20 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
       return false;
     }
 
+    if (element instanceof PsiDocTag) {
+      // We don't want to provide closing tag for the type parameters, i.e. at situations like the one below:
+      // /**
+      //  * @param <T>[caret]
+      //  */
+      PsiDocTag tag = (PsiDocTag)element;
+      if ("param".equals(tag.getName())) {
+        final PsiDocTagValue value = tag.getValueElement();
+        if (value == null || value.getTextRange().getEndOffset() == offset) {
+          return false;
+        } 
+      } 
+    }
+    
     ASTNode node = element.getNode();
     return node != null 
            && (JavaDocTokenType.ALL_JAVADOC_TOKENS.contains(node.getElementType())
