@@ -49,7 +49,7 @@ public class RunConfigurationTypeUsagesCollector extends AbstractApplicationUsag
     final Set<String> runConfigurationTypes = new HashSet<String>();
     final RunManager runManager = RunManager.getInstance(project);
     for (RunConfiguration runConfiguration : runManager.getAllConfigurations()) {
-      if (!runManager.isTemporary(runConfiguration)) {
+      if ((runConfiguration != null) && (!runManager.isTemporary(runConfiguration))) {
         final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
         final ConfigurationType configurationType = configurationFactory.getType();
         final StringBuilder keyBuilder = new StringBuilder();
