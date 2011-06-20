@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl;
+package com.intellij.psi;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiTopLevelElementFactory;
-import com.intellij.psi.PsiTopLevelElementFactoryProvider;
 
 /**
-* @author Medvedev Max
-*/
-public class Provider implements PsiTopLevelElementFactoryProvider {
-  @Override
-  public PsiTopLevelElementFactory getFactory(Project project) {
-    return JavaPsiFacade.getElementFactory(project);
+ * @author Medvedev Max
+ */
+public class JVMElementFactories extends LanguageExtension<JVMElementFactoryProvider> {
+  private static final JVMElementFactories INSTANCE = new JVMElementFactories();
+
+  private JVMElementFactories() {
+    super("com.intellij.generation.topLevelFactory");
+  }
+
+  public static JVMElementFactory getFactory(Language language, Project project) {
+    final JVMElementFactoryProvider provider = INSTANCE.forLanguage(language);
+    return provider.getFactory(project);
   }
 }

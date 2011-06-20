@@ -905,7 +905,7 @@
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
-    <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.Provider"/>
+    <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
   </extensions>
 
 </idea-plugin>

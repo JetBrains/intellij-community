@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Medvedev Max
  */
-public interface PsiTopLevelElementFactory {
+public interface JVMElementFactory {
   /**
    * Creates an empty class with the specified name.
    *

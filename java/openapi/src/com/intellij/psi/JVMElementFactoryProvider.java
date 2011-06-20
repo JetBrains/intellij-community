@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl;
+package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiTopLevelElementFactory;
-import com.intellij.psi.PsiTopLevelElementFactoryProvider;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 /**
-* @author Medvedev Max
-*/
-public class Provider implements PsiTopLevelElementFactoryProvider {
-  @Override
-  public PsiTopLevelElementFactory getFactory(Project project) {
-    return GroovyPsiElementFactory.getInstance(project);
-  }
+ * @author Medvedev Max
+ */
+public interface JVMElementFactoryProvider {
+  JVMElementFactory getFactory(Project project);
 }

@@ -56,7 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author dimaskin
  */
-public abstract class GroovyPsiElementFactory implements PsiTopLevelElementFactory {
+public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   @NonNls public static final String DUMMY_FILE_NAME = "DUMMY__";
 
