@@ -95,6 +95,9 @@
     <configurationType implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
 
+    <configurationType implementation="com.jetbrains.python.testing.attest.PythonAtTestRunConfigurationType"/>
+    <configurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
+
     <referenceImporter implementation="com.jetbrains.python.codeInsight.imports.PythonReferenceImporter"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
@@ -687,6 +690,19 @@
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction" text="Python Package"
             description="Create a new directory and __init__.py inside it" icon="/nodes/packageClosed.png">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij.spellchecker">
+    <support implementation="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
+    <support implementation="com.jetbrains.python.spellchecker.RestSpellcheckerStrategy"/>
+    <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
+  </extensions>
+
+  <actions>
+    <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
+            text="Generate Python Spellchecker Dictionaries" internal="true">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>
 </idea-plugin>

@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -17,7 +18,7 @@ public class PyLiteralCollectionType extends PyClassType implements PyCollection
   }
 
   @Override
-  public PyType getElementType(TypeEvalContext context) {
+  public PyType getElementType(@NotNull TypeEvalContext context) {
     final PyExpression[] elements = mySequence.getElements();
     if (elements.length == 0 || elements.length > 10 /* performance */) {
       return null;

@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PySequenceExpression;
@@ -164,7 +165,6 @@ public class PyBuiltinCache {
   /**
    * Looks for a top-level named item. (Package builtins does not contain any sensible nested names anyway.)
    * @param name to look for
-   * @param type to look for and cast to (most often, PyFunction or PyClass)
    * @return found element, or null.
    */
   @Nullable
@@ -187,7 +187,7 @@ public class PyBuiltinCache {
    * Stores the most often used types, returned by getNNNType().
    */
   private final Map<String,PyClassType> myTypeCache = new HashMap<String, PyClassType>();
-  
+
   /**
   @return
   */
@@ -247,6 +247,26 @@ public class PyBuiltinCache {
   @Nullable
   public PyClassType getStrType() {
     return getObjectType("str");
+  }
+
+  @Nullable
+  public PyClassType getBytesType(LanguageLevel level) {
+    if (level.isPy3K()) {
+      return getObjectType("bytes");
+    }
+    else {
+      return getObjectType("str");
+    }
+  }
+
+  @Nullable
+  public PyType getStringType(LanguageLevel level) {
+    if (level.isPy3K()) {
+      return getObjectType("str");
+    }
+    else {
+      return getObjectType("unicode");
+    }
   }
 
   @Nullable

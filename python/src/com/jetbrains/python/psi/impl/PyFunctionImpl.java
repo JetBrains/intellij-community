@@ -30,8 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Implements PyFunction.
@@ -127,27 +126,63 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         return new PyClassType(pyClass, false);
       }
     }
-
     for(PyTypeProvider typeProvider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final PyType returnType = typeProvider.getReturnType(this, callSite, typeEvalContext);
       if (returnType != null) {
         return returnType;
       }
     }
-
     final PyType docStringType = getReturnTypeFromDocString();
     if (docStringType != null) {
       return docStringType;
-    }
+    }    
     if (typeEvalContext.allowReturnTypes()) {
+      final PyType yieldType = getYieldStatementType(typeEvalContext);
+      if (yieldType != null) {
+        return yieldType;
+      }
       return getReturnStatementType(typeEvalContext);
     }
     return null;
   }
 
   @Nullable
+  private PyType getYieldStatementType(@NotNull final TypeEvalContext context) {
+    PyType elementType = null;
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
+    final PyClass listClass = cache.getClass("list");
+    final PyStatementList statements = getStatementList();
+    final Set<PyType> types = new HashSet<PyType>();
+    if (statements != null && listClass != null) {
+      statements.accept(new PyRecursiveElementVisitor() {
+        @Override
+        public void visitPyYieldExpression(PyYieldExpression node) {
+          PyType t = node.getType(context);
+          if (t != null) {
+            types.add(t);
+          }
+          else {
+            types.add(cache.getObjectType());
+          }
+        }
+      });
+      final int n = types.size();
+      if (n == 1) {
+        elementType = types.iterator().next();
+      }
+      else if (n > 0) {
+        elementType = new PyUnionType(types);
+      }
+    }
+    if (elementType != null) {
+       return new PyCollectionTypeImpl(listClass, false, elementType);
+    }
+    return null;
+  }
+
+  @Nullable
   public PyType getReturnStatementType(TypeEvalContext typeEvalContext) {
-    ReturnVisitor visitor = new ReturnVisitor(typeEvalContext);
+    ReturnVisitor visitor = new ReturnVisitor(this, typeEvalContext);
     final PyStatementList statements = getStatementList();
     if (statements != null) {
       statements.accept(visitor);
@@ -224,30 +259,34 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
+    private final PyFunction myFunction;
     private final TypeEvalContext myContext;
     private PyType myResult = null;
     private boolean myHasReturns = false;
 
-    public ReturnVisitor(final TypeEvalContext context) {
+    public ReturnVisitor(PyFunction function, final TypeEvalContext context) {
+      myFunction = function;
       myContext = context;
     }
 
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {
-      final PyExpression expr = node.getExpression();
-      PyType returnType;
-      returnType = expr == null ? PyNoneType.INSTANCE : myContext.getType(expr);
-      if (!myHasReturns) {
-        myResult = returnType;
-        myHasReturns = true;
-      }
-      else {
-        if (myResult == null) {
+      if (PsiTreeUtil.getParentOfType(node, ScopeOwner.class, true) == myFunction) {
+        final PyExpression expr = node.getExpression();
+        PyType returnType;
+        returnType = expr == null ? PyNoneType.INSTANCE : myContext.getType(expr);
+        if (!myHasReturns) {
           myResult = returnType;
+          myHasReturns = true;
         }
         else {
-          if (returnType != null) {
-            myResult = PyUnionType.union(myResult, returnType);
+          if (myResult == null) {
+            myResult = returnType;
+          }
+          else {
+            if (returnType != null) {
+              myResult = PyUnionType.union(myResult, returnType);
+            }
           }
         }
       }

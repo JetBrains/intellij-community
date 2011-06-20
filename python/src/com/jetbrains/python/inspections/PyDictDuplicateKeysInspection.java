@@ -1,15 +1,17 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+import java.util.Map;
 
 /**
  * User: catherine
@@ -39,15 +41,16 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     @Override
     public void visitPyDictLiteralExpression(PyDictLiteralExpression node) {
       if (node.getElements().length != 0){
-        HashSet<String> set = new HashSet<String>();
+        Map<String, PyElement> map = new HashMap<String, PyElement>();
         for (PyExpression exp : node.getElements()) {
           PyExpression key = ((PyKeyValueExpression)exp).getKey();
           if (key instanceof PyNumericLiteralExpression
                   || key instanceof PyStringLiteralExpression || key instanceof PyReferenceExpression) {
-            if (set.contains(key.getText())) {
-              registerProblem(node, "Dictionary contains duplicate keys " + key.getText());
+            if (map.keySet().contains(key.getText())) {
+              registerProblem(key, "Dictionary contains duplicate keys " + key.getText());
+              registerProblem(map.get(key.getText()), "Dictionary contains duplicate keys " + key.getText());
             }
-            set.add(key.getText());
+            map.put(key.getText(), key);
           }
         }
       }
@@ -56,50 +59,49 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
       if (isDict(node)) {
-        HashSet<String> set = new HashSet<String>();
+        Map<String, PsiElement> map = new HashMap<String, PsiElement>();
         PyExpression[] argumentList = node.getArgumentList().getArguments();
         for (PyExpression argument : argumentList) {
           if (argument instanceof PyParenthesizedExpression)
             argument = ((PyParenthesizedExpression)argument).getContainedExpression();
           if (argument instanceof PySequenceExpression) {
             for (PyElement el : ((PySequenceExpression)argument).getElements()) {
-              String key = getKey(el);
-              checkKey(key, set, node);
+              PsiElement key = getKey(el);
+              checkKey(map, key);
             }
           }
           else {
-            String key = getKey(argument);
-            checkKey(key, set, node);
+            PsiElement key = getKey(argument);
+            checkKey(map, key);
           }
         }
       }
     }
 
-    private void checkKey(String key, Set<String> set, PyCallExpression node) {
-      if (key != null) {
-        if (set.contains(key)) {
-          registerProblem(node, "Dictionary contains duplicate keys " + key);
-        }
-        set.add(key);
+    private void checkKey(Map<String, PsiElement> map, PsiElement node) {
+      if (node == null) return;
+      String key = node.getText();
+      if (node instanceof PyStringLiteralExpression)
+        key = ((PyStringLiteralExpression)node).getStringValue();
+      if (map.keySet().contains(key)) {
+        registerProblem(node, "Dictionary contains duplicate keys " + key);
+        registerProblem(map.get(key), "Dictionary contains duplicate keys " + key);
       }
+      map.put(key, node);
     }
 
     @Nullable
-    private String getKey(PyElement argument) {
+    private PsiElement getKey(PyElement argument) {
       if (argument instanceof PyParenthesizedExpression) {
         PyExpression expr = ((PyParenthesizedExpression)argument).getContainedExpression();
         if (expr instanceof PyTupleExpression) {
           PyElement key = ((PyTupleExpression)expr).getElements()[0];
-          if (key instanceof PyStringLiteralExpression) {
-            return ((PyStringLiteralExpression)key).getStringValue();
-          }
-          else {
-            return key.getText();
-          }
+          return key;
         }
       }
       if (argument instanceof PyKeywordArgument) {
-        return ((PyKeywordArgument)argument).getKeyword();
+        ASTNode keyWord = ((PyKeywordArgument)argument).getKeywordNode();
+        if (keyWord != null) return keyWord.getPsi();
       }
       return null;
     }

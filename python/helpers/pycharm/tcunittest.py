@@ -61,7 +61,6 @@ class TeamcityTestResult(TestResult):
 
       return val[quote_ind:]
 
-
     def formatErr(self, err):
         exctype, value, tb = err
         return ''.join(traceback.format_exception(exctype, value, tb))
@@ -88,15 +87,18 @@ class TeamcityTestResult(TestResult):
         self.messages.testError(self.getTestName(test),
             message='Error', details=err)
 
+    def find_error_value(self, err):
+      error_value = traceback.extract_tb(err)
+      error_value = error_value[-1][-1]
+      return error_value.split('assert')[-1].strip()
+
     def addFailure(self, test, err):
         TestResult.addFailure(self, test, err)
 
         error_value = smart_str(err[1])
         if not len(error_value):
           # means it's test function and we have to extract value from traceback
-          error_value = traceback.extract_tb(err[2])
-          error_value = error_value[-1][-1]
-          error_value = error_value.split('assert')[-1].strip()
+          error_value = self.find_error_value(err[2])
 
         if (error_value.startswith("'") or error_value.startswith('"')) and \
                             (error_value.endswith("'") or error_value.endswith('"')):

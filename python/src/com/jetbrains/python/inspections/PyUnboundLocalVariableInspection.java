@@ -2,8 +2,11 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.dataflow.DFALimitExceededException;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -11,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -26,10 +30,14 @@ import com.jetbrains.python.psi.impl.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * @author oleg
  */
 public class PyUnboundLocalVariableInspection extends PyInspection {
+  private static Key<Set<ScopeOwner>> LARGE_FUNCTIONS_KEY = Key.create("PyUnboundLocalVariableInspection.LargeFunctions");
+
   @NotNull
   @Nls
   public String getDisplayName() {
@@ -37,10 +45,14 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
   }
 
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
+    session.putUserData(LARGE_FUNCTIONS_KEY, new HashSet<ScopeOwner>());
     return new PyInspectionVisitor(holder){
       @Override
       public void visitPyReferenceExpression(final PyReferenceExpression node) {
+        final Set<ScopeOwner> largeFunctions = session.getUserData(LARGE_FUNCTIONS_KEY);
+        assert largeFunctions != null;
+
         if (node.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(node)){
           return;
         }
@@ -61,7 +73,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, name);
-        if (owner == null) {
+        if (owner == null || largeFunctions.contains(owner)) {
           return;
         }
         // Ignore references declared in outer scopes
@@ -82,7 +94,15 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         else {
           anchor = node;
         }
-        final ScopeVariable variable = scope.getDeclaredVariable(anchor, name);
+        ScopeVariable variable = null;
+        try {
+          variable = scope.getDeclaredVariable(anchor, name);
+        }
+        catch (DFALimitExceededException e) {
+          largeFunctions.add(owner);
+          registerProblem(owner, PyBundle.message("INSP.unbound.function.too.large", owner.getName()));
+          return;
+        }
         if (variable == null) {
           boolean resolves2LocalVariable = false;
           boolean resolve2Scope = true;
@@ -136,26 +156,33 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           if (number != -1) {
             ControlFlowUtil.iteratePrev(number, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
               public ControlFlowUtil.Operation fun(final Instruction inst) {
-                if (inst.num() == number){
-                  return ControlFlowUtil.Operation.NEXT;
-                }
-                if (inst instanceof ReadWriteInstruction) {
-                  final ReadWriteInstruction rwInst = (ReadWriteInstruction)inst;
-                  if (name.equals(rwInst.getName())) {
-                    final PsiElement e = inst.getElement();
-                    if (e != null && scope.getDeclaredVariable(e, name) != null) {
-                      return ControlFlowUtil.Operation.BREAK;
-                    }
-                    if (rwInst.getAccess().isWriteAccess()) {
-                      return ControlFlowUtil.Operation.CONTINUE;
-                    }
-                    else {
-                      readAccessSeen.set(true);
-                      return ControlFlowUtil.Operation.BREAK;
+                try {
+                  if (inst.num() == number){
+                    return ControlFlowUtil.Operation.NEXT;
+                  }
+                  if (inst instanceof ReadWriteInstruction) {
+                    final ReadWriteInstruction rwInst = (ReadWriteInstruction)inst;
+                    if (name.equals(rwInst.getName())) {
+                      final PsiElement e = inst.getElement();
+                      if (e != null && scope.getDeclaredVariable(e, name) != null) {
+                        return ControlFlowUtil.Operation.BREAK;
+                      }
+                      if (rwInst.getAccess().isWriteAccess()) {
+                        return ControlFlowUtil.Operation.CONTINUE;
+                      }
+                      else {
+                        readAccessSeen.set(true);
+                        return ControlFlowUtil.Operation.BREAK;
+                      }
                     }
                   }
+                  return ControlFlowUtil.Operation.NEXT;
                 }
-                return ControlFlowUtil.Operation.NEXT;
+                catch (DFALimitExceededException e) {
+                  largeFunctions.add(owner);
+                  registerProblem(owner, PyBundle.message("INSP.unbound.function.too.large", owner.getName()));
+                  return ControlFlowUtil.Operation.BREAK;
+                }
               }
             });
           }

@@ -390,7 +390,7 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         type, _typeName, resolver = getType(var)
         return resolver.getDictionary(var)
     except:
-        traceback.print_exc()
+        return None
 
 class ExceptionOnEvaluate:
     def __init__(self, result):
@@ -495,14 +495,14 @@ def consoleExec(thread_id, frame_id, expression):
         # Case 2
         return True
 
-    # Case 3
-    try:
-        Exec(code, updated_globals, frame.f_locals)
+        # Case 3
+        try:
+            Exec(code, updated_globals, frame.f_locals)
 
-    except SystemExit:
-        raise
-    except:
-        interpreter.showtraceback()
+        except SystemExit:
+            raise
+        except:
+            interpreter.showtraceback()
 
     return False
 

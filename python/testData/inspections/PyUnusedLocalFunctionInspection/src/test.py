@@ -13,3 +13,11 @@ def bar():
     def bar1():pass #fail
     def bar1():pass #pass
     return bar1
+
+# PY-3866
+def foo():
+    def bar(): #pass
+        pass
+    def baz(): #pass
+        bar()
+    baz()

@@ -1,3 +1,5 @@
+from pydevd_file_utils import GetFileNameAndBaseFromFile
+
 def read_file(filename):
     f = open(filename, "r")
     s =  f.read()
@@ -50,7 +52,9 @@ def get_source(frame):
 def get_template_file_name(frame):
     try:
         source = get_source(frame)
-        return source[0].name
+        fname = source[0].name
+        filename, base = GetFileNameAndBaseFromFile(fname)
+        return filename
     except:
         return None
 
@@ -92,9 +96,15 @@ class FCode:
         self.co_name = name
         self.co_filename = filename
 
-def just_raised(frame):
-    name = frame.f_code.co_name
-    return name in ['_resolve_lookup', 'load_template_source']
+
+def is_django_exception_break_context(frame):
+    try:
+        name = frame.f_code.co_name
+    except :
+        name = None
+    return name in ['_resolve_lookup', 'find_template']
 
 
-  
+def just_raised(trace):
+    return trace.tb_next is None
+
