@@ -34,6 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -84,11 +85,15 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   static final Icon ourQuickFixOffIcon = IconLoader.getIcon("/actions/quickfixOffBulb.png");
   static final Icon ourArrowIcon = IconLoader.getIcon("/general/arrowDown.png");
   static final Icon ourInactiveArrowIcon = new EmptyIcon(ourArrowIcon.getIconWidth(), ourArrowIcon.getIconHeight());
-  private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(6, 6, 6, 6);
-  private static final Border ACTIVE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(5, 5, 5, 5));
+  
+  private static final int NORMAL_BORDER_SIZE = 6;
+  private static final int SMALL_BORDER_SIZE = 4;
+  
+  private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
+  private static final Border ACTIVE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
 
-  private static final Border INACTIVE_BORDER_SMALL = BorderFactory.createEmptyBorder(4, 4, 4, 4);
-  private static final Border ACTIVE_BORDER_SMALL = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(3, 3, 3, 3));
+  private static final Border INACTIVE_BORDER_SMALL = BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
+  private static final Border ACTIVE_BORDER_SMALL = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1));
 
   private final Editor myEditor;
 
@@ -252,17 +257,36 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
       realPoint = new Point(- (ourIntentionIcon.getIconWidth() / 2) - 4, - (ourIntentionIcon.getIconHeight() / 2));
     } else {
-      final int yShift = (ourIntentionIcon.getIconHeight() - editor.getLineHeight() - 1) / 2 - 1;
+      // try to place bulb on the same line
+      final int borderHeight = NORMAL_BORDER_SIZE;
+
+      int yShift = -(NORMAL_BORDER_SIZE + ourIntentionIcon.getIconHeight());
+      if (canPlaceBulbOnTheSameLine(editor)) {
+        yShift = -(borderHeight + ((ourIntentionIcon.getIconHeight() - editor.getLineHeight())/2) + 3);
+      }
+
       final int xShift = ourIntentionIcon.getIconWidth();
 
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift- LIGHTBULB_OFFSET);
+      realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift);
     }
 
     Point location = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
     return new Point(location.x, location.y);
   }
+  
+  private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || editor.isOneLineMode()) return false;
+    final int offset = editor.getCaretModel().getOffset();
+    final VisualPosition pos = editor.offsetToVisualPosition(offset);
+    int line = pos.line;
 
+    final int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
+    final Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
+
+    return point.x > (ourIntentionIcon.getIconWidth() + NORMAL_BORDER_SIZE*2);
+  }
+                                                                 
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull final Editor editor,
@@ -371,7 +395,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     if (isShowing()) {
       final RelativePoint swCorner = RelativePoint.getSouthWestOf(this);
-      myPopup.show(new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y+LIGHTBULB_OFFSET)));
+      final int yOffset = canPlaceBulbOnTheSameLine(myEditor) ? 0 : myEditor.getLineHeight() - (myEditor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE);
+      myPopup.show(new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset)));
     }
     else {
       myPopup.showInBestPositionFor(myEditor);
