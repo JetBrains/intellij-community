@@ -377,11 +377,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   private JComponent createSignaturePanel() {
-    mySignatureArea = new EditorTextField(EditorFactory.getInstance().createDocument(calculateSignature()),
-                                          getProject(),
-                                          getFileType(),
-                                          true,
-                                          false);
+    mySignatureArea = createSignaturePreviewComponent();
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("signature.preview.border.title")));
     panel.add(mySignatureArea, BorderLayout.CENTER);
@@ -396,6 +392,14 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     });
     updateSignature();
     return panel;
+  }
+
+  protected EditorTextField createSignaturePreviewComponent() {
+    return new EditorTextField(EditorFactory.getInstance().createDocument(calculateSignature()),
+                               getProject(),
+                               getFileType(),
+                               true,
+                               false);
   }
 
   protected void updateSignature() {
