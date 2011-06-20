@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +46,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ActionMenuItem extends JMenuItem {
-  private static final Icon ourCheckedIcon = new SizedIcon(Icons.CHECK_ICON, 18, 18);
+  private static final Icon ourCheckedIcon = new SizedIcon(PlatformIcons.CHECK_ICON, 18, 18);
   private static final Icon ourUncheckedIcon = EmptyIcon.ICON_18;
 
   private final ActionRef<AnAction> myAction;
@@ -101,29 +101,6 @@ public class ActionMenuItem extends JMenuItem {
   public void removeNotify() {
     uninstallSynchronizer();
     super.removeNotify();
-  }
-
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    //g.setColor(getBackground());
-    //g.fillRect(0, 0, getWidth(), getHeight());
-  }
-
-  @Override
-  protected void paintChildren(Graphics g) {
-    super.paintChildren(g);
-  }
-
-  @Override
-  protected void paintBorder(Graphics g) {
-    super.paintBorder(g);
-  }
-
-
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
   }
 
   private void installSynchronizer() {
@@ -317,10 +294,7 @@ public class ActionMenuItem extends JMenuItem {
         else if (Presentation.PROP_TEXT.equals(name)) {
           setText(myPresentation.getText());
         }
-        else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
-          updateIcon(myAction.getAction());
-        }
-        else if (SELECTED.equals(name)) {
+        else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name) || SELECTED.equals(name)) {
           updateIcon(myAction.getAction());
         }
       }
