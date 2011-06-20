@@ -52,6 +52,8 @@
 
     <extensionPoint name="groovyFrameworkConfigNotification" interface="org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification"/>
     <extensionPoint name="groovySourceFolderDetector" interface="org.jetbrains.plugins.groovy.actions.GroovySourceFolderDetector"/>
+
+    <extensionPoint name="mvc.framework" interface="org.jetbrains.plugins.groovy.mvc.MvcFramework"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -98,6 +100,9 @@
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
     <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gpp.GppPositionManager"/>
+
+    <mvc.framework implementation="org.jetbrains.plugins.groovy.griffon.GriffonFramework"/>
+    <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.groovy.griffon.GriffonConfigureNotification"/>
 
   </extensions>
 
@@ -558,6 +563,24 @@
 
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
+
+    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.griffon.GriffonLibraryPresentationProvider"/>
+    <moduleBuilder builderClass="org.jetbrains.plugins.groovy.griffon.GriffonModuleBuilder"/>
+    <wizardMode implementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectBuilder"/>
+    <programRunner implementation="org.jetbrains.plugins.groovy.griffon.GriffonDebuggerRunner"/>
+    <configurationType implementation="org.jetbrains.plugins.groovy.griffon.GriffonRunConfigurationType"/>
+    <toolWindow id="Griffon View" anchor="left" secondary="false" icon="/images/griffon/griffon.png"
+                factoryClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"
+                conditionClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"/>
+
+    <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcConsole"
+                    serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
+    <selectInTarget implementation="org.jetbrains.plugins.groovy.mvc.projectView.MvcProjectViewSelectInTarget"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"
+                    serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
+
+
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -619,6 +642,10 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
+    <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.MvcRunTarget"
+            text="Run Target" description="Run arbitrary Grails/Griffon target">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
+    </action>
   </actions>
 
   <application-components>
@@ -627,6 +654,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.gant.GantLoader</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcPathMacros</implementation-class>
     </component>
   </application-components>
 
@@ -640,6 +670,13 @@
     <component>
       <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
       <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.mvc.projectView.MvcViewManager</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
     </component>
   </project-components>
 
