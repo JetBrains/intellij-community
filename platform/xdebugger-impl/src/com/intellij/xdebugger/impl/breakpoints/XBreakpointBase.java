@@ -39,6 +39,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
+import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -360,6 +361,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     public ActionGroup getPopupMenuActions() {
       DefaultActionGroup group = new DefaultActionGroup();
       final XDebuggerManager debuggerManager = XDebuggerManager.getInstance(getProject());
+
+      group.add(new EditBreakpointAction(XDebuggerBundle.message("xdebugger.view.breakpoint.edit.action"), XBreakpointBase.this, this));
+
+      group.add(new Separator());
+
       if (!debuggerManager.getBreakpointManager().isDefaultBreakpoint(XBreakpointBase.this)) {
         group.add(new RemoveBreakpointGutterIconAction(XBreakpointBase.this));
       }
@@ -369,7 +375,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       }
       group.add(new Separator());
 
-      group.add(new EditBreakpointAction(XDebuggerBundle.message("xdebugger.view.breakpoint.properties.action"), XBreakpointBase.this, this));
+      group.add(new ViewBreakpointsAction(XDebuggerBundle.message("xdebugger.view.breakpoint.reveal.action"), XBreakpointBase.this));
       return group;
     }
 

@@ -53,8 +53,10 @@ public class EditBreakpointAction extends AnAction {
     if (editor != null) {
       final EditorGutterComponentEx gutterComponent = ((EditorEx)editor).getGutterComponentEx();
       Point point = gutterComponent.getPoint(myBreakpointGutterRenderer);
-      final Icon icon = myBreakpointGutterRenderer.getIcon();
-      DebuggerUIUtil.showBreakpointEditorBalloon(project, new Point(point.x + icon.getIconWidth()/2 + gutterComponent.getIconsAreaWidth(), point.y + icon.getIconHeight()/2), gutterComponent, false, myBreakpoint);
+      if (point != null) {
+        final Icon icon = myBreakpointGutterRenderer.getIcon();
+        DebuggerUIUtil.showBreakpointEditorBalloon(project, new Point(point.x + icon.getIconWidth()/2 + gutterComponent.getIconsAreaWidth(), point.y + icon.getIconHeight()/2), gutterComponent, false, myBreakpoint);
+      }
     }
   }
 }

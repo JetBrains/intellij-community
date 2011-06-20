@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +46,12 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   private JPanel myContentPane;
   private Map<SuspendPolicy, JRadioButton> mySuspendRadioButtons;
 
+  public interface Delegate {
+    void showMoreOptionsIfNeeded();
+  }
+
+  private Delegate myDelegate;
+
   public void init(Project project, final XBreakpointManager breakpointManager, @NotNull B breakpoint) {
     super.init(project, breakpointManager, breakpoint);
     mySuspendRadioButtons = new HashMap<SuspendPolicy, JRadioButton>();
@@ -52,6 +60,15 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
     mySuspendRadioButtons.put(SuspendPolicy.NONE, mySuspendNoneRadioButton);
     @NonNls String card = myBreakpointType.isSuspendThreadSupported() ? "radioButtons" : "checkbox";
     ((CardLayout)mySuspendPolicyPanel.getLayout()).show(mySuspendPolicyPanel, card);
+
+    mySuspendCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        if (myDelegate != null && !mySuspendCheckBox.isSelected()) {
+          myDelegate.showMoreOptionsIfNeeded();
+        }
+      }
+    });
   }
 
   @Override
@@ -64,7 +81,13 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   void loadProperties() {
     SuspendPolicy suspendPolicy = myBreakpoint.getSuspendPolicy();
     mySuspendRadioButtons.get(suspendPolicy).setSelected(true);
-    mySuspendCheckBox.setSelected(suspendPolicy != SuspendPolicy.NONE);
+    final boolean selected = suspendPolicy != SuspendPolicy.NONE;
+    mySuspendCheckBox.setSelected(selected);
+    if (!selected) {
+      if (myDelegate != null) {
+        myDelegate.showMoreOptionsIfNeeded();
+      }
+    }
   }
 
   private SuspendPolicy getConfiguredSuspendPolicy() {
@@ -84,5 +107,13 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   @Override
   void saveProperties() {
     myBreakpoint.setSuspendPolicy(getConfiguredSuspendPolicy());
+  }
+
+  public Delegate getDelegate() {
+    return myDelegate;
+  }
+
+  public void setDelegate(Delegate delegate) {
+    myDelegate = delegate;
   }
 }

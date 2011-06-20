@@ -40,9 +40,10 @@ import java.util.List;
  * Time: 15:46
  * To change this template use File | Settings | File Templates.
  */
-public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
+public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implements XSuspendPolicyPanel.Delegate {
 
   private LinkLabel myShowMoreOptionsLink;
+  private boolean myShowMoreOptions;
 
   private void createUIComponents() {
     myShowMoreOptionsLink = new LinkLabel("More Options", null, new LinkListener() {
@@ -53,6 +54,15 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
         }
       }
     });
+  }
+
+  @Override
+  public void showMoreOptionsIfNeeded() {
+    if (myShowMoreOptions) {
+      if (myDelegate != null) {
+        myDelegate.showMoreOptions();
+      }
+    }
   }
 
   public interface Delegate {
@@ -90,6 +100,8 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
     XBreakpointType<B, ?> breakpointType = XBreakpointUtil.getType(breakpoint);
 
     mySuspendPolicyPanel.init(project, breakpointManager, breakpoint);
+    mySuspendPolicyPanel.setDelegate(this);
+
     mySubPanels.add(mySuspendPolicyPanel);
     myMasterBreakpointPanel.init(project, breakpointManager, breakpoint);
     mySubPanels.add(myMasterBreakpointPanel);
@@ -106,14 +118,14 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
       myConditionPanel.setVisible(false);
     }
 
-    boolean showMoreOptions = false;
+    myShowMoreOptions = false;
     for (XBreakpointPropertiesSubPanel<B> panel : mySubPanels) {
       if (panel.lightVariant(showAllOptions)) {
-        showMoreOptions = true;
+        myShowMoreOptions = true;
       }
     }
 
-    myShowMoreOptionsLink.setVisible(showMoreOptions);
+    myShowMoreOptionsLink.setVisible(myShowMoreOptions);
 
     myCustomPanels = new ArrayList<XBreakpointCustomPropertiesPanel<B>>();
     XBreakpointCustomPropertiesPanel<B> customPropertiesPanel = breakpointType.createCustomPropertiesPanel();
@@ -121,8 +133,6 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
       myCustomPropertiesPanelWrapper.add(customPropertiesPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customPropertiesPanel);
     }
-
-    loadProperties();
   }
 
   public void saveProperties() {
@@ -145,7 +155,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
     }
   }
 
-  private void loadProperties() {
+  public void loadProperties() {
     for (XBreakpointPropertiesSubPanel<B> panel : mySubPanels) {
       panel.loadProperties();
     }

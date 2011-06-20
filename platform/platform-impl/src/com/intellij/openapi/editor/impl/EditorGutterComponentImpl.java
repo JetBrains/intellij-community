@@ -1277,7 +1277,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public Point getPoint(GutterIconRenderer renderer) {
     for (int line : myLineToGutterRenderers.keys()) {
       for (GutterIconRenderer gutterIconRenderer : myLineToGutterRenderers.get(line)) {
-        if (gutterIconRenderer == renderer) {
+        if (gutterIconRenderer.equals(renderer)) {
           int x = getLineMarkerAreaOffset() + 1;
           final int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
           return new Point(x, y);
