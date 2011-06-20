@@ -24,15 +24,17 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -43,6 +45,22 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   private final int myEndOffset;
   private final AnnotationHolderImpl myAnnotationHolder;
 
+  private volatile DocumentListener myDocumentListener;
+  private volatile boolean myDocumentChanged;
+
+  private final Map<ExternalAnnotator, MyData> myAnnotator2DataMap;
+
+  private static class MyData {
+    final PsiFile myPsiRoot;
+    final Object myCollectedInfo;
+    volatile Object myAnnotationResult;
+
+    private MyData(PsiFile psiRoot, Object collectedInfo) {
+      myPsiRoot = psiRoot;
+      myCollectedInfo = collectedInfo;
+    }
+  }
+
   public ExternalToolPass(@NotNull PsiFile file,
                           @NotNull Editor editor,
                           int startOffset,
@@ -52,9 +70,13 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
+
+    myAnnotator2DataMap = new HashMap<ExternalAnnotator, MyData>();
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
+    myDocumentChanged = false;
+
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getLanguages();
     for (Language language : relevantLanguages) {
@@ -68,17 +90,75 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
 
         for(ExternalAnnotator externalAnnotator: externalAnnotators) {
           externalAnnotator.annotate(psiRoot, myAnnotationHolder);
+
+          final Object collectedInfo = externalAnnotator.collectionInformation(psiRoot);
+          if (collectedInfo != null) {
+            myAnnotator2DataMap.put(externalAnnotator, new MyData(psiRoot, collectedInfo));
+          }
         }
       }
     }
   }
 
   public void doApplyInformationToEditor() {
-    List<HighlightInfo> infos = getHighlights();
-    // This should be done for any result for removing old highlights
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, getColorsScheme(), getId());
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());
+
+    myDocumentListener = new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent event) {
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent event) {
+        myDocumentChanged = true;
+      }
+    };
+    myDocument.addDocumentListener(myDocumentListener);
+
+    final Runnable r = new Runnable() {
+      @Override
+      public void run() {
+        if (myDocumentChanged || myProject.isDisposed()) {
+          doFinish();
+          return;
+        }
+        doAnnotate();
+
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            if (myDocumentChanged || myProject.isDisposed()) {
+              doFinish();
+              return;
+            }
+            collectHighlighters();
+
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (myDocumentChanged || myProject.isDisposed()) {
+                  doFinish();
+                  return;
+                }
+
+                myDocument.removeDocumentListener(myDocumentListener);
+                final List<HighlightInfo> infos = getHighlights();
+                UpdateHighlightersUtil
+                  .setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, getColorsScheme(), getId());
+              }
+            });
+          }
+        });
+      }
+    };
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      r.run();
+    }
+    else {
+      ApplicationManager.getApplication().executeOnPooledThread(r);
+    }
   }
 
   private List<HighlightInfo> getHighlights() {
@@ -87,5 +167,41 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
       infos.add(HighlightInfo.fromAnnotation(annotation));
     }
     return infos;
+  }
+
+  private void collectHighlighters() {
+    for (ExternalAnnotator annotator : myAnnotator2DataMap.keySet()) {
+      final MyData data = myAnnotator2DataMap.get(annotator);
+      if (data != null) {
+        annotator.apply(data.myPsiRoot, data.myAnnotationResult, myAnnotationHolder);
+      }
+    }
+  }
+
+  private void doFinish() {
+    myDocument.removeDocumentListener(myDocumentListener);
+    final Runnable r = new Runnable() {
+      @Override
+      public void run() {
+        UpdateHighlightersUtil
+          .setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, Collections.<HighlightInfo>emptyList(),
+                                   getColorsScheme(), getId());
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      r.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(r);
+    }
+  }
+
+  private void doAnnotate() {
+    for (ExternalAnnotator annotator : myAnnotator2DataMap.keySet()) {
+      final MyData data = myAnnotator2DataMap.get(annotator);
+      if (data != null) {
+        data.myAnnotationResult = annotator.doAnnotate(data.myCollectedInfo);
+      }
+    }
   }
 }

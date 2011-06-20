@@ -48,7 +48,7 @@ import java.net.URL;
  * User: sweinreuter
  * Date: 18.07.2007
  */
-public class RngSchemaValidator implements ExternalAnnotator {
+public class RngSchemaValidator extends ExternalAnnotator {
   private static final Logger LOG = Logger.getInstance(RngSchemaValidator.class.getName());
 
   public void annotate(final PsiFile file, final AnnotationHolder holder) {

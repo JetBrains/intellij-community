@@ -16,6 +16,8 @@
 package com.intellij.lang.annotation;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Implemented by a custom language plugin to process the files in a language by an
@@ -25,7 +27,20 @@ import com.intellij.psi.PsiFile;
  * @author ven
  * @see com.intellij.lang.ExternalLanguageAnnotators
  */
-public interface ExternalAnnotator {
+public abstract class ExternalAnnotator {
+
+  @Nullable
+  public Object collectionInformation(@NotNull PsiFile file) {
+    return null;
+  }
+
+  @Nullable
+  public Object doAnnotate(Object collectedInfo) {
+    return null;
+  }
+
+  public void apply(@NotNull PsiFile file, Object annotationResult, @NotNull AnnotationHolder holder) {
+  }
 
   /**
    * Annotates the specified file.
@@ -33,5 +48,8 @@ public interface ExternalAnnotator {
    * @param file   the file to annotate.
    * @param holder the container which receives annotations created by the plugin.
    */
-  void annotate(PsiFile file, AnnotationHolder holder);
+  // todo: adapt existing annotators to a new API
+  @Deprecated
+  public void annotate(PsiFile file, AnnotationHolder holder) {
+  }
 }

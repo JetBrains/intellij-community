@@ -33,7 +33,7 @@ import com.intellij.xml.util.XmlTagUtil;
 /**
  * @author ven
  */
-public class XMLExternalAnnotator implements ExternalAnnotator {
+public class XMLExternalAnnotator extends ExternalAnnotator {
 
   public void annotate(PsiFile file, AnnotationHolder holder) {
     if (!(file instanceof XmlFile)) return;
