@@ -569,7 +569,7 @@
     <wizardMode implementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectBuilder"/>
     <programRunner implementation="org.jetbrains.plugins.groovy.griffon.GriffonDebuggerRunner"/>
     <configurationType implementation="org.jetbrains.plugins.groovy.griffon.GriffonRunConfigurationType"/>
-    <toolWindow id="Griffon View" anchor="left" secondary="false" icon="/images/griffon/griffon.png"
+    <toolWindow id="Griffon View" anchor="left" secondary="false" icon="/icons/griffon/griffon.png"
                 factoryClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"
                 conditionClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"/>
 
