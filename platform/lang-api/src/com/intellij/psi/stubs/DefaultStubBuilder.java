@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -37,7 +38,7 @@ public class DefaultStubBuilder implements StubBuilder {
     return new PsiFileStubImpl(file);
   }
 
-  protected StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
+  private StubElement buildStubTreeFor(@NotNull PsiElement elt, StubElement parentStub) {
     StubElement stub = parentStub;
     if (elt instanceof StubBasedPsiElement) {
       final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
