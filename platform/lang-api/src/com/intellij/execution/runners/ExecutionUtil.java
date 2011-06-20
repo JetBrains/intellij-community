@@ -58,7 +58,9 @@ public class ExecutionUtil {
     String error = e.getMessage();
     HyperlinkListener listener = null;
 
-    if (error.contains("87") && e instanceof ProcessNotCreatedException) {
+    if (error.contains("87") &&
+        e instanceof ProcessNotCreatedException &&
+        !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
       final String commandLineString = ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString();
       if (commandLineString.length() > 1024 * 32) {
         error = "Command line is too long. In order to reduce its length classpath file can be used.<br>" +
