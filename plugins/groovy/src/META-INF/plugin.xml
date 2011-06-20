@@ -642,10 +642,16 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
-    <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.MvcRunTarget"
-            text="Run Target" description="Run arbitrary Grails/Griffon target">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
-    </action>
+    <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup">
+      <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.MvcRunTarget"
+              text="Run Target" description="Run arbitrary Grails/Griffon target">
+        <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
+      </action>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddFrameworkSupport"/>
+      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="AddFrameworkSupport"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
   </actions>
 
   <application-components>
