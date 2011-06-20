@@ -38,11 +38,13 @@
             id="Images.ShowThumbnails" text="Show image thumbnails">
       <keyboard-shortcut first-keystroke="shift control T" keymap="$default"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
+      <add-to-group anchor="after" group-id="NavbarPopupMenu" relative-to-action="AddToFavorites"/>
     </action>
     <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
             id="Images.ToggleTransparencyChessboard"
             icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png"
-            text="Show Chessboard">
+            text="Show Chessboard"
+            description="Show a chessboard on transparent image parts">
     </action>
     <group id="Images.EditorToolbar">
       <reference id="Images.ToggleTransparencyChessboard"/>
@@ -93,11 +95,15 @@
     <group id="Images.ThumbnailsToolbar">
       <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
               id="Images.Thumbnails.UpFolder"
+              text="Parent Folder"
+              description="Show image thumbnails from the containing folder"
               icon="/nodes/upFolder.png">
         <keyboard-shortcut first-keystroke="BACK_SPACE" keymap="$default"/>
       </action>
       <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
               id="Images.Thumbnails.ToggleRecursive"
+              text="Recursive"
+              description="Toggle whether to show the images from subfolders recursively"
               icon="/objectBrowser/flattenPackages.png">
         <keyboard-shortcut first-keystroke="control MULTIPLY" keymap="$default"/>
       </action>
@@ -106,6 +112,8 @@
       <separator/>
       <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
               id="Images.Thumbnails.Hide"
+              text="Hide"
+              description="Hide image thumbnails"
               icon="/actions/cancel.png" use-shortcut-of="CloseContent"/>
     </group>
     <group id="Images.ThumbnailsPopupMenu">
