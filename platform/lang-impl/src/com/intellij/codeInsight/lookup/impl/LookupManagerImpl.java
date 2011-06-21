@@ -126,10 +126,6 @@ public class LookupManagerImpl extends LookupManager {
                                  @NotNull final LookupArranger arranger) {
     hideActiveLookup();
 
-    if (myActiveLookup != null) {
-      LOG.error(myActiveLookup.isLookupDisposed());
-    }
-
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -199,12 +195,13 @@ public class LookupManagerImpl extends LookupManager {
         if (myActiveLookup == null) return;
         LOG.assertTrue(myActiveLookup.isLookupDisposed());
         myActiveLookup.removeLookupListener(this);
-        Disposer.dispose(connector);
         Lookup lookup = myActiveLookup;
         ApplicationManager.getApplication().assertIsDispatchThread();
         myActiveLookup = null;
         myActiveLookupEditor = null;
         myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
+
+        Disposer.dispose(connector);
       }
     });
 
@@ -223,8 +220,14 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   public void hideActiveLookup() {
-    if (myActiveLookup != null) {
-      myActiveLookup.hide();
+    LookupImpl lookup = myActiveLookup;
+    if (lookup != null) {
+      lookup.hide();
+      LOG.assertTrue(lookup.isLookupDisposed(), "Should be disposed");
+      if (myActiveLookup != null) {
+        lookup.hide();
+        LOG.error("Non-cleaned-up lookup: " + lookup.isLookupDisposed());
+      }
     }
   }
 
