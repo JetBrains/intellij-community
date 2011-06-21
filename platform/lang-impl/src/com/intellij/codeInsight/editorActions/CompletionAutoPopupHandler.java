@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -59,6 +60,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   @Override
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) return Result.CONTINUE;
+    if (PowerSaveMode.isEnabled()) return Result.CONTINUE;
 
     if (LookupManager.getActiveLookup(editor) != null) {
       return Result.CONTINUE;
