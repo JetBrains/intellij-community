@@ -16,6 +16,7 @@
 
 package com.intellij.pom.tree.events.impl;
 
+import com.intellij.idea.LoggerFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
@@ -27,6 +28,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.CharTable;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -37,6 +39,7 @@ import java.util.*;
 public class TreeChangeEventImpl implements TreeChangeEvent{
   private final Map<ASTNode, TreeChange> myChangedElements = new THashMap<ASTNode, TreeChange>();
   private final List<ASTNode> myChangedInOrder = new ArrayList<ASTNode>();
+  private List<ASTNode> myChangedInOrderNew;
   private final List<Set<ASTNode>> myOfEqualDepth = new ArrayList<Set<ASTNode>>(10);
   private final PomModelAspect myAspect;
   private final FileElement myFileElement;
@@ -53,7 +56,38 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   @NotNull
   public ASTNode[] getChangedElements() {
-    return myChangedInOrder.toArray(new ASTNode[myChangedInOrder.size()]);
+    if (myChangedInOrderNew == null) {
+      myChangedInOrderNew = new ArrayList<ASTNode>(myChangedElements.keySet());
+
+      Collections.sort(myChangedInOrderNew, new Comparator<ASTNode>() {
+        final Map<ASTNode, int[]> routeMap = new THashMap<ASTNode, int[]>(myChangedElements.size());
+        final TObjectIntHashMap<ASTNode> nodeIndex = new TObjectIntHashMap<ASTNode>(myChangedElements.size());
+
+        @Override
+        public int compare(ASTNode o1, ASTNode o2) {
+          int[] route = routeMap.get(o1);
+          if (route == null) routeMap.put(o1, route = getRoute(o1, nodeIndex));
+          int[] route2 = routeMap.get(o2);
+          if (route2 == null) routeMap.put(o2, route2 = getRoute(o2, nodeIndex));
+          return compareRoutes(route, route2);
+        }
+      });
+
+      int size = myChangedInOrderNew.size();
+      if (size == myChangedInOrder.size()) {
+        for(int i = 0; i < size; ++i) {
+          if (myChangedInOrderNew.get(i) != myChangedInOrder.get(i)) {
+            LoggerFactory.getInstance().getLoggerInstance(getClass().getName()).error("Unexpected changed elements difference");
+            return myChangedInOrder.toArray(new ASTNode[myChangedInOrder.size()]);
+          }
+        }
+      } else {
+        LoggerFactory.getInstance().getLoggerInstance(getClass().getName()).error("Unexpected changed elements difference");
+        return myChangedInOrder.toArray(new ASTNode[myChangedInOrder.size()]);
+      }
+    }
+
+    return myChangedInOrderNew.toArray(new ASTNode[myChangedInOrderNew.size()]);
   }
 
   public TreeChange getChangesByElement(@NotNull ASTNode element) {
@@ -96,6 +130,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public void clear() {
+    myChangedInOrderNew = null;
     myChangedInOrder.clear();
     myChangedElements.clear();
     myOfEqualDepth.clear();
@@ -214,6 +249,32 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
         rootIndex++;
       }
       root[i] = rootIndex;
+    }
+    return root;
+  }
+
+  private static int[] getRoute(ASTNode node, TObjectIntHashMap<ASTNode> index){
+    final List<ASTNode> parents = new ArrayList<ASTNode>(20);
+    while(node != null){
+      ASTNode nodeTreeParent = node.getTreeParent();
+      if (nodeTreeParent == null) break;
+      if (!index.contains(node)) {
+        ASTNode current = nodeTreeParent.getFirstChildNode();
+        int rootIndex = 0;
+
+        while(current != null){
+          index.put(current, rootIndex);
+          current = current.getTreeNext();
+          rootIndex++;
+        }
+      }
+      parents.add(node);
+      node = nodeTreeParent;
+    }
+    final int[] root = new int[parents.size()];
+    for(int i = 0; i < root.length; i++){
+      final ASTNode parent = parents.get(root.length - i - 1);
+      root[i] = index.get(parent);
     }
     return root;
   }
