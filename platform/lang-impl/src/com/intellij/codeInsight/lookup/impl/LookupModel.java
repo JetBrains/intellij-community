@@ -39,7 +39,6 @@ public class LookupModel {
     }
   };
   private final Object lock = new Object();
-  @SuppressWarnings({"unchecked"}) private final Map<LookupElement, Collection<LookupElementAction>> myItemActions = new THashMap<LookupElement, Collection<LookupElementAction>>(TObjectHashingStrategy.IDENTITY);
   @SuppressWarnings({"unchecked"}) private final Map<LookupElement, String> myItemPresentations = new THashMap<LookupElement, String>(TObjectHashingStrategy.IDENTITY);
   private final List<LookupElement> myItems = new ArrayList<LookupElement>();
   private SortedList<LookupElement> mySortedItems;
@@ -82,20 +81,6 @@ public class LookupModel {
     }
   }
 
-
-  public void setItemActions(LookupElement item, Collection<LookupElementAction> actions) {
-    synchronized (lock) {
-      myItemActions.put(item, actions);
-    }
-  }
-
-  public Collection<LookupElementAction> getActionsFor(LookupElement element) {
-    synchronized (lock) {
-      final Collection<LookupElementAction> collection = myItemActions.get(element);
-      return collection == null ? Collections.<LookupElementAction>emptyList() : collection;
-    }
-  }
-
   public Pair<List<LookupElement>, Iterable<List<LookupElement>>> getModelSnapshot() {
     synchronized (lock) {
       final List<LookupElement> sorted = new ArrayList<LookupElement>(mySortedItems);
@@ -106,9 +91,7 @@ public class LookupModel {
 
   public void collectGarbage() {
     synchronized (lock) {
-      Set<LookupElement> itemSet = new THashSet<LookupElement>(myItems, TObjectHashingStrategy.IDENTITY);
-      myItemActions.keySet().retainAll(itemSet);
-      myItemPresentations.keySet().retainAll(itemSet);
+      myItemPresentations.keySet().retainAll(new THashSet<LookupElement>(myItems, TObjectHashingStrategy.IDENTITY));
     }
   }
 

@@ -272,7 +272,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myModel.addItem(item);
 
     updateLookupWidth(item);
-    updateItemActions(item);
   }
 
   public void updateLookupWidth(LookupElement item) {
@@ -284,16 +283,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   }
 
-  public void updateItemActions(LookupElement item) {
+  public Collection<LookupElementAction> getActionsFor(LookupElement element) {
     final CollectConsumer<LookupElementAction> consumer = new CollectConsumer<LookupElementAction>();
     for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
-      provider.fillActions(item, this, consumer);
+      provider.fillActions(element, this, consumer);
     }
-    myModel.setItemActions(item, consumer.getResult());
-  }
-
-  public Collection<LookupElementAction> getActionsFor(LookupElement element) {
-    return myModel.getActionsFor(element);
+    return consumer.getResult();
   }
 
   public JList getList() {
@@ -930,7 +925,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
-    final Collection<LookupElementAction> actions = myModel.getActionsFor(item);
+    final Collection<LookupElementAction> actions = getActionsFor(item);
     if (!actions.isEmpty()) {
       myHintAlarm.addRequest(new Runnable() {
         @Override
