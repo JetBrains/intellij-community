@@ -109,6 +109,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           initOccurrencesMarkers();
           setElementToRename(variable);
           started = AbstractInplaceIntroducer.super.performInplaceRename(false, nameSuggestions);
+          myBalloon.setTitle(variable.getText());
         }
         result.set(started);
         if (!started && variable != null) {
@@ -139,6 +140,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             myEditor.putUserData(INTRODUCE_RESTART, false);
           }
         }
+        myBalloon.setTitle(getVariable().getText());
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, getCommandName(), getCommandName());

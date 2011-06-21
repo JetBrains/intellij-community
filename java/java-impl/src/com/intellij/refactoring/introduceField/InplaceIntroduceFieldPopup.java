@@ -202,6 +202,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
             protected void run(Result result) throws Throwable {
               PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
               visibilityListener.perform(getVariable());
+              myBalloon.setTitle(getVariable().getText());
             }
           }.execute();
         }
@@ -214,7 +215,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
             @Override
             protected void run(Result result) throws Throwable {
               PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              finalListener.perform(myIntroduceFieldPanel.isDeclareFinal(), getVariable());
+              finalListener.perform(myIntroduceFieldPanel.isDeclareFinal(), getVariable(), myBalloon);
             }
           }.execute();
         }

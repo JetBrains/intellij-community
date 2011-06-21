@@ -335,6 +335,7 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
           protected void run(Result result) throws Throwable {
             PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
             visibilityListener.perform(getVariable());
+            myBalloon.setTitle(getVariable().getText());
           }
         }.execute();
       }

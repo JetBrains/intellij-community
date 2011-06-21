@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtil;
@@ -175,7 +176,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
             @Override
             protected void run(Result result) throws Throwable {
               PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              finalListener.perform(myFinalCb.isSelected(), getParameter());
+              finalListener.perform(myFinalCb.isSelected(), getParameter(), getBalloon());
             }
           }.execute();
         }
@@ -185,6 +186,8 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
                                               GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
     }
   }
+
+  protected abstract Balloon getBalloon();
 
   @Override
   protected void saveSettings(JavaRefactoringSettings settings) {

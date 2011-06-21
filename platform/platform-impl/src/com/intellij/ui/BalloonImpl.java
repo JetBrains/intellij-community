@@ -48,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
@@ -1420,6 +1419,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   @Override
   public boolean isDisposed() {
     return myDisposed;
+  }
+
+  @Override
+  public void setTitle(String title) {
+    myTitleLabel.setText(title);
   }
 
   @Override

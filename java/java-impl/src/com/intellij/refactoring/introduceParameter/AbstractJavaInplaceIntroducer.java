@@ -3,7 +3,10 @@ package com.intellij.refactoring.introduceParameter;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.keymap.Keymap;
@@ -33,7 +36,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   protected TypeSelectorManagerImpl myTypeSelectorManager;
   protected TypeSelector myTypeSelector;
 
-  public AbstractJavaInplaceIntroducer(Project project,
+  public AbstractJavaInplaceIntroducer(final Project project,
                                        Editor editor,
                                        PsiExpression expr,
                                        PsiVariable localVariable,
@@ -43,11 +46,20 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     myTypeSelectorManager = typeSelectorManager;
     myTypeSelector = myTypeSelectorManager.getTypeSelector();
     JComponent component = myTypeSelector.getComponent();
-    if (component instanceof JCheckBox) {
-      ((JCheckBox)component).addActionListener(new ActionListener() {
+    if (component instanceof JComboBox) {
+      ((JComboBox)component).addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          getVariable().getTypeElement().replace(JavaPsiFacade.getElementFactory(myProject).createTypeElement(myTypeSelector.getSelectedType()));
+          final PsiVariable variable = getVariable();
+          if (variable != null) {
+            new WriteCommandAction(project, getCommandName(), getCommandName()) {
+              @Override
+              protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+                variable.getTypeElement().replace(JavaPsiFacade.getElementFactory(myProject).createTypeElement(myTypeSelector.getSelectedType()));
+              }
+            }.execute();
+            myBalloon.setTitle(variable.getText());
+          }
         }
       });
     }

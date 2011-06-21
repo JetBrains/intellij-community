@@ -21,8 +21,7 @@ import com.intellij.util.ui.PositionTracker;
 
 import javax.swing.JComponent;
 import javax.swing.JLayeredPane;
-import java.awt.Dimension;
-import java.awt.Rectangle;
+import java.awt.*;
 
 /**
  * @see com.intellij.openapi.ui.popup.JBPopupFactory
@@ -53,6 +52,8 @@ public interface Balloon extends Disposable {
   boolean wasFadedOut();
 
   boolean isDisposed();
+
+  void setTitle(String title);
 
   enum Position {
     below, above, atLeft, atRight

@@ -20,6 +20,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -83,6 +84,11 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
         if (myParameterIndex < 0) return;
         restartInplaceIntroduceTemplate();
       }
+
+      @Override
+      protected Balloon getBalloon() {
+        return myBalloon;
+      }
     };
     myPanel.append2MainPanel(myWholePanel);
     JComponent typeChooser = typeComponent();
@@ -120,7 +126,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   private PsiParameter getParameter() {
     if (!myMethod.isValid()) return null;
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
-    return parameters.length > myParameterIndex ? parameters[myParameterIndex] : null;
+    return parameters.length > myParameterIndex && myParameterIndex >= 0 ? parameters[myParameterIndex] : null;
   }
 
 

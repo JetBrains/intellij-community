@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiTypeElement;
@@ -21,8 +22,9 @@ public class FinalListener {
     myEditor = editor;
   }
 
-  public void perform(final boolean generateFinal, PsiVariable variable) {
+  public void perform(final boolean generateFinal, PsiVariable variable, Balloon balloon) {
     perform(generateFinal, PsiModifier.FINAL, variable);
+    balloon.setTitle(variable.getText());
   }
 
   public void perform(final boolean generateFinal, final String modifier, final PsiVariable variable) {
