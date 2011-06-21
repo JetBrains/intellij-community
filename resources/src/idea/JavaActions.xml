@@ -190,6 +190,10 @@
       <add-to-group group-id="CallHierarchyPopupMenu" anchor="first"/>
     </action>
 
+    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction">
+      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+    </action>
+
     <group id="Debugger.FramePanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>

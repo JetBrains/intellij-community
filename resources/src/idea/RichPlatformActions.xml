@@ -68,10 +68,6 @@
       <add-to-group group-id="MainToolBar" anchor="after" relative-to-action="ShowSettings"/>
     </action>
 
-    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction">
-      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
-    </action>
-
     <!-- Edit -->
     <reference ref="EditorCompleteStatement">
       <add-to-group group-id="EditSmartGroup" anchor="first"/>
