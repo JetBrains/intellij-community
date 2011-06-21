@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 
 /**
 * User: anna
@@ -53,5 +50,6 @@ public class FinalListener {
     } else {
       runnable.run();
     }
+    PsiDocumentManager.getInstance(variable.getProject()).commitDocument(document);
   }
 }
