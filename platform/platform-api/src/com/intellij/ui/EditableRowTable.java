@@ -32,11 +32,11 @@ public class EditableRowTable {
   private EditableRowTable() {}
 
   public static JPanel createButtonsTable(final JTable table, final RowEditableTableModel tableModel, boolean addMnemonics) {
-    return createButtonsTable(table, tableModel, addMnemonics, false);
+    return createButtonsTable(table, tableModel, addMnemonics, true, true);
   }
 
   public static JPanel createButtonsTable(final JTable table, final RowEditableTableModel tableModel,
-                                          boolean addMnemonics, boolean iconsOnly,
+                                          boolean addMnemonics, boolean iconsOnly, boolean isHorizontal,
                                           AnAction...actions) {
     JPanel panel = new JPanel();
     panel.setBorder(iconsOnly ? IdeBorderFactory.createEmptyBorder(0) : BorderFactory.createEmptyBorder(4, 4, 4, 4));
@@ -161,7 +161,7 @@ public class EditableRowTable {
       gbConstraints.weighty = 1;
       panel.add(new JPanel(), gbConstraints);
     } else {
-      p.set(new AddRemoveUpDownPanel(listener, table, actions));
+      p.set(new AddRemoveUpDownPanel(listener, table, isHorizontal, actions, AddRemoveUpDownPanel.Buttons.ALL));
       panel.add(p.get(), BorderLayout.NORTH);
     }
 

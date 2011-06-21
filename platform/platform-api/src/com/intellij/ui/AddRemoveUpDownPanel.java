@@ -34,16 +34,17 @@ public class AddRemoveUpDownPanel extends JPanel {
   public static enum Buttons {
     ADD, REMOVE, UP, DOWN;
 
+    public static Buttons[] ALL = {ADD, REMOVE, UP, DOWN};
+
     Icon getIcon() {
       switch (this) {
-        case ADD: return PlatformIcons.ADD_BIG;
-        case REMOVE: return PlatformIcons.REMOVE_BIG;
-        case UP: return PlatformIcons.UP_BIG;
-        case DOWN: return PlatformIcons.DOWN_BIG;
+        case ADD: return PlatformIcons.ADD_ICON;
+        case REMOVE: return PlatformIcons.DELETE_ICON;
+        case UP: return PlatformIcons.MOVE_UP_ICON;
+        case DOWN: return PlatformIcons.MOVE_DOWN_ICON;
       }
       return null;
     }
-
 
     TableActionButton createButton(final Listener listener) {
       return new TableActionButton(this, listener);
@@ -79,7 +80,7 @@ public class AddRemoveUpDownPanel extends JPanel {
 
   private Map<Buttons, TableActionButton> myButtons = new HashMap<Buttons, TableActionButton>();
 
-  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane,
+  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, boolean isHorizontal,
                               @Nullable AnAction[] additionalActions, Buttons... buttons) {
     super(new VerticalFlowLayout(VerticalFlowLayout.TOP));
     AnAction[] actions = new AnAction[buttons.length];
@@ -106,7 +107,7 @@ public class AddRemoveUpDownPanel extends JPanel {
         }
       }
     }
-    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(actions), false).getComponent());
+    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(actions), isHorizontal).getComponent());
   }
 
   public void setEnabled(Buttons button, boolean enabled) {
@@ -117,7 +118,7 @@ public class AddRemoveUpDownPanel extends JPanel {
   }
 
   public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, @Nullable AnAction[] additionalActions) {
-    this(listener, contentPane, additionalActions,  Buttons.ADD, Buttons.REMOVE, Buttons.UP, Buttons.DOWN);
+    this(listener, contentPane, false, additionalActions, Buttons.ADD, Buttons.REMOVE, Buttons.UP, Buttons.DOWN);
   }
 
   static class TableActionButton extends AnAction implements ShortcutProvider {
