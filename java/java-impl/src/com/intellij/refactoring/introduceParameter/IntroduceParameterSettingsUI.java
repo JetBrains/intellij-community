@@ -32,6 +32,8 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -188,6 +190,7 @@ public abstract class IntroduceParameterSettingsUI {
       for (JCheckBox box : removeParamsCb) {
         if (box != null) {
           box.setEnabled(myCbReplaceAllOccurences.isSelected());
+          box.setSelected(myCbReplaceAllOccurences.isSelected());
         }
       }
       getTypeSelectionManager().setAllOccurences(myCbReplaceAllOccurences.isSelected());
@@ -221,8 +224,9 @@ public abstract class IntroduceParameterSettingsUI {
       gbConstraints.gridy++;
       panel.add(cb, gbConstraints);
       final int i1 = i;
-      cb.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
+      cb.addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
           myParametersToRemoveChecked[i1] = cb.isSelected();
         }
       });

@@ -111,11 +111,13 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
     gc.insets.left = 6;
     myWholePanel.add(createRightPanel(), gc);
 
-    gc.gridy = 2;
-    gc.gridx = 0;
-    gc.gridwidth = 2;
     JComponent typeChooser = typeComponent();
     if (typeChooser != null) {
+      gc.gridy = 2;
+      gc.gridx = 0;
+      gc.gridwidth = 2;
+      gc.insets.left = 5;
+      gc.insets.right = 5;
       myWholePanel.add(typeChooser, gc);
     }
   }

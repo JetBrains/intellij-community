@@ -94,7 +94,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     JComponent typeChooser = typeComponent();
     if (typeChooser != null) {
       myWholePanel.add(typeChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                                             new Insets(0,0,0,0), 0,0));
+                                                                             new Insets(0,5,0,5), 0,0));
     }
   }
 

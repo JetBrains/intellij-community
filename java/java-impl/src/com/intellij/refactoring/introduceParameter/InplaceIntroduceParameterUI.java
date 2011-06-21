@@ -135,7 +135,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     final GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
 
-    gc.insets = new Insets(0, 5, 0, 0);
+    gc.insets = new Insets(0, 0, 0, 0);
     gc.gridwidth = 1;
     gc.fill = GridBagConstraints.NONE;
     if (myOccurrences.length > 1 && !myIsInvokedOnDeclaration) {
@@ -143,7 +143,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
       createOccurrencesCb(gc, myWholePanel, myOccurrences.length);
     }
     gc.gridy++;
-    gc.insets.left = 5;
+    gc.insets.left = 0;
     createDelegateCb(gc, myWholePanel);
 
 
@@ -183,7 +183,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
       });
       myWholePanel.add(myFinalCb,
                        new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                              GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
+                                              GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
     }
   }
 
