@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,11 +28,11 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     }
   };
   private Comparable[] myComputedWeighs;
-  private T myElement;
+  private final Computable<T> myElement;
   private final Loc myLocation;
   private final Weigher<T,Loc>[] myWeighers;
 
-  public WeighingComparable(final T element,
+  public WeighingComparable(final Computable<T> element,
                             @Nullable final Loc location,
                             final Weigher<T,Loc>[] weighers) {
     myElement = element;
@@ -65,21 +66,10 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   private Comparable getWeight(final int index) {
     Comparable weight = myComputedWeighs[index];
     if (weight == null) {
-      T element = myElement;
-      if (element == null) {
-        synchronized (this) { // clear processor cache
-          weight = myComputedWeighs[index];
-          assert weight != null;
-        }
-      } else {
-        weight = myWeighers[index].weigh(element, myLocation);
-        if (weight == null) weight = NULL;
-        myComputedWeighs[index] = weight;
-
-        if (index == myComputedWeighs.length - 1) {
-          myElement = null; // we ain't gonna need it anymore, let gc take care of it
-        }
-      }
+      T element = myElement.compute();
+      weight = element == null ? NULL : myWeighers[index].weigh(element, myLocation);
+      if (weight == null) weight = NULL;
+      myComputedWeighs[index] = weight;
     }
     return weight == NULL ? null : weight;
   }

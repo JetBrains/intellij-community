@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.NegatingComparable;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +28,14 @@ import org.jetbrains.annotations.NotNull;
 public class LookupElementProximityWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    final Object o = item.getObject();
-    if (o instanceof PsiElement) {
-      return PsiProximityComparator.getProximity((PsiElement)o, location.getCompletionParameters().getPosition(), location.getProcessingContext());
+    if (item.getObject() instanceof PsiElement) {
+      return PsiProximityComparator.getProximity(new Computable<PsiElement>() {
+        @Override
+        public PsiElement compute() {
+          Object object = item.getObject();
+          return object instanceof PsiElement ? (PsiElement)object : null;
+        }
+      }, location.getCompletionParameters().getPosition(), location.getProcessingContext());
     }
     return null;
   }

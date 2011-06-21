@@ -25,6 +25,7 @@ package com.intellij.psi.util.proximity;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.WeighingComparable;
@@ -90,6 +91,12 @@ public class PsiProximityComparator implements Comparator<Object> {
 
   @Nullable
   public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final PsiElement element, final PsiElement context, ProcessingContext processingContext) {
+    return getProximity(new Computable.PredefinedValueComputable<PsiElement>(element), context, processingContext);
+  }
+
+  @Nullable
+  public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final Computable<PsiElement> elementComputable, final PsiElement context, ProcessingContext processingContext) {
+    PsiElement element = elementComputable.compute();
     if (element == null) return null;
     if (element instanceof MetadataPsiElementBase) return null;
     if (context == null) return null;
