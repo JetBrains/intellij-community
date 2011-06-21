@@ -259,6 +259,7 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
 
   @Override
   protected PsiVariable getVariable() {
+    if (myFieldRangeStart == null) return null;
     PsiElement element = myParentClass.getContainingFile().findElementAt(myFieldRangeStart.getStartOffset());
     if (element instanceof PsiWhiteSpace) {
       element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
