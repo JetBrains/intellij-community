@@ -162,6 +162,9 @@ public class SwitchUtils{
     }
 
     private static boolean canBeSwitchExpression(PsiExpression expression, LanguageLevel languageLevel) {
+        if (expression == null) {
+            return false;
+        }
         final PsiType type = expression.getType();
         if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) ||
                 PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
