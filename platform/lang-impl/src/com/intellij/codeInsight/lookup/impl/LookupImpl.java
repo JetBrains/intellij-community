@@ -381,6 +381,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     LookupElement oldSelected = mySelectionTouched ? (LookupElement)myList.getSelectedValue() : null;
     String oldInvariant = mySelectionInvariant;
 
+    boolean selectionVisible = myList.getFirstVisibleIndex() <= myList.getSelectedIndex() && myList.getSelectedIndex() <= myList.getLastVisibleIndex();
+
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
     model.addAll(getPrefixItems(items, true));
     model.addAll(getPrefixItems(items, false));
@@ -425,6 +427,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
       else {
         myList.setSelectedIndex(0);
+      }
+
+      if (selectionVisible) {
+        ensureSelectionVisible();
       }
     }
   }
