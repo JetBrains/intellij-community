@@ -21,7 +21,6 @@ import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
@@ -42,7 +41,10 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -333,13 +335,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myFrozenItems.clear();
     refreshUi();
     ensureSelectionVisible();
-    if (myStartCompletionWhenNothingMatches && myList.getModel().getSize() == 1 && myList.getModel().getElementAt(0) instanceof EmptyLookupItem) {
-      CompletionAutoPopupHandler.scheduleAutoPopup(myProject, myEditor, getPsiFile());
-    }
   }
 
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
     myStartCompletionWhenNothingMatches = startCompletionWhenNothingMatches;
+  }
+
+  public boolean isStartCompletionWhenNothingMatches() {
+    return myStartCompletionWhenNothingMatches;
   }
 
   public void ensureSelectionVisible() {

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -75,6 +76,9 @@ public class TypedHandler implements TypedActionHandler {
           }
         });
         lookup.appendPrefix(charTyped);
+        if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
+          CompletionAutoPopupHandler.scheduleAutoPopup(editor.getProject(), editor, lookup.getPsiFile());
+        }
 
         AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
 
