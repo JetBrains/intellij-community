@@ -126,6 +126,10 @@ public class LookupManagerImpl extends LookupManager {
                                  @NotNull final LookupArranger arranger) {
     hideActiveLookup();
 
+    if (myActiveLookup != null) {
+      LOG.error(myActiveLookup.isLookupDisposed());
+    }
+
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
