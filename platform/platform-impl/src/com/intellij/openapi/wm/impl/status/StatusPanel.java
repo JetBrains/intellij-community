@@ -157,7 +157,7 @@ class StatusPanel extends JPanel {
                           ? IdeNotificationArea.getPendingNotificationsIcon(ourShowLogIcon, maximumType)
                           : new PendingNotificationsIcon(ourShowLogIcon, maximumType == NotificationType.ERROR ? Color.red : maximumType == NotificationType.WARNING ? Color.orange : Color.green.darker());
           myShowLog.setIcon(icon);
-          myShowLog.setToolTipText(visible ? "" : count > 0 ? String.format("%s notifications pending", count) : "Click to open the event log");
+          myShowLog.setToolTipText(visible ? "" : count > 0 ? count + " " + StringUtil.pluralize("notification", count) + " pending" : "Click to open the event log");
           myShowLog.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 20 - icon.getIconWidth()));
 
 
