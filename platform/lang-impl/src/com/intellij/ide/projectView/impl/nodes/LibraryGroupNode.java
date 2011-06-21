@@ -110,7 +110,12 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   }
 
   public boolean contains(@NotNull VirtualFile file) {
-    return someChildContainsFile(file);
+    final ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) {
+      return false;
+    }
+
+    return someChildContainsFile(file, false);
   }
 
   public void update(PresentationData presentation) {
