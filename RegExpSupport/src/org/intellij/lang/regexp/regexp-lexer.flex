@@ -107,7 +107,7 @@ HEX_CHAR=[0-9a-fA-F]
 
 <QUOTED> {
   "\\E"              { yypopstate(); return RegExpTT.QUOTE_END; }
-  .                  { return RegExpTT.CHARACTER; }
+  {ANY}              { return RegExpTT.CHARACTER; }
 }
 
 /* \\ */
