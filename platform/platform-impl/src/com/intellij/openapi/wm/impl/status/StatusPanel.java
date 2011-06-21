@@ -149,7 +149,13 @@ class StatusPanel extends JPanel {
 
           final NotificationType maximumType = count > 0 ? NotificationModel.getMaximumType(notifications) : null;
 
-          Icon icon = visible ? ourHideLogIcon : IdeNotificationArea.getPendingNotificationsIcon(ourShowLogIcon, maximumType);
+          Icon icon = visible
+                      ? ourHideLogIcon
+                      : maximumType == null
+                        ? ourShowLogIcon
+                        : statusMessage != null && maximumType == statusMessage.getType()
+                          ? IdeNotificationArea.getPendingNotificationsIcon(ourShowLogIcon, maximumType)
+                          : new PendingNotificationsIcon(ourShowLogIcon, maximumType == NotificationType.ERROR ? Color.red : maximumType == NotificationType.WARNING ? Color.orange : Color.green.darker());
           myShowLog.setIcon(icon);
           myShowLog.setToolTipText(visible ? "" : count > 0 ? String.format("%s notifications pending", count) : "Click to open the event log");
           myShowLog.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 20 - icon.getIconWidth()));
@@ -164,6 +170,36 @@ class StatusPanel extends JPanel {
       myLogAlarm.cancelAllRequests();
     }
     return myLogMode;
+  }
+
+  private static class PendingNotificationsIcon implements Icon {
+    private final Icon myBase;
+    private final Color myColor;
+
+    private PendingNotificationsIcon(Icon base, Color color) {
+      myBase = base;
+      myColor = color;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      myBase.paintIcon(c, g, x, y);
+      g.setColor(Color.white);
+      int size = 4;
+      g.drawRect(x, y, size + 1, size + 1);
+      g.setColor(myColor);
+      g.fillRect(x + 1, y + 1, size, size);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myBase.getIconWidth();
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myBase.getIconHeight();
+    }
   }
 
   public void hideLog() {
