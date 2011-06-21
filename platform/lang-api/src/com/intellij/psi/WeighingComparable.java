@@ -27,7 +27,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     }
   };
   private Comparable[] myComputedWeighs;
-  private final T myElement;
+  private T myElement;
   private final Loc myLocation;
   private final Weigher<T,Loc>[] myWeighers;
 
@@ -65,9 +65,21 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   private Comparable getWeight(final int index) {
     Comparable weight = myComputedWeighs[index];
     if (weight == null) {
-      weight = myWeighers[index].weigh(myElement, myLocation);
-      if (weight == null) weight = NULL;
-      myComputedWeighs[index] = weight;
+      T element = myElement;
+      if (element == null) {
+        synchronized (this) { // clear processor cache
+          weight = myComputedWeighs[index];
+          assert weight != null;
+        }
+      } else {
+        weight = myWeighers[index].weigh(element, myLocation);
+        if (weight == null) weight = NULL;
+        myComputedWeighs[index] = weight;
+
+        if (index == myComputedWeighs.length - 1) {
+          myElement = null; // we ain't gonna need it anymore, let gc take care of it
+        }
+      }
     }
     return weight == NULL ? null : weight;
   }
