@@ -69,7 +69,7 @@ import static com.intellij.execution.process.ProcessOutputTypes.STDOUT;
 public abstract class AndroidRunningState implements RunProfileState, AndroidDebugBridge.IClientChangeListener {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidRunningState");
 
-  public static final int WAITING_TIME = 5;
+  public static final int WAITING_TIME = 10;
 
   private static final Pattern FAILURE = Pattern.compile("Failure\\s+\\[(.*)\\]");
   private static final Pattern TYPED_ERROR = Pattern.compile("Error\\s+[Tt]ype\\s+(\\d+).*");
