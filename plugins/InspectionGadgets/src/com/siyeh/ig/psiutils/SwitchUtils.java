@@ -160,30 +160,33 @@ public class SwitchUtils{
     }
 
     private static boolean canBeSwitchExpression(PsiExpression expression, LanguageLevel languageLevel) {
-      final PsiType type = expression.getType();
+        if (expression == null) {
+            return false;
+        }
+        final PsiType type = expression.getType();
 
-      if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) ||
-          PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
-          return true;
-      }
-      else if (type instanceof PsiClassType) {
-          final PsiClass aClass = ((PsiClassType)type).resolve();
-          if (aClass != null) {
-              final String fqn = aClass.getQualifiedName();
-              if (CommonClassNames.JAVA_LANG_CHARACTER.equals(fqn) || CommonClassNames.JAVA_LANG_BYTE.equals(fqn) ||
-                  CommonClassNames.JAVA_LANG_SHORT.equals(fqn) || CommonClassNames.JAVA_LANG_INTEGER.equals(fqn)) {
-                  return true;
-              }
-              if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && aClass.isEnum()) {
-                  return true;
-              }
-              if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && CommonClassNames.JAVA_LANG_STRING.equals(fqn)) {
-                  return true;
-              }
-          }
-      }
+        if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) ||
+            PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
+            return true;
+        }
+        else if (type instanceof PsiClassType) {
+            final PsiClass aClass = ((PsiClassType)type).resolve();
+            if (aClass != null) {
+                final String fqn = aClass.getQualifiedName();
+                if (CommonClassNames.JAVA_LANG_CHARACTER.equals(fqn) || CommonClassNames.JAVA_LANG_BYTE.equals(fqn) ||
+                    CommonClassNames.JAVA_LANG_SHORT.equals(fqn) || CommonClassNames.JAVA_LANG_INTEGER.equals(fqn)) {
+                    return true;
+                }
+                if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && aClass.isEnum()) {
+                    return true;
+                }
+                if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && CommonClassNames.JAVA_LANG_STRING.equals(fqn)) {
+                    return true;
+                }
+            }
+        }
 
-      return false;
+        return false;
     }
 
     private static PsiExpression determinePossibleStringSwitchExpression(
