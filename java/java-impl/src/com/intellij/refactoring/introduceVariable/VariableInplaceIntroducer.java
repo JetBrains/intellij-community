@@ -196,7 +196,7 @@ public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer
             @Override
             protected void run(com.intellij.openapi.application.Result result) throws Throwable {
               PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              finalListener.perform(myCanBeFinalCb.isSelected(), getVariable(), myBalloon);
+              finalListener.perform(myCanBeFinalCb.isSelected(), getVariable());
             }
           }.execute();
         }

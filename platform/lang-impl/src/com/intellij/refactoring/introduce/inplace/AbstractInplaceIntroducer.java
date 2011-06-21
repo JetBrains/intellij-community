@@ -98,7 +98,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
         RangeMarker r;
         if (myLocalMarker != null) {
-          final PsiReference reference = myExpr.getReference();
+          final PsiReference reference = myExpr != null ? myExpr.getReference() : null;
           if (reference != null && reference.resolve() == myLocalVariable) {
             r = myExprMarker;
           } else {
@@ -120,7 +120,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           initOccurrencesMarkers();
           setElementToRename(variable);
           started = AbstractInplaceIntroducer.super.performInplaceRename(false, nameSuggestions);
-          myBalloon.setTitle(variable.getText());
+          updateTitle(variable);
         }
         result.set(started);
         if (!started && variable != null) {
@@ -137,6 +137,12 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     return result.get();
   }
 
+  protected void updateTitle(V variable) {
+    if (myBalloon != null) {
+      myBalloon.setTitle(variable.getText());
+    }
+  }
+
   public void restartInplaceIntroduceTemplate() {
     Runnable restartTemplateRunnable = new Runnable() {
       public void run() {
@@ -151,7 +157,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             myEditor.putUserData(INTRODUCE_RESTART, false);
           }
         }
-        myBalloon.setTitle(getVariable().getText());
+        updateTitle(getVariable());
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, getCommandName(), getCommandName());

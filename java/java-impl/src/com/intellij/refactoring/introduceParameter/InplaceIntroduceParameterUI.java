@@ -176,7 +176,11 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
             @Override
             protected void run(Result result) throws Throwable {
               PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              finalListener.perform(myFinalCb.isSelected(), getParameter(), getBalloon());
+              finalListener.perform(myFinalCb.isSelected(), getParameter());
+              final Balloon balloon = getBalloon();
+              if (balloon != null) {
+                balloon.setTitle(getParameter().getText());
+              }
             }
           }.execute();
         }

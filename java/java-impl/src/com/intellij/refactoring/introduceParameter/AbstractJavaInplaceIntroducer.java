@@ -58,7 +58,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
                 variable.getTypeElement().replace(JavaPsiFacade.getElementFactory(myProject).createTypeElement(myTypeSelector.getSelectedType()));
               }
             }.execute();
-            myBalloon.setTitle(variable.getText());
+            updateTitle(variable);
           }
         }
       });
