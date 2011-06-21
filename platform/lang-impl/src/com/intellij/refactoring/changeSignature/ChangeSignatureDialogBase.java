@@ -345,7 +345,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
       @Nullable
       @Override
-      public TableCellEditor getCellEditor(final int row, final int column) {
+      public TableCellEditor getCellEditor(int row, int column) {
         final TableCellEditor editor = super.getCellEditor(row, column);
         final DocumentAdapter listener = new DocumentAdapter() {
           @Override
@@ -353,7 +353,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
             final TableCellEditor ed = myParametersTable.getCellEditor();
             if (ed != null) {
               Object editorValue = ed.getCellEditorValue();
-              myParametersTableModel.setValueAtWithoutUpdate(editorValue, row, column);
+              myParametersTableModel.setValueAtWithoutUpdate(editorValue, myParametersTable.getSelectedRow(), myParametersTable.getSelectedColumn());
               updateSignature();
             }
           }
