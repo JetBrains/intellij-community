@@ -16,6 +16,7 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -324,18 +325,18 @@ public class AutoUnboxingInspection extends BaseInspection {
         return new AutoUnboxingVisitor();
     }
 
-    private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    PsiFile psiFile = holder.getFile();
+    if (psiFile.getLanguage() != StdLanguages.JAVA || !PsiUtil.isLanguageLevel5OrHigher(psiFile)) {
+        return new PsiElementVisitor() {
+        };
+    }
+    return super.buildVisitor(holder, isOnTheFly);
+  }
 
-        @Override public void visitElement(PsiElement element) {
-            if (element.getLanguage() != StdLanguages.JAVA) {
-                return;
-            }
-            if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
-                return;
-            }
-            super.visitElement(element);
-        }
-
+  private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
         @Override public void visitArrayAccessExpression(
                 PsiArrayAccessExpression expression){
             super.visitArrayAccessExpression(expression);
