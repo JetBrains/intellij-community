@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.paths;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.impl.FakePsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,12 +32,29 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
 
   @Override
   public PsiElement resolve() {
-    return myElement;
+    return new MyFakePsiElement();
   }
 
   @NotNull
   @Override
   public Object[] getVariants() {
     return EMPTY_ARRAY;
+  }
+
+  class MyFakePsiElement extends FakePsiElement {
+    @Override
+      public PsiElement getParent() {
+        return myElement;
+      }
+
+    @Override
+      public void navigate(boolean requestFocus) {
+        BrowserUtil.launchBrowser(getValue());
+      }
+
+    @Override
+      public String getPresentableText() {
+        return getValue();
+      }
   }
 }
