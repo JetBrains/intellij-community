@@ -32,6 +32,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -229,13 +230,24 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     return fileContent;
   }
 
-  public static SimpleDiffRequest createBinaryDiffRequest(final Project project, final Change change) throws VcsException {
+  private static SimpleDiffRequest createBinaryDiffRequest(final Project project, final Change change) throws VcsException {
     final FilePath filePath = ChangesUtil.getFilePath(change);
     final SimpleDiffRequest request = new SimpleDiffRequest(project, filePath.getPath());
     try {
       request.setContents(createBinaryFileContent(project, change.getBeforeRevision(), filePath.getName()),
                           createBinaryFileContent(project, change.getAfterRevision(), filePath.getName()));
       return request;
+    }
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
+  }
+
+  public static BeforeAfter<DiffContent> createBinaryDiffContents(final Project project, final Change change) throws VcsException {
+    final FilePath filePath = ChangesUtil.getFilePath(change);
+    try {
+      return new BeforeAfter<DiffContent>(createBinaryFileContent(project, change.getBeforeRevision(), filePath.getName()),
+                          createBinaryFileContent(project, change.getAfterRevision(), filePath.getName()));
     }
     catch (IOException e) {
       throw new VcsException(e);
@@ -262,7 +274,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     return false;
   }
 
-  private static boolean isBinaryChange(Project project, Change change) {
+  public static boolean isBinaryChange(Project project, Change change) {
     final ContentRevision bRev = change.getBeforeRevision();
     final ContentRevision aRev = change.getAfterRevision();
 

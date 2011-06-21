@@ -51,6 +51,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -89,9 +90,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private Color myBackgroundColor = null;
   private String myLastGutterToolTip = null;
   private int myLastPreferredHeight = -1;
+  private int myLineShift;
 
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
+    myLineShift = 0;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       installDnD();
     }
@@ -249,7 +252,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       int startLineNumber = clip.y / lineHeight;
       int endLineNumber = (clip.y + clip.height) / lineHeight + 1;
       int lastLine = myEditor.logicalToVisualPosition(
-        new LogicalPosition(Math.max(0, myEditor.getDocument().getLineCount() - 1), 0))
+        new LogicalPosition(endLineNumber(), 0))
         .line;
       endLineNumber = Math.min(endLineNumber, lastLine + 1);
       if (startLineNumber >= endLineNumber) {
@@ -336,7 +339,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int startLineNumber = clip.y / lineHeight;
     int endLineNumber = (clip.y + clip.height) / lineHeight + 1;
     int lastLine = myEditor.logicalToVisualPosition(
-      new LogicalPosition(Math.max(0, myEditor.getDocument().getLineCount() - 1), 0))
+      new LogicalPosition(endLineNumber(), 0))
       .line;
     endLineNumber = Math.min(endLineNumber, lastLine + 1);
     if (startLineNumber >= endLineNumber) {
@@ -362,7 +365,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
         continue;
       }
-      int logLine = logicalPosition.line;
+      int logLine = logicalPosition.line + myLineShift;
       String s = String.valueOf(logLine + 1);
       g.drawString(s,
                    getLineNumberAreaOffset() + getLineNumberAreaWidth() -
@@ -372,6 +375,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     g2.setTransform(old);
+  }
+
+  private int endLineNumber() {
+    return Math.max(0, myEditor.getDocument().getLineCount() - 1);
   }
 
   private interface RangeHighlighterProcessor {
@@ -957,9 +964,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return isLineMarkersShown() ? myLineMarkerAreaWidth : 0;
   }
 
-  public void setLineNumberAreaWidth(int lineNumberAriaWidth) {
-    if (myLineNumberAreaWidth != lineNumberAriaWidth) {
-      myLineNumberAreaWidth = lineNumberAriaWidth;
+  public void setLineNumberAreaWidth(final Convertor<Integer, Integer> calculator) {
+    final int lineNumberAreaWidth = calculator.convert(endLineNumber() + myLineShift);
+    if (myLineNumberAreaWidth != lineNumberAreaWidth) {
+      myLineNumberAreaWidth = lineNumberAreaWidth;
       fireResized();
     }
   }
@@ -982,6 +990,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public int getIconsAreaWidth() {
     return myIconsAreaWidth;
+  }
+
+  @Override
+  public void setLineShift(int lineShift) {
+    myLineShift = lineShift;
   }
 
   private boolean isMirrored() {

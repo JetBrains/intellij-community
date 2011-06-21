@@ -75,6 +75,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
@@ -1506,8 +1507,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myPreferredSize = dim;
 
       stopOptimizedScrolling();
-      int line = Math.max(1, getDocument().getLineCount());
-      myGutterComponent.setLineNumberAreaWidth(getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(line + 2)) + 6);
+      myGutterComponent.setLineNumberAreaWidth(new Convertor<Integer, Integer>() {
+        @Override
+        public Integer convert(Integer lineNumber) {
+          return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 2)) + 6;
+        }
+      });
 
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();

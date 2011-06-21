@@ -23,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -256,6 +253,16 @@ public class ChangesUtil {
 
   public static boolean isBinaryChange(final Change change) {
     return isBinaryContentRevision(change.getBeforeRevision()) || isBinaryContentRevision(change.getAfterRevision());
+  }
+
+  public static boolean isTextConflictingChange(final Change change) {
+    final FileStatus status = change.getFileStatus();
+    return FileStatus.MERGED_WITH_CONFLICTS.equals(status) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(status);
+  }
+
+  public static boolean isPropertyConflictingChange(final Change change) {
+    final FileStatus status = change.getFileStatus();
+    return FileStatus.MERGED_WITH_PROPERTY_CONFLICTS.equals(status) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(status);
   }
 
   public interface PerVcsProcessor<T> {

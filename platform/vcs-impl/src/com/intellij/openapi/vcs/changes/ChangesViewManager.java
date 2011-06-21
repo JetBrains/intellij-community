@@ -32,22 +32,30 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -56,6 +64,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -66,6 +76,7 @@ import java.util.List;
 
 public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, ProjectComponent {
   public static final int UNVERSIONED_MAX_SIZE = 50;
+  public static final Icon detailsIcon = IconLoader.getIcon("/vcs/volute.png");
   private boolean SHOW_FLATTEN_MODE = true;
   private boolean SHOW_IGNORED_MODE = false;
 
@@ -79,21 +90,54 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private final ChangeListListener myListener = new MyChangeListListener();
   private final Project myProject;
   private final ChangesViewContentManager myContentManager;
+  private final VcsChangeDetailsManager myVcsChangeDetailsManager;
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
+  private Splitter mySplitter;
+  // todo group somewhere
+  private JPanel myNoDetailsPanel;
+  private JPanel myNothingSelected;
+  private boolean myDetailsOn;
+  private ChangesViewManager.MyFileListener myFileListener;
+  private final SLRUMap<FilePath, Pair<JPanel, Disposable>> myDetailsCache;
+  private FilePath myDetailsFilePath;
+  private final MyDocumentListener myDocumentListener;
+  private ZipperUpdater myDetailsUpdater;
+  private Runnable myUpdateDetails;
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
   }
 
-  public ChangesViewManager(Project project, ChangesViewContentManager contentManager) {
+  public ChangesViewManager(Project project, ChangesViewContentManager contentManager, final VcsChangeDetailsManager vcsChangeDetailsManager) {
     myProject = project;
     myContentManager = contentManager;
+    myVcsChangeDetailsManager = vcsChangeDetailsManager;
     myView = new ChangesListView(project);
+    myNoDetailsPanel = VcsChangeDetailsManager.errorPanel("No details available", false);
+    myNothingSelected = VcsChangeDetailsManager.errorPanel("Nothing selected", false);
+
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myFileListener = new MyFileListener();
+    myDocumentListener = new MyDocumentListener();
+    myDetailsCache = new SLRUMap<FilePath, Pair<JPanel, Disposable>>(10, 10) {
+      @Override
+      protected void onDropFromCache(FilePath key, Pair<JPanel, Disposable> value) {
+        if (value.getSecond() != null) {
+          Disposer.dispose(value.getSecond());
+        }
+      }
+    };
+    myDetailsUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, myProject);
+    myUpdateDetails = new Runnable() {
+      @Override
+      public void run() {
+        changeDetails();
+      }
+    };
   }
 
   public void projectOpened() {
@@ -123,6 +167,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   public void projectClosed() {
+    myDetailsCache.clear();
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
   }
@@ -165,6 +210,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));                                              
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
+    visualActionsGroup.add(new ToggleDetailsAction());
     visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
     toolbarPanel.add(createToolbarComponent(visualActionsGroup), BorderLayout.CENTER);
 
@@ -179,12 +225,61 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     panel.setToolbar(toolbarPanel);
 
     final JPanel content = new JPanel(new BorderLayout());
-    content.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
+    mySplitter = new Splitter(false, 0.5f);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
+    final JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
+    wrapper.add(scrollPane, BorderLayout.CENTER);
+    mySplitter.setShowDividerControls(true);
+    mySplitter.setFirstComponent(wrapper);
+    content.add(mySplitter, BorderLayout.CENTER);
     content.add(myProgressLabel, BorderLayout.SOUTH);
     panel.setContent(content);
 
     myView.installDndSupport(ChangeListManagerImpl.getInstanceImpl(myProject));
+    myView.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        changeDetails();
+      }
+    });
     return panel;
+  }
+
+  private void changeDetails() {
+    if (! myDetailsOn) {
+      mySplitter.setSecondComponent(null);
+    } else {
+      final Change[] selectedChanges = myView.getSelectedChanges();
+      if (selectedChanges.length == 0) {
+        mySplitter.setSecondComponent(myNothingSelected);
+      } else {
+        Pair<JPanel, Disposable> details = null;
+        FilePath filePath = null;
+        for (Change change : selectedChanges) {
+          filePath = ChangesUtil.getFilePath(change);
+          details = myDetailsCache.get(filePath);
+          if (details != null) break;
+          details = myVcsChangeDetailsManager.getPanel(change);
+          if (details != null) {
+            myDetailsCache.put(filePath, details);
+            break;
+          }
+        }
+
+        final JPanel panel;
+        if (details == null) {
+          panel = myNoDetailsPanel;
+        }
+        else {
+          myDetailsFilePath = filePath;
+          panel = details.getFirst();
+        }
+        mySplitter.setSecondComponent(panel);
+      }
+    }
+    mySplitter.revalidate();
+    mySplitter.repaint();
   }
 
   private int ctrlMask() {
@@ -393,5 +488,75 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   @Override
   public void initComponent() {
+  }
+
+  private class ToggleDetailsAction extends ToggleAction implements DumbAware {
+    private ToggleDetailsAction() {
+      super("Change details", "Change details", detailsIcon);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myDetailsOn;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      final VirtualFileManager manager = VirtualFileManager.getInstance();
+      final EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+      if (myDetailsOn) {
+        manager.removeVirtualFileListener(myFileListener);
+        multicaster.removeDocumentListener(myDocumentListener);
+      } else {
+        manager.addVirtualFileListener(myFileListener);
+        multicaster.addDocumentListener(myDocumentListener);
+      }
+      myDetailsOn = ! myDetailsOn;
+      changeDetails();
+    }
+  }
+
+  private class MyFileListener extends VirtualFileAdapter {
+    @Override
+    public void contentsChanged(VirtualFileEvent event) {
+      impl(event.getFile());
+    }
+
+    @Override
+    public void fileCreated(VirtualFileEvent event) {
+      impl(event.getFile());
+    }
+
+    @Override
+    public void fileDeleted(VirtualFileEvent event) {
+      impl(event.getFile());
+    }
+  }
+
+  private void impl(final VirtualFile vf) {
+    final boolean wasInCache = myDetailsCache.remove(new FilePathImpl(vf));
+    if (wasInCache || (myDetailsFilePath != null && myDetailsFilePath.getVirtualFile() != null && myDetailsFilePath.getVirtualFile().equals(vf))) {
+      myDetailsUpdater.queue(myUpdateDetails);
+    }
+  }
+
+  private class MyDocumentListener implements DocumentListener {
+    private final FileDocumentManager myFileDocumentManager;
+
+    public MyDocumentListener() {
+      myFileDocumentManager = FileDocumentManager.getInstance();
+    }
+
+    @Override
+    public void beforeDocumentChange(DocumentEvent event) {
+    }
+
+    @Override
+    public void documentChanged(DocumentEvent event) {
+      final VirtualFile vf = myFileDocumentManager.getFile(event.getDocument());
+      if (vf != null) {
+        impl(vf);
+      }
+    }
   }
 }

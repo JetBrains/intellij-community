@@ -40,15 +40,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -85,6 +83,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final FontSizeSynchronizer myFontSizeSynchronizer = new FontSizeSynchronizer();
   private DiffRequest myDiffRequest;
   private boolean myIsRequestFocus = true;
+  private boolean myIsSynchScroll;
 
   private final DiffRequest.ToolbarAddons TOOL_BAR = new DiffRequest.ToolbarAddons() {
     public void customize(DiffToolbar toolbar) {
@@ -105,6 +104,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.disableToolbar(!enableToolbar);
     if (enableToolbar) myPanel.resetToolbar();
     myOwnerWindow = owner;
+    myIsSynchScroll = true;
     myLeftSide = new DiffSideView("", this);
     myRightSide = new DiffSideView("", this);
     myLeftSide.becomeMaster();
@@ -123,6 +123,43 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
       setComparisonPolicy(defaultComparisonPolicy);
     }
+  }
+
+  public void noSynchScroll() {
+    myIsSynchScroll = false;
+  }
+
+  public DiffSplitter getSplitter() {
+    return mySplitter;
+  }
+
+  public void reset() {
+    myPanel.setPreferredHeightGetter(null);
+  }
+
+  public void prefferedSizeByContents(final int maximumLines) {
+    if (getEditor1() == null && getEditor2() == null) return;
+
+    if (getEditor1() != null) {
+      getEditor1().getSettings().setAdditionalLinesCount(0);
+    }
+    if (getEditor2() != null) {
+      getEditor2().getSettings().setAdditionalLinesCount(0);
+    }
+    myPanel.setPrefferedWidth(20);
+    myPanel.setPreferredHeightGetter(new Getter<Integer>() {
+      @Override
+      public Integer get() {
+        final int size1 = getEditor1() == null ? 10 : getEditor1().getComponent().getPreferredSize().height;
+        final int size2 = getEditor2() == null ? 10 : getEditor2().getComponent().getPreferredSize().height;
+        final int lineHeight = getEditor1() == null ? getEditor2().getLineHeight() : getEditor1().getLineHeight();
+        final int size = Math.max(size1, size2);
+        if (maximumLines > 0) {
+          return Math.min(size, maximumLines * lineHeight);
+        }
+        return size;
+      }
+    });
   }
 
   public Editor getEditor1() {
@@ -157,6 +194,19 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public void removeStatusBar() {
     myPanel.removeStatusBar();
+  }
+
+  public void enableToolbar(final boolean value) {
+    myPanel.disableToolbar(!value);
+  }
+
+  public void setLineShift(int offset1, int offset2) {
+    if (getEditor1() != null) {
+      ((EditorGutterComponentEx) getEditor1().getGutter()).setLineShift(offset1);
+    }
+    if (getEditor2() != null) {
+      ((EditorGutterComponentEx) getEditor2().getGutter()).setLineShift(offset2);
+    }
   }
 
   private static DiffHighlighterFactory createHighlighter(FileType contentType, VirtualFile file, Project project) {
@@ -292,7 +342,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     Editor editor1 = getEditor(FragmentSide.SIDE1);
     Editor editor2 = getEditor(FragmentSide.SIDE2);
-    if (editor1 != null && editor2 != null) {
+    if (editor1 != null && editor2 != null && myIsSynchScroll) {
       myScrollSupport.install(new EditingSides[]{this});
     }
 
@@ -452,6 +502,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
               line = checker2.contextMatchCheck();
             }
             final int finalLine = line;
+            final ModalityState modalityState = myOwnerWindow == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(myOwnerWindow);
             application.invokeLater(new Runnable() {
               @Override
               public void run() {
@@ -462,7 +513,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
                   scrollCurrentToFirstDiff();
                 }
               }
-            }, ModalityState.stateForComponent(myOwnerWindow));
+            }, modalityState);
           }
         });
       }

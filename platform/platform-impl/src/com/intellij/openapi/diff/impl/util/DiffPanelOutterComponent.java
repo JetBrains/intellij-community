@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.ex.DiffStatusBar;
 import com.intellij.openapi.diff.impl.DiffToolbarComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.util.Getter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +39,9 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
   private final JPanel myBottomContainer;
   private JComponent myBottomComponent;
   private JPanel myWrapper;
+  private Getter<Integer> myPreferredHeightGetter;
+  private int myPrefferedWidth;
+  private Getter<Integer> myDefaultHeight;
 
   public DiffPanelOutterComponent(List<TextDiffType> diffTypes, DiffRequest.ToolbarAddons defaultActions) {
     super(new BorderLayout());
@@ -50,6 +54,14 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
     disableToolbar(false);
     myWrapper = new JPanel(new BorderLayout());
     add(myWrapper, BorderLayout.CENTER);
+    myDefaultHeight = new Getter<Integer>() {
+      @Override
+      public Integer get() {
+        return 400;
+      }
+    };
+    myPreferredHeightGetter = myDefaultHeight;
+    myPrefferedWidth = 600;
   }
 
   public DiffToolbar resetToolbar() {
@@ -95,7 +107,19 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
 
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(600, 400);
+    return new Dimension(myPrefferedWidth, myPreferredHeightGetter.get());
+  }
+
+  public void setPrefferedWidth(int prefferedWidth) {
+    myPrefferedWidth = prefferedWidth;
+  }
+
+  public void setPreferredHeightGetter(final Getter<Integer> getter) {
+    if (getter == null) {
+      myPreferredHeightGetter = myDefaultHeight;
+    } else {
+      myPreferredHeightGetter = getter;
+    }
   }
 
   public void removeStatusBar() {

@@ -364,7 +364,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   }
 
   @NotNull
-  private Change[] getSelectedChanges() {
+  public Change[] getSelectedChanges() {
     Set<Change> changes = new LinkedHashSet<Change>();
 
     final TreePath[] paths = getSelectionPaths();

@@ -52,4 +52,6 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   @Nullable
   public abstract Point getPoint(GutterIconRenderer renderer);
+
+  public abstract void setLineShift(int lineShift);
 }
