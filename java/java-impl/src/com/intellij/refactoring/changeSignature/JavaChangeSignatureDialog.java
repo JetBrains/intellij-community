@@ -17,6 +17,8 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -108,9 +110,18 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
     final JBTable table = new JBTable(myExceptionsModel);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
-    table.getColumnModel().getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));
+    final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
+    cellEditor.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        final int row = table.getSelectedRow();
+        final int col = table.getSelectedColumn();
+        myExceptionsModel.setValueAt(cellEditor.getCellEditorValue(), row, col);
+        updateSignature();
+      }
+    });
+    table.getColumnModel().getColumn(0).setCellEditor(cellEditor);
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("changeSignature.exceptions.panel.border.title")));
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
     final JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(scrollPane, BorderLayout.CENTER);
@@ -144,8 +155,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     myPropExceptionsButton.setShortcut(KeyboardShortcut.fromString("alt X"));
 
 
-    final JPanel buttonsPanel = EditableRowTable.createButtonsTable(table, myExceptionsModel, false, true,
-                                                                    myPropExceptionsButton);
+    final JPanel buttonsPanel = EditableRowTable.createButtonsTable(table, myExceptionsModel, false, true, false, myPropExceptionsButton);
 
     panel.add(buttonsPanel, BorderLayout.EAST);
 
@@ -156,7 +166,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     });
 
     final ArrayList<Pair<String, JPanel>> result = new ArrayList<Pair<String, JPanel>>();
-    result.add(Pair.create("Exceptions", panel));
+    final String message = RefactoringBundle.message("changeSignature.exceptions.panel.border.title");
+    result.add(Pair.create(message, panel));
     return result;
   }
 

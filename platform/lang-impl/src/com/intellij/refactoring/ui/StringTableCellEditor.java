@@ -17,6 +17,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
@@ -24,6 +25,8 @@ import com.intellij.ui.EditorTextField;
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author dsl
@@ -31,6 +34,7 @@ import java.awt.*;
 public class StringTableCellEditor extends AbstractCellEditor implements TableCellEditor {
   private Document myDocument;
   private final Project myProject;
+  private Set<DocumentListener> myListeners = new HashSet<DocumentListener>();
 
   public StringTableCellEditor(final Project project) {
     myProject = project;
@@ -43,10 +47,19 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
             }
           };
     myDocument = editorTextField.getDocument();
+    if (myDocument != null) {
+      for (DocumentListener listener : myListeners) {
+        editorTextField.addDocumentListener(listener);
+      }
+    }
     return editorTextField;
   }
 
   public Object getCellEditorValue() {
     return myDocument.getText();
+  }
+
+  public void addDocumentListener(DocumentListener listener) {
+    myListeners.add(listener);
   }
 }

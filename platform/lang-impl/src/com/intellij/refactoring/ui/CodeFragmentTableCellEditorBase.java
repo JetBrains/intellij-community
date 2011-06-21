@@ -16,6 +16,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
@@ -24,9 +25,10 @@ import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author dsl
@@ -37,6 +39,7 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
   private final Project myProject;
   private final FileType myFileType;
   protected EditorTextField myEditorTextField;
+  private Set<DocumentListener> myListeners = new HashSet<DocumentListener>();
 
   public CodeFragmentTableCellEditorBase(final Project project, FileType fileType) {
     myProject = project;
@@ -48,6 +51,13 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
 
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myCodeFragment);
     myEditorTextField = createEditorField(myDocument);
+    if (myEditorTextField != null) {
+      for (DocumentListener listener : myListeners) {
+        myEditorTextField.addDocumentListener(listener);
+      }
+      myEditorTextField.setDocument(myDocument);
+    }
+
     return myEditorTextField;
   }
 
@@ -69,5 +79,9 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
     super.stopCellEditing();
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     return true;
+  }
+
+  public void addDocumentListener(DocumentListener listener) {
+    myListeners.add(listener);
   }
 }

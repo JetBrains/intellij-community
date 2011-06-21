@@ -92,6 +92,7 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase implements Shor
   @Override
   public void setVisibility(String visibility) {
     myGroup.setValue(visibility);
+    myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
   }
 
   @Override

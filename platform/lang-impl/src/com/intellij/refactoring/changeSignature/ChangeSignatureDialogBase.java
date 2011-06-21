@@ -15,13 +15,13 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -51,12 +51,14 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -210,7 +212,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
 
     final JPanel p = new JPanel(new BorderLayout());
-    if (myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
+    if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
       p.add(myVisibilityPanel, BorderLayout.WEST);
     }
     p.add(typePanel, BorderLayout.EAST);
@@ -340,6 +342,31 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         super.editingStopped(e);
         repaint(); // to update disabled cells background
       }
+
+      @Nullable
+      @Override
+      public TableCellEditor getCellEditor(final int row, final int column) {
+        final TableCellEditor editor = super.getCellEditor(row, column);
+        final DocumentAdapter listener = new DocumentAdapter() {
+          @Override
+          public void documentChanged(DocumentEvent e) {
+            final TableCellEditor ed = myParametersTable.getCellEditor();
+            if (ed != null) {
+              Object editorValue = ed.getCellEditorValue();
+              myParametersTableModel.setValueAtWithoutUpdate(editorValue, row, column);
+              updateSignature();
+            }
+          }
+        };
+
+        if (editor instanceof StringTableCellEditor) {
+          final StringTableCellEditor ed = (StringTableCellEditor)editor;
+          ed.addDocumentListener(listener);
+        } else if (editor instanceof CodeFragmentTableCellEditorBase) {
+          ((CodeFragmentTableCellEditorBase)editor).addDocumentListener(listener);
+        }
+        return editor;
+      }
     };
     myParametersTable.setCellSelectionEnabled(true);
 
@@ -360,7 +387,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.setSurrendersFocusOnKeystroke(true);
     myPropagateParamChangesButton.setShortcut(KeyboardShortcut.fromString("alt G"));
     final JPanel buttonsPanel = EditableRowTable.createButtonsTable(myParametersTable, myParametersTableModel,
-                                                              false, true, myPropagateParamChangesButton);
+                                                              false, true, false, myPropagateParamChangesButton);
     myPropagateParamChangesButton.setEnabled(false);
     myPropagateParamChangesButton.setVisible(false);
     panel.add(buttonsPanel, BorderLayout.EAST);
@@ -383,7 +410,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     panel.add(mySignatureArea, BorderLayout.CENTER);
     mySignatureArea.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
     mySignatureArea.setPreferredSize(new Dimension(-1, 130));
-    mySignatureArea.setBackground(HintUtil.INFORMATION_COLOR);
+    mySignatureArea.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR));
     mySignatureArea.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
