@@ -167,6 +167,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       final JBPopup popup = myPopupRef.get();
       if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
         final ImplementationViewComponent component = (ImplementationViewComponent) ((AbstractPopup)popup).getComponent();
+        ((AbstractPopup)popup).setCaption(CodeInsightBundle.message("implementation.view.title", text));
         component.update(impls, index);
         return;
       }
