@@ -89,6 +89,8 @@ public abstract class GroovyNamedArgumentProvider {
           if (!(parameters.length == 0 ? method.isConstructor() : canBeMap(parameters[0]))) {
             continue;
           }
+
+          collectVariantsFromSimpleDescriptors(namedArguments, method);
         }
 
         for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
@@ -98,6 +100,17 @@ public abstract class GroovyNamedArgumentProvider {
     }
 
     return namedArguments;
+  }
+
+  private static void collectVariantsFromSimpleDescriptors(Map<String, ArgumentDescriptor> res, PsiMethod method) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null) {
+      Map<String, ArgumentDescriptor> map =
+        SimpleGroovyNamedArgumentProvider.getMethodMap(containingClass.getQualifiedName(), method.getName());
+      if (map != null) {
+        res.putAll(map);
+      }
+    }
   }
 
   public static boolean canBeMap(PsiParameter parameter) {
