@@ -19,7 +19,10 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.VisibleAreaEvent;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -76,12 +79,23 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
   private final EditorTextRepresentationHelper myRepresentationHelper;
   private final SoftWrapDataMapper myDataMapper;
 
+  /**
+   * Visual area width change causes soft wraps addition/removal, so, we want to update <code>'y'</code> coordinate
+   * of the editor viewport then. For example, we observe particular text region at the 'vcs diff' control and change
+   * its width. We would like to see the same text range at the viewport then.
+   * <p/>
+   * This field holds offset of the text range that is shown at the top-left viewport position. It's used as an anchor
+   * during viewport's <code>'y'</code> coordinate adjustment on visual area width change.
+   */
+  private int myLastTopLeftCornerOffset = -1;
+
   private VisibleAreaWidthProvider myWidthProvider;
   private LineWrapPositionStrategy myLineWrapPositionStrategy;
-  private boolean myCustomIndentUsedLastTime;
-  private int myCustomIndentValueUsedLastTime;
-  private int myVisibleAreaWidth;
-  private boolean myInProgress;
+  private boolean                  myVisualAreaListenerAttached;
+  private boolean                  myCustomIndentUsedLastTime;
+  private int                      myCustomIndentValueUsedLastTime;
+  private int                      myVisibleAreaWidth;
+  private boolean                  myInProgress;
 
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorEx editor,
@@ -110,8 +124,24 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     myLineWrapPositionStrategy = null;
   }
 
-  @SuppressWarnings({"ForLoopReplaceableByForEach"})
+  private void initListenerIfNecessary() {
+    // We can't attach the listener during this object initialization because there is a big chance that the editor is in incomplete
+    // state there (e.g. it's scrolling model is not initialized yet).
+    if (myVisualAreaListenerAttached) {
+      return;
+    }
+    myVisualAreaListenerAttached = true;
+    myEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
+      @Override
+      public void visibleAreaChanged(VisibleAreaEvent e) {
+        updateLastTopLeftCornerOffset();
+      }
+    });
+    updateLastTopLeftCornerOffset();
+  }
+  
   private void recalculateSoftWraps() {
+    initListenerIfNecessary();
     if (myVisibleAreaWidth <= 0 || myEventsStorage.getEvents().isEmpty()) {
       return;
     }
@@ -128,6 +158,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     finally {
       myInProgress = false;
     }
+    updateLastTopLeftCornerOffset();
   }
 
   private void recalculateSoftWraps(IncrementalCacheUpdateEvent event) {
@@ -156,7 +187,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     }
   }
 
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
   private boolean doRecalculateSoftWraps(IncrementalCacheUpdateEvent event) {
     // Preparation.
     myContext.reset();
@@ -652,13 +682,51 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       return;
     }
 
-    // Drop information about processed lines then.
+    // We want to adjust viewport's 'y' coordinate on complete recalculation, so, we remember number of soft-wrapped lines
+    // before the target offset on recalculation start and compare it with the number of soft-wrapped lines before the same offset
+    // after the recalculation.
+    int softWrapsBefore = -1;
+    final ScrollingModelEx scrollingModel = myEditor.getScrollingModel();
+    int yScrollOffset = scrollingModel.getVerticalScrollOffset();
+    int anchorOffset = myLastTopLeftCornerOffset;
+    if (anchorOffset >= 0) {
+      softWrapsBefore = getNumberOfSoftWrapsBefore(anchorOffset);
+    }
+
+    // Drop information about processed lines.
     reset();
     myStorage.removeAll();
     myVisibleAreaWidth = currentVisibleAreaWidth;
     recalculateSoftWraps();
+    
+    // Adjust viewport's 'y' coordinate if necessary.
+    if (softWrapsBefore >= 0) {
+      int softWrapsNow = getNumberOfSoftWrapsBefore(anchorOffset);
+      if (softWrapsNow != softWrapsBefore) {
+        scrollingModel.disableAnimation();
+        try {
+          scrollingModel.scrollVertically(yScrollOffset + (softWrapsNow - softWrapsBefore) * myEditor.getLineHeight());
+        }
+        finally {
+          scrollingModel.enableAnimation();
+        }
+      }
+    }
+    updateLastTopLeftCornerOffset();
   }
 
+  private void updateLastTopLeftCornerOffset() {
+    final LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(
+      new VisualPosition(1 + myEditor.getScrollingModel().getVisibleArea().y / myEditor.getLineHeight(), 0)
+    );
+    myLastTopLeftCornerOffset = myEditor.logicalPositionToOffset(logicalPosition);
+  }
+  
+  private int getNumberOfSoftWrapsBefore(int offset) {
+    final int i = myStorage.getSoftWrapIndex(offset);
+    return i >= 0 ? i : -i - 1;
+  }
+  
   private IndentType getIndentToUse() {
     return myEditor.getSettings().isUseCustomSoftWrapIndent() ? IndentType.CUSTOM : IndentType.NONE;
   }
