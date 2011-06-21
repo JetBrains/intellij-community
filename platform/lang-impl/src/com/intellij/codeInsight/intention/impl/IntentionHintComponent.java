@@ -282,9 +282,9 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     int line = pos.line;
 
     final int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
+    if (firstNonSpaceColumnOnTheLine == -1) return false;
     final Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
-
-    return point.x > (ourIntentionIcon.getIconWidth() + NORMAL_BORDER_SIZE*2);
+    return point.x > (ourIntentionIcon.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2);
   }
                                                                  
   private IntentionHintComponent(@NotNull Project project,
