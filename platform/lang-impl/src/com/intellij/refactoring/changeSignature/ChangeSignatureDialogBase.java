@@ -181,8 +181,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       }
     };
 
-    createVisibilityPanel();
-
     final JLabel nameLabel = new JLabel(RefactoringBundle.message("name.prompt"));
     myNameField = new EditorTextField(myMethod.getName());
     nameLabel.setLabelFor(myNameField);
@@ -192,6 +190,8 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     if (myMethod.canChangeName()) {
       myNameField.addDocumentListener(documentListener);
     }
+
+    createVisibilityPanel();
 
     if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
       final JLabel typeLabel = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
