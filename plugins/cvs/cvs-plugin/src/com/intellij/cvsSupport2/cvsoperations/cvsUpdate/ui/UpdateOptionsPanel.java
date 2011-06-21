@@ -143,7 +143,12 @@ public class UpdateOptionsPanel {
     configuration.MERGE_WITH_BRANCH2_NAME = myBranch2.getText();
     configuration.RESET_STICKY = mySwitchToHeadRevision.isSelected();
     configuration.CREATE_NEW_DIRECTORIES = myCreateNewDirectories.isSelected();
-    configuration.UPDATE_KEYWORD_SUBSTITUTION = myChangeKeywordSubstitutionPanel.getKeywordSubstitution().toString();
+    final KeywordSubstitution keywordSubstitution = myChangeKeywordSubstitutionPanel.getKeywordSubstitution();
+    if (keywordSubstitution == null) {
+      configuration.UPDATE_KEYWORD_SUBSTITUTION = null;
+    } else {
+      configuration.UPDATE_KEYWORD_SUBSTITUTION = keywordSubstitution.toString();
+    }
 
     myDateOrRevisionOrTagSettings.saveTo(configuration.UPDATE_DATE_OR_REVISION_SETTINGS);
   }
