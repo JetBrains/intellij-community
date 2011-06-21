@@ -96,7 +96,18 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
-        RangeMarker r = myLocalMarker != null ? myLocalMarker : myExprMarker;
+        RangeMarker r;
+        if (myLocalMarker != null) {
+          final PsiReference reference = myExpr.getReference();
+          if (reference != null && reference.resolve() == myLocalVariable) {
+            r = myExprMarker;
+          } else {
+            r = myLocalMarker;
+          }
+        }
+        else {
+          r = myExprMarker;
+        }
         final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
         boolean started = false;
         if (variable != null) {
