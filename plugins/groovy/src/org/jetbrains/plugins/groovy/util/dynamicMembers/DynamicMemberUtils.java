@@ -26,14 +26,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DynamicMemberUtils {
 
-  private static final Key<Map<String, ClassMemberHolder>> KEY = Key.create("DynamicMemberUtils");
+  private static final Key<ConcurrentHashMap<String, ClassMemberHolder>> KEY = Key.create("DynamicMemberUtils");
 
   private DynamicMemberUtils() {
 
   }
 
   public static ClassMemberHolder getMembers(@NotNull Project project, @NotNull String source) {
-    Map<String, ClassMemberHolder> map = project.getUserData(KEY);
+    ConcurrentHashMap<String, ClassMemberHolder> map = project.getUserData(KEY);
 
     if (map == null) {
       map = new ConcurrentHashMap<String, ClassMemberHolder>();
@@ -44,7 +44,10 @@ public class DynamicMemberUtils {
 
     if (res == null) {
       res = new ClassMemberHolder(project, source);
-      map.put(source, res);
+      ClassMemberHolder oldValue = map.putIfAbsent(source, res);
+      if (oldValue != null) {
+        res = oldValue;
+      }
     }
 
     assert source == res.myClassSource : "Store class sources in static constant, do not generate it in each call.";
