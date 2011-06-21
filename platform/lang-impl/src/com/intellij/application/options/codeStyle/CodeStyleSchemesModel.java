@@ -132,6 +132,7 @@ public class CodeStyleSchemesModel {
     if (commit) {
       final CodeStyleSettingsManager projectSettings = getProjectSettings();
       projectSettings.USE_PER_PROJECT_SETTINGS = usePerProjectSettings;
+      projectSettings.PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
     } 
     
     if (myUsePerProjectSettings != usePerProjectSettings) {
