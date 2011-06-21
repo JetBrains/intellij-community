@@ -14,6 +14,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.io.StringRef;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.StatementParsing;
@@ -42,7 +43,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
 
   @Override
   public int getStubVersion() {
-    return 33;
+    return 34;
   }
 
   @Override
@@ -84,13 +85,15 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   public void serialize(PyFileStub stub, StubOutputStream dataStream) throws IOException {
     writeNullableList(dataStream, stub.getDunderAll());
     writeBitSet(dataStream, stub.getFutureFeatures());
+    dataStream.writeName(stub.getDeprecationMessage());
   }
 
   @Override
   public PyFileStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     List<String> all = readNullableList(dataStream);
     BitSet future_features = readBitSet(dataStream);
-    return new PyFileStubImpl(all, future_features);
+    StringRef deprecationMessage = dataStream.readName();
+    return new PyFileStubImpl(all, future_features, deprecationMessage);
   }
 
   private static BitSet readBitSet(StubInputStream dataStream) throws IOException {

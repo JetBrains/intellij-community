@@ -24,6 +24,8 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.jetbrains.python.PythonMockSdk;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PyLightFixtureTestCase extends UsefulTestCase {
   private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor("2.5");
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor("3.1");
+  private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
   protected CodeInsightTestFixture myFixture;
   private static boolean ourPlatformPrefixInitialized;
@@ -84,6 +87,10 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
 
   protected void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+  }
+
+  protected static void assertNotParsed(PyFile file) {
+    assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {

@@ -220,6 +220,42 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return PyTypeParser.getTypeByName(this, typeName);
   }
 
+  @Override
+  public String getDeprecationMessage() {
+    PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.getDeprecationMessage();
+    }
+    return extractDeprecationMessage();
+  }
+
+  public String extractDeprecationMessage() {
+    PyStatementList statementList = getStatementList();
+    if (statementList == null) {
+      return null;
+    }
+    return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
+  }
+
+  public static String extractDeprecationMessage(List<PyStatement> statements) {
+    for (PyStatement statement : statements) {
+      if (statement instanceof PyExpressionStatement) {
+        PyExpressionStatement expressionStatement = (PyExpressionStatement)statement;
+        if (expressionStatement.getExpression() instanceof PyCallExpression) {
+          PyCallExpression callExpression = (PyCallExpression)expressionStatement.getExpression();
+          if (callExpression.isCalleeText(PyNames.WARN)) {
+            PyReferenceExpression warningClass = callExpression.getArgument(1, PyReferenceExpression.class);
+            if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||
+                                         PyNames.PENDING_DEPRECATION_WARNING.equals(warningClass.getReferencedName()))) {
+              return PyUtil.strValue(callExpression.getArguments() [0]);
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   @Nullable
   public String extractDocStringReturnType() {
     final PyStringLiteralExpression docString = getDocStringExpression();

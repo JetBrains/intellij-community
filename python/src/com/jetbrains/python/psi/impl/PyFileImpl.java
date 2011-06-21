@@ -547,6 +547,19 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return enabled;
   }
 
+  @Override
+  public String getDeprecationMessage() {
+    final StubElement stub = getStub();
+    if (stub instanceof PyFileStub) {
+      return ((PyFileStub) stub).getDeprecationMessage();
+    }
+    return extractDeprecationMessage();
+  }
+
+  public String extractDeprecationMessage() {
+    return PyFunctionImpl.extractDeprecationMessage(getStatements());
+  }
+
   public boolean calculateImportFromFuture(FutureFeature feature) {
     final List<PyFromImportStatement> fromImports = getFromImports();
     for (PyFromImportStatement fromImport : fromImports) {
