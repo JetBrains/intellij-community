@@ -183,13 +183,13 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
     createVisibilityPanel();
 
+    final JLabel nameLabel = new JLabel(RefactoringBundle.message("name.prompt"));
+    myNameField = new EditorTextField(myMethod.getName());
+    nameLabel.setLabelFor(myNameField);
+    namePanel.add(nameLabel);
+    namePanel.add(myNameField);
+    myNameField.setEnabled(myMethod.canChangeName());
     if (myMethod.canChangeName()) {
-      final JLabel nameLabel = new JLabel(RefactoringBundle.message("name.prompt"));
-      myNameField = new EditorTextField(myMethod.getName());
-      nameLabel.setLabelFor(myNameField);
-      namePanel.add(nameLabel);
-      namePanel.add(myNameField);
-      myNameField.setEnabled(myMethod.canChangeName());
       myNameField.addDocumentListener(documentListener);
     }
 
