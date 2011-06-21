@@ -823,6 +823,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     layeredPane.add(myIconPanel, 42, 0);
     layeredPane.add(mySortingLabel, 10, 0);
 
+    //todo PopupFactory recycles popups, perhaps this cleanup should be done somewhere else
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        layeredPane.remove(myIconPanel);
+        layeredPane.remove(mySortingLabel);
+      }
+    });
+
     layoutStatusIcons();
   }
 
