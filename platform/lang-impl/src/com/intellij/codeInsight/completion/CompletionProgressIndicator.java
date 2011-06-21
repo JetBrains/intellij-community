@@ -278,29 +278,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     assert !isAutopopupCompletion();
 
     final JComponent contentComponent = myEditor.getContentComponent();
-    contentComponent.addKeyListener(new KeyAdapter() {
-      public void keyPressed(KeyEvent e) {
-        processModifier(e);
-      }
-
-      public void keyReleased(KeyEvent e) {
-        processModifier(e);
-      }
-
-      private void processModifier(KeyEvent e) {
-        final int code = e.getKeyCode();
-        if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
-          contentComponent.removeKeyListener(this);
-          final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-          if (phase instanceof CompletionPhase.BgCalculation) {
-            ((CompletionPhase.BgCalculation)phase).modifiersChanged = true;
-          }
-          else if (phase instanceof CompletionPhase.InsertedSingleItem) {
-            CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-          }
-        }
-      }
-    });
+    contentComponent.addKeyListener(new ModifierTracker(contentComponent));
   }
 
   public void setMergeCommand() {
@@ -707,5 +685,35 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
     return false;
+  }
+
+  private static class ModifierTracker extends KeyAdapter {
+    private final JComponent myContentComponent;
+
+    public ModifierTracker(JComponent contentComponent) {
+      myContentComponent = contentComponent;
+    }
+
+    public void keyPressed(KeyEvent e) {
+      processModifier(e);
+    }
+
+    public void keyReleased(KeyEvent e) {
+      processModifier(e);
+    }
+
+    private void processModifier(KeyEvent e) {
+      final int code = e.getKeyCode();
+      if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
+        myContentComponent.removeKeyListener(this);
+        final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+        if (phase instanceof CompletionPhase.BgCalculation) {
+          ((CompletionPhase.BgCalculation)phase).modifiersChanged = true;
+        }
+        else if (phase instanceof CompletionPhase.InsertedSingleItem) {
+          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        }
+      }
+    }
   }
 }
