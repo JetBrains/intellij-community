@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Mike
  */
 public interface XmlFile extends PsiFile, XmlElement, FileResolveScopeProvider {
+  XmlFile[] EMPTY_ARRAY = new XmlFile[0];
+
   @Nullable
   XmlDocument getDocument();
 
