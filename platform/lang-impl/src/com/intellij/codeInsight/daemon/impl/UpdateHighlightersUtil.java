@@ -22,8 +22,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -589,19 +587,14 @@ public class UpdateHighlightersUtil {
     final MarkupModel markup = document.getMarkupModel(project);
     assertMarkupConsistent(markup, project);
 
-    Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
-    if (editors.length <= 0) return;
-    
-    final int start = e.getOffset();
+    final int start = e.getOffset() - 1;
     final int end = start + Math.max(e.getOldLength(), e.getNewLength());
 
-    final boolean[] highlightersChanged = {false};
-    final List<HighlightInfo> removed = new ArrayList<HighlightInfo>();
-    final boolean[] documentChangedInsideHighlighter = {false};
+    final List<HighlightInfo> toRemove = new ArrayList<HighlightInfo>();
     DaemonCodeAnalyzerImpl.processHighlights(document, project, null, start, end, new Processor<HighlightInfo>() {
       public boolean process(HighlightInfo info) {
         RangeHighlighter highlighter = info.highlighter;
-        boolean toRemove = false;
+        boolean remove = false;
         if (info.needUpdateOnTyping()) {
           int highlighterStart = highlighter.getStartOffset();
           int highlighterEnd = highlighter.getEndOffset();
@@ -613,31 +606,18 @@ public class UpdateHighlightersUtil {
               highlighterEnd += 1;
             }
           }
-
-          if (!highlighter.isValid()) {
-            toRemove = true;
-          }
-          else if (start < highlighterEnd && highlighterStart <= end) {
-            documentChangedInsideHighlighter[0] = true;
-            toRemove = true;
+          if (!highlighter.isValid() || start < highlighterEnd && highlighterStart <= end) {
+            remove = true;
           }
         }
-
-        if (toRemove) {
-          //if (info.type.equals(HighlightInfoType.WRONG_REF)) {
-            /*
-            markup.removeHighlighter(highlighter);
-            */
-          //}
-          highlightersChanged[0] = true;
-          removed.add(info);
+        if (remove) {
+          toRemove.add(info);
         }
-
         return true;
       }
     });
 
-    for (HighlightInfo info : removed) {
+    for (HighlightInfo info : toRemove) {
       if (!info.highlighter.isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
         info.highlighter.dispose();
       }
@@ -645,7 +625,7 @@ public class UpdateHighlightersUtil {
     
     assertMarkupConsistent(markup, project);
 
-    if (highlightersChanged[0] || documentChangedInsideHighlighter[0]) {
+    if (!toRemove.isEmpty()) {
       disableWhiteSpaceOptimization(document);
     }
   }
