@@ -50,7 +50,11 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   public OptimizeImportsProcessor(Project project, PsiFile[] files, Runnable postRunnable) {
-    super(project, files, PROGRESS_TEXT, COMMAND_NAME, postRunnable);
+    this(project, files, COMMAND_NAME, postRunnable);
+  }
+
+  public OptimizeImportsProcessor(Project project, PsiFile[] files, String commandName, Runnable postRunnable) {
+    super(project, files, PROGRESS_TEXT, commandName, postRunnable);
   }
 
   @NotNull

@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,9 @@ import java.awt.*;
 import java.util.Collection;
 
 public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implements CheckinMetaHandler {
+
+  public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports.before.commit");
+  
   protected final Project myProject;
   private final CheckinProjectPanel myPanel;
 
@@ -80,7 +84,7 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
     };
 
     if (configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT) {
-      new OptimizeImportsProcessor(myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, files), performCheckoutAction).run();
+      new OptimizeImportsProcessor(myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, files), COMMAND_NAME, performCheckoutAction).run();
     }  else {
       finishAction.run();
     }
