@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,23 +23,25 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
+import com.intellij.ui.plaf.gtk.GtkMenuUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.plaf.MenuItemUI;
+import javax.swing.plaf.basic.BasicMenuUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public final class ActionMenu extends JMenu {
+  private static final String MARK = "__TOP_LEVEL__";
+
   private final String myPlace;
   private DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -56,18 +58,23 @@ public final class ActionMenu extends JMenu {
    * at JMenuBar.
    */
   private StubItem myStubItem;
+  private final boolean myTopLevel;
 
-  public ActionMenu(DataContext context,
-                    String place,
-                    ActionGroup group,
-                    PresentationFactory presentationFactory,
-                    final boolean enableMnemonics) {
+  public ActionMenu(final DataContext context,
+                    final String place,
+                    final ActionGroup group,
+                    final PresentationFactory presentationFactory,
+                    final boolean enableMnemonics,
+                    final boolean topLevel) {
+    super(topLevel ? MARK : "");  // super() invokes updateUI() before myTopLevel got chance to set
+
     myContext = context;
     myPlace = place;
     myGroup = ActionRef.fromAction(group);
     myPresentationFactory = presentationFactory;
     myPresentation = myPresentationFactory.getPresentation(group);
     myMnemonicEnabled = enableMnemonics;
+    myTopLevel = topLevel;
 
     init();
 
@@ -94,6 +101,7 @@ public final class ActionMenu extends JMenu {
     }
   }
 
+  @Override
   public void removeNotify() {
     uninstallSynchronizer();
     super.removeNotify();
@@ -107,18 +115,31 @@ public final class ActionMenu extends JMenu {
     }
   }
 
+  @Override
   public void updateUI() {
-    JPopupMenu popupMenu = getPopupMenu();
-    if (popupMenu != null) {
-      popupMenu.updateUI();
-    }
     if (UIUtil.isStandardMenuLAF()) {
-      setUI((MenuItemUI)UIManager.getUI(this));
+      super.updateUI();
     }
     else {
       setUI(IdeaMenuUI.createUI(this));
       setFont(UIUtil.getMenuFont());
+
+      JPopupMenu popupMenu = getPopupMenu();
+      if (popupMenu != null) {
+        popupMenu.updateUI();
+      }
     }
+  }
+
+  @Override
+  public void setUI(final MenuItemUI ui) {
+    final MenuItemUI newUi = !isTopLevel() && UIUtil.isUnderGTKLookAndFeel() && ui instanceof BasicMenuUI
+                             ? new GtkMenuUI((BasicMenuUI)ui) : ui;
+    super.setUI(newUi);
+  }
+
+  private boolean isTopLevel() {
+    return myTopLevel || getText() == MARK;
   }
 
   private void init() {
@@ -154,6 +175,7 @@ public final class ActionMenu extends JMenu {
     super.setDisplayedMnemonicIndex(myMnemonicEnabled ? index : -1);
   }
 
+  @Override
   public void setMnemonic(int mnemonic) {
     super.setMnemonic(myMnemonicEnabled ? mnemonic : 0);
   }
@@ -170,6 +192,7 @@ public final class ActionMenu extends JMenu {
     }
   }
 
+  @Override
   public void menuSelectionChanged(boolean isIncluded) {
     super.menuSelectionChanged(isIncluded);
     showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
@@ -189,7 +212,6 @@ public final class ActionMenu extends JMenu {
       }
     }
   }
-
 
   private class MenuListenerImpl implements MenuListener {
     public void menuCanceled(MenuEvent e) {

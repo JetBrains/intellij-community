@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,19 @@ import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
 /**
+ * Made non-final public for Fabrique.
+ *
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-
-// Made non-final public for Fabrique
-public class IdeMenuBar extends JMenuBar{
+public class IdeMenuBar extends JMenuBar {
   private final MyTimerListener myTimerListener;
   private ArrayList<AnAction> myVisibleActions;
   private ArrayList<AnAction> myNewVisibleActions;
@@ -49,9 +50,9 @@ public class IdeMenuBar extends JMenuBar{
   private final ActionManagerEx myActionManager;
   private final Disposable myDisposable = Disposer.newDisposable();
 
-  public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager){
+  public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
     myActionManager = actionManager;
-    myTimerListener=new MyTimerListener();
+    myTimerListener = new MyTimerListener();
     myVisibleActions = new ArrayList<AnAction>();
     myNewVisibleActions = new ArrayList<AnAction>();
     myPresentationFactory = new MenuItemPresentationFactory();
@@ -61,11 +62,12 @@ public class IdeMenuBar extends JMenuBar{
   /**
    * Invoked when enclosed frame is being shown.
    */
-  public void addNotify(){
+  @Override
+  public void addNotify() {
     super.addNotify();
     updateMenuActions();
     // Add updater for menus
-    myActionManager.addTimerListener(1000,new WeakTimerListener(myActionManager,myTimerListener));
+    myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
     UISettingsListener UISettingsListener = new UISettingsListener() {
       public void uiSettingsChanged(final UISettings source) {
         updateMnemonicsVisibility();
@@ -79,7 +81,8 @@ public class IdeMenuBar extends JMenuBar{
   /**
    * Invoked when enclosed frame is being disposed.
    */
-  public void removeNotify(){
+  @Override
+  public void removeNotify() {
     Disposer.dispose(myDisposable);
     super.removeNotify();
   }
@@ -92,7 +95,6 @@ public class IdeMenuBar extends JMenuBar{
 
     if (!myNewVisibleActions.equals(myVisibleActions)) {
       // should rebuild UI
-
       final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
 
       final ArrayList<AnAction> temp = myVisibleActions;
@@ -100,15 +102,9 @@ public class IdeMenuBar extends JMenuBar{
       myNewVisibleActions = temp;
 
       removeAll();
-      Color background = null;
+      final boolean enableMnemonics = !UISettings.getInstance().DISABLE_MNEMONICS;
       for (final AnAction action : myVisibleActions) {
-        final ActionMenu menu = new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, !UISettings.getInstance().DISABLE_MNEMONICS);
-        add(menu);
-        background = menu.getBackground();
-      }
-
-      if (background != null) {
-        setBackground(background);
+        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true));
       }
 
       updateMnemonicsVisibility();
@@ -125,11 +121,12 @@ public class IdeMenuBar extends JMenuBar{
   }
 
   /**
-   * Hacks a problem under Alloy LaF which draws menubar in different background menu items are drawn in.
+   * Hacks a problem under Alloy LaF which draws menu bar in different background menu items are drawn in.
    */
-  @Override public void updateUI() {
+  @Override
+  public void updateUI() {
     super.updateUI();
-    if (getMenuCount() > 0) {
+    if (UIUtil.isUnderAlloyLookAndFeel() && getMenuCount() > 0) {
       final JMenu menu = getMenu(0);
       if (menu != null) {  // hack for Substance LAF compatibility
         menu.updateUI();
@@ -138,9 +135,7 @@ public class IdeMenuBar extends JMenuBar{
     }
   }
 
-  private void expandActionGroup(final DataContext context,
-                                 final ArrayList<AnAction> newVisibleActions,
-                                 ActionManager actionManager) {
+  private void expandActionGroup(final DataContext context, final ArrayList<AnAction> newVisibleActions, ActionManager actionManager) {
     final ActionGroup mainActionGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
     if (mainActionGroup == null) return;
     final AnAction[] children = mainActionGroup.getChildren(null);
@@ -149,9 +144,7 @@ public class IdeMenuBar extends JMenuBar{
         continue;
       }
       final Presentation presentation = myPresentationFactory.getPresentation(action);
-      final AnActionEvent e = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation,
-                                                actionManager,
-                                                0);
+      final AnActionEvent e = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, actionManager, 0);
       e.setInjectedContext(action.isInInjectedContext());
       action.update(e);
       if (presentation.isVisible()) { // add only visible items
@@ -160,39 +153,39 @@ public class IdeMenuBar extends JMenuBar{
     }
   }
 
-  private void updateMnemonicsVisibility(){
-    final boolean enabled= !UISettings.getInstance().DISABLE_MNEMONICS;
-    for(int i=0;i<getMenuCount();i++){
+  private void updateMnemonicsVisibility() {
+    final boolean enabled = !UISettings.getInstance().DISABLE_MNEMONICS;
+    for (int i = 0; i < getMenuCount(); i++) {
       ((ActionMenu)getMenu(i)).setMnemonicEnabled(enabled);
     }
   }
 
-  private final class MyTimerListener implements TimerListener{
+  private final class MyTimerListener implements TimerListener {
+    @Override
     public ModalityState getModalityState() {
       return ModalityState.stateForComponent(IdeMenuBar.this);
     }
 
-    public void run(){
-      if(!isShowing()){
+    @Override
+    public void run() {
+      if (!isShowing()) {
         return;
       }
 
-      Window mywindow = SwingUtilities.windowForComponent(IdeMenuBar.this);
-      if (mywindow != null && !mywindow.isActive()) return;
+      final Window myWindow = SwingUtilities.windowForComponent(IdeMenuBar.this);
+      if (myWindow != null && !myWindow.isActive()) return;
 
       // do not update when a popup menu is shown (if popup menu contains action which is also in the menu bar, it should not be enabled/disabled)
-
-      final MenuSelectionManager menuSelectionManager=MenuSelectionManager.defaultManager();
+      final MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
       final MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
-      if(selectedPath.length>0){
+      if (selectedPath.length > 0) {
         return;
       }
 
       // don't update toolbar if there is currently active modal dialog
-
-      final Window window=KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if(window instanceof Dialog){
-        if (((Dialog)window).isModal()){
+      final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      if (window instanceof Dialog) {
+        if (((Dialog)window).isModal()) {
           return;
         }
       }
@@ -200,5 +193,4 @@ public class IdeMenuBar extends JMenuBar{
       updateMenuActions();
     }
   }
-
 }

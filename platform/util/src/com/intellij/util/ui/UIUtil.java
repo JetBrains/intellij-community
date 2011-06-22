@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,13 +64,43 @@ import java.util.regex.Pattern;
  * @author max
  */
 public class UIUtil {
+  public enum FontSize { NORMAL, SMALL }
+
+  public static final char MNEMONIC = 0x1B;
+  @NonNls public static final String HTML_MIME = "text/html";
+  @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
+  @NonNls public static final String ARIAL_FONT_NAME = "Arial";
+  @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
+  @NonNls public static final String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
+  @NonNls public static final String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
+
+  public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
+
+  @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
+
+  public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
+
+  private static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
+  private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
+  private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
+  private static final Color BORDER_COLOR = new Color(170, 170, 170);
+
+  // accessed only from EDT
+  private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
+
+  private static final String ROOT_PANE = "JRootPane.future";
+
+  private UIUtil() { }
+
   public static String getHtmlBody(String text) {
     return getHtmlBody(new Html(text));
   }
 
   public static String getHtmlBody(Html html) {
     String text = html.getText();
-    String result = text;
+    String result;
     if (!text.startsWith("<html>")) {
       result = text.replaceAll("\n", "<br>");
     }
@@ -89,42 +119,7 @@ public class UIUtil {
       }
     }
 
-
-
     return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
-  }
-
-  public enum FontSize { NORMAL, SMALL }
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
-  @NonNls public static final String HTML_MIME = "text/html";
-  public static final char MNEMONIC = 0x1B;
-  @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
-  @NonNls public static final String ARIAL_FONT_NAME = "Arial";
-  @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
-
-  private static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
-
-  private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
-  private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
-
-  private static final Color BORDER_COLOR = new Color(170, 170, 170);
-
-  public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
-
-  @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
-
-  public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
-
-  // accessed only from EDT
-  private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
-
-  @NonNls public static final String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
-  @NonNls public static final String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
-
-  private static final String ROOT_PANE = "JRootPane.future";
-
-  private UIUtil() {
   }
 
   public static void drawLinePickedOut(Graphics graphics, int x, int y, int x1, int y1) {
@@ -155,7 +150,6 @@ public class UIUtil {
 
   public static int getStringY(@NotNull final String string, @NotNull final Rectangle bounds, @NotNull final Graphics2D g) {
     final int centerY = bounds.height / 2;
-    final FontMetrics fm = g.getFontMetrics();
     final Font font = g.getFont();
     final FontRenderContext frc = g.getFontRenderContext();
     final Rectangle stringBounds = font.getStringBounds(string, frc).getBounds();
@@ -190,7 +184,7 @@ public class UIUtil {
   public static String[] splitText(String text, FontMetrics fontMetrics, int widthLimit, char separator) {
     ArrayList<String> lines = new ArrayList<String>();
     String currentLine = "";
-    StringBuffer currentAtom = new StringBuffer();
+    StringBuilder currentAtom = new StringBuilder();
 
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
@@ -687,6 +681,53 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
+  public static String getGtkThemeName() {
+    final LookAndFeel laf = UIManager.getLookAndFeel();
+    if (laf != null && "GTKLookAndFeel".equals(laf.getClass().getSimpleName())) {
+      try {
+        final Method method = laf.getClass().getDeclaredMethod("getGtkThemeName");
+        method.setAccessible(true);
+        final Object theme = method.invoke(laf);
+        if (theme != null) {
+          return theme.toString();
+        }
+      }
+      catch (Exception ignore) { }
+    }
+    return null;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isMurrineBasedTheme() {
+    final String gtkTheme = getGtkThemeName();
+    return "Ambiance".equalsIgnoreCase(gtkTheme) ||
+           "Radiance".equalsIgnoreCase(gtkTheme) ||
+           "Dust".equalsIgnoreCase(gtkTheme) ||
+           "Dust Sand".equalsIgnoreCase(gtkTheme);
+  }
+
+  public static Color shade(final Color c, final double factor, final double alphaFactor) {
+    assert factor >= 0 : factor;
+    return new Color(
+      Math.min((int)Math.round(c.getRed() * factor), 255),
+      Math.min((int)Math.round(c.getGreen() * factor), 255),
+      Math.min((int)Math.round(c.getBlue() * factor), 255),
+      Math.min((int)Math.round(c.getAlpha() * alphaFactor), 255)
+    );
+  }
+
+  public static Color mix(final Color c1, final Color c2, final double factor) {
+    assert 0 <= factor && factor <= 1.0 : factor;
+    final double backFactor = 1.0 - factor;
+    return new Color(
+      Math.min((int)Math.round(c1.getRed() * backFactor + c2.getRed() * factor), 255),
+      Math.min((int)Math.round(c1.getGreen() * backFactor + c2.getGreen() * factor), 255),
+      Math.min((int)Math.round(c1.getBlue() * backFactor + c2.getBlue() * factor), 255)
+    );
+  }
+
   public static boolean isFullRowSelectionLAF() {
     return isUnderNimbusLookAndFeel() || isUnderQuaquaLookAndFeel();
   }
@@ -782,26 +823,24 @@ public class UIUtil {
     }
     if (fg != null) {
       rule.append(" color: #");
-      if (fg.getRed() < 16) {
-        rule.append('0');
-      }
-      rule.append(Integer.toHexString(fg.getRed()));
-      if (fg.getGreen() < 16) {
-        rule.append('0');
-      }
-      rule.append(Integer.toHexString(fg.getGreen()));
-      if (fg.getBlue() < 16) {
-        rule.append('0');
-      }
-      rule.append(Integer.toHexString(fg.getBlue()));
+      appendColor(fg, rule);
       rule.append(" ; ");
     }
     rule.append(" }");
     return rule.toString();
   }
 
+  public static void appendColor(final Color color, final StringBuilder sb) {
+    if (color.getRed() < 16) sb.append('0');
+    sb.append(Integer.toHexString(color.getRed()));
+    if (color.getGreen() < 16) sb.append('0');
+    sb.append(Integer.toHexString(color.getGreen()));
+    if (color.getBlue() < 16) sb.append('0');
+    sb.append(Integer.toHexString(color.getBlue()));
+  }
+
   /**
-   * @param g
+   * @param g  graphics.
    * @param x  top left X coordinate.
    * @param y  top left Y coordinate.
    * @param x1 right bottom X coordinate.
@@ -1473,7 +1512,7 @@ public class UIUtil {
   }
 
   public static String convertSpace2Nbsp(String html) {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     int currentPos = 0;
     int braces = 0;
     while (currentPos < html.length()) {
@@ -1490,13 +1529,6 @@ public class UIUtil {
         result.append(each);
       }
       currentPos++;
-    }
-
-    String text = result.toString();
-    int htmlTag = text.toLowerCase().lastIndexOf("</html>");
-
-    if (htmlTag >= 0) {
-      text = text.substring(0, htmlTag) + "<br><br>" + text.substring(htmlTag);
     }
 
     return result.toString();
@@ -1547,7 +1579,9 @@ public class UIUtil {
   }
 
   /**
-   * Avoid blinking while changing background
+   * Avoid blinking while changing background.
+   * @param component   component.
+   * @param background  new background.
    */
   public static void changeBackGround(final Component component, final Color background) {
     final Color oldBackGround = component.getBackground();

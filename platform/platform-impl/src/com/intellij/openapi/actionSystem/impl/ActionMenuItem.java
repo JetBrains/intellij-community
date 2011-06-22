@@ -29,12 +29,15 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
+import com.intellij.ui.plaf.gtk.GtkMenuItemUI;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.plaf.MenuItemUI;
+import javax.swing.plaf.basic.BasicMenuItemUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -57,12 +60,12 @@ public class ActionMenuItem extends JMenuItem {
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private final boolean myEnableMnemonics;
 
-  public ActionMenuItem(AnAction action,
-                        Presentation presentation,
-                        String place,
-                        DataContext context,
+  public ActionMenuItem(final AnAction action,
+                        final Presentation presentation,
+                        final String place,
+                        final DataContext context,
                         final boolean enableMnemonics,
-                        boolean prepareNow) {
+                        final boolean prepareNow) {
     myAction = ActionRef.fromAction(action);
     myPresentation = presentation;
     myPlace = place;
@@ -88,16 +91,19 @@ public class ActionMenuItem extends JMenuItem {
   /**
    * We have to make this method public to allow BegMenuItemUI to invoke it.
    */
+  @Override
   public void fireActionPerformed(ActionEvent event) {
     super.fireActionPerformed(event);
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     installSynchronizer();
     init();
   }
 
+  @Override
   public void removeNotify() {
     uninstallSynchronizer();
     super.removeNotify();
@@ -159,6 +165,7 @@ public class ActionMenuItem extends JMenuItem {
     return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && keyStroke.getModifiers() == 0;
   }
 
+  @Override
   public void updateUI() {
     if (UIUtil.isStandardMenuLAF()) {
       super.updateUI();
@@ -168,9 +175,17 @@ public class ActionMenuItem extends JMenuItem {
     }
   }
 
+  @Override
+  public void setUI(final MenuItemUI ui) {
+    final MenuItemUI newUi = UIUtil.isUnderGTKLookAndFeel() && ui instanceof BasicMenuItemUI
+                             ? new GtkMenuItemUI((BasicMenuItemUI)ui) : ui;
+    super.setUI(newUi);
+  }
+
   /**
    * Updates long description of action at the status bar.
    */
+  @Override
   public void menuSelectionChanged(boolean isIncluded) {
     super.menuSelectionChanged(isIncluded);
     ActionMenu.showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
