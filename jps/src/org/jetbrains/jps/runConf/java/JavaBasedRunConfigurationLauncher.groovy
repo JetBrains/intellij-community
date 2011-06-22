@@ -11,6 +11,7 @@ import org.jetbrains.jps.runConf.RunConfigurationLauncherService
 public abstract class JavaBasedRunConfigurationLauncher extends RunConfigurationLauncherService {
   private File myOutputFile;
   private File myErrorFile;
+  private Map<String, String> mySystemProperties = [:];
 
   JavaBasedRunConfigurationLauncher(String typeId) {
     super(typeId)
@@ -36,7 +37,7 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
   /**
    * @return system properties (can be specified in JVM arguments too, but this call is more convenient)
    */
-  public Map<String, String> getSystemProperties(RunConfiguration runConf) { return Collections.emptyMap() };
+  public Map<String, String> getSystemProperties(RunConfiguration runConf) { return mySystemProperties; };
 
   /**
    * @return classpath required to launch specified main class
@@ -57,7 +58,11 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     myErrorFile = errFile;
   }
 
-  public final void start(RunConfiguration runConf) {
+  public void addSystemProperties(Map<String, String> props) {
+    mySystemProperties.putAll(props);
+  }
+
+  final void actualStart(RunConfiguration runConf) {
     def project = runConf.project;
 
     def ant = project.binding.ant;

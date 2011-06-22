@@ -13,14 +13,14 @@ public abstract class RunConfigurationLauncherService {
 
   public void afterFinish(RunConfiguration runConf) {};
 
-  public final void startRunConfiguration(RunConfiguration runConf) {
+  public final void start(RunConfiguration runConf) {
     beforeStart(runConf);
     try {
-      start(runConf);
+      actualStart(runConf);
     } finally {
       afterFinish(runConf);
     };
   };
 
-  public abstract void start(RunConfiguration runConf);
+  protected abstract void actualStart(RunConfiguration runConf);
 }

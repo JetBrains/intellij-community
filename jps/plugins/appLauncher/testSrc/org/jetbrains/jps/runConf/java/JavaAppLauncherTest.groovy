@@ -14,16 +14,11 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
   }
 
   public void test_properties() {
-    JavaAppLauncher launcher = new JavaAppLauncher() {
-      @Override
-      Map<String, String> getSystemProperties(RunConfiguration runConf) {
-        return ["my.prop1" : "val1", "my.prop2" : "val2"];
-      }
-    }
-
-    runAndAssertOutput("MainClassProperties", launcher, { output ->
-      assertTrue(output, output.indexOf("val1" + System.getProperty("line.separator")) != -1)
-      assertTrue(output, output.indexOf("val2") != -1)
+    runAndAssertOutput("MainClassProperties", {JavaBasedRunConfigurationLauncher launcher ->
+        launcher.addSystemProperties(["my.prop1" : "val1", "my.prop2" : "val2"])
+      }, { output ->
+        assertTrue(output, output.indexOf("val1" + System.getProperty("line.separator")) != -1)
+        assertTrue(output, output.indexOf("val2") != -1)
     })
   }
 
@@ -50,7 +45,7 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
     })
   }
 
-  private void runAndAssertOutput(String runConfName, JavaBasedRunConfigurationLauncher launcher, Closure assertions) {
+  private void runAndAssertOutput(String runConfName, Closure launcherInitializer, Closure assertions) {
     Project project = loadProject("plugins/appLauncher/testData/main-class-run-conf", [:]);
 
     RunConfiguration runConf = project.runConfigurations[runConfName];
@@ -61,10 +56,12 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
 
     File outFile = createTempFile();
 
-    if (launcher == null) {
-      launcher = new JavaAppLauncher();
-    }
+    JavaAppLauncher launcher = new JavaAppLauncher();
     launcher.setOutputFile(outFile);
+
+    if (launcherInitializer != null) {
+      launcherInitializer(launcher);
+    }
 
     launcher.start(runConf);
 

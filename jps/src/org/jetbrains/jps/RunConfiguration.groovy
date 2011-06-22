@@ -17,12 +17,13 @@ public class RunConfiguration {
   final String workingDir;
   final Map<String, String> allOptions;
   final Map<String, String> envVars;
-  final List<String> classPatterns;
+  final Node node
 
   def RunConfiguration(Project project, MacroExpander macroExpander, Node confTag) {
     this.project = project;
     this.name = confTag.'@name';
     this.type = confTag.'@type';
+    this.node = confTag;
 
     this.allOptions = [:];
     confTag.option.each{ opt ->
@@ -56,35 +57,17 @@ public class RunConfiguration {
     confTag.envs.env.each{ el ->
       this.envVars[el.'@name'] = el.'@value';
     }
-
-    this.classPatterns = [];
-    confTag.patterns?.pattern.each{ el ->
-      this.classPatterns.add(el.'@testClass');
-    }
   }
 
   private static OwnServiceLoader<RunConfigurationLauncherService> runConfLauncherServices = OwnServiceLoader.load(RunConfigurationLauncherService.class)
 
-  def start() {
+  def RunConfigurationLauncherService getLauncher() {
     for (RunConfigurationLauncherService service: runConfLauncherServices.iterator()) {
       if (service.typeId == type) {
-        service.startRunConfiguration(this);
-        return;
+        return service;
       }
     }
 
-    throw new RuntimeException("Run configuration \"$name\" of type \"$type\" is not supported.");
+    return null;
   }
-
-  // for Java based run configurations returns runtime classpath, required to launch this configuration in JVM
-/*
-  void makeDependencies() {
-    if (this.module != null) {
-      this.module.make();
-      this.module.makeTests();
-    } else {
-      this.project.makeAll();
-    }
-  }
-*/
 }
