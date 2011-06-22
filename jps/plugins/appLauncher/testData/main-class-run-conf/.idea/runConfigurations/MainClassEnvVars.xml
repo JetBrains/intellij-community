@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="MainClassWithThread" type="Application" factoryName="Application">
-    <extension name="coverage" enabled="false" sample_coverage="true" runner="idea" merge="false" />
+  <configuration default="false" name="MainClassEnvVars" type="Application" factoryName="Application">
+    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <extension name="snapshooter" />
-    <option name="MAIN_CLASS_NAME" value="MainClassWithThread" />
+    <option name="MAIN_CLASS_NAME" value="MainClassEnvVars" />
     <option name="VM_PARAMETERS" value="" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
@@ -12,7 +12,13 @@
     <option name="ENV_VARIABLES" />
     <option name="PASS_PARENT_ENVS" value="true" />
     <module name="main-class-run-conf" />
-    <envs />
+    <envs>
+      <env name="ENV1" value="val1" />
+      <env name="ENV2" value="val2" />
+    </envs>
+    <RunnerSettings RunnerId="Profile ">
+      <option name="myExternalizedOptions" value="&#13;&#10;snapshots-dir=&#13;&#10;additional-options2=onexit\=snapshot&#13;&#10;" />
+    </RunnerSettings>
     <RunnerSettings RunnerId="Run" />
     <ConfigurationWrapper RunnerId="Run" />
     <method />

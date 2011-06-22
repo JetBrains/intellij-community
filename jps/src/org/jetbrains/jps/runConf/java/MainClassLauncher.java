@@ -42,8 +42,6 @@ public class MainClassLauncher {
     } catch (Throwable e) {
       throw new RuntimeException("Exception occurred in TeamCity tests launcher: " + main.getName() + ", error: " + e.toString(), e);
     }
-
-    System.exit(0); // we need to call exit, otherwise JVM may hang in case if there are non daemon threads
   }
 
   private static URL[] getClasspathElems(String tempFileName) throws IOException {

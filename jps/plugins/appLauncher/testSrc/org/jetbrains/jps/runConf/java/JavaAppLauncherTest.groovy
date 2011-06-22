@@ -3,44 +3,57 @@ package org.jetbrains.jps.runConf.java
 import org.jetbrains.jps.JpsBuildTestCase
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.RunConfiguration
-import org.jetbrains.jps.idea.OwnServiceLoader
-import org.jetbrains.jps.runConf.RunConfigurationLauncherService
 import org.jetbrains.jps.util.FileUtil
 
 class JavaAppLauncherTest extends JpsBuildTestCase {
   public void test_simple() {
-    Project project = loadProject("plugins/appLauncher/testData/main-class-run-conf", [:]);
-
-    RunConfiguration runConf = project.runConfigurations["MainClass"];
-
-    project.targetFolder = createTempDir().absolutePath;
-
-    project.makeAll();
-
-    assertOutput(runConf, { output ->
+    runAndAssertOutput("MainClass", null, { output ->
       assertTrue(output, output.indexOf("arg1" + System.getProperty("line.separator")) != -1)
       assertTrue(output, output.indexOf("arg2") != -1)
     })
   }
 
-  private void assertOutput(RunConfiguration runConf, Closure assertions) {
+  public void test_properties() {
+    JavaAppLauncher launcher = new JavaAppLauncher() {
+      @Override
+      Map<String, String> getSystemProperties(RunConfiguration runConf) {
+        return ["my.prop1" : "val1", "my.prop2" : "val2"];
+      }
+    }
+
+    runAndAssertOutput("MainClassProperties", launcher, { output ->
+      assertTrue(output, output.indexOf("val1" + System.getProperty("line.separator")) != -1)
+      assertTrue(output, output.indexOf("val2") != -1)
+    })
+  }
+
+  public void test_env_vars() {
+    runAndAssertOutput("MainClassEnvVars", null, { output ->
+      assertTrue(output, output.indexOf("val1" + System.getProperty("line.separator")) != -1)
+      assertTrue(output, output.indexOf("val2") != -1)
+    })
+  }
+
+  private void runAndAssertOutput(String runConfName, JavaBasedRunConfigurationLauncher launcher, Closure assertions) {
+    Project project = loadProject("plugins/appLauncher/testData/main-class-run-conf", [:]);
+
+    RunConfiguration runConf = project.runConfigurations[runConfName];
+
+    project.targetFolder = createTempDir().absolutePath;
+
+    project.makeAll();
+
     File outFile = createTempFile();
 
-    JavaAppLauncher launcher = getLauncher();
+    if (launcher == null) {
+      launcher = new JavaAppLauncher();
+    }
     launcher.setOutputFile(outFile);
 
     launcher.start(runConf);
 
     String output = FileUtil.loadFileText(outFile);
     assertions(output);
-  }
-
-  private JavaAppLauncher getLauncher() {
-    for (RunConfigurationLauncherService service: OwnServiceLoader.load(RunConfigurationLauncherService.class).iterator()) {
-      if (service instanceof JavaAppLauncher) return service;
-    }
-
-    return null;
   }
 
 }

@@ -1,7 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="MainClassTempDir" type="Application" factoryName="Application">
+  <configuration default="false" name="MainClassProperties" type="Application" factoryName="Application">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-    <option name="MAIN_CLASS_NAME" value="MainClassTempDir" />
+    <extension name="snapshooter" />
+    <option name="MAIN_CLASS_NAME" value="MainClassProperties" />
     <option name="VM_PARAMETERS" value="" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
