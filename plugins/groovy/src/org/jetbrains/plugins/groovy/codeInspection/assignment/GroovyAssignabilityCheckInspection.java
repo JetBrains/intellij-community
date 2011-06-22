@@ -309,9 +309,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         PsiType expressionType = namedArgumentExpression.getType();
         if (expressionType == null) continue;
 
-        expressionType = TypesUtil.boxPrimitiveType(expressionType, namedArgument.getManager(), namedArgument.getResolveScope());
+        expressionType = TypesUtil.boxPrimitiveType(expressionType, call.getManager(), call.getResolveScope());
 
-        if (!descriptor.checkType(expressionType)) {
+        if (!descriptor.checkType(expressionType, call)) {
           registerError(namedArgumentExpression, "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'");
         }
       }
