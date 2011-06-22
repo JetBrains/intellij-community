@@ -1,6 +1,6 @@
 package p2
 
-import static p2.C1.E.e
+import static C1.E.e
 
 class C1 {
   def foo() {

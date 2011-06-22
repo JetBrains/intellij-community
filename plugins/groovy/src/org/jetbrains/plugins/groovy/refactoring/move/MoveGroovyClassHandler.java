@@ -62,12 +62,13 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
 
     PsiClass newClass = null;
 
+    final String newPackageName = newPackage.getQualifiedName();
     if (aClass instanceof GroovyScriptClass) {
       final PsiClass[] classes = ((GroovyFile)file).getClasses();
       if (classes.length == 1) {
         if (!moveDestination.equals(file.getContainingDirectory())) {
           aClass.getManager().moveFile(file, moveDestination);
-          ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
+          ((PsiClassOwner)file).setPackageName(newPackageName);
         }
         return ((GroovyFile)file).getScriptClass();
       }
@@ -113,18 +114,18 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       else if (((GroovyFile)file).getClasses().length > 1) {
         correctSelfReferences(aClass, newPackage);
         String modifiersText = null;
-        if (newPackage.getQualifiedName().equals(((GroovyFile)file).getPackageName())) {
+        if (newPackageName.equals(((GroovyFile)file).getPackageName())) {
           final GrPackageDefinition packageDefinition = ((GroovyFile)file).getPackageDefinition();
           if (packageDefinition != null) {
             final PsiModifierList modifierList = packageDefinition.getModifierList();
             if (modifierList != null) {
-              modifiersText = modifierList.getText();
+              modifiersText = modifierList.getText().trim();
             }
           }
         }
-        final PsiClass created = ((GroovyFile)GroovyTemplatesFactory
-          .createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION,
-                              "GroovyClass.groovy")).getClasses()[0];
+        final PsiFile fromTemplate =
+          GroovyTemplatesFactory.createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION, "GroovyClass.groovy");
+        final PsiClass created = ((GroovyFile)fromTemplate).getClasses()[0];
         PsiDocComment docComment = aClass.getDocComment();
         if (docComment != null) {
           final PsiDocComment createdDocComment = created.getDocComment();
@@ -137,10 +138,13 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
           docComment.delete();
         }
         newClass = (PsiClass)created.replace(aClass);
-        if (modifiersText != null) {
-          final GrPackageDefinition newPackageDefinition = (GrPackageDefinition)GroovyPsiElementFactory.getInstance(aClass.getProject())
-            .createTopElementFromText(modifiersText + " package " + newPackage.getQualifiedName());
+        if (modifiersText != null && modifiersText.length() > 0) {
+          final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(aClass.getProject());
+          final GrPackageDefinition newPackageDefinition = (GrPackageDefinition)factory.createTopElementFromText(modifiersText + " package " + newPackageName);
           ((GroovyFile)newClass.getContainingFile()).setPackage(newPackageDefinition);
+        }
+        else {
+          ((GroovyFile)newClass.getContainingFile()).setPackageName(newPackageName);
         }
         correctOldClassReferences(newClass, aClass);
         aClass.delete();

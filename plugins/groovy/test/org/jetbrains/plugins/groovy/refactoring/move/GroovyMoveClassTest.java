@@ -16,22 +16,27 @@
 
 package org.jetbrains.plugins.groovy.refactoring.move;
 
+import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -45,9 +50,8 @@ import java.util.Comparator;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
-  @Override
-  protected String getBasePath() {
+public class GroovyMoveClassTest extends CodeInsightTestCase {
+  protected static String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/move/moveClass/";
   }
 
@@ -134,7 +138,11 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     doTest("aliasImported", new String[]{"p1.C1"}, "p2");
   }
 
-  private void performAction(String[] classNames, String newPackageName) {
+  public void _testTwoModules() {
+    doTwoModulesTest("twoModules", new String[]{"p1.C1"}, "p2");
+  }
+
+  private void performAction(String[] classNames, String newPackageName, int dirCount) {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for (int i = 0; i < classes.length; i++) {
       String className = classNames[i];
@@ -145,17 +153,19 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(newPackageName);
     assertNotNull("Package " + newPackageName + " not found", aPackage);
     final PsiDirectory[] dirs = aPackage.getDirectories();
-    assertEquals(dirs.length, 1);
+    assertEquals(dirs.length, dirCount);
 
     final Application application = ApplicationManager.getApplication();
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
         application.runWriteAction(new Runnable() {
           @Override
           public void run() {
-            new MoveClassesOrPackagesProcessor(getProject(), classes, new SingleSourceRootMoveDestination(
-              PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(dirs[0])), dirs[0]), true, true, null).run();
+            final PsiDirectory dir = dirs[dirs.length - 1];
+            final SingleSourceRootMoveDestination moveDestination =
+              new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(dir)), dir);
+            new MoveClassesOrPackagesProcessor(getProject(), classes, moveDestination, true, true, null).run();
           }
         });
       }
@@ -166,17 +176,44 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest(String testName, String[] classNames, String newPackageName) {
-    final VirtualFile actualRoot = myFixture.copyDirectoryToProject(testName + "/before", "");
+    try {
+      String root = PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath() + testName;
 
-    performAction(classNames, newPackageName);
+      String rootBefore = root + "/before";
+      PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+      VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(getProject(), myModule, rootBefore, myFilesToDelete);
 
-    File expectedRoot = new File(getTestDataPath() + testName + "/after");
-    //VirtualFile expectedRoot = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + testName + "/after");
-    getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    FileDocumentManager.getInstance().saveAllDocuments();
+      performAction(classNames, newPackageName, 1);
 
-    VirtualFileManager.getInstance().refresh(false);
-    assertDirsEquals(expectedRoot, actualRoot);
+      String rootAfter = root + "/after";
+      VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
+      myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+      PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void doTwoModulesTest(String testName, String[] classNames, String newPackageName) {
+    try {
+      String root = PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath() + testName;
+
+      String rootBefore = root + "/before";
+      PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+      VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(getProject(), myModule, rootBefore, myFilesToDelete);
+      final Module second = createModule("second");
+      rootDir.findChild("second").createChildDirectory(this, "p2");
+      performAction(classNames, newPackageName, 1);
+
+      String rootAfter = root + "/after";
+      VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
+      myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+      PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void assertDirsEquals(File d1, VirtualFile d2) {
