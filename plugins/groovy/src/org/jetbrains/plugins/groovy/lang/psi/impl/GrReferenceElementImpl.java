@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
@@ -84,15 +86,28 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return this;
-
+    final boolean fullyQualified = isFullyQualified();
+    final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && fullyQualified;
     if (element instanceof PsiClass) {
-      final String newName = ((PsiClass) element).getName();
-      final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRename(newName));
-      if (newElement.isReferenceTo(element)) return newElement;
       final String qualifiedName = ((PsiClass)element).getQualifiedName();
-      if (qualifiedName == null) return newElement;
-      return newElement.bindWithQualifiedRef(qualifiedName);
-    } else if (element instanceof PsiMember) {
+
+      if (!preserveQualification || qualifiedName == null) {
+        final String newName = ((PsiClass)element).getName();
+        setQualifier(null);
+        final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRename(newName));
+
+        if (newElement.isReferenceTo(element) || qualifiedName == null || JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope()) == null) {
+          return newElement;
+        }
+      }
+
+      final GrReferenceElement<Q> qualifiedRef = bindWithQualifiedRef(qualifiedName);
+      if (!preserveQualification) {
+        PsiUtil.shortenReference(qualifiedRef);
+      }
+      return qualifiedRef;
+    }
+    else if (element instanceof PsiMember) {
       PsiMember member = (PsiMember)element;
       if (!isPhysical()) {
         // don't qualify reference: the isReferenceTo() check fails anyway, whether we have a static import for this member or not
@@ -102,22 +117,27 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
       if (psiClass == null) throw new IncorrectOperationException();
 
       String qName = psiClass.getQualifiedName() + "." + member.getName();
-      return bindWithQualifiedRef(qName);
+      final GrReferenceElement<Q> qualifiedRef = bindWithQualifiedRef(qName);
+      if (!preserveQualification) {
+        PsiUtil.shortenReference(qualifiedRef);
+      }
+      return qualifiedRef;
     }
     else if (element instanceof PsiPackage) {
-      final String qName = ((PsiPackage) element).getQualifiedName();
-      return bindWithQualifiedRef(qName);
+      return bindWithQualifiedRef(((PsiPackage)element).getQualifiedName());
     }
 
     throw new IncorrectOperationException("Cannot bind to:" + element + " of class " + element.getClass());
   }
 
 
-  protected abstract PsiElement bindWithQualifiedRef(@NotNull String qName);
+  protected abstract GrReferenceElement<Q> bindWithQualifiedRef(@NotNull String qName);
 
   protected boolean bindsCorrectly(PsiElement element) {
     return isReferenceTo(element);
   }
+
+  protected abstract boolean isFullyQualified();
 
   @NotNull
   public PsiType[] getTypeArguments() {

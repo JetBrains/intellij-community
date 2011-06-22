@@ -247,12 +247,10 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Nullable
   public GrTopStatement createTopElementFromText(String text) {
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        text);
-    final PsiElement firstChild = dummyFile.getFirstChild();
-    if (!(firstChild instanceof GrTopStatement)) return null;
-
-    return (GrTopStatement) firstChild;
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), text);
+    final GrTopStatement[] topStatements = ((GroovyFileBase)dummyFile).getTopStatements();
+    LOG.assertTrue(topStatements.length == 1);
+    return topStatements[0];
   }
 
   public GrClosableBlock createClosureFromText(String closureText) throws IncorrectOperationException {

@@ -77,13 +77,12 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  protected PsiElement bindWithQualifiedRef(@NotNull String qName) {
+  protected GrCodeReferenceElement bindWithQualifiedRef(@NotNull String qName) {
     final GrTypeArgumentList list = getTypeArgumentList();
     final String typeArgs = (list != null) ? list.getText() : "";
     final String text = qName + typeArgs;
     final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(text);
     getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
-    PsiUtil.shortenReference(qualifiedRef);
     return qualifiedRef;
   }
 
@@ -220,6 +219,26 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
 
     return false;
+  }
+
+  @Override
+  protected boolean isFullyQualified() {
+    switch (getKind(false)) {
+      case PACKAGE_FQ:
+      case CLASS_FQ:
+      case CLASS_OR_PACKAGE_FQ:
+      case STATIC_MEMBER_FQ:
+      case CLASS_OR_PACKAGE:
+        if (resolve() instanceof PsiPackage) return true;
+        break;
+      case CLASS:
+      case CLASS_IN_QUALIFIED_NEW:
+        break;
+    }
+    final GrCodeReferenceElement qualifier = getQualifier();
+    if (qualifier == null) return false;
+    if (qualifier.resolve() instanceof PsiPackage) return true;
+    return ((GrCodeReferenceElementImpl)qualifier).isFullyQualified();
   }
 
   public boolean isReferenceTo(PsiElement element) {

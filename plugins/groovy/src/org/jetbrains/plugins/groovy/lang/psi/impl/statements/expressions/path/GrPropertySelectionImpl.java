@@ -68,4 +68,9 @@ public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implement
     assert last != null;
     return last;
   }
+
+  @Override
+  protected boolean isFullyQualified() {
+    return false;
+  }
 }

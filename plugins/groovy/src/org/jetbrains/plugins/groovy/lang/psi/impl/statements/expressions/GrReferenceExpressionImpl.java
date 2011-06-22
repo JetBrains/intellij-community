@@ -343,14 +343,28 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Override
-  protected PsiElement bindWithQualifiedRef(@NotNull String qName) {
+  protected GrReferenceExpression bindWithQualifiedRef(@NotNull String qName) {
     final GrTypeArgumentList list = getTypeArgumentList();
     final String typeArgs = (list != null) ? list.getText() : "";
     final String text = qName + typeArgs;
     GrReferenceExpression qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createReferenceExpressionFromText(text);
     getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
-    PsiUtil.shortenReference(qualifiedRef);
     return qualifiedRef;
+  }
+
+  @Override
+  protected boolean isFullyQualified() {
+    final Kind kind = getKind();
+    switch (kind) {
+      case TYPE_OR_PROPERTY:
+        if (resolve() instanceof PsiPackage) return true;
+        break;
+      case METHOD_OR_PROPERTY:
+        break;
+    }
+    final GrExpression qualifier = getQualifier();
+    if (!(qualifier instanceof GrReferenceExpressionImpl)) return false;
+    return ((GrReferenceExpressionImpl)qualifier).isFullyQualified();
   }
 
   protected PsiElement handleElementRenameInner(String newElementName) throws IncorrectOperationException {
