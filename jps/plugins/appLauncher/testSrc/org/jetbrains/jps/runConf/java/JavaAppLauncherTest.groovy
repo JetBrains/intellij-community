@@ -17,6 +17,13 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
 
     project.makeAll();
 
+    assertOutput(runConf, { output ->
+      assertTrue(output, output.indexOf("arg1" + System.getProperty("line.separator")) != -1)
+      assertTrue(output, output.indexOf("arg2") != -1)
+    })
+  }
+
+  private void assertOutput(RunConfiguration runConf, Closure assertions) {
     File outFile = createTempFile();
 
     JavaAppLauncher launcher = getLauncher();
@@ -25,8 +32,7 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
     launcher.start(runConf);
 
     String output = FileUtil.loadFileText(outFile);
-    assertTrue(output, output.indexOf("arg1" + System.getProperty("line.separator")) != -1)
-    assertTrue(output, output.indexOf("arg2") != -1)
+    assertions(output);
   }
 
   private JavaAppLauncher getLauncher() {
