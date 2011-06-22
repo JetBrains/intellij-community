@@ -142,11 +142,13 @@ public class PluginDownloader {
         return false; //was not updated
       }
       final BuildNumber currentBuildNumber = ApplicationInfo.getInstance().getBuild();
-      final BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild(), descriptor.getName());
+      String sinceBuildString = descriptor.getSinceBuild();
+      final BuildNumber sinceBuild = StringUtil.isEmptyOrSpaces(sinceBuildString) ? null : BuildNumber.fromString(sinceBuildString, descriptor.getName());
       if (sinceBuild != null && sinceBuild.compareTo(currentBuildNumber) > 0) {
         return false;
       }
-      final BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild(), descriptor.getName());
+      String untilBuildString = descriptor.getUntilBuild();
+      final BuildNumber untilBuild = StringUtil.isEmptyOrSpaces(untilBuildString) ? null : BuildNumber.fromString(untilBuildString, descriptor.getName());
       if (untilBuild != null && untilBuild.compareTo(currentBuildNumber) < 0) {
         return false;
       }
