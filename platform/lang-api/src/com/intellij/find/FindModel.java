@@ -173,6 +173,87 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     isMultiline = model.isMultiline;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    FindModel findModel = (FindModel)o;
+
+    if (isCaseSensitive != findModel.isCaseSensitive) return false;
+    if (isCustomScope != findModel.isCustomScope) return false;
+    if (isFindAll != findModel.isFindAll) return false;
+    if (isFindAllEnabled != findModel.isFindAllEnabled) return false;
+    if (isForward != findModel.isForward) return false;
+    if (isFromCursor != findModel.isFromCursor) return false;
+    if (isGlobal != findModel.isGlobal) return false;
+    if (isInCommentsOnly != findModel.isInCommentsOnly) return false;
+    if (isInStringLiteralsOnly != findModel.isInStringLiteralsOnly) return false;
+    if (isMultiline != findModel.isMultiline) return false;
+    if (isMultipleFiles != findModel.isMultipleFiles) return false;
+    if (isOpenInNewTabEnabled != findModel.isOpenInNewTabEnabled) return false;
+    if (isOpenNewTab != findModel.isOpenNewTab) return false;
+    if (isOpenNewTabVisible != findModel.isOpenNewTabVisible) return false;
+    if (isPreserveCase != findModel.isPreserveCase) return false;
+    if (isProjectScope != findModel.isProjectScope) return false;
+    if (isPromptOnReplace != findModel.isPromptOnReplace) return false;
+    if (isRegularExpressions != findModel.isRegularExpressions) return false;
+    if (isReplaceAll != findModel.isReplaceAll) return false;
+    if (isReplaceState != findModel.isReplaceState) return false;
+    if (isSearchHighlighters != findModel.isSearchHighlighters) return false;
+    if (isWholeWordsOnly != findModel.isWholeWordsOnly) return false;
+    if (isWithSubdirectories != findModel.isWithSubdirectories) return false;
+    if (customScope != null ? !customScope.equals(findModel.customScope) : findModel.customScope != null) return false;
+    if (customScopeName != null ? !customScopeName.equals(findModel.customScopeName) : findModel.customScopeName != null) return false;
+    if (directoryName != null ? !directoryName.equals(findModel.directoryName) : findModel.directoryName != null) return false;
+    if (fileFilter != null ? !fileFilter.equals(findModel.fileFilter) : findModel.fileFilter != null) return false;
+    if (moduleName != null ? !moduleName.equals(findModel.moduleName) : findModel.moduleName != null) return false;
+    if (myPattern != null ? !myPattern.equals(findModel.myPattern) : findModel.myPattern != null) return false;
+    if (myStringToFind != null ? !myStringToFind.equals(findModel.myStringToFind) : findModel.myStringToFind != null) return false;
+    if (myStringToReplace != null ? !myStringToReplace.equals(findModel.myStringToReplace) : findModel.myStringToReplace != null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 0;
+    result = 31 * result + (myStringToFind != null ? myStringToFind.hashCode() : 0);
+    result = 31 * result + (myStringToReplace != null ? myStringToReplace.hashCode() : 0);
+    result = 31 * result + (isSearchHighlighters ? 1 : 0);
+    result = 31 * result + (isReplaceState ? 1 : 0);
+    result = 31 * result + (isWholeWordsOnly ? 1 : 0);
+    result = 31 * result + (isInCommentsOnly ? 1 : 0);
+    result = 31 * result + (isInStringLiteralsOnly ? 1 : 0);
+    result = 31 * result + (isFromCursor ? 1 : 0);
+    result = 31 * result + (isForward ? 1 : 0);
+    result = 31 * result + (isGlobal ? 1 : 0);
+    result = 31 * result + (isRegularExpressions ? 1 : 0);
+    result = 31 * result + (isCaseSensitive ? 1 : 0);
+    result = 31 * result + (isMultipleFiles ? 1 : 0);
+    result = 31 * result + (isPromptOnReplace ? 1 : 0);
+    result = 31 * result + (isReplaceAll ? 1 : 0);
+    result = 31 * result + (isOpenNewTab ? 1 : 0);
+    result = 31 * result + (isOpenInNewTabEnabled ? 1 : 0);
+    result = 31 * result + (isOpenNewTabVisible ? 1 : 0);
+    result = 31 * result + (isProjectScope ? 1 : 0);
+    result = 31 * result + (isFindAll ? 1 : 0);
+    result = 31 * result + (isFindAllEnabled ? 1 : 0);
+    result = 31 * result + (moduleName != null ? moduleName.hashCode() : 0);
+    result = 31 * result + (directoryName != null ? directoryName.hashCode() : 0);
+    result = 31 * result + (isWithSubdirectories ? 1 : 0);
+    result = 31 * result + (fileFilter != null ? fileFilter.hashCode() : 0);
+    result = 31 * result + (customScopeName != null ? customScopeName.hashCode() : 0);
+    result = 31 * result + (customScope != null ? customScope.hashCode() : 0);
+    result = 31 * result + (isCustomScope ? 1 : 0);
+    result = 31 * result + (isMultiline ? 1 : 0);
+    result = 31 * result + (isPreserveCase ? 1 : 0);
+    result = 31 * result + (myPattern != null ? myPattern.hashCode() : 0);
+    return result;
+  }
+
   /**
    * Gets the string to find.
    *

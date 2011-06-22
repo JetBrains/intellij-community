@@ -29,8 +29,8 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +50,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
 
   public CreateFormAction() {
     super(UIDesignerBundle.message("action.gui.form.text"),
-          UIDesignerBundle.message("action.gui.form.description"), Icons.UI_FORM_ICON);
+          UIDesignerBundle.message("action.gui.form.description"), PlatformIcons.UI_FORM_ICON);
 
     // delete obsolete template
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {

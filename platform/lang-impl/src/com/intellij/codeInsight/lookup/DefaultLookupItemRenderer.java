@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SizedIcon;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +31,7 @@ import javax.swing.*;
  */
 public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>{
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
-  private static final Icon SAMPLE_ICON = Icons.CLASS_ICON;
+  private static final Icon SAMPLE_ICON = PlatformIcons.CLASS_ICON;
 
   public void renderElement(final LookupItem item, final LookupElementPresentation presentation) {
     presentation.setIcon(getRawIcon(item, presentation.isReal()));

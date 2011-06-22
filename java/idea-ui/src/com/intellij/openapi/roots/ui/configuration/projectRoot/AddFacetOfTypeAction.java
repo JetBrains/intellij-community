@@ -30,7 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
   private FacetStructureConfigurable myFacetStructureConfigurable;
 
   AddFacetOfTypeAction(FacetStructureConfigurable facetStructureConfigurable) {
-    super("New Facet", null, Icons.ADD_ICON);
+    super("New Facet", null, PlatformIcons.ADD_ICON);
     this.myFacetStructureConfigurable = facetStructureConfigurable;
   }
 

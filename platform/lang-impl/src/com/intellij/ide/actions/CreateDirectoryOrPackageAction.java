@@ -26,7 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
   public CreateDirectoryOrPackageAction() {
@@ -97,11 +97,11 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     if (isPackage) {
       presentation.setText(IdeBundle.message("action.package"));
-      presentation.setIcon(Icons.PACKAGE_ICON);
+      presentation.setIcon(PlatformIcons.PACKAGE_ICON);
     }
     else {
       presentation.setText(IdeBundle.message("action.directory"));
-      presentation.setIcon(Icons.DIRECTORY_OPEN_ICON);
+      presentation.setIcon(PlatformIcons.DIRECTORY_OPEN_ICON);
     }
   }
 

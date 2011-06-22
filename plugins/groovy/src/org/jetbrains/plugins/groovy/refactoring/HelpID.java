@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.openapi.roots.watcher.impl;
-
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.util.Condition;
-import org.jdom.Element;
+package org.jetbrains.plugins.groovy.refactoring;
 
 /**
- * @author dsl
+ * @author Medvedev Max
  */
-public interface OrderEntryPredicate extends Condition<OrderEntry>, Cloneable {
-  void writeToElement(Element element);
-  Object clone() throws CloneNotSupportedException;
+public interface HelpID {
+  String GROOVY_INTRODUCE_PARAMETER = "refactoring.introduceParameter.groovy";
 }

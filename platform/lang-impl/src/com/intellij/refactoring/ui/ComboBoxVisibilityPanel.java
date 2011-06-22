@@ -15,53 +15,42 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ComboBoxVisibilityPanel extends VisibilityPanelBase implements ShortcutProvider {
+public class ComboBoxVisibilityPanel extends VisibilityPanelBase /*implements ShortcutProvider*/ {
   private final JLabel myLabel;
-  private ComboBoxVisibilityGroup myGroup;
-  private JButton myButton;
+  private final JComboBox myComboBox;
+  private final Map<String, String> myNamesMap = new HashMap<String, String>();
 
   public ComboBoxVisibilityPanel(String name, String[] options, String[] presentableNames) {
-    final Runnable callback = new Runnable() {
-      public void run() {
-        myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
-      }
-    };
-    setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP));
-    myLabel = new JLabel(name, EmptyIcon.create(2), SwingConstants.LEFT);
-    myGroup = new ComboBoxVisibilityGroup(options, presentableNames, callback) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (myButton != null) {
-          myButton.doClick();
-        }
-      }
-    };
-
+    setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 2, true, false));
+    myLabel = new JLabel(name);
     add(myLabel);
-    final JComponent panel = myGroup.createCustomComponent(myGroup.getTemplatePresentation());
-    final JPanel p = new JPanel(new BorderLayout());
-    p.add(panel, BorderLayout.SOUTH);
-    p.setBorder(IdeBorderFactory.createEmptyBorder(SystemInfo.isMac ? 3 : 2 ,0,0,0));
-    add(p);
-    myButton = UIUtil.findComponentOfType(panel, JButton.class);
-    DialogUtil.registerMnemonic(myLabel, this);
+    myComboBox = new JComboBox(presentableNames);
+    add(myComboBox);
+    for (int i = 0; i < options.length; i++) {
+      myNamesMap.put(options[i], presentableNames[i]);
+    }
+    myComboBox.addActionListener(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(ComboBoxVisibilityPanel.this));
+      }
+    });
+    DialogUtil.registerMnemonic(myLabel, myComboBox);
   }
 
   public ComboBoxVisibilityPanel(String name, String[] options) {
@@ -82,7 +71,8 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase implements Shor
 
   @Override
   public String getVisibility() {
-    return myGroup.getValue();
+    final String selected = (String)myComboBox.getSelectedItem();
+    return ContainerUtil.reverseMap(myNamesMap).get((selected));
   }
 
   public void addListener(ChangeListener listener) {
@@ -91,30 +81,7 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase implements Shor
 
   @Override
   public void setVisibility(String visibility) {
-    myGroup.setValue(visibility);
+    myComboBox.setSelectedItem(myNamesMap.get(visibility));
     myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
-  }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    final Shortcut shortcut = getShortcut();
-    if (shortcut != null) {
-      myGroup.registerCustomShortcutSet(new CustomShortcutSet(shortcut), UIUtil.getRootPane(this));
-    }
-  }
-
-  public JButton getButton() {
-    return myButton;
-  }
-
-  @Override
-  public Shortcut getShortcut() {
-    final int index = myLabel.getDisplayedMnemonicIndex();
-    if (0 <= index && index < myLabel.getText().length()) {
-      final char ch = myLabel.getText().charAt(index);
-      return KeyboardShortcut.fromString("alt " + String.valueOf(ch).toUpperCase());
-    }
-    return null;
   }
 }

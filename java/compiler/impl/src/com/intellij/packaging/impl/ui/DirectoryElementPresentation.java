@@ -15,12 +15,12 @@
  */
 package com.intellij.packaging.impl.ui;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
-import com.intellij.ide.projectView.PresentationData;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,8 +38,8 @@ public class DirectoryElementPresentation extends PackagingElementPresentation {
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
-    presentationData.setOpenIcon(Icons.DIRECTORY_OPEN_ICON);
-    presentationData.setClosedIcon(Icons.DIRECTORY_CLOSED_ICON);
+    presentationData.setOpenIcon(PlatformIcons.DIRECTORY_OPEN_ICON);
+    presentationData.setClosedIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
     presentationData.addText(myElement.getDirectoryName(), mainAttributes);
   }
 

@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 /**
 * @author nik
@@ -34,7 +34,7 @@ class AddSingleEntryModuleLibraryAction extends AddItemPopupAction<Library> {
   public AddSingleEntryModuleLibraryAction(final ClasspathPanel classpathPanel,
                                            int actionIndex,
                                            StructureConfigurableContext context) {
-    super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.simple.module.library.action"), Icons.JAR_ICON);
+    super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.simple.module.library.action"), PlatformIcons.JAR_ICON);
     myContext = context;
   }
 

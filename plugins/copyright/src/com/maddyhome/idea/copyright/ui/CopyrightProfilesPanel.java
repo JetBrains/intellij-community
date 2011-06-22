@@ -37,7 +37,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
@@ -147,7 +147,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Nullable
     protected ArrayList<AnAction> createActions(boolean fromPopup) {
         ArrayList<AnAction> result = new ArrayList<AnAction>();
-        result.add(new AnAction("Add", "Add", Icons.ADD_ICON) {
+        result.add(new AnAction("Add", "Add", PlatformIcons.ADD_ICON) {
             {
                 registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
             }
@@ -179,7 +179,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
                 event.getPresentation().setEnabled(getSelectedObject() != null);
             }
         });
-        result.add(new AnAction("Import", "Import", Icons.ADVICE_ICON) {
+        result.add(new AnAction("Import", "Import", PlatformIcons.ADVICE_ICON) {
           public void actionPerformed(AnActionEvent event) {
             final OpenProjectFileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
               @Override

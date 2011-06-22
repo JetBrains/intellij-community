@@ -27,7 +27,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +73,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
     if (myIcon != null) {
       return myIcon;
     }
-    return Icons.UI_FORM_ICON;
+    return PlatformIcons.UI_FORM_ICON;
   }
 
   public boolean isNavigateAction() {

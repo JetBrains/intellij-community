@@ -37,8 +37,8 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -370,7 +370,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   public Icon getElementIcon(final int flags) {
-    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
+    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.ABSTRACT_METHOD_ICON : PlatformIcons.METHOD_ICON;
     RowIcon baseIcon = createLayeredIcon(methodIcon, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }

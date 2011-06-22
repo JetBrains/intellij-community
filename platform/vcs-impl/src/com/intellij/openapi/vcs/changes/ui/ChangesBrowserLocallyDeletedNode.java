@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -80,7 +80,7 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode impleme
       renderer.setIcon(addIcon);
     } else {
       if (filePath.isDirectory() || !isLeaf()) {
-        renderer.setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
+        renderer.setIcon(expanded ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON);
       }
       else {
         renderer.setIcon(filePath.getFileType().getIcon());

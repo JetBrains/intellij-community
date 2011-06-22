@@ -27,7 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -91,7 +91,7 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
 
           @Override
           public Icon getIconFor(LibraryType aValue) {
-            return aValue != null ? aValue.getIcon() : Icons.LIBRARY_ICON;
+            return aValue != null ? aValue.getIcon() : PlatformIcons.LIBRARY_ICON;
           }
 
           @Override

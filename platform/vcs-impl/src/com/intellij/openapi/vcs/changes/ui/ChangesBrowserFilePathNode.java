@@ -16,10 +16,10 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import java.io.File;
 
@@ -48,7 +48,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
       if (!isLeaf()) {
         appendCount(renderer);
       }
-      renderer.setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
+      renderer.setIcon(expanded ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
     else {
       if (renderer.isShowFlatten()) {

@@ -51,7 +51,7 @@ public class GenerateToStringWorker {
   private static final Logger logger = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringWorker");
 
   private final PsiElementFactory elementFactory;
-  private final PsiTopLevelElementFactory topLevelFactory;
+  private final JVMElementFactory topLevelFactory;
   private final CodeStyleManager codeStyleManager;
   private final Editor editor;
   private final PsiFile containingFile;
@@ -67,7 +67,7 @@ public class GenerateToStringWorker {
     this.psi = PsiAdapterFactory.getPsiAdapter();
     this.editor = editor;
     this.elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    this.topLevelFactory = PsiTopLevelElementFactories.getFactory(clazz.getLanguage(), project);
+    this.topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), project);
     this.codeStyleManager = CodeStyleManager.getInstance(project);
     this.containingFile = clazz.getContainingFile();
     this.config = GenerateToStringContext.getConfig();

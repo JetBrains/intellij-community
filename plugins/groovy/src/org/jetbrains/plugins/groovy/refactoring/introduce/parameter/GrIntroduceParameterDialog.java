@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.HelpID;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyFieldValidator;
@@ -58,7 +59,6 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   private JLabel myNameLabel;
   private GrIntroduceParameterContext myContext;
   TObjectIntHashMap<JCheckBox> toRemoveCBs;
-  private static final String GROOVY_INTRODUCE_PARAMETER = "refactoring.introduceParameter.groovy";
 
   public GrIntroduceParameterDialog(GrIntroduceParameterContext context, TObjectIntHashMap<GrParameter> parametersToRemove) {
     super(context.project, true);
@@ -177,7 +177,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
   @Override
   protected String getHelpId() {
-    return GROOVY_INTRODUCE_PARAMETER;
+    return HelpID.GROOVY_INTRODUCE_PARAMETER;
   }
 
   private TIntArrayList getParametersToRemove() {

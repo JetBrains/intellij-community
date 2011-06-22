@@ -28,7 +28,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +77,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     }
 
     public Icon getIcon(boolean isOpen) {
-      return isOpen ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON;
+      return isOpen ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
     }
 
     @NotNull

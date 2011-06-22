@@ -35,7 +35,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     final CompositeAppearance oldText = myHighlightedText;
     final boolean isMeta = myTarget instanceof MetaTarget;
 
-    myOpenIcon = myClosedIcon = isMeta ? Icons.ANT_META_TARGET_ICON : Icons.ANT_TARGET_ICON;
+    myOpenIcon = myClosedIcon = isMeta ? PlatformIcons.ANT_META_TARGET_ICON : PlatformIcons.ANT_TARGET_ICON;
 
     myHighlightedText = new CompositeAppearance();
 

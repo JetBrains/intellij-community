@@ -22,8 +22,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +40,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
   public CreateDialogAction() {
     super(UIDesignerBundle.message("action.create.dialog"),
-          UIDesignerBundle.message("action.description.create.dialog"), Icons.UI_FORM_ICON);
+          UIDesignerBundle.message("action.description.create.dialog"), PlatformIcons.UI_FORM_ICON);
   }
 
   @NotNull

@@ -341,7 +341,7 @@
 
     <sourceRootFinder implementation="org.jetbrains.plugins.groovy.GroovySourceRootFinder"/>
 
-    <generation.topLevelFactory language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.Provider" />
+    <generation.topLevelFactory language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFactoryProvider" />
 
     <!-- control flow -->
     <intentionAction>

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.psi.WeighingComparable;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,11 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
 
   @Override
   public void addElement(LookupElement t) {
-    myWeights.put(t, myWeigher.weigh(t));
+    Comparable weight = myWeigher.weigh(t);
+    if (weight instanceof WeighingComparable) {
+      ((WeighingComparable)weight).force();
+    }
+    myWeights.put(t, weight);
     super.addElement(t);
   }
 

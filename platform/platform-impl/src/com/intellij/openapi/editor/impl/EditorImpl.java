@@ -3915,6 +3915,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         public void actionPerformed(ActionEvent e) {
           myCommandProcessor.executeCommand(myProject, new DocumentRunnable(myDocument, myProject) {
             public void run() {
+              // We experienced situation when particular editor was disposed but the timer was still on.
+              if (isDisposed()) {
+                myTimer.stop();
+                return;
+              }
               int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
               VisualPosition caretPosition = getCaretModel().getVisualPosition();
               int column = caretPosition.column;

@@ -79,35 +79,43 @@ public class AddRemoveUpDownPanel extends JPanel {
   }
 
   private Map<Buttons, TableActionButton> myButtons = new HashMap<Buttons, TableActionButton>();
+  private final AnActionButton[] myActions;
 
   public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, boolean isHorizontal,
-                              @Nullable AnAction[] additionalActions, Buttons... buttons) {
-    super(new VerticalFlowLayout(VerticalFlowLayout.TOP));
-    AnAction[] actions = new AnAction[buttons.length];
+                              @Nullable AnActionButton[] additionalActions, Buttons... buttons) {
+    super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, false, false));
+    AnActionButton[] actions = new AnActionButton[buttons.length];
     for (int i = 0; i < buttons.length; i++) {
       Buttons button = buttons[i];
       final TableActionButton b = button.createButton(listener);
       actions[i] = b;
       myButtons.put(button, b);
-      final Shortcut shortcut = b.getShortcut();
-      if (contentPane != null && shortcut != null) {
-        b.registerCustomShortcutSet(new CustomShortcutSet(shortcut), contentPane);
-      }
     }
     if (additionalActions != null && additionalActions.length > 0) {
-      final ArrayList<AnAction> allActions = new ArrayList<AnAction>(Arrays.asList(actions));
+      final ArrayList<AnActionButton> allActions = new ArrayList<AnActionButton>(Arrays.asList(actions));
       allActions.addAll(Arrays.asList(additionalActions));
-      actions = allActions.toArray(new AnAction[allActions.size()]);
-      for (final AnAction action : additionalActions) {
-        if (action instanceof ShortcutProvider && contentPane != null) {
-          final Shortcut shortcut = ((ShortcutProvider)action).getShortcut();
-          if (shortcut != null) {
-            action.registerCustomShortcutSet(new CustomShortcutSet(shortcut), contentPane);
-          }
-        }
+      actions = allActions.toArray(new AnActionButton[allActions.size()]);
+    }
+    myActions = actions;
+    for (AnActionButton action : actions) {
+      action.setContextComponent(contentPane);
+    }
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
+                                                                                  new DefaultActionGroup(myActions),
+                                                                                  isHorizontal);
+    add(toolbar.getComponent());
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    final JRootPane pane = getRootPane();
+    for (AnActionButton button : myActions) {
+      final Shortcut shortcut = button.getShortcut();
+      if (shortcut != null) {
+        button.registerCustomShortcutSet(new CustomShortcutSet(shortcut), pane);
       }
     }
-    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(actions), isHorizontal).getComponent());
   }
 
   public void setEnabled(Buttons button, boolean enabled) {
@@ -117,12 +125,11 @@ public class AddRemoveUpDownPanel extends JPanel {
     }
   }
 
-  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, @Nullable AnAction[] additionalActions) {
+  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, @Nullable AnActionButton[] additionalActions) {
     this(listener, contentPane, false, additionalActions, Buttons.ADD, Buttons.REMOVE, Buttons.UP, Buttons.DOWN);
   }
 
-  static class TableActionButton extends AnAction implements ShortcutProvider {
-    private boolean enabled = true;
+  static class TableActionButton extends AnActionButton {
     private final Buttons myButton;
     private final Listener myListener;
 
@@ -135,15 +142,6 @@ public class AddRemoveUpDownPanel extends JPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myButton.performAction(myListener);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(enabled);
-    }
-
-    public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
     }
 
     @Override

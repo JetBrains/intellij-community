@@ -41,6 +41,15 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     myComputedWeighs = new Comparable[weighers.length];
   }
 
+  public void force() {
+    for (int i = 0; i < myComputedWeighs.length; i++) {
+      Comparable weight = getWeight(i);
+      if (weight instanceof WeighingComparable) {
+        ((WeighingComparable)weight).force();
+      }
+    }
+  }
+
   public int compareTo(final WeighingComparable<T,Loc> comparable) {
     if (myComputedWeighs == comparable.myComputedWeighs) return 0;
 

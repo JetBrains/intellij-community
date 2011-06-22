@@ -29,8 +29,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -240,7 +240,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(Icons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
+    final RowIcon baseIcon = createLayeredIcon(PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

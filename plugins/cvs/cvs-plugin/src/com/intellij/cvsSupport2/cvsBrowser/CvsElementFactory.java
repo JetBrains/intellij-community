@@ -16,16 +16,15 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.util.Icons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
 public abstract class CvsElementFactory {
-  private final static Icon TREE_OPEN = Icons.DIRECTORY_OPEN_ICON;
-  private final static Icon TREE_CLOSE = Icons.DIRECTORY_CLOSED_ICON;
+  private final static Icon TREE_OPEN = PlatformIcons.DIRECTORY_OPEN_ICON;
+  private final static Icon TREE_CLOSE = PlatformIcons.DIRECTORY_CLOSED_ICON;
   private final static Icon MODULE_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
   private final static Icon MODULE_CLOSE = IconLoader.getIcon("/nodes/ModuleClosed.png");
 

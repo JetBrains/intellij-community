@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 /**
  * @author yole
@@ -60,7 +60,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> {
       appendCount(renderer);
     }
     if (file.isDirectory()) {
-      renderer.setIcon(Icons.DIRECTORY_CLOSED_ICON);
+      renderer.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
     else {
       renderer.setIcon(file.getFileType().getIcon());

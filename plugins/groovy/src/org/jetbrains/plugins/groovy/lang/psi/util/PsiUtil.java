@@ -1279,4 +1279,16 @@ public class PsiUtil {
     }
     return ControlFlowUtils.collectReturns(controlFlowOwner, true).contains(expr);
   }
+
+  @Nullable
+  public static PsiClass getContainingNotInnerClass(@Nullable PsiElement element) {
+    PsiClass domainClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (domainClass == null) return null;
+
+    while (true) {
+      PsiClass c = domainClass.getContainingClass();
+      if (c == null) return domainClass;
+      domainClass = c;
+    }
+  }
 }

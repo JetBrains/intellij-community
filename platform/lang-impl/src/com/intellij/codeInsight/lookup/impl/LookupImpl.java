@@ -21,7 +21,6 @@ import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
@@ -42,7 +41,10 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -272,7 +274,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myModel.addItem(item);
 
     updateLookupWidth(item);
-    updateItemActions(item);
   }
 
   public void updateLookupWidth(LookupElement item) {
@@ -284,16 +285,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   }
 
-  public void updateItemActions(LookupElement item) {
+  public Collection<LookupElementAction> getActionsFor(LookupElement element) {
     final CollectConsumer<LookupElementAction> consumer = new CollectConsumer<LookupElementAction>();
     for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
-      provider.fillActions(item, this, consumer);
+      provider.fillActions(element, this, consumer);
     }
-    myModel.setItemActions(item, consumer.getResult());
-  }
-
-  public Collection<LookupElementAction> getActionsFor(LookupElement element) {
-    return myModel.getActionsFor(element);
+    return consumer.getResult();
   }
 
   public JList getList() {
@@ -338,17 +335,20 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myFrozenItems.clear();
     refreshUi();
     ensureSelectionVisible();
-    if (myStartCompletionWhenNothingMatches && myList.getModel().getSize() == 1 && myList.getModel().getElementAt(0) instanceof EmptyLookupItem) {
-      CompletionAutoPopupHandler.scheduleAutoPopup(myProject, myEditor, getPsiFile());
-    }
   }
 
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
     myStartCompletionWhenNothingMatches = startCompletionWhenNothingMatches;
   }
 
+  public boolean isStartCompletionWhenNothingMatches() {
+    return myStartCompletionWhenNothingMatches;
+  }
+
   public void ensureSelectionVisible() {
-    ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
+    if (!isSelectionVisible()) {
+      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
+    }
   }
 
   boolean truncatePrefix(boolean preserveSelection) {
@@ -385,6 +385,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     boolean hasPreselected = !mySelectionTouched && items.contains(myPreselectedItem);
     LookupElement oldSelected = mySelectionTouched ? (LookupElement)myList.getSelectedValue() : null;
     String oldInvariant = mySelectionInvariant;
+
+    boolean selectionVisible = isSelectionVisible();
 
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
     model.addAll(getPrefixItems(items, true));
@@ -431,7 +433,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       else {
         myList.setSelectedIndex(0);
       }
+
+      if (selectionVisible) {
+        ensureSelectionVisible();
+      }
     }
+  }
+
+  private boolean isSelectionVisible() {
+    return myList.getFirstVisibleIndex() <= myList.getSelectedIndex() && myList.getSelectedIndex() <= myList.getLastVisibleIndex();
   }
 
   private LinkedHashSet<LookupElement> matchingItems(Pair<List<LookupElement>, Iterable<List<LookupElement>>> snapshot) {
@@ -930,7 +940,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
-    final Collection<LookupElementAction> actions = myModel.getActionsFor(item);
+    final Collection<LookupElementAction> actions = getActionsFor(item);
     if (!actions.isEmpty()) {
       myHintAlarm.addRequest(new Runnable() {
         @Override

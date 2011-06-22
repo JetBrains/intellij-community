@@ -34,7 +34,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -363,7 +363,7 @@ public class FacetAutodetectionConfigurable implements Configurable {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file != null) {
         append(path, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        setIcon(file.isDirectory() ? Icons.FOLDER_ICON : file.getIcon());
+        setIcon(file.isDirectory() ? PlatformIcons.FOLDER_ICON : file.getIcon());
       }
       else {
         append(path, SimpleTextAttributes.ERROR_ATTRIBUTES);

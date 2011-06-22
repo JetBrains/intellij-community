@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi.impl;
 
-package com.intellij.ide.actions;
-
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JVMElementFactoryProvider;
+import com.intellij.psi.JavaPsiFacade;
 
 /**
- * @author spleaner
- */
-public class CreateHtml5Action extends CreateHtmlAction {
-
-  public CreateHtml5Action() {
-    super(StdFileTypes.HTML, FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME);
+* @author Medvedev Max
+*/
+public class JavaFactoryProvider implements JVMElementFactoryProvider {
+  @Override
+  public JVMElementFactory getFactory(Project project) {
+    return JavaPsiFacade.getElementFactory(project);
   }
 }

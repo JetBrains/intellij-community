@@ -651,7 +651,7 @@ public class PsiAdapter {
      * @return the added annotation object
      * @throws IncorrectOperationException is thrown if error adding/replacing the javadoc comment.
      */
-    public PsiAnnotation addAnnotationToMethod(PsiTopLevelElementFactory factory, PsiMethod method, String annotation) throws IncorrectOperationException {
+    public PsiAnnotation addAnnotationToMethod(JVMElementFactory factory, PsiMethod method, String annotation) throws IncorrectOperationException {
         PsiAnnotation ann = method.getModifierList().findAnnotation(annotation);
         if (ann == null) {
             // add new annotation

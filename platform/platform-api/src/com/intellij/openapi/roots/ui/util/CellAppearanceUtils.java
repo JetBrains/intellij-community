@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.io.File;
@@ -58,7 +58,7 @@ public class CellAppearanceUtils {
       return new HttpUrlCellAppearance(virtualFile);
     }
     if (virtualFile.isDirectory()) {
-      return SimpleTextCellAppearance.normal(virtualFile.getPresentableUrl(), Icons.FOLDER_ICON);
+      return SimpleTextCellAppearance.normal(virtualFile.getPresentableUrl(), PlatformIcons.FOLDER_ICON);
     }
     return new ValidFileCellAppearance(virtualFile);
   }
@@ -67,7 +67,7 @@ public class CellAppearanceUtils {
     if (file.getFileSystem().getProtocol().equals(JarFileSystem.PROTOCOL) && file.getParent() == null) {
       return file.getIcon();
     }
-    if (file.isDirectory()) return Icons.FOLDER_ICON;
+    if (file.isDirectory()) return PlatformIcons.FOLDER_ICON;
     return file.getIcon();
   }
 
@@ -80,7 +80,7 @@ public class CellAppearanceUtils {
     if (!file.exists()) return CompositeAppearance.invalid(absolutePath);
     if (file.isDirectory()) {
       CompositeAppearance appearance = CompositeAppearance.single(absolutePath);
-      appearance.setIcon(Icons.FOLDER_ICON);
+      appearance.setIcon(PlatformIcons.FOLDER_ICON);
       return appearance;
     }
     String name = file.getName();

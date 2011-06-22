@@ -28,7 +28,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -58,7 +58,7 @@ public class ChooseCheckoutMode extends WizardStep {
 
   private final JPanel myCenterPanel = new JPanel(new CardLayout());
 
-  private static final Icon FOLDER_ICON = Icons.DIRECTORY_CLOSED_ICON;
+  private static final Icon FOLDER_ICON = PlatformIcons.DIRECTORY_CLOSED_ICON;
 
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.cvsSupport2.ui.experts.checkout.ChooseCheckoutMode");

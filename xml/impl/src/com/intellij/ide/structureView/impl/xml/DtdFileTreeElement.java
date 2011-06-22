@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.xml.impl.dtd.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -83,7 +83,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     }
 
     public Icon getIcon(final boolean open) {
-      return Icons.XML_TAG_ICON;
+      return PlatformIcons.XML_TAG_ICON;
     }
 
     public String getLocationString() {

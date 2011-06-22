@@ -27,7 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -91,7 +91,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
   private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {
     uiField.getTextField().setEditable(false);
-    uiField.setButtonIcon(Icons.OPEN_EDIT_DIALOG_ICON);
+    uiField.setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
     uiField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final TagListDialog tagListDialog = new TagListDialog(title);

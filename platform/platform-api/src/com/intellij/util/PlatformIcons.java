@@ -37,6 +37,7 @@ public interface PlatformIcons {
   @NonNls String CLASS_ICON_PATH = "/nodes/class.png";
   Icon CLASS_ICON = IconLoader.getIcon(CLASS_ICON_PATH);
   Icon EXCEPTION_CLASS_ICON = IconLoader.getIcon("/nodes/exceptionClass.png");
+  Icon NEW_EXCEPTION = IconLoader.getIcon("/nodes/newException.png");
   Icon ANONYMOUS_CLASS_ICON = IconLoader.getIcon("/nodes/anonymousClass.png");
   Icon ABSTRACT_CLASS_ICON = IconLoader.getIcon("/nodes/abstractClass.png");
   Icon JUNIT_TEST_CLASS_ICON = IconLoader.getIcon("/nodes/junitTestClass.png");

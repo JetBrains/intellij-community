@@ -337,4 +337,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testClassicRethrow() throws Exception {
     doTest(false, false);
   }
+
+  public void testRegexp() throws Exception {
+    doTest(false, false);
+  }
 }

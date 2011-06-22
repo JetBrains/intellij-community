@@ -33,7 +33,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,10 +122,10 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     }
 
     if (suitableTypes.isEmpty()) {
-      return new AnAction[]{new CreateNewLibraryAction(text, Icons.LIBRARY_ICON, null, librariesConfigurable, project)};
+      return new AnAction[]{new CreateNewLibraryAction(text, PlatformIcons.LIBRARY_ICON, null, librariesConfigurable, project)};
     }
     List<AnAction> actions = new ArrayList<AnAction>();
-    actions.add(new CreateNewLibraryAction(IdeBundle.message("create.default.library.type.action.name"), Icons.LIBRARY_ICON, null, librariesConfigurable, project));
+    actions.add(new CreateNewLibraryAction(IdeBundle.message("create.default.library.type.action.name"), PlatformIcons.LIBRARY_ICON, null, librariesConfigurable, project));
     for (LibraryType<?> type : suitableTypes) {
       actions.add(new CreateNewLibraryAction(type.getCreateActionName(), type.getIcon(), type, librariesConfigurable, project));
     }

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -29,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -117,7 +117,7 @@ public abstract class GroovyNamedArgumentProvider {
     if (parameter instanceof GrParameter) {
       if (((GrParameter)parameter).getTypeElementGroovy() == null) return true;
     }
-    return InheritanceUtil.isInheritor(parameter.getType(), CommonClassNames.JAVA_UTIL_MAP);
+    return GroovyPsiManager.isInheritorCached(parameter.getType(), CommonClassNames.JAVA_UTIL_MAP);
   }
 
   public static class ArgumentDescriptor {
@@ -142,7 +142,7 @@ public abstract class GroovyNamedArgumentProvider {
       return this;
     }
 
-    public boolean checkType(@NotNull PsiType type) {
+    public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
       return true;
     }
 
@@ -225,8 +225,8 @@ public abstract class GroovyNamedArgumentProvider {
     }
 
     @Override
-    public boolean checkType(@NotNull PsiType type) {
-      return InheritanceUtil.isInheritor(type, myTypeName);
+    public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
+      return GroovyPsiManager.isInheritorCached(type, myTypeName);
     }
   }
 
@@ -243,9 +243,9 @@ public abstract class GroovyNamedArgumentProvider {
     }
 
     @Override
-    public boolean checkType(@NotNull PsiType type) {
+    public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
       for (String typeName : myTypeNames) {
-        if (InheritanceUtil.isInheritor(type, typeName)) {
+        if (GroovyPsiManager.isInheritorCached(type, typeName)) {
           return true;
         }
       }
@@ -255,17 +255,15 @@ public abstract class GroovyNamedArgumentProvider {
 
   protected static class TypeCondition extends ArgumentDescriptor {
     private final PsiType myType;
-    private final GroovyPsiElement myContext;
 
-    public TypeCondition(PsiType type, PsiElement navigationElement, @NotNull GroovyPsiElement context) {
+    public TypeCondition(PsiType type, PsiElement navigationElement) {
       super(navigationElement);
       myType = type;
-      myContext = context;
     }
 
     @Override
-    public boolean checkType(@NotNull PsiType type) {
-      return TypesUtil.isAssignable(myType, type, myContext);
+    public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
+      return TypesUtil.isAssignable(myType, type, context);
     }
   }
 }

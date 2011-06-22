@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-package com.intellij.ide.actions;
-
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JVMElementFactoryProvider;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 /**
- * @author spleaner
- */
-public class CreateXhtmlAction extends CreateHtmlAction {
-
-  public CreateXhtmlAction() {
-    super(StdFileTypes.XHTML, FileTemplateManager.INTERNAL_XHTML_TEMPLATE_NAME);
+* @author Medvedev Max
+*/
+public class GroovyFactoryProvider implements JVMElementFactoryProvider {
+  @Override
+  public JVMElementFactory getFactory(Project project) {
+    return GroovyPsiElementFactory.getInstance(project);
   }
 }
