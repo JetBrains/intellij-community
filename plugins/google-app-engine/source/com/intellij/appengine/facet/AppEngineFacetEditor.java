@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.RightAlignedLabelUI;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -186,7 +186,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
         }
         else {
           setForeground(myFilesList.getForeground());
-          setIcon(file.isDirectory() ? Icons.FOLDER_ICON : file.getIcon());
+          setIcon(file.isDirectory() ? PlatformIcons.FOLDER_ICON : file.getIcon());
         }
         setText(path);
       }
