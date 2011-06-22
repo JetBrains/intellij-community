@@ -120,19 +120,19 @@ def getType(o):
 
     try:
         if type_name == 'org.python.core.PyJavaInstance':
-            return (type_object, type_name, pydevd_resolver.instanceResolver)
+            return type_object, type_name, pydevd_resolver.instanceResolver
 
         if type_name == 'org.python.core.PyArray':
-            return (type_object, type_name, pydevd_resolver.jyArrayResolver)
+            return type_object, type_name, pydevd_resolver.jyArrayResolver
 
         for t in typeMap:
             if isinstance(o, t[0]):
-                return (type_object, type_name, t[1])
+                return type_object, type_name, t[1]
     except:
         traceback.print_exc()
 
     #no match return default        
-    return (type_object, type_name, pydevd_resolver.defaultResolver)
+    return type_object, type_name, pydevd_resolver.defaultResolver
 
 
 try:
@@ -248,7 +248,7 @@ def frameVarsToXML(frame):
     return xml
 
 def iterFrames(initialFrame):
-    '''NO-YIELD VERSION: Iterates through all the frames starting at the specified frame (which will be the first returned item)'''
+    """NO-YIELD VERSION: Iterates through all the frames starting at the specified frame (which will be the first returned item)"""
     #cannot use yield
     frames = []
 
@@ -397,9 +397,9 @@ class ExceptionOnEvaluate:
         self.result = result
 
 def evaluateExpression(thread_id, frame_id, expression, doExec):
-    '''returns the result of the evaluated expression
+    """returns the result of the evaluated expression
     @param doExec: determines if we should do an exec or an eval
-    '''
+    """
     frame = findFrame(thread_id, frame_id)
 
     expression = str(expression.replace('@LINE@', '\n'))
@@ -462,15 +462,15 @@ class ConsoleWriter(InteractiveInterpreter):
     def write(self, data):
         #if (data.find("global_vars") == -1 and data.find("pydevd") == -1):
         if self.skip > 0:
-            self.skip = self.skip - 1
+            self.skip -= 1
         else:
             if data == "Traceback (most recent call last):\n":
                 self.skip = 1
             sys.stderr.write(data)
 
 def consoleExec(thread_id, frame_id, expression):
-    '''returns 'False' in case expression is partialy correct
-    '''
+    """returns 'False' in case expression is partialy correct
+    """
     frame = findFrame(thread_id, frame_id)
 
     expression = str(expression.replace('@LINE@', '\n'))
@@ -495,24 +495,24 @@ def consoleExec(thread_id, frame_id, expression):
         # Case 2
         return True
 
-        # Case 3
-        try:
-            Exec(code, updated_globals, frame.f_locals)
+    # Case 3
+    try:
+        Exec(code, updated_globals, frame.f_locals)
 
-        except SystemExit:
-            raise
-        except:
-            interpreter.showtraceback()
+    except SystemExit:
+        raise
+    except:
+        interpreter.showtraceback()
 
     return False
 
 
 def changeAttrExpression(thread_id, frame_id, attr, expression):
-    '''Changes some attribute in a given frame.
+    """Changes some attribute in a given frame.
     @note: it will not (currently) work if we're not in the topmost frame (that's a python
     deficiency -- and it appears that there is no way of making it currently work --
     will probably need some change to the python internals)
-    '''
+    """
     frame = findFrame(thread_id, frame_id)
 
     if isinstance(frame, DjangoTemplateFrame):
