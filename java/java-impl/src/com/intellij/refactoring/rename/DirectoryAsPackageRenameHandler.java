@@ -97,6 +97,7 @@ public class DirectoryAsPackageRenameHandler implements RenameHandler, TitledHan
                           new String[]{RefactoringBundle.message("rename.current.directory"),
                             RefactoringBundle.message("rename.directories"), CommonBundle.getCancelButtonText()}, 0,
                           Messages.getWarningIcon());
+            if (ret == -1) return;
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, ret == 0 ? new PsiDirectory[] {psiDirectory} : projectDirectories);
           }
           else {
