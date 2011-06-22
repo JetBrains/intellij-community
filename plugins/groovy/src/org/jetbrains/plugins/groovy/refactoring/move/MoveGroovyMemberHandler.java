@@ -20,13 +20,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.refactoring.move.moveMembers.MoveJavaMemberHandler;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveMembers.MoveMemberHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.refactoring.util.EnumConstantsUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -45,18 +48,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
  */
-public class MoveGroovyMemberHandler extends MoveJavaMemberHandler {
-  @Override
+public class MoveGroovyMemberHandler implements MoveMemberHandler {
   public boolean changeExternalUsage(@NotNull MoveMembersOptions options, @NotNull MoveMembersProcessor.MoveMembersUsageInfo usage) {
     final PsiElement element = usage.getElement();
     if (element == null || !element.isValid()) return true;
@@ -149,7 +149,6 @@ public class MoveGroovyMemberHandler extends MoveJavaMemberHandler {
     return memberCopy;
   }
 
-  @Override
   public void decodeContextInfo(@NotNull PsiElement scope) {
     GroovyChangeContextUtil.decodeContextInfo(scope, null, null);
   }
@@ -256,5 +255,76 @@ public class MoveGroovyMemberHandler extends MoveJavaMemberHandler {
       }
     }
     return (anchor != null ? targetClass.addAfter(constant, anchor) : targetClass.add(constant));
+  }
+
+  @Override
+  public MoveMembersProcessor.MoveMembersUsageInfo getUsage(@NotNull PsiMember member,
+                                                            @NotNull PsiReference psiReference,
+                                                            @NotNull Set<PsiMember> membersToMove,
+                                                            @NotNull PsiClass targetClass) {
+    PsiElement ref = psiReference.getElement();
+    if (ref instanceof GrReferenceExpression) {
+      GrReferenceExpression refExpr = (GrReferenceExpression)ref;
+      GrExpression qualifier = refExpr.getQualifier();
+      if (RefactoringHierarchyUtil.willBeInTargetClass(refExpr, membersToMove, targetClass, true)) {
+        // both member and the reference to it will be in target class
+        if (!RefactoringUtil.isInMovedElement(refExpr, membersToMove)) {
+          if (qualifier != null) {
+            return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, null, qualifier, psiReference);  // remove qualifier
+          }
+        }
+        else if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).isReferenceTo(member.getContainingClass())) {
+          return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, null, qualifier, psiReference);  // change qualifier
+        }
+      }
+      else {
+        // member in target class, the reference will be outside target class
+        if (qualifier == null) {
+          return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, targetClass, refExpr, psiReference); // add qualifier
+        }
+        else {
+          return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, targetClass, qualifier, psiReference); // change qualifier
+        }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public void checkConflictsOnUsage(@NotNull MoveMembersProcessor.MoveMembersUsageInfo usageInfo,
+                                    @Nullable String newVisibility,
+                                    @Nullable PsiModifierList modifierListCopy,
+                                    @NotNull PsiClass targetClass,
+                                    @NotNull Set<PsiMember> membersToMove,
+                                    @NotNull MultiMap<PsiElement, String> conflicts) {
+    final PsiElement element = usageInfo.getElement();
+    if (element == null) return;
+
+    final PsiMember member = usageInfo.member;
+    if (element instanceof GrReferenceExpression) {
+      GrExpression qualifier = ((GrReferenceExpression)element).getQualifier();
+      PsiClass accessObjectClass = null;
+      if (qualifier != null) {
+        accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
+      }
+
+      if (!JavaResolveUtil.isAccessible(member, targetClass, modifierListCopy, element, accessObjectClass, null)) {
+        String visibility = newVisibility != null ? newVisibility : VisibilityUtil.getVisibilityStringToDisplay(member);
+        String message = RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
+                                                   RefactoringUIUtil.getDescription(member, false),
+                                                   visibility,
+                                                   RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
+        conflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
+      }
+    }
+  }
+
+  @Override
+  public void checkConflictsOnMember(@NotNull PsiMember member,
+                                     @Nullable String newVisibility,
+                                     @Nullable PsiModifierList modifierListCopy,
+                                     @NotNull PsiClass targetClass,
+                                     @NotNull Set<PsiMember> membersToMove,
+                                     @NotNull MultiMap<PsiElement, String> conflicts) {
   }
 }

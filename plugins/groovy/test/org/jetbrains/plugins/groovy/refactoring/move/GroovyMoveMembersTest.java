@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
@@ -26,13 +28,14 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -109,10 +112,15 @@ public class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
 
   private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices) {
     final VirtualFile actualDir = myFixture.copyDirectoryToProject(getTestName(true) + "/before", "");
-    //final VirtualFile expectedDir = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + getTestName(true) + "/after");
-    final File expectedDir = new File(getTestDataPath() + getTestName(true) + "/after");
+    final VirtualFile expectedDir = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + getTestName(true) + "/after");
+    //final File expectedDir = new File(getTestDataPath() + getTestName(true) + "/after");
     performAction(sourceClassName, targetClassName, memberIndices);
-    GroovyMoveClassTest.assertDirsEquals(expectedDir, actualDir);
+    try {
+      PlatformTestUtil.assertDirectoriesEqual(expectedDir, actualDir, VirtualFileFilter.ALL);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void performAction(String sourceClassName, String targetClassName, int[] memberIndices) {

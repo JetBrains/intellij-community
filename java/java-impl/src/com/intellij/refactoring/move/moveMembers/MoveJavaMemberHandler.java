@@ -51,7 +51,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (RefactoringHierarchyUtil.willBeInTargetClass(refExpr, membersToMove, targetClass, true)) {
         // both member and the reference to it will be in target class
-        if (!isInMovedElement(refExpr, membersToMove)) {
+        if (!RefactoringUtil.isInMovedElement(refExpr, membersToMove)) {
           if (qualifier != null) {
             return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, null, qualifier, psiReference);  // remove qualifier
           }
@@ -74,13 +74,6 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       }
     }
     return null;
-  }
-
-  protected static boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
-    for (PsiMember member : membersToMove) {
-      if (PsiTreeUtil.isAncestor(member, element, false)) return true;
-    }
-    return false;
   }
 
   @Override

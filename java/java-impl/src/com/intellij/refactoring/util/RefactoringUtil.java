@@ -56,7 +56,6 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
@@ -944,6 +943,13 @@ public class RefactoringUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
+    for (PsiMember member : membersToMove) {
+      if (PsiTreeUtil.isAncestor(member, element, false)) return true;
+    }
+    return false;
   }
 
   public static interface ImplicitConstructorUsageVisitor {

@@ -8,5 +8,4 @@ public class ClassWithStaticMethod {
         OtherClass.callee();
     }
 
-
 }

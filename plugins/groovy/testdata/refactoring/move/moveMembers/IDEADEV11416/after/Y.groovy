@@ -3,5 +3,4 @@ class X {
 }
 
 interface Y {
-
 }

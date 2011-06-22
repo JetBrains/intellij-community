@@ -1291,4 +1291,21 @@ public class PsiUtil {
       domainClass = c;
     }
   }
+
+  @NotNull
+  public static ResolveResult getAccessObjectClass(GrExpression expression) {
+    if (expression instanceof GrSuperReferenceExpression || expression instanceof GrThisReferenceExpression) return GroovyResolveResult.EMPTY_RESULT;
+    PsiType type = expression.getType();
+    if (type instanceof PsiClassType) {
+      return ((PsiClassType)type).resolveGenerics();
+    }
+    if (type == null && expression instanceof GrReferenceExpression) {
+      GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();
+      if (resolveResult.getElement() instanceof PsiClass) {
+        return resolveResult;
+      }
+    }
+    return GroovyResolveResult.EMPTY_RESULT;
+  }
+
 }
