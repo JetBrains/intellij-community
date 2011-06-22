@@ -252,7 +252,7 @@ public class ActionMenuItem extends JMenuItem {
       }
     }
     else {
-      if (!SystemInfo.isMac || UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+      if (UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
         Icon icon = myPresentation.getIcon();
         setIcon(icon);
         if (myPresentation.getDisabledIcon() != null) {
