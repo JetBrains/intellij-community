@@ -34,6 +34,7 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.ui.AnActionButton;
 import com.intellij.ui.EditableRowTable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -134,8 +135,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null,
-                                                     PlatformIcons.EXCEPTION_CLASS_ICON) {
+    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, PlatformIcons.NEW_EXCEPTION) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<JavaCallerChooser>();

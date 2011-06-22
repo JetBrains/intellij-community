@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.ui;
+package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private boolean myEnabled = true;
   private boolean myVisible = true;
   private Shortcut myShortcut;
+  private JComponent myContextComponent;
 
   protected AnActionButton(String text) {
     super(text);
@@ -60,7 +62,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(isEnabled());
+    e.getPresentation().setEnabled(isEnabled() && isContextComponentOk());
     e.getPresentation().setVisible(isVisible());
   }
 
@@ -71,5 +73,14 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   public void setShortcut(Shortcut shortcut) {
     myShortcut = shortcut;
+  }
+
+  public void setContextComponent(JComponent contextComponent) {
+    myContextComponent = contextComponent;
+  }
+
+  private boolean isContextComponentOk() {
+    return myContextComponent == null
+           || (myContextComponent.isVisible() && UIUtil.getParentOfType(JLayeredPane.class, myContextComponent) != null);
   }
 }

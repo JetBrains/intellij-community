@@ -29,6 +29,7 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -94,6 +95,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     public final TableCellRenderer getRenderer(ParameterTableModelItemBase<P> item) {
       if (myRenderer == null) {
         final TableCellRenderer original = doCreateRenderer(item);
+        final DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
         myRenderer = new TableCellRenderer() {
 
           public Component getTableCellRendererComponent(JTable table,
@@ -102,11 +104,13 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
                                                          boolean hasFocus,
                                                          int row,
                                                          int column) {
-            Component component = original.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
             if (!table.isCellEditable(row, table.convertColumnIndexToModel(column))) {
-              Color bg = table.getBackground().darker();
-              component.setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230));
+              return defaultRenderer.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
+              //Color bg = table.getBackground().darker();
+              //component.setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230));
             }
+            Component component = original.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
             if (component instanceof EditorTextField) {
               ((EditorTextField)component).setCenterByHeight(false);

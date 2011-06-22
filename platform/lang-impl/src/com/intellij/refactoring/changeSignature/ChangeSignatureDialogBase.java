@@ -165,15 +165,22 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myParametersTableModel.getRowCount() > 0 ? myParametersTable : myNameField;
+    if (myParametersTableModel.getRowCount() > 0) {
+      final JTable table = myParametersTable.getComponent();
+      table.getSelectionModel().setSelectionInterval(0,0);
+      table.getColumnModel().getSelectionModel().setSelectionInterval(0, 0);
+      return table;
+    } else {
+      return myNameField == null ? super.getPreferredFocusedComponent() : myNameField;
+    }
   }
 
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
+    JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     final JPanel methodPanel = new JPanel(new BorderLayout());
-    final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
-    final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
+    final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+    final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 2, true, false));
 
     final DocumentListener documentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {
@@ -273,6 +280,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     bottom.add(optionsPanel, BorderLayout.NORTH);
     bottom.add(createSignaturePanel(), BorderLayout.SOUTH);
     main.add(bottom, BorderLayout.SOUTH);
+    main.setBorder(IdeBorderFactory.createEmptyBorder(5,0,0,0));
     return main;
   }
 
@@ -283,8 +291,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       panel.add(myDelegationPanel, BorderLayout.WEST);
     }
 
-    myPropagateParamChangesButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null,
-                                                       PlatformIcons.NEW_PARAMETER) {
+    myPropagateParamChangesButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, PlatformIcons.NEW_PARAMETER) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Ref<CallerChooserBase<M>> chooser = new Ref<CallerChooserBase<M>>();
@@ -369,7 +376,8 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       }
     };
     myParametersTable.setCellSelectionEnabled(true);
-
+    myParametersTable.setRowSelectionAllowed(false);
+    myParametersTable.setColumnSelectionAllowed(false);
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("parameters.border.title")));
 
@@ -400,7 +408,12 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       }
     );
 
+    customizeParametersTable(myParametersTable);
+
     return panel;
+  }
+
+  protected void customizeParametersTable(TableView<ParameterTableModelItemBase<P>> table) {
   }
 
   private JComponent createSignaturePanel() {
