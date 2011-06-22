@@ -107,6 +107,7 @@ public class IdeMenuBar extends JMenuBar {
         add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true));
       }
 
+      fixMenuBackground();
       updateMnemonicsVisibility();
       validate();
 
@@ -120,12 +121,16 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
-  /**
-   * Hacks a problem under Alloy LaF which draws menu bar in different background menu items are drawn in.
-   */
   @Override
   public void updateUI() {
     super.updateUI();
+    fixMenuBackground();
+  }
+
+  /**
+   * Hacks a problem under Alloy LaF which draws menu bar in different background menu items are drawn in.
+   */
+  private void fixMenuBackground() {
     if (UIUtil.isUnderAlloyLookAndFeel() && getMenuCount() > 0) {
       final JMenu menu = getMenu(0);
       if (menu != null) {  // hack for Substance LAF compatibility
