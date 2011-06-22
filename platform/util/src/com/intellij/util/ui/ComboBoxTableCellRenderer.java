@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,57 +20,55 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ListWithSelection;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.Iterator;
 import java.util.Arrays;
 
 public class ComboBoxTableCellRenderer extends JPanel implements TableCellRenderer {
-
-  public final static ComboBoxTableCellRenderer INSTANCE = new ComboBoxTableCellRenderer();
+  public final static TableCellRenderer INSTANCE = new ComboBoxTableCellRenderer();
 
   /**
-   * DefaultTableCellRenderer, that displays JComboBox on selected value
+   * DefaultTableCellRenderer, that displays JComboBox on selected value.
    */
   public final static TableCellRenderer COMBO_WHEN_SELECTED_RENDERER = new DefaultTableCellRenderer() {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (isSelected) {
-        return INSTANCE.getTableCellRendererComponent(table, new ListWithSelection(Arrays.asList(value)), isSelected, hasFocus, row, column);
+        value = new ListWithSelection<Object>(Arrays.asList(value));
+        return INSTANCE.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       }
       return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     }
   };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.ComboBoxTableCellRenderer");
+
   private final JComboBox myCombo = new JComboBox();
 
   private ComboBoxTableCellRenderer() {
     super(new GridBagLayout());
     add(myCombo,
-        new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                               new Insets(0, 0, 0, 0), 0, 0));
+        new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
   }
 
-  public JComponent getTableCellRendererComponent(JTable table,
-                                                 Object value,
-                                                 boolean isSelected,
-                                                 boolean hasFocus,
-                                                 int row,
-                                                 int column) {
-    LOG.assertTrue(value instanceof ListWithSelection, LogUtil.objectAndClass(value));
-    final ListWithSelection tags = (ListWithSelection)value;
-    if (tags.getSelection() == null) {
-      tags.selectFirst();
+  public JComponent getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    if (value instanceof ListWithSelection) {
+      final ListWithSelection tags = (ListWithSelection)value;
+      if (tags.getSelection() == null) {
+        tags.selectFirst();
+      }
+      myCombo.removeAllItems();
+      for (Object tag : tags) {
+        myCombo.addItem(tag);
+      }
+      myCombo.setSelectedItem(tags.getSelection());
     }
-    myCombo.removeAllItems();
-    for (Iterator each = tags.iterator(); each.hasNext();) {
-      myCombo.addItem(each.next());
+    else {
+      LOG.error("value " + LogUtil.objectAndClass(value) + ", at " + row + ":" + column + ", in " + table.getModel());
+      myCombo.removeAllItems();
+      myCombo.setSelectedIndex(-1);
     }
-
-    myCombo.setSelectedItem(tags.getSelection());
 
     return this;
   }
-
 }
