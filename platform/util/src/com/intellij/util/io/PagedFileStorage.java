@@ -37,9 +37,22 @@ public class PagedFileStorage implements Forceable {
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagedFileStorage");
   private static final int MEGABYTE = 1024 * 1024;
-  private final static int BUFFER_SIZE = 10 * MEGABYTE;
-  private final static int UPPER_LIMIT = 200 * MEGABYTE;
-  private final static int LOWER_LIMIT = 100 * MEGABYTE;
+  private final static int BUFFER_SIZE;
+
+  private final static int UPPER_LIMIT;
+  public static final int LOWER_LIMIT_IN_MEGABYTES = 100;
+  private final static int LOWER_LIMIT = LOWER_LIMIT_IN_MEGABYTES * MEGABYTE;
+
+  static {
+    String maxPagedStorageCacheProperty = System.getProperty("idea.max.paged.storage.cache");
+    int defaultMaxPagedStorageCacheInMegabytes = 200;
+    UPPER_LIMIT = (maxPagedStorageCacheProperty == null ? defaultMaxPagedStorageCacheInMegabytes:
+                   Math.max(Integer.valueOf(maxPagedStorageCacheProperty), LOWER_LIMIT_IN_MEGABYTES))*MEGABYTE;
+
+    String pagedStoragePageSizeProperty = System.getProperty("idea.paged.storage.page.size");
+    int defaultPagedStoragePageSizeInMegabytes = 10;
+    BUFFER_SIZE = maxPagedStorageCacheProperty == null ? defaultPagedStoragePageSizeInMegabytes:Math.max(1,Integer.valueOf(pagedStoragePageSizeProperty))* MEGABYTE;
+  }
 
   private final StorageLock myLock;
 
@@ -80,9 +93,9 @@ public class PagedFileStorage implements Forceable {
             // ensure it's allocated
             wrapper.buf();
             if (oome != null) {
-              LOG.error("Successfully recovered OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MEGABYTE + "MB " +
-                        "new size limit: " + mySizeLimit / MEGABYTE + "MB " +
-                        "trying to allocate " + wrapper.myLength + " block");
+              LOG.info("Successfully recovered OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MEGABYTE + "MB " +
+                       "new size limit: " + mySizeLimit / MEGABYTE + "MB " +
+                       "trying to allocate " + wrapper.myLength + " block");
             }
             return wrapper;
           }
