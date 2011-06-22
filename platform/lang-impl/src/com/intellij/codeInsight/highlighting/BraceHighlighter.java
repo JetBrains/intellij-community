@@ -71,8 +71,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
 
         final Document document = editor.getDocument();
         int line = e.getNewPosition().line;
-        // Don't update braces for virtual space navigation.
-        if (line < 0 || line >= document.getLineCount() || editor.getCaretModel().getOffset() >= document.getLineEndOffset(line)) {
+        if (line < 0 || line >= document.getLineCount()) {
           return;
         }
         updateBraces(editor, myAlarm);
