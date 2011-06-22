@@ -19,7 +19,7 @@ import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
@@ -28,8 +28,8 @@ import javax.swing.*;
 * @author Konstantin Bulenkov
 */
 class ChangeCompareModeAction extends AnAction {
-  private final static Icon ON = Icons.CHECK_ICON;
-  private final static Icon ON_SELECTED = Icons.CHECK_ICON_SELECTED;
+  private final static Icon ON = PlatformIcons.CHECK_ICON;
+  private final static Icon ON_SELECTED = PlatformIcons.CHECK_ICON_SELECTED;
   private final static Icon OFF = EmptyIcon.create(ON.getIconHeight());
 
   private final DirDiffTableModel myModel;

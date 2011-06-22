@@ -19,7 +19,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -256,7 +256,7 @@ public class BreakpointTree extends CheckboxTree {
     }
 
     protected Icon getDisplayIcon() {
-      return Icons.METHOD_ICON;
+      return PlatformIcons.METHOD_ICON;
     }
 
     public boolean equals(final Object o) {
@@ -304,7 +304,7 @@ public class BreakpointTree extends CheckboxTree {
     }
 
     protected Icon getDisplayIcon() {
-      return Icons.CLASS_ICON;
+      return PlatformIcons.CLASS_ICON;
     }
 
     public boolean equals(final Object o) {
@@ -344,7 +344,7 @@ public class BreakpointTree extends CheckboxTree {
 
     public void customizeCellRenderer(final ColoredTreeCellRenderer targetRenderer, CheckedTreeNode node, boolean selected,
                                       final boolean checked, boolean expanded, boolean leaf, boolean hasFocus) {
-      targetRenderer.setIcon(Icons.PACKAGE_ICON);
+      targetRenderer.setIcon(PlatformIcons.PACKAGE_ICON);
       final String displayName;
       final CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
       if (parent != null && parent.getUserObject() instanceof PackageDescriptor) {
@@ -362,7 +362,7 @@ public class BreakpointTree extends CheckboxTree {
     }
 
     protected Icon getDisplayIcon() {
-      return Icons.PACKAGE_ICON;
+      return PlatformIcons.PACKAGE_ICON;
     }
 
     public boolean equals(final Object o) {
@@ -776,7 +776,7 @@ public class BreakpointTree extends CheckboxTree {
     }
 
     protected Icon getDisplayIcon() {
-      return Icons.PROJECT_ICON;
+      return PlatformIcons.PROJECT_ICON;
     }
   }
   

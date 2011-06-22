@@ -36,7 +36,7 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -151,7 +151,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     myBuilder.initRootNode();
 
     myTree.setDragEnabled(false);
-    myTree.setRowHeight(Icons.CLASS_ICON.getIconHeight());
+    myTree.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight());
 
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
@@ -262,7 +262,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private static class ProjectDescriptor extends LibrariesTreeNodeBase<Project> {
     protected ProjectDescriptor(final Project project, final Project element) {
       super(project, null, element);
-      getTemplatePresentation().setIcons(Icons.PROJECT_ICON);
+      getTemplatePresentation().setIcons(PlatformIcons.PROJECT_ICON);
       getTemplatePresentation().addText(notEmpty(getElement().getName()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
@@ -306,7 +306,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       super(project, parentDescriptor, table);
       myWeight = weight;
       myAutoExpand = autoExpand;
-      getTemplatePresentation().setIcons(Icons.LIBRARY_ICON);
+      getTemplatePresentation().setIcons(PlatformIcons.LIBRARY_ICON);
       final String nodeText = table.getPresentation().getDisplayName(true);
       getTemplatePresentation().addText(notEmpty(nodeText), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }

@@ -54,7 +54,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -451,7 +451,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     public ToggleShowFlattenAction() {
       super(VcsBundle.message("changes.action.show.directories.text"),
             VcsBundle.message("changes.action.show.directories.description"),
-            Icons.DIRECTORY_CLOSED_ICON);
+            PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
 
     public boolean isSelected(AnActionEvent e) {

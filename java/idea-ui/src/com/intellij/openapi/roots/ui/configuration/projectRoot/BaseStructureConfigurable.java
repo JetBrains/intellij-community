@@ -43,7 +43,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -467,7 +467,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     public AbstractAddGroup(String text) {
-      this(text, Icons.ADD_ICON);
+      this(text, PlatformIcons.ADD_ICON);
     }
 
     public ActionGroup getActionGroup() {

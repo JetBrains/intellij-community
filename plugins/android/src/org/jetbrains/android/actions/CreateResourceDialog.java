@@ -20,7 +20,7 @@ import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +49,7 @@ public abstract class CreateResourceDialog extends DialogWrapper {
     super(project);
     myResTypeLabel.setLabelFor(myResourceTypeCombo);
     myResourceTypeCombo.registerUpDownHint(myFileNameField);
-    myUpDownHint.setIcon(Icons.UP_DOWN_ARROWS);
+    myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
     CreateTypedResourceFileAction[] actionArray = actions.toArray(new CreateTypedResourceFileAction[actions.size()]);
     for (CreateTypedResourceFileAction action : actionArray) {
       String resType = action.getResourceType();

@@ -49,10 +49,13 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.ui.*;
+import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -340,7 +343,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   private ActionGroup createAddNonCompositeElementGroup() {
     DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("artifacts.add.copy.action"), true);
-    group.getTemplatePresentation().setIcon(Icons.ADD_ICON);
+    group.getTemplatePresentation().setIcon(PlatformIcons.ADD_ICON);
     for (PackagingElementType<?> type : PackagingElementFactory.getInstance().getNonCompositeElementTypes()) {
       group.add(new AddNewPackagingElementAction(type, this));
     }

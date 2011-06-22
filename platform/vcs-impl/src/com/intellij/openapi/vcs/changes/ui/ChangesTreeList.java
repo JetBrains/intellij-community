@@ -39,7 +39,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -644,7 +644,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final FilePath path = TreeModelBuilder.getPathForObject(value);
           if (path.isDirectory()) {
-            setIcon(Icons.DIRECTORY_CLOSED_ICON);
+            setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
           } else {
             setIcon(path.getFileType().getIcon());
           }
@@ -717,7 +717,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     public ToggleShowDirectoriesAction() {
       super(VcsBundle.message("changes.action.show.directories.text"),
             VcsBundle.message("changes.action.show.directories.description"),
-            Icons.DIRECTORY_CLOSED_ICON);
+            PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
 
     public boolean isSelected(AnActionEvent e) {
