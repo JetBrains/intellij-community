@@ -27,6 +27,7 @@ class Project {
   final Map<String, Module> modules = [:]
   final Map<String, Library> libraries = [:]
   final Map<String, Artifact> artifacts = [:]
+  final Map<String, RunConfiguration> runConfigurations = [:]
 
   String targetFolder = null
   String tempFolder = null

@@ -4,13 +4,24 @@ import junit.framework.TestCase
 import org.codehaus.gant.GantBinding
 import org.jetbrains.jps.idea.IdeaProjectLoader
 import org.jetbrains.jps.util.FileSystemItem
-import org.jetbrains.jps.util.FileUtil;
+import org.jetbrains.jps.util.TempFiles
 
 /**
  * @author nik
  */
 abstract class JpsBuildTestCase extends TestCase {
-  
+  private TempFiles myTempFiles;
+
+  @Override
+  protected void setUp() {
+    myTempFiles = new TempFiles();
+  }
+
+  @Override
+  protected void tearDown() {
+    myTempFiles.cleanup();
+  }
+
   def doTest(String projectPath, Closure initProject, Closure expectedOutput) {
     doTest(projectPath, [:], initProject, expectedOutput)
   }
@@ -28,7 +39,7 @@ abstract class JpsBuildTestCase extends TestCase {
 
   def protected buildAll(String projectPath, Map<String, String> pathVariables, Closure initProject) {
     Project project = loadProject(projectPath, pathVariables)
-    def target = FileUtil.createTempDirectory("targetDir")
+    def target = createTempDir()
     project.targetFolder = target.absolutePath
     initProject(project)
     project.clean()
@@ -65,6 +76,14 @@ abstract class JpsBuildTestCase extends TestCase {
     initializer.delegate = meta
     initializer.setResolveStrategy Closure.DELEGATE_FIRST
     initializer()
+  }
+
+  def File createTempDir() {
+    return myTempFiles.createTempDir();
+  }
+
+  def File createTempFile() {
+    return myTempFiles.createTempFile();
   }
 
 }

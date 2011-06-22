@@ -81,6 +81,7 @@ public class IdeaProjectLoader {
     loadModules(getComponent(root, "ProjectModuleManager"))
     loadProjectLibraries(getComponent(root, "libraryTable"))
     loadArtifacts(getComponent(root, "ArtifactManager"))
+    loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
   }
 
   def loadFromDirectoryBased(File dir) {
@@ -116,6 +117,16 @@ public class IdeaProjectLoader {
         if (file.isFile()) {
           def artifactsComponent = new XmlParser(false, false).parse(file)
           loadArtifacts(artifactsComponent)
+        }
+      }
+    }
+
+    def runConfFolder = new File(dir, "runConfigurations")
+    if (runConfFolder.isDirectory()) {
+      runConfFolder.eachFile {File file ->
+        if (file.isFile()) {
+          def runConfManager = new XmlParser(false, false).parse(file);
+          loadRunConfigurations(runConfManager);
         }
       }
     }
@@ -189,6 +200,16 @@ public class IdeaProjectLoader {
       def options = artifactLoader.loadOptions(artifactTag, artifactName)
       def artifact = new Artifact(name: artifactName, rootElement: root, outputPath: outputPath, properties: options);
       project.artifacts[artifact.name] = artifact;
+    }
+  }
+
+  def loadRunConfigurations(Node runConfManager) {
+    if (runConfManager == null) return;
+
+    runConfManager.configuration.each {Node confTag ->
+      def name = confTag.'@name';
+      RunConfiguration runConf = new RunConfiguration(project, projectMacroExpander, confTag);
+      project.runConfigurations[name] = runConf;
     }
   }
 
