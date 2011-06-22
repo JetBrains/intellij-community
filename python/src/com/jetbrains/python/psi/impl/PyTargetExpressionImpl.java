@@ -14,8 +14,8 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -285,9 +285,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   public Icon getIcon(final int flags) {
     if (getQualifier() != null || PsiTreeUtil.<PsiElement>getParentOfType(this, PyFunction.class, PyClass.class) instanceof PyClass) {
-      return Icons.FIELD_ICON;
+      return PlatformIcons.FIELD_ICON;
     }
-    return Icons.VARIABLE_ICON;
+    return PlatformIcons.VARIABLE_ICON;
   }
 
   @Nullable

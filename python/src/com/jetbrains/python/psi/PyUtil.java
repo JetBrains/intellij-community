@@ -21,10 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
@@ -677,7 +674,7 @@ public class PyUtil {
   }
 
   public static LookupElement createNamedParameterLookup(String name) {
-    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").setIcon(Icons.PARAMETER_ICON);
+    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").setIcon(PlatformIcons.PARAMETER_ICON);
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
 

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
@@ -121,7 +121,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
             item = LookupElementBuilder
               .create("'" + ((PyKeywordArgument)argument).getKeyword() + "'")
               .setTypeText("dict key")
-              .setIcon(Icons.PARAMETER_ICON);
+              .setIcon(PlatformIcons.PARAMETER_ICON);
             result.addElement(item);
           }
         }
@@ -149,7 +149,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
               item = LookupElementBuilder
                 .create(key.getText())
                 .setTypeText("dict key")
-                .setIcon(Icons.PARAMETER_ICON);
+                .setIcon(PlatformIcons.PARAMETER_ICON);
               result.addElement(item);
             }
           }
@@ -168,7 +168,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
       item = LookupElementBuilder
         .create(expression.getKey().getText())
         .setTypeText("dict key")
-        .setIcon(Icons.PARAMETER_ICON);
+        .setIcon(PlatformIcons.PARAMETER_ICON);
       result.addElement(item);
     }
   }
