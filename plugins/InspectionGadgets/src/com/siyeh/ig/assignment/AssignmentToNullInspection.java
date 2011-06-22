@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,47 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class AssignmentToNullInspection extends BaseInspection {
 
+    @SuppressWarnings("PublicField")
+    public boolean ignoreAssignmentsToFields = false;
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("assignment.to.null.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "assignment.to.null.problem.descriptor");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "assignment.to.null.option"), this,
+                "ignoreAssignmentsToFields");
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new AssignmentToNullVisitor();
     }
 
-    private static class AssignmentToNullVisitor extends BaseInspectionVisitor {
+    private class AssignmentToNullVisitor extends BaseInspectionVisitor {
 
         @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression value) {
@@ -59,19 +76,30 @@ public class AssignmentToNullInspection extends BaseInspection {
             }
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression)parent;
-            final PsiExpression lhs = assignmentExpression.getLExpression();
-            if (lhs instanceof PsiReferenceExpression) {
-                final PsiReferenceExpression referenceExpression =
-                        (PsiReferenceExpression)lhs;
-                final PsiElement element = referenceExpression.resolve();
-                if (element instanceof PsiVariable) {
-                    final PsiVariable variable = (PsiVariable)element;
-                    if (AnnotationUtil.isNullable(variable)) {
-                        return;
-                    }
-                }
+            final PsiExpression lhs = ParenthesesUtils.stripParentheses(
+                    assignmentExpression.getLExpression());
+            if (lhs == null || isReferenceToNullableVariable(lhs)) {
+                return;
             }
             registerError(lhs);
+        }
+
+        private boolean isReferenceToNullableVariable(
+                PsiExpression lhs) {
+            if (!(lhs instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)lhs;
+            final PsiElement element = referenceExpression.resolve();
+            if (!(element instanceof PsiVariable)) {
+                return false;
+            }
+            final PsiVariable variable = (PsiVariable)element;
+            if (ignoreAssignmentsToFields && variable instanceof PsiField) {
+                return true;
+            }
+            return AnnotationUtil.isNullable(variable);
         }
     }
 }
