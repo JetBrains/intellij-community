@@ -4,7 +4,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.yaml.psi.*;
 
 import javax.swing.*;
@@ -55,7 +55,7 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
         public Icon getIcon(boolean open) {
           final PsiElement value = kv.getValue();
           return value instanceof YAMLCompoundValue && !((YAMLCompoundValue)value).getYAMLElements().isEmpty()
-                 ? Icons.XML_TAG_ICON : Icons.PROPERTY_ICON;
+                 ? PlatformIcons.XML_TAG_ICON : PlatformIcons.PROPERTY_ICON;
         }
 
         public TextAttributesKey getTextAttributesKey() {
@@ -74,7 +74,7 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
         }
 
         public Icon getIcon(boolean open) {
-          return Icons.XML_TAG_ICON;
+          return PlatformIcons.XML_TAG_ICON;
         }
 
         public TextAttributesKey getTextAttributesKey() {
