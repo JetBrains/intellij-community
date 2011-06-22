@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -26,17 +27,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class RevealFileAction extends AnAction {
-
   @Override
   public void update(AnActionEvent e) {
     final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-
-    final boolean isLocalFile = isLocalFile(file);
-    if (isLocalFile) {
-      e.getPresentation().setText(getActionName());
-    } else {
-      e.getPresentation().setEnabled(false);
-    }
+    final Presentation presentation = e.getPresentation();
+    presentation.setText(getActionName());
+    presentation.setEnabled(isLocalFile(file));
   }
 
   public static boolean isLocalFile(@Nullable final VirtualFile file) {
@@ -64,4 +60,3 @@ public class RevealFileAction extends AnAction {
     ShowFilePathAction.open(ioFile, new File(file.getPresentableUrl()));
   }
 }
-
