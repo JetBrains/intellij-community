@@ -210,8 +210,8 @@ public class OptimizedFileManager extends DefaultFileManager {
                             myWriters.add(new DelayedClassFileWriter() {
                                 public void commit() throws IOException {
                                     final OutputStream result = superOpenOutputStream();
-                                    final ClassReader reader = new ClassReader(buffer);
-                                    final byte[] instrumented = InstrumentationUtil.instrumentNotNull(reader, loader);
+
+                                    final byte[] instrumented = InstrumentationUtil.instrumentNotNull(buffer, loader);
 
                                     if (instrumented != null) {
                                         result.write(instrumented);

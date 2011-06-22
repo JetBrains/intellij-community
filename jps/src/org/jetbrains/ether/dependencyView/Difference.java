@@ -1,6 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
-import com.sun.tools.javac.util.Pair;
+import org.jetbrains.ether.Pair;
 
 import java.util.*;
 

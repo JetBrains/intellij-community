@@ -1,12 +1,12 @@
 package org.jetbrains.ether.dependencyView;
 
-import com.sun.tools.javac.util.Pair;
 import org.jetbrains.ether.RW;
-import org.objectweb.asm.Opcodes;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,12 +27,15 @@ public class ClassRepr extends Proto {
 
     public abstract class Diff extends Difference {
         public abstract Difference.Specifier<TypeRepr.AbstractType> interfaces();
+
         public abstract Difference.Specifier<TypeRepr.AbstractType> nestedClasses();
+
         public abstract Difference.Specifier<FieldRepr> fields();
+
         public abstract Difference.Specifier<MethodRepr> methods();
     }
 
-    public Diff difference (final Proto past) {
+    public Diff difference(final Proto past) {
         final ClassRepr pastClass = (ClassRepr) past;
 
         int diff = super.difference(past).base();
@@ -53,11 +56,11 @@ public class ClassRepr extends Proto {
             }
 
             public Difference.Specifier<FieldRepr> fields() {
-                return Difference.make (pastClass.fields, fields);
+                return Difference.make(pastClass.fields, fields);
             }
 
             public Difference.Specifier<MethodRepr> methods() {
-                return Difference.make (pastClass.methods, methods);
+                return Difference.make(pastClass.methods, methods);
             }
 
             public int base() {
@@ -89,7 +92,7 @@ public class ClassRepr extends Proto {
         }
     }
 
-    public ClassRepr (final int a, final StringCache.S sn, final StringCache.S fn, final StringCache.S n, final StringCache.S sig, final String sup, final String[] i, final Collection<String> ns, final Set<FieldRepr> f, final Set<MethodRepr> m) {
+    public ClassRepr(final int a, final StringCache.S sn, final StringCache.S fn, final StringCache.S n, final StringCache.S sig, final String sup, final String[] i, final Collection<String> ns, final Set<FieldRepr> f, final Set<MethodRepr> m) {
         super(a, sig, n);
         fileName = fn;
         sourceFileName = sn;
@@ -98,7 +101,7 @@ public class ClassRepr extends Proto {
         nestedClasses = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(ns, new HashSet<TypeRepr.AbstractType>());
         fields = f;
         methods = m;
-   }
+    }
 
     public ClassRepr(final BufferedReader r) {
         super(r);
@@ -147,7 +150,7 @@ public class ClassRepr extends Proto {
         return result;
     }
 
-    public UsageRepr.Usage createUsage () {
+    public UsageRepr.Usage createUsage() {
         return UsageRepr.createClassUsage(name);
     }
 

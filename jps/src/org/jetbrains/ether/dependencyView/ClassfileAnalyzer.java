@@ -1,6 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
-import com.sun.tools.javac.util.Pair;
+import org.jetbrains.ether.Pair;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.EmptyVisitor;
 import org.objectweb.asm.signature.SignatureReader;
@@ -23,12 +23,12 @@ public class ClassfileAnalyzer {
 
     private static class ClassCrawler extends EmptyVisitor {
 
-        private void processSignature (final String sig) {
+        private void processSignature(final String sig) {
             if (sig != null)
                 new SignatureReader(sig).accept(signatureCrawler);
         }
 
-        private final SignatureVisitor signatureCrawler = new SignatureVisitor () {
+        private final SignatureVisitor signatureCrawler = new SignatureVisitor() {
             public void visitFormalTypeParameter(String name) {
             }
 
@@ -127,7 +127,7 @@ public class ClassfileAnalyzer {
             takeIntoAccount = notPrivate(a);
 
             access = a;
-            name = StringCache.get (n);
+            name = StringCache.get(n);
             signature = sig;
             superClass = s;
             interfaces = i;
@@ -137,7 +137,7 @@ public class ClassfileAnalyzer {
 
         @Override
         public void visitSource(String source, String debug) {
-            sourceFile = StringCache.get (source);
+            sourceFile = StringCache.get(source);
         }
 
         @Override
@@ -208,7 +208,7 @@ public class ClassfileAnalyzer {
         }
     }
 
-    public static Pair<ClassRepr,Set<UsageRepr.Usage>> analyze(final StringCache.S fileName, final ClassReader cr) {
+    public static Pair<ClassRepr, Set<UsageRepr.Usage>> analyze(final StringCache.S fileName, final ClassReader cr) {
         final ClassCrawler visitor = new ClassCrawler(fileName);
 
         cr.accept(visitor, 0);

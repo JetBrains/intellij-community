@@ -1,6 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
-import com.sun.tools.javac.util.Pair;
+import org.jetbrains.ether.Pair;
 import org.jetbrains.ether.ProjectWrapper;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
