@@ -131,8 +131,6 @@ class PyDBFrame:
                             if django_breakpoint.condition is not None:
                                 try:
                                     val = eval(django_breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
-                                    print django_breakpoint.condition
-                                    print val
                                     if not val:
                                         flag = False
                                 except:
@@ -150,10 +148,6 @@ class PyDBFrame:
                                                 thread.log_expression = val
                             if flag:
                                 frame = suspend_django(self, mainDebugger, thread, frame)
-
-                if not flag:
-                    return self.trace_dispatch
-
 
             #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
             #(one for the line and the other for the return).
@@ -202,7 +196,6 @@ class PyDBFrame:
 
             elif info.pydev_step_cmd == CMD_STEP_OVER:
                 if is_django_suspended(thread):
-
                     django_stop = event == 'call' and is_django_render_call(frame)
 
                     stop = False
