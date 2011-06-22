@@ -2,6 +2,7 @@ from django_debug import is_django_render_call, get_template_file_name, get_temp
 from django_debug import find_django_render_frame
 from django_frame import just_raised
 from django_frame import is_django_exception_break_context
+from django_frame import DjangoTemplateFrame
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
 import traceback #@Reimport
@@ -124,8 +125,31 @@ class PyDBFrame:
                         django_breakpoint = django_breakpoints_for_file[template_line]
 
                         if django_breakpoint.is_triggered(frame):
-                            frame = suspend_django(self, mainDebugger, thread, frame)
                             flag = True
+                            new_frame = DjangoTemplateFrame(frame)
+
+                            if django_breakpoint.condition is not None:
+                                try:
+                                    val = eval(django_breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
+                                    print django_breakpoint.condition
+                                    print val
+                                    if not val:
+                                        flag = False
+                                except:
+                                    sys.stderr.write('Error while evaluating condition \'%s\': %s\n' % (django_breakpoint.condition, sys.exc_info()[1]))
+                                    sys.stderr.flush()
+
+                                if django_breakpoint.expression is not None:
+                                        try:
+                                            try:
+                                                val = eval(django_breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
+                                            except:
+                                                val = sys.exc_info()[1]
+                                        finally:
+                                            if val is not None:
+                                                thread.log_expression = val
+                            if flag:
+                                frame = suspend_django(self, mainDebugger, thread, frame)
 
                 if not flag:
                     return self.trace_dispatch
