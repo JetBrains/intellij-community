@@ -34,7 +34,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
@@ -217,7 +217,7 @@ public class AntUIUtil {
         appearance.getEnding().addComment(projectName);
       }
       appearance.customize(this);
-      setIcon(Icons.ANT_TARGET_ICON);
+      setIcon(PlatformIcons.ANT_TARGET_ICON);
     }
   }
 }

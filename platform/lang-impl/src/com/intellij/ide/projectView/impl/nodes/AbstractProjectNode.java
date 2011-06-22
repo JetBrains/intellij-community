@@ -27,7 +27,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,7 +78,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
   public void update(PresentationData presentation) {
-    presentation.setIcons(Icons.PROJECT_ICON);
+    presentation.setIcons(PlatformIcons.PROJECT_ICON);
     presentation.setPresentableText(getProject().getName());
   }
 

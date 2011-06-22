@@ -22,7 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -136,7 +136,7 @@ public abstract class AbstractFieldPanel extends JPanel {
         myDoClickAction = new TextFieldWithBrowseButton.MyDoClickAction(showViewerButton);
       }
       showViewerButton.setFocusable(false);
-      showViewerButton.setIcon(Icons.OPEN_EDIT_DIALOG_ICON);
+      showViewerButton.setIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
       showViewerButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           Viewer viewer = new Viewer();

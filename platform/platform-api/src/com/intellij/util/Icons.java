@@ -15,5 +15,9 @@
  */
 package com.intellij.util;
 
+/**
+ * @deprecated use PlatformIcons instead
+ * @see PlatformIcons
+ */
 public abstract class Icons implements PlatformIcons {
 }

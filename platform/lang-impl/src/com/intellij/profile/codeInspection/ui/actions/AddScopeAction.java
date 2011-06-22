@@ -35,7 +35,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -46,7 +46,7 @@ public abstract class AddScopeAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + AddScopeAction.class.getName());
 
   public AddScopeAction(Tree tree) {
-    super("Add Scope", "Add Scope", Icons.ADD_ICON);
+    super("Add Scope", "Add Scope", PlatformIcons.ADD_ICON);
     myTree = tree;
     registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
   }
