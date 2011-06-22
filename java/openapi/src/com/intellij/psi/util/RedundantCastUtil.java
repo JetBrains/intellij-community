@@ -341,6 +341,17 @@ public class RedundantCastUtil {
             //branches need to be of the same type
             if (!Comparing.equal(operand.getType(), ((PsiConditionalExpression)parent).getType())) return;
           }
+        } else if (parent instanceof PsiTypeCastExpression) {
+          PsiTypeElement typeElement = ((PsiTypeCastExpression)parent).getCastType();
+          if (typeElement != null) {
+            PsiType castType = typeElement.getType();
+            if (castType instanceof PsiPrimitiveType) {
+              final PsiType operandType = operand.getType();
+              if (!(operandType instanceof PsiPrimitiveType) && PsiPrimitiveType.getUnboxedType(operandType) != castType) {
+                return;
+              }
+            }
+          }
         }
         processAlreadyHasTypeCast(typeCast);
       }

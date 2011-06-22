@@ -38,7 +38,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.rename.DirectoryAsPackageRenameHandler;
+import com.intellij.refactoring.rename.DirectoryAsPackageRenameHandlerBase;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -159,7 +159,7 @@ public class MoveClassesOrPackagesImpl {
       final StringBuffer message = new StringBuffer();
       RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, aPackage.getQualifiedName());
       if (directories.length > 1) {
-        DirectoryAsPackageRenameHandler.buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
+        DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, aPackage.getQualifiedName(), directories);
         message.append("\n\n");
         String report = RefactoringBundle
           .message("all.these.directories.will.be.moved.and.all.references.to.0.will.be.changed", aPackage.getQualifiedName());

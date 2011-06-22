@@ -110,7 +110,15 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
         fillParameterList(vm, VM_PARAMETERS);
         fillParameterList(params.getProgramParametersList(), PROGRAM_PARAMETERS);
-
+        if (!VM_PARAMETERS.contains("-Xms")) {
+          vm.add("-Xms128m");
+        }
+        if (!VM_PARAMETERS.contains("-Xmx")) {
+          vm.add("-Xmx512m");
+        }
+        if (!VM_PARAMETERS.contains("-XX:MaxPermSize")) {
+          vm.add("-XX:MaxPermSize=250m");
+        }
         @NonNls String libPath = ideaJdk.getHomePath() + File.separator + "lib";
         vm.add("-Xbootclasspath/a:" + libPath + File.separator + "boot.jar");
 
