@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupActionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.util.Consumer;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ public class ImportStaticLookupActionProvider implements LookupActionProvider {
       return;
     }
 
-    final Icon checkIcon = Icons.CHECK_ICON;
+    final Icon checkIcon = PlatformIcons.CHECK_ICON;
     final Icon icon = item.willBeImported() ? checkIcon : new EmptyIcon(checkIcon.getIconWidth(), checkIcon.getIconHeight());
     consumer.consume(new LookupElementAction(icon, "Import statically") {
       @Override

@@ -85,7 +85,7 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -699,7 +699,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     myActionGroup.removeAll();
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
       myActionGroup.addAction(new PaneOptionAction(myFlattenPackages, IdeBundle.message("action.flatten.packages"),
-                                             IdeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON,
+                                             IdeBundle.message("action.flatten.packages"), PlatformIcons.FLATTEN_PACKAGES_ICON,
                                              ourFlattenPackagesDefaults) {
         public void setSelected(AnActionEvent event, boolean flag) {
           final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();

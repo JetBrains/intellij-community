@@ -33,8 +33,8 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -350,7 +350,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   }
 
   public Icon getIcon(int flags) {
-    return Icons.PROPERTY_ICON;
+    return PlatformIcons.PROPERTY_ICON;
   }
 
   public void delete() throws IncorrectOperationException {

@@ -19,7 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +62,7 @@ public class PropertiesGrouper implements Grouper{
 
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.properties"), null, Icons.PROPERTY_ICON);
+    return new ActionPresentationData(IdeBundle.message("action.structureview.show.properties"), null, PlatformIcons.PROPERTY_ICON);
   }
 
   @NotNull

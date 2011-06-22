@@ -48,7 +48,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -437,7 +437,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
       if (presentableFile != null && presentableFile.isValid()) {
         if (presentableFile.getFileSystem() instanceof HttpFileSystem) {
-          icon = Icons.WEB_ICON;
+          icon = PlatformIcons.WEB_ICON;
         }
         else {
           if (presentableFile.isDirectory()) {
@@ -445,7 +445,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
               icon = JAR_DIRECTORY_ICON;
             }
             else {
-              icon = Icons.DIRECTORY_CLOSED_ICON;
+              icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
             }
           }
           else {

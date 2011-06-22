@@ -29,7 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -89,8 +89,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   public void update(PresentationData presentation) {
     final String[] groupPath = getValue().getGroupPath();
     presentation.setPresentableText(groupPath[groupPath.length-1]);
-    presentation.setOpenIcon(Icons.OPENED_MODULE_GROUP_ICON);
-    presentation.setClosedIcon(Icons.CLOSED_MODULE_GROUP_ICON);
+    presentation.setOpenIcon(PlatformIcons.OPENED_MODULE_GROUP_ICON);
+    presentation.setClosedIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
   public String getTestPresentation() {

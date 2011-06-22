@@ -52,10 +52,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Icons;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +125,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
   }
 
   public RowIcon getElementIcon(final int elementFlags) {
-    return createLayeredIcon(Icons.PACKAGE_ICON, elementFlags);
+    return createLayeredIcon(PlatformIcons.PACKAGE_ICON, elementFlags);
   }
 
   public String getName() {

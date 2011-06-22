@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,7 +60,7 @@ public class TestDataGroupVirtualFile extends DeprecatedVirtualFile {
 
   @Override
   public Icon getIcon() {
-    return Icons.TEST_SOURCE_FOLDER;
+    return PlatformIcons.TEST_SOURCE_FOLDER;
   }
 
   @NotNull

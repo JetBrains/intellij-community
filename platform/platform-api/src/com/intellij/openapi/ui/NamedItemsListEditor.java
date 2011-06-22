@@ -27,7 +27,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.*;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nullable;
@@ -299,7 +299,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
   private class AddAction extends DumbAwareAction {
         public AddAction() {
-            super("Add", "Add", Icons.ADD_ICON);
+            super("Add", "Add", PlatformIcons.ADD_ICON);
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }
 

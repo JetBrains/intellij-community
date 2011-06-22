@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +95,7 @@ public class UiUtils {
                 @NotNull ListTable table, @NotNull String chooserTitle,
                 @NotNull ClassFilter filter) {
             super(InspectionGadgetsBundle.message("button.add"), "",
-                    Icons.ADD_ICON);
+                    PlatformIcons.ADD_ICON);
             this.table = table;
             this.chooserTitle = chooserTitle;
             this.myFilter = filter;
@@ -147,7 +147,7 @@ public class UiUtils {
 
         public AddAction(ListTable table) {
             super(InspectionGadgetsBundle.message("button.add"), "",
-                    Icons.ADD_ICON);
+                    PlatformIcons.ADD_ICON);
             this.table = table;
         }
 
@@ -182,7 +182,7 @@ public class UiUtils {
 
         public RemoveAction(ListTable table) {
             super(InspectionGadgetsBundle.message("button.remove"), "",
-                    Icons.DELETE_ICON);
+                    PlatformIcons.DELETE_ICON);
             this.table = table;
         }
 

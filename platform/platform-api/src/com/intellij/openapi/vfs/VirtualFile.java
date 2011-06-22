@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -261,7 +262,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   public Icon getIcon() {
     if (isDirectory() && isInLocalFileSystem()) {
-      return Icons.FOLDER_ICON;
+      return PlatformIcons.FOLDER_ICON;
     }
     return getFileType().getIcon();
   }

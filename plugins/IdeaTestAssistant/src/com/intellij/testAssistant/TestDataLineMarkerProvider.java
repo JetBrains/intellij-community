@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
     }
     final PsiMethod method = (PsiMethod)element;
     if (isTestMethod(method)) {
-      return new LineMarkerInfo<PsiMethod>(method, method.getTextOffset(), Icons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null,
+      return new LineMarkerInfo<PsiMethod>(method, method.getTextOffset(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null,
                                            new TestDataNavigationHandler());
     }
     return null;

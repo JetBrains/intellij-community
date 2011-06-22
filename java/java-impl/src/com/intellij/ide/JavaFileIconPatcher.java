@@ -28,7 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
@@ -45,7 +45,7 @@ public class JavaFileIconPatcher implements FileIconPatcher {
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInSource(file) && CompilerManager.getInstance(project).isExcludedFromCompilation(file)) {
-      return new LayeredIcon(icon, Icons.EXCLUDED_FROM_COMPILE_ICON);
+      return new LayeredIcon(icon, PlatformIcons.EXCLUDED_FROM_COMPILE_ICON);
     }
 
     return icon;
@@ -54,7 +54,7 @@ public class JavaFileIconPatcher implements FileIconPatcher {
   private static Icon replaceIcon(VirtualFile file, int flags, Project project, Icon baseIcon) {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
     if (fileType == StdFileTypes.JAVA && !FileIndexUtil.isJavaSourceFile(project, file)) {
-      return Icons.JAVA_OUTSIDE_SOURCE_ICON;
+      return PlatformIcons.JAVA_OUTSIDE_SOURCE_ICON;
     }
 
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);

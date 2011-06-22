@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -166,14 +166,14 @@ public class FileChooserDescriptor implements Cloneable{
 
   public Icon getOpenIcon(VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) {
-      return Icons.DIRECTORY_OPEN_ICON;
+      return PlatformIcons.DIRECTORY_OPEN_ICON;
     }
     // deliberately pass project null: isJavaSourceFile() and excluded from compile information is unavailable for template project
     return IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, null);
   }
   public Icon getClosedIcon(VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) {
-      return Icons.DIRECTORY_CLOSED_ICON;
+      return PlatformIcons.DIRECTORY_CLOSED_ICON;
     }
     return IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, null);
   }

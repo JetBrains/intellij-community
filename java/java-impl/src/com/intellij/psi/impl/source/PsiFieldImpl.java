@@ -35,9 +35,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -250,7 +250,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(Icons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
+    final RowIcon baseIcon = createLayeredIcon(PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

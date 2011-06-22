@@ -43,8 +43,8 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -273,7 +273,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       return originalIcon;
     }
     else {
-      return LayeredIcon.create(originalIcon, Icons.LOCKED_ICON);
+      return LayeredIcon.create(originalIcon, PlatformIcons.LOCKED_ICON);
     }
   }
 

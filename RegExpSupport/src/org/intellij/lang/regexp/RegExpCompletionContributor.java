@@ -22,7 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ui.EmptyIcon;
 import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
@@ -37,7 +37,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author vnikolaenko
  */
 public class RegExpCompletionContributor extends CompletionContributor {
-  private static final Icon emptyIcon = new EmptyIcon(Icons.PROPERTY_ICON.getIconWidth(), Icons.PROPERTY_ICON.getIconHeight());
+  private static final Icon emptyIcon = new EmptyIcon(PlatformIcons.PROPERTY_ICON.getIconWidth(), PlatformIcons.PROPERTY_ICON.getIconHeight());
 
   public RegExpCompletionContributor() {
     {
@@ -104,7 +104,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
       for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
-        addLookupElement(result, "{" + stringArray[0] + "}", stringArray.length > 1 ? stringArray[1]:null, Icons.PROPERTY_ICON);
+        addLookupElement(result, "{" + stringArray[0] + "}", stringArray.length > 1 ? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }
   }
@@ -127,7 +127,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
       }
 
       for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
-        addLookupElement(result, "p{" + stringArray[0] + "}", stringArray.length > 1? stringArray[1]:null, Icons.PROPERTY_ICON);
+        addLookupElement(result, "p{" + stringArray[0] + "}", stringArray.length > 1? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }
   }

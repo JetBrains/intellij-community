@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -26,9 +27,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -193,7 +193,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   public Icon getElementIcon(final int flags) {
-    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
+    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.ABSTRACT_METHOD_ICON : PlatformIcons.METHOD_ICON;
     RowIcon baseIcon = createLayeredIcon(methodIcon, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }

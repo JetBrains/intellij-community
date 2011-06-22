@@ -49,10 +49,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CharTable;
-import com.intellij.util.Icons;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.*;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -1131,7 +1128,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   public Icon getElementIcon(int flags) {
-    return Icons.XML_TAG_ICON;
+    return PlatformIcons.XML_TAG_ICON;
   }
 
   protected class BodyInsertTransaction extends InsertTransaction {

@@ -30,15 +30,15 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
 public class OrderEntryCellAppearanceUtils {
-  public static final Icon EXCLUDE_FOLDER_ICON = CellAppearanceUtils.excludeIcon(Icons.FOLDER_ICON);
+  public static final Icon EXCLUDE_FOLDER_ICON = CellAppearanceUtils.excludeIcon(PlatformIcons.FOLDER_ICON);
   public static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
   public static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
@@ -86,17 +86,17 @@ public class OrderEntryCellAppearanceUtils {
   public static CellAppearance forLibrary(Library library, final boolean hasInvalidRoots) {
     String name = library.getName();
     if (name != null) {
-      return normalOrRedWaved(name, Icons.LIBRARY_ICON, hasInvalidRoots);
+      return normalOrRedWaved(name, PlatformIcons.LIBRARY_ICON, hasInvalidRoots);
     }
     String[] files = library.getUrls(OrderRootType.CLASSES);
     if (files.length == 0) {
-      return SimpleTextCellAppearance.invalid(ProjectBundle.message("library.empty.library.item"), Icons.LIBRARY_ICON);
+      return SimpleTextCellAppearance.invalid(ProjectBundle.message("library.empty.library.item"), PlatformIcons.LIBRARY_ICON);
     }
     if (files.length == 1) {
       return forVirtualFilePointer(new LightFilePointer(files[0]));
     }
     String url = StringUtil.trimEnd(files[0], JarFileSystem.JAR_SEPARATOR);
-    return SimpleTextCellAppearance.normal(PathUtil.getFileName(url), Icons.LIBRARY_ICON);
+    return SimpleTextCellAppearance.normal(PathUtil.getFileName(url), PlatformIcons.LIBRARY_ICON);
   }
 
   public static CellAppearance normalOrRedWaved(String text, final Icon icon, boolean waved) {
@@ -107,7 +107,7 @@ public class OrderEntryCellAppearanceUtils {
   }
 
   public static Icon sourceFolderIcon(boolean testSource) {
-    return testSource ? Icons.TEST_SOURCE_FOLDER : Icons.SOURCE_FOLDERS_ICON;
+    return testSource ? PlatformIcons.TEST_SOURCE_FOLDER : PlatformIcons.SOURCE_FOLDERS_ICON;
   }
 
   public static ModifiableCellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected, final boolean showVersion) {
@@ -137,7 +137,7 @@ public class OrderEntryCellAppearanceUtils {
   }
 
   public static SimpleTextCellAppearance forSourceFolder(SourceFolder folder) {
-    return formatRelativePath(folder, Icons.FOLDER_ICON);
+    return formatRelativePath(folder, PlatformIcons.FOLDER_ICON);
   }
 
   public static CellAppearance forExcludeFolder(ExcludeFolder folder) {

@@ -24,14 +24,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.packageDependencies.DependencyUISettings;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 public final class FlattenPackagesAction extends ToggleAction {
   private final Runnable myUpdate;
 
   public FlattenPackagesAction(Runnable update) {
     super(IdeBundle.message("action.flatten.packages"),
-          IdeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON);
+          IdeBundle.message("action.flatten.packages"), PlatformIcons.FLATTEN_PACKAGES_ICON);
     myUpdate = update;
   }
 

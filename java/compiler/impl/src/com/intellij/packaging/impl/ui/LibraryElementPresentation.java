@@ -16,17 +16,17 @@
 package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.module.Module;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +64,7 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myLibrary != null) {
-      presentationData.setIcons(Icons.LIBRARY_ICON);
+      presentationData.setIcons(PlatformIcons.LIBRARY_ICON);
       presentationData.addText(myLibraryName, mainAttributes);
       presentationData.addText(getLibraryTableComment(myLibrary), commentAttributes);
     }

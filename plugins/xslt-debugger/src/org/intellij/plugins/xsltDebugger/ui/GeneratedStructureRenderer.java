@@ -19,7 +19,7 @@ package org.intellij.plugins.xsltDebugger.ui;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 
@@ -49,7 +49,7 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
       final OutputEventQueue.NodeEvent.QName qname = event.getQName();
       switch (event.getType()) {
         case OutputEventQueue.START_ELEMENT:
-          setIcon(Icons.XML_TAG_ICON);
+          setIcon(PlatformIcons.XML_TAG_ICON);
           append(qname.getQName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           if (qname.myURI != null && qname.myURI.length() > 0) {
             append(" {", SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -58,7 +58,7 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
           }
           break;
         case OutputEventQueue.ATTRIBUTE:
-          setIcon(Icons.ANNOTATION_TYPE_ICON);
+          setIcon(PlatformIcons.ANNOTATION_TYPE_ICON);
           append(qname.getQName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           if (qname.myURI != null && qname.myURI.length() > 0) {
             append(" {" + qname.myURI + "}", SimpleTextAttributes.GRAYED_ATTRIBUTES);

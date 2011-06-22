@@ -17,7 +17,7 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
@@ -56,7 +56,7 @@ class NavBarItem extends SimpleColoredComponent {
       myAttributes = presentation.getTextAttributes(object, false);
     } else {
       myText = "Sample";
-      myIcon = Icons.DIRECTORY_OPEN_ICON;
+      myIcon = PlatformIcons.DIRECTORY_OPEN_ICON;
       myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
 

@@ -137,7 +137,7 @@ public class InjectionsSettingsUI implements Configurable {
     });
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    final AnAction addAction = new AnAction("Add", "Add", Icons.ADD_ICON) {
+    final AnAction addAction = new AnAction("Add", "Add", PlatformIcons.ADD_ICON) {
       @Override
       public void update(final AnActionEvent e) {
         e.getPresentation().setEnabled(!myAddActions.isEmpty());
@@ -148,7 +148,7 @@ public class InjectionsSettingsUI implements Configurable {
         performAdd(e);
       }
     };
-    final AnAction removeAction = new AnAction("Remove", "Remove", Icons.DELETE_ICON) {
+    final AnAction removeAction = new AnAction("Remove", "Remove", PlatformIcons.DELETE_ICON) {
       @Override
       public void update(final AnActionEvent e) {
         boolean enabled = false;
@@ -167,7 +167,7 @@ public class InjectionsSettingsUI implements Configurable {
       }
     };
 
-    final AnAction editAction = new AnAction("Edit", "Edit", Icons.PROPERTIES_ICON) {
+    final AnAction editAction = new AnAction("Edit", "Edit", PlatformIcons.PROPERTIES_ICON) {
       @Override
       public void update(final AnActionEvent e) {
         final AnAction action = getEditAction();
@@ -180,7 +180,7 @@ public class InjectionsSettingsUI implements Configurable {
         performEditAction(e);
       }
     };
-    final AnAction copyAction = new AnAction("Duplicate", "Duplicate", Icons.DUPLICATE_ICON) {
+    final AnAction copyAction = new AnAction("Duplicate", "Duplicate", PlatformIcons.DUPLICATE_ICON) {
       @Override
       public void update(final AnActionEvent e) {
         final AnAction action = getEditAction();
@@ -207,13 +207,13 @@ public class InjectionsSettingsUI implements Configurable {
     editAction.registerCustomShortcutSet(CommonShortcuts.ENTER, myInjectionsTable);
 
     group.addSeparator();
-    group.add(new AnAction("Enable Selected Injections", "Enable Selected Injections", Icons.SELECT_ALL_ICON) {
+    group.add(new AnAction("Enable Selected Injections", "Enable Selected Injections", PlatformIcons.SELECT_ALL_ICON) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performSelectedInjectionsEnabled(true);
       }
     });
-    group.add(new AnAction("Disable Selected Injections", "Disable Selected Injections", Icons.UNSELECT_ALL_ICON) {
+    group.add(new AnAction("Disable Selected Injections", "Disable Selected Injections", PlatformIcons.UNSELECT_ALL_ICON) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performSelectedInjectionsEnabled(false);

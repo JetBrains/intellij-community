@@ -24,7 +24,7 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ import javax.swing.*;
  * @author peter
  */
 public class PsiTypeCanonicalLookupElement extends LookupElement {
-  private static final Icon EMPTY_ICON = new EmptyIcon(Icons.CLASS_ICON.getIconWidth() * 2, Icons.CLASS_ICON.getIconHeight());
+  private static final Icon EMPTY_ICON = new EmptyIcon(PlatformIcons.CLASS_ICON.getIconWidth() * 2, PlatformIcons.CLASS_ICON.getIconHeight());
 
   private final PsiType myType;
   private final String myPresentableText;

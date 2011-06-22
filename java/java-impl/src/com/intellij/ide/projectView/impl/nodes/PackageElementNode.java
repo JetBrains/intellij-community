@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,8 +133,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     String name = PackageUtil.getNodeName(getSettings(), aPackage,parentPackage, qName, showFQName(aPackage));
     presentation.setPresentableText(name);
 
-    presentation.setOpenIcon(Icons.PACKAGE_OPEN_ICON);
-    presentation.setClosedIcon(Icons.PACKAGE_ICON);
+    presentation.setOpenIcon(PlatformIcons.PACKAGE_OPEN_ICON);
+    presentation.setClosedIcon(PlatformIcons.PACKAGE_ICON);
 
     for(ProjectViewNodeDecorator decorator: Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
       decorator.decorate(this, presentation);

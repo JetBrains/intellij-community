@@ -20,7 +20,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.util.Set;
@@ -46,11 +46,11 @@ public class ModuleGroupNode extends PackageDependenciesNode {
   }
 
   public Icon getOpenIcon() {
-    return Icons.OPENED_MODULE_GROUP_ICON;
+    return PlatformIcons.OPENED_MODULE_GROUP_ICON;
   }
 
   public Icon getClosedIcon() {
-    return Icons.CLOSED_MODULE_GROUP_ICON;
+    return PlatformIcons.CLOSED_MODULE_GROUP_ICON;
   }
 
   public String toString() {
