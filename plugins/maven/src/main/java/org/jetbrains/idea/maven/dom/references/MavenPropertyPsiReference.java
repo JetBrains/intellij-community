@@ -29,8 +29,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -284,7 +284,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private static LookupElement createLookupElement(Object element, String name) {
-    return createLookupElement(element, name, Icons.PROPERTY_ICON);
+    return createLookupElement(element, name, PlatformIcons.PROPERTY_ICON);
   }
 
   private static LookupElement createLookupElement(Object element, String name, Icon icon) {

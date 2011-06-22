@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnServerFileManager;
@@ -155,7 +155,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new AnAction("Add", "Add", Icons.ADD_ICON) {
+    result.add(new AnAction("Add", "Add", PlatformIcons.ADD_ICON) {
         {
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }

@@ -16,7 +16,7 @@
 package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
@@ -26,6 +26,6 @@ public class HttpUrlCellAppearance extends ValidFileCellAppearance {
   }
 
   protected Icon getIcon() {
-    return Icons.WEB_ICON;
+    return PlatformIcons.WEB_ICON;
   }
 }

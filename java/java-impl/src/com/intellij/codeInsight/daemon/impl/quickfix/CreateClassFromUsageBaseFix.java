@@ -15,12 +15,15 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,15 +126,28 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
 
   @Nullable
   protected static String getSuperClassName(final PsiJavaCodeReferenceElement element) {
-    final String superClassName;
-    if (element.getParent().getParent() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element.getParent().getParent();
+    String superClassName = null;
+    final PsiElement ggParent = element.getParent().getParent();
+    if (ggParent instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)ggParent;
       if (method.getThrowsList() == element.getParent()) {
         superClassName = "java.lang.Exception";
       }
-      else superClassName = null;
+    } else if (ggParent instanceof PsiClassObjectAccessExpression) {
+      final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiExpression)ggParent, false);
+      if (expectedTypes.length == 1) {
+        final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(expectedTypes[0].getType());
+        final PsiClass psiClass = classResolveResult.getElement();
+        if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
+          PsiType psiType = classResolveResult.getSubstitutor().substitute(psiClass.getTypeParameters()[0]);
+          if (psiType instanceof PsiWildcardType && ((PsiWildcardType)psiType).isExtends()) {
+            psiType = ((PsiWildcardType)psiType).getExtendsBound();
+          }
+          final PsiClass aClass = PsiUtil.resolveClassInType(psiType);
+          if (aClass != null) return aClass.getQualifiedName();
+        }
+      }
     }
-    else superClassName = null;
 
     return superClassName;
   }

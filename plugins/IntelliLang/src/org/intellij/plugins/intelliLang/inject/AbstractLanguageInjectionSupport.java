@@ -31,7 +31,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel;
@@ -95,7 +95,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   public static AnAction createDefaultAddAction(final Project project,
                                                 final Consumer<BaseInjection> consumer,
                                                 final AbstractLanguageInjectionSupport support) {
-    return new AnAction("Generic "+ StringUtil.capitalize(support.getId()), null, Icons.FILE_ICON) {
+    return new AnAction("Generic "+ StringUtil.capitalize(support.getId()), null, PlatformIcons.FILE_ICON) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final BaseInjection injection = new BaseInjection(support.getId());

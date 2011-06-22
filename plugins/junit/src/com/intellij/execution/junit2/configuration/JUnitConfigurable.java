@@ -50,6 +50,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -149,7 +150,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
     myPatternTextField = new TextFieldWithBrowseButton();
-    myPatternTextField.setButtonIcon(Icons.ADD_ICON);
+    myPatternTextField.setButtonIcon(PlatformIcons.ADD_ICON);
     panel.add(myPatternTextField, BorderLayout.CENTER);
     final FixedSizeButton editBtn = new FixedSizeButton();
     editBtn.setIcon(IconLoader.getIcon("/actions/showViewer.png"));

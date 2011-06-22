@@ -26,7 +26,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +102,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public Icon getIcon() {
-    return isContainer() ? Icons.FOLDER_ICON : myFile.getIcon();
+    return isContainer() ? PlatformIcons.FOLDER_ICON : myFile.getIcon();
   }
 
   @Override

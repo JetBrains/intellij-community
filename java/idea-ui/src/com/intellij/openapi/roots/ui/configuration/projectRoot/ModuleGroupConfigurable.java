@@ -27,7 +27,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.PanelWithText;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,11 +57,11 @@ public class ModuleGroupConfigurable extends NamedConfigurable<ModuleGroup> {
   }
 
   public Icon getIcon() {
-    return Icons.OPENED_MODULE_GROUP_ICON;
+    return PlatformIcons.OPENED_MODULE_GROUP_ICON;
   }
 
   public Icon getIcon(final boolean open) {
-    return open ? Icons.OPENED_MODULE_GROUP_ICON : Icons.CLOSED_MODULE_GROUP_ICON;
+    return open ? PlatformIcons.OPENED_MODULE_GROUP_ICON : PlatformIcons.CLOSED_MODULE_GROUP_ICON;
   }
 
   @Nullable

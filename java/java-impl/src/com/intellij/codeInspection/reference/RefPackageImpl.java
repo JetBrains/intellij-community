@@ -25,7 +25,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
@@ -73,6 +73,6 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   }
 
   public Icon getIcon(final boolean expanded) {
-    return expanded ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON;
+    return expanded ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON;
   }
 }

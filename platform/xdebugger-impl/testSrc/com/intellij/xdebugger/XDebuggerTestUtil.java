@@ -21,15 +21,14 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import junit.framework.Assert;
@@ -210,6 +209,45 @@ public class XDebuggerTestUtil {
     }.execute();
 
     return consoleView.getEditor().getDocument().getText();
+  }
+
+  public static <T extends XBreakpointType> XBreakpoint addBreakpoint(@NotNull final Project project,
+                                                               @NotNull final Class<T> exceptionType,
+                                                               @NotNull final XBreakpointProperties properties) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XBreakpointType[] types = XBreakpointUtil.getBreakpointTypes();
+    final Ref<XBreakpoint> breakpoint = Ref.create(null);
+    for (XBreakpointType type : types) {
+      if (exceptionType.isInstance(type)) {
+        final T breakpointType = exceptionType.cast(type);
+        new WriteAction() {
+          @Override
+          protected void run(Result result) throws Throwable {
+            breakpoint.set(breakpointManager.addBreakpoint(breakpointType, properties));
+          }
+        }.execute();
+        break;
+      }
+    }
+    return breakpoint.get();
+  }
+
+  public static void setBreakpointCondition(Project project, int line, final String condition) {
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    for (XBreakpoint breakpoint : breakpointManager.getAllBreakpoints()) {
+      if (breakpoint instanceof XLineBreakpoint) {
+        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+
+        if (lineBreakpoint.getLine() == line) {
+          new WriteAction() {
+            @Override
+            protected void run(Result result) throws Throwable {
+              lineBreakpoint.setCondition(condition);
+            }
+          }.execute();
+        }
+      }
+    }
   }
 
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XExecutionStack.XStackFrameContainer {

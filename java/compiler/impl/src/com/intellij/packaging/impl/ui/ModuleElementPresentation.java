@@ -24,7 +24,7 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.packaging.ui.TreeNodePresentation;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +67,7 @@ public class ModuleElementPresentation extends TreeNodePresentation {
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     final Module module = findModule();
     if (myTestOutput) {
-      presentationData.setIcons(Icons.TEST_SOURCE_FOLDER);
+      presentationData.setIcons(PlatformIcons.TEST_SOURCE_FOLDER);
     }
     else if (module != null) {
       presentationData.setOpenIcon(module.getModuleType().getNodeIcon(true));

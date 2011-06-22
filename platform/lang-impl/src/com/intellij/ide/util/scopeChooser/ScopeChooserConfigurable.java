@@ -34,7 +34,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -375,7 +375,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       super(IdeBundle.message("add.scope.popup.title"), true);
       myFromPopup = fromPopup;
       final Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(Icons.ADD_ICON);
+      presentation.setIcon(PlatformIcons.ADD_ICON);
       setShortcutSet(CommonShortcuts.INSERT);
     }
 
@@ -406,7 +406,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       }
       if (myFromPopup) {
         final AnAction action = myChildren[getDefaultIndex()];
-        action.getTemplatePresentation().setIcon(Icons.ADD_ICON);
+        action.getTemplatePresentation().setIcon(PlatformIcons.ADD_ICON);
         return new AnAction[]{action};
       }
       return myChildren;

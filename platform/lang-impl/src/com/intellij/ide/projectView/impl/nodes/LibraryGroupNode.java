@@ -34,7 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -115,7 +115,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
   public void update(PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
-    presentation.setIcons(Icons.LIBRARY_ICON);
+    presentation.setIcons(PlatformIcons.LIBRARY_ICON);
   }
 
   public boolean canNavigate() {

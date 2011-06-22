@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,7 +84,7 @@ public class TagListDialog extends DialogWrapper{
   }
 
   private AnAction createDeleteAction() {
-    return new IconWithTextAction(ApplicationBundle.message("action.remove"), null, Icons.DELETE_ICON) {
+    return new IconWithTextAction(ApplicationBundle.message("action.remove"), null, PlatformIcons.DELETE_ICON) {
       public void update(AnActionEvent e) {
         final int selectedIndex = myList.getSelectedIndex();
         if (selectedIndex >= 0) {
@@ -111,7 +111,7 @@ public class TagListDialog extends DialogWrapper{
   }
 
   private AnAction createAddAction() {
-    return new IconWithTextAction(ApplicationBundle.message("action.add"), null, Icons.ADD_ICON){
+    return new IconWithTextAction(ApplicationBundle.message("action.add"), null, PlatformIcons.ADD_ICON){
       public void actionPerformed(AnActionEvent e) {
         final String tagName = Messages.showInputDialog(ApplicationBundle.message("editbox.enter.tag.name"),
                                                         ApplicationBundle.message("title.tag.name"), Messages.getQuestionIcon());

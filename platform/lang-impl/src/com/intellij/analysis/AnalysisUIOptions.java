@@ -28,7 +28,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
@@ -146,7 +146,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public AnAction createGroupByDirectoryAction(final InspectionResultsView view) {
     return new ToggleAction("Group by directory",
                             "Group by directory",
-                            Icons.DIRECTORY_CLOSED_ICON) {
+                            PlatformIcons.DIRECTORY_CLOSED_ICON) {
 
       public boolean isSelected(AnActionEvent e) {
         return SHOW_STRUCTURE;

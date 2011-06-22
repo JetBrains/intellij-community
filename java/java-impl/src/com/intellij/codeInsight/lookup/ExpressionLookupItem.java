@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.psi.*;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 /**
  * @author peter
@@ -33,7 +33,7 @@ public class ExpressionLookupItem extends LookupItem<PsiExpression> implements T
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
-      setIcon(Icons.METHOD_ICON);
+      setIcon(PlatformIcons.METHOD_ICON);
     }
   }
 

@@ -205,7 +205,7 @@ public final class Presentation implements Cloneable {
     return myIcon;
   }
 
-  public void setIcon(Icon icon){
+  public void setIcon(@Nullable Icon icon) {
     Icon oldIcon = myIcon;
     myIcon = icon;
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, myIcon);
@@ -215,7 +215,7 @@ public final class Presentation implements Cloneable {
     return myDisabledIcon;
   }
 
-  public void setDisabledIcon(Icon icon){
+  public void setDisabledIcon(@Nullable Icon icon) {
     Icon oldDisabledIcon = myDisabledIcon;
     myDisabledIcon = icon;
     myChangeSupport.firePropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, myDisabledIcon);
@@ -225,7 +225,7 @@ public final class Presentation implements Cloneable {
     return myHoveredIcon;
   }
 
-  public void setHoveredIcon(final Icon hoveredIcon) {
+  public void setHoveredIcon(@Nullable final Icon hoveredIcon) {
     Icon old = myHoveredIcon;
     myHoveredIcon = hoveredIcon;
     myChangeSupport.firePropertyChange(PROP_HOVERED_ICON, old, myHoveredIcon);

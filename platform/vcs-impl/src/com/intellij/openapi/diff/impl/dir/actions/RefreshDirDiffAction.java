@@ -19,14 +19,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class RefreshDirDiffAction extends DirDiffAction {
   public RefreshDirDiffAction(DirDiffTableModel model) {
-    super(model, "Refresh", Icons.SYNCHRONIZE_ICON);
+    super(model, "Refresh", PlatformIcons.SYNCHRONIZE_ICON);
   }
 
   @Override

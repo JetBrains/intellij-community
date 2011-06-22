@@ -22,7 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -54,7 +54,7 @@ public class GitLogTreeFileSelectorRenderer extends NodeRenderer {
           final FileElement fileElement = (FileElement)element;
           final VirtualFile file = fileElement.getFile();
           if (myModules.contains(file)) {
-            setIcon(expanded ? Icons.CONTENT_ROOT_ICON_OPEN : Icons.CONTENT_ROOT_ICON_CLOSED);
+            setIcon(expanded ? PlatformIcons.CONTENT_ROOT_ICON_OPEN : PlatformIcons.CONTENT_ROOT_ICON_CLOSED);
           }
         }
       }
@@ -70,8 +70,8 @@ public class GitLogTreeFileSelectorRenderer extends NodeRenderer {
 
       // a hack
       myName = proxiedDescriptor.toString();
-      myOpenIcon = Icons.CONTENT_ROOT_ICON_OPEN;
-      myClosedIcon = Icons.CONTENT_ROOT_ICON_CLOSED;
+      myOpenIcon = PlatformIcons.CONTENT_ROOT_ICON_OPEN;
+      myClosedIcon = PlatformIcons.CONTENT_ROOT_ICON_CLOSED;
       setChildrenSortingStamp(proxiedDescriptor.getChildrenSortingStamp());
       setIndex(proxiedDescriptor.getIndex());
       setUpdateCount(proxiedDescriptor.getUpdateCount());

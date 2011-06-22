@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -104,7 +104,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     myTargetInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl));
 
     final String addText = SvnBundle.message("action.Subversion.integrate.changes.dialog.add.wc.text");
-    final AnAction addAction = new AnAction(addText, addText, Icons.ADD_ICON) {
+    final AnAction addAction = new AnAction(addText, addText, PlatformIcons.ADD_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myWorkingCopiesList);
       }
@@ -137,7 +137,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     myGroup.add(addAction);
 
     final String removeText = SvnBundle.message("action.Subversion.integrate.changes.dialog.remove.wc.text");
-    myGroup.add(new AnAction(removeText, removeText, Icons.DELETE_ICON) {
+    myGroup.add(new AnAction(removeText, removeText, PlatformIcons.DELETE_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.DELETE, myWorkingCopiesList);
       }

@@ -37,7 +37,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -89,7 +89,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     if (manager instanceof DebuggerSessionTabBase) {
       final DebuggerSessionTabBase mgr = (DebuggerSessionTabBase)manager;
       mgr.addAdditionalTabComponent(new OutputTabComponent(outputConsole), "XSLT-Output", IconLoader.getIcon("/debugger/console.png"));
-      mgr.addAdditionalTabComponent(StructureTabComponent.create(process, outputConsole), "XSLT-Structure", Icons.FLATTEN_PACKAGES_ICON);
+      mgr.addAdditionalTabComponent(StructureTabComponent.create(process, outputConsole), "XSLT-Structure", PlatformIcons.FLATTEN_PACKAGES_ICON);
     } else {
       manager.addAdditionalTabComponent(new OutputTabComponent(outputConsole), "XSLT-Output");
       manager.addAdditionalTabComponent(StructureTabComponent.create(process, outputConsole), "XSLT-Structure");

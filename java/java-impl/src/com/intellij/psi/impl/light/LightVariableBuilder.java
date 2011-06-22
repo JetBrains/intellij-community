@@ -5,8 +5,8 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   private final String myName;
   private final PsiType myType;
   private volatile LightModifierList myModifierList;
-  private volatile Icon myBaseIcon = Icons.VARIABLE_ICON;
+  private volatile Icon myBaseIcon = PlatformIcons.VARIABLE_ICON;
 
   public LightVariableBuilder(@NotNull String name, @NotNull String type, @NotNull PsiElement navigationElement) {
     this(name, JavaPsiFacade.getElementFactory(navigationElement.getProject()).createTypeFromText(type, navigationElement), navigationElement);

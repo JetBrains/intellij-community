@@ -26,8 +26,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.dom.manifest.Action;
 import org.jetbrains.android.dom.manifest.*;
@@ -62,7 +62,7 @@ public class NewAndroidComponentDialog extends DialogWrapper {
     super(module.getProject());
     myKindLabel.setLabelFor(myKindCombo);
     myKindCombo.registerUpDownHint(myNameField);
-    myUpDownHint.setIcon(Icons.UP_DOWN_ARROWS);
+    myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
     myKindCombo.addItem(AndroidBundle.message("android.new.component.dialog.activity.item"), null, AndroidFileTemplateProvider.ACTIVITY);
 
     if (!containsCustomApplicationClass(module)) {

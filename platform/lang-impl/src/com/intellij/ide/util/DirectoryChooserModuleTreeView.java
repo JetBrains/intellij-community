@@ -34,7 +34,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
@@ -243,7 +243,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         setIcon(module.getModuleType().getNodeIcon((flags1 & Iconable.ICON_FLAG_OPEN) != 0));
       } else if (value instanceof ModuleGroup) {
         append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        setIcon(expanded ? Icons.OPENED_MODULE_GROUP_ICON : Icons.CLOSED_MODULE_GROUP_ICON);
+        setIcon(expanded ? PlatformIcons.OPENED_MODULE_GROUP_ICON : PlatformIcons.CLOSED_MODULE_GROUP_ICON);
       }
     }
   }

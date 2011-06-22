@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,7 +62,7 @@ public class BrowserSelector {
                             int index,
                             boolean selected,
                             boolean hasFocus) {
-        final Icon baseIcon = value != null ? value.getIcon() : Icons.WEB_ICON;
+        final Icon baseIcon = value != null ? value.getIcon() : PlatformIcons.WEB_ICON;
         final Icon icon = myBrowserComboWithBrowse.isEnabled() ? baseIcon : IconLoader.getDisabledIcon(baseIcon);
         setIcon(icon);
         setText(value != null ? value.getName() : "Default");

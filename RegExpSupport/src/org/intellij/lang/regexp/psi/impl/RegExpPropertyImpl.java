@@ -23,14 +23,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-
+import com.intellij.util.PlatformIcons;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpProperty;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -143,7 +142,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
             private final String[] myProp;
 
             public MyLookupValue(String[] prop) {
-                super(prop[0], Icons.PROPERTY_ICON);
+                super(prop[0], PlatformIcons.PROPERTY_ICON);
                 myProp = prop;
             }
 

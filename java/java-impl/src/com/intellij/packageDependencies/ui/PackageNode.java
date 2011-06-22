@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.util.Map;
@@ -101,11 +101,11 @@ public class PackageNode extends PackageDependenciesNode {
   }
 
   public Icon getOpenIcon() {
-    return Icons.PACKAGE_OPEN_ICON;
+    return PlatformIcons.PACKAGE_OPEN_ICON;
   }
 
   public Icon getClosedIcon() {
-    return Icons.PACKAGE_ICON;
+    return PlatformIcons.PACKAGE_ICON;
   }
 
 

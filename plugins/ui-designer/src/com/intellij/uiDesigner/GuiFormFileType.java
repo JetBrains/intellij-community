@@ -19,7 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +48,7 @@ public class GuiFormFileType implements FileType {
   }
 
   public Icon getIcon() {
-    return Icons.UI_FORM_ICON;
+    return PlatformIcons.UI_FORM_ICON;
   }
 
   public boolean isBinary() {

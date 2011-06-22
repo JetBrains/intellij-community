@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,11 +178,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       return ICON_MODULE;
     }
     if (element instanceof LibraryDescriptor) {
-      return Icons.LIBRARY_ICON;
+      return PlatformIcons.LIBRARY_ICON;
     }
     if (element instanceof File) {
       final File file = (File)element;
-      return file.isDirectory()? Icons.DIRECTORY_CLOSED_ICON : Icons.JAR_ICON;
+      return file.isDirectory()? PlatformIcons.DIRECTORY_CLOSED_ICON : PlatformIcons.JAR_ICON;
     }
     return null;
   }

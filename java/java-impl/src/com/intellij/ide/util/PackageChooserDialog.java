@@ -38,8 +38,8 @@ import com.intellij.psi.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -104,7 +104,7 @@ public class PackageChooserDialog extends PackageChooser {
           boolean hasFocus
         ) {
           super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-          setIcon(expanded ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON);
+          setIcon(expanded ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON);
 
           if (value instanceof DefaultMutableTreeNode) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;

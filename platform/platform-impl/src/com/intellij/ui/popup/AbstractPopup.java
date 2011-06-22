@@ -146,6 +146,7 @@ public class AbstractPopup implements JBPopup {
   private boolean myMayBeParent;
   private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
   private JLabel myAdComponent;
+  private boolean myDisposed;
 
 
   AbstractPopup() {
@@ -983,6 +984,11 @@ public class AbstractPopup implements JBPopup {
 
 
   public void dispose() {
+    if (myDisposed) {
+      return;
+    }
+    myDisposed = true;
+
     Disposer.dispose(this, false);
 
     assert ApplicationManager.getApplication().isDispatchThread();

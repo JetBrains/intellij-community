@@ -33,7 +33,7 @@ import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.util.Function;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
@@ -100,7 +100,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
                                         final boolean hasFocus) {
 
         final Object o = ((DefaultMutableTreeNode)value).getUserObject();
-        setIcon(o instanceof PsiMethod ? Icons.METHOD_ICON : o instanceof PsiParameter ? Icons.PARAMETER_ICON : null);
+        setIcon(o instanceof PsiMethod ? PlatformIcons.METHOD_ICON : o instanceof PsiParameter ? PlatformIcons.PARAMETER_ICON : null);
         final String name;
         if (o instanceof PsiMethod) {
           name = PsiFormatUtil.formatMethod((PsiMethod)o, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,

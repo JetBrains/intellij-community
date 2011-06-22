@@ -24,7 +24,7 @@ import com.intellij.packaging.elements.CompositePackagingElementType;
 import com.intellij.packaging.impl.ui.properties.ArchiveElementPropertiesPanel;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ class ArchiveElementType extends CompositePackagingElementType<ArchivePackagingE
 
   @Override
   public Icon getCreateElementIcon() {
-    return Icons.JAR_ICON;
+    return PlatformIcons.JAR_ICON;
   }
 
   @NotNull

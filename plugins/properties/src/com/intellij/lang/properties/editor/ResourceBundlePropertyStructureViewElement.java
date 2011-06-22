@@ -28,7 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,7 +76,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
       }
 
       public Icon getIcon(boolean open) {
-        return Icons.PROPERTY_ICON;
+        return PlatformIcons.PROPERTY_ICON;
       }
 
       public TextAttributesKey getTextAttributesKey() {

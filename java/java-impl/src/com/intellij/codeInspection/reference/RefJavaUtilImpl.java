@@ -105,6 +105,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
           }
 
           @Override public void visitAnonymousClass(PsiAnonymousClass psiClass) {
+            super.visitAnonymousClass(psiClass);
             RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(psiClass);
             refFrom.addReference(refClass, psiClass, psiFrom, false, true, null);
           }

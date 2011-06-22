@@ -24,7 +24,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,7 +70,7 @@ public class CustomColorsPage implements ColorSettingsPage {
   }
 
   public Icon getIcon() {
-    return Icons.CUSTOM_FILE_ICON;
+    return PlatformIcons.CUSTOM_FILE_ICON;
   }
 
   @NotNull

@@ -27,7 +27,7 @@ import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -151,7 +151,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByScopeAction extends RuleAction {
     private GroupByScopeAction(UsageViewImpl view) {
-      super(view, "Group by test/production", Icons.TEST_SOURCE_FOLDER);
+      super(view, "Group by test/production", PlatformIcons.TEST_SOURCE_FOLDER);
     }
     protected boolean getOptionValue() {
       return UsageViewSettings.getInstance().GROUP_BY_SCOPE;
@@ -177,7 +177,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByPackageAction extends RuleAction {
     private GroupByPackageAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.package"), Icons.GROUP_BY_PACKAGES);
+      super(view, UsageViewBundle.message("action.group.by.package"), PlatformIcons.GROUP_BY_PACKAGES);
     }
     protected boolean getOptionValue() {
       return UsageViewSettings.getInstance().GROUP_BY_PACKAGE;

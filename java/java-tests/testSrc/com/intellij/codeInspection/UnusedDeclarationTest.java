@@ -176,4 +176,8 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   public void testenumValues() throws Exception {
     doTest();
   }
+
+  public void testUsagesInAnonymous() throws Exception {
+    doTest();
+  }
 }

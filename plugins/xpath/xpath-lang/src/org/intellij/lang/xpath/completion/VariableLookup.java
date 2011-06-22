@@ -15,10 +15,10 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.openapi.util.Iconable;
 import com.intellij.codeInsight.lookup.LookupValueWithPriority;
-import com.intellij.util.Icons;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
@@ -43,7 +43,7 @@ public class VariableLookup extends AbstractLookup implements Lookup, Iconable, 
     }
 
     public Icon getIcon(int flags) {
-        return myIcon != null ? myIcon : Icons.VARIABLE_ICON;
+        return myIcon != null ? myIcon : PlatformIcons.VARIABLE_ICON;
     }
 
     public int getPriority() {

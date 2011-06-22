@@ -16,7 +16,7 @@
 package org.intellij.plugins.intelliLang.inject.config.ui.configurables;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlTagPanel;
 
@@ -36,6 +36,6 @@ public class XmlTagInjectionConfigurable extends InjectionConfigurable<XmlTagInj
   }
 
   public Icon getIcon() {
-    return Icons.XML_TAG_ICON;
+    return PlatformIcons.XML_TAG_ICON;
   }
 }

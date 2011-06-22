@@ -28,7 +28,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
 
   public AddLibraryAction(ClasspathPanel classpathPanel, final int index, final String title,
                           final StructureConfigurableContext context) {
-    super(classpathPanel, index, title, Icons.LIBRARY_ICON);
+    super(classpathPanel, index, title, PlatformIcons.LIBRARY_ICON);
     myContext = context;
   }
 

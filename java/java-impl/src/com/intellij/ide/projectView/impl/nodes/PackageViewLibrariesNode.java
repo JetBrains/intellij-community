@@ -28,7 +28,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -84,7 +84,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
 
   public void update(final PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
-    presentation.setIcons(Icons.LIBRARY_ICON);
+    presentation.setIcons(PlatformIcons.LIBRARY_ICON);
   }
 
   public String getTestPresentation() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.SystemInfo;
 
 /**
  * @author Roman.Chernyatchik
  */
 public class MenuItemPresentationFactory extends PresentationFactory {
   protected Presentation processPresentation(Presentation presentation) {
-    if (SystemInfo.isMac && !UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+    if (!UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
       presentation.setIcon(null);
       presentation.setDisabledIcon(null);
       presentation.setHoveredIcon(null);

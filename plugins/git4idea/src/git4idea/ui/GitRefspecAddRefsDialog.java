@@ -24,7 +24,7 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
@@ -265,7 +265,7 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
           // category node (render as bold)
           text = (String)userObject;
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-          icon = expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON;
+          icon = expanded ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
         }
         else {
           // reference node

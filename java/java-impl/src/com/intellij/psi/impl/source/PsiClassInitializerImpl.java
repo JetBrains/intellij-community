@@ -26,7 +26,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -83,6 +83,6 @@ public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitiali
   }
 
   public Icon getElementIcon(int flags) {
-    return createLayeredIcon(Icons.CLASS_INITIALIZER, ElementPresentationUtil.getFlags(this, false));
+    return createLayeredIcon(PlatformIcons.CLASS_INITIALIZER, ElementPresentationUtil.getFlags(this, false));
   }
 }

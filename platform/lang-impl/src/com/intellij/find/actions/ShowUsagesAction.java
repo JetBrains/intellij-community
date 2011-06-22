@@ -58,7 +58,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.Table;
@@ -542,7 +542,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     };
     table.setModel(model);
 
-    table.setRowHeight(Icons.CLASS_ICON.getIconHeight()+2);
+    table.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight()+2);
     table.setShowGrid(false);
     table.setShowVerticalLines(false);
     table.setShowHorizontalLines(false);

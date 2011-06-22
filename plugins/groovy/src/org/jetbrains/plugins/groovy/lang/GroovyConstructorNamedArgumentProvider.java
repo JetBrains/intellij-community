@@ -140,14 +140,12 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
   private static class MyPsiScopeProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
     private final String myNameHint;
     private final Map<String, ArgumentDescriptor> myResult;
-    private final GroovyPsiElement myContext;
     private final EnumSet<ResolveKind> myResolveTargetKinds;
 
     private MyPsiScopeProcessor(Map<String, ArgumentDescriptor> result, GroovyPsiElement context) {
       myResolveTargetKinds = ResolverProcessor.RESOLVE_KINDS_METHOD_PROPERTY;
       myNameHint = null;
       myResult = result;
-      myContext = context;
     }
 
     private MyPsiScopeProcessor(@NotNull String propertyName, boolean findSetter, Map<String, ArgumentDescriptor> result, GroovyPsiElement context) {
@@ -161,7 +159,6 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
       }
 
       myResult = result;
-      myContext = context;
     }
 
     @Override
@@ -193,7 +190,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
           type = substitutor.substitute(type);
         }
 
-        myResult.put(propertyName, new TypeCondition(type, element, myContext));
+        myResult.put(propertyName, new TypeCondition(type, element));
       }
 
       return true;

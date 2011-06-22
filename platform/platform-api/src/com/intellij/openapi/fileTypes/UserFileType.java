@@ -17,7 +17,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ import javax.swing.*;
 public abstract class UserFileType <T extends UserFileType> implements FileType, Cloneable {
   @NotNull private String myName = "";
   private String myDescription = "";
-  private Icon myIcon = Icons.CUSTOM_FILE_ICON;
+  private Icon myIcon = PlatformIcons.CUSTOM_FILE_ICON;
 
   public abstract SettingsEditor<T> getEditor();
 

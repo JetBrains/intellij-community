@@ -15,13 +15,12 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +38,7 @@ public class PublicElementsFilter implements Filter{
 
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.non.public"), null, Icons.PRIVATE_ICON);
+    return new ActionPresentationData(IdeBundle.message("action.structureview.show.non.public"), null, PlatformIcons.PRIVATE_ICON);
   }
 
   @NotNull

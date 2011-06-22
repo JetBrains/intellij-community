@@ -27,7 +27,7 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Function;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,10 +69,10 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
       }
     }, ", ");
 
-    final int w = Icons.PARAMETER_ICON.getIconWidth();
+    final int w = PlatformIcons.PARAMETER_ICON.getIconWidth();
     LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(Icons.PARAMETER_ICON, 0, 2*w/5, 0);
-    icon.setIcon(Icons.PARAMETER_ICON, 1);
+    icon.setIcon(PlatformIcons.PARAMETER_ICON, 0, 2*w/5, 0);
+    icon.setIcon(PlatformIcons.PARAMETER_ICON, 1);
 
     final LookupElement element = LookupElementBuilder.create(lookupString).setIcon(icon);
     element.putUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS, Boolean.TRUE);

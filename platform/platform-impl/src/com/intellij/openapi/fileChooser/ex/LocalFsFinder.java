@@ -20,7 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,7 +148,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
     @Nullable
     public Icon getIcon() {
-      return myFile != null ? (myFile.isDirectory() ? Icons.DIRECTORY_CLOSED_ICON : myFile.getIcon()) : null;
+      return myFile != null ? (myFile.isDirectory() ? PlatformIcons.DIRECTORY_CLOSED_ICON : myFile.getIcon()) : null;
     }
 
     public boolean equals(final Object o) {

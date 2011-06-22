@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,7 +53,7 @@ public class TestModuleOutputElementType extends ModuleOutputElementTypeBase<Tes
 
   @Override
   public Icon getCreateElementIcon() {
-    return Icons.TEST_SOURCE_FOLDER;
+    return PlatformIcons.TEST_SOURCE_FOLDER;
   }
 
   protected List<Module> getSuitableModules(ArtifactEditorContext context) {

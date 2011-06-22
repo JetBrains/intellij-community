@@ -22,7 +22,7 @@ import com.intellij.psi.impl.RenameableFakePsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +57,7 @@ public class SchemaPrefix extends RenameableFakePsiElement {
   }
 
   public Icon getIcon() {
-    return Icons.VARIABLE_ICON;
+    return PlatformIcons.VARIABLE_ICON;
   }
 
   @Override

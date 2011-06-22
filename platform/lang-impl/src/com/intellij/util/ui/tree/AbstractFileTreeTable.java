@@ -27,14 +27,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.TreeTableSpeedSearch;
-import com.intellij.util.IconUtil;
-import com.intellij.util.Icons;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.util.IconUtil;
+import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,7 +99,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
         Icon icon;
         if (file.isDirectory()) {
-          icon = expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON;
+          icon = expanded ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
         }
         else {
           icon = IconUtil.getIcon(file, 0, null);

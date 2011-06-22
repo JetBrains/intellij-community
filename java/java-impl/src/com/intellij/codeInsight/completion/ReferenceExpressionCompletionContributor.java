@@ -41,8 +41,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -294,7 +294,7 @@ public class ReferenceExpressionCompletionContributor {
     item.setLookupString(StringUtil.isEmpty(qualifierText) ? presentable : prefix);
     item.setPresentableText(presentable);
     item.addLookupStrings(prefix, presentable, "asList(" + prefix + ")");
-    item.setIcon(Icons.METHOD_ICON);
+    item.setIcon(PlatformIcons.METHOD_ICON);
     item.setInsertHandler(new InsertHandler<LookupElement>() {
       public void handleInsert(InsertionContext context, LookupElement item) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ASLIST);
@@ -469,7 +469,7 @@ public class ReferenceExpressionCompletionContributor {
     item.setLookupString(prefix + ".toArray(" + getSpace(callSpace) + expressionString + getSpace(callSpace) + ")");
     item.setPresentableText(prefix + ".toArray(" + presentableString + ")");
     item.addLookupStrings(presentableString);
-    item.setIcon(Icons.METHOD_ICON);
+    item.setIcon(PlatformIcons.METHOD_ICON);
     item.setInsertHandler(new InsertHandler<LookupItem>(){
       public void handleInsert(InsertionContext context, LookupItem item) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR);

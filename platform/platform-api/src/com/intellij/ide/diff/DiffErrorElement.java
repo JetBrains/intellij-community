@@ -17,7 +17,7 @@ package com.intellij.ide.diff;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +87,7 @@ public class DiffErrorElement extends DiffElement {
 
   @Override
   public Icon getIcon() {
-    return Icons.ERROR_INTRODUCTION_ICON;
+    return PlatformIcons.ERROR_INTRODUCTION_ICON;
   }
 
   @Override

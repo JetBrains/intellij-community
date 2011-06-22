@@ -493,7 +493,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class FlattenPackagesAction extends ToggleAction {
     FlattenPackagesAction() {
-      super(AnalysisScopeBundle.message("action.flatten.packages"), AnalysisScopeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON);
+      super(AnalysisScopeBundle.message("action.flatten.packages"),
+            AnalysisScopeBundle.message("action.flatten.packages"),
+            PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
 
     public boolean isSelected(AnActionEvent event) {

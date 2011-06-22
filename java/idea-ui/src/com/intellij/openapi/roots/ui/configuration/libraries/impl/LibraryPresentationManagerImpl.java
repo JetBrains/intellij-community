@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   @Override
   public Icon getNamedLibraryIcon(@NotNull Library library, @Nullable StructureConfigurableContext context) {
     final Icon icon = getCustomIcon(library, context);
-    return icon != null ? icon : Icons.LIBRARY_ICON;
+    return icon != null ? icon : PlatformIcons.LIBRARY_ICON;
   }
 
   @Override

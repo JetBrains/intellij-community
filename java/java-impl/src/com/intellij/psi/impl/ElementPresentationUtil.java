@@ -30,13 +30,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import gnu.trove.TIntObjectHashMap;
 
 import javax.swing.*;
 
-public class ElementPresentationUtil {
+public class ElementPresentationUtil implements PlatformIcons {
   private static final Icon STATIC_MARK_ICON = IconLoader.getIcon("/nodes/staticMark.png");
   private static final Icon FINAL_MARK_ICON = IconLoader.getIcon("/nodes/finalMark.png");
   public static final Icon JUNIT_TEST_MARK = IconLoader.getIcon("/nodes/junitTestMark.png");
@@ -169,25 +169,25 @@ public class ElementPresentationUtil {
 
   private static final TIntObjectHashMap<Icon> BASE_ICON = new TIntObjectHashMap<Icon>(20);
   static {
-    BASE_ICON.put(CLASS_KIND_CLASS, Icons.CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, Icons.ABSTRACT_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_ANNOTATION, Icons.ANNOTATION_TYPE_ICON);
-    BASE_ICON.put(CLASS_KIND_ANNOTATION | FLAGS_ABSTRACT, Icons.ANNOTATION_TYPE_ICON);
-    BASE_ICON.put(CLASS_KIND_ANONYMOUS, Icons.ANONYMOUS_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_ANONYMOUS | FLAGS_ABSTRACT, Icons.ANONYMOUS_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_ASPECT, Icons.ASPECT_ICON);
-    BASE_ICON.put(CLASS_KIND_ASPECT | FLAGS_ABSTRACT, Icons.ASPECT_ICON);
-    BASE_ICON.put(CLASS_KIND_ENUM, Icons.ENUM_ICON);
-    BASE_ICON.put(CLASS_KIND_ENUM | FLAGS_ABSTRACT, Icons.ENUM_ICON);
-    BASE_ICON.put(CLASS_KIND_EXCEPTION, Icons.EXCEPTION_CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_CLASS, CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_ANNOTATION, ANNOTATION_TYPE_ICON);
+    BASE_ICON.put(CLASS_KIND_ANNOTATION | FLAGS_ABSTRACT, ANNOTATION_TYPE_ICON);
+    BASE_ICON.put(CLASS_KIND_ANONYMOUS, ANONYMOUS_CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_ANONYMOUS | FLAGS_ABSTRACT, ANONYMOUS_CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_ASPECT, ASPECT_ICON);
+    BASE_ICON.put(CLASS_KIND_ASPECT | FLAGS_ABSTRACT, ASPECT_ICON);
+    BASE_ICON.put(CLASS_KIND_ENUM, ENUM_ICON);
+    BASE_ICON.put(CLASS_KIND_ENUM | FLAGS_ABSTRACT, ENUM_ICON);
+    BASE_ICON.put(CLASS_KIND_EXCEPTION, EXCEPTION_CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_EXCEPTION | FLAGS_ABSTRACT, ABSTRACT_EXCEPTION_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_INTERFACE, Icons.INTERFACE_ICON);
-    BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, Icons.INTERFACE_ICON);
-    BASE_ICON.put(CLASS_KIND_JSP, Icons.JSP_ICON);
-    BASE_ICON.put(CLASS_KIND_JSP | FLAGS_ABSTRACT, Icons.JSP_ICON);
-    BASE_ICON.put(CLASS_KIND_JUNIT_TEST, Icons.CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, Icons.ABSTRACT_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_RUNNABLE, Icons.CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_INTERFACE, INTERFACE_ICON);
+    BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, INTERFACE_ICON);
+    BASE_ICON.put(CLASS_KIND_JSP, JSP_ICON);
+    BASE_ICON.put(CLASS_KIND_JSP | FLAGS_ABSTRACT, JSP_ICON);
+    BASE_ICON.put(CLASS_KIND_JUNIT_TEST, CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_RUNNABLE, CLASS_ICON);
   }
 
   public static Icon getClassIconOfKind(PsiClass aClass, int classKind) {
@@ -242,7 +242,7 @@ public class ElementPresentationUtil {
 
   static {
     ElementBase.registerIconLayer(FLAGS_STATIC, STATIC_MARK_ICON);
-    ElementBase.registerIconLayer(FLAGS_EXCLUDED, Icons.EXCLUDED_FROM_COMPILE_ICON);
+    ElementBase.registerIconLayer(FLAGS_EXCLUDED, EXCLUDED_FROM_COMPILE_ICON);
     ElementBase.registerIconLayer(FLAGS_FINAL, FINAL_MARK_ICON);
     ElementBase.registerIconLayer(FLAGS_JUNIT_TEST, JUNIT_TEST_MARK);
     ElementBase.registerIconLayer(FLAGS_RUNNABLE, RUNNABLE_MARK);

@@ -18,9 +18,12 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.ui.*;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.SourceItemPresentation;
+import com.intellij.packaging.ui.SourceItemWeights;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -77,8 +80,8 @@ public class ModuleGroupItem extends PackagingSourceItem {
     @Override
     public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                        SimpleTextAttributes commentAttributes) {
-      presentationData.setClosedIcon(Icons.CLOSED_MODULE_GROUP_ICON);
-      presentationData.setOpenIcon(Icons.OPENED_MODULE_GROUP_ICON);
+      presentationData.setClosedIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+      presentationData.setOpenIcon(PlatformIcons.OPENED_MODULE_GROUP_ICON);
       presentationData.addText(myGroupName, mainAttributes);
     }
 

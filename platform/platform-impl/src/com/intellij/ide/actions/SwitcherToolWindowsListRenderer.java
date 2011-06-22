@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,7 +60,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
 
     icon = toolWindow.getIcon();
     if (icon == null) {
-      return Icons.UI_FORM_ICON;
+      return PlatformIcons.UI_FORM_ICON;
     }
 
     icon = to16x16(icon);
