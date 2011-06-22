@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.TitlePanel;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -154,7 +154,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
             text = file.getPresentableUrl();
           }
           attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-          icon = Icons.DIRECTORY_CLOSED_ICON;
+          icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
         }
         else {
           text = file == null ? "found files" : file.getPresentableUrl();
@@ -162,7 +162,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
             isValid = false;
           }
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-          icon = expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON;
+          icon = expanded ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
         }
         final ColoredTreeCellRenderer textRenderer = getTextRenderer();
         textRenderer.setIcon(icon);

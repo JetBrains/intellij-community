@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +51,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       Icon symbolIcon;
       final boolean isOpen = (flags & Iconable.ICON_FLAG_OPEN) != 0;
       if (isJarRoot) {
-        symbolIcon = Icons.JAR_ICON;
+        symbolIcon = PlatformIcons.JAR_ICON;
       }
       else if (isContentRoot) {
         Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
@@ -59,17 +59,17 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
           symbolIcon = module.getModuleType().getNodeIcon(isOpen);
         }
         else {
-          symbolIcon = isOpen ? Icons.CONTENT_ROOT_ICON_OPEN : Icons.CONTENT_ROOT_ICON_CLOSED;
+          symbolIcon = isOpen ? PlatformIcons.CONTENT_ROOT_ICON_OPEN : PlatformIcons.CONTENT_ROOT_ICON_CLOSED;
         }
       }
       else if (isSourceOrTestRoot) {
         symbolIcon = IconSet.getSourceRootIcon(inTestSource, isOpen);
       }
       else if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
-        symbolIcon = isOpen ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON;
+        symbolIcon = isOpen ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON;
       }
       else {
-        symbolIcon = isOpen ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON;
+        symbolIcon = isOpen ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
       }
       boolean isExcluded = ElementPresentationUtil.isExcluded(vFile, project);
       return ElementBase.createLayeredIcon(symbolIcon, isExcluded ? ElementPresentationUtil.FLAGS_EXCLUDED : 0);

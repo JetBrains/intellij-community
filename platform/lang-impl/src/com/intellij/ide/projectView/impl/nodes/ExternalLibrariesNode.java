@@ -33,12 +33,15 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformIcons;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class ExternalLibrariesNode extends ProjectViewNode<String> {
   public ExternalLibrariesNode(Project project, ViewSettings viewSettings) {
@@ -119,6 +122,6 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   @Override
   protected void update(PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.external.libraries"));
-    presentation.setIcons(Icons.LIBRARY_ICON);
+    presentation.setIcons(PlatformIcons.LIBRARY_ICON);
   }
 }

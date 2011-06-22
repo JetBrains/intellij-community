@@ -26,7 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -161,11 +161,11 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public Icon getOpenIcon() {
-    return Icons.PACKAGE_OPEN_ICON;
+    return PlatformIcons.PACKAGE_OPEN_ICON;
   }
 
   public Icon getClosedIcon() {
-    return Icons.PACKAGE_ICON;
+    return PlatformIcons.PACKAGE_ICON;
   }
 
   public void setCompactedDirNode(final DirectoryNode compactedDirNode) {

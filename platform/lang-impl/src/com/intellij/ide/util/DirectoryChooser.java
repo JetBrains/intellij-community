@@ -30,6 +30,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -299,13 +300,13 @@ public class DirectoryChooser extends DialogWrapper {
       if (myDirectory != null) {
         VirtualFile virtualFile = myDirectory.getVirtualFile();
         if (fileIndex.isInTestSourceContent(virtualFile)){
-          return Icons.MODULES_TEST_SOURCE_FOLDER;
+          return PlatformIcons.MODULES_TEST_SOURCE_FOLDER;
         }
         else if (fileIndex.isInSourceContent(virtualFile)){
-          return Icons.MODULES_SOURCE_FOLDERS_ICON;
+          return PlatformIcons.MODULES_SOURCE_FOLDERS_ICON;
         }
       }
-      return Icons.FOLDER_ICON;
+      return PlatformIcons.FOLDER_ICON;
     }
 
     public String getPresentableUrl() {

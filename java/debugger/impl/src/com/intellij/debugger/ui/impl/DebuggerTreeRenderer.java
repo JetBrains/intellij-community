@@ -26,7 +26,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.ui.DebuggerIcons;
@@ -38,7 +38,7 @@ import java.awt.*;
 public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private static final Icon myThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroup.png");
   private static final Icon myCurrentThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroupCurrent.png");
-  private static final Icon myStaticFieldIcon = Icons.FIELD_ICON;
+  private static final Icon myStaticFieldIcon = PlatformIcons.FIELD_ICON;
 
   private static final Icon myStaticIcon = IconLoader.getIcon("/nodes/static.png");
 

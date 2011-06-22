@@ -4,7 +4,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
@@ -112,14 +112,14 @@ public class XsltStackFrame extends XStackFrame {
       Icon icon = null;
       if (myVariable.isGlobal()) {
         if (kind == Debugger.Variable.Kind.VARIABLE) {
-          icon = Icons.FIELD_ICON;
+          icon = PlatformIcons.FIELD_ICON;
         } else {
-          icon = Icons.PROPERTY_ICON;
+          icon = PlatformIcons.PROPERTY_ICON;
         }
       } else if (kind == Debugger.Variable.Kind.VARIABLE) {
-        icon = Icons.VARIABLE_ICON;
+        icon = PlatformIcons.VARIABLE_ICON;
       } else if (kind == Debugger.Variable.Kind.PARAMETER) {
-        icon = Icons.PARAMETER_ICON;
+        icon = PlatformIcons.PARAMETER_ICON;
       }
 
       final Value v = myVariable.getValue();
