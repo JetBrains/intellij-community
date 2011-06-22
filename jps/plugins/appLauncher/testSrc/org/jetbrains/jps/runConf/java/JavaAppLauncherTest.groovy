@@ -34,6 +34,22 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
     })
   }
 
+  public void test_jvm_args() {
+    runAndAssertOutput("MainClassVmArgs", null, { output ->
+      assertTrue(output, output.indexOf("val1" + System.getProperty("line.separator")) != -1)
+      assertTrue(output, output.indexOf("val2") != -1)
+    })
+  }
+
+  public void test_args_with_spaces() {
+    runAndAssertOutput("MainClassComplexArgs", null, { output ->
+      assertTrue(output, output.indexOf("argument with space1" + System.getProperty("line.separator")) != -1)
+      assertTrue(output, output.indexOf("argument with space2" + System.getProperty("line.separator")) != -1)
+      assertTrue(output, output.indexOf("aa") != -1)
+      assertTrue(output, output.indexOf("bb") != -1)
+    })
+  }
+
   private void runAndAssertOutput(String runConfName, JavaBasedRunConfigurationLauncher launcher, Closure assertions) {
     Project project = loadProject("plugins/appLauncher/testData/main-class-run-conf", [:]);
 
@@ -55,5 +71,4 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
     String output = FileUtil.loadFileText(outFile);
     assertions(output);
   }
-
 }

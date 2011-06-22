@@ -95,7 +95,7 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
 
     def runConfRuntimeCpFile = createTempClasspath(runConfRuntimeCp);
     def mainClassCpFile = createTempClasspath(getMainClassClasspath(runConf));
-    def tmpArgs = createTempArgs(splitArguments(params.classArgs));
+    def tmpArgs = createTempArgs(splitCommandArgumentsAndUnquote(params.classArgs));
     project.info("Starting run configuration $runConf.name ...");
 
     ant.java(attrs) {
@@ -110,8 +110,58 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     };
   }
 
-  private List<String> splitArguments(String argsLine) {
-    return Arrays.asList(argsLine.split(" ")); // TODO: this code must be improved
+  /** This utility differs from splitHonorQuote: it considers quote in sequence 'ddd\" -' as boundary quote.
+   * So it can split "-Dffoo=c:\some\path\ddd\" -Dfff=sss correctly.
+   * */
+  private static List<String> splitCommandArgumentsAndUnquote(String line) {
+    final ArrayList<String> result = new ArrayList<String>();
+    final StringBuilder builder = new StringBuilder();
+    boolean inQuotes = false;
+    for (int i = 0; i < line.length(); i++) {
+      final char c = line.charAt(i);
+      if (c == ' ' && !inQuotes) {
+        if (builder.length() > 0) {
+          result.add(builder.toString());
+          builder.setLength(0);
+        }
+        continue;
+      }
+
+      if ((c == '"' || c == '\'') && isNotEscapedQuote(line, i)) {
+        inQuotes = !inQuotes;
+      }
+      builder.append(c);
+    }
+
+    if (builder.length() > 0) {
+      result.add(builder.toString());
+    }
+    return removeQuotes(result);
+  }
+
+  private static List<String> removeQuotes(final List<String> result) {
+    for (int i = 0; i < result.size(); i++) {
+      String value = result.get(i);
+      if (value.length() > 1 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+        value = value.substring(1, value.length()-1);
+      }
+      result.set(i, value);
+    }
+    return result;
+  }
+
+  private static boolean isNotEscapedQuote(final String line, final int i) {
+    if (i == 0) return true;
+    if (line.charAt(i - 1) == '\\') {  // Previous character is escaping one
+
+      int j;
+      for(j = i + 1; j < line.length(); j ++) { // inspect chars after the quote
+        if (line.charAt(j) == ' ') continue;
+        return (line.charAt(j) == '-') || (line.charAt(j) == '\"' && j + 1 < line.length() && line.charAt(j + 1) == '-');             // next option started, so quote is not escaped actually
+      }
+      return j == line.length();
+    }
+    return true;
   }
 
   private String createTempClasspath(Collection<String> runtimeClasspath) {
