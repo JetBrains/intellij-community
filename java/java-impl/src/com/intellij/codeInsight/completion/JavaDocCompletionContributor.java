@@ -205,7 +205,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
       final Editor editor = context.getEditor();
-      final PsiMethod method = (PsiMethod)((LookupItem)item).getObject();
+      final PsiMethod method = (PsiMethod)item.getObject();
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final StringBuffer buffer = new StringBuffer();

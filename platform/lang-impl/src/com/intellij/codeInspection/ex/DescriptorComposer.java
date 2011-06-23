@@ -98,7 +98,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
     composeDescription(descriptor, problemIdx, buf, refElement);
 
-    if (refElement instanceof RefElement && !((RefElement)refElement).isValid()) return;
+    if (refElement instanceof RefElement && !refElement.isValid()) return;
 
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > 0) {

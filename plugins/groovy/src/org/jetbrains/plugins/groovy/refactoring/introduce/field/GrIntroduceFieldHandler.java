@@ -222,7 +222,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     }
     GrAssignmentExpression init = ((GrAssignmentExpression)GroovyPsiElementFactory.getInstance(context.project)
       .createExpressionFromText(settings.getName() + " = " + initializer.getText()));
-    init = (GrAssignmentExpression)block.addStatementBefore(init, (GrStatement)anchor);
+    init = (GrAssignmentExpression)block.addStatementBefore(init, anchor);
     replaceOccurence(field, init.getLValue());
   }
 

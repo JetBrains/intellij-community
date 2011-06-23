@@ -44,7 +44,7 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
     myModifiableArtifactModel = modifiableArtifactModel;
 
     ProjectLibrariesConfigurable configurable = ProjectLibrariesConfigurable.getInstance(project);
-    myLibrariesModel = (LibrariesModifiableModel)configurable.getModelProvider().getModifiableModel();
+    myLibrariesModel = configurable.getModelProvider().getModifiableModel();
   }
 
   @Override

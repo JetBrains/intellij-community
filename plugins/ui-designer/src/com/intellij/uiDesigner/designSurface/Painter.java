@@ -437,7 +437,7 @@ public final class Painter {
       g2d.setColor(Color.BLUE);
       g2d.fillRect(0, 0, (int) stringBounds.getWidth(), (int) stringBounds.getHeight());
       g2d.setColor(Color.WHITE);
-      g.drawString(tagBuilder.toString(), 0, (int) g.getFontMetrics().getAscent());
+      g.drawString(tagBuilder.toString(), 0, g.getFontMetrics().getAscent());
     }
   }
 }

@@ -104,7 +104,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       if (! groupConfigurable.getEditableObject().isDefault()) {
         result.removeAll(groupConfigurable.getRepositories());
       }
@@ -120,7 +120,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       final String groupName = groupConfigurable.getEditableObject().getName();
 
       if (checkSet.contains(groupName)) {
@@ -132,7 +132,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.applyImpl();
       if(! groupConfigurable.validate(errorMessageRef)) {
         listener.onError(errorMessageRef.get(), myComponent, false);
@@ -223,7 +223,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.apply();
       groups.add(groupConfigurable.getEditableObject());
     }
@@ -236,7 +236,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.reset();
     }
   }
@@ -310,7 +310,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   public void setIsValid(final boolean valid) {
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.setIsValid(valid);
     }
   }

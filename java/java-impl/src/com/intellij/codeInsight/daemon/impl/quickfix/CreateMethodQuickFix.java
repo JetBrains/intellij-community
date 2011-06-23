@@ -70,7 +70,7 @@ public class CreateMethodQuickFix implements LocalQuickFix {
         }
       });
 
-    method = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences((PsiMethod)myTargetClass.add(method));
+    method = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(myTargetClass.add(method));
     CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);
   }
 

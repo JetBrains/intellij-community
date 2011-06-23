@@ -69,7 +69,7 @@ class SameNamesJoiner implements TreeStructureProvider {
   }
 
   private boolean hasElementWithTheSameName(PsiFile element) {
-    PsiDirectory psiDirectory = ((PsiDirectory)element.getParent());
+    PsiDirectory psiDirectory = element.getParent();
     PsiElement[] children = psiDirectory.getChildren();
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];

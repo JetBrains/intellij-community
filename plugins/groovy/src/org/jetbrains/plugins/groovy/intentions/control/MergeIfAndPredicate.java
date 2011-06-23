@@ -36,7 +36,7 @@ class MergeIfAndPredicate implements PsiElementPredicate {
     if (thenBranch == null) {
       return false;
     }
-    thenBranch = ConditionalUtils.stripBraces((GrStatement) thenBranch);
+    thenBranch = ConditionalUtils.stripBraces(thenBranch);
     if (!(thenBranch instanceof GrIfStatement)) {
       return false;
     }

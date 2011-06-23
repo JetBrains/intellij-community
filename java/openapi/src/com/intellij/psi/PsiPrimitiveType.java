@@ -99,7 +99,7 @@ public class PsiPrimitiveType extends PsiType {
     if (!((PsiClassType)type).getLanguageLevel().hasEnumKeywordAndAutoboxing()) return null;
     final PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return null;
-    return (PsiPrimitiveType)ourQNameToUnboxed.get(psiClass.getQualifiedName());
+    return ourQNameToUnboxed.get(psiClass.getQualifiedName());
   }
 
   public String getBoxedTypeName() {

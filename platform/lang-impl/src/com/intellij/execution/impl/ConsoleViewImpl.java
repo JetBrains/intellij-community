@@ -890,7 +890,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
 
       FoldRegion region =
-        ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(oStart, oEnd, prevFolding.getPlaceholderText(toFold), null, false);
+        myEditor.getFoldingModel().createFoldRegion(oStart, oEnd, prevFolding.getPlaceholderText(toFold), null, false);
       if (region != null) {
         toAdd.add(region);
       }

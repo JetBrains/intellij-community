@@ -308,7 +308,7 @@ public abstract class BaseRefactoringProcessor {
         }
         if (usage instanceof UsageInfo2UsageAdapter) {
           final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-          if (usageInfo instanceof MoveRenameUsageInfo && ((MoveRenameUsageInfo)usageInfo).isDynamicUsage()) {
+          if (usageInfo instanceof MoveRenameUsageInfo && usageInfo.isDynamicUsage()) {
             dynamicUsagesCount++;
             dynamicUsagesCodeFiles.add(containingFile);
           }

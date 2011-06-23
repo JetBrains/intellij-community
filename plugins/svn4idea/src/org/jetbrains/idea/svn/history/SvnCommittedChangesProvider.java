@@ -653,7 +653,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                          // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
                          return;
                        }
-                       result[0] = new SvnChangeList(myVcs, (SvnRepositoryLocation) location, logEntry, repositoryUrl.toString());
+                       result[0] = new SvnChangeList(myVcs, location, logEntry, repositoryUrl.toString());
                      }
                    });
     }

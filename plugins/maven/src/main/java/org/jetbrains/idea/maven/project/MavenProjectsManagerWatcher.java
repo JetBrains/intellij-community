@@ -426,13 +426,13 @@ public class MavenProjectsManagerWatcher {
     public void before(List<? extends VFileEvent> events) {
       for (VFileEvent each : events) {
         if (each instanceof VFileDeleteEvent) {
-          deleteRecursively(((VFileDeleteEvent)each).getFile());
+          deleteRecursively(each.getFile());
         }
         else {
           if (!isRelevant(each.getPath())) continue;
           if (each instanceof VFilePropertyChangeEvent) {
             if (((VFilePropertyChangeEvent)each).getPropertyName().equals(VirtualFile.PROP_NAME)) {
-              deleteRecursively(((VFilePropertyChangeEvent)each).getFile());
+              deleteRecursively(each.getFile());
             }
           }
           else if (each instanceof VFileMoveEvent) {
@@ -478,15 +478,15 @@ public class MavenProjectsManagerWatcher {
           }
         }
         else if (each instanceof VFileContentChangeEvent) {
-          updateFile(((VFileContentChangeEvent)each).getFile());
+          updateFile(each.getFile());
         }
         else if (each instanceof VFilePropertyChangeEvent) {
           if (((VFilePropertyChangeEvent)each).getPropertyName().equals(VirtualFile.PROP_NAME)) {
-            updateFile(((VFilePropertyChangeEvent)each).getFile());
+            updateFile(each.getFile());
           }
         }
         else if (each instanceof VFileMoveEvent) {
-          updateFile(((VFileMoveEvent)each).getFile());
+          updateFile(each.getFile());
         }
       }
       apply();

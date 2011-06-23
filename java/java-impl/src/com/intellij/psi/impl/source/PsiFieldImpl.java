@@ -372,15 +372,15 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       if (nextField == null || nextField.getElementType() != JavaElementType.FIELD) break;
 
       TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1, null, getManager());
-      CodeEditUtil.addChild((CompositeElement)field, semicolon, null);
+      CodeEditUtil.addChild(field, semicolon, null);
 
-      CodeEditUtil.removeChild((CompositeElement)comma.getTreeParent(), comma);
+      CodeEditUtil.removeChild(comma.getTreeParent(), comma);
 
       PsiElement typeClone = type.copy();
-      CodeEditUtil.addChild((CompositeElement)nextField, SourceTreeToPsiMap.psiElementToTree(typeClone), nextField.getFirstChildNode());
+      CodeEditUtil.addChild(nextField, SourceTreeToPsiMap.psiElementToTree(typeClone), nextField.getFirstChildNode());
 
       PsiElement modifierListClone = modifierList.copy();
-      CodeEditUtil.addChild((CompositeElement)nextField, SourceTreeToPsiMap.psiElementToTree(modifierListClone), nextField.getFirstChildNode());
+      CodeEditUtil.addChild(nextField, SourceTreeToPsiMap.psiElementToTree(modifierListClone), nextField.getFirstChildNode());
 
       field = nextField;
     }

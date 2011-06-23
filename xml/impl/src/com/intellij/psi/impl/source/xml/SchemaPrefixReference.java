@@ -56,7 +56,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
       myPrefix = new SchemaPrefix((XmlAttribute)myElement, getRangeInElement(), myName);
     }
     else if (myElement instanceof XmlAttributeValue &&
-             ((XmlAttribute)((XmlAttributeValue)myElement).getParent()).getLocalName().equals("prefix")) {
+             ((XmlAttribute)myElement.getParent()).getLocalName().equals("prefix")) {
       myPrefix = SchemaPrefix.createJspPrefix((XmlAttributeValue)myElement, myName);
     }
     else {

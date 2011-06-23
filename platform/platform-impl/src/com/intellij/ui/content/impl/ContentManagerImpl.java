@@ -157,7 +157,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     public JComponent getComponent() {
       if (myUI instanceof SwitchProvider) {
-        return ((SwitchProvider)myUI).getComponent();
+        return myUI.getComponent();
       }
 
       return this;

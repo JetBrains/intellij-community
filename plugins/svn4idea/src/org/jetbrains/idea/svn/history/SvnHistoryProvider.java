@@ -466,7 +466,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     public VcsFileRevision valueOf(final VcsFileRevision vcsFileRevision) {
-      return (VcsFileRevision) vcsFileRevision;
+      return vcsFileRevision;
     }
 
     public String getText(final VcsFileRevision vcsFileRevision) {

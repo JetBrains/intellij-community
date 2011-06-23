@@ -93,7 +93,7 @@ public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionT
               ASTNode[] nodes = property.getNode().getChildren(null);
               PsiElement valElement = nodes.length < 3 ? property : nodes[2].getPsi();
               problemDescriptors.add(manager.createProblemDescriptor(valElement, PropertiesBundle.message(
-                "unused.message.format.parameter.problem.descriptor", integer.toString(), Integer.toString(i)), isOnTheFly, (LocalQuickFix[])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                "unused.message.format.parameter.problem.descriptor", integer.toString(), Integer.toString(i)), isOnTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
               break;
             }
           }

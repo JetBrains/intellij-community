@@ -73,7 +73,7 @@ public class IdeaMenuUI extends BasicMenuUI{
 
   protected void installDefaults() {
     super.installDefaults();
-    Integer integer = (Integer)UIUtil.getPropertyMaxGutterIconWidth(getPropertyPrefix());
+    Integer integer = UIUtil.getPropertyMaxGutterIconWidth(getPropertyPrefix());
     if (integer != null){
       myMaxGutterIconWidth = integer.intValue();
     }

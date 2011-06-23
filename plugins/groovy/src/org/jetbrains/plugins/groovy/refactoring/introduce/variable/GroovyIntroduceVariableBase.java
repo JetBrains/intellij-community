@@ -247,7 +247,7 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
     if (!(realContainer instanceof GrLoopStatement)) {
       if (realContainer instanceof GrStatementOwner) {
         GrStatementOwner block = (GrStatementOwner)realContainer;
-        varDecl = (GrVariableDeclaration)block.addStatementBefore(varDecl, (GrStatement)anchorElement);
+        varDecl = (GrVariableDeclaration)block.addStatementBefore(varDecl, anchorElement);
       }
     }
     else {

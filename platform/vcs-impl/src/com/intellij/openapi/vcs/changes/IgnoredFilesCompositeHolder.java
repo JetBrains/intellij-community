@@ -99,7 +99,7 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
   public void notifyVcsStarted(AbstractVcs vcs) {
     myCurrentVcs = vcs;
     if (! myHolderMap.containsKey(vcs)) {
-      myHolderMap.put(vcs, vcs.reportsIgnoredDirectories() ? (IgnoredFilesHolder) new RecursiveFileHolder(myProject, HolderType.IGNORED) :
+      myHolderMap.put(vcs, vcs.reportsIgnoredDirectories() ? new RecursiveFileHolder(myProject, HolderType.IGNORED) :
         new MapIgnoredFilesHolder(myProject));
     }
   }

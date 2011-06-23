@@ -98,7 +98,7 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
     GrDocCommentOwner container = getContainer(element);
     assert container != null;
     if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;
-    final GrModifierList modifierList = (GrModifierList)((PsiModifierListOwner)container).getModifierList();
+    final GrModifierList modifierList = (GrModifierList)container.getModifierList();
     if (modifierList != null) {
       addSuppressAnnotation(project, modifierList, myID);
     }

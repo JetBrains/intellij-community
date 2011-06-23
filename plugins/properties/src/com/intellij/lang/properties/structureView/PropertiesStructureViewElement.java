@@ -40,15 +40,15 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement 
   }
 
   public void navigate(boolean requestFocus) {
-    ((NavigationItem)myProperty).navigate(requestFocus);
+    myProperty.navigate(requestFocus);
   }
 
   public boolean canNavigate() {
-    return ((NavigationItem)myProperty).canNavigate();
+    return myProperty.canNavigate();
   }
 
   public boolean canNavigateToSource() {
-    return ((NavigationItem)myProperty).canNavigateToSource();
+    return myProperty.canNavigateToSource();
   }
 
   public StructureViewTreeElement[] getChildren() {

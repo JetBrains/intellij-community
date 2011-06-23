@@ -314,7 +314,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     }
 
     private boolean inContent(VirtualFile file) {
-      return ((ProjectLevelVcsManagerImpl) myVcsManager).isFileInContent(file);
+      return myVcsManager.isFileInContent(file);
     }
   }
 

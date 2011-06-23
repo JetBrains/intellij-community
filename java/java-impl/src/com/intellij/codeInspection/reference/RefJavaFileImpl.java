@@ -25,6 +25,6 @@ import com.intellij.psi.PsiJavaFile;
 public class RefJavaFileImpl extends RefFileImpl {
   RefJavaFileImpl(PsiJavaFile elem, RefManager manager) {
     super(elem, manager);
-    ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(((PsiJavaFile)elem).getPackageName())).add(this);
+    ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(elem.getPackageName())).add(this);
   }
 }
