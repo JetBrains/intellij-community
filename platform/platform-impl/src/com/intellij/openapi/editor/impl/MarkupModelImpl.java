@@ -69,7 +69,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (getDocument().getLineCount() - 1) + "]");
     }
 
-    int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
+    int offset = getDocument().getLineStartOffset(lineNumber);
+    //int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
 
     return addRangeHighlighter(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
