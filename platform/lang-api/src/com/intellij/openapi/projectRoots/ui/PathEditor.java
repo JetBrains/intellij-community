@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Icons;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;

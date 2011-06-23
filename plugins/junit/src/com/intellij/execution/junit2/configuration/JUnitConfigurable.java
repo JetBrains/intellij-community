@@ -47,9 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.InsertPathAction;
-import com.intellij.util.Icons;
 import com.intellij.util.PlatformIcons;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -62,8 +60,8 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private static final List<TIntArrayList> ourEnabledFields = Arrays.asList(
