@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -160,7 +161,18 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     for (VirtualFile file : files) {
       if (file.isValid()) {
         PushedFilePropertiesUpdater.findAndUpdateValue(project, file, this, languageLevel);
+        VirtualFile parent = file.getParent();
+        if (parent != null && parent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
+          setNoSizeLimitRecursive(file);
+        }
       }
+    }
+  }
+
+  private static void setNoSizeLimitRecursive(VirtualFile file) {
+    file.putUserData(SingleRootFileViewProvider.ourNoSizeLimitKey, Boolean.TRUE);
+    for (VirtualFile child : file.getChildren()) {
+      setNoSizeLimitRecursive(child);
     }
   }
 
