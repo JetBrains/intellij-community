@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="jps-appLauncher">
+    <output-path>$PROJECT_DIR$/out/artifacts</output-path>
+    <root id="archive" name="jps-appLauncher.jar">
+      <element id="module-output" name="appLauncher" />
+    </root>
+  </artifact>
+</component>
