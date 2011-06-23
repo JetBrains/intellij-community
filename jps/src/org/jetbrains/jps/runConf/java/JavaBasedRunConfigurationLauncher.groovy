@@ -13,7 +13,7 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
   private File myErrorFile;
   private Map<String, String> mySystemProperties = [:];
 
-  JavaBasedRunConfigurationLauncher(String typeId) {
+  public JavaBasedRunConfigurationLauncher(String typeId) {
     super(typeId)
   }
 

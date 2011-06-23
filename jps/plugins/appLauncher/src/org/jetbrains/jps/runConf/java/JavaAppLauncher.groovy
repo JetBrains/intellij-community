@@ -3,7 +3,7 @@ package org.jetbrains.jps.runConf.java
 import org.jetbrains.jps.RunConfiguration
 
 class JavaAppLauncher extends JavaBasedRunConfigurationLauncher {
-  JavaAppLauncher() {
+  public JavaAppLauncher() {
     super("Application")
   }
 
