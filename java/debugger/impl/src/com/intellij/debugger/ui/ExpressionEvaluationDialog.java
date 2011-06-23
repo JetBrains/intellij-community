@@ -39,7 +39,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
   private JLabel myLanguageLabel;
 
   public ExpressionEvaluationDialog(Project project, TextWithImports defaultExpression) {
-    super(project, makeOnLine(defaultExpression));
+    super(project, defaultExpression);
     setTitle(DebuggerBundle.message("evaluate.expression.dialog.title"));
 
     final KeyStroke expressionStroke = KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.ALT_MASK);
@@ -102,22 +102,6 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     if (myLanguageLabel != null) {
       myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
     }
-  }
-
-  private static TextWithImports makeOnLine(TextWithImports text) {
-    String initialExpression = text.getText();
-    if (initialExpression != null) {
-      int size = initialExpression.length();
-      StringBuffer buf = new StringBuffer(size);
-      for (int idx = 0; idx < size; idx++) {
-        char ch = initialExpression.charAt(idx);
-        if (ch != '\n' && ch != '\r') {
-          buf.append(ch);
-        }
-      }
-      text.setText(initialExpression);
-    }
-    return text;
   }
 
   protected void initDialogData(TextWithImports text) {
