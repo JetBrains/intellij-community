@@ -225,6 +225,7 @@ nomaxvalue
 nominvalue
 nomonitoring
 nonatomic
+noninfingement
 nonschema
 noorder
 noparallel
@@ -340,6 +341,7 @@ startup
 stateful
 stmt
 stylesheet
+sublicense
 subpackage
 subpartition
 subpartitions
