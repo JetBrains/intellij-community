@@ -129,7 +129,7 @@ public class DtdCompletionData extends CompletionData {
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
 
-      if (((MutableLookupElement)item).getObject().toString().startsWith("<!")) {
+      if (item.getObject().toString().startsWith("<!")) {
         PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
 
         int caretOffset = context.getEditor().getCaretModel().getOffset();

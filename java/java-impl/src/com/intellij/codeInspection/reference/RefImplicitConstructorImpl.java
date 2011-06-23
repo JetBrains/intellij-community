@@ -38,7 +38,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   }
 
   public void buildReferences() {
-    ((RefManagerImpl)getRefManager()).fireBuildReferences(this);
+    getRefManager().fireBuildReferences(this);
   }
 
   public boolean isSuspicious() {

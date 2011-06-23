@@ -34,7 +34,7 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
   }
 
   public ChangeType.ChangeSide getChangeSide(FragmentSide side) {
-    return isBranch(side) ? myOriginalSide : (ChangeType.ChangeSide)myConflict;
+    return isBranch(side) ? myOriginalSide : myConflict;
   }
 
   private boolean isBranch(FragmentSide side) {

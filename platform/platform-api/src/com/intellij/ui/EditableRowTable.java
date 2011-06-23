@@ -31,7 +31,7 @@ public class EditableRowTable {
   private EditableRowTable() {}
 
   public static JPanel createButtonsTable(final JTable table, final RowEditableTableModel tableModel, boolean addMnemonics) {
-    return createButtonsTable(table, tableModel, addMnemonics, true, true);
+    return createButtonsTable(table, tableModel, addMnemonics, true, false);
   }
 
   public static JPanel createButtonsTable(final JTable table, final RowEditableTableModel tableModel,

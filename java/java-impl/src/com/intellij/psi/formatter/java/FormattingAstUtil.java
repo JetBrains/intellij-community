@@ -153,6 +153,6 @@ public class FormattingAstUtil {
     }
     PsiBinaryExpression expression1 = (PsiBinaryExpression)SourceTreeToPsiMap.treeElementToPsi(node1);
     PsiBinaryExpression expression2 = (PsiBinaryExpression)SourceTreeToPsiMap.treeElementToPsi(node2);
-    return expression1.getOperationSign().getTokenType() == expression2.getOperationSign().getTokenType();
+    return expression1.getOperationTokenType() == expression2.getOperationTokenType();
   }
 }

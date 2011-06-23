@@ -442,7 +442,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           for (final AntBuildFileBase buildFile : getBuildFiles()) {
             final Element element = new Element(BUILD_FILE);
             element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
-            ((AntBuildFileBase)buildFile).writeProperties(element);
+            buildFile.writeProperties(element);
             saveEvents(element, buildFile);
             parentNode.addContent(element);
           }

@@ -21,22 +21,21 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -69,7 +68,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     super(project);
     if (targetDirectory != null) {
       final List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(Arrays.asList(directories));
-      for (Iterator<PsiDirectory> iterator = dirs.iterator(); iterator.hasNext();) {
+      for (Iterator<PsiDirectory> iterator = dirs.iterator(); iterator.hasNext(); ) {
         final PsiDirectory directory = iterator.next();
         if (targetDirectory.equals(directory.getParentDirectory()) || targetDirectory.equals(directory)) {
           iterator.remove();
@@ -88,12 +87,13 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     }
   }
 
+  @NotNull
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myFilesToMove.size()];
     final PsiFile[] classes = PsiUtilBase.toPsiFileArray(myFilesToMove.keySet());
     System.arraycopy(classes, 0, elements, 0, classes.length);
-    return new MoveClassesOrPackagesViewDescriptor(elements, false, false, getTargetName());
+    return new MoveMultipleElementsViewDescriptor(elements, getTargetName());
   }
 
   protected String getTargetName() {
@@ -104,50 +104,11 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @Override
   public UsageInfo[] findUsages() {
     final List<UsageInfo> usages = new ArrayList<UsageInfo>();
-    final Set<String> packageNames = new HashSet<String>();
-    for (PsiFile psiFile : myFilesToMove.keySet()) {
-      if (psiFile instanceof PsiClassOwner) {
-        final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
-        for (PsiClass aClass : classes) {
-          Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(aClass, mySearchInComments, mySearchInNonJavaFiles, aClass.getName()));
-        }
-        packageNames.add(((PsiClassOwner)psiFile).getPackageName());
-      }
-    }
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-    for (String packageName : packageNames) {
-      final PsiPackage aPackage = psiFacade.findPackage(packageName);
-      if (aPackage != null) {
-        boolean remainsNothing = true;
-        for (PsiDirectory packageDirectory : aPackage.getDirectories()) {
-          if (!isUnderRefactoring(packageDirectory)) {
-            remainsNothing = false;
-            break;
-          }
-        }
-        if (remainsNothing) {
-          for (PsiReference reference : ReferencesSearch.search(aPackage)) {
-            final PsiElement element = reference.getElement();
-            final PsiImportStatementBase statementBase = PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
-            if (statementBase != null && statementBase.isOnDemand()) {
-              usages.add(new RemoveOnDemandImportStatementsUsageInfo(statementBase));
-            }
-          }
-        }
-      }
+    for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
+      helper.findUsages(myFilesToMove.keySet(), myDirectories, usages, mySearchInComments, mySearchInNonJavaFiles, myProject);
     }
     return UsageViewUtil.removeDuplicatedUsages(usages.toArray(new UsageInfo[usages.size()]));
   }
-
-  private boolean isUnderRefactoring(PsiDirectory packageDirectory) {
-    for (PsiDirectory directory : myDirectories) {
-      if (PsiTreeUtil.isAncestor(directory, packageDirectory, true)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
@@ -189,31 +150,23 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     final List<PsiFile> movedFiles = new ArrayList<PsiFile>();
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
     for (PsiFile psiFile : myFilesToMove.keySet()) {
-      ChangeContextUtil.encodeContextInfo(psiFile, true);
+      for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
+        helper.beforeMove(psiFile);
+      }
       final RefactoringElementListener listener = getTransaction().getElementListener(psiFile);
       final PsiDirectory moveDestination = myFilesToMove.get(psiFile).getTargetDirectory();
-      if (psiFile instanceof PsiClassOwner) {
-        for (PsiClass psiClass : ((PsiClassOwner)psiFile).getClasses()) {
-          final PsiClass newClass = MoveClassesOrPackagesUtil.doMoveClass(psiClass, moveDestination);
-          oldToNewElementsMapping.put(psiClass, newClass);
-          listener.elementMoved(newClass);
-        }
-      } else {
-        if (!moveDestination.equals(psiFile.getContainingDirectory())) {
-          MoveFileHandler.forElement(psiFile).prepareMovedFile(psiFile, moveDestination, oldToNewElementsMapping);
 
-          PsiFile moving = moveDestination.findFile(psiFile.getName());
-          if (moving == null) {
-            MoveFilesOrDirectoriesUtil.doMoveFile(psiFile, moveDestination);
-          }
-          moving = moveDestination.findFile(psiFile.getName());
-          movedFiles.add(moving);
-          listener.elementMoved(psiFile);
+      for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
+        boolean processed = helper.move(psiFile, moveDestination, oldToNewElementsMapping, movedFiles, listener);
+        if (processed) {
+          break;
         }
       }
     }
     for (PsiElement newElement : oldToNewElementsMapping.values()) {
-      ChangeContextUtil.decodeContextInfo(newElement, null, null);
+      for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
+        helper.afterMove(newElement);
+      }
     }
 
     // fix references in moved files to outer files
@@ -222,14 +175,9 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       FileReferenceContextUtil.decodeFileReferences(movedFile);
     }
 
-    myNonCodeUsages = MoveClassesOrPackagesProcessor.retargetUsages(usages, oldToNewElementsMapping);
-    for (UsageInfo usage : usages) {
-      if (usage instanceof RemoveOnDemandImportStatementsUsageInfo) {
-        final PsiElement element = usage.getElement();
-        if (element != null) {
-          element.delete();
-        }
-      }
+    myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
+    for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
+      helper.postProcessUsages(usages);
     }
     for (PsiDirectory directory : myDirectories) {
       directory.delete();
@@ -273,12 +221,6 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     return new TargetDirectoryWrapper(myTargetDirectory);
   }
 
-  private static class RemoveOnDemandImportStatementsUsageInfo extends UsageInfo {
-    public RemoveOnDemandImportStatementsUsageInfo(PsiImportStatementBase statementBase) {
-      super(statementBase);
-    }
-  }
-  
   public static class TargetDirectoryWrapper {
     private TargetDirectoryWrapper myParentDirectory;
     private PsiDirectory myTargetDirectory;

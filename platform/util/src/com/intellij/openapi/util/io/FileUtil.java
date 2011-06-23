@@ -1078,6 +1078,21 @@ public class FileUtil {
     return found;
   }
 
+  @NotNull
+  public static List<File> findFilesOrDirsByMask(@NotNull Pattern pattern, @NotNull File dir) {
+    final ArrayList<File> found = new ArrayList<File>();
+    for (File file : dir.listFiles()) {
+      if (file.isDirectory()) {
+        found.addAll(findFilesOrDirsByMask(pattern, file));
+      }
+
+      if (pattern.matcher(file.getName()).matches()) {
+        found.add(file);
+      }
+    }
+    return found;
+  }
+
   /**
    * Returns empty string for empty path.
    * First checks whether provided path is a path of a file with sought-for name.

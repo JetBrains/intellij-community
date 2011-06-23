@@ -151,10 +151,6 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     myCvsStandardOperationsProvider.rollback();
   }
   
-  public byte[] getFileContent(String path) throws VcsException {
-    return myCvsStandardOperationsProvider.getFileContent(path);
-  }
-
   public CvsStandardOperationsProvider getStandardOperationsProvider() {
     return myCvsStandardOperationsProvider;
   }

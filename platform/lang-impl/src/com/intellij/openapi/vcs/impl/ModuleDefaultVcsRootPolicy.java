@@ -64,8 +64,11 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme) && (myBaseDir != null)) {
       final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && vcsName.equals(vcsManager.getVcsFor(ideaDir))) {
-        result.add(ideaDir);
+      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+        final AbstractVcs vcsFor = vcsManager.getVcsFor(ideaDir);
+        if (vcsFor != null && vcsName.equals(vcsFor.getName())) {
+          result.add(ideaDir);
+        }
       }
     }
     // assertion for read access inside

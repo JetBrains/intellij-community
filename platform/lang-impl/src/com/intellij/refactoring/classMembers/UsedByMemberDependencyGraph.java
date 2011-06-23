@@ -104,7 +104,7 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
     ArrayList<String> strings = new ArrayList<String>();
     for (T dep : dependencies) {
       if (dep instanceof PsiNamedElement) {
-        strings.add(((PsiNamedElement)dep).getName());
+        strings.add(dep.getName());
       }
     }
 

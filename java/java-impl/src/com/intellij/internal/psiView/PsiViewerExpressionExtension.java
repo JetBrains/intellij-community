@@ -17,7 +17,7 @@ package com.intellij.internal.psiView;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
@@ -31,7 +31,7 @@ public class PsiViewerExpressionExtension extends JavaPsiViewerExtension {
   }
 
   public Icon getIcon() {
-    return Icons.CLASS_INITIALIZER;
+    return PlatformIcons.CLASS_INITIALIZER;
   }
 
   public PsiElement createElement(Project project, String text) {

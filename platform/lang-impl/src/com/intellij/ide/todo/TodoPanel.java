@@ -51,8 +51,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.Icons;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +68,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -575,7 +575,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   private final class MyShowPackagesAction extends ToggleAction {
     MyShowPackagesAction() {
-      super(IdeBundle.message("action.group.by.packages"), null, Icons.GROUP_BY_PACKAGES);
+      super(IdeBundle.message("action.group.by.packages"), null, PlatformIcons.GROUP_BY_PACKAGES);
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -605,7 +605,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   private final class MyFlattenPackagesAction extends ToggleAction {
     MyFlattenPackagesAction() {
-      super(IdeBundle.message("action.flatten.packages"), null, Icons.FLATTEN_PACKAGES_ICON);
+      super(IdeBundle.message("action.flatten.packages"), null, PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
 
     public void update(AnActionEvent e) {

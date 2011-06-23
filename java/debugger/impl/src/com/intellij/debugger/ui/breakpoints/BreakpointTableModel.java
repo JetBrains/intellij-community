@@ -112,7 +112,7 @@ public class BreakpointTableModel extends AbstractTableModel implements ItemRemo
   }
 
   public Object getValueAt(int rowIndex, int columnIndex) {
-    Breakpoint breakpoint = (Breakpoint)myBreakpoints.get(rowIndex);
+    Breakpoint breakpoint = myBreakpoints.get(rowIndex);
     if (columnIndex == NAME) {
       return breakpoint.getDisplayName();
     }

@@ -15,9 +15,9 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.Icons;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.util.PlatformIcons;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
 
 import javax.swing.*;
@@ -31,6 +31,6 @@ public class NodeLookup extends AbstractLookup implements Lookup, Iconable {
     }
 
     public Icon getIcon(int flags) {
-        return principalType == XPathNodeTest.PrincipalType.ATTRIBUTE ? Icons.ANNOTATION_TYPE_ICON : IconLoader.getIcon("/icons/tag.png");
+        return principalType == XPathNodeTest.PrincipalType.ATTRIBUTE ? PlatformIcons.ANNOTATION_TYPE_ICON : IconLoader.getIcon("/icons/tag.png");
     }
 }

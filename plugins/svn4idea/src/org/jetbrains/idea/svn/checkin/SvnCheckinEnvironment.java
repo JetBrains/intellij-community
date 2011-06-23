@@ -168,7 +168,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     if (committables.isEmpty()) {
       return;
     }
-    File[] pathsToCommit = (File[])committables.toArray(new File[committables.size()]);
+    File[] pathsToCommit = committables.toArray(new File[committables.size()]);
     boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
     SVNCommitPacket[] commitPackets = null;
     SVNCommitInfo[] results;

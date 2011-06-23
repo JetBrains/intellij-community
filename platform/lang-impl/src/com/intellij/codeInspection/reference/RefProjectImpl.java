@@ -24,7 +24,7 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
@@ -38,6 +38,6 @@ public class RefProjectImpl extends RefEntityImpl implements RefProject {
   }
 
   public Icon getIcon(final boolean expanded) {
-    return Icons.PROJECT_ICON;
+    return PlatformIcons.PROJECT_ICON;
   }
 }

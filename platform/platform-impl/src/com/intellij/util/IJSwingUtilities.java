@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import gnu.trove.TIntStack;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -169,6 +170,7 @@ public class IJSwingUtilities {
     };
   }
 
+  @Nullable
   public static <T extends Component> T findParentOfType(Component focusOwner, Class<T> aClass) {
     return (T)ContainerUtil.find(getParents(focusOwner), (FilteringIterator.InstanceOf<T>)FilteringIterator.instanceOf(aClass));
   }

@@ -602,15 +602,32 @@ public class PsiTreeUtil {
     return processor.getCollection();
   }
 
-  public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor processor) {
+  public static boolean processElements(@Nullable PsiElement element, @NotNull final PsiElementProcessor processor) {
     if (element == null) return true;
-    //noinspection unchecked
-    if (!processor.execute(element)) return false;
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (!processElements(child, processor)) return false;
+    if (element instanceof PsiCompiledElement || !element.isPhysical()) { // DummyHolders cannot be visited by walking visitors because children/parent relationship is broken there
+      //noinspection unchecked
+      if (!processor.execute(element)) return false;
+      for (PsiElement child : element.getChildren()) {
+        if (!processElements(child, processor)) return false;
+      }
+      return true;
     }
+    final boolean[] result = {true};
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        //noinspection unchecked
+        if (processor.execute(element)) {
+          super.visitElement(element);
+        }
+        else {
+          stopWalking();
+          result[0] = false;
+        }
+      }
+    });
 
-    return true;
+    return result[0];
   }
 
   public static boolean processElements(@NotNull PsiElementProcessor processor, @Nullable PsiElement... elements) {

@@ -90,7 +90,7 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
       return;
     }
     final XmlAttributeDescriptor attrDescriptor = descriptor.getAttributeDescriptor(myAttrName, myTag);
-    boolean indirectSyntax = XmlExtension.getExtension((XmlFile)myTag.getContainingFile()).isIndirectSyntax(attrDescriptor);
+    boolean indirectSyntax = XmlExtension.getExtension(myTag.getContainingFile()).isIndirectSyntax(attrDescriptor);
 
     PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
       XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)

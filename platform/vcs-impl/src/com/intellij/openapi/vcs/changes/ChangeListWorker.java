@@ -64,7 +64,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap = new LinkedHashMap<String, LocalChangeList>();
     myIdx = new ChangeListsIndexes(worker.myIdx);
     myLocallyDeleted = worker.myLocallyDeleted.copy();
-    mySwitchedHolder = (SwitchedFileHolder) worker.mySwitchedHolder.copy();
+    mySwitchedHolder = worker.mySwitchedHolder.copy();
     myDelta = worker.myDelta;
     myListsToDisappear = new LinkedList<String>(worker.myListsToDisappear);
     

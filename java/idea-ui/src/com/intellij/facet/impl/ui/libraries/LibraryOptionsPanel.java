@@ -34,8 +34,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
-import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.RadioButtonEnumModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -319,7 +319,7 @@ public class LibraryOptionsPanel {
         ProjectStructureDialogCellAppearanceUtils.forLibrary(((ExistingLibraryEditor)value).getLibrary(), null).customize(this);
       }
       else if (value instanceof NewLibraryEditor) {
-        setIcon(Icons.LIBRARY_ICON);
+        setIcon(PlatformIcons.LIBRARY_ICON);
         final String name = ((NewLibraryEditor)value).getName();
         append(name != null ? name : "<unnamed>");
       }

@@ -380,7 +380,7 @@ public class MergePanel2 implements DiffViewer {
       if (myIndex == 0) editor.setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
       if (myIndex != 1) ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
       editor.getSettings().setFoldingOutlineShown(false);
-      ((FoldingModelEx)editor.getFoldingModel()).setFoldingEnabled(false);
+      editor.getFoldingModel().setFoldingEnabled(false);
       HashSet<EditorPlace.ViewProperty> notProcessedDefaults = new HashSet<EditorPlace.ViewProperty>(ALL_PROPERTIES);
       for (EditorPlace.ViewProperty viewProperty : myProperties.keySet()) {
         notProcessedDefaults.remove(viewProperty);

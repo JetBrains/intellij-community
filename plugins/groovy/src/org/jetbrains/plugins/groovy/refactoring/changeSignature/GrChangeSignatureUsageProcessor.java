@@ -367,8 +367,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   private static void processClassUsage(GrTypeDefinition psiClass, JavaChangeInfo changeInfo) {
     String name = psiClass.getName();
 
-    GrConstructor constructor = ((GrConstructor)GroovyPsiElementFactory.getInstance(psiClass.getProject())
-      .createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", null));
+    GrConstructor constructor = GroovyPsiElementFactory.getInstance(psiClass.getProject())
+      .createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", null);
 
     GrModifierList list = constructor.getModifierList();
     if (psiClass.hasModifierProperty(GrModifier.PRIVATE)) list.setModifierProperty(GrModifier.PRIVATE, true);

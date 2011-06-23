@@ -34,7 +34,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.Consumer;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
@@ -331,14 +331,14 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   @Override
   public AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer) {
     return new AnAction[] {
-      new AnAction("XML Tag Injection", null, Icons.XML_TAG_ICON) {
+      new AnAction("XML Tag Injection", null, PlatformIcons.XML_TAG_ICON) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
           final BaseInjection newInjection = showInjectionUI(project, new XmlTagInjection());
           if (newInjection != null) consumer.consume(newInjection);
         }
       },
-      new AnAction("XML Attribute Injection", null, Icons.ANNOTATION_TYPE_ICON) {
+      new AnAction("XML Attribute Injection", null, PlatformIcons.ANNOTATION_TYPE_ICON) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new XmlAttributeInjection());

@@ -45,12 +45,12 @@ public class VisibilityIcons {
         setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, baseIcon);
       }
       else {
-        Icon emptyIcon = new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
+        Icon emptyIcon = new EmptyIcon(PlatformIcons.PUBLIC_ICON.getIconWidth(), PlatformIcons.PUBLIC_ICON.getIconHeight());
         baseIcon.setIcon(emptyIcon, 1);
       }
     }
-    else if (Icons.PUBLIC_ICON != null) {
-        Icon emptyIcon = new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
+    else if (PlatformIcons.PUBLIC_ICON != null) {
+        Icon emptyIcon = new EmptyIcon(PlatformIcons.PUBLIC_ICON.getIconWidth(), PlatformIcons.PUBLIC_ICON.getIconHeight());
         baseIcon.setIcon(emptyIcon, 1);
       }
   }
@@ -59,20 +59,20 @@ public class VisibilityIcons {
     Icon icon;
     switch (accessLevel) {
       case PsiUtil.ACCESS_LEVEL_PUBLIC:
-        icon = Icons.PUBLIC_ICON;
+        icon = PlatformIcons.PUBLIC_ICON;
         break;
       case PsiUtil.ACCESS_LEVEL_PROTECTED:
-        icon = Icons.PROTECTED_ICON;
+        icon = PlatformIcons.PROTECTED_ICON;
         break;
       case PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL:
-        icon = Icons.PACKAGE_LOCAL_ICON;
+        icon = PlatformIcons.PACKAGE_LOCAL_ICON;
         break;
       case PsiUtil.ACCESS_LEVEL_PRIVATE:
-        icon = Icons.PRIVATE_ICON;
+        icon = PlatformIcons.PRIVATE_ICON;
         break;
       default:
-        if (Icons.PUBLIC_ICON != null) {
-          icon = new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
+        if (PlatformIcons.PUBLIC_ICON != null) {
+          icon = new EmptyIcon(PlatformIcons.PUBLIC_ICON.getIconWidth(), PlatformIcons.PUBLIC_ICON.getIconHeight());
         }
         else {
           return;

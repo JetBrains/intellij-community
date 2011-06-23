@@ -49,9 +49,9 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
     public Comparator getComparator() {
       return new Comparator() {
         public int compare(Object o1, Object o2) {
-          KeywordSubstitutionWrapper firstSubstitution = (KeywordSubstitutionWrapper)((FileExtension)o1).getKeywordSubstitutionsWithSelection()
+          KeywordSubstitutionWrapper firstSubstitution = ((FileExtension)o1).getKeywordSubstitutionsWithSelection()
             .getSelection();
-          KeywordSubstitutionWrapper secondSubstitution = (KeywordSubstitutionWrapper)((FileExtension)o2).getKeywordSubstitutionsWithSelection()
+          KeywordSubstitutionWrapper secondSubstitution = ((FileExtension)o2).getKeywordSubstitutionsWithSelection()
             .getSelection();
           return
             firstSubstitution.toString().compareTo(secondSubstitution.toString());

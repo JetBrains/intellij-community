@@ -92,8 +92,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   protected FileIndex[] getFileIndices() {
     final FileIndex[] indices = new FileIndex[myScopeModules.size()];
     int idx = 0;
-    for (final Module myScopeModule : myScopeModules) {
-      final Module module = (Module)myScopeModule;
+    for (final Module module : myScopeModules) {
       indices[idx++] = ModuleRootManager.getInstance(module).getFileIndex();
     }
     return indices;

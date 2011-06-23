@@ -76,7 +76,7 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     for (final AbstractDomChildrenDescription description : domElement.getGenericInfo().getChildrenDescriptions()) {
       final JComponent boundComponent = getBoundComponent(description);
       if (boundComponent != null) {
-        if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(((DomFixedChildDescription)description).getType())) {
+        if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
           if ((description.getValues(domElement)).size() == 1) {
             final GenericDomValue element = domElement.getManager().createStableValue(new Factory<GenericDomValue>() {
               public GenericDomValue create() {

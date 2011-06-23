@@ -57,7 +57,7 @@ public class JavaMembersGetter extends MembersGetter {
     parent = parent.getParent();
     while (parent instanceof PsiBinaryExpression) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
-      final IElementType op = binaryExpression.getOperationSign().getTokenType();
+      final IElementType op = binaryExpression.getOperationTokenType();
       if (JavaTokenType.EQEQ == op || JavaTokenType.NE == op) {
         if (prev == binaryExpression.getROperand()) {
           processMembers(position, results, getCalledClass(binaryExpression.getLOperand()), false);

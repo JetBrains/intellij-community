@@ -32,8 +32,8 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +86,7 @@ public class SimpleClasspathPanel extends JPanel {
         if (value instanceof Library) {
           final Library library = (Library)value;
           if (library.getName() != null && library.getUrls(OrderRootType.CLASSES).length == 0) {
-            SimpleTextCellAppearance.invalid(library.getName(), Icons.LIBRARY_ICON).customize(this);
+            SimpleTextCellAppearance.invalid(library.getName(), PlatformIcons.LIBRARY_ICON).customize(this);
           }
           else {
             OrderEntryCellAppearanceUtils.forLibrary(library).customize(this);
@@ -276,7 +276,7 @@ public class SimpleClasspathPanel extends JPanel {
     protected PopupAction[] createPopupActions() {
       int index = 1;
       final List<PopupAction> actions = new ArrayList<PopupAction>();
-      actions.add(new ChooseAndAddAction(index++, "Jar...", Icons.JAR_ICON) {
+      actions.add(new ChooseAndAddAction(index++, "Jar...", PlatformIcons.JAR_ICON) {
         @NotNull
         protected List<Library> doChoose() {
           final ChooseJarDialog dialog = new ChooseJarDialog(SimpleClasspathPanel.this, getVirtualFiles(), myDisposable);
@@ -284,7 +284,7 @@ public class SimpleClasspathPanel extends JPanel {
           return dialog.getChosenElements();
         }
       });
-      actions.add(new ChooseAndAddAction(index++, "Library...", Icons.LIBRARY_ICON) {
+      actions.add(new ChooseAndAddAction(index++, "Library...", PlatformIcons.LIBRARY_ICON) {
 
         @NotNull
         protected List<Library> doChoose() {

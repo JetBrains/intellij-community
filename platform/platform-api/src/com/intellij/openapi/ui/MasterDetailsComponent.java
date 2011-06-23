@@ -35,7 +35,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -748,7 +748,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     private final Condition<Object> myCondition;
 
     public MyDeleteAction(Condition<Object> availableCondition) {
-      super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), Icons.DELETE_ICON);
+      super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), PlatformIcons.DELETE_ICON);
       registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
       myCondition = availableCondition;
     }

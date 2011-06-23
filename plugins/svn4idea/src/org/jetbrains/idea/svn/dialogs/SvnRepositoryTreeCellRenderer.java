@@ -19,7 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.text.DateFormatUtil;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -71,9 +71,9 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
 
   private void setDirectoryIcon(final boolean expanded) {
     if (expanded) {
-      setIcon(Icons.DIRECTORY_OPEN_ICON);
+      setIcon(PlatformIcons.DIRECTORY_OPEN_ICON);
     } else {
-      setIcon(Icons.DIRECTORY_CLOSED_ICON);
+      setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
   }
 

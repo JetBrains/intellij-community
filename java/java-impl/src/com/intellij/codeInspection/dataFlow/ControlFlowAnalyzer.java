@@ -145,7 +145,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
       lExpr.accept(this);
 
-      IElementType op = expression.getOperationSign().getTokenType();
+      IElementType op = expression.getOperationTokenType();
       PsiType type = expression.getType();
       boolean isBoolean = PsiType.BOOLEAN.equals(type);
       if (op == JavaTokenType.EQ) {
@@ -882,7 +882,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new PushInstruction(dfaValue, expression));
       }
       else {
-        IElementType op = expression.getOperationSign().getTokenType();
+        IElementType op = expression.getOperationTokenType();
         PsiExpression lExpr = expression.getLOperand();
         PsiExpression rExpr = expression.getROperand();
 

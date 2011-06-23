@@ -283,7 +283,7 @@ public class BlockSupportImpl extends BlockSupport {
     return childTooDeep;
   }
 
-  public static void sendPsiBeforeEvent(final PsiElement scope) {
+  public static void sendBeforeChildrenChangeEvent(final PsiElement scope) {
     if(!scope.isPhysical()) return;
     final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
@@ -294,7 +294,7 @@ public class BlockSupportImpl extends BlockSupport {
     manager.beforeChildrenChange(event);
   }
 
-  public static void sendPsiAfterFileEvent(final PsiFileImpl scope, int oldLength) {
+  public static void sendAfterChildrenChangedEvent(final PsiFileImpl scope, int oldLength) {
     if (!scope.isPhysical()) return;
     final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);

@@ -16,7 +16,7 @@
 package org.intellij.plugins.intelliLang.inject.config.ui.configurables;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlAttributePanel;
 
@@ -36,6 +36,6 @@ public class XmlAttributeInjectionConfigurable extends InjectionConfigurable<Xml
   }
 
   public Icon getIcon() {
-    return Icons.ANNOTATION_TYPE_ICON;
+    return PlatformIcons.ANNOTATION_TYPE_ICON;
   }
 }

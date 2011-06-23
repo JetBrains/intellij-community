@@ -152,7 +152,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
       String key = (String)value;
       if (isComputablePropertyExpression(expression)) return;
       Ref<String> resourceBundleName = new Ref<String>();
-      if (!JavaI18nUtil.isValidPropertyReference(expression, key, resourceBundleName)) {
+      if (!JavaI18nUtil.isValidPropertyReference(myManager.getProject(), expression, key, resourceBundleName)) {
         final String description = CodeInsightBundle.message("inspection.unresolved.property.key.reference.message", key);
         final String bundleName = resourceBundleName.get();
         final List<PropertiesFile> propertiesFiles = JavaI18nUtil.propertiesFilesByBundleName(bundleName, expression);
@@ -183,7 +183,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
       if (expression.getParent() instanceof PsiExpressionList && expression.getParent().getParent() instanceof PsiMethodCallExpression) {
         final Map<String, Object> annotationParams = new HashMap<String, Object>();
         annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-        if (! JavaI18nUtil.mustBePropertyKey(expression, annotationParams)) return;
+        if (! JavaI18nUtil.mustBePropertyKey(myManager.getProject(), expression, annotationParams)) return;
 
         final int paramsCount = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
         if (paramsCount == -1) return;

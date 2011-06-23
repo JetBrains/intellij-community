@@ -129,7 +129,7 @@ public class IconUtil {
           }
 
           if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
-            icon = new LayeredIcon(icon, Icons.LOCKED_ICON);
+            icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
           }
 
           Iconable.LastComputedIcon.put(file, icon, flags);
@@ -150,9 +150,9 @@ public class IconUtil {
 
   public static Icon getEmptyIcon(boolean showVisibility) {
     RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(createEmptyIconLike(Icons.CLASS_ICON_PATH), 0);
+    baseIcon.setIcon(createEmptyIconLike(PlatformIcons.CLASS_ICON_PATH), 0);
     if (showVisibility) {
-      baseIcon.setIcon(createEmptyIconLike(Icons.PUBLIC_ICON_PATH), 1);
+      baseIcon.setIcon(createEmptyIconLike(PlatformIcons.PUBLIC_ICON_PATH), 1);
     }
     return baseIcon;
   }

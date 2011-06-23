@@ -53,7 +53,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentsUtil;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
@@ -208,7 +208,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           ToolWindow toolWindow =
             toolWindowManager.registerToolWindow(ToolWindowId.VCS, true, ToolWindowAnchor.BOTTOM, myProject, true);
           myContentManager = toolWindow.getContentManager();
-          toolWindow.setIcon(Icons.VCS_SMALL_TAB);
+          toolWindow.setIcon(PlatformIcons.VCS_SMALL_TAB);
           toolWindow.installWatcher(myContentManager);
         } else {
           myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);

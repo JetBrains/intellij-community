@@ -117,7 +117,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
           }
         }
         else if (context instanceof PsiAssignmentExpression &&
-                 ((PsiAssignmentExpression)context).getOperationSign().getTokenType() == JavaTokenType.EQ) {
+                 ((PsiAssignmentExpression)context).getOperationTokenType() == JavaTokenType.EQ) {
           final PsiAssignmentExpression assignment = (PsiAssignmentExpression)context;
           holder.registerProblem(assignment.getRExpression(),
                                  InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3",

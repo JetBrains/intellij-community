@@ -83,6 +83,13 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     myPsiManager = myHostPsiFile.getManager();
     cleared = true;
   }
+  // null registrar
+  MultiHostRegistrarImpl() {
+    myProject = null;
+    myContextElement = null;
+    myHostPsiFile = null;
+    myPsiManager = null;
+  }
 
   public List<Pair<Place, PsiFile>> getResult() {
     return result;
@@ -205,7 +212,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       assert parserDefinition != null : "Parser definition for language "+myLanguage+" is null";
       PsiFile psiFile = parserDefinition.createFile(viewProvider);
 
-      SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(shreds.get(0).host);
+      SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(shreds.get(0).host, myHostPsiFile);
 
       synchronized (PsiLock.LOCK) {
         final ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
@@ -332,10 +339,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     result.add(Pair.create(place, psiFile));
   }
 
-  private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(final T host) {
-    return host.isPhysical()
-           ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host)
-           : new IdentitySmartPointer<T>(host);
+  private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(@NotNull T host, @NotNull PsiFile hostPsiFile) {
+    return hostPsiFile.isPhysical()
+           ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host, hostPsiFile)
+           : new IdentitySmartPointer<T>(host, hostPsiFile);
   }
 
   private static void patchLeafs(ASTNode parsedNode, List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers, Place shreds) {

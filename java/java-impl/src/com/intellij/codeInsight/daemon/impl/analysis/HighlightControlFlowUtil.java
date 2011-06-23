@@ -589,14 +589,14 @@ public class HighlightControlFlowUtil {
     }
     else if (expression instanceof PsiPostfixExpression) {
       final PsiExpression operand = ((PsiPostfixExpression)expression).getOperand();
-      final IElementType sign = ((PsiPostfixExpression)expression).getOperationSign().getTokenType();
+      final IElementType sign = ((PsiPostfixExpression)expression).getOperationTokenType();
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
       }
     }
     else if (expression instanceof PsiPrefixExpression) {
       final PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
-      final IElementType sign = ((PsiPrefixExpression)expression).getOperationSign().getTokenType();
+      final IElementType sign = ((PsiPrefixExpression)expression).getOperationTokenType();
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
       }

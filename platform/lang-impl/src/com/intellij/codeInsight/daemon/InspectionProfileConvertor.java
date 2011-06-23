@@ -174,7 +174,7 @@ public class InspectionProfileConvertor {
 
       //set up tools for default profile
       if (level != HighlightDisplayLevel.DO_NOT_SHOW) {
-        profile.enableTool(shortName, (NamedScope)null);
+        profile.enableTool(shortName, null);
       }
 
       if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {

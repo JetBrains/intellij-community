@@ -28,15 +28,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +101,7 @@ public class ImportTree extends NodeRenderer {
   }
 
   public AnAction createExcludeAction() {
-    return new AnAction(CvsBundle.message("import.wizard.exclude.from.import.action.name"), null, Icons.DELETE_ICON) {
+    return new AnAction(CvsBundle.message("import.wizard.exclude.from.import.action.name"), null, PlatformIcons.DELETE_ICON) {
       public void update(AnActionEvent e) {
         VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         Presentation presentation = e.getPresentation();
@@ -128,7 +128,7 @@ public class ImportTree extends NodeRenderer {
   }
 
   public AnAction createIncludeAction() {
-    return new AnAction(CvsBundle.message("import.wizard.include.to.import.action.name"), null, Icons.ADD_ICON) {
+    return new AnAction(CvsBundle.message("import.wizard.include.to.import.action.name"), null, PlatformIcons.ADD_ICON) {
       public void update(AnActionEvent e) {
         VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         Presentation presentation = e.getPresentation();

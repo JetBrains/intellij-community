@@ -33,7 +33,7 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
     myFile = file;
   }
 
-  public IdentitySmartPointer(final T element) {
+  public IdentitySmartPointer(@NotNull T element) {
     this(element, element.getContainingFile());
   }
 

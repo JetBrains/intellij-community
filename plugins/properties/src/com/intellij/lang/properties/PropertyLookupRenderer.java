@@ -15,14 +15,14 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 /**
  * @author yole
@@ -33,7 +33,7 @@ public class PropertyLookupRenderer implements ElementLookupRenderer<Property> {
   }
 
   public void renderElement(final LookupItem item, final Property property, final LookupElementPresentation presentation) {
-    presentation.setIcon(Icons.PROPERTY_ICON);
+    presentation.setIcon(PlatformIcons.PROPERTY_ICON);
     presentation.setItemText(property.getUnescapedKey());
 
     PropertiesFile propertiesFile = property.getContainingFile();

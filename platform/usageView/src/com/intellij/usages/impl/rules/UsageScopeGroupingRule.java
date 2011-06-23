@@ -26,7 +26,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,7 +56,7 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
 
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
     public Icon getIcon(boolean isOpen) {
-      return Icons.TEST_SOURCE_FOLDER;
+      return PlatformIcons.TEST_SOURCE_FOLDER;
     }
 
     @NotNull
@@ -66,7 +66,7 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
   };
   private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(1) {
     public Icon getIcon(boolean isOpen) {
-      return Icons.SOURCE_FOLDERS_ICON ;
+      return PlatformIcons.SOURCE_FOLDERS_ICON;
     }
 
     @NotNull
@@ -76,7 +76,7 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
   };
   private static final UsageScopeGroup LIBRARY = new UsageScopeGroup(2) {
     public Icon getIcon(boolean isOpen) {
-      return Icons.LIBRARY_ICON ;
+      return PlatformIcons.LIBRARY_ICON;
     }
 
     @NotNull

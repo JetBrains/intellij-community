@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnServerFileManager;
@@ -104,7 +104,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       if (! groupConfigurable.getEditableObject().isDefault()) {
         result.removeAll(groupConfigurable.getRepositories());
       }
@@ -120,7 +120,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       final String groupName = groupConfigurable.getEditableObject().getName();
 
       if (checkSet.contains(groupName)) {
@@ -132,7 +132,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.applyImpl();
       if(! groupConfigurable.validate(errorMessageRef)) {
         listener.onError(errorMessageRef.get(), myComponent, false);
@@ -155,7 +155,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new AnAction("Add", "Add", Icons.ADD_ICON) {
+    result.add(new AnAction("Add", "Add", PlatformIcons.ADD_ICON) {
         {
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }
@@ -223,7 +223,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.apply();
       groups.add(groupConfigurable.getEditableObject());
     }
@@ -236,7 +236,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.reset();
     }
   }
@@ -310,7 +310,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   public void setIsValid(final boolean valid) {
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) ((MyNode) node).getConfigurable();
+      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.setIsValid(valid);
     }
   }

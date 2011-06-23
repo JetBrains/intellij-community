@@ -41,8 +41,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import com.intellij.util.Icons;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
@@ -444,7 +444,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   @Override
   public AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer) {
     return new AnAction[] {
-      new AnAction("Java Parameter", null, Icons.PARAMETER_ICON) {
+      new AnAction("Java Parameter", null, PlatformIcons.PARAMETER_ICON) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new MethodParameterInjection());

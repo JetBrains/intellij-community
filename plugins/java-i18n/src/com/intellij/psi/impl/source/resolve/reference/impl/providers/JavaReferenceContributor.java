@@ -29,7 +29,7 @@ public class JavaReferenceContributor extends PsiReferenceContributor{
         PsiLiteralExpression literalExpression = (PsiLiteralExpression) context;
         final Map<String, Object> annotationParams = new HashMap<String, Object>();
         annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-        return !JavaI18nUtil.mustBePropertyKey(literalExpression, annotationParams);
+        return !JavaI18nUtil.mustBePropertyKey(context.getProject(), literalExpression, annotationParams);
       }
 
       public boolean isClassAcceptable(Class hintClass) {

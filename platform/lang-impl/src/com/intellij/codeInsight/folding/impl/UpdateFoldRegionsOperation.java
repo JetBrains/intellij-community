@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -47,14 +48,20 @@ class UpdateFoldRegionsOperation implements Runnable {
   
   private final Project myProject;
   private final Editor myEditor;
+  private final PsiFile myFile;
   private final boolean myApplyDefaultState;
   private final Map<PsiElement, FoldingDescriptor> myElementsToFoldMap;
   private final boolean myForInjected;
 
-  UpdateFoldRegionsOperation(Project project, Editor editor, Map<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean applyDefaultState,
+  UpdateFoldRegionsOperation(@NotNull Project project,
+                             @NotNull Editor editor,
+                             @NotNull PsiFile file,
+                             @NotNull Map<PsiElement, FoldingDescriptor> elementsToFoldMap,
+                             boolean applyDefaultState,
                              boolean forInjected) {
     myProject = project;
     myEditor = editor;
+    myFile = file;
     myApplyDefaultState = applyDefaultState;
     myElementsToFoldMap = elementsToFoldMap;
     myForInjected = forInjected;
@@ -116,7 +123,7 @@ class UpdateFoldRegionsOperation implements Runnable {
         continue;
       }
       
-      info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
+      info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi, myFile));
       newRegions.add(region);
 
       boolean expandStatus = !descriptor.isNonExpandable() && shouldExpandNewRegion(element, range, rangeToExpandStatusMap);

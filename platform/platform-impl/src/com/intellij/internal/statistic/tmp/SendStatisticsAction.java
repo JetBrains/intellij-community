@@ -16,16 +16,16 @@
 package com.intellij.internal.statistic.tmp;
 
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
-import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
 import com.intellij.internal.statistic.connect.StatisticsConnectionService;
+import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 public class SendStatisticsAction extends AnAction {
 
@@ -37,7 +37,7 @@ public class SendStatisticsAction extends AnAction {
 
         final StatisticsResult result = service.send();
 
-        Messages.showMessageDialog(result.getDescription(), "Result", Icons.CUSTOM_FILE_ICON);
+        Messages.showMessageDialog(result.getDescription(), "Result", PlatformIcons.CUSTOM_FILE_ICON);
     }
   }
 }

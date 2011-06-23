@@ -17,8 +17,9 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -45,6 +46,7 @@ import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -343,17 +345,15 @@ public class IncrementalSearchHandler {
     }
   }
 
-  public static class MyTypedHandler implements TypedActionHandler {
-    private final TypedActionHandler myOriginalHandler;
-
-    public MyTypedHandler(TypedActionHandler originalAction) {
-      myOriginalHandler = originalAction;
+  public static class MyTypedHandler extends TypedActionHandlerBase {
+    public MyTypedHandler(@Nullable TypedActionHandler originalHandler) {
+      super(originalHandler);
     }
 
     public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
-        myOriginalHandler.execute(editor, charTyped, dataContext);
+        if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
       }
       else{
         LightweightHint hint = data.hint;

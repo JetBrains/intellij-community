@@ -75,7 +75,7 @@ public class IsConstantExpressionVisitor extends JavaElementVisitor {
     }
     operand.accept(this);
     if (!myIsConstant) return;
-    IElementType opType = expression.getOperationSign().getTokenType();
+    IElementType opType = expression.getOperationTokenType();
     if (opType == JavaTokenType.PLUS || opType == JavaTokenType.MINUS || opType == JavaTokenType.TILDE || opType == JavaTokenType.EXCL) {
       return;
     }

@@ -113,7 +113,7 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
     }
 
     if (call instanceof GrMethodCallExpression) {
-      for (GrExpression arg : ((GrMethodCallExpression)call).getClosureArguments()) {
+      for (GrExpression arg : call.getClosureArguments()) {
         if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
           return call;
         }

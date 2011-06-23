@@ -16,7 +16,7 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
@@ -34,6 +34,6 @@ public class InspectionPackageNode extends InspectionTreeNode {
   }
 
   public Icon getIcon(boolean expanded) {
-    return expanded ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON;
+    return expanded ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON;
   }
 }

@@ -71,6 +71,10 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
       finally {
         target.close();
       }
+    } else {
+      // read file from server, but do not save it.
+      final LineReader lineReader = new LineReader(textFileSource, length);
+      for (byte[] line = lineReader.readLine(); line != null; line = lineReader.readLine());
     }
   }
 

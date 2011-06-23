@@ -26,9 +26,12 @@ import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.ui.*;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -188,6 +191,9 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
       return new ColoredTableCellRenderer() {
         public void customizeCellRenderer(JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
+          setBackground(table.getBackground());
+          setForeground(table.getForeground());
+
           if (value == null) return;
           append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
         }

@@ -18,14 +18,10 @@ package com.intellij.cvsSupport2;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.common.RepositoryModificationOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
-import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
-import java.io.File;
 import java.util.Map;
 
 public class CvsStandardOperationsProvider {
@@ -82,16 +78,5 @@ public class CvsStandardOperationsProvider {
 
   public void rollback() {
     myCurrentTransaction = null;
-  }
-
-  public byte[] getFileContent(String path) throws VcsException {
-    try {
-      GetFileContentOperation command = GetFileContentOperation.createForFile(CvsVfsUtil.findFileByIoFile(new File(path)));
-      CvsVcs2.executeOperation(CvsBundle.message("operation.name.get.file.content"), command, myProject);
-      return command.getFileBytes();
-    }
-    catch (CannotFindCvsRootException cannotFindCvsRootException) {
-      throw new VcsException(cannotFindCvsRootException);
-    }
   }
 }

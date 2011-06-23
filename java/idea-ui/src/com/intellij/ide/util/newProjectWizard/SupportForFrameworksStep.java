@@ -51,7 +51,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   private static String getBaseDirectory(final ModuleBuilder builder) {
     String path = null;
     if (builder instanceof JavaModuleBuilder) {
-      path = ((JavaModuleBuilder)builder).getContentEntryPath();
+      path = builder.getContentEntryPath();
     }
     if (path == null) {
       path = builder.getModuleFileDirectory();

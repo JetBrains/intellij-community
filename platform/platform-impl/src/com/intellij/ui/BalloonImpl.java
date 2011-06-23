@@ -1220,7 +1220,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
             Container parent = myCloseRec.getParent();
             parent.remove(myCloseRec);
             ((JComponent)parent).revalidate();
-            ((JComponent)parent).repaint();
+            parent.repaint();
           }
         }
       });

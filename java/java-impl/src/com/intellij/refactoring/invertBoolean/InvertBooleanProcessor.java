@@ -238,7 +238,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
         if (expression.getParent() instanceof PsiMethodCallExpression) expression = (PsiExpression)expression.getParent();
         try {
           while (expression.getParent() instanceof PsiPrefixExpression &&
-                 ((PsiPrefixExpression)expression.getParent()).getOperationSign().getTokenType() == JavaTokenType.EXCL) {
+                 ((PsiPrefixExpression)expression.getParent()).getOperationTokenType() == JavaTokenType.EXCL) {
             expression = (PsiExpression)expression.getParent();
           }
           if (!(expression.getParent() instanceof PsiExpressionStatement)) {

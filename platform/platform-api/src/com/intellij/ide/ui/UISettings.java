@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public float ALPHA_MODE_RATIO = 0.5f;
   public int MAX_CLIPBOARD_CONTENTS = 5;
   public boolean OVERRIDE_NONIDEA_LAF_FONTS = false;
-  public boolean SHOW_ICONS_IN_MENUS = true; // Only makes sense on MacOS
+  public boolean SHOW_ICONS_IN_MENUS = true;
   public boolean DISABLE_MNEMONICS = SystemInfo.isMac; // IDEADEV-33409, should be disabled by default on MacOS
   public boolean SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false;
 
@@ -97,10 +97,12 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
    */
   public static final int TABS_NONE = 0;
 
-  /** Invoked by reflection */
-  public UISettings(){
+  /**
+   * Invoked by reflection.
+   */
+  public UISettings() {
     tweakPlatformDefaults();
-    myListenerList=new EventListenerList();
+    myListenerList = new EventListenerList();
     setSystemFontFaceAndSize();
   }
 
@@ -114,11 +116,10 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   }
 
   /**
-   *
-    * @deprecated use {@link UISettings#addUISettingsListener(com.intellij.ide.ui.UISettingsListener, Disposable disposable)} instead
+   * @deprecated use {@link UISettings#addUISettingsListener(com.intellij.ide.ui.UISettingsListener, Disposable disposable)} instead.
    */
-  public void addUISettingsListener(UISettingsListener listener){
-    myListenerList.add(UISettingsListener.class,listener);
+  public void addUISettingsListener(UISettingsListener listener) {
+    myListenerList.add(UISettingsListener.class, listener);
   }
 
   public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable){

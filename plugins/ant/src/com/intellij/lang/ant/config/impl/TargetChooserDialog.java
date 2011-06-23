@@ -29,9 +29,12 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -206,7 +209,7 @@ public class TargetChooserDialog extends DialogWrapper {
           final String antTargetName = antTarget.getName();
           append(antTargetName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           boolean isMeta = antTarget instanceof MetaTarget;
-          setIcon(isMeta ? Icons.ANT_META_TARGET_ICON : Icons.ANT_TARGET_ICON);
+          setIcon(isMeta ? PlatformIcons.ANT_META_TARGET_ICON : PlatformIcons.ANT_TARGET_ICON);
         }
       }
     }

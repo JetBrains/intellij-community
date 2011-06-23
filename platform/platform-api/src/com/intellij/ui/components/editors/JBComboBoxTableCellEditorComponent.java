@@ -21,7 +21,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
@@ -73,8 +73,8 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
     private Icon getIcon(boolean selected) {
       final boolean small = "small".equals(JBComboBoxTableCellEditorComponent.this.getClientProperty("JComponent.sizeVariant"));
       return small
-             ? selected ? Icons.CHECK_ICON_SMALL_SELECTED : Icons.CHECK_ICON_SMALL
-             : selected ? Icons.CHECK_ICON_SELECTED : Icons.CHECK_ICON;
+             ? selected ? PlatformIcons.CHECK_ICON_SMALL_SELECTED : PlatformIcons.CHECK_ICON_SMALL
+             : selected ? PlatformIcons.CHECK_ICON_SELECTED : PlatformIcons.CHECK_ICON;
     }
   };
 

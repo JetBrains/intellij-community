@@ -24,7 +24,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +44,7 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
 
   @Override
   public Icon getCreateElementIcon() {
-    return Icons.LIBRARY_ICON;
+    return PlatformIcons.LIBRARY_ICON;
   }
 
   @Override

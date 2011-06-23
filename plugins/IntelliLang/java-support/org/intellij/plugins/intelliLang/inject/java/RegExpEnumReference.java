@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.util.RegExpUtil;
 import org.intellij.plugins.intelliLang.util.StringLiteralReference;
@@ -50,7 +50,7 @@ final class RegExpEnumReference extends StringLiteralReference {
     }
     return ContainerUtil.map2Array(values, new Function<String, Object>() {
       public Object fun(String s) {
-        return LookupElementBuilder.create(s).setIcon(Icons.ENUM_ICON);
+        return LookupElementBuilder.create(s).setIcon(PlatformIcons.ENUM_ICON);
       }
     });
   }

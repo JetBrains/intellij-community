@@ -325,7 +325,7 @@ public class ControlFlowUtils{
 
     public static boolean isInLoop(@NotNull PsiElement element){
         final PsiLoopStatement loopStatement =
-                PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
+                PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class, true, PsiClass.class);
         if (loopStatement == null){
             return false;
         }

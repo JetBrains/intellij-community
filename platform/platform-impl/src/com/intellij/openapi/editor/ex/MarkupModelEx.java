@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -33,6 +34,7 @@ import java.util.Iterator;
 public interface MarkupModelEx extends MarkupModel {
   void dispose();
 
+  @Nullable
   RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
 

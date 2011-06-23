@@ -35,7 +35,7 @@ public class IdeGlassPaneUtil {
     if (!(component instanceof JComponent)) throw new IllegalArgumentException("Component must be instance of JComponent");
 
     final JRootPane root = ((JComponent)component).getRootPane();
-    if (root == null) new IllegalArgumentException("Component must be visible in order to find glass pane for it");
+    if (root == null) throw new IllegalArgumentException("Component must be visible in order to find glass pane for it");
 
     final Component gp = root.getGlassPane();
     if (!(gp instanceof IdeGlassPane)) {

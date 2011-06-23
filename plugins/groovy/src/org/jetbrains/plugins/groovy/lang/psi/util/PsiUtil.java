@@ -1253,7 +1253,7 @@ public class PsiUtil {
   }
 
   public static boolean isExpressionUsed(PsiElement expr) {
-    while (expr.getParent() instanceof GrParenthesizedExpression) expr = (GrExpression)expr.getParent();
+    while (expr.getParent() instanceof GrParenthesizedExpression) expr = expr.getParent();
 
     final PsiElement parent = expr.getParent();
     if (parent instanceof GrBinaryExpression ||

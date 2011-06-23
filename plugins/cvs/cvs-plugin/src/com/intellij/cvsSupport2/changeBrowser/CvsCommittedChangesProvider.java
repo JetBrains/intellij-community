@@ -136,7 +136,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   public Pair<CvsChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
     // todo implement in proper way
     final FilePathImpl filePath = new FilePathImpl(file);
-    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) getLocationFor(filePath);
+    CvsRepositoryLocation cvsLocation = getLocationFor(filePath);
     if (cvsLocation == null) return null;
     final String module = cvsLocation.getModuleName();
     final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();

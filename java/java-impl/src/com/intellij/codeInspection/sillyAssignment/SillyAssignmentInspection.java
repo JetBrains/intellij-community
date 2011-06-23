@@ -80,7 +80,7 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static void checkSillyAssignment(PsiAssignmentExpression assignment, ProblemsHolder holder) {
-    if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return;
+    if (assignment.getOperationTokenType() != JavaTokenType.EQ) return;
     PsiExpression lExpression = assignment.getLExpression();
     PsiExpression rExpression = assignment.getRExpression();
     if (rExpression == null) return;

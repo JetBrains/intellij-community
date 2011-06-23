@@ -251,6 +251,10 @@ public class MockPsiManager extends PsiManagerEx {
   public void beforeChildReplacement(@NotNull final PsiTreeChangeEventImpl event) {
   }
 
+  @Override
+  public void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event) {
+  }
+
   @NotNull
   public CacheManager getCacheManager() {
     return myCompositeCacheManager;

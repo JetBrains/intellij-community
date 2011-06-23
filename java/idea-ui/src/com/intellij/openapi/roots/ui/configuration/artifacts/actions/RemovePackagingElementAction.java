@@ -16,15 +16,11 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.util.Icons;
-
-import java.util.List;
+import com.intellij.util.PlatformIcons;
 
 /**
  * @author nik
@@ -32,7 +28,7 @@ import java.util.List;
 public class RemovePackagingElementAction extends LayoutTreeActionBase {
 
   public RemovePackagingElementAction(ArtifactEditorEx artifactEditor) {
-    super(ProjectBundle.message("action.name.remove.packaging.element"), ProjectBundle.message("action.description.remove.packaging.elements"), Icons.DELETE_ICON,
+    super(ProjectBundle.message("action.name.remove.packaging.element"), ProjectBundle.message("action.description.remove.packaging.elements"), PlatformIcons.DELETE_ICON,
           artifactEditor);
   }
 

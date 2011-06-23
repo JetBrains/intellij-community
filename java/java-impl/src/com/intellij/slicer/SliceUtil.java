@@ -128,7 +128,7 @@ public class SliceUtil {
                                          @NotNull SliceUsage parent,
                                          @NotNull PsiSubstitutor substitutor) {
     final PsiExpression realExpression =
-      exp.getParent() instanceof DummyHolder ? (PsiExpression)((DummyHolder)exp.getParent()).getContext() : exp;
+      exp.getParent() instanceof DummyHolder ? (PsiExpression)exp.getParent().getContext() : exp;
     assert realExpression != null;
     if (!(realExpression instanceof PsiCompiledElement)) {
       SliceUsage usage = createSliceUsage(realExpression, parent, substitutor);

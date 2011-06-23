@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -69,7 +71,10 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     }
 
     editorTextField.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    editorTextField.setBorder(hasFocus ? BorderFactory.createLineBorder(table.getForeground()): new EmptyBorder(1, 1, 1, 1));
+    ListSelectionModel selModel = table.getSelectionModel();
+    final Color color = (selModel.getMaxSelectionIndex() - selModel.getMinSelectionIndex()) == 0
+                        ? table.getSelectionBackground() : table.getForeground();
+    editorTextField.setBorder(hasFocus ? BorderFactory.createLineBorder(color): IdeBorderFactory.createEmptyBorder(1));
     return editorTextField;
   }
 }

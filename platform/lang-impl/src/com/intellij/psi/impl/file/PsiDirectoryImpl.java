@@ -47,8 +47,8 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -559,7 +559,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   protected Icon getElementIcon(final int flags) {
-    return Icons.DIRECTORY_CLOSED_ICON;
+    return PlatformIcons.DIRECTORY_CLOSED_ICON;
   }
 
   public void putInfo(Map<String, String> info) {

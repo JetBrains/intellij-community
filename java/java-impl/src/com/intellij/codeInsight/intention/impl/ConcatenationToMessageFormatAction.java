@@ -89,7 +89,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     if (expression instanceof PsiBinaryExpression) {
       final PsiType type = expression.getType();
       if (type != null && type.equalsToText("java.lang.String")
-          && ((PsiBinaryExpression)expression).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
+          && ((PsiBinaryExpression)expression).getOperationTokenType() == JavaTokenType.PLUS) {
         buildMessageFormatString(((PsiBinaryExpression)expression).getLOperand(), formatString, args);
         final PsiExpression rhs = ((PsiBinaryExpression)expression).getROperand();
         if (rhs != null) {

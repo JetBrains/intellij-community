@@ -61,6 +61,7 @@ class FormatProcessor {
 
   private final CodeStyleSettings.IndentOptions myIndentOption;
   private final CodeStyleSettings               mySettings;
+  private final Document                        myDocument;
 
   /**
    * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detect
@@ -134,6 +135,7 @@ class FormatProcessor {
     myProgressIndicator = progressIndicator;
     myIndentOption = indentOptions;
     mySettings = settings;
+    myDocument = docModel.getDocument();
     myCurrentState = new WrapBlocksState(rootBlock, docModel, affectedRanges, interestingOffset);
   }
 
@@ -599,7 +601,7 @@ class FormatProcessor {
     }
     
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
-      alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks, myIndentOption
+      myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks, myIndentOption
     );
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     switch (result) {
@@ -610,9 +612,9 @@ class FormatProcessor {
         if (offsetResponsibleBlock == null) {
           return true;
         }
-        Set<LeafBlockWrapper> blocksCausedRealignment;
+        Set<LeafBlockWrapper> blocksCausedRealignment = new HashSet<LeafBlockWrapper>();
         myBackwardShiftedAlignedBlocks.clear();
-        myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment = new HashSet<LeafBlockWrapper>());
+        myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment);
         blocksCausedRealignment.add(myCurrentBlock);
         storeAlignmentMapping(myCurrentBlock, offsetResponsibleBlock);
         myCurrentBlock = offsetResponsibleBlock.getNextBlock();

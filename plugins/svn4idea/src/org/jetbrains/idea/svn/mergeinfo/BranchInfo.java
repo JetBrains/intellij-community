@@ -227,7 +227,7 @@ public class BranchInfo {
       }
       final String absoluteTrunk = SVNPathUtil.append(myRepositoryRoot, newTrunkUrl);
       if ((1 >= newTrunkUrl.length()) || (myRepositoryRoot.length() >= newBranchUrl.toString().length()) ||
-        (newBranchUrl.equals(absoluteTrunk))) {
+        (newBranchUrl.toString().equals(absoluteTrunk))) {
         return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
       }
       // go up

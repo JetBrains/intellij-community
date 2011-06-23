@@ -23,11 +23,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
-import com.intellij.packaging.ui.*;
-import com.intellij.packaging.impl.ui.LibraryElementPresentation;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
+import com.intellij.packaging.impl.ui.LibraryElementPresentation;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.SourceItemPresentation;
+import com.intellij.packaging.ui.SourceItemWeights;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -105,7 +108,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
                        SimpleTextAttributes commentAttributes) {
       final String name = myLibrary.getName();
       if (name != null) {
-        presentationData.setIcons(Icons.LIBRARY_ICON);
+        presentationData.setIcons(PlatformIcons.LIBRARY_ICON);
         presentationData.addText(name, mainAttributes);
         presentationData.addText(LibraryElementPresentation.getLibraryTableComment(myLibrary), commentAttributes);
       }

@@ -40,7 +40,7 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -432,10 +432,10 @@ public class PathEditor {
         return ICON_INVALID;
       }
       else if (isHttpRoot(file)) {
-        return Icons.WEB_ICON;
+        return PlatformIcons.WEB_ICON;
       }
       else {
-        return isJarFile(file) ? Icons.JAR_ICON : Icons.FILE_ICON;
+        return isJarFile(file) ? PlatformIcons.JAR_ICON : PlatformIcons.FILE_ICON;
       }
     }
     return ICON_EMPTY;

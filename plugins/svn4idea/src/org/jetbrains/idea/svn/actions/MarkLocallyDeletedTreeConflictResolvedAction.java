@@ -141,7 +141,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
       final LocallyDeletedChange change = missingFiles.get(0);
       myEnabled = change instanceof SvnLocallyDeletedChange && ((SvnLocallyDeletedChange) change).getConflictState().isTree();
       if (myEnabled) {
-        myPath = ((SvnLocallyDeletedChange) change).getPath();
+        myPath = change.getPath();
       }
       else {
         myPath = null;

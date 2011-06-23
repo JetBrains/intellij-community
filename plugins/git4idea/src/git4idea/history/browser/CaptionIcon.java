@@ -77,7 +77,7 @@ public class CaptionIcon implements Icon {
     g.setColor(myBgrnd.darker().darker());
     g.setFont(myPlusFont);
     if (myWithContinuation) {
-      ((Graphics2D)g).drawString(" +", x + myWidth - 2 - myAddWidth, y + myHeight - 3);
+      g.drawString(" +", x + myWidth - 2 - myAddWidth, y + myHeight - 3);
     }
 
     graphics2D.setPaint(oldPaint);

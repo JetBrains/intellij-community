@@ -89,7 +89,7 @@ public class FoldingUpdate {
     final TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
     getFoldingsFor(file instanceof PsiCompiledElement ? (PsiFile)((PsiCompiledElement)file).getMirror() : file, document, elementsToFoldMap, quick);
 
-    final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, applyDefaultState, false);
+    final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap, applyDefaultState, false);
     Runnable runnable = new Runnable() {
       public void run() {
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
@@ -105,7 +105,7 @@ public class FoldingUpdate {
 
   private static final Key<Object> LAST_UPDATE_INJECTED_STAMP_KEY = Key.create("LAST_UPDATE_INJECTED_STAMP_KEY");
   @Nullable
-  public static Runnable updateInjectedFoldRegions(@NotNull final Editor editor, @NotNull PsiFile file, final boolean applyDefaultState) {
+  public static Runnable updateInjectedFoldRegions(@NotNull final Editor editor, @NotNull final PsiFile file, final boolean applyDefaultState) {
     if (file instanceof PsiCompiledElement) return null;
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -120,6 +120,7 @@ public class FoldingUpdate {
     List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
     if (injectedDocuments.isEmpty()) return null;
     final List<EditorWindow> injectedEditors = new ArrayList<EditorWindow>();
+    final List<PsiFile> injectedFiles = new ArrayList<PsiFile>();
     final List<Map<PsiElement, FoldingDescriptor>> maps = new ArrayList<Map<PsiElement, FoldingDescriptor>>();
     for (DocumentWindow injectedDocument : injectedDocuments) {
       PsiFile injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
@@ -128,6 +129,7 @@ public class FoldingUpdate {
       if (!(injectedEditor instanceof EditorWindow)) continue;
 
       injectedEditors.add((EditorWindow)injectedEditor);
+      injectedFiles.add(injectedFile);
       Map<PsiElement, FoldingDescriptor> map = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
       maps.add(map);
       getFoldingsFor(injectedFile, injectedDocument, map, false);
@@ -137,9 +139,10 @@ public class FoldingUpdate {
       public void run() {
         for (int i = 0; i < injectedEditors.size(); i++) {
           EditorWindow injectedEditor = injectedEditors.get(i);
+          PsiFile injectedFile = injectedFiles.get(i);
           if (!injectedEditor.getDocument().isValid()) continue;
           Map<PsiElement, FoldingDescriptor> map = maps.get(i);
-          UpdateFoldRegionsOperation op = new UpdateFoldRegionsOperation(project, injectedEditor, map, applyDefaultState, true);
+          UpdateFoldRegionsOperation op = new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, map, applyDefaultState, true);
           injectedEditor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(op);
         }
 

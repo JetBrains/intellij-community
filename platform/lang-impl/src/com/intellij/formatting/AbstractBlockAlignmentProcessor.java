@@ -87,8 +87,9 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
     if (blocksCausedRealignment != null && blocksCausedRealignment.contains(context.targetBlock)) {
       LOG.error(String.format("Formatting error - code block %s is set to be shifted right because of its alignment with "
                               + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
-                              + "subsequent block to be shifted right as well - cyclic dependency",
-                              offsetResponsibleBlock.getTextRange(), context.targetBlock.getTextRange()));
+                              + "subsequent block to be shifted right as well - cyclic dependency. Document: %n%s",
+                              offsetResponsibleBlock.getTextRange(), context.targetBlock.getTextRange(), context.document.getText()
+      ));
       blocksCausedRealignment.add(context.targetBlock);
       return Result.UNABLE_TO_ALIGN_BACKWARD_BLOCK;
     }

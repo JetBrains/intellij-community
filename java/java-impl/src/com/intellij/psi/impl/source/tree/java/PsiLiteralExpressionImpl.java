@@ -24,11 +24,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -84,7 +86,9 @@ public class PsiLiteralExpressionImpl
       return PsiType.CHAR;
     }
     if (type == JavaTokenType.STRING_LITERAL) {
-      return PsiType.getJavaLangString(getManager(), getResolveScope());
+      PsiManagerEx manager = getManager();
+      GlobalSearchScope resolveScope = manager.getFileManager().getResolveScope(this);
+      return PsiType.getJavaLangString(manager, resolveScope);
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
       return PsiType.BOOLEAN;
@@ -258,7 +262,7 @@ public class PsiLiteralExpressionImpl
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_31)
             && getParent() instanceof PsiPrefixExpression
-            && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == JavaTokenType.MINUS)) {
+            && ((PsiPrefixExpression)getParent()).getOperationTokenType() == JavaTokenType.MINUS)) {
         if (text.equals(HEX_PREFIX)) {
           return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
         }
@@ -274,7 +278,7 @@ public class PsiLiteralExpressionImpl
       //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_63_L)
             && getParent() instanceof PsiPrefixExpression
-            && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == JavaTokenType.MINUS)) {
+            && ((PsiPrefixExpression)getParent()).getOperationTokenType() == JavaTokenType.MINUS)) {
         if (text.equals(LONG_HEX_EMPTY)) {
           return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
         }

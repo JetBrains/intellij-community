@@ -99,6 +99,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   // todo group somewhere
   private JPanel myNoDetailsPanel;
   private JPanel myNothingSelected;
+  private JPanel myNotLoadedYet;
   private boolean myDetailsOn;
   private ChangesViewManager.MyFileListener myFileListener;
   private final SLRUMap<FilePath, Pair<JPanel, Disposable>> myDetailsCache;
@@ -106,6 +107,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private final MyDocumentListener myDocumentListener;
   private ZipperUpdater myDetailsUpdater;
   private Runnable myUpdateDetails;
+  private MessageBusConnection myConnection;
+  private ChangesViewManager.ToggleDetailsAction myToggleDetailsAction;
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
@@ -118,6 +121,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myView = new ChangesListView(project);
     myNoDetailsPanel = VcsChangeDetailsManager.errorPanel("No details available", false);
     myNothingSelected = VcsChangeDetailsManager.errorPanel("Nothing selected", false);
+    myNotLoadedYet = VcsChangeDetailsManager.errorPanel("Changes content is not loaded yet", false);
 
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
@@ -154,8 +158,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myContentManager.addContent(content);
 
     scheduleRefresh();
-    final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
-    connection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, new Runnable() {
+    myConnection = myProject.getMessageBus().connect(myProject);
+    myConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -167,6 +171,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   public void projectClosed() {
+    myConnection.disconnect();
     myDetailsCache.clear();
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
@@ -210,7 +215,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));                                              
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
-    visualActionsGroup.add(new ToggleDetailsAction());
+    myToggleDetailsAction = new ToggleDetailsAction();
+    visualActionsGroup.add(myToggleDetailsAction);
     visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
     toolbarPanel.add(createToolbarComponent(visualActionsGroup), BorderLayout.CENTER);
 
@@ -257,6 +263,12 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         Pair<JPanel, Disposable> details = null;
         FilePath filePath = null;
         for (Change change : selectedChanges) {
+          if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
+            mySplitter.setSecondComponent(myNotLoadedYet);
+            mySplitter.revalidate();
+            mySplitter.repaint();
+            return;
+          }
           filePath = ChangesUtil.getFilePath(change);
           details = myDetailsCache.get(filePath);
           if (details != null) break;

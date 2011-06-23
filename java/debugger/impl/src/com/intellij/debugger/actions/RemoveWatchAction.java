@@ -35,7 +35,7 @@ public class RemoveWatchAction extends DebuggerAction {
       }
     }
 
-    return (DebuggerTreeNodeImpl[])selectedWatches.toArray(new DebuggerTreeNodeImpl[selectedWatches.size()]);
+    return selectedWatches.toArray(new DebuggerTreeNodeImpl[selectedWatches.size()]);
   }
 
   public void actionPerformed(AnActionEvent e) {

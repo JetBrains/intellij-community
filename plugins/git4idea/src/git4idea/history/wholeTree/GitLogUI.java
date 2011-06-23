@@ -274,7 +274,7 @@ public class GitLogUI implements Disposable {
     });
 
     /*final JComponent specificDetails = myDetails.create();
-    final Content specificDetailsContent = myUi.createContent("Specific0", specificDetails, "Details", Icons.UNSELECT_ALL_ICON, null);
+    final Content specificDetailsContent = myUi.createContent("Specific0", specificDetails, "Details", PlatformIcons.UNSELECT_ALL_ICON, null);
     myUi.addContent(specificDetailsContent, 0, PlaceInGrid.bottom, false);
     repoContent.setCloseable(false);
     repoContent.setPinned(true);

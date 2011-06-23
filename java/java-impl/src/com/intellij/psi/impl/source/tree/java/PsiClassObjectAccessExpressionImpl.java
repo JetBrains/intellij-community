@@ -21,10 +21,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -99,8 +99,8 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
 
   @NotNull
   public Icon getElementIcon(final int flags) {
-    final RowIcon rowIcon = createLayeredIcon(Icons.FIELD_ICON, 0);
-    rowIcon.setIcon(Icons.PUBLIC_ICON, 1);
+    final RowIcon rowIcon = createLayeredIcon(PlatformIcons.FIELD_ICON, 0);
+    rowIcon.setIcon(PlatformIcons.PUBLIC_ICON, 1);
     return rowIcon;
   }
 }
