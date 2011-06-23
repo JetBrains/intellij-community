@@ -55,13 +55,19 @@ class LineBreakpoint:
 
       breakDict[line] = self
 
+def get_exception_full_qname(exctype):
+    if not exctype:
+        return None
+    return exctype.__module__ + '.' + exctype.__name__
 
 def get_exception_name(exctype):
-    return exctype.__module__ + '.' + exctype.__name__
+    if not exctype:
+        return None
+    return exctype.__name__
 
 
 def get_exception_breakpoint(exctype, exceptions, notify_class):
-    name = get_exception_name(exctype)
+    name = get_exception_full_qname(exctype)
     exc = None
     if exceptions is not None:
         for k, e in exceptions.items():
