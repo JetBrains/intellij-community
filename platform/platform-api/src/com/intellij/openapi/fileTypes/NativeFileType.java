@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,6 +65,16 @@ public class NativeFileType implements INativeFileType {
 
   public String getCharset(@NotNull VirtualFile file, byte[] content) {
     return null;
+  }
+
+  @Override
+  public boolean openFileInAssociatedApplication(Project project, VirtualFile file) {
+    return openAssociatedApplication(file);
+  }
+
+  @Override
+  public boolean useNativeIcon() {
+    return true;
   }
 
   public static boolean openAssociatedApplication(VirtualFile file) {
