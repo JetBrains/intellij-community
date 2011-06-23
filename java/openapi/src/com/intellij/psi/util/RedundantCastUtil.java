@@ -141,7 +141,7 @@ public class RedundantCastUtil {
       PsiExpression lExpr = deparenthesizeExpression(expression.getROperand());
 
       if (rExpr != null && lExpr != null) {
-        final IElementType binaryToken = expression.getOperationSign().getTokenType();
+        final IElementType binaryToken = expression.getOperationTokenType();
         processBinaryExpressionOperand(lExpr, rExpr, binaryToken);
         processBinaryExpressionOperand(rExpr, lExpr, binaryToken);
       }

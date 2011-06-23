@@ -351,7 +351,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final PsiExpression rOperand = expression.getROperand();
     if (rOperand == null) return;
     final TypeView right = new TypeView(rOperand);
-    if (!TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationSign().getTokenType(), left.getType(), right.getType(), false)) {
+    if (!TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationTokenType(), left.getType(), right.getType(), false)) {
       if (left.isChanged()) {
         findConversionOrFail(expression, lOperand, left.getTypePair());
       }

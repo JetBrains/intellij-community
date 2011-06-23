@@ -294,7 +294,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     while (element instanceof PsiParenthesizedExpression) {
       element = element.getParent();
     }
-    return element instanceof PsiPrefixExpression && ((PsiPrefixExpression)element).getOperationSign().getTokenType() == JavaTokenType.EXCL;
+    return element instanceof PsiPrefixExpression && ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.EXCL;
   }
 
   private static Template generateTemplate(Project project, PsiExpression initializer, PsiType type) {

@@ -69,7 +69,7 @@ public class AnnotationUtilEx {
       element = ContextComputationProcessor.getTopLevelInjectionTarget(element);
       final PsiElement parent = element.getParent();
 
-      if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationSign().getTokenType() == JavaTokenType.PLUSEQ) {
+      if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationTokenType() == JavaTokenType.PLUSEQ) {
         element = ((PsiAssignmentExpression)element).getLExpression();
         continue;
       }
@@ -145,7 +145,7 @@ public class AnnotationUtilEx {
 
     if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
-      if (p.getRExpression() == element || p.getOperationSign().getTokenType() == JavaTokenType.PLUSEQ) {
+      if (p.getRExpression() == element || p.getOperationTokenType() == JavaTokenType.PLUSEQ) {
         final PsiExpression left = p.getLExpression();
         if (left instanceof PsiReferenceExpression) {
           if (!visitor.visitReference((PsiReferenceExpression)left)) return false;

@@ -130,7 +130,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       rExpression.accept(this);
       Evaluator rEvaluator = myResult;
 
-      if(expression.getOperationSign().getTokenType() != JavaTokenType.EQ) {
+      if(expression.getOperationTokenType() != JavaTokenType.EQ) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.operation.not.supported", expression.getOperationSign().getText()));
       }
 
@@ -311,7 +311,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
       rOperand.accept(this);
       Evaluator rResult = myResult;
-      IElementType opType = expression.getOperationSign().getTokenType();
+      IElementType opType = expression.getOperationTokenType();
       PsiType expressionExpectedType = expression.getType();
       if (expressionExpectedType == null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));

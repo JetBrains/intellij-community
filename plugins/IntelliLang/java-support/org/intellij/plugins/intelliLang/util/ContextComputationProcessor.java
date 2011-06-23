@@ -77,13 +77,13 @@ public class ContextComputationProcessor {
       collectOperands(((PsiConditionalExpression)expression).getElseExpression(), result, unparsable);
     }
     else if (expression instanceof PsiBinaryExpression &&
-             ((PsiBinaryExpression)expression).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
+             ((PsiBinaryExpression)expression).getOperationTokenType() == JavaTokenType.PLUS) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       collectOperands(binaryExpression.getLOperand(), result, unparsable);
       collectOperands(binaryExpression.getROperand(), result, unparsable);
     }
     else if (expression instanceof PsiAssignmentExpression &&
-             ((PsiAssignmentExpression)expression).getOperationSign().getTokenType() == JavaTokenType.PLUSEQ) {
+             ((PsiAssignmentExpression)expression).getOperationTokenType() == JavaTokenType.PLUSEQ) {
       unparsable.set(Boolean.TRUE);
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
       collectOperands(assignmentExpression.getLExpression(), result, unparsable);

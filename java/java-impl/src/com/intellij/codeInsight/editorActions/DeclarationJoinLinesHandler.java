@@ -64,7 +64,7 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     PsiExpression initializerExpression;
-    final IElementType originalOpSign = assignment.getOperationSign().getTokenType();
+    final IElementType originalOpSign = assignment.getOperationTokenType();
     if (originalOpSign == JavaTokenType.EQ) {
       initializerExpression = assignment.getRExpression();
     }

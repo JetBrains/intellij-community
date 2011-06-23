@@ -125,7 +125,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
     while (true) {
       PsiExpression lOperand = element.getLOperand();
       PsiExpression rOperand = element.getROperand();
-      if (element.getOperationSign().getTokenType() != JavaTokenType.PLUS) return concatenation;
+      if (element.getOperationTokenType() != JavaTokenType.PLUS) return concatenation;
       stringLiteralOccured |= lOperand instanceof PsiLiteralExpression && ((PsiLiteralExpression)lOperand).getValue() instanceof String ||
                               rOperand instanceof PsiLiteralExpression && ((PsiLiteralExpression)rOperand).getValue() instanceof String;
 

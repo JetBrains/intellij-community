@@ -262,7 +262,7 @@ public class PsiLiteralExpressionImpl
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_31)
             && getParent() instanceof PsiPrefixExpression
-            && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == JavaTokenType.MINUS)) {
+            && ((PsiPrefixExpression)getParent()).getOperationTokenType() == JavaTokenType.MINUS)) {
         if (text.equals(HEX_PREFIX)) {
           return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
         }
@@ -278,7 +278,7 @@ public class PsiLiteralExpressionImpl
       //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_63_L)
             && getParent() instanceof PsiPrefixExpression
-            && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == JavaTokenType.MINUS)) {
+            && ((PsiPrefixExpression)getParent()).getOperationTokenType() == JavaTokenType.MINUS)) {
         if (text.equals(LONG_HEX_EMPTY)) {
           return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
         }

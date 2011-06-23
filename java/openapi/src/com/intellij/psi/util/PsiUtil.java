@@ -81,7 +81,7 @@ public final class PsiUtil extends PsiUtilBase {
     PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
     return !(parent instanceof PsiAssignmentExpression) ||
            !PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getLExpression(), expr, false) ||
-           ((PsiAssignmentExpression)parent).getOperationSign().getTokenType() != JavaTokenType.EQ;
+           ((PsiAssignmentExpression)parent).getOperationTokenType() != JavaTokenType.EQ;
   }
 
   public static boolean isAccessible(PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
@@ -276,12 +276,12 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static boolean isIncrementDecrementOperation(PsiElement element) {
     if (element instanceof PsiPostfixExpression) {
-      final IElementType sign = ((PsiPostfixExpression) element).getOperationSign().getTokenType();
+      final IElementType sign = ((PsiPostfixExpression)element).getOperationTokenType();
       if (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)
         return true;
     }
     else if (element instanceof PsiPrefixExpression) {
-      final IElementType sign = ((PsiPrefixExpression) element).getOperationSign().getTokenType();
+      final IElementType sign = ((PsiPrefixExpression)element).getOperationTokenType();
       if (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)
         return true;
     }

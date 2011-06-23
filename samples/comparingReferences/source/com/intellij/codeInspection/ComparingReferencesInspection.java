@@ -69,7 +69,7 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
 
       @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
           super.visitBinaryExpression(expression);
-          IElementType opSign = expression.getOperationSign().getTokenType();
+        IElementType opSign = expression.getOperationTokenType();
           if (opSign == JavaTokenType.EQEQ || opSign == JavaTokenType.NE) {
               PsiExpression lOperand = expression.getLOperand();
               PsiExpression rOperand = expression.getROperand();
@@ -102,7 +102,7 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       try {
         PsiBinaryExpression binaryExpression = (PsiBinaryExpression)descriptor.getPsiElement();
-        IElementType opSign = binaryExpression.getOperationSign().getTokenType();
+        IElementType opSign = binaryExpression.getOperationTokenType();
         PsiExpression lExpr = binaryExpression.getLOperand();
         PsiExpression rExpr = binaryExpression.getROperand();
         if (rExpr == null)
