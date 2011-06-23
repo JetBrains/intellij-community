@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.ultimate.PluginVerifier;
@@ -23,5 +24,6 @@ public class PythonFileTypeFactory extends FileTypeFactory {
     consumer.consume(PythonFileType.INSTANCE, "py;pyw;");
     consumer.consume(QtUIFileType.INSTANCE, "ui");
     consumer.consume(QtTranslationsFileType.INSTANCE, "ts");
+    consumer.consume(XmlFileType.INSTANCE, "qrc");
   }
 }
