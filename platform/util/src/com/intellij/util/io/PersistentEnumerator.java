@@ -197,17 +197,15 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
   
-  protected int tryEnumerate(Data value) throws IOException {
+  protected synchronized int tryEnumerate(Data value) throws IOException {
     synchronized (ourEnumerationCache) {
       final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
       if (cachedId != null) return cachedId.intValue();
     }
 
     final int id;
-    synchronized (this) {
-      synchronized (ourLock) {
-        id = enumerateImpl(value, false);
-      }
+    synchronized (ourLock) {
+      id = enumerateImpl(value, false);
     }
 
     if (id != NULL_ID) {
@@ -218,20 +216,16 @@ public class PersistentEnumerator<Data> implements Forceable {
 
     return id;
   }
-
-  public int enumerate(Data value) throws IOException {
+  
+  public synchronized int enumerate(Data value) throws IOException {
     synchronized (ourEnumerationCache) {
       final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
-      if (cachedId != null) {
-        return cachedId.intValue();
-      }
+      if (cachedId != null) return cachedId.intValue();
     }
 
     final int id;
-    synchronized (this) {
-      synchronized (ourLock) {
-        id = enumerateImpl(value, true);
-      }
+    synchronized (ourLock) {
+      id = enumerateImpl(value, true);
     }
 
     synchronized (ourEnumerationCache) {
