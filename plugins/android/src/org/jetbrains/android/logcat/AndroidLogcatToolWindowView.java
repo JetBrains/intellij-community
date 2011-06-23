@@ -19,6 +19,7 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
 import com.intellij.diagnostic.logging.LogConsoleBase;
+import com.intellij.diagnostic.logging.LogConsoleListener;
 import com.intellij.diagnostic.logging.LogFilterModel;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.Disposable;
@@ -27,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -41,6 +43,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Writer;
 import java.util.List;
 
 /**
@@ -58,7 +61,9 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private volatile IDevice myDevice;
   private final Object myLock = new Object();
   private final LogConsoleBase myLogConsole;
+
   private volatile Reader myCurrentReader;
+  private volatile Writer myCurrentWriter;
 
   private final AndroidDebugBridge.IDeviceChangeListener myDeviceChangeListener = new AndroidDebugBridge.IDeviceChangeListener() {
     public void deviceConnected(IDevice device) {
@@ -142,6 +147,19 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         return AndroidLogcatToolWindowView.this.isActive();
       }
     };
+    myLogConsole.addListener(new LogConsoleListener() {
+      @Override
+      public void loggingWillBeStopped() {
+        if (myCurrentWriter != null) {
+          try {
+            myCurrentWriter.close();
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+      }
+    });
     mySearchComponentWrapper.add(myLogConsole.getSearchComponent());
     JComponent consoleComponent = myLogConsole.getComponent();
     DefaultActionGroup group = new DefaultActionGroup();
@@ -184,6 +202,14 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     if (myDevice != device) {
       synchronized (myLock) {
         myDevice = device;
+        if (myCurrentWriter != null) {
+          try {
+            myCurrentWriter.close();
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
         if (myCurrentReader != null) {
           try {
             myCurrentReader.close();
@@ -193,7 +219,15 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
           }
         }
         if (device != null) {
-          myCurrentReader = AndroidLogcatUtil.startLoggingThread(myProject, device, false, myLogConsole);
+          final Pair<Reader,Writer> pair = AndroidLogcatUtil.startLoggingThread(myProject, device, false, myLogConsole);
+          if (pair != null) {
+            myCurrentReader = pair.first;
+            myCurrentWriter = pair.second;
+          }
+          else {
+            myCurrentReader = null;
+            myCurrentWriter = null;
+          }
         }
       }
     }
