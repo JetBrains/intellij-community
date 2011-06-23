@@ -18,11 +18,9 @@
  * created at Sep 17, 2001
  * @author Jeka
  */
-package com.intellij.refactoring.move.moveClassesOrPackages;
+package com.intellij.refactoring.move;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
@@ -30,36 +28,25 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 
-class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
+public class MoveMultipleElementsViewDescriptor implements UsageViewDescriptor {
   private final PsiElement[] myPsiElements;
-  private final boolean mySearchInComments;
-  private final boolean mySearchInNonJavaFiles;
-  private final String myNewParentPackageName;
   private String myProcessedElementsHeader;
   private final String myCodeReferencesText;
 
-  public MoveClassesOrPackagesViewDescriptor(PsiElement[] psiElements,
-                                             boolean isSearchInComments,
-                                             boolean searchInNonJavaFiles,
-                                             String targetName) {
+  public MoveMultipleElementsViewDescriptor(PsiElement[] psiElements,
+                                            String targetName) {
     myPsiElements = psiElements;
-    mySearchInComments = isSearchInComments;
-    mySearchInNonJavaFiles = searchInNonJavaFiles;
-    myNewParentPackageName = targetName;
     if (psiElements.length == 1) {
       myProcessedElementsHeader = StringUtil.capitalize(
-        RefactoringBundle.message("move.single.element.elements.header", UsageViewUtil.getType(psiElements[0]), myNewParentPackageName));
-      myCodeReferencesText = RefactoringBundle.message("references.in.code.to.0.1", UsageViewUtil.getType(psiElements[0]), UsageViewUtil.getLongName(psiElements[0]));
+        RefactoringBundle.message("move.single.element.elements.header", UsageViewUtil.getType(psiElements[0]), targetName));
+      myCodeReferencesText = RefactoringBundle
+        .message("references.in.code.to.0.1", UsageViewUtil.getType(psiElements[0]), UsageViewUtil.getLongName(psiElements[0]));
     }
     else {
       if (psiElements.length > 0) {
-        if (psiElements[0] instanceof PsiClass) {
-          myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("move.classes.elements.header", myNewParentPackageName));
-        }
-        else if (psiElements[0] instanceof PsiDirectory){
-          myProcessedElementsHeader =
-            StringUtil.capitalize(RefactoringBundle.message("move.packages.elements.header", myNewParentPackageName));
-        }
+        myProcessedElementsHeader = StringUtil.capitalize(
+          RefactoringBundle
+            .message("move.single.element.elements.header", StringUtil.pluralize(UsageViewUtil.getType(psiElements[0])), targetName));
       }
       myCodeReferencesText = RefactoringBundle.message("references.found.in.code");
     }

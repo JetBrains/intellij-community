@@ -38,6 +38,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
+import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
@@ -114,8 +115,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myElementsToMove.length];
     System.arraycopy(myElementsToMove, 0, elements, 0, myElementsToMove.length);
-    return new MoveClassesOrPackagesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles,
-                                                   MoveClassesOrPackagesUtil.getPackageName(myTargetPackage));
+    return new MoveMultipleElementsViewDescriptor(elements, MoveClassesOrPackagesUtil.getPackageName(myTargetPackage));
   }
 
   public boolean verifyValidPackageName() {
@@ -486,36 +486,12 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      myNonCodeUsages = retargetUsages(usages, oldToNewElementsMapping);
+      myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
     }
     catch (IncorrectOperationException e) {
       myNonCodeUsages = new NonCodeUsageInfo[0];
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
-  }
-
-  public static NonCodeUsageInfo[] retargetUsages(final UsageInfo[] usages, final Map<PsiElement, PsiElement> oldToNewElementsMapping)
-    throws IncorrectOperationException {
-    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
-    for (UsageInfo usage : usages) {
-      if (usage instanceof NonCodeUsageInfo) {
-        nonCodeUsages.add((NonCodeUsageInfo)usage);
-      }
-      else if (usage instanceof MoveRenameUsageInfo) {
-        final MoveRenameUsageInfo moveRenameUsage = (MoveRenameUsageInfo)usage;
-        final PsiElement oldElement = moveRenameUsage.getReferencedElement();
-        final PsiElement newElement = oldToNewElementsMapping.get(oldElement);
-        LOG.assertTrue(newElement != null);
-        final PsiReference reference = moveRenameUsage.getReference();
-        if (reference != null) {
-          try {
-            reference.bindToElement(newElement);
-          } catch (IncorrectOperationException e) {//
-          }
-        }
-      }
-    }
-    return nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
   }
 
   protected void performPsiSpoilingRefactoring() {

@@ -629,4 +629,6 @@
   <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.PlainTextFormatter" />
 
   <documentationProvider implementation="com.intellij.openapi.paths.WebReferenceDocumentationProvider"/>
+
+  <refactoring.moveDirectoryWithClassesHelper implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper$Default" order="last"/>
 </extensions>

@@ -722,6 +722,8 @@
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveInner.MoveInnerToUpperOrMembersHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.anonymousToInner.MoveAnonymousToInnerHandler"/>
 
+    <refactoring.moveDirectoryWithClassesHelper implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveDirectoryWithClassesHelper"/>
+
     <moveFileHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaFileHandler" id="java"/>
 
     <refactoring.moveClassHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaClassHandler" id="java"/>

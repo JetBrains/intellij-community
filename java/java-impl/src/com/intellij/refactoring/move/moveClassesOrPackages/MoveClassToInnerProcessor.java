@@ -36,6 +36,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
+import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
@@ -93,9 +94,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new MoveClassesOrPackagesViewDescriptor(myClassesToMove,
-                                                   mySearchInComments, mySearchInNonJavaFiles,
-                                                   myTargetClass.getQualifiedName());
+    return new MoveMultipleElementsViewDescriptor(myClassesToMove, myTargetClass.getQualifiedName());
   }
 
   @NotNull
@@ -155,7 +154,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
         oldToNewElementsMapping.put(classToMove, newClass);
       }
 
-      myNonCodeUsages = MoveClassesOrPackagesProcessor.retargetUsages(usages, oldToNewElementsMapping);
+      myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
       retargetNonCodeUsages(oldToNewElementsMapping);
 
       retargetClassRefsInMoved(oldToNewElementsMapping);

@@ -220,6 +220,7 @@
 
   <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
   <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
+  <extensionPoint name="refactoring.moveDirectoryWithClassesHelper" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper"/>
   <extensionPoint name="refactoring.moveClassHandler" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler"/>
   <extensionPoint name="refactoring.moveMemberHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="refactoring.moveInnerHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
