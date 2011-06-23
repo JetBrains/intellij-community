@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ import java.util.List;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> implements UserActivityProviderComponent {
   private boolean myPassParentEnvs;
-  private Map<String, String> myEnvs;
+  private Map<String, String> myEnvs = new THashMap<String, String>();
   @NonNls private static final String ENVS = "envs";
   @NonNls private static final String ENV = "env";
   @NonNls private static final String NAME = "name";
@@ -85,6 +86,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     }
   }
 
+  @NotNull
   public Map<String, String> getEnvs() {
     return myEnvs;
   }

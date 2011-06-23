@@ -109,9 +109,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
     configuration.vmParams = myVMParameters.getText().trim();
     configuration.cmdLine = getCommandLine();
     configuration.envs.clear();
-    if (myEnvVariablesComponent.getEnvs() != null) {
-      configuration.envs.putAll(myEnvVariablesComponent.getEnvs());
-    }
+    configuration.envs.putAll(myEnvVariablesComponent.getEnvs());
     configuration.passParentEnv = myEnvVariablesComponent.isPassParentEnvs();
 
     if (myDepsClasspath.isEnabled()) {
