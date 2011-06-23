@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Override this class to provide custom type of facets. The implementation should be registered in the plugin.xml:
- * <p>
- * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
- * &nbsp;&nbsp;&lt;facetType implementation="qualified-class-name"/&gt;<br>
+ * Override this class to provide custom type of facets. The implementation should be registered in your {@code plugin.xml}:
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ * &nbsp;&nbsp;&lt;facetType implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
- *
+ * </pre>
  * @author nik
  */
 public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
