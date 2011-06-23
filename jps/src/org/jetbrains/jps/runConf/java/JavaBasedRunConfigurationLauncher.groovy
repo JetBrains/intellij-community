@@ -62,7 +62,7 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     mySystemProperties.putAll(props);
   }
 
-  final void actualStart(RunConfiguration runConf) {
+  final void startInternal(RunConfiguration runConf) {
     def project = runConf.project;
 
     def ant = project.binding.ant;

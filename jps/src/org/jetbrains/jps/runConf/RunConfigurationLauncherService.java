@@ -20,11 +20,11 @@ public abstract class RunConfigurationLauncherService {
   public final void start(RunConfiguration runConf) {
     beforeStart(runConf);
     try {
-      actualStart(runConf);
+      startInternal(runConf);
     } finally {
       afterFinish(runConf);
     }
   }
 
-  protected abstract void actualStart(RunConfiguration runConf);
+  protected abstract void startInternal(RunConfiguration runConf);
 }
