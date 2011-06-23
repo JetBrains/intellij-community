@@ -22,7 +22,7 @@
 
   <configuration name="&lt;template&gt;" type="JUnit" default="true" selected="false">
     <option name="MAIN_CLASS_NAME" />
-    <option name="VM_PARAMETERS" />
+    <option name="VM_PARAMETERS" value="-ea"/>
     <option name="PARAMETERS" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
   </configuration>
@@ -32,6 +32,10 @@
     <option name="SHMEM_ADDRESS" value="javadebug" />
     <option name="HOST" value="localhost" />
     <option name="PORT" value="5005" />
+  </configuration>
+
+  <configuration name="&lt;template&gt;" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" default="true" selected="false">
+    <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m" />
   </configuration>
 
   <configuration name="&lt;template&gt;" type="WebApp" default="true" selected="false">

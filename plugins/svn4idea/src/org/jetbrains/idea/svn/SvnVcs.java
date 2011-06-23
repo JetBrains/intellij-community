@@ -274,6 +274,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       final MessageBusConnection connection = bus.connect();
       connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
         public void processLoadedLists(final List<LocalChangeList> lists) {
+          if (lists.isEmpty()) return;
           SvnConfiguration.SvnSupportOptions supportOptions = null;
           try {
             ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
