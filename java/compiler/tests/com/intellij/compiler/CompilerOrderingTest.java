@@ -62,7 +62,7 @@ public class CompilerOrderingTest extends IdeaTestCase {
     for (TranslatingCompiler compiler : compilers) {
       actualDescriptions.add(compiler.getDescription());
     }
-    final String[] actual = (String[])ArrayUtil.toStringArray(actualDescriptions);
+    final String[] actual = ArrayUtil.toStringArray(actualDescriptions);
 
     assertEquals(expected.length, actual.length);
 
