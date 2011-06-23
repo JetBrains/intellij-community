@@ -175,7 +175,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     ):baseIcon;
   }
 
-  public static class ElementIconRequest extends ComparableObject.Impl {
+  private static class ElementIconRequest extends ComparableObject.Impl {
     public ElementIconRequest(PsiElement element, int flags) {
       super(new Object[] {createPointer(element), flags});
     }

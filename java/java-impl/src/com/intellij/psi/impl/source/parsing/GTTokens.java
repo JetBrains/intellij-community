@@ -27,52 +27,50 @@ import com.intellij.util.CharTable;
 /**
  *  @author dsl
  */
-class GTTokens implements JavaTokenType {
+class GTTokens {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.GTTokens");
   static IElementType getTokenType(Lexer lexer) {
-    if (lexer.getTokenType() != GT) return lexer.getTokenType();
+    if (lexer.getTokenType() != JavaTokenType.GT) return lexer.getTokenType();
     final LexerPosition originalPosition = lexer.getCurrentPosition();
     final int prevTokenEnd = lexer.getTokenEnd();
     lexer.advance();
     if (lexer.getTokenStart() != prevTokenEnd) {
       lexer.restore(originalPosition);
-      return GT;
+      return JavaTokenType.GT;
     }
     final IElementType resultType;
     IElementType i1 = lexer.getTokenType();
-    if (i1 == EQ) {
-      resultType = GE;
+    if (i1 == JavaTokenType.EQ) {
+      resultType = JavaTokenType.GE;
     }
-    else if (i1 == GT) {
-      {
-        final int prevTokenEnd2 = lexer.getTokenEnd();
-        lexer.advance();
-        if (lexer.getTokenStart() != prevTokenEnd2) {
-          resultType = GTGT;
-        }
-        else {
-          IElementType i = lexer.getTokenType();
-          if (i == GT) {
-            final int prevTokenEnd3 = lexer.getTokenEnd();
-            lexer.advance();
-            if (lexer.getTokenStart() != prevTokenEnd3 || lexer.getTokenType() != EQ) {
-              resultType = GTGTGT;
-            }
-            else {
-              resultType = GTGTGTEQ;
-            }
-          }
-          else if (i == EQ) {
-            resultType = GTGTEQ;
+    else if (i1 == JavaTokenType.GT) {
+      final int prevTokenEnd2 = lexer.getTokenEnd();
+      lexer.advance();
+      if (lexer.getTokenStart() != prevTokenEnd2) {
+        resultType = JavaTokenType.GTGT;
+      }
+      else {
+        IElementType i = lexer.getTokenType();
+        if (i == JavaTokenType.GT) {
+          final int prevTokenEnd3 = lexer.getTokenEnd();
+          lexer.advance();
+          if (lexer.getTokenStart() != prevTokenEnd3 || lexer.getTokenType() != JavaTokenType.EQ) {
+            resultType = JavaTokenType.GTGTGT;
           }
           else {
-            resultType = GTGT;
+            resultType = JavaTokenType.GTGTGTEQ;
           }
+        }
+        else if (i == JavaTokenType.EQ) {
+          resultType = JavaTokenType.GTGTEQ;
+        }
+        else {
+          resultType = JavaTokenType.GTGT;
         }
       }
     }
     else {
-      resultType = GT;
+      resultType = JavaTokenType.GT;
     }
     lexer.restore(originalPosition);
     return resultType;
@@ -80,38 +78,38 @@ class GTTokens implements JavaTokenType {
 
   static TreeElement createTokenElementAndAdvance(IElementType tokenType, Lexer lexer, CharTable table) {
     final TreeElement result;
-    if (tokenType == GTGT || tokenType == GE) {
+    if (tokenType == JavaTokenType.GTGT || tokenType == JavaTokenType.GE) {
       result = mergeTokens(1, lexer, tokenType, table);
     }
-    else if (tokenType == GTGTEQ || tokenType == GTGTGT) {
+    else if (tokenType == JavaTokenType.GTGTEQ || tokenType == JavaTokenType.GTGTGT) {
       result = mergeTokens(2, lexer, tokenType, table);
     }
-    else if (tokenType == GTGTGTEQ) {
+    else if (tokenType == JavaTokenType.GTGTGTEQ) {
       result = mergeTokens(3, lexer, tokenType, table);
     }
     else {
       LOG.assertTrue(tokenType == lexer.getTokenType());
-      result = ParseUtil.createTokenElement(lexer, table);
+      result = ParseUtilBase.createTokenElement(lexer, table);
     }
     lexer.advance();
     return result;
   }
 
   static void advance(IElementType tokenType, Lexer lexer) {
-    if(lexer.getTokenType() != GT){
+    if(lexer.getTokenType() != JavaTokenType.GT){
       lexer.advance();
     }
     else {
-      if (tokenType == GTGTGTEQ) {
+      if (tokenType == JavaTokenType.GTGTGTEQ) {
         lexer.advance();
         lexer.advance();
         lexer.advance();
       }
-      else if (tokenType == GTGTEQ || tokenType == GTGTGT) {
+      else if (tokenType == JavaTokenType.GTGTEQ || tokenType == JavaTokenType.GTGTGT) {
         lexer.advance();
         lexer.advance();
       }
-      else if (tokenType == GTGT || tokenType == GE) {
+      else if (tokenType == JavaTokenType.GTGT || tokenType == JavaTokenType.GE) {
         lexer.advance();
       }
       lexer.advance();
