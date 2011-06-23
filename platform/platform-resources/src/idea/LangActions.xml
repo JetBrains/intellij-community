@@ -64,7 +64,8 @@
       <separator/>
       <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
       <action id="Print" class="com.intellij.codeEditor.printing.PrintAction"/>
-
+      <reference ref="AddToFavorites"/>
+      
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="InvalidateCaches"/>
     </group>
 
@@ -134,14 +135,13 @@
     <action id="ShowUsagesSettings" class="com.intellij.find.actions.ShowUsagesAction$ShowSettings"/>
 
     <group id="CodeEditorBaseGroup">
-      <separator/>
       <group id="CodeEditorViewGroup">
-        <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
-        <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
-        <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
         <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
         <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
+        <separator/>
+        <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
+        <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
         <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
         <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
       </group>
@@ -151,10 +151,8 @@
         <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
       </group>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
 
-      <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="after"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
     </group>
 
     <group id="FoldingGroup" popup="true">
@@ -168,13 +166,15 @@
       <separator/>
       <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
 
-      <add-to-group group-id="ViewMenu" anchor="last"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="UIToggleActions" anchor="before"/>
     </group>
 
-    <!-- TODO: correct action location -->
-    <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction">
-      <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="before"/>
-    </action>
+    <group id="QuickActions">
+      <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
+      <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
+
+      <add-to-group group-id="ViewMenu" anchor="first"/>
+    </group>
 
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
       <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
@@ -187,8 +187,7 @@
       <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
       <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
       <separator/>
-
-      <add-to-group group-id="ViewMenu" anchor="last"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="UIToggleActions" anchor="before"/>
     </group>
 
     <!-- Go To -->
@@ -273,6 +272,7 @@
       <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
       <action id="MoveLineDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineDownAction"/>
       <action id="MoveLineUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineUpAction"/>
+      <separator/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
 

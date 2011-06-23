@@ -138,7 +138,6 @@
              <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
              <group id="FileSettingsGroup"/>
           </group>
-          <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
         </group>
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
@@ -194,16 +193,6 @@
 
       <!-- View -->
       <group id="ViewMenu" popup="true">
-        <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
-        <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
-        <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
-        <reference ref="EditorToggleShowWhitespaces"/>
-        <reference ref="EditorToggleShowLineNumbers"/>
-        <reference ref="EditorToggleShowIndentLines" />
-        <reference ref="EditorToggleUseSoftWraps" />
-        <separator/>
-        <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
-        <separator/>
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>
@@ -215,6 +204,18 @@
         <group id="PairFileActions">
           <reference ref="CompareTwoFiles"/>
           <reference ref="CompareFileWithEditor"/>
+        </group>
+        <separator/>
+        <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
+        <group id="UIToggleActions">
+          <separator/>
+          <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
+          <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+          <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
+          <reference ref="EditorToggleShowWhitespaces"/>
+          <reference ref="EditorToggleShowLineNumbers"/>
+          <reference ref="EditorToggleShowIndentLines"/>
+          <reference ref="EditorToggleUseSoftWraps"/>
         </group>
       </group>
 
@@ -243,6 +244,9 @@
           <group id="PlaySavedMacroActions" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
         </group>
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
+        <separator/>
+        <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
+        <separator/>
       </group>
 
       <group id="WindowMenu" popup="true">
