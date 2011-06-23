@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,19 +61,22 @@ public interface BlockAlignmentProcessor {
   Result applyAlignment(@NotNull Context context);
   
   class Context {
-    
-    @NotNull public final AlignmentImpl alignment;
-    @NotNull public final LeafBlockWrapper targetBlock;
-    @NotNull public final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings;
-    @NotNull public final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> backwardShiftedAlignedBlocks;
-    @NotNull public final CodeStyleSettings.IndentOptions indentOptions;
 
-    public Context(@NotNull AlignmentImpl alignment,
+    @NotNull public final Document                                             document;
+    @NotNull public final AlignmentImpl                                        alignment;
+    @NotNull public final LeafBlockWrapper                                     targetBlock;
+    @NotNull public final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings;
+    @NotNull public final Map<LeafBlockWrapper, Set<LeafBlockWrapper>>         backwardShiftedAlignedBlocks;
+    @NotNull public final CodeStyleSettings.IndentOptions                      indentOptions;
+
+    public Context(@NotNull Document document,
+                   @NotNull AlignmentImpl alignment,
                    @NotNull LeafBlockWrapper targetBlock,
                    @NotNull Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings,
                    @NotNull Map<LeafBlockWrapper, Set<LeafBlockWrapper>> backwardShiftedAlignedBlocks,
                    @NotNull CodeStyleSettings.IndentOptions indentOptions)
     {
+      this.document = document;
       this.alignment = alignment;
       this.targetBlock = targetBlock;
       this.alignmentMappings = alignmentMappings;
