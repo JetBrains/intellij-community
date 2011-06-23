@@ -50,7 +50,7 @@ public class RunConfiguration {
     def String workDirUrl = this.allOptions['WORKING_DIRECTORY'];
     if (workDirUrl == null) workDirUrl = "";
     if (workDirUrl != '') {
-      workDirUrl = macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(workDirUrl));
+      workDirUrl = this.macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(workDirUrl));
     }
 
     this.workingDir = workDirUrl == '' ? new File(".").getCanonicalPath() : new File(workDirUrl).getCanonicalPath();

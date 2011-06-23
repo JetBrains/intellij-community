@@ -98,9 +98,9 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
       attrs["error"] = myErrorFile.absolutePath;
     }
 
-    def runConfRuntimeCpFile = createTempClasspath(runConfRuntimeCp);
-    def mainClassCpFile = createTempClasspath(getMainClassClasspath(runConf));
-    def tmpArgs = createTempArgs(splitCommandArgumentsAndUnquote(params.classArgs));
+    def runConfRuntimeCpFile = createTempFile(runConfRuntimeCp);
+    def mainClassCpFile = createTempFile(getMainClassClasspath(runConf));
+    def tmpArgs = createTempFile(splitCommandArgumentsAndUnquote(params.classArgs));
     project.info("Starting run configuration $runConf.name ...");
 
     ant.java(attrs) {
@@ -169,8 +169,8 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     return true;
   }
 
-  private String createTempClasspath(Collection<String> runtimeClasspath) {
-    def tmp = File.createTempFile("runner-cp", "suffix");
+  protected String createTempFile(Collection<String> runtimeClasspath) {
+    def tmp = File.createTempFile("runConf", "suffix");
     def writer = new BufferedWriter(new FileWriter(tmp));
 
     try {
@@ -184,26 +184,10 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     return tmp.getCanonicalPath();
   }
 
-  private String createTempArgs(List<String> args) {
-    def tmp = File.createTempFile("runner-args", "suffix");
-    def writer = new BufferedWriter(new FileWriter(tmp));
-
-    try {
-      for (String arg: args) {
-        if (arg != null) {
-          writer.writeLine(arg)
-        };
-      }
-    } finally {
-      writer.close();
-    }
-    return tmp.getCanonicalPath();
-  }
-
-  private Collection<String> splitClasspath(String cp) {
+  protected Collection<String> splitClasspath(String classpathStr) {
     def result = new LinkedHashSet<String>();
-    if (cp != null) {
-      result.addAll(Arrays.asList(cp.split(File.pathSeparator)));
+    if (classpathStr != null) {
+      result.addAll(Arrays.asList(classpathStr.split(File.pathSeparator)));
     }
     return result;
   }
