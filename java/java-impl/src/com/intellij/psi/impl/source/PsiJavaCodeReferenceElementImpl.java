@@ -543,6 +543,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   private PsiElement bindToClass(final PsiClass aClass) throws IncorrectOperationException {
     String qName = aClass.getQualifiedName();
+    final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     if (qName == null) {
       qName = aClass.getName();
@@ -552,12 +553,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
     }
     else {
-      if (facade.findClass(qName, getResolveScope()) == null) {
+      if (facade.findClass(qName, getResolveScope()) == null && !preserveQualification) {
         return this;
       }
     }
 
-    final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified();
     final PsiReferenceParameterList parameterList = getParameterList();
     String text = parameterList == null ? qName : qName + parameterList.getText();
     PsiJavaCodeReferenceElement ref = facade.getParserFacade().createReferenceFromText(text, getParent());
