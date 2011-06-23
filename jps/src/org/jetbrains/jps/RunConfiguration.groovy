@@ -17,7 +17,8 @@ public class RunConfiguration {
   final String workingDir;
   final Map<String, String> allOptions;
   final Map<String, String> envVars;
-  final Node node
+  final Node node;
+  final MacroExpander macroExpander;
 
   def RunConfiguration(Project project, MacroExpander macroExpander, Node confTag) {
     this.project = project;
@@ -41,8 +42,9 @@ public class RunConfiguration {
       this.module = null;
     }
 
+    this.macroExpander = macroExpander;
     if (this.module != null) {
-      macroExpander = new ModuleMacroExpander(macroExpander, this.module.basePath);
+      this.macroExpander = new ModuleMacroExpander(macroExpander, this.module.basePath);
     }
 
     def String workDirUrl = this.allOptions['WORKING_DIRECTORY'];
