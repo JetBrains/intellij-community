@@ -1,10 +1,16 @@
 package com.jetbrains.pyqt;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunContentExecutor;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -12,12 +18,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.django.run.Runner;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author yole
@@ -42,12 +44,20 @@ public class CompileQrcAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    List<String> args = new ArrayList<String>(Arrays.asList(path, "-o", dialog.getOutputPath()));
+
+    GeneralCommandLine cmdLine = new GeneralCommandLine();
+    cmdLine.setPassParentEnvs(true);
+    cmdLine.setExePath(path);
+    cmdLine.addParameters("-o", dialog.getOutputPath());
     for (VirtualFile vFile : vFiles) {
-      args.add(vFile.getPath());
+      cmdLine.addParameter(vFile.getPath());
     }
     try {
-      Runner.runInPath(project, vFiles[0].getParent().getPath(), true, null, args.toArray(new String[args.size()]));
+      ProcessHandler process = new OSProcessHandler(cmdLine.createProcess(), cmdLine.getCommandLineString());
+      ProcessTerminatedListener.attach(process);
+      new RunContentExecutor(project, process)
+        .withTitle("Compile .qrc")
+        .run();
     }
     catch (ExecutionException ex) {
       Messages.showErrorDialog(project, "Error running " + path + ": " + ex.getMessage(), "Compile .qrc file");
@@ -79,6 +89,13 @@ public class CompileQrcAction extends AnAction {
 
     protected CompileQrcDialog(Project project, VirtualFile[] vFiles) {
       super(project);
+      if (vFiles.length == 1) {
+        setTitle("Compile " + vFiles [0].getName());
+      }
+      else {
+        setTitle("Compile " + vFiles.length + " .qrc files");
+      }
+      myOutputFileField.addBrowseFolderListener("Select output path:", null, project, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
       init();
     }
 
@@ -89,6 +106,11 @@ public class CompileQrcAction extends AnAction {
 
     public String getOutputPath() {
       return myOutputFileField.getText();
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myOutputFileField;
     }
   }
 }
