@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class PagedFileStorage implements Forceable {
 
   static {
     String maxPagedStorageCacheProperty = System.getProperty("idea.max.paged.storage.cache");
-    int defaultMaxPagedStorageCacheInMegabytes = 200;
+    int defaultMaxPagedStorageCacheInMegabytes = SystemInfo.is64Bit ? 500:200;
     UPPER_LIMIT = (maxPagedStorageCacheProperty == null ? defaultMaxPagedStorageCacheInMegabytes:
                    Math.max(Integer.valueOf(maxPagedStorageCacheProperty), LOWER_LIMIT_IN_MEGABYTES))*MEGABYTE;
 
