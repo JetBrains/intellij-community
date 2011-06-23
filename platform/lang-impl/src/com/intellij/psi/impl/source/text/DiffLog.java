@@ -58,33 +58,30 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
   private final List<LogEntry> myEntries = new ArrayList<LogEntry>();
 
-  public void doActualPsiChange(final PsiFile file){
+  public void doActualPsiChange(@NotNull final PsiFile file){
     try {
-
-
       final Document document = file.getViewProvider().getDocument();
-      PsiToDocumentSynchronizer.DocumentChangeTransaction transaction =
-        ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject())).getSynchronizer().getTransaction(document);
+      PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject());
+      PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
 
       final PsiFileImpl fileImpl = (PsiFileImpl)file;
 
       final ASTDiffBuilder astDiffBuilder = new ASTDiffBuilder(fileImpl);
 
       if (transaction == null) {
-      final PomModel model = PomManager.getModel(fileImpl.getProject());
+        final PomModel model = PomManager.getModel(fileImpl.getProject());
 
-      model.runTransaction(new PomTransactionBase(fileImpl, model.getModelAspect(TreeAspect.class)) {
-        public PomModelEvent runInner() {
-          for (LogEntry entry : myEntries) {
-            entry.doActualPsiChange(file, astDiffBuilder);
+        model.runTransaction(new PomTransactionBase(fileImpl, model.getModelAspect(TreeAspect.class)) {
+          public PomModelEvent runInner() {
+            for (LogEntry entry : myEntries) {
+              entry.doActualPsiChange(file, astDiffBuilder);
+            }
+            fileImpl.subtreeChanged();
+
+            final PomModel model = PomManager.getModel(fileImpl.getProject());
+            return new TreeAspectEvent(model, astDiffBuilder.getEvent());
           }
-          fileImpl.subtreeChanged();
-
-          final PomModel model = PomManager.getModel(fileImpl.getProject());
-          TreeAspectEvent treeAspectEvent = new TreeAspectEvent(model, astDiffBuilder.getEvent());
-          return treeAspectEvent;
-        }
-      });
+        });
       }
       else {
         for (LogEntry entry : myEntries) {
@@ -146,19 +143,21 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       assert parent != null : "old:" + oldNode + " new:" + newNode;
 
       final PsiElement psiParent = parent.getPsi();
-      final PsiElement psiChild = file.isPhysical() ? oldNode.getPsi() : null;
-      if (psiParent != null && psiChild != null) {
+      final PsiElement psiOldChild = file.isPhysical() ? oldNode.getPsi() : null;
+      final PsiElement psiNewChild = newNode.getPsi();
+      if (psiParent != null && psiOldChild != null) {
         final PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
         event.setParent(psiParent);
-        event.setChild(psiChild);
+        event.setFile(file);
+        event.setOldChild(psiOldChild);
+        event.setNewChild(psiNewChild);
         ((PsiManagerEx)file.getManager()).beforeChildReplacement(event);
       }
 
       ((TreeElement)newNode).rawRemove();
       ((TreeElement)oldNode).rawReplaceWithList((TreeElement)newNode);
 
-
-       astDiffBuilder.nodeReplaced(oldNode, newNode);
+      astDiffBuilder.nodeReplaced(oldNode, newNode);
 
       /////////////////
       ((TreeElement)newNode).clearCaches();
@@ -192,6 +191,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
         event.setParent(psiParent);
         event.setChild(psiChild);
+        event.setFile(file);
         ((PsiManagerEx)file.getManager()).beforeChildRemoval(event);
       }
 
@@ -222,6 +222,16 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       ASTNode firstChildNode = myOldParent.getFirstChildNode();
       for (int i = 0; i < myPos; i++) {
         anchor = anchor == null ? firstChildNode : anchor.getTreeNext();
+      }
+
+      PsiElement psiParent = myOldParent.getPsi();
+      PsiElement psiChild = file.isPhysical() ? myNewNode.getPsi() : null;
+      if (psiParent != null && psiChild != null) {
+        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
+        event.setParent(psiParent);
+        event.setChild(psiChild);
+        event.setFile(file);
+        ((PsiManagerEx)file.getManager()).beforeChildAddition(event);
       }
 
       ((TreeElement)myNewNode).rawRemove();
@@ -259,14 +269,14 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     void doActualPsiChange(@NotNull PsiFile file, @NotNull ASTDiffBuilder astDiffBuilder) {
       PsiFileImpl fileImpl = (PsiFileImpl)file;
       final int oldLength = myOldNode.getTextLength();
-      BlockSupportImpl.sendPsiBeforeEvent(fileImpl);
+      BlockSupportImpl.sendBeforeChildrenChangeEvent(fileImpl);
       if (myOldNode.getFirstChildNode() != null) myOldNode.rawRemoveAllChildren();
       final ASTNode firstChildNode = myNewNode.getFirstChildNode();
       if (firstChildNode != null) myOldNode.rawAddChildren((TreeElement)firstChildNode);
       fileImpl.getTreeElement().setCharTable(myNewNode.getCharTable());
       ((PsiManagerEx)file.getManager()).invalidateFile(fileImpl);
       myOldNode.subtreeChanged();
-      BlockSupportImpl.sendPsiAfterFileEvent(fileImpl, oldLength);
+      BlockSupportImpl.sendAfterChildrenChangedEvent(fileImpl, oldLength);
     }
   }
 

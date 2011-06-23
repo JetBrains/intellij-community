@@ -231,7 +231,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
-    BlockSupportImpl.sendPsiBeforeEvent(transaction.getChangeScope());
+    BlockSupportImpl.sendBeforeChildrenChangeEvent(transaction.getChangeScope());
     LOG.assertTrue(changeScope != null);
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
 

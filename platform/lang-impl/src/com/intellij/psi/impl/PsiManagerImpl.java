@@ -423,7 +423,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     myTreeChangeListeners.remove(listener);
   }
 
-  public void beforeChildAddition(PsiTreeChangeEventImpl event) {
+  @Override
+  public void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event) {
+    beforeAnyChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -434,6 +436,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforeChildRemoval(@NotNull PsiTreeChangeEventImpl event) {
+    beforeAnyChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REMOVAL);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -445,6 +448,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforeChildReplacement(@NotNull PsiTreeChangeEventImpl event) {
+    beforeAnyChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -456,6 +460,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforeChildrenChange(PsiTreeChangeEventImpl event) {
+    beforeAnyChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILDREN_CHANGE);
     if (LOG.isDebugEnabled()) {
       LOG.debug("beforeChildrenChange: parent = " + event.getParent());
@@ -464,6 +469,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforeChildMovement(PsiTreeChangeEventImpl event) {
+    beforeAnyChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_MOVEMENT);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -476,6 +482,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforePropertyChange(PsiTreeChangeEventImpl event) {
+    beforeAnyChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -488,7 +495,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void childAdded(PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_ADDED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -501,7 +507,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void childRemoved(PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -513,7 +518,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void childReplaced(PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_REPLACED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -527,7 +531,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void childMoved(PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -541,7 +544,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void childrenChanged(PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -553,7 +555,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void propertyChanged(PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -692,14 +693,14 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void nonPhysicalChange() {
-    beforeChange(false);
+    beforeAnyChange(false);
   }
 
   public void physicalChange() {
-    beforeChange(true);
+    beforeAnyChange(true);
   }
 
-  private void beforeChange(boolean isPhysical) {
+  private void beforeAnyChange(boolean isPhysical) {
     myMessageBus.syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(isPhysical);
   }
 

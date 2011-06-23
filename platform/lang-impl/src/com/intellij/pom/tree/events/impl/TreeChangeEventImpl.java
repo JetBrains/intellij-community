@@ -16,8 +16,8 @@
 
 package com.intellij.pom.tree.events.impl;
 
-import com.intellij.idea.LoggerFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.tree.events.ChangeInfo;
@@ -37,6 +37,7 @@ import java.util.*;
  * @author ik
  */
 public class TreeChangeEventImpl implements TreeChangeEvent{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.pom.tree.events.impl.TreeChangeEventImpl");
   private final Map<ASTNode, TreeChange> myChangedElements = new THashMap<ASTNode, TreeChange>();
   private final List<ASTNode> myChangedInOrder = new ArrayList<ASTNode>();
   private List<ASTNode> myChangedInOrderNew;
@@ -77,12 +78,13 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
       if (size == myChangedInOrder.size()) {
         for(int i = 0; i < size; ++i) {
           if (myChangedInOrderNew.get(i) != myChangedInOrder.get(i)) {
-            LoggerFactory.getInstance().getLoggerInstance(getClass().getName()).error("Unexpected changed elements difference");
+            LOG.error("Unexpected changed elements difference");
             return myChangedInOrder.toArray(new ASTNode[myChangedInOrder.size()]);
           }
         }
-      } else {
-        LoggerFactory.getInstance().getLoggerInstance(getClass().getName()).error("Unexpected changed elements difference");
+      }
+      else {
+        LOG.error("Unexpected changed elements difference");
         return myChangedInOrder.toArray(new ASTNode[myChangedInOrder.size()]);
       }
     }
@@ -91,10 +93,19 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public TreeChange getChangesByElement(@NotNull ASTNode element) {
+    LOG.assertTrue(isAncestor(element, myFileElement), element);
     return myChangedElements.get(element);
   }
 
+  private static boolean isAncestor(ASTNode thisElement, FileElement fileElement) {
+    TreeElement element;
+    for (element = (TreeElement)thisElement; element.getTreeParent() != null; element = element.getTreeParent()) {
+    }
+    return element == fileElement;
+  }
+
   public void addElementaryChange(@NotNull ASTNode element, @NotNull ChangeInfo change) {
+    LOG.assertTrue(isAncestor(element, myFileElement), element);
     final ASTNode parent = element.getTreeParent();
     if (parent == null) return;
     ASTNode currentParent = parent;
@@ -310,6 +321,8 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
       while (iterator.hasNext()) {
         final Map.Entry<ASTNode, TreeChange> entry = iterator.next();
         final ASTNode changed = entry.getKey();
+        LOG.assertTrue(isAncestor(changed, myFileElement), changed);
+
         final TreeChange treeChange = myChangedElements.get(changed);
         if(treeChange != null){
           iterator.remove();
@@ -356,7 +369,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public String toString(){
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     for (final Map.Entry<ASTNode, TreeChange> entry : myChangedElements.entrySet()) {
       buffer.append(entry.getKey().getElementType().toString());
       buffer.append(": ");
