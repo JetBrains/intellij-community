@@ -421,7 +421,12 @@ public class I18nInspection extends BaseLocalInspectionTool {
       }
 
       Set<PsiModifierListOwner> nonNlsTargets = new THashSet<PsiModifierListOwner>();
-      if (canBeI18ned(expression, stringValue, nonNlsTargets)) {
+      if (canBeI18ned(myManager.getProject(), expression, stringValue, nonNlsTargets)) {
+        PsiField parentField = PsiTreeUtil.getParentOfType(expression, PsiField.class);
+        if (parentField != null) {
+          nonNlsTargets.add(parentField);
+        }
+
         final String description = CodeInsightBundle.message("inspection.i18n.message.general.with.value", "#ref");
 
         List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
@@ -474,21 +479,16 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
   }
 
-  private boolean canBeI18ned(PsiLiteralExpression expression, String value, final Set<PsiModifierListOwner> nonNlsTargets) {
+  private boolean canBeI18ned(@NotNull Project project, @NotNull PsiLiteralExpression expression, @NotNull String value, @NotNull Set<PsiModifierListOwner> nonNlsTargets) {
     if (ignoreForNonAlpha && !StringUtil.containsAlphaCharacters(value)) {
       return false;
     }
 
-    PsiField parentField = PsiTreeUtil.getParentOfType(expression, PsiField.class);
-    if (parentField != null) {
-      nonNlsTargets.add(parentField);
-    }
-
-    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<String, Object>(), nonNlsTargets)) {
+    if (JavaI18nUtil.isPassedToAnnotatedParam(project, expression, AnnotationUtil.NON_NLS, new HashMap<String, Object>(), nonNlsTargets)) {
       return false;
     }
 
-    if (isInNonNlsCall(expression, nonNlsTargets)) {
+    if (isInNonNlsCall(project, expression, nonNlsTargets)) {
       return false;
     }
 
@@ -496,11 +496,11 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (isPassedToNonNlsVariable(expression, nonNlsTargets)) {
+    if (isPassedToNonNlsVariable(project, expression, nonNlsTargets)) {
       return false;
     }
 
-    if (JavaI18nUtil.mustBePropertyKey(expression, new HashMap<String, Object>())) {
+    if (JavaI18nUtil.mustBePropertyKey(project, expression, new HashMap<String, Object>())) {
       return false;
     }
 
@@ -531,7 +531,6 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
     Pattern pattern = myCachedNonNlsPattern;
     if (pattern != null) {
-      Project project = expression.getProject();
       PsiFile file = expression.getContainingFile();
       Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       int line = document.getLineNumber(expression.getTextRange().getStartOffset());
@@ -582,8 +581,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
            || isPackageNonNls(psiPackage.getParentPackage());
   }
 
-  private boolean isPassedToNonNlsVariable(final PsiLiteralExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
-    PsiExpression toplevel = JavaI18nUtil.getToplevelExpression(expression);
+  private boolean isPassedToNonNlsVariable(@NotNull Project project,
+                                           @NotNull PsiLiteralExpression expression,
+                                           final Set<PsiModifierListOwner> nonNlsTargets) {
+    PsiExpression toplevel = JavaI18nUtil.getToplevelExpression(project, expression);
     PsiVariable var = null;
     if (toplevel instanceof PsiAssignmentExpression) {
       PsiExpression lExpression = ((PsiAssignmentExpression)toplevel).getLExpression();
@@ -678,8 +679,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return false;
   }
 
-  private static boolean isInNonNlsCall(PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
-    expression = JavaI18nUtil.getToplevelExpression(expression);
+  private static boolean isInNonNlsCall(@NotNull Project project, @NotNull PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
+    expression = JavaI18nUtil.getToplevelExpression(project, expression);
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList) {
       final PsiElement grParent = parent.getParent();

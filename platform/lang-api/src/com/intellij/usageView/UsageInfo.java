@@ -59,7 +59,7 @@ public class UsageInfo {
     if (startOffset != element.getTextOffset() - elementRange.getStartOffset() || endOffset != elementRange.getLength()) {
       PsiFile file = element.getContainingFile();
       LOG.assertTrue(file != null, element);
-      mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element);
+      mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element, file);
       myPsiFileRange = smartPointerManager.createSmartPsiFileRangePointer(file, TextRange.create(startOffset, endOffset).shiftRight(elementRange.getStartOffset()));
     }
     else {

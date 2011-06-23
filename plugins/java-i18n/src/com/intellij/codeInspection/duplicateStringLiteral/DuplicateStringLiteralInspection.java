@@ -90,16 +90,17 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     return "DuplicateStringLiteralInspection";
   }
 
-  private void checkStringLiteralExpression(final PsiLiteralExpression originalExpression,
-                                            ProblemsHolder holder,
+  private void checkStringLiteralExpression(@NotNull final PsiLiteralExpression originalExpression,
+                                            @NotNull ProblemsHolder holder,
                                             final boolean isOnTheFly) {
     Object value = originalExpression.getValue();
     if (!(value instanceof String)) return;
-    if (!shouldCheck(originalExpression)) return;
+    Project project = holder.getProject();
+    if (!shouldCheck(project, originalExpression)) return;
     final String stringToFind = (String)value;
     if (stringToFind.length() == 0) return;
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(originalExpression.getProject());
-    final PsiSearchHelper searchHelper = originalExpression.getManager().getSearchHelper();
+    final PsiSearchHelper searchHelper = holder.getFile().getManager().getSearchHelper();
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
     // put longer strings first
@@ -140,7 +141,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         PsiElement element = file.findElementAt(offset);
         if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) continue;
         PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
-        if (expression != originalExpression && Comparing.equal(stringToFind, expression.getValue()) && shouldCheck(expression)) {
+        if (expression != originalExpression && Comparing.equal(stringToFind, expression.getValue()) && shouldCheck(project, expression)) {
           foundExpr.add(expression);
         }
       }
@@ -197,8 +198,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     holder.registerProblem(originalExpression, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, array);
   }
 
-  private boolean shouldCheck(final PsiLiteralExpression expression) {
-    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, new THashMap<String, Object>())) return false;
+  private boolean shouldCheck(@NotNull Project project, @NotNull PsiLiteralExpression expression) {
+    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(project, expression, new THashMap<String, Object>())) return false;
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class, true, PsiCodeBlock.class, PsiField.class);
     return annotation == null || !"java.lang.SuppressWarnings".equals(annotation.getQualifiedName());
   }

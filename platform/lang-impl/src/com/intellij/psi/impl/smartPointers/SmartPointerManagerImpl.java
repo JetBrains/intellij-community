@@ -160,7 +160,12 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Key<Reference<SmartPsiElementPointer>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
-    if (!element.isValid()) {
+    PsiFile containingFile = element.getContainingFile();
+    return createSmartPsiElementPointer(element, containingFile);
+  }
+  @NotNull
+  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
+    if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
       LOG.error("Invalid element:" + element);
     }
     Reference<SmartPsiElementPointer> data = element.getUserData(CACHED_SMART_POINTER_KEY);
@@ -169,7 +174,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return cachedPointer;
     }
 
-    PsiFile containingFile = element.getContainingFile();
     SmartPointerEx<E> pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile);
     initPointer(pointer, containingFile);
     element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<SmartPsiElementPointer>(pointer));

@@ -134,7 +134,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @NotNull
   private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
-    if (element instanceof PsiCompiledElement || !element.isPhysical()) {
+    if (element instanceof PsiCompiledElement || containingFile == null || !containingFile.isPhysical() || !element.isPhysical()) {
       if (element instanceof StubBasedPsiElement && element instanceof PsiCompiledElement) {
         if (element instanceof PsiFile) {
           return new FileElementInfo((PsiFile)element);
@@ -148,9 +148,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
     if (element instanceof PsiDirectory) {
       return new DirElementInfo((PsiDirectory)element);
-    }
-    if (containingFile == null) {
-      return new HardElementInfo(project, element);
     }
 
     for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {

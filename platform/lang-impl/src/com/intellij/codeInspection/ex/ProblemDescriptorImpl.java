@@ -80,8 +80,10 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     super(fixes, descriptionTemplate);
     myShowTooltip = tooltip;
     myHintAction = hintAction;
-    LOG.assertTrue(startElement.isValid(), startElement);
-    LOG.assertTrue(startElement == endElement || endElement.isValid(), endElement);
+    PsiFile startContainingFile = startElement.getContainingFile();
+    LOG.assertTrue(startContainingFile != null && startContainingFile.isValid() || startElement.isValid(), startElement);
+    PsiFile endContainingFile = startElement == endElement ? startContainingFile : endElement.getContainingFile();
+    LOG.assertTrue(startElement == endElement || endContainingFile != null && endContainingFile.isValid() || endElement.isValid(), endElement);
     assertPhysical(startElement);
     if (startElement != endElement) assertPhysical(endElement);
 
@@ -92,10 +94,10 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     }
 
     myHighlightType = highlightType;
-    final Project project = startElement.getProject();
+    final Project project = startContainingFile == null ? startElement.getProject() : startContainingFile.getProject();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
-    myStartSmartPointer = manager.createSmartPsiElementPointer(startElement);
-    myEndSmartPointer = startElement == endElement ? null : manager.createSmartPsiElementPointer(endElement);
+    myStartSmartPointer = manager.createSmartPsiElementPointer(startElement, startContainingFile);
+    myEndSmartPointer = startElement == endElement ? null : manager.createSmartPsiElementPointer(endElement, endContainingFile);
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;

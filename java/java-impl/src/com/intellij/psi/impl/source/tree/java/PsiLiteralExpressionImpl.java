@@ -24,11 +24,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -84,7 +86,9 @@ public class PsiLiteralExpressionImpl
       return PsiType.CHAR;
     }
     if (type == JavaTokenType.STRING_LITERAL) {
-      return PsiType.getJavaLangString(getManager(), getResolveScope());
+      PsiManagerEx manager = getManager();
+      GlobalSearchScope resolveScope = manager.getFileManager().getResolveScope(this);
+      return PsiType.getJavaLangString(manager, resolveScope);
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
       return PsiType.BOOLEAN;
