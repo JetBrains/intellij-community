@@ -250,6 +250,25 @@ public class XDebuggerTestUtil {
     }
   }
 
+  public static void setBreakpointLogExpression(Project project, int line, final String logExpression) {
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    for (XBreakpoint breakpoint : breakpointManager.getAllBreakpoints()) {
+      if (breakpoint instanceof XLineBreakpoint) {
+        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+
+        if (lineBreakpoint.getLine() == line) {
+          new WriteAction() {
+            @Override
+            protected void run(Result result) throws Throwable {
+              lineBreakpoint.setLogExpression(logExpression);
+              lineBreakpoint.setLogMessage(true);
+            }
+          }.execute();
+        }
+      }
+    }
+  }
+
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XExecutionStack.XStackFrameContainer {
     public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
       addChildren(stackFrames, last);
