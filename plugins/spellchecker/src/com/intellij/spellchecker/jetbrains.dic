@@ -225,6 +225,7 @@ nomaxvalue
 nominvalue
 nomonitoring
 nonatomic
+noninfingement
 nonschema
 noorder
 noparallel
@@ -343,6 +344,7 @@ stdarg
 stdlib
 stmt
 stylesheet
+sublicense
 subpackage
 subpartition
 subpartitions
