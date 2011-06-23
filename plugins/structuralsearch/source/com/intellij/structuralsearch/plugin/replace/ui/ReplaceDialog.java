@@ -305,7 +305,7 @@ public class ReplaceDialog extends SearchDialog {
     for(Variable var:vars) {
       if (!varsMap.containsKey(var.getName())) {
         String newVarName = var.getName() + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX;
-        varsMap.put(newVarName, new Variable(newVarName, (Expression)null, null, false, false));
+        varsMap.put(newVarName, new Variable(newVarName, null, null, false, false));
       }
     }
     return new ArrayList<Variable>(varsMap.values());

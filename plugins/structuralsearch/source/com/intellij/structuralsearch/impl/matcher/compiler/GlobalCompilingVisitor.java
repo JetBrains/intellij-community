@@ -215,7 +215,7 @@ public class GlobalCompilingVisitor {
     }
 
     if (handlers != null) {
-      return (hasLiteralContent) ? (MatchingHandler)new LiteralWithSubstitutionHandler(
+      return (hasLiteralContent) ? new LiteralWithSubstitutionHandler(
         buf.toString(),
         handlers
       ) :
