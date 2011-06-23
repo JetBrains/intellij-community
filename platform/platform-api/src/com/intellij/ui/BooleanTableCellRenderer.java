@@ -15,52 +15,52 @@
  */
 
 /**
- * created at Oct 5, 2001
  * @author Jeka
+ * @author Konstantin Bulenkov
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
 public class BooleanTableCellRenderer extends JCheckBox implements TableCellRenderer {
-  private final JPanel myPanel = new JPanel();
+  private final JPanel myPanel = new JPanel(new BorderLayout());
 
   public BooleanTableCellRenderer() {
     super();
-    setHorizontalAlignment(CENTER);
+    setBorderPainted(true);
     setVerticalAlignment(CENTER);
-    setBorder(null);
+    setHorizontalAlignment(CENTER);
   }
 
-  public Component getTableCellRendererComponent(JTable table, Object value,
-                                                 boolean isSelected, boolean hasFocus,
-                                                 int row, int column) {
-    if(value == null) {
-      if(isSelected) {
-        myPanel.setBackground(table.getSelectionBackground());
-      }
-      else {
-        myPanel.setBackground(table.getBackground());
-      }
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSel, boolean hasFocus, int row, int column) {
+    final Color bg = table.getBackground();
+    final Color fg = table.getForeground();
+    final Color selBg = table.getSelectionBackground();
+    final Color selFg = table.getSelectionForeground();
+
+    myPanel.setBackground(isSel ? selBg : bg);
+    if (value == null) {
       return myPanel;
     }
-    if(isSelected) {
-      setForeground(table.getSelectionForeground());
-      super.setBackground(table.getSelectionBackground());
-    }
-    else {
-      setForeground(table.getForeground());
-      setBackground(table.getBackground());
-    }
+
+    setForeground(isSel ? selFg : fg);
+    if (isSel) super.setBackground(selBg); else setBackground(bg);
+
     if (value instanceof String) {
       setSelected(Boolean.parseBoolean((String)value));
-    }
-    else {
+    } else {
       setSelected(((Boolean)value).booleanValue());
     }
+
+    setBorder(hasFocus ? UIUtil.getTableFocusCellHighlightBorder() : IdeBorderFactory.createEmptyBorder(1));
+
     setEnabled(table.isCellEditable(row, column));
+
     return this;
   }
 }
