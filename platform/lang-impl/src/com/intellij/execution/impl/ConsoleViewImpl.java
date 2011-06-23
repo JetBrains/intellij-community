@@ -39,10 +39,7 @@ import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -401,6 +398,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
               myTokens = newTokens;
             }
           }
+        }
+      });
+      
+      myEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
+        @Override
+        public void visibleAreaChanged(VisibleAreaEvent e) {
+          // There is a possible case that the console text is populated while the console is not shown (e.g. we're debugging and
+          // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
+          // are soft wrapped. We want to update viewport position then when the console becomes visible.
+          final Rectangle oldRectangle = e.getOldRectangle();
+          final Rectangle newRectangle = e.getNewRectangle();
+          if (oldRectangle == null || newRectangle == null) {
+            return;
+          }
+
+          if (oldRectangle.height <= 0 && newRectangle.height > 0 && myEditor.getSoftWrapModel().isSoftWrappingEnabled()
+              && myEditor.getCaretModel().getOffset() == myEditor.getDocument().getTextLength()) {
+            EditorUtil.scrollToTheEnd(myEditor);
+          } 
         }
       });
     }
