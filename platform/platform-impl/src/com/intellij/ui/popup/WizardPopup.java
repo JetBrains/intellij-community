@@ -288,7 +288,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     public Dimension getPreferredSize() {
       final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       Point p = null;
-      if (focusOwner != null && focusOwner.isVisible()) {
+      if (focusOwner != null && focusOwner.isShowing()) {
         p = focusOwner.getLocationOnScreen();
       }
 
