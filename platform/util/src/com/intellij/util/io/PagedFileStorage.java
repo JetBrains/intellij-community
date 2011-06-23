@@ -52,7 +52,7 @@ public class PagedFileStorage implements Forceable {
 
     String pagedStoragePageSizeProperty = System.getProperty("idea.paged.storage.page.size");
     int defaultPagedStoragePageSizeInMegabytes = 10;
-    BUFFER_SIZE = (maxPagedStorageCacheProperty == null ? defaultPagedStoragePageSizeInMegabytes:Math.max(1,Integer.valueOf(pagedStoragePageSizeProperty)))* MEGABYTE;
+    BUFFER_SIZE = (pagedStoragePageSizeProperty == null ? defaultPagedStoragePageSizeInMegabytes:Math.max(1,Integer.valueOf(pagedStoragePageSizeProperty)))* MEGABYTE;
   }
 
   private final StorageLock myLock;
