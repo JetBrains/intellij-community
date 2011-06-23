@@ -691,6 +691,10 @@
             description="Create a new directory and __init__.py inside it" icon="/nodes/packageClosed.png">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
+
+    <action id="CompuleQrc" class="com.jetbrains.pyqt.CompileQrcAction" text="Compile .qrc file">
+      <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">

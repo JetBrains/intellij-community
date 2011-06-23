@@ -76,35 +76,49 @@ public abstract class QtFileType implements FileType, INativeFileType {
 
   @Override
   public boolean openFileInAssociatedApplication(Project project, VirtualFile file) {
+    String qtTool = findQtTool(ModuleUtil.findModuleForFile(file, project), getToolName());
+    if (qtTool == null) {
+      return false;
+    }
+    try {
+      Runtime.getRuntime().exec(new String[] { qtTool, file.getPath() } );
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(project, "Failed to run Qt Designer: " + e.getMessage(), "Error");
+    }
+    return true;
+  }
+
+  public static String findQtTool(Module module, String toolName) {
     if (SystemInfo.isWindows) {
-      Module module = ModuleUtil.findModuleForFile(file, project);
       if (module == null) {
-        return false;
+        return null;
       }
       Sdk sdk = PythonSdkType.findPythonSdk(module);
       if (sdk == null) {
-        return false;
+        return null;
       }
-      List<PsiElement> qt4 =
-        ResolveImportUtil.resolveModulesInRootProvider(sdk.getRootProvider(), module, PyQualifiedName.fromComponents("PyQt4"));
-      for (PsiElement psiElement : qt4) {
-        if (psiElement instanceof PsiDirectory) {
-          VirtualFile designer = ((PsiDirectory)psiElement).getVirtualFile().findChild(getToolName() + ".exe");
-          if (designer != null) {
-            try {
-              Runtime.getRuntime().exec(new String[] { designer.getPath(), file.getPath() } );
-            }
-            catch (IOException e) {
-              Messages.showErrorDialog(project, "Failed to run Qt Designer: " + e.getMessage(), "Error");
-            }
-            return true;
-          }
-        }
+      String tool = findToolInPackage(toolName, module, sdk, "PyQt4");
+      if (tool != null) {
+        return tool;
       }
-
+      return findToolInPackage(toolName, module, sdk, "PySide");
    }
     // TODO
-    return true;
+    return null;
+  }
+
+  private static String findToolInPackage(String toolName, Module module, Sdk sdk, String name) {
+    List<PsiElement> elements = ResolveImportUtil.resolveModulesInRootProvider(sdk.getRootProvider(), module, PyQualifiedName.fromComponents(name));
+    for (PsiElement psiElement : elements) {
+      if (psiElement instanceof PsiDirectory) {
+        VirtualFile tool = ((PsiDirectory)psiElement).getVirtualFile().findChild(toolName + ".exe");
+        if (tool != null) {
+          return tool.getPath();
+        }
+      }
+    }
+    return null;
   }
 
   protected abstract String getToolName();
