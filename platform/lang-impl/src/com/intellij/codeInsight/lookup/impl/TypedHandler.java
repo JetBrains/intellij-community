@@ -25,6 +25,7 @@ import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -38,12 +39,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class TypedHandler implements TypedActionHandler {
-  private final TypedActionHandler myOriginalHandler;
+public class TypedHandler extends TypedActionHandlerBase {
   private static boolean inside = false;
 
   public TypedHandler(TypedActionHandler originalHandler){
-    myOriginalHandler = originalHandler;
+    super(originalHandler);
   }
 
   public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext){
@@ -52,7 +52,7 @@ public class TypedHandler implements TypedActionHandler {
     try {
       final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup == null){
-        myOriginalHandler.execute(editor, charTyped, dataContext);
+        if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
         return;
       }
 
@@ -100,7 +100,7 @@ public class TypedHandler implements TypedActionHandler {
       }
 
       lookup.hide();
-      myOriginalHandler.execute(editor, charTyped, dataContext);
+      if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
     }
     finally {
       inside = false;

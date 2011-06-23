@@ -17,6 +17,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
+import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ConsoleActionsPostProcessor;
@@ -1000,17 +1001,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return myTokens.size();
   }
 
-  private static class MyTypedHandler implements TypedActionHandler {
-    private final TypedActionHandler myOriginalHandler;
+  private static class MyTypedHandler extends TypedActionHandlerBase {
 
     private MyTypedHandler(final TypedActionHandler originalAction) {
-      myOriginalHandler = originalAction;
+      super(originalAction);
     }
 
     public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
       final ConsoleViewImpl consoleView = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
       if (consoleView == null || !consoleView.myState.isRunning() || consoleView.isViewer) {
-        myOriginalHandler.execute(editor, charTyped, dataContext);
+        if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
       }
       else {
         final String s = String.valueOf(charTyped);
