@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class FormatterUtil {
   
@@ -273,19 +272,35 @@ public class FormatterUtil {
     }
   }
 
-  public static boolean containsWhiteSpacesOnly(final ASTNode node) {
+  private static boolean spacesOnly(TreeElement node) {
     if (node.getElementType() == TokenType.WHITE_SPACE || node.getTextLength() == 0) return true;
     for (FormatterUtilHelper helper : ourHelpers) {
       if (helper.containsWhitespacesOnly(node)) return true;
     }
 
-    if (node instanceof LeafElement) return false;
-    ASTNode child = node.getFirstChildNode();
-    while (child != null) {
-      if (!containsWhiteSpacesOnly(child)) return false;
-      child = child.getTreeNext();
-    }
-    return true;
+    return false;
+  }
+
+  public static boolean containsWhiteSpacesOnly(final ASTNode root) {
+    final boolean[] spacesOnly = {true};
+    ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      public void visitComposite(CompositeElement composite) {
+        if (!spacesOnly(composite)) {
+          super.visitComposite(composite);
+        }
+      }
+
+      @Override
+      public void visitLeaf(LeafElement leaf) {
+        if (!spacesOnly(leaf)) {
+          spacesOnly[0] = false;
+          stopWalking();
+        }
+      }
+    });
+
+    return spacesOnly[0];
   }
 
   public static boolean isPrecededBy(ASTNode node, IElementType eType) {
