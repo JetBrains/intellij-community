@@ -56,7 +56,8 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myEventMulticaster = createEventMulticaster();
     myWaitSemaphore = new Semaphore();
     myWaitSemaphore.down();
-    addProcessListener(myAfterStartNotifiedRunner = new TasksRunner());
+    myAfterStartNotifiedRunner = new TasksRunner();
+    myListeners.add(myAfterStartNotifiedRunner);
   }
 
   public void startNotify() {
