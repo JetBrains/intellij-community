@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider{
+public class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider, ExternalDocumentationHandler {
 
   private final List<DocumentationProvider> myProviders;
 
@@ -52,6 +52,28 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
 
   public List<DocumentationProvider> getProviders() {
     return myProviders;
+  }
+
+  @Override
+  public boolean handleExternal(PsiElement element, PsiElement originalElement) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  @Override
+  public boolean handleExternalLink(PsiManager psiManager, String link, PsiElement context) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).handleExternalLink(psiManager, link, context)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {

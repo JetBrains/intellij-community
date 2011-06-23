@@ -21,6 +21,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -67,6 +68,11 @@ public class ExternalJavaDocAction extends AnAction {
     PsiElement originalElement = getOriginalElement(context, editor);
     DocumentationManager.storeOriginalElement(project, originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
+    
+    if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
+      return;
+    }
+    
     final List<String> urls = provider.getUrlFor(element, originalElement);
     if (urls != null && !urls.isEmpty()) {
       showExternalJavadoc(urls);
