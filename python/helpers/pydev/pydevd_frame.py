@@ -137,15 +137,15 @@ class PyDBFrame:
                                     sys.stderr.write('Error while evaluating condition \'%s\': %s\n' % (django_breakpoint.condition, sys.exc_info()[1]))
                                     sys.stderr.flush()
 
-                                if django_breakpoint.expression is not None:
+                            if django_breakpoint.expression is not None:
+                                    try:
                                         try:
-                                            try:
-                                                val = eval(django_breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
-                                            except:
-                                                val = sys.exc_info()[1]
-                                        finally:
-                                            if val is not None:
-                                                thread.log_expression = val
+                                            val = eval(django_breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
+                                        except:
+                                            val = sys.exc_info()[1]
+                                    finally:
+                                        if val is not None:
+                                            thread.additionalInfo.message = val
                             if flag:
                                 frame = suspend_django(self, mainDebugger, thread, frame)
 
@@ -176,7 +176,7 @@ class PyDBFrame:
                             val = sys.exc_info()[1]
                     finally:
                         if val is not None:
-                            thread.log_expression = val
+                            thread.additionalInfo.message = val
 
                 self.setSuspend(thread, CMD_SET_BREAK)
 
