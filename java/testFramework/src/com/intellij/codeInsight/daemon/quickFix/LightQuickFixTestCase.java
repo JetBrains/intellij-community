@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,13 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
     throws Exception {
     doAction(text, actionShouldBeAvailable, testFullPath, testName, myWrapper);
+  }
+
+  protected void doAction(final String actionName) {
+    final List<IntentionAction> available = getAvailableActions();
+    final IntentionAction action = findActionWithText(available, actionName);
+    assertNotNull("Action '" + actionName + "' not found among " + available.toString(), action);
+    invoke(action);
   }
 
   protected static void invoke(IntentionAction action) throws IncorrectOperationException {
