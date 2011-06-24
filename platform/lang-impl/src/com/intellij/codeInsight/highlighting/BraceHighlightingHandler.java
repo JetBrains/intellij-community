@@ -240,8 +240,8 @@ public class BraceHighlightingHandler {
       // Example: 
       //     public void test() { <caret>
       //     }
-      boolean searchForward = true;
       char c = chars.charAt(offset);
+      boolean searchForward = c != '\n';
 
       // Try to find matched brace backwards.
       if (offset >= originalOffset || c != '\n') {
@@ -260,8 +260,8 @@ public class BraceHighlightingHandler {
 
       // Try to find matched brace forward.
       if (searchForward) {
-        int forwardOffset = CharArrayUtil.shiftForward(chars, c == '\n' ? offset + 1 : offset, "\t ");
-        if (forwardOffset > offset || c == ' ' || c == '\t' || c == '\n') {
+        int forwardOffset = CharArrayUtil.shiftForward(chars, offset, "\t ");
+        if (forwardOffset > offset || c == ' ' || c == '\t') {
           iterator = getEditorHighlighter().createIterator(forwardOffset);
           FileType newFileType = getFileTypeByIterator(iterator);
           if (BraceMatchingUtil.isLBraceToken(iterator, chars, newFileType) ||
