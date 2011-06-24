@@ -17,17 +17,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @autor: ilyas
@@ -45,6 +45,7 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     return "WHILE statement";
   }
 
+  @Nullable
   public GrCondition getCondition() {
     PsiElement lParenth = getLParenth();
 
@@ -56,6 +57,7 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     return null;
   }
 
+  @Nullable
   public GrStatement getBody() {
     GrStatement[] statements = findChildrenByClass(GrStatement.class);
 
@@ -65,23 +67,8 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     return null;
   }
 
-  public GrCondition replaceBody(GrCondition newBody) throws IncorrectOperationException {
-    if (getBody() == null ||
-        newBody == null) {
-      throw new IncorrectOperationException();
-    }
-    ASTNode oldBodyNode = getBody().getNode();
-    if (oldBodyNode.getTreePrev() != null &&
-        GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
-      ASTNode whiteNode = GroovyPsiElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
-      getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
-    }
-    getNode().replaceChild(oldBodyNode, newBody.getNode());
-    ASTNode newNode = newBody.getNode();
-    if (!(newNode.getPsi() instanceof GrCondition)) {
-      throw new IncorrectOperationException();
-    }
-    return (GrCondition) newNode.getPsi();
+  public <T extends GrCondition> T replaceBody(T newBody) throws IncorrectOperationException {
+    return PsiImplUtil.replaceBody(newBody, getBody(), getNode(), getProject());
   }
 
   public PsiElement getRParenth() {

@@ -23,12 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @autor: ilyas
@@ -78,43 +77,12 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return null;
   }
 
-  public GrStatement replaceThenBranch(GrStatement newBranch) throws IncorrectOperationException {
-    final GrStatement thenBranch = getThenBranch();
-    if (thenBranch == null ||
-            newBranch == null) {
-      throw new IncorrectOperationException();
-    }
-    ASTNode oldBodyNode = thenBranch.getNode();
-    if (oldBodyNode.getTreePrev() != null &&
-            GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
-      ASTNode whiteNode = GroovyPsiElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
-      getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
-    }
-    this.getNode().replaceChild(oldBodyNode, newBranch.getNode());
-    ASTNode newNode = newBranch.getNode();
-    if (!(newNode.getPsi() instanceof GrCondition)) {
-      throw new IncorrectOperationException();
-    }
-    return (GrStatement) newNode.getPsi();
+  public <T extends GrStatement> T replaceThenBranch(T newBranch) throws IncorrectOperationException {
+    return PsiImplUtil.replaceBody(newBranch, getThenBranch(), getNode(), getProject());
   }
 
-  public GrStatement replaceElseBranch(GrStatement newBranch) throws IncorrectOperationException {
-    final GrStatement elseBranch = getElseBranch();
-    if (elseBranch == null || newBranch == null) {
-      throw new IncorrectOperationException();
-    }
-    ASTNode oldBodyNode = elseBranch.getNode();
-    if (oldBodyNode.getTreePrev() != null &&
-            GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
-      ASTNode whiteNode = GroovyPsiElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
-      getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
-    }
-    this.getNode().replaceChild(oldBodyNode, newBranch.getNode());
-    ASTNode newNode = newBranch.getNode();
-    if (!(newNode.getPsi() instanceof GrCondition)) {
-      throw new IncorrectOperationException();
-    }
-    return (GrStatement) newNode.getPsi();
+  public <T extends GrStatement> T replaceElseBranch(T newBranch) throws IncorrectOperationException {
+    return PsiImplUtil.replaceBody(newBranch, getElseBranch(), getNode(), getProject());
   }
 
   public PsiElement getElseKeyword() {

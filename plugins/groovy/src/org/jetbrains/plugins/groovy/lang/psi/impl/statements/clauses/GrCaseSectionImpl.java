@@ -22,6 +22,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -73,21 +74,18 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     return findChildrenByClass(GrStatement.class);
   }
 
-  public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
-
-    if (anchor == null || !this.equals(anchor.getParent())) {
-      throw new IncorrectOperationException();
-    }
+  public GrStatement addStatementBefore(@NotNull GrStatement element, @Nullable GrStatement anchor) throws IncorrectOperationException {
     ASTNode elemNode = element.copy().getNode();
     assert elemNode != null;
-    final ASTNode anchorNode = anchor.getNode();
+    final ASTNode anchorNode = anchor != null ? anchor.getNode() : null;
     getNode().addChild(elemNode, anchorNode);
     if (mayUseNewLinesAsSeparators()) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
-    } else {
+    }
+    else {
       getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchorNode);
     }
-    return (GrStatement) elemNode.getPsi();
+    return (GrStatement)elemNode.getPsi();
   }
 
   private boolean mayUseNewLinesAsSeparators() {

@@ -16,15 +16,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.params;
 
-import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import com.intellij.psi.PsiParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -46,7 +46,7 @@ public interface GrParameter extends PsiParameter, GrVariable, GrCondition {
   GrExpression getDefaultInitializer();
 
   @NotNull
-  PsiModifierList getModifierList();
+  GrModifierList getModifierList();
 
   boolean isOptional();
 }

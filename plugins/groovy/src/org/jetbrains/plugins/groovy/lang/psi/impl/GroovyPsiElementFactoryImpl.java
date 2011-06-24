@@ -254,11 +254,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrClosableBlock createClosureFromText(String closureText) throws IncorrectOperationException {
-    PsiFile psiFile = createDummyFile(closureText);
-    ASTNode node = psiFile.getFirstChild().getNode();
-    if (node.getElementType() != GroovyElementTypes.CLOSABLE_BLOCK)
-      throw new IncorrectOperationException("Invalid all text");
-    return (GrClosableBlock) node.getPsi();
+    GroovyFile psiFile = createDummyFile("def foo  = " + closureText);
+    final GrStatement st = psiFile.getStatements()[0];
+    LOG.assertTrue(st instanceof GrVariableDeclaration, closureText);
+    final GrExpression initializer = ((GrVariableDeclaration)st).getVariables()[0].getInitializerGroovy();
+    LOG.assertTrue(initializer instanceof GrClosableBlock, closureText);
+    return ((GrClosableBlock)initializer);
   }
 
   private GroovyFileImpl createDummyFile(String text, boolean physical) {
@@ -298,9 +299,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   public GrCodeReferenceElement createTypeOrPackageReference(String qName) {
     final GroovyFileBase file = createDummyFile("def " + qName + " i");
-    LOG
-      .assertTrue(file.getTopStatements().length == 1 && (GrVariableDeclaration)file.getTopStatements()[0] instanceof GrVariableDeclaration,
-                  qName);
+    LOG.assertTrue(file.getTopStatements().length == 1 && (GrVariableDeclaration)file.getTopStatements()[0] instanceof GrVariableDeclaration, qName);
     GrVariableDeclaration varDecl = (GrVariableDeclaration) file.getTopStatements()[0];
     final GrClassTypeElement typeElement = (GrClassTypeElement) varDecl.getTypeElementGroovy();
     assert typeElement != null;

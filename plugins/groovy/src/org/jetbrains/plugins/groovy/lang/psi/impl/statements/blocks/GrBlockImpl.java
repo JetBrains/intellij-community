@@ -144,7 +144,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return result.toArray(new GrStatement[result.size()]);
   }
 
-  public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
+  public GrStatement addStatementBefore(@NotNull GrStatement element, @Nullable GrStatement anchor) throws IncorrectOperationException {
     if (anchor == null && getRBrace() == null) {
       throw new IncorrectOperationException();
     }

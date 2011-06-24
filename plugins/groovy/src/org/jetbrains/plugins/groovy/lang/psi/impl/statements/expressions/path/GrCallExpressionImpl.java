@@ -34,7 +34,7 @@ public abstract class GrCallExpressionImpl extends GrCallImpl implements GrCallE
 
   @Nullable
   public PsiType getNominalType() {
-    return PsiImplUtil.getNominalType(this);
+    return getType();
   }
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {

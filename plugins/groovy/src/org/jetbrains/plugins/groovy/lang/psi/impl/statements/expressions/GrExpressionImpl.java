@@ -24,7 +24,7 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
 
   @Nullable
   public PsiType getNominalType() {
-    return PsiImplUtil.getNominalType(this);
+    return getType();
   }
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {

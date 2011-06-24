@@ -16,10 +16,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.PsiElement;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -27,14 +27,16 @@ import com.intellij.psi.PsiElement;
  */
 public interface GrWhileStatement extends GrStatement, GrControlStatement, GrLoopStatement {
 
-  public GrCondition getCondition();
-
-  public GrStatement getBody();
+  @Nullable
+  GrCondition getCondition();
 
   @Nullable
-    public PsiElement getRParenth();
+  GrStatement getBody();
 
-    @Nullable
-    public PsiElement getLParenth();
+  @Nullable
+  PsiElement getRParenth();
+
+  @Nullable
+  PsiElement getLParenth();
 
 }

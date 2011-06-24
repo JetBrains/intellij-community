@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -34,6 +35,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -42,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -385,10 +388,6 @@ public class PsiImplUtil {
         method.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  public static PsiType getNominalType(final GrExpression expr) {
-    return expr.getType();
-  }
-
   public static void deleteStatementTail(PsiElement container, @NotNull PsiElement statement) {
     PsiElement next = statement.getNextSibling();
     while (next != null) {
@@ -449,6 +448,7 @@ public class PsiImplUtil {
     return AstBufferUtil.getTextSkippingTokens(node, TokenSets.WHITE_SPACES_OR_COMMENTS);
   }
 
+  @Nullable
   public static PsiCodeBlock getOrCreatePsiCodeBlock(GrOpenBlock block) {
     if (block == null) return null;
 
@@ -457,6 +457,19 @@ public class PsiImplUtil {
     if (body != null) return body;
     final GrSyntheticCodeBlock newBody = new GrSyntheticCodeBlock(block);
     block.putUserData(PSI_CODE_BLOCK, new SoftReference<PsiCodeBlock>(newBody));
+    return newBody;
+  }
+
+  public static <T extends GrCondition> T replaceBody(T newBody, GrStatement body, ASTNode node, Project project) {
+    if (body == null || newBody == null) {
+      throw new IncorrectOperationException();
+    }
+    ASTNode oldBodyNode = body.getNode();
+    if (oldBodyNode.getTreePrev() != null && mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
+      ASTNode whiteNode = GroovyPsiElementFactory.getInstance(project).createWhiteSpace().getNode();
+      node.replaceChild(oldBodyNode.getTreePrev(), whiteNode);
+    }
+    node.replaceChild(oldBodyNode, newBody.getNode());
     return newBody;
   }
 }

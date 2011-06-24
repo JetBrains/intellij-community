@@ -22,6 +22,7 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -51,4 +52,7 @@ public interface GrVariable extends PsiVariable, GrNamedElement {
 
   @Nullable
   PsiType getDeclaredType();
+
+  @Nullable
+  GrModifierList getModifierList();
 }

@@ -16,10 +16,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.annotations.Nullable;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
@@ -36,9 +36,9 @@ public interface GrIfStatement extends GrStatement, GrControlStatement {
     @Nullable
     GrStatement getElseBranch();
 
-    GrStatement replaceThenBranch(GrStatement newBranch) throws IncorrectOperationException;
+    <T extends GrStatement> T replaceThenBranch(T newBranch) throws IncorrectOperationException;
 
-    GrStatement replaceElseBranch(GrStatement newBranch) throws IncorrectOperationException;
+    <T extends GrStatement> T replaceElseBranch(T newBranch) throws IncorrectOperationException;
 
     @Nullable
     PsiElement getElseKeyword();

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
@@ -78,23 +78,8 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
     return true;
   }
 
-  public GrCondition replaceBody(GrCondition newBody) throws IncorrectOperationException {
-    if (getBody() == null ||
-            newBody == null) {
-      throw new IncorrectOperationException();
-    }
-    ASTNode oldBodyNode = getBody().getNode();
-    if (oldBodyNode.getTreePrev() != null &&
-            GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
-      ASTNode whiteNode = GroovyPsiElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
-      getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
-    }
-    this.getNode().replaceChild(oldBodyNode, newBody.getNode());
-    ASTNode newNode = newBody.getNode();
-    if (!(newNode.getPsi() instanceof GrCondition)) {
-      throw new IncorrectOperationException();
-    }
-    return (GrCondition) newNode.getPsi();
+  public <T extends GrCondition> T replaceBody(T newBody) throws IncorrectOperationException {
+    return PsiImplUtil.replaceBody(newBody, getBody(), getNode(), getProject());
   }
 
   public PsiElement getRParenth() {
