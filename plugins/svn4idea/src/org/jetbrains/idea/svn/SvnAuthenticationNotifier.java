@@ -118,7 +118,10 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final IdeFrame frameFor = WindowManagerEx.getInstanceEx().findFrameFor(myProject);
     if (frameFor != null) {
       final JComponent component = frameFor.getComponent();
-      final Point point = component.getMousePosition();
+      Point point = component.getMousePosition();
+      if (point == null) {
+        point = new Point((int)(component.getWidth() * 0.7), 0);
+      }
       SwingUtilities.convertPointToScreen(point, component);
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Already checking...", MessageType.WARNING, null).
         createBalloon().show(new RelativePoint(point), Balloon.Position.below);
