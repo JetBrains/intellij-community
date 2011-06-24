@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package x;
+import x.Base1.D;
+import static <error descr="'D' is already defined in a single-type import">x.Base2.D</error>;
 
-public class Base1 {
-  public static final int F = 1;
-  public static void m(int i) { }
-  public static class F { }
-  public static class D { }
-  public interface I1 {
-    int IF = 1;
-  }
-  public interface I2 {
-    float IF = 2.0f;
+class UsageMixed {
+  void use() {
+    <error descr="Reference to 'D' is ambiguous, both 'x.Base1.D' and 'x.Base2.D' match">D</error>.class.getName();
   }
 }

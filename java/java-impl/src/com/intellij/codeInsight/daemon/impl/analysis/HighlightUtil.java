@@ -2019,18 +2019,18 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkSingleImportClassConflict(PsiImportStatement statement,
-                                                             Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> singleImportedClasses) {
+                                                             Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> importedClasses) {
     if (statement.isOnDemand()) return null;
     PsiElement element = statement.resolve();
     if (element instanceof PsiClass) {
       String name = ((PsiClass)element).getName();
-      Pair<PsiImportStaticReferenceElement, PsiClass> imported = singleImportedClasses.get(name);
+      Pair<PsiImportStaticReferenceElement, PsiClass> imported = importedClasses.get(name);
       PsiClass importedClass = imported == null ? null : imported.getSecond();
       if (importedClass != null && !element.getManager().areElementsEquivalent(importedClass, element)) {
         String description = JavaErrorMessages.message("single.import.class.conflict", formatClass(importedClass));
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
       }
-      singleImportedClasses.put(name, Pair.create((PsiImportStaticReferenceElement)statement.getReference(), (PsiClass)element));
+      importedClasses.put(name, Pair.create((PsiImportStaticReferenceElement)null, (PsiClass)element));
     }
     return null;
   }

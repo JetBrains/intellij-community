@@ -445,7 +445,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitImportStatement(final PsiImportStatement statement) {
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSingleImportClassConflict(statement, mySingleImportedClasses));
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(HighlightUtil.checkSingleImportClassConflict(statement, mySingleImportedClasses));
+    }
   }
 
   @Override
@@ -471,9 +473,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           final Pair<PsiImportStaticReferenceElement, PsiClass> imported = mySingleImportedClasses.get(refName);
           final PsiClass aClass = imported == null ? null : imported.getSecond();
           if (aClass != null && !manager.areElementsEquivalent(aClass, element)) {
-            description = imported.getFirst().equals(ref)
-                          ? JavaErrorMessages.message("class.is.ambiguous.in.single.static.import", refName)
-                          : JavaErrorMessages.message("class.is.already.defined.in.single.static.import", refName);
+            description = imported.first == null
+                          ? JavaErrorMessages.message("single.import.class.conflict", refName)
+                          : imported.first.equals(ref)
+                            ? JavaErrorMessages.message("class.is.ambiguous.in.single.static.import", refName)
+                            : JavaErrorMessages.message("class.is.already.defined.in.single.static.import", refName);
           }
           mySingleImportedClasses.put(refName, Pair.create(ref, (PsiClass)element));
         }
@@ -481,7 +485,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           final Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
           final PsiField field = imported == null ? null : imported.getSecond();
           if (field != null && !manager.areElementsEquivalent(field, element)) {
-            description = imported.getFirst().equals(ref)
+            description = imported.first.equals(ref)
                           ? JavaErrorMessages.message("field.is.ambiguous.in.single.static.import", refName)
                           : JavaErrorMessages.message("field.is.already.defined.in.single.static.import", refName);
           }
