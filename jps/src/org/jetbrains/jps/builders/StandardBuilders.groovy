@@ -317,15 +317,13 @@ class JetBrainsInstrumentations implements ModuleBuilder {
             final List<File> formFiles = new ArrayList<File>();
             final ProjectWrapper pw = state.projectWrapper;
 
-            if (pw != null) {
-              for (Module m: moduleChunk.elements) {
-                  final Set<S> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
-                  for (S name: names) {
-                      if (name.value.endsWith(".form")) {
-                          formFiles.add(new File(pw.getAbsolutePath(name.value)));
-                      }
-                  }
-              }
+            for (Module m: moduleChunk.elements) {
+                final Set<S> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
+                for (S name: names) {
+                    if (name.value.endsWith(".form")) {
+                        formFiles.add(new File(pw.getAbsolutePath(name.value)));
+                    }
+                }
             }
 
             final List<PrefixedPath> nestedFormDirs = new ArrayList<PrefixedPath>();

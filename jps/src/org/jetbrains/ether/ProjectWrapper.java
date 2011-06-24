@@ -739,17 +739,27 @@ public class ProjectWrapper {
         }
     }
 
-    private ProjectWrapper(final String prjDir, final String setupScript) {
+    private ProjectWrapper(final GantBinding binding, final String prjDir, final String setupScript, final Map<String, String> pathVariables) {
         dependencyMapping = new Mappings(this);
         backendCallback = dependencyMapping.getCallback();
         affectedFiles = new HashSet<StringCache.S>();
 
-        myProject = new Project(new GantBinding());
-        myRoot = getCanonicalPath(prjDir);
+        myProject = new Project(binding == null ? new GantBinding() : binding);
+
+        final File prjFile = new File(prjDir);
+        final boolean dirBased = !(prjFile.isFile() && prjDir.endsWith(".ipr"));
+
+        myRoot = dirBased ? getCanonicalPath(prjDir) : getCanonicalPath(prjFile.getPath());
+
+        final String loadPath = dirBased ? getAbsolutePath(myIDEADir) : prjDir;
 
         myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
-        IdeaProjectLoader.loadFromPath(myProject, getAbsolutePath(myIDEADir), setupScript);
+        if (pathVariables == null) {
+            IdeaProjectLoader.loadFromPath(myProject, loadPath, setupScript);
+        } else {
+            IdeaProjectLoader.loadFromPath(myProject, loadPath, pathVariables, setupScript);
+        }
 
         for (Module m : myProject.getModules().values()) {
             myModules.put(m.getName(), new ModuleWrapper(m));
@@ -880,7 +890,11 @@ public class ProjectWrapper {
     }
 
     public static ProjectWrapper load(final String path, final String setupScript) {
-        return new ProjectWrapper(path, setupScript);
+        return new ProjectWrapper(null, path, setupScript, null);
+    }
+
+    public static ProjectWrapper load(final GantBinding binding, final String path, final String setupScript, final Map<String, String> pathVariables) {
+        return new ProjectWrapper(binding, path, setupScript, pathVariables);
     }
 
     public void report(final String module) {
@@ -923,6 +937,18 @@ public class ProjectWrapper {
 
     public void rebuild() {
         makeModules(myProject.getModules().values(), defaultFlags);
+    }
+
+    public void buildArtifacts() {
+        myProject.buildArtifacts();
+    }
+
+    public void deleteTempFiles() {
+        myProject.deleteTempFiles();
+    }
+
+    public Project getProject() {
+        return myProject;
     }
 
     class BusyBeaver {
@@ -1126,7 +1152,7 @@ public class ProjectWrapper {
                     final List<Module> dep = new ArrayList<Module>();
 
                     for (ClasspathItem cpi : module.getClasspath(kind)) {
-                        if (cpi instanceof Module) {
+                        if (cpi instanceof Module && !marked.contains(((Module) cpi).getName())) {
                             DotPrinter.edge(((Module) cpi).getName(), mName);
                             dep.add((Module) cpi);
                         }
