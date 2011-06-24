@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.intellij.ui;
 
-import com.intellij.util.ui.Table;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -26,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class OrderPanel<T> extends JPanel{
   private String CHECKBOX_COLUMN_NAME;
@@ -33,7 +35,7 @@ public abstract class OrderPanel<T> extends JPanel{
   private final Class<T> myEntryClass;
   private final JTable myEntryTable;
 
-  private final java.util.List<OrderPanelListener> myListeners = new ArrayList<OrderPanelListener>();
+  private final List<OrderPanelListener> myListeners = new ArrayList<OrderPanelListener>();
 
   private boolean myEntryEditable = false;
 
@@ -41,12 +43,12 @@ public abstract class OrderPanel<T> extends JPanel{
     this(entryClass, true);
   }
 
-  protected OrderPanel(Class<T> entryClass, boolean showSheckboxes) {
+  protected OrderPanel(Class<T> entryClass, boolean showCheckboxes) {
     super(new BorderLayout());
 
     myEntryClass = entryClass;
 
-    myEntryTable = new Table(new MyTableModel(showSheckboxes));
+    myEntryTable = new JBTable(new MyTableModel(showCheckboxes));
     myEntryTable.setShowGrid(false);
     myEntryTable.setDragEnabled(false);
     myEntryTable.setShowHorizontalLines(false);
@@ -89,11 +91,11 @@ public abstract class OrderPanel<T> extends JPanel{
     myEntryEditable = entryEditable;
   }
 
-  public void setCheckboxColumnName(String name) {
+  public void setCheckboxColumnName(final String name) {
     final int width;
-    if(name == null) {
-      width = 0;
+    if (StringUtil.isEmpty(name)) {
       CHECKBOX_COLUMN_NAME = "";
+      width = new JCheckBox().getPreferredSize().width;
     }
     else {
       CHECKBOX_COLUMN_NAME = name;
@@ -101,7 +103,7 @@ public abstract class OrderPanel<T> extends JPanel{
       width = fontMetrics.stringWidth(" " + name + " ") + 4;
     }
 
-    final TableColumn checkboxColumn = myEntryTable.getTableHeader().getColumnModel().getColumn(getCheckboxColumn());
+    final TableColumn checkboxColumn = myEntryTable.getColumnModel().getColumn(getCheckboxColumn());
     checkboxColumn.setWidth(width);
     checkboxColumn.setPreferredWidth(width);
     checkboxColumn.setMaxWidth(width);
@@ -192,6 +194,7 @@ public abstract class OrderPanel<T> extends JPanel{
 
   private class MyTableModel extends DefaultTableModel {
     private final boolean myShowCheckboxes;
+
     public MyTableModel(boolean showCheckboxes) {
       myShowCheckboxes = showCheckboxes;
     }
@@ -244,7 +247,8 @@ public abstract class OrderPanel<T> extends JPanel{
   }
 
   public T getValueAt(int row) {
-    return (T)((MyTableModel)myEntryTable.getModel()).getValueAt(row, getEntryColumn());
+    //noinspection unchecked
+    return (T)myEntryTable.getModel().getValueAt(row, getEntryColumn());
   }
 
   public abstract boolean isCheckable(T entry);
@@ -258,16 +262,14 @@ public abstract class OrderPanel<T> extends JPanel{
     return CHECKBOX_COLUMN_NAME;
   }
 
-  public java.util.List<T> getEntries() {
+  public List<T> getEntries() {
     final TableModel model = myEntryTable.getModel();
     final int size = model.getRowCount();
-    java.util.List<T> result = new ArrayList<T>(size);
+    List<T> result = new ArrayList<T>(size);
     for (int idx = 0; idx < size; idx++) {
       result.add(getValueAt(idx));
     }
 
     return result;
   }
-
-
 }
