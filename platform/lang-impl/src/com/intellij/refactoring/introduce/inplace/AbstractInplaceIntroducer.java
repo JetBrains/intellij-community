@@ -19,7 +19,9 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -186,10 +188,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected void addReferenceAtCaret(Collection<PsiReference> refs) {
-    final V variable = getVariable();
+    super.addReferenceAtCaret(refs);
+    final V variable = getLocalVariable();
     if (variable != null) {
       for (PsiReference reference : ReferencesSearch.search(variable)) {
-        refs.remove(reference);
+        refs.add(reference);
       }
     }
   }
@@ -291,6 +294,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           myExpr != null && !myExpr.isValid()) {
         super.moveOffsetAfter(false);
         return;
+      }
+      if (getLocalVariable() != null) {
+        new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
+          @Override
+          protected void run(Result result) throws Throwable {
+            getLocalVariable().setName(myLocalName);
+          }
+        }.execute();
       }
       performIntroduce();
       saveSettings(getVariable());
