@@ -45,6 +45,12 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
     final Project project = myXsltDebugProcess.getSession().getProject();
     final String fileURL = getFileURL(file);
     final int lineNumber = getActualLineNumber(breakpoint, project);
+    if (lineNumber == -1) {
+      final XDebugSession session = myXsltDebugProcess.getSession();
+      session.updateBreakpointPresentation(breakpoint, DebuggerIcons.INVALID_BREAKPOINT_ICON,
+                                           "Unsupported breakpoint position");
+      return;
+    }
 
     try {
       final BreakpointManager manager = myXsltDebugProcess.getBreakpointManager();
