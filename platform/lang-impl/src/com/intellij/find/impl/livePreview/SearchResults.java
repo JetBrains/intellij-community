@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.regex.PatternSyntaxException;
 public class SearchResults {
 
   public int getStamp() {
-    return myStamp;
+    return ++myStamp;
   }
 
   public enum Direction {UP, DOWN}
@@ -48,6 +49,8 @@ public class SearchResults {
   private boolean myDisposed = false;
 
   private int myStamp = 0;
+
+  private int myLastUpdatedStamp = -1;
 
   public SearchResults(Editor editor) {
     myEditor = editor;
@@ -164,7 +167,7 @@ public class SearchResults {
   }
 
   public void clear() {
-    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null, false, null, myStamp);
+    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null, false, null, getStamp());
   }
 
   public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, final TextRange next, final int stamp) {
@@ -216,7 +219,7 @@ public class SearchResults {
           };
 
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            ApplicationManager.getApplication().invokeLater(searchCompletedRunnable);
+            SwingUtilities.invokeLater(searchCompletedRunnable);
           } else {
             searchCompletedRunnable.run();
           }
@@ -231,8 +234,10 @@ public class SearchResults {
 
   private void searchCompleted(List<LiveOccurrence> occurrences, int size, Editor editor, @Nullable FindModel findModel,
                                boolean toChangeSelection, @Nullable TextRange next, int stamp) {
-    if (stamp < myStamp) return;
-    myStamp = stamp+1;
+    if (stamp < myLastUpdatedStamp){
+      return;
+    }
+    myLastUpdatedStamp = stamp;
     if (editor == getEditor() && !myDisposed) {
       myOccurrences = occurrences;
       final TextRange oldCursorRange = myCursor != null ? myCursor.getPrimaryRange() : null;

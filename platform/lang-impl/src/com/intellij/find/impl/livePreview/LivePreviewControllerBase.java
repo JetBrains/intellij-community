@@ -119,14 +119,14 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   }
 
   public void updateInBackground(FindModel findModel, final boolean allowedToChangedEditorSelection) {
+    final int stamp = mySearchResults.getStamp();
     myLivePreviewAlarm.cancelAllRequests();
     if (findModel == null) return;
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     final FindModel copy = new FindModel();
     copy.copyFrom(findModel);
-    
+
     final ModalityState modalityState = ModalityState.current();
-    final int stamp = mySearchResults.getStamp();
     Runnable request = new Runnable() {
       @Override
       public void run() {
