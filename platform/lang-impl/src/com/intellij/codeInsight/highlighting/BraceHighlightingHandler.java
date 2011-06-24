@@ -180,7 +180,7 @@ public class BraceHighlightingHandler {
   }
 
   public void updateBraces() {
-    if (myPsiFile == null) return;
+    if (myPsiFile == null || !myPsiFile.isValid()) return;
 
     clearBraceHighlighters();
 
