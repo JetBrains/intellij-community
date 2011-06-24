@@ -288,7 +288,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
     if (PyNames.INIT_DOT_PY.equals(getName())) {
       final PyQualifiedName qName = stub.getImportSourceQName();
-      if (qName.endsWith(name)) {
+      if (qName != null && qName.endsWith(name)) {
         final PsiElement element = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveFromImportStatementSource(stub.getPsi()));
         if (element != null && element.getParent() == getContainingDirectory()) {
           return element;
