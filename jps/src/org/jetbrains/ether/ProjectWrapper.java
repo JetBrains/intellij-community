@@ -749,7 +749,7 @@ public class ProjectWrapper {
         final File prjFile = new File(prjDir);
         final boolean dirBased = !(prjFile.isFile() && prjDir.endsWith(".ipr"));
 
-        myRoot = dirBased ? getCanonicalPath(prjDir) : getCanonicalPath(prjFile.getPath());
+        myRoot = dirBased ? getCanonicalPath(prjDir) : getCanonicalPath(prjFile.getParent());
 
         final String loadPath = dirBased ? getAbsolutePath(myIDEADir) : prjDir;
 

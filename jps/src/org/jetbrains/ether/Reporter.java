@@ -78,7 +78,7 @@ public class Reporter {
             writer.close();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
