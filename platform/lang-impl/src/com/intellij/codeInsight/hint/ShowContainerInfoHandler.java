@@ -77,7 +77,10 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
         return;
       }
 
-    final TextRange range = DeclarationRangeUtil.getDeclarationRange(container);
+    final TextRange range = DeclarationRangeUtil.getPossibleDeclarationAtRange(container);
+    if (range == null) {
+      return;
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
