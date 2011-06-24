@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>8</line>
+    <description>Casting null to Class[] is redundant</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>9</line>
+    <description>Casting null to Class[] is redundant</description>
+  </problem>
+</problems>

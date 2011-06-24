@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>New1.java</file>
+    <line>5</line>
+    <description>Casting null to String is redundant</description>
+  </problem>
+</problems>
+

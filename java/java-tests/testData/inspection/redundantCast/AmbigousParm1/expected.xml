@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AmbigousParm1.java</file>
+    <line>11</line>
+    <description>Casting c to A is redundant</description>
+  </problem>
+</problems>
+

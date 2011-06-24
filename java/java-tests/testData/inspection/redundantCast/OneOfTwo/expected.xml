@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>OneOfTwo.java</file>
+    <line>8</line>
+    <description>Casting o to String is redundant</description>
+  </problem>
+</problems>
+

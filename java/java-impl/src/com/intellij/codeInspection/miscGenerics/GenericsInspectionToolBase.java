@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,5 +63,6 @@ public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool
     return null;
   }
 
+  @Nullable
   public abstract ProblemDescriptor[] getDescriptions(PsiElement place, InspectionManager manager, boolean isOnTheFly);
 }
