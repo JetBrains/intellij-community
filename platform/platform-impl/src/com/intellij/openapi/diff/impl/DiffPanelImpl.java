@@ -142,9 +142,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     if (getEditor1() != null) {
       getEditor1().getSettings().setAdditionalLinesCount(0);
+      getEditor1().getSettings().setAdditionalPageAtBottom(false);
     }
     if (getEditor2() != null) {
       getEditor2().getSettings().setAdditionalLinesCount(0);
+      getEditor2().getSettings().setAdditionalPageAtBottom(false);
     }
     myPanel.setPrefferedWidth(20);
     myPanel.setPreferredHeightGetter(new Getter<Integer>() {
