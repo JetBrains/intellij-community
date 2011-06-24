@@ -330,7 +330,14 @@ public class RedundantCastUtil {
         PsiTypeElement typeElement = ((PsiTypeCastExpression)expr).getCastType();
         if (typeElement == null) return;
         PsiType castType = typeElement.getType();
+        final PsiExpression innerOperand = ((PsiTypeCastExpression)expr).getOperand();
+        final PsiType operandType = innerOperand != null ? innerOperand.getType() : null;
+        final PsiType topCastType = typeCast.getType();
         if (!(castType instanceof PsiPrimitiveType)) {
+          if (operandType != null && topCastType != null && TypeConversionUtil.areTypesConvertible(operandType, topCastType)) {
+            addToResults((PsiTypeCastExpression)expr);
+          }
+        } else if (PsiPrimitiveType.getUnboxedType(operandType) == topCastType) {
           addToResults((PsiTypeCastExpression)expr);
         }
       }
@@ -340,17 +347,6 @@ public class RedundantCastUtil {
           if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
             //branches need to be of the same type
             if (!Comparing.equal(operand.getType(), ((PsiConditionalExpression)parent).getType())) return;
-          }
-        } else if (parent instanceof PsiTypeCastExpression) {
-          PsiTypeElement typeElement = ((PsiTypeCastExpression)parent).getCastType();
-          if (typeElement != null) {
-            PsiType castType = typeElement.getType();
-            if (castType instanceof PsiPrimitiveType) {
-              final PsiType operandType = operand.getType();
-              if (!(operandType instanceof PsiPrimitiveType) && PsiPrimitiveType.getUnboxedType(operandType) != castType) {
-                return;
-              }
-            }
           }
         }
         processAlreadyHasTypeCast(typeCast);
@@ -362,6 +358,8 @@ public class RedundantCastUtil {
       PsiElement parent = typeCast.getParent();
       while(parent instanceof PsiParenthesizedExpression) parent = parent.getParent();
       if (parent instanceof PsiExpressionList) return; // do not replace in arg lists - should be handled by parent
+      if (parent instanceof PsiReturnStatement) return;
+      if (parent instanceof PsiTypeCastExpression) return;
 
       if (isTypeCastSemantical(typeCast)) return;
 
