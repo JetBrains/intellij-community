@@ -303,8 +303,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public boolean isVarArgs() {
-    GrParameter[] parameters = getParameters();
-    return parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
+    return PsiImplUtil.isVarArgs(getParameters());
   }
 
   @NotNull

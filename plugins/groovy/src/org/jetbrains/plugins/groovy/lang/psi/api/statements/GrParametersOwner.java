@@ -29,4 +29,6 @@ public interface GrParametersOwner extends GroovyPsiElement {
 
   @Nullable
   GrParameterList getParameterList();
+
+  boolean isVarArgs();
 }

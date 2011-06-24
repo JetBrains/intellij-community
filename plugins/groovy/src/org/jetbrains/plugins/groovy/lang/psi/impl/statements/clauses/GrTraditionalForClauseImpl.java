@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -117,5 +118,10 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
   @Override
   public GrParameterList getParameterList() {
     return null;
+  }
+
+  @Override
+  public boolean isVarArgs() {
+    throw new IncorrectOperationException("For clause cannot have varargs");
   }
 }

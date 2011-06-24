@@ -136,6 +136,11 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return findPsiChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP);
   }
 
+  @Override
+  public boolean isVarArgs() {
+    return PsiImplUtil.isVarArgs(getParameters());
+  }
+
 
   @NotNull
   public GrParameterListImpl getParameterList() {

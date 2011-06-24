@@ -15,15 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.light.LightParameter;
+import com.intellij.psi.impl.light.LightVariableBuilder;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -31,12 +34,33 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author ven
  */
-public class GrLightParameter extends LightParameter implements GrParameter {
+public class GrLightParameter extends LightVariableBuilder<GrLightParameter> implements GrParameter {
   public static final GrLightParameter[] EMPTY_ARRAY = new GrLightParameter[0];
   private volatile boolean myOptional;
+  private volatile GrModifierList myModifierList;
+  private PsiElement myScope;
 
   public GrLightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement scope) {
-    super(name, type, scope, GroovyFileType.GROOVY_LANGUAGE);
+    super(scope.getManager(), name, type, GroovyFileType.GROOVY_LANGUAGE);
+    myScope = scope;
+    myModifierList = new GrLightModifierList(scope, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getDeclarationScope() {
+    return myScope;
+  }
+
+  @Override
+  public boolean isVarArgs() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public PsiAnnotation[] getAnnotations() {
+    return PsiAnnotation.EMPTY_ARRAY;
   }
 
   public GrTypeElement getTypeElementGroovy() {
@@ -96,5 +120,17 @@ public class GrLightParameter extends LightParameter implements GrParameter {
   @Override
   public boolean isValid() {
     return getDeclarationScope().isValid();
+  }
+
+  @NotNull
+  @Override
+  public GrModifierList getModifierList() {
+    return myModifierList;
+  }
+
+  @Override
+  public GrLightParameter setModifiers(String... modifiers) {
+    myModifierList = new GrLightModifierList(getContext(), modifiers);
+    return this;
   }
 }

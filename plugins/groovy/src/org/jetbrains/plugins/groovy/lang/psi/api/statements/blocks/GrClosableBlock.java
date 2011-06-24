@@ -48,4 +48,6 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
 
   @Nullable
   PsiElement getArrow();
+
+  boolean isVarArgs();
 }

@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -66,5 +67,10 @@ public class GrCatchClauseImpl extends GroovyPsiElementImpl implements GrCatchCl
 
   public GrParameterList getParameterList() {
     return null;
+  }
+
+  @Override
+  public boolean isVarArgs() {
+    throw new IncorrectOperationException("Catch clause cannot have varargs");
   }
 }

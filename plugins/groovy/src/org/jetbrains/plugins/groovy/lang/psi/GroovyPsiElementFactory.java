@@ -127,7 +127,11 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrTopStatement createTopElementFromText(String text);
 
-  public abstract GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException;
+  public abstract GrClosableBlock createClosureFromText(String text, @Nullable PsiElement context);
+
+  public GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException {
+    return createClosureFromText(s, null);
+  }
 
   public GrParameter createParameter(String name, @Nullable String typeText, @Nullable GroovyPsiElement context) throws IncorrectOperationException {
     return createParameter(name, typeText, null, context);

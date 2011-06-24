@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -55,6 +56,11 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
 
   public GrParameterList getParameterList() {
     return null;
+  }
+
+  @Override
+  public boolean isVarArgs() {
+    throw new IncorrectOperationException("For in clause cannot have varargs");
   }
 
   @Nullable
