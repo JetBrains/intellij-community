@@ -16,11 +16,11 @@ import org.jetbrains.jps.*
  */
 class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 
-    def preprocessModuleCycle(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    def preprocessModuleCycle(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
         doBuildModule(moduleChunk, state)
     }
 
-    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
         doBuildModule(moduleChunk, state)
     }
 
@@ -135,7 +135,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 
 class ResourceCopier implements ModuleBuilder {
 
-    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
         if (state.iterated) return;
 
         state.iterated = true
@@ -170,11 +170,11 @@ class ResourceCopier implements ModuleBuilder {
 }
 
 class GroovycBuilder implements ModuleBuilder {
-    def GroovycBuilder(Project project) {
+    def GroovycBuilder(org.jetbrains.jps.Project project) {
         project.taskdef(name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")
     }
 
-    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
         if (!GroovyFileSearcher.containGroovyFiles(state.sourceRoots)) return
 
         def ant = project.binding.ant
@@ -214,11 +214,11 @@ class GroovycBuilder implements ModuleBuilder {
 
 class GroovyStubGenerator implements ModuleBuilder {
 
-    def GroovyStubGenerator(Project project) {
+    def GroovyStubGenerator(org.jetbrains.jps.Project project) {
         project.taskdef(name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")
     }
 
-    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
         if (!GroovyFileSearcher.containGroovyFiles(state.sourceRoots)) return
 
         def ant = project.binding.ant
@@ -283,11 +283,11 @@ class JetBrainsInstrumentations implements ModuleBuilder {
         }
     }
 
-    def JetBrainsInstrumentations(Project project) {
+    def JetBrainsInstrumentations(org.jetbrains.jps.Project project) {
         project.taskdef(name: "jb_instrumentations", classname: "com.intellij.ant.InstrumentIdeaExtensions")
     }
 
-    def getPrefixedPath(Project project, String root, ModuleChunk moduleChunk) {
+    def getPrefixedPath(org.jetbrains.jps.Project project, String root, ModuleChunk moduleChunk) {
         final path = new PrefixedPath(project.binding.ant.project, root)
 
         moduleChunk.elements.each {module ->
@@ -300,7 +300,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
         return path
     }
 
-    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
         if (state.loader == null) {
             final StringBuffer cp = new StringBuffer()
 
@@ -317,14 +317,14 @@ class JetBrainsInstrumentations implements ModuleBuilder {
             final List<File> formFiles = new ArrayList<File>();
             final ProjectWrapper pw = state.projectWrapper;
 
-            for (Module m: moduleChunk.elements) {
-                final Set<S> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
-                for (S name: names) {
-                    if (name.value.endsWith(".form")) {
-                        formFiles.add(new File(pw.getAbsolutePath(name.value)));
-                    }
-                }
-            }
+              for (Module m: moduleChunk.elements) {
+                  final Set<S> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
+                  for (S name: names) {
+                      if (name.value.endsWith(".form")) {
+                          formFiles.add(new File(pw.getAbsolutePath(name.value)));
+                      }
+                  }
+              }
 
             final List<PrefixedPath> nestedFormDirs = new ArrayList<PrefixedPath>();
 
@@ -387,7 +387,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
 class CustomTasksBuilder implements ModuleBuilder {
     List<ModuleBuildTask> tasks = []
 
-    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
         moduleChunk.modules.each {Module module ->
             tasks*.perform(module, state.targetFolder)
         }
