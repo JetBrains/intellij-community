@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ShiftedSimpleContent;
@@ -148,7 +149,11 @@ public class VcsChangeDetailsManager {
     public Pair<JPanel, Disposable> convert(Change o) {
       try {
         final List<BeforeAfter<ShiftedSimpleContent>> requestForChange = myRequestFromChange.createRequestForChange(o, extraLines);
-        if (requestForChange == null || requestForChange.isEmpty()) return null;
+        if (requestForChange == null) return null;
+        if (requestForChange.isEmpty()) {
+          return new Pair<JPanel, Disposable>(
+            errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false), null);
+        }
         final ChangesFragmentedDiffPanel panel =
           new ChangesFragmentedDiffPanel(myProject, requestForChange, myDiffPanelCache, changeDescription(o));
         return new Pair<JPanel, Disposable>(panel.getPanel(), panel);
