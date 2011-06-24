@@ -67,6 +67,11 @@ public class Reporter {
             return;
 
         try {
+            final File file = new File (name);
+            final String path = file.getParent();
+
+            new File (path).mkdirs();
+
             final FileWriter writer = new FileWriter(name);
 
             writer.write(contents);
