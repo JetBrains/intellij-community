@@ -28,6 +28,7 @@ import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -198,7 +199,13 @@ public class TodoCheckinHandlerWorker {
           }
         }
         final StepIntersection<TodoItem, LineFragment> intersection =
-          new StepIntersection<TodoItem, LineFragment>(TodoItemConvertor.getInstance(), LineFragmentConvertor.getInstance(), lineFragments);
+          new StepIntersection<TodoItem, LineFragment>(TodoItemConvertor.getInstance(), LineFragmentConvertor.getInstance(), lineFragments,
+                                                       new Getter<String>() {
+                                                         @Override
+                                                         public String get() {
+                                                           return myAfterContent;
+                                                         }
+                                                       });
 
         intersection.process(newTodoItems, new PairConsumer<TodoItem, LineFragment>() {
 
@@ -247,7 +254,12 @@ public class TodoCheckinHandlerWorker {
       }
       if (myOldTodoTexts == null) {
         final StepIntersection<LineFragment, TodoItem> intersection = new StepIntersection<LineFragment, TodoItem>(
-          LineFragmentConvertor.getInstance(), TodoItemConvertor.getInstance(), myOldItems);
+          LineFragmentConvertor.getInstance(), TodoItemConvertor.getInstance(), myOldItems, new Getter<String>() {
+          @Override
+          public String get() {
+            return myBeforeContent;
+          }
+        });
         myOldTodoTexts = new HashSet<String>();
         intersection.process(Collections.singletonList(myCurrentLineFragment), new PairConsumer<LineFragment, TodoItem>() {
           @Override
