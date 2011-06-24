@@ -71,6 +71,9 @@
 
     <bundledColorSchemesProvider implementation="com.jetbrains.python.PythonBundledColorSchemeProvider"/>
 
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyElement"
+                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
+
     <!-- Run/Debug -->
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
