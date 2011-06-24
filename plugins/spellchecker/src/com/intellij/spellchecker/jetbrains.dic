@@ -44,6 +44,7 @@ ccflags
 cdata
 charset
 checkbox
+checkboxes
 checksum
 chmod
 classpath
