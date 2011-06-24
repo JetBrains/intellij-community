@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ public class PackageVisibleFieldInspection extends BaseInspection {
 
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new EncapsulateVariableFix();
+        final PsiField field = (PsiField) infos[0];
+        return new EncapsulateVariableFix(field.getName());
     }
 
     @Override
@@ -68,7 +69,7 @@ public class PackageVisibleFieldInspection extends BaseInspection {
                     field.hasModifierProperty(PsiModifier.FINAL)) {
                 return;
             }
-            registerFieldError(field);
+            registerFieldError(field, field);
         }
     }
 }

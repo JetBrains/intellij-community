@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,20 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.JavaFileStubBuilder;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.security.SecureRandom;
 
 
 public class JavaStubBuilderTest extends LightIdeaTestCase {
-  private static final StubBuilder OLD_BUILDER = new JavaFileStubBuilder();
+  @SuppressWarnings("deprecation")
+  private static final StubBuilder OLD_BUILDER = new com.intellij.psi.impl.source.JavaFileStubBuilder();
   private static final StubBuilder NEW_BUILDER = new JavaLightStubBuilder();
   private static final int SOE_TEST_DEPTH = 20000;
 
@@ -364,7 +365,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     }).cpuBound().assertTiming();
   }
 
-  private static void doTest(final String source, final String tree) {
+  private static void doTest(final String source, @Nullable final String tree) {
     final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
     final FileASTNode fileNode = file.getNode();
     assertNotNull(fileNode);

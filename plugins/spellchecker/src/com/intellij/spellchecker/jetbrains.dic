@@ -44,6 +44,7 @@ ccflags
 cdata
 charset
 checkbox
+checkboxes
 checksum
 chmod
 classpath
@@ -225,6 +226,7 @@ nomaxvalue
 nominvalue
 nomonitoring
 nonatomic
+noninfingement
 nonschema
 noorder
 noparallel
@@ -284,6 +286,7 @@ pycharm
 readonly
 readwrite
 rect
+redistributions
 refactor
 refactored
 refactoring
@@ -343,6 +346,7 @@ stdarg
 stdlib
 stmt
 stylesheet
+sublicense
 subpackage
 subpartition
 subpartitions

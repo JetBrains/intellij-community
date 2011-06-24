@@ -15,11 +15,15 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.Convertor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author irengrig
@@ -39,9 +43,15 @@ public class StepIntersection<Data, Area> {
   private Area myCurArea;
   private final List<Area> myAreas;
   private HackSearch<Data,Area,TextRange> myHackSearch;
+  // EA-28497, EA-26379
+  private Getter<String> myDebugDocumentTextGetter;
 
-  public StepIntersection(Convertor<Data, TextRange> dataConvertor, Convertor<Area, TextRange> areasConvertor, final List<Area> areas) {
+  public StepIntersection(Convertor<Data, TextRange> dataConvertor,
+                          Convertor<Area, TextRange> areasConvertor,
+                          final List<Area> areas,
+                          Getter<String> debugDocumentTextGetter) {
     myAreas = areas;
+    myDebugDocumentTextGetter = debugDocumentTextGetter;
     myAreaIndex = 0;
     myDataConvertor = dataConvertor;
     myAreasConvertor = areasConvertor;
@@ -116,14 +126,18 @@ public class StepIntersection<Data, Area> {
     if (myAreaIndex >= myAreas.size()) {
       return;
     }
-    assert myAreaRange == null || myAreaRange.getEndOffset() < myAreasConvertor.convert(myAreas.get(myAreaIndex)).getStartOffset();
+    assert myAreaRange == null || myAreaRange.getEndOffset() < myAreasConvertor.convert(myAreas.get(myAreaIndex)).getStartOffset() :
+      "Area ranges intersect: first: " + myAreaRange + ", second: " + myAreasConvertor.convert(myAreas.get(myAreaIndex)) + ", text: '" +
+      myDebugDocumentTextGetter.get() + "'";
     myCurArea = myAreas.get(myAreaIndex);
     myAreaRange = myAreasConvertor.convert(myCurArea);
   }
 
   private void dataStep() {
     myCurData = myDataIterator.next();
-    assert myDataRange == null || myDataRange.getEndOffset() < myDataConvertor.convert(myCurData).getStartOffset();
+    assert myDataRange == null || myDataRange.getEndOffset() < myDataConvertor.convert(myCurData).getStartOffset() :
+      "Data ranges intersect: first: " + myDataRange + ", second: " + myDataConvertor.convert(myCurData) + ", text: '" +
+      myDebugDocumentTextGetter.get() + "'";
     myDataRange = myDataConvertor.convert(myCurData);
   }
 }

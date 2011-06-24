@@ -1,0 +1,14 @@
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant type cast</problem_class>
+    <description>Casting &lt;code&gt;this&lt;/code&gt; to &lt;code&gt;CastPreventsNPEDetection&lt;/code&gt; is redundant</description>
+  </problem>
+  <problem>
+    <file>Suspicious.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant type cast</problem_class>
+    <description>Casting &lt;code&gt;str&lt;/code&gt; to &lt;code&gt;String&lt;/code&gt; is redundant</description>
+  </problem>
+</problems>

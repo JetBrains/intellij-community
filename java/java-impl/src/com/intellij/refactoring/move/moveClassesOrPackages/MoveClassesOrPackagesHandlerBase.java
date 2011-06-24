@@ -317,7 +317,7 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
          moveDirectoryDescription = "Move everything from " + myDirectories[0].getVirtualFile().getPresentableUrl() + " to another directory";
        }
        myRbMoveDirectory = new JRadioButton();
-       myRbMoveDirectory.setMnemonic('d');
+       myRbMoveDirectory.setMnemonic('e');
        myRbMoveDirectory.setText(moveDirectoryDescription);
 
        ButtonGroup gr = new ButtonGroup();
@@ -325,7 +325,11 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
        gr.add(myRbRearrangePackage);
        gr.add(myRbMoveDirectory);
 
-       new RadioUpDownListener(myRbMovePackage, myRbRearrangePackage, myRbMoveDirectory);
+       if (myRearrangePackagesEnabled) {
+         new RadioUpDownListener(myRbMovePackage, myRbRearrangePackage, myRbMoveDirectory);
+       } else {
+         new RadioUpDownListener(myRbMovePackage, myRbMoveDirectory);
+       }
 
        Box box = Box.createVerticalBox();
        box.add(Box.createVerticalStrut(5));

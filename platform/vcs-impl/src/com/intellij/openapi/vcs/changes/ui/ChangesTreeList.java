@@ -721,7 +721,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return !PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
+      return (! myProject.isDisposed()) && !PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
     }
 
     public void setSelected(AnActionEvent e, boolean state) {

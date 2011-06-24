@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,11 +227,18 @@ public class ProgressManagerImpl extends ProgressManager {
     return myThreadIndicator.get();
   }
 
-  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, @NotNull String progressTitle, boolean canBeCanceled, Project project) {
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
+                                                     @NotNull String progressTitle,
+                                                     boolean canBeCanceled,
+                                                     @Nullable Project project) {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
   }
 
-  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, @NotNull String progressTitle, boolean canBeCanceled, Project project, JComponent parentComponent) {
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
+                                                     @NotNull String progressTitle,
+                                                     boolean canBeCanceled,
+                                                     @Nullable Project project,
+                                                     @Nullable JComponent parentComponent) {
     Task.Modal task = new Task.Modal(project, progressTitle, canBeCanceled) {
       public void run(@NotNull ProgressIndicator indicator) {
         process.run();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +65,12 @@ public class UseOfAnotherObjectsPrivateFieldInspection
         panel.addCheckbox(InspectionGadgetsBundle.message(
                 "ignore.accesses.from.equals.method"), "ignoreEquals");
         return panel;
+    }
+
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiField field = (PsiField) infos[0];
+        return new EncapsulateVariableFix(field.getName());
     }
 
     @Override
@@ -112,7 +120,7 @@ public class UseOfAnotherObjectsPrivateFieldInspection
             if(fieldNameElement == null){
                 return;
             }
-            registerError(fieldNameElement);
+            registerError(fieldNameElement, field);
         }
     }
 }

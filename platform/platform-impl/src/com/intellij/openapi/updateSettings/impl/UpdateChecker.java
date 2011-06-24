@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Oct 31, 2002
- * Time: 6:33:01 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.openapi.updateSettings.impl;
 
@@ -44,9 +35,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
@@ -72,15 +63,20 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * XML sample:
+ * <pre>{@code
  * <idea>
- * <build>456</build>
- * <version>4.5.2</version>
- * <title>New Intellij IDEA Version</title>
- * <message>
- * New version of IntelliJ IDEA is available.
- * Please visit http://www.intellij.com/ for more info.
- * </message>
+ *   <build>456</build>
+ *   <version>4.5.2</version>
+ *   <title>New Intellij IDEA Version</title>
+ *   <message>
+ *     New version of IntelliJ IDEA is available.
+ *     Please visit http://www.intellij.com/ for more info.
+ *   </message>
  * </idea>
+ * }</pre>
+ *
+ * @author mike
+ * Date: Oct 31, 2002
  */
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
@@ -110,6 +106,7 @@ public final class UpdateChecker {
   private static class StringHolder {
     private static final String UPDATE_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getCheckingUrl();
     private static final String PATCHES_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getPatchesUrl();
+    private StringHolder() { }
   }
 
   private static String getUpdateUrl() {
@@ -190,12 +187,14 @@ public final class UpdateChecker {
   public static boolean checkPluginsHost(final String host, final List<PluginDownloader> downloaded) throws Exception {
     final Document document = loadVersionInfo(host);
     if (document == null) return false;
+
     boolean success = true;
     for (Object plugin : document.getRootElement().getChildren("plugin")) {
-      Element pluginElement = (Element)plugin;
+      final Element pluginElement = (Element)plugin;
       final String pluginId = pluginElement.getAttributeValue("id");
-      String pluginUrl = pluginElement.getAttributeValue("url");
+      final String pluginUrl = pluginElement.getAttributeValue("url");
       final String pluginVersion = pluginElement.getAttributeValue("version");
+
       if (pluginId == null) {
         LOG.info("plugin id should not be null");
         success = false;
@@ -208,19 +207,25 @@ public final class UpdateChecker {
         continue;
       }
 
-
-      if (!pluginUrl.startsWith(HttpFileSystem.PROTOCOL)) {
-        final HttpFileSystem fileSystem = HttpFileSystem.getInstance();
-        final VirtualFile hostFile = fileSystem.findFileByPath(VfsUtil.urlToPath(host));
-        LOG.assertTrue(hostFile != null);
-        final VirtualFile pluginByRelativePath = findPluginByRelativePath(hostFile.getParent(), pluginUrl, fileSystem);
-        if (pluginByRelativePath != null) {
-          pluginUrl = pluginByRelativePath.getUrl();
+      final VirtualFileManager fileManager = VirtualFileManager.getInstance();
+      VirtualFile pluginFile = fileManager.findFileByUrl(pluginUrl);
+      if (pluginFile == null) {
+        final VirtualFile hostFile = fileManager.findFileByUrl(host);
+        if (hostFile == null) {
+          LOG.error("can't find file by url '" + host + "'");
+          success = false;
+          break;
+        }
+        pluginFile = findPluginByRelativePath(hostFile.getParent(), pluginUrl, hostFile.getFileSystem());
+        if (pluginFile == null) {
+          LOG.error("can't find '" + pluginUrl + "' relative to '" + host + "'");
+          success = false;
+          continue;
         }
       }
 
-      final String finalPluginUrl = pluginUrl;
-      Runnable updatePluginRunnable = new Runnable() {
+      final String finalPluginUrl = pluginFile.getUrl();
+      final Runnable updatePluginRunnable = new Runnable() {
         public void run() {
           try {
             final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -248,9 +253,9 @@ public final class UpdateChecker {
   }
 
   @Nullable
-  public static VirtualFile findPluginByRelativePath(VirtualFile hostFile,
-                                                     @NotNull @NonNls String relPath,
-                                                     final HttpFileSystem fileSystem) {
+  public static VirtualFile findPluginByRelativePath(@NotNull final VirtualFile hostFile,
+                                                     @NotNull @NonNls final String relPath,
+                                                     @NotNull final VirtualFileSystem fileSystem) {
     if (relPath.length() == 0) return hostFile;
     int index = relPath.indexOf('/');
     if (index < 0) index = relPath.length();

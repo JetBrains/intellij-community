@@ -30,6 +30,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -54,11 +55,17 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private Splitter mySplitter;
   private final Project myProject;
+  private final boolean myAllowMultipleSelections;
 
   public ContentChooser(Project project, String title, boolean useIdeaEditor) {
+    this(project, title, useIdeaEditor, false);
+  }
+  
+  public ContentChooser(Project project, String title, boolean useIdeaEditor, boolean allowMultipleSelections) {
     super(project, true);
     myProject = project;
     myUseIdeaEditor = useIdeaEditor;
+    myAllowMultipleSelections = allowMultipleSelections;
 
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
@@ -72,7 +79,9 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     myList = new JBList();
-    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    final int selectionMode = myAllowMultipleSelections ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION 
+                                                        : ListSelectionModel.SINGLE_SELECTION;
+    myList.setSelectionMode(selectionMode);
 
     rebuildListContent();
 
@@ -92,15 +101,21 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myList.addKeyListener(new KeyAdapter() {
       public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-          int selectedIndex = getSelectedIndex();
-          int size = myAllContents.size();
-          removeContentAt(myAllContents.get(selectedIndex));
+          int newSelectionIndex = -1;
+          for (int i : getSelectedIndices()) {
+            removeContentAt(myAllContents.get(i));
+            if (newSelectionIndex < 0) {
+              newSelectionIndex = i;
+            }
+          }
+          
           rebuildListContent();
-          if (size == 1) {
+          if (myAllContents.size() <= 0) {
             close(CANCEL_EXIT_CODE);
             return;
           }
-          myList.setSelectedIndex(Math.min(selectedIndex, myAllContents.size() - 1));
+          newSelectionIndex = Math.min(newSelectionIndex, myAllContents.size() - 1);
+          myList.setSelectedIndex(newSelectionIndex);
         }
         else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           close(OK_EXIT_CODE);
@@ -141,8 +156,11 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private void updateViewerForSelection() {
     if (myAllContents.size() == 0) return;
-    String fullString = getStringRepresentationFor(myAllContents.get(getSelectedIndex()));
-    fullString = StringUtil.convertLineSeparators(fullString);
+    String fullString = "";
+    for (int i : getSelectedIndices()) {
+      String s = getStringRepresentationFor(myAllContents.get(i));
+      fullString += StringUtil.convertLineSeparators(s);
+    }
 
     if (myViewer != null) {
       EditorFactory.getInstance().releaseEditor(myViewer);
@@ -219,11 +237,26 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     if (myList.getSelectedIndex() == -1) return 0;
     return myList.getSelectedIndex();
   }
+  
+  @NotNull
+  public int[] getSelectedIndices() {
+    return myList.getSelectedIndices();
+  }
 
   public List<Data> getAllContents() {
     return myAllContents;
   }
 
+  @NotNull
+  public String getSelectedText() {
+    String result = "";
+    for (int i : getSelectedIndices()) {
+      String s = getStringRepresentationFor(myAllContents.get(i));
+      result += StringUtil.convertLineSeparators(s);
+    }
+    return result;
+  }
+  
   private static class MyListCellRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       // Fix GTK background

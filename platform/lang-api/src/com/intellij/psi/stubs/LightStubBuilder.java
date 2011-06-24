@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.*;
+import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -139,7 +140,7 @@ public class LightStubBuilder implements StubBuilder {
         }
       }
       else {
-        LOG.error("Element is not of ILighterStubElementType: " + elementType + ", " + element);
+        LOG.error("Element is not of ILightStubElementType: " + LogUtil.objectAndClass(elementType) + ", " + element);
       }
     }
 
@@ -259,6 +260,11 @@ public class LightStubBuilder implements StubBuilder {
       public int hashCode() {
         return myNode.hashCode();
       }
+
+      @Override
+      public String toString() {
+        return "node wrapper[" + myNode + "]";
+      }
     }
 
     private static class TokenNodeWrapper extends NodeWrapper implements LighterASTTokenNode {
@@ -269,6 +275,11 @@ public class LightStubBuilder implements StubBuilder {
       @Override
       public CharSequence getText() {
         return myNode.getText();
+      }
+
+      @Override
+      public String toString() {
+        return "token wrapper[" + myNode + "]";
       }
     }
   }

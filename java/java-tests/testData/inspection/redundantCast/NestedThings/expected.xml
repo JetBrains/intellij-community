@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>NestedThings.java</file>
+    <line>13</line>
+    <description>Casting "" to String is redundant</description>
+  </problem>
+</problems>
+

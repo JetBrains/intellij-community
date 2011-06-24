@@ -29,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,88 +103,12 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
 
       @Override public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
         super.visitMethodCallExpression(methodCall);
-        final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return;
-        final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-        if (args.length != 1) return;
-        PsiType argType = args[0].getType();
-        if (argType instanceof PsiPrimitiveType) {
-          argType = ((PsiPrimitiveType)argType).getBoxedType(methodCall);
-        }
-
-        if (!(argType instanceof PsiClassType)) return;
-
-        final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
-        PsiMethod calleeMethod = (PsiMethod)resolveResult.getElement();
-        if (calleeMethod == null) return;
-        PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
-
-        synchronized (patternMethods) {
-          if (patternMethods.isEmpty()) {
-            setupPatternMethods(methodCall.getManager(), methodCall.getResolveScope(), patternMethods, indices);
-          }
-        }
-
-        for (int i = 0; i < patternMethods.size(); i++) {
-          PsiMethod patternMethod = patternMethods.get(i);
-          if (!patternMethod.getName().equals(methodExpression.getReferenceName())) continue;
-          int index = indices.get(i);
-
-          //we are in collections method implementation
-          if (contextMethod != null && isInheritorOrSelf(contextMethod, patternMethod)) return;
-
-          final PsiClass calleeClass = calleeMethod.getContainingClass();
-          PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-          final PsiClass patternClass = patternMethod.getContainingClass();
-          substitutor = TypeConversionUtil.getClassSubstitutor(patternClass, calleeClass, substitutor);
-          if (substitutor == null) continue;
-
-          if (!patternMethod.getSignature(substitutor).equals(calleeMethod.getSignature(PsiSubstitutor.EMPTY))) continue;
-
-          PsiTypeParameter[] typeParameters = patternClass.getTypeParameters();
-          if (typeParameters.length <= index) return;
-          final PsiTypeParameter typeParameter = typeParameters[index];
-          PsiType typeParamMapping = substitutor.substitute(typeParameter);
-          if (typeParamMapping == null) return;
-          String message = null;
-          if (typeParamMapping instanceof PsiCapturedWildcardType) {
-            typeParamMapping = ((PsiCapturedWildcardType)typeParamMapping).getWildcard();
-          }
-          if (!typeParamMapping.isAssignableFrom(argType)) {
-            if (typeParamMapping.isConvertibleFrom(argType)) {
-              if (REPORT_CONVERTIBLE_METHOD_CALLS) {
-                message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor1",
-                                                    PsiFormatUtil.formatMethod(calleeMethod, substitutor,
-                                                                               PsiFormatUtil.SHOW_NAME | PsiFormatUtil
-                                                                                 .SHOW_CONTAINING_CLASS, PsiFormatUtil.SHOW_TYPE));
-              }
-            }
-            else {
-              PsiType qualifierType = qualifier.getType();
-              LOG.assertTrue(qualifierType != null);
-
-              message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
-                                                  PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
-                                                  PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY));
-            }
-          }
-          if (message != null) {
-            holder.registerProblem(args[0], message);
-          }
-          return;
+        final String message = getSuspiciousMethodCallMessage(methodCall, REPORT_CONVERTIBLE_METHOD_CALLS, patternMethods, indices
+        );
+        if (message != null) {
+          holder.registerProblem(methodCall.getArgumentList().getExpressions()[0], message);
         }
       }
-
-      private boolean isInheritorOrSelf(PsiMethod inheritorCandidate, PsiMethod base) {
-        PsiClass aClass = inheritorCandidate.getContainingClass();
-        PsiClass bClass = base.getContainingClass();
-        if (aClass == null || bClass == null) return false;
-        PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(bClass, aClass, PsiSubstitutor.EMPTY);
-        return substitutor != null &&
-               MethodSignatureUtil.findMethodBySignature(bClass, inheritorCandidate.getSignature(substitutor), false) == base;
-      }
-
     };
   }
 
@@ -203,5 +125,97 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
   @NotNull
   public String getShortName() {
     return "SuspiciousMethodCalls";
+  }
+
+  @Nullable
+  private static String getSuspiciousMethodCallMessage(final PsiMethodCallExpression methodCall,
+                                                       final boolean reportConvertibleMethodCalls, final List<PsiMethod> patternMethods,
+                                                       final IntArrayList indices) {
+    final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+    if (args.length != 1) return null;
+    PsiType argType = args[0].getType();
+    return getSuspiciousMethodCallMessage(methodCall, argType, reportConvertibleMethodCalls, patternMethods, indices);
+  }
+
+  @Nullable
+  public static String getSuspiciousMethodCallMessage(PsiMethodCallExpression methodCall,
+                                                      PsiType argType, boolean reportConvertibleMethodCalls, List<PsiMethod> patternMethods,
+                                                      IntArrayList indices) {
+    final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return null;
+    if (argType instanceof PsiPrimitiveType) {
+      argType = ((PsiPrimitiveType)argType).getBoxedType(methodCall);
+    }
+
+    if (!(argType instanceof PsiClassType)) return null;
+
+    final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
+    PsiMethod calleeMethod = (PsiMethod)resolveResult.getElement();
+    if (calleeMethod == null) return null;
+    PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
+
+    synchronized (patternMethods) {
+      if (patternMethods.isEmpty()) {
+        setupPatternMethods(methodCall.getManager(), methodCall.getResolveScope(), patternMethods, indices);
+      }
+    }
+
+    for (int i = 0; i < patternMethods.size(); i++) {
+      PsiMethod patternMethod = patternMethods.get(i);
+      if (!patternMethod.getName().equals(methodExpression.getReferenceName())) continue;
+      int index = indices.get(i);
+
+      //we are in collections method implementation
+      if (contextMethod != null && isInheritorOrSelf(contextMethod, patternMethod)) return null;
+
+      final PsiClass calleeClass = calleeMethod.getContainingClass();
+      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      final PsiClass patternClass = patternMethod.getContainingClass();
+      substitutor = TypeConversionUtil.getClassSubstitutor(patternClass, calleeClass, substitutor);
+      if (substitutor == null) continue;
+
+      if (!patternMethod.getSignature(substitutor).equals(calleeMethod.getSignature(PsiSubstitutor.EMPTY))) continue;
+
+      PsiTypeParameter[] typeParameters = patternClass.getTypeParameters();
+      if (typeParameters.length <= index) return null;
+      final PsiTypeParameter typeParameter = typeParameters[index];
+      PsiType typeParamMapping = substitutor.substitute(typeParameter);
+      if (typeParamMapping == null) return null;
+      String message = null;
+      if (typeParamMapping instanceof PsiCapturedWildcardType) {
+        typeParamMapping = ((PsiCapturedWildcardType)typeParamMapping).getWildcard();
+      }
+      if (!typeParamMapping.isAssignableFrom(argType)) {
+        if (typeParamMapping.isConvertibleFrom(argType)) {
+          if (reportConvertibleMethodCalls) {
+            message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor1",
+                                                PsiFormatUtil.formatMethod(calleeMethod, substitutor,
+                                                                           PsiFormatUtilBase.SHOW_NAME |
+                                                                           PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
+                                                                           PsiFormatUtilBase.SHOW_TYPE));
+          }
+        }
+        else {
+          PsiType qualifierType = qualifier.getType();
+          LOG.assertTrue(qualifierType != null);
+
+          message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
+                                              PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
+                                              PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY));
+        }
+      }
+      return message;
+    }
+    return null;
+  }
+
+  private static boolean isInheritorOrSelf(PsiMethod inheritorCandidate, PsiMethod base) {
+    PsiClass aClass = inheritorCandidate.getContainingClass();
+    PsiClass bClass = base.getContainingClass();
+    if (aClass == null || bClass == null) return false;
+    PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(bClass, aClass, PsiSubstitutor.EMPTY);
+    return substitutor != null &&
+           MethodSignatureUtil.findMethodBySignature(bClass, inheritorCandidate.getSignature(substitutor), false) == base;
   }
 }

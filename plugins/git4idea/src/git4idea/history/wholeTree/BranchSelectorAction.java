@@ -21,7 +21,6 @@ import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.history.browser.SymbolicRefs;
 
-import java.awt.*;
 import java.util.TreeSet;
 
 /**
@@ -64,11 +63,12 @@ public class BranchSelectorAction extends BasePopupAction {
       actionConsumer.consume(new SelectBranchAction("*" + minusRefs(current.getFullName()), current.getFullName()));
     }
     final TreeSet<String> locals = mySymbolicRefs.getLocalBranches();
+    final String currentName = current == null ? null : current.getName();
     if (locals != null && (! locals.isEmpty())) {
       final DefaultActionGroup local = new DefaultActionGroup("Local", true);
       actionConsumer.consume(local);
       for (String s : locals) {
-        final String presentation = s.equals(current.getName()) ? ("*" + s) : s;
+        final String presentation = s.equals(currentName) ? ("*" + s) : s;
         local.add(new SelectBranchAction(presentation, s));
       }
     }
@@ -77,7 +77,7 @@ public class BranchSelectorAction extends BasePopupAction {
       final DefaultActionGroup remote = new DefaultActionGroup("Remote", true);
       actionConsumer.consume(remote);
       for (String s : remotes) {
-        final String presentation = s.equals(current.getName()) ? ("*" + s) : s;
+        final String presentation = s.equals(currentName) ? ("*" + s) : s;
         remote.add(new SelectBranchAction(presentation, GitBranch.REFS_REMOTES_PREFIX + s));
       }
     }

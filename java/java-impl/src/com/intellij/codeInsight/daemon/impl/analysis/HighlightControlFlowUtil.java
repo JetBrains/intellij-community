@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -687,7 +687,7 @@ public class HighlightControlFlowUtil {
     else {
       scope = new PsiElement[]{variable.getParent()};
     }
-    if (scope.length < 1 || scope[0].getContainingFile() != context.getContainingFile()) return null;
+    if (scope.length < 1 || scope[0] == null || scope[0].getContainingFile() != context.getContainingFile()) return null;
 
     PsiElement parent = context.getParent();
     PsiElement prevParent = context;

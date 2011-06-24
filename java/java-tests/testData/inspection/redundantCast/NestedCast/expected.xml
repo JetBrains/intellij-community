@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>CastTest.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant type cast</problem_class>
+    <description>Casting &lt;code&gt;ct1&lt;/code&gt; to &lt;code&gt;CastTest&lt;/code&gt; is redundant</description>
+  </problem>
+</problems>

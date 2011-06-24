@@ -19,6 +19,7 @@ public class Base1 {
   public static final int F = 1;
   public static void m(int i) { }
   public static class F { }
+  public static class D { }
   public interface I1 {
     int IF = 1;
   }

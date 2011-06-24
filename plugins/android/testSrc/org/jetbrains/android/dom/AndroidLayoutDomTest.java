@@ -1,13 +1,12 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -281,6 +280,38 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     assertNotNull(rootReference);
     PsiElement rootViewClass = rootReference.resolve();
     assertTrue("Must be PsiClass reference", rootViewClass instanceof PsiClass);
+  }
+
+  public void testOnClickCompletion() throws Throwable {
+    copyOnClickClasses();
+    doTestCompletionVariants(getTestName(true) + ".xml", "clickHandler1", "clickHandler7");
+  }
+
+  public void testOnClickHighlighting() throws Throwable {
+    copyOnClickClasses();
+    doTestHighlighting();
+  }
+
+  public void testOnClickNavigation() throws Throwable {
+    copyOnClickClasses();
+    final VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(file);
+
+    final PsiReference reference = TargetElementUtilBase.findReference(myFixture.getEditor(), myFixture.getCaretOffset());
+    assertNotNull(reference);
+    assertInstanceOf(reference, PsiPolyVariantReference.class);
+    final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+    assertEquals(3, results.length);
+    for (ResolveResult result : results) {
+      assertInstanceOf(result.getElement(), PsiMethod.class);
+    }
+  }
+
+  private void copyOnClickClasses() throws IOException {
+    copyFileToProject("OnClick_Class1.java", "src/p1/p2/OnClick_Class1.java");
+    copyFileToProject("OnClick_Class2.java", "src/p1/p2/OnClick_Class2.java");
+    copyFileToProject("OnClick_Class3.java", "src/p1/p2/OnClick_Class3.java");
+    copyFileToProject("OnClick_Class4.java", "src/p1/p2/OnClick_Class4.java");
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,17 +33,20 @@ public class PublicFieldInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreEnums = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("public.field.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "public.field.problem.descriptor");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -51,14 +54,18 @@ public class PublicFieldInspection extends BaseInspection {
                 "ignoreEnums");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new EncapsulateVariableFix();
+        final PsiField field = (PsiField) infos[0];
+        return new EncapsulateVariableFix(field.getName());
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new PublicFieldVisitor();
     }
@@ -87,7 +94,7 @@ public class PublicFieldInspection extends BaseInspection {
                     }
                 }
             }
-            registerFieldError(field);
+            registerFieldError(field, field);
         }
     }
 }

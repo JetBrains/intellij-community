@@ -19,22 +19,80 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lene
- * Date: 26.04.11
- * Time: 23:10
+ * @author Elena Shaverdova
+ * @author Nikolay Matveev
  */
-public class ScriptRunnerUtil {
-  private static final Logger LOG = Logger.getInstance(ScriptRunnerUtil.class.getName());
+public final class ScriptRunnerUtil {
+
+  private static final Logger LOG = Logger.getInstance("com.intellij.execution.process.ScriptRunnerUtil");
+
+  public static final Condition<Key> STDOUT_OUTPUT_KEY_FILTER = new Condition<Key>() {
+    @Override
+    public boolean value(Key key) {
+      return ProcessOutputTypes.STDOUT.equals(key);
+    }
+  };
+
+  public static final Condition<Key> STDERR_OUTPUT_KEY_FILTER = new Condition<Key>() {
+    @Override
+    public boolean value(Key key) {
+      return ProcessOutputTypes.STDERR.equals(key);
+    }
+  };
+
+  public static final Condition<Key> STDOUT_OR_STDERR_OUTPUT_KEY_FILTER = Conditions.or(STDOUT_OUTPUT_KEY_FILTER, STDERR_OUTPUT_KEY_FILTER);
+
+  private static final int DEFAULT_TIMEOUT = 30000;
 
   private ScriptRunnerUtil() {
+  }
+
+  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine,
+                                        @NotNull Condition<Key> outputTypeFilter)
+    throws ExecutionException {
+    return getProcessOutput(commandLine, outputTypeFilter, DEFAULT_TIMEOUT);
+  }
+
+  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine,
+                                        @NotNull Condition<Key> outputTypeFilter,
+                                        long timeout)
+    throws ExecutionException {
+    return getProcessOutput(new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()), outputTypeFilter,
+                            timeout);
+  }
+
+  public static String getProcessOutput(@NotNull final ProcessHandler processHandler,
+                                        @NotNull final Condition<Key> outputTypeFilter,
+                                        final long timeout)
+    throws ExecutionException {
+    final StringBuilder outputBuilder = new StringBuilder();
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        if (outputTypeFilter.value(outputType)) {
+          final String text = event.getText();
+          outputBuilder.append(text);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(text);
+          }
+        }
+      }
+    });
+    processHandler.startNotify();
+    if (!processHandler.waitFor(timeout)) {
+      throw new ExecutionException(ExecutionBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
+    }
+    return outputBuilder.toString();
   }
 
   public static OSProcessHandler execute(String exePath,

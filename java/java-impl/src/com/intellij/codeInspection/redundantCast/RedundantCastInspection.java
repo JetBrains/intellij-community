@@ -15,18 +15,29 @@
  */
 package com.intellij.codeInspection.redundantCast;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
+import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.IntArrayList;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,10 +51,15 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.cast.display.name");
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 
+  public boolean IGNORE_ANNOTATED_METHODS = false;
+  public boolean IGNORE_SUSPICIOUS_METHOD_CALLS = false;
+
+
   public RedundantCastInspection() {
     myQuickFixAction = new AcceptSuggested();
   }
 
+  @Nullable
   public ProblemDescriptor[] getDescriptions(PsiElement where, InspectionManager manager, boolean isOnTheFly) {
     List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
@@ -58,10 +74,56 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
   }
 
+  @Override
+  public void writeSettings(Element node) throws WriteExternalException {
+    if (IGNORE_ANNOTATED_METHODS || IGNORE_SUSPICIOUS_METHOD_CALLS) {
+      super.writeSettings(node);
+    }
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox("Ignore casts appeared in suspicious collections method calls", "IGNORE_SUSPICIOUS_METHOD_CALLS");
+    optionsPanel.addCheckbox("Ignore casts to invoke @NotNull method which overrides @Nullable", "IGNORE_ANNOTATED_METHODS");
+    return optionsPanel;
+  }
+
+  @Nullable
   private ProblemDescriptor createDescription(@NotNull PsiTypeCastExpression cast, @NotNull InspectionManager manager, boolean onTheFly) {
     PsiExpression operand = cast.getOperand();
     PsiTypeElement castType = cast.getCastType();
     if (operand == null || castType == null) return null;
+    PsiElement parent = cast.getParent();
+    while (parent instanceof PsiParenthesizedExpression){
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiReferenceExpression) {
+      if (IGNORE_ANNOTATED_METHODS) {
+        final PsiElement gParent = parent.getParent();
+        if (gParent instanceof PsiMethodCallExpression) {
+          final PsiMethod psiMethod = ((PsiMethodCallExpression)gParent).resolveMethod();
+          if (psiMethod != null && AnnotationUtil.isNotNull(psiMethod)) {
+            final PsiClass superClass = PsiUtil.resolveClassInType(operand.getType());
+            for (PsiMethod method : psiMethod.findSuperMethods(superClass)) {
+              if (AnnotationUtil.isNullable(method)) {
+                return null;
+              }
+            }
+          }
+        }
+      }
+    } else if (parent instanceof PsiExpressionList)  {
+      final PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiMethodCallExpression && IGNORE_SUSPICIOUS_METHOD_CALLS) {
+        final String message = SuspiciousCollectionsMethodCallsInspection
+          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand.getType(), true, new ArrayList<PsiMethod>(), new IntArrayList());
+        if (message != null) {
+          return null;
+        }
+      }
+    }
+
     String message = InspectionsBundle.message("inspection.redundant.cast.problem.descriptor",
                                                "<code>" + operand.getText() + "</code>", "<code>#ref</code> #loc");
     return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);

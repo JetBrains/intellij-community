@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 04-Dec-2007
- */
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -30,6 +25,10 @@ import com.intellij.ui.SimpleTextAttributes;
 import javax.swing.*;
 import java.util.ArrayList;
 
+/**
+ * @author anna
+ * Date: 04-Dec-2007
+ */
 public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
   private static final String AVAILABLE_VERSION = "available version: ";
@@ -37,14 +36,25 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
 
   protected DetectedPluginsPanel() {
     super(PluginDownloader.class);
-    getEntryTable().setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer(){
-      protected void customizeCellRenderer(final JTable table, final Object value, final boolean selected, final boolean hasFocus, final int row, final int column) {
+    final JTable entryTable = getEntryTable();
+    entryTable.setTableHeader(null);
+    entryTable.setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer() {
+      protected void customizeCellRenderer(final JTable table,
+                                           final Object value,
+                                           final boolean selected,
+                                           final boolean hasFocus,
+                                           final int row,
+                                           final int column) {
         final PluginDownloader downloader = (PluginDownloader)value;
         append(downloader.getPluginName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(downloader.getPluginId()));
         final String loadedVersion = downloader.getPluginVersion();
         if (loadedVersion != null || (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null)) {
-          append(" (" + (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null ? INSTALLED_VERSION + ideaPluginDescriptor.getVersion() + (loadedVersion != null ? ", " : "") :"") + (loadedVersion != null ? AVAILABLE_VERSION + loadedVersion : "") + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          final String installedVersion = ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null
+                                          ? INSTALLED_VERSION + ideaPluginDescriptor.getVersion() + (loadedVersion != null ? ", " : "")
+                                          : "";
+          final String availableVersion = loadedVersion != null ? AVAILABLE_VERSION + loadedVersion : "";
+          append(" (" + installedVersion + availableVersion + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
     });
@@ -78,8 +88,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     myListeners.add(l);
   }
 
-  public static interface Listener {
+  public interface Listener {
     void stateChanged();
   }
-
 }

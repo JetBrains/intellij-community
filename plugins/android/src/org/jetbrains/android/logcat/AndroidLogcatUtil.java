@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.run.LoggingReceiver;
 import org.jetbrains.android.util.AndroidBundle;
@@ -31,10 +32,7 @@ import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.PipedReader;
-import java.io.PipedWriter;
-import java.io.Reader;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -99,7 +97,7 @@ public class AndroidLogcatUtil {
   }
 
   @Nullable
-  public static Reader startLoggingThread(final Project project,
+  public static Pair<Reader, Writer> startLoggingThread(final Project project,
                                           final IDevice device,
                                           final boolean clearLogcat,
                                           @NotNull final LogConsoleBase console) {
@@ -155,6 +153,6 @@ public class AndroidLogcatUtil {
         });
       }
     });
-    return logReader;
+    return new Pair<Reader, Writer>(logReader, logWriter);
   }
 }

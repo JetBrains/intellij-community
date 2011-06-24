@@ -149,7 +149,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
                                                       final String title) {
     Profile profile;
     if (profileName != null) {
-      profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName);
+      profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName, false);
       if (profile == null) {
         profile = InspectionProfileManager.getInstance().getProfile(profileName, false);
       }
@@ -162,7 +162,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
       inspectionProfile = (InspectionProfile)profile;
     }
     else {
-      inspectionProfile = new InspectionProfileImpl("Server Side") {
+      inspectionProfile = new InspectionProfileImpl(profileName) {
         public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
           return resMap.containsKey(key.toString());
         }

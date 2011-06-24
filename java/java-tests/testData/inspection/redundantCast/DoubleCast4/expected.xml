@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>DoubleCast4.java</file>
+    <line>4</line>
+    <description>Casting '(String) o' to Object is redundant</description>
+  </problem>
+  <problem>
+    <file>DoubleCast4.java</file>
+    <line>4</line>
+    <description>Casting 'o' to String is redundant</description>
+  </problem>
+</problems>
+

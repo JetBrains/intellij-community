@@ -67,13 +67,11 @@ public class XsltDebuggerRunner extends JavaPatchableProgramRunner {
     final XDebugSession debugSession =
       XDebuggerManager.getInstance(project).startSession(this, executionEnvironment, contentToReuse, new XDebugProcessStarter() {
         @NotNull
-        public XDebugProcess start(@NotNull final XDebugSession session) {
+        public XDebugProcess start(@NotNull final XDebugSession session) throws ExecutionException {
           ACTIVE.set(Boolean.TRUE);
           try {
             final ExecutionResult result = runProfileState.execute(executor, XsltDebuggerRunner.this);
             return new XsltDebugProcess(session, result);
-          } catch (ExecutionException e) {
-            throw new RuntimeException(e);
           } finally {
             ACTIVE.remove();
           }

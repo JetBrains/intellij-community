@@ -25,8 +25,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.BackgroundSynchronousInvisibleComputable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -220,7 +222,23 @@ public class FragmentedDiffRequestFromChange implements DiffRequestFromChange<Sh
     }
 
     private String notNullContentRevision(final ContentRevision cr) throws VcsException {
-      final String s = cr == null ? "" : cr.getContent();
+      if (cr == null) return "";
+      final Ref<VcsException> ref = new Ref<VcsException>();
+      final String s = new BackgroundSynchronousInvisibleComputable<String>() {
+        @Override
+        protected String runImpl() {
+          try {
+            return cr.getContent();
+          }
+          catch (VcsException e) {
+            ref.set(e);
+            return null;
+          }
+        }
+      }.compute();
+      if (! ref.isNull()) {
+        throw ref.get();
+      }
       return s == null ? "" : s;
     }
   }
