@@ -915,6 +915,7 @@
 
   <action id="Console.Jdbc.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
   <action id="Console.Jdbc.Properties"><keyboard-shortcut first-keystroke="control alt ENTER"/></action>
+  <action id="Console.Jdbc.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
 
   <action id="Console.Hibernate.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
   <action id="Console.Hibernate.GenerateSql"><keyboard-shortcut first-keystroke="control shift ENTER"/></action>
