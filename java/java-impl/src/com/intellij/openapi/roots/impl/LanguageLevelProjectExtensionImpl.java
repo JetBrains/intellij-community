@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   @Deprecated
   @NonNls private static final String JDK_15_ATTR = "jdk-15";
 
-  private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_5;
+  private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_6;
   private LanguageLevel myOriginalLanguageLevel = myLanguageLevel;
 
   private final Project myProject;
