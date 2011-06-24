@@ -34,7 +34,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -213,6 +212,9 @@ public class DirDiffPanel implements Disposable {
     myFilterLabel.setLabelFor(myFilter);
     final Callable<DiffElement> srcChooser = myModel.getSourceDir().getElementChooser(project);
     final Callable<DiffElement> trgChooser = myModel.getTargetDir().getElementChooser(project);
+    mySourceDirField.setEditable(false);
+    myTargetDirField.setEditable(false);
+
     if (srcChooser != null) {
       mySourceDirField.setButtonEnabled(true);
       mySourceDirField.addActionListener(new AbstractAction() {
@@ -233,7 +235,6 @@ public class DirDiffPanel implements Disposable {
     } else {
       mySourceDirField.setButtonEnabled(false);
       mySourceDirField.getButton().setVisible(false);
-      mySourceDirField.setEditable(false);
     }
 
     if (trgChooser != null) {
@@ -256,7 +257,6 @@ public class DirDiffPanel implements Disposable {
     } else {
       myTargetDirField.setButtonEnabled(false);
       myTargetDirField.getButton().setVisible(false);
-      myTargetDirField.setEditable(false);
     }
   }
 
