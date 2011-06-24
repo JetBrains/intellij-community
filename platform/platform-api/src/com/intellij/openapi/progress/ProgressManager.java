@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public abstract class ProgressManager {
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                                               @NotNull @Nls String progressTitle,
                                                               boolean canBeCanceled,
-                                                              Project project);
+                                                              @Nullable Project project);
 
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
@@ -97,8 +97,8 @@ public abstract class ProgressManager {
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                                               @NotNull @Nls String progressTitle,
                                                               boolean canBeCanceled,
-                                                              Project project,
-                                                              JComponent parentComponent);
+                                                              @Nullable Project project,
+                                                              @Nullable JComponent parentComponent);
 
   /**
    * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
