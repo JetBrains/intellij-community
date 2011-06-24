@@ -23,12 +23,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
@@ -52,8 +54,9 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
 
     if (!(focusedComponent instanceof JComponent)) return;
 
+    final CopyPasteManagerEx copyPasteManager = (CopyPasteManagerEx)CopyPasteManager.getInstance();
     final ContentChooser<Transferable> chooser = new ContentChooser<Transferable>(project, UIBundle.message(
-      "choose.content.to.paste.dialog.title"), true){
+      "choose.content.to.paste.dialog.title"), true, true){
       protected String getStringRepresentationFor(final Transferable content) {
         try {
           return (String)content.getTransferData(DataFlavor.stringFlavor);
@@ -71,7 +74,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       }
 
       protected void removeContentAt(final Transferable content) {
-        ((CopyPasteManagerEx)CopyPasteManager.getInstance()).removeContent(content);
+        copyPasteManager.removeContent(content);
       }
     };
 
@@ -79,12 +82,17 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       chooser.show();
     }
     else {
-      chooser.close(ContentChooser.CANCEL_EXIT_CODE);
+      chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
     }
 
     if (chooser.isOK()) {
-      final int selectedIndex = chooser.getSelectedIndex();
-      ((CopyPasteManagerEx)CopyPasteManager.getInstance()).moveContentTopStackTop(chooser.getAllContents().get(selectedIndex));
+      final int[] selectedIndices = chooser.getSelectedIndices();
+      if (selectedIndices.length == 1) {
+        copyPasteManager.moveContentTopStackTop(chooser.getAllContents().get(selectedIndices[0]));
+      }
+      else {
+        copyPasteManager.setContents(new StringSelection(chooser.getSelectedText()));
+      }
 
       if (editor != null) {
           if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
