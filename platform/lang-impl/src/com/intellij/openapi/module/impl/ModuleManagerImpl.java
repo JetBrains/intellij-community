@@ -272,15 +272,16 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           if (!app.isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
             String message;
             if (modulesWithUnknownTypes.size() == 1) {
-              message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName());
+              message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName(),
+                                              modulesWithUnknownTypes.get(0).getModuleType().getId());
             }
             else {
               StringBuilder modulesBuilder = new StringBuilder();
               for (final Module module : modulesWithUnknownTypes) {
-                modulesBuilder.append("\n\"");
-                modulesBuilder.append(module.getName());
-                modulesBuilder.append("\"");
+                modulesBuilder.append("<br>\"");
+                modulesBuilder.append(module.getName()).append("\" (type '").append(module.getModuleType().getId()).append("')");
               }
+              modulesBuilder.append("<br>");
               message = ProjectBundle.message("module.unknown.type.multiple.error", modulesBuilder.toString());
             }
             // it is not modal warning at all
