@@ -241,6 +241,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   }
 
   public void entryChanged(VirtualFile file) {
+    if (myProject.isDisposed()) return; // invoke later is possible
     fireFileStatusChanged(file);
     VcsDirtyScopeManager.getInstance(getProject()).fileDirty(file);
   }
