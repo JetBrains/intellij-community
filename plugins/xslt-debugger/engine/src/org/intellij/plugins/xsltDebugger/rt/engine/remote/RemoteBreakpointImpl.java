@@ -31,7 +31,8 @@ import java.util.List;
 class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteBreakpoint {
   private final Breakpoint myBreakpoint;
 
-  public RemoteBreakpointImpl(Breakpoint breakpoint) throws RemoteException {
+  private RemoteBreakpointImpl(Breakpoint breakpoint) throws RemoteException {
+    assert breakpoint != null;
     myBreakpoint = breakpoint;
   }
 
@@ -86,8 +87,12 @@ class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteBreakpo
   public static List<RemoteBreakpoint> convert(List<Breakpoint> list) throws RemoteException {
     final ArrayList<RemoteBreakpoint> breakpoints = new ArrayList<RemoteBreakpoint>(list.size());
     for (Breakpoint breakpoint : list) {
-      breakpoints.add(new RemoteBreakpointImpl(breakpoint));
+      breakpoints.add(create(breakpoint));
     }
     return breakpoints;
+  }
+
+  public static RemoteBreakpointImpl create(Breakpoint breakpoint) throws RemoteException {
+    return breakpoint != null ? new RemoteBreakpointImpl(breakpoint) : null;
   }
 }

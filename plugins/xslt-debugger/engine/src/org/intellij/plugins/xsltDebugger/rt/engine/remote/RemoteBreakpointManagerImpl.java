@@ -37,11 +37,11 @@ class RemoteBreakpointManagerImpl extends PortableRemoteObject implements Remote
   }
 
   public RemoteBreakpoint setBreakpoint(File file, int line) throws RemoteException {
-    return new RemoteBreakpointImpl(myManager.setBreakpoint(file, line));
+    return RemoteBreakpointImpl.create(myManager.setBreakpoint(file, line));
   }
 
   public RemoteBreakpoint setBreakpoint(String uri, int line) throws RemoteException {
-    return new RemoteBreakpointImpl(myManager.setBreakpoint(uri, line));
+    return RemoteBreakpointImpl.create(myManager.setBreakpoint(uri, line));
   }
 
   public void removeBreakpoint(String uri, int line) {
@@ -53,6 +53,6 @@ class RemoteBreakpointManagerImpl extends PortableRemoteObject implements Remote
   }
 
   public RemoteBreakpoint getBreakpoint(String uri, int lineNumber) throws RemoteException {
-    return new RemoteBreakpointImpl(myManager.getBreakpoint(uri, lineNumber));
+    return RemoteBreakpointImpl.create(myManager.getBreakpoint(uri, lineNumber));
   }
 }
