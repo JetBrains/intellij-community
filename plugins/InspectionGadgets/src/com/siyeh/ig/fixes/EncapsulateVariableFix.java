@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,14 +28,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class EncapsulateVariableFix extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message("encapsulate.variable.quickfix");
+    private final String fieldName;
+
+    public EncapsulateVariableFix(String fieldName) {
+        this.fieldName = fieldName;
     }
 
+    @Override
+    @NotNull
+    public String getName() {
+        return InspectionGadgetsBundle.message("encapsulate.variable.quickfix",
+                fieldName);
+    }
+
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
-        final PsiField field = (PsiField) nameElement.getParent();
+        final PsiElement parent = nameElement.getParent();
+        final PsiField field;
+        if (parent instanceof PsiField) {
+            field = (PsiField) parent;
+        } else if (parent instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) parent;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiField)) {
+                return;
+            }
+            field = (PsiField) target;
+        } else {
+            return;
+        }
         final JavaRefactoringActionHandlerFactory factory =
                 JavaRefactoringActionHandlerFactory.getInstance();
         final RefactoringActionHandler renameHandler =
