@@ -1306,9 +1306,11 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
     final PsiExpression lOperand = expression.getLOperand();
     final PsiExpression rOperand = expression.getROperand();
-    IElementType signTokenType = expression.getOperationSign().getTokenType();
+    IElementType signTokenType = expression.getOperationTokenType();
 
-    if ((signTokenType == JavaTokenType.ANDAND || signTokenType == JavaTokenType.OROR) && myEnabledShortCircuit) {
+    boolean isAndAnd = signTokenType == JavaTokenType.ANDAND;
+    boolean isOrOr = signTokenType == JavaTokenType.OROR;
+    if ((isAndAnd || isOrOr) && myEnabledShortCircuit) {
       Object exprValue = myConstantEvaluationHelper.computeConstantExpression(lOperand);
       Boolean lvalue = null;
       if (exprValue instanceof Boolean) {
@@ -1322,24 +1324,20 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
         rvalue = shouldCalculateConstantExpression(expression) ? (Boolean)exprValue : null;
       }
       Boolean doShortcut;
-      boolean shouldGenLOperand = true;
       if (lvalue != null) {
-        doShortcut = lvalue.booleanValue() != (signTokenType == JavaTokenType.ANDAND);
+        doShortcut = lvalue.booleanValue() != isAndAnd;
       }
-      else if (rvalue != null && rvalue.booleanValue() != (signTokenType == JavaTokenType.ANDAND)) {
+      else if (rvalue != null && rvalue.booleanValue() != isAndAnd) {
         doShortcut = Boolean.TRUE;
-        shouldGenLOperand = false; // case of 'if (x && false)...'
       }
       else {
         doShortcut = null;
       }
         
-      if (shouldGenLOperand) {
-        generateLOperand(lOperand, rOperand, signTokenType);
-      }
-      BranchingInstruction.Role role = signTokenType == JavaTokenType.ANDAND ? myEndJumpRoles.peek() : myStartJumpRoles.peek();
-      PsiElement gotoElement = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekElement() : myStartStatementStack.peekElement();
-      boolean gotoIsAtStart = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekAtStart() : myStartStatementStack.peekAtStart();
+      generateLOperand(lOperand, rOperand, signTokenType);
+      BranchingInstruction.Role role = isAndAnd ? myEndJumpRoles.peek() : myStartJumpRoles.peek();
+      PsiElement gotoElement = isAndAnd ? myEndStatementStack.peekElement() : myStartStatementStack.peekElement();
+      boolean gotoIsAtStart = isAndAnd ? myEndStatementStack.peekAtStart() : myStartStatementStack.peekAtStart();
       if (doShortcut == null) {
         myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, role, lOperand));
         addElementOffsetLater(gotoElement, gotoIsAtStart);
@@ -1360,15 +1358,15 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     finishElement(expression);
   }
 
-  private void generateLOperand(PsiExpression lOperand, PsiExpression rOperand, IElementType signTokenType) {
+  private void generateLOperand(@NotNull PsiExpression lOperand, PsiExpression rOperand, IElementType signTokenType) {
     if (rOperand != null) {
       myStartJumpRoles.push(BranchingInstruction.Role.END);
       myEndJumpRoles.push(BranchingInstruction.Role.END);
       PsiElement then = signTokenType == JavaTokenType.OROR ? myStartStatementStack.peekElement() : rOperand;
-      boolean thenAtStart = signTokenType == JavaTokenType.OROR ? myStartStatementStack.peekAtStart() : true;
+      boolean thenAtStart = signTokenType != JavaTokenType.OROR || myStartStatementStack.peekAtStart();
       myStartStatementStack.pushStatement(then, thenAtStart);
       PsiElement elseS = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekElement() : rOperand;
-      boolean elseAtStart = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekAtStart() : true;
+      boolean elseAtStart = signTokenType != JavaTokenType.ANDAND || myEndStatementStack.peekAtStart();
       myEndStatementStack.pushStatement(elseS, elseAtStart);
     }
     lOperand.accept(this);

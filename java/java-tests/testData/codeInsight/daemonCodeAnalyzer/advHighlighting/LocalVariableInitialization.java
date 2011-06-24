@@ -328,11 +328,11 @@ public class a  {
         }
     }
     void cfx3() {
-        boolean b;
-        boolean c;// = true;
-        if (c && false) {
-            c = b;
-        }
+      boolean b;
+      boolean c;// = true;
+      if (<error descr="Variable 'c' might not have been initialized">c</error> && false) {
+          c = b;
+      }
     }
     void cfx4()
     {
