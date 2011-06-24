@@ -69,8 +69,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (getDocument().getLineCount() - 1) + "]");
     }
 
-    int offset = getDocument().getLineStartOffset(lineNumber);
-    //int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
+    // The rationale why we don't bind to the line start offset here is that following: suppose particular breakpoint is hit
+    // during debugging. We may want to type <enter> at the active line indent and highlighted string will be moved one line
+    // down as well then.
+    int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
 
     return addRangeHighlighter(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }

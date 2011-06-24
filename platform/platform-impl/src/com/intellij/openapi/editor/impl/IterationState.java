@@ -118,10 +118,10 @@ public final class IterationState {
 
   private class HighlighterSweep {
     private RangeHighlighterEx myNextHighlighter = null;
-    private Iterator<RangeHighlighterEx> myIterator;
+    private PushBackIterator<RangeHighlighterEx> myIterator;
 
     private void init(@NotNull MarkupModelEx markupModel, int start, int end) {
-      myIterator = markupModel.overlappingIterator(start, end);
+      myIterator = new PushBackIterator<RangeHighlighterEx>(markupModel.overlappingIterator(start, end));
       int skipped = 0;
       while (myIterator.hasNext()) {
         RangeHighlighterEx highlighter = myIterator.next();
@@ -142,6 +142,20 @@ public final class IterationState {
         if (myNextHighlighter.getAffectedAreaStartOffset() <= myStartOffset) {
           myCurrentHighlighters.add(myNextHighlighter);
           myNextHighlighter = null;
+        }
+        
+        // There is a possible case that there are two highlighters mapped to offset of the first non-white space symbol
+        // on a line. The second one may have HighlighterTargetArea.LINES_IN_RANGE area, so, we should use it for indent
+        // background processing (that is the case for the active debugger line that starts with highlighted brace/bracket).
+        // So, we check if it's worth to use next highlighter here.
+        else if (myIterator.hasNext()) {
+          final RangeHighlighterEx lookAhead = myIterator.next();
+          if (lookAhead.getAffectedAreaStartOffset() <= myStartOffset) {
+            myCurrentHighlighters.add(lookAhead);
+          }
+          else {
+            myIterator.pushBack(lookAhead);
+          }
         }
       }
 
@@ -473,6 +487,45 @@ public final class IterationState {
       int o1Length = o1.getEndOffset() - o1.getStartOffset();
       int o2Length = o2.getEndOffset() - o2.getStartOffset();
       return o1Length - o2Length;
+    }
+  }
+  
+  private static class PushBackIterator<T> implements Iterator<T> {
+    
+    private final Iterator<T> myDelegate;
+    private T myPushedBack;
+
+    PushBackIterator(Iterator<T> delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myPushedBack != null || myDelegate.hasNext();
+    }
+
+    @Override
+    public T next() {
+      if (myPushedBack != null) {
+        T result = myPushedBack;
+        myPushedBack = null;
+        return result;
+      }
+      return myDelegate.next();
+    }
+
+    @Override
+    public void remove() {
+      if (myPushedBack == null) {
+        myDelegate.remove();
+      }
+      else {
+        myPushedBack = null;
+      }
+    }
+
+    public void pushBack(T element) {
+      myPushedBack = element;
     }
   }
 }
