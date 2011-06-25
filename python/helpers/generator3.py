@@ -1810,8 +1810,8 @@ class ModuleRedeclarator(object):
         vars_complex = {}
         funcs = {}
         classes = {}
-        our_package = packageOf(p_name)
         for item_name in self.module.__dict__:
+            note("looking at %s", item_name)
             if item_name in ("__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
                 continue # handled otherwise
             try:
@@ -1831,20 +1831,23 @@ class ModuleRedeclarator(object):
                     mod_name = getattr(item, '__module__', None)
                 except:
                     pass
-            import_from_top = our_package.startswith(packageOf(mod_name, True)) # e.g. p_name="pygame.rect" and mod_name="pygame"
+            # we assume that module foo.bar never imports foo; foo may import foo.bar. (see pygame and pygame.rect)
+            maybe_import_mod_name = mod_name or ""
+            import_is_from_top = len(p_name) > len(maybe_import_mod_name) and p_name.startswith(maybe_import_mod_name)
+            note("mod_name = %s, prospective = %s,  from top = %s", mod_name, maybe_import_mod_name, import_is_from_top)
             want_to_import = False
             if (mod_name
                 and mod_name != BUILTIN_MOD_NAME
                 and mod_name != p_name
                 and mod_name not in surely_not_imported_mods
-                and not import_from_top
+                and not import_is_from_top
             ):
                 # import looks valid, but maybe it's a .py file? we're certain not to import from .py
                 # e.g. this rules out _collections import collections and builtins import site.
                 try:
                     imported = __import__(mod_name) # ok to repeat, Python caches for us
                     if imported:
-                        qualifieds = name.split(".")[1:]
+                        qualifieds = mod_name.split(".")[1:]
                         for qual in qualifieds:
                             imported = getattr(imported, qual, None)
                             if not imported:
