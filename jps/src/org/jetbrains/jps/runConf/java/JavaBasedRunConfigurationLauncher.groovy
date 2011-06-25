@@ -5,8 +5,7 @@ import org.jetbrains.jps.RunConfiguration
 import org.jetbrains.jps.runConf.RunConfigurationLauncherService
 
 /**
- * This launcher is able to start Java based test runner.
- * Launcher starts JVM with by executing some main class, which creates classloader and then executes specified main class
+ * This launcher is able can be used to start Java main class.
  */
 public abstract class JavaBasedRunConfigurationLauncher extends RunConfigurationLauncherService {
   private File myOutputFile;
@@ -58,6 +57,9 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     myErrorFile = errFile;
   }
 
+  /**
+   * Adds system properties.
+   */
   public void addSystemProperties(Map<String, String> props) {
     mySystemProperties.putAll(props);
   }
