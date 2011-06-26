@@ -1056,6 +1056,18 @@ class ModuleRedeclarator(object):
     #    'xml.parsers.expat': ('ExpatError', 'error'),
     }
 
+    KNOWN_FAKE_BASES = [] # list of classes that pretend to be base classes but are mere wrappers.
+    try:
+        import sip as sip_module # Qt specifically likes it
+        if hasattr(sip_module, 'wrapper'):
+            KNOWN_FAKE_BASES.append(sip_module.wrapper)
+        if hasattr(sip_module, 'simplewrapper'):
+            KNOWN_FAKE_BASES.append(sip_module.simplewrapper)
+        del sip_module
+    except:
+        pass
+
+
     # Some builtin classes effectively change __init__ signature without overriding it.
     # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
     def fake_builtin_init(self): pass # just a callable, sig doesn't matter
@@ -1625,11 +1637,15 @@ class ModuleRedeclarator(object):
                 seen[p_class] = p_name
         bases = getBases(p_class)
         base_def = ""
+        skipped_bases = []
         if bases:
             skip_qualifiers = [p_modname, BUILTIN_MOD_NAME, 'exceptions']
             skip_qualifiers.extend(self.KNOWN_FAKE_REEXPORTERS.get(p_modname, ()))
             bases_list = [] # what we'll render in the class decl
             for base in bases: # somehow import every base class
+                if base in self.KNOWN_FAKE_BASES:
+                    skipped_bases.append(str(base))
+                    continue
                 base_name = base.__name__
                 qual_module_name = self.qualifierOf(base, skip_qualifiers)
                 got_existing_import = False
@@ -1646,20 +1662,19 @@ class ModuleRedeclarator(object):
                 else:
                     bases_list.append(base_name)
             base_def = "(" + ", ".join(bases_list) + ")"
-        out(indent, "class ", p_name, base_def, ":")
+        out(indent, "class ", p_name, base_def, ":", skipped_bases and "# skipped bases: " + ", ".join(skipped_bases) or "")
         self.outDocAttr(out, p_class, indent + 1)
         # inner parts
         methods = {}
         properties = {}
         others = {}
         we_are_the_base_class = p_modname == BUILTIN_MOD_NAME and p_name == "object"
-        has_dict = hasattr(p_class, "__dict__")
-        if has_dict:
-            field_source = p_class.__dict__
-        else:
-            field_source = dir(p_class) # this includes unwanted inherited methods, but no dict + inheritance is rare
         try:
-            field_keys = field_source.keys() # Jython 2.5.1 _codecs fail here
+            if hasattr(p_class, "__dict__"):
+                field_source = p_class.__dict__
+                field_keys = field_source.keys() # Jython 2.5.1 _codecs fail here
+            else:
+                field_keys = dir(p_class) # this includes unwanted inherited methods, but no dict + inheritance is rare
         except:
             field_keys = ()
         for item_name in field_keys:
