@@ -40,8 +40,10 @@ public class MainClassLauncher {
     try {
       mainMethod.invoke(null, new Object[] { arguments.toArray(new String[arguments.size()])});
     } catch (Throwable e) {
-      throw new RuntimeException("Exception occurred in TeamCity tests launcher: " + main.getName() + ", error: " + e.toString(), e);
+      throw new RuntimeException("Exception occurred in main class: " + main.getName() + ", error: " + e.toString(), e);
     }
+
+    System.exit(0);
   }
 
   private static URL[] getClasspathElems(String tempFileName) throws IOException {
