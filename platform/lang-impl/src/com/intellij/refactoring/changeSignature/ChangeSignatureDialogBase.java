@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,8 +167,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   public JComponent getPreferredFocusedComponent() {
     if (myParametersTableModel.getRowCount() > 0) {
       final JTable table = myParametersTable.getComponent();
-      table.getSelectionModel().setSelectionInterval(0,0);
-      table.getColumnModel().getSelectionModel().setSelectionInterval(0, 0);
+      if (table.getColumnModel().getSelectedColumnCount() == 0) {
+        table.getSelectionModel().setSelectionInterval(0,0);
+        table.getColumnModel().getSelectionModel().setSelectionInterval(0, 0);
+      }
       return table;
     } else {
       return myNameField == null ? super.getPreferredFocusedComponent() : myNameField;
@@ -376,8 +378,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       }
     };
     myParametersTable.setCellSelectionEnabled(true);
-    myParametersTable.setRowSelectionAllowed(false);
-    myParametersTable.setColumnSelectionAllowed(false);
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("parameters.border.title")));
 
