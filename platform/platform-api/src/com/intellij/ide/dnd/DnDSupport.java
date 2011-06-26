@@ -85,10 +85,12 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
 
   @Override
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-    final DnDImage image = myImageProvider.fun(new DnDActionInfo(action, dragOrigin));
-    if (image != null) {
-      final Point point = image.getPoint();
-      return new Pair<Image, Point>(image.getImage(), point == null ? dragOrigin : point);
+    if (myImageProvider != null) {
+      final DnDImage image = myImageProvider.fun(new DnDActionInfo(action, dragOrigin));
+      if (image != null) {
+        final Point point = image.getPoint();
+        return new Pair<Image, Point>(image.getImage(), point == null ? dragOrigin : point);
+      }
     }
     return null;
   }
