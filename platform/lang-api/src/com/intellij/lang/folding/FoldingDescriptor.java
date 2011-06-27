@@ -134,7 +134,9 @@ public class FoldingDescriptor {
     final Language lang = psiElement.getLanguage();
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
     if (foldingBuilder != null) {
-      return foldingBuilder.getPlaceholderText(myElement);
+      return foldingBuilder instanceof FoldingBuilderEx
+             ? ((FoldingBuilderEx)foldingBuilder).getPlaceholderText(myElement, myRange)
+             : foldingBuilder.getPlaceholderText(myElement);
     }
     return null;
   }
