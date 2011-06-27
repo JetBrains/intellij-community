@@ -15,6 +15,8 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 public class CharArrayCharSequence implements CharSequenceBackedByArray {
   private final char[] myChars;
   private final int myStart;
@@ -59,12 +61,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
   }
 
   public int hashCode() {
-    int h = 0;
-    int to = myEnd;
-    for (int off = myStart; off < to; off++) {
-      h = 31 * h + myChars[off];
-    }
-    return h;
+    return StringUtil.stringHashCode(myChars, myStart, myEnd);
   }
 
   public void getChars(char[] dst, int dstOffset) {

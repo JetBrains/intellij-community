@@ -800,12 +800,7 @@ public class StringUtil {
     if (chars instanceof CharSequenceWithStringHash) return chars.hashCode();
     if (chars instanceof CharArrayCharSequence) return chars.hashCode();
 
-    int h = 0;
-    int to = chars.length();
-    for (int off = 0; off < to; off++) {
-      h = 31 * h + chars.charAt(off);
-    }
-    return h;
+    return stringHashCode(chars, 0, chars.length());
   }
 
   public static int stringHashCode(CharSequence chars, int from, int to) {
@@ -841,12 +836,7 @@ public class StringUtil {
   }
 
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
-    int h = 0;
-    final int len = chars.length();
-    for (int i = 0; i < len; i++) {
-      h = 31 * h + toLowerCase(chars.charAt(i));
-    }
-    return h;
+    return stringHashCodeInsensitive(chars, 0, chars.length());
   }
 
   /**
@@ -1946,12 +1936,7 @@ public class StringUtil {
   }
 
   public static int hashCode(@NotNull CharSequence s) {
-    int result = 0;
-    for (int i = 0; i < s.length(); i++) {
-      // Copied from java.lang.String.hashCode()
-      result = 31 * result + s.charAt(i);
-    }
-    return result;
+    return stringHashCode(s);
   }
 
   public static boolean equals(@Nullable CharSequence s1, @Nullable CharSequence s2) {
