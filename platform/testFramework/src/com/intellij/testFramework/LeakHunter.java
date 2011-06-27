@@ -196,7 +196,7 @@ public class LeakHunter {
             while (backLink != null) {
               String valueStr;
               try {
-                valueStr = String.valueOf(leaked);
+                valueStr = String.valueOf(backLink.value);
               }
               catch (Exception e) {
                 valueStr = "("+e.getMessage()+" while computing .toString())";
