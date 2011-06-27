@@ -52,7 +52,7 @@ class Java16ApiCompiler {
 
         List<File> filesToCompile = []
 
-        if (state.sourceFiles.size() > 0) {
+        if (state.incremental) {
             for (String src: state.sourceFiles) {
                 if (src.endsWith(".java")) {
                     filesToCompile << new File(src)

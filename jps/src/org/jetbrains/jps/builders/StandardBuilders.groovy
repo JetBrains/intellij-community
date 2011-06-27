@@ -10,6 +10,7 @@ import org.jetbrains.ether.dependencyView.StringCache
 import org.jetbrains.ether.dependencyView.StringCache.S
 import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
 import org.jetbrains.jps.*
+import org.jetbrains.ether.MockFS
 
 /**
  * @author max
@@ -145,6 +146,8 @@ class ResourceCopier implements ModuleBuilder {
         def ant = project.binding.ant
 
         state.sourceRoots.each {String root ->
+            final File f = MockFS.fromFiles(root, state.sourceFiles)
+
             if (new File(root).exists()) {
                 def target = state.targetFolder
                 def prefix = moduleChunk.modules.collect { it.sourceRootPrefixes[root] }.find {it != null}
