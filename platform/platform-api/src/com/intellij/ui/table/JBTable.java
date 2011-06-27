@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -327,7 +327,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     final TableCellEditor editor = getCellEditor(row, column);
     if (editor != null && editor.isCellEditable(e)) {
       editorComp = prepareEditor(editor, row, column);
-      ((JComponent)editorComp).setBorder(null);
+      //((JComponent)editorComp).setBorder(null);
       if (editorComp == null) {
         removeEditor();
         return false;
