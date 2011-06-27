@@ -56,20 +56,18 @@ public class TreeTable extends JBTable {
 
   @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
   public void setModel(TreeTableModel treeTableModel) {// Create the tree. It will be used as a renderer and editor.
-    if (myTree != null){
+    if (myTree != null) {
       myTree.removePropertyChangeListener(JTree.ROW_HEIGHT_PROPERTY, myTreeRowHeightPropertyListener);
     }
     myTree = new TreeTableTree(treeTableModel, this);
-    if (myTree.getRowHeight() != getRowHeight()){
-      setRowHeight(myTree.getRowHeight());
-    }
+    setRowHeight(myTree.getRowHeight());
     myTreeRowHeightPropertyListener = new PropertyChangeListener() {
-              public void propertyChange(PropertyChangeEvent evt) {
-                int treeRowHeight = myTree.getRowHeight();
-                if (treeRowHeight == getRowHeight() - 3) return;
-                setRowHeight(treeRowHeight);
-              }
-            };
+      public void propertyChange(PropertyChangeEvent evt) {
+        int treeRowHeight = myTree.getRowHeight();
+        if (treeRowHeight == getRowHeight() - 3) return;
+        setRowHeight(treeRowHeight);
+      }
+    };
     myTree.addPropertyChangeListener(JTree.ROW_HEIGHT_PROPERTY, myTreeRowHeightPropertyListener);
 
     // Install a tableModel representing the visible rows in the tree.
@@ -90,13 +88,13 @@ public class TreeTable extends JBTable {
     // No intercell spacing
     setIntercellSpacing(new Dimension(0, 0));
 
-    // And update the height of the trees row to match that of
-    // the table.
+    // And update the height of the trees row to match that of the table.
     if (myTree.getRowHeight() < 1) {
-      // Metal looks better like this.
-      setRowHeight(18);
+      setRowHeight(18);  // Metal looks better like this.
     }
-    setRowHeight(getRowHeight());
+    else {
+      setRowHeight(getRowHeight());
+    }
   }
 
   public TreeTableModel getTableModel() {
@@ -122,7 +120,7 @@ public class TreeTable extends JBTable {
 
   /**
    * Overridden to message super and forward the method to the tree.
-   * Since the tree is not actually in the component hieachy it will
+   * Since the tree is not actually in the component hierarchy it will
    * never receive this unless we forward it in this manner.
    */
   public void updateUI() {

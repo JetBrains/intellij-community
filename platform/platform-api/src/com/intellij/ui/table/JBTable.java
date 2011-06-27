@@ -134,9 +134,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         TableModel model = getModel();
         for (int row = 0; row < model.getRowCount(); row++) {
           for (int column = 0; column < model.getColumnCount(); column++) {
-            Dimension size =
-              getCellRenderer(row, column).getTableCellRendererComponent(this, model.getValueAt(row, column), true, true, row, column)
-                .getPreferredSize();
+            Dimension size = getCellRenderer(row, column)
+              .getTableCellRendererComponent(this, model.getValueAt(row, column), true, true, row, column)
+              .getPreferredSize();
             myRowHeight = Math.max(size.height, myRowHeight);
           }
         }
@@ -154,15 +154,15 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   @Override
-  public void updateUI() {
-    super.updateUI();
-    myMinRowHeight = null;
-  }
-
-  @Override
   public void setRowHeight(int rowHeight) {
     myRowHeight = rowHeight;
     myRowHeightIsExplicitlySet = true;
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    myMinRowHeight = null;
   }
 
   private void repaintViewport() {
@@ -260,7 +260,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public static DefaultCellEditor createBooleanEditor() {
     return new DefaultCellEditor(new JCheckBox()) {
       {
-        ((JCheckBox)getComponent()).setHorizontalAlignment(JCheckBox.CENTER);
+        ((JCheckBox)getComponent()).setHorizontalAlignment(SwingConstants.CENTER);
       }
 
       @Override
