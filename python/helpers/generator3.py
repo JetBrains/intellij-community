@@ -1051,13 +1051,6 @@ class ModuleRedeclarator(object):
         "gnomecanvas": ("gnome.canvas",),
     }
 
-    # names that look genuinely exported but aren't.
-    # e.g. 'xml.parsers.expat.ExpatError' is actually defined in pyexpat, and xml.parsers.expat imports it from there.
-    # {'qualified_purported_module': ('name',..)}
-    KNOWN_FAKE_EXPORTS = {
-    #    'xml.parsers.expat': ('ExpatError', 'error'),
-    }
-
     KNOWN_FAKE_BASES = []
     # list of classes that pretend to be base classes but are mere wrappers, and their defining modules
     # [(class, module),...] -- real objects, not names
