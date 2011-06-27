@@ -58,7 +58,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                                @NotNull AndroidFacetConfiguration configuration) {
     AndroidPlatform platform = configuration.getAndroidPlatform();
     if (platform != null) {
-      List<VirtualFile> externalLibsAndModules = AndroidRootUtil.getExternalLibraries(module, null);
+      List<VirtualFile> externalLibsAndModules = AndroidRootUtil.getExternalLibraries(module);
       return externalLibsAndModules.toArray(new VirtualFile[externalLibsAndModules.size()]);
     }
     return VirtualFile.EMPTY_ARRAY;

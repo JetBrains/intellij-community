@@ -154,7 +154,6 @@ public class AndroidRootUtil {
   private static void fillExternalLibrariesAndModules(final Module module,
                                                       final Set<VirtualFile> outputDirs,
                                                       @Nullable final Set<VirtualFile> libraries,
-                                                      @Nullable final Library platformLibrary,
                                                       final Set<Module> visited) {
     if (!visited.add(module)) {
       return;
@@ -168,17 +167,15 @@ public class AndroidRootUtil {
           }
           if (libraries != null && entry instanceof LibraryOrderEntry) {
             Library library = ((LibraryOrderEntry)entry).getLibrary();
-            if (platformLibrary == null || !platformLibrary.equals(library)) {
-              if (library != null) {
-                for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-                  if (file.exists()) {
-                    if (file.getFileSystem() instanceof JarFileSystem) {
-                      VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
-                      if (localFile != null) libraries.add(localFile);
-                    }
-                    else {
-                      libraries.add(file);
-                    }
+            if (library != null) {
+              for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+                if (file.exists()) {
+                  if (file.getFileSystem() instanceof JarFileSystem) {
+                    VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+                    if (localFile != null) libraries.add(localFile);
+                  }
+                  else {
+                    libraries.add(file);
                   }
                 }
               }
@@ -203,7 +200,7 @@ public class AndroidRootUtil {
                 }
               }
             }
-            fillExternalLibrariesAndModules(depModule, outputDirs, libraries, platformLibrary, visited);
+            fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited);
           }
         }
       }
@@ -211,17 +208,17 @@ public class AndroidRootUtil {
   }
 
   @NotNull
-  public static List<VirtualFile> getExternalLibraries(Module module, @Nullable Library platformLibrary) {
+  public static List<VirtualFile> getExternalLibraries(Module module) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     OrderedSet<VirtualFile> libs = new OrderedSet<VirtualFile>();
-    fillExternalLibrariesAndModules(module, files, libs, platformLibrary, new HashSet<Module>());
+    fillExternalLibrariesAndModules(module, files, libs, new HashSet<Module>());
     return libs;
   }
 
   @NotNull
   public static Set<VirtualFile> getDependentModules(Module module, VirtualFile moduleOutputDir) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
-    fillExternalLibrariesAndModules(module, files, null, null, new HashSet<Module>());
+    fillExternalLibrariesAndModules(module, files, null, new HashSet<Module>());
     files.remove(moduleOutputDir);
     return files;
   }
@@ -245,12 +242,6 @@ public class AndroidRootUtil {
 
   @Nullable
   public static String getModuleDirPath(Module module) {
-    /*VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-
-    if (contentRoots.length == 1) {
-      return contentRoots[0].getPath();
-    }*/
-
     String moduleFilePath = module.getModuleFilePath();
     String moduleDirPath = new File(moduleFilePath).getParent();
     if (moduleDirPath != null) {
