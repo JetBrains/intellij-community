@@ -60,12 +60,8 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
 
 
   private JCheckBox myReplaceAllCb;
-  private JCheckBox myAnnotateNonNls;
-  private StateRestoringCheckBox myCbDeleteVariable;
 
   private JCheckBox myMoveToAnotherClassCb;
-
-  private JComboBox myVisibilityCombo;
 
   private JPanel myWholePanel;
   private final PsiClass myParentClass;
@@ -102,26 +98,14 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
     myWholePanel = new JPanel(new GridBagLayout());
     GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
-    gc.gridwidth = 2;
     myWholePanel.add(myLabel, gc);
 
-    gc.gridwidth = 1;
     gc.gridy = 1;
-    myWholePanel.add(createLeftPanel(), gc);
-
-    gc.gridx = 1;
-    gc.insets.left = 6;
     myWholePanel.add(createRightPanel(), gc);
 
-    JComponent typeChooser = typeComponent();
-    if (typeChooser != null) {
-      gc.gridy = 2;
-      gc.gridx = 0;
-      gc.gridwidth = 2;
-      gc.insets.left = 5;
-      gc.insets.right = 5;
-      myWholePanel.add(typeChooser, gc);
-    }
+    gc.gridy = 2;
+    myWholePanel.add(createLeftPanel(), gc);
+
   }
 
   @Nullable
@@ -139,75 +123,36 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
   private JPanel createRightPanel() {
     final JPanel right = new JPanel(new GridBagLayout());
     final GridBagConstraints rgc =
-      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                             new Insets(1, 0, 0, 0), 0, 0);
+      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                             new Insets(0, 0, 0, 0), 0, 0);
     myReplaceAllCb = new JCheckBox("Replace all occurrences");
     myReplaceAllCb.setMnemonic('a');
     myReplaceAllCb.setFocusable(false);
     myReplaceAllCb.setVisible(myOccurrences.length > 1);
     right.add(myReplaceAllCb, rgc);
 
-    myCbDeleteVariable = new StateRestoringCheckBox("Delete variable declaration");
-    myCbDeleteVariable.setMnemonic('d');
-    myCbDeleteVariable.setFocusable(false);
-    if (getLocalVariable() != null) {
-      if (myReplaceAllCb != null) {
-        myReplaceAllCb.setEnabled(false);
-        myReplaceAllCb.setSelected(true);
-        myCbDeleteVariable.setSelected(true);
-        myCbDeleteVariable.setEnabled(false);
-      }
-    }
-    else {
-      myCbDeleteVariable.setVisible(false);
-    }
-    right.add(myCbDeleteVariable, rgc);
-
-    myAnnotateNonNls = new JCheckBox("Annotate field as @NonNls");
-    myAnnotateNonNls.setMnemonic('f');
-    myAnnotateNonNls.setFocusable(false);
-    if ((myTypeSelectorManager.isSuggestedType("java.lang.String") || (getLocalVariable() != null && AnnotationUtil
-      .isAnnotated(getLocalVariable(), AnnotationUtil.NON_NLS, false))) &&
-        LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().hasEnumKeywordAndAutoboxing() &&
-        JavaPsiFacade.getInstance(myProject).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
-      final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
-      myAnnotateNonNls.setSelected(component.isTrueValue(IntroduceConstantDialog.NONNLS_SELECTED_PROPERTY));
-      myAnnotateNonNls.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          component.setValue(IntroduceConstantDialog.NONNLS_SELECTED_PROPERTY, Boolean.toString(myAnnotateNonNls.isSelected()));
-        }
-      });
-    }
-    else {
-      myAnnotateNonNls.setVisible(false);
-    }
-    right.add(myAnnotateNonNls, rgc);
     return right;
   }
 
   private JPanel createLeftPanel() {
     final JPanel left = new JPanel(new GridBagLayout());
-    String initialVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
-    if (initialVisibility == null) {
-      initialVisibility = PsiModifier.PUBLIC;
-    }
-    myVisibilityCombo = InplaceCombosUtil.createVisibilityCombo(left, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0,
-                                                                                             GridBagConstraints.NORTHEAST,
-                                                                                             GridBagConstraints.NONE,
-                                                                                             new Insets(6, 5, 0, 0), 0, 0),
-                                                                myProject, initialVisibility);
     myMoveToAnotherClassCb = new JCheckBox("Move to another class");
     myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
     left.add(myMoveToAnotherClassCb,
-             new GridBagConstraints(0, 1, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0),
+             new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0),
                                     0, 0));
     return left;
   }
 
 
   private String getSelectedVisibility() {
-    return (String)myVisibilityCombo.getSelectedItem();
+
+    String initialVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
+    if (initialVisibility == null) {
+      initialVisibility = PsiModifier.PUBLIC;
+    }
+    return initialVisibility;
   }
 
 
@@ -294,8 +239,8 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
                                                 BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
                                                 getSelectedVisibility(), (PsiLocalVariable)getLocalVariable(),
                                                 getType(),
-                                                isDeleteVariable(),
-                                                myParentClass, isAnnotateNonNls(), false);
+                                                true,
+                                                myParentClass, false, false);
     new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
       @Override
       protected void run(Result result) throws Throwable {
@@ -328,25 +273,6 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
 
   @Override
   protected JComponent getComponent() {
-    final VisibilityListener visibilityListener = new VisibilityListener(myEditor) {
-      @Override
-      protected String getVisibility() {
-        return getSelectedVisibility();
-      }
-    };
-    myVisibilityCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        new WriteCommandAction(myProject, IntroduceConstantHandler.REFACTORING_NAME, IntroduceConstantHandler.REFACTORING_NAME) {
-          @Override
-          protected void run(Result result) throws Throwable {
-            PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-            visibilityListener.perform(getVariable());
-            updateTitle(getVariable());
-          }
-        }.execute();
-      }
-    });
     myReplaceAllCb.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -354,12 +280,6 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
       }
     });
 
-    myAnnotateNonNls.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        //todo it is unresolved; import here is not a good idea new FinalListener(myProject).perform(myAnnotateNonNls.isSelected(), "@NonNls");
-      }
-    });
     return myWholePanel;
   }
 
@@ -370,13 +290,5 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
 
   public String getCommandName() {
     return IntroduceConstantHandler.REFACTORING_NAME;
-  }
-
-  private boolean isAnnotateNonNls() {
-    return myAnnotateNonNls.isSelected();
-  }
-
-  private boolean isDeleteVariable() {
-    return myCbDeleteVariable.isSelected();
   }
 }
