@@ -47,6 +47,11 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
     return null;
   }
 
+  @Override
+  public boolean isLibraryOnly() {
+    return true;
+  }
+
   public void addSupport(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel, @Nullable Library library) {
   }
 }

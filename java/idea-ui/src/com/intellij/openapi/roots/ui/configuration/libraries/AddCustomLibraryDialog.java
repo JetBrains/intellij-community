@@ -60,9 +60,8 @@ public class AddCustomLibraryDialog extends DialogWrapper {
     setTitle(IdeBundle.message("setup.library.dialog.title"));
     VirtualFile baseDir = myModule.getProject().getBaseDir();
     final String baseDirPath = baseDir != null ? baseDir.getPath() : "";
-    final LibraryCompositionSettings settings = new LibraryCompositionSettings(description, baseDirPath);
-    Disposer.register(myDisposable, settings);
-    myPanel = new LibraryOptionsPanel(settings, myLibrariesContainer, false);
+    myPanel = new LibraryOptionsPanel(description, baseDirPath, null, myLibrariesContainer, false);
+    Disposer.register(myDisposable, myPanel);
     init();
   }
 
@@ -84,29 +83,29 @@ public class AddCustomLibraryDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    myPanel.apply();
-    if (myPanel.getSettings().downloadFiles(myPanel.getMainPanel())) {
+    final LibraryCompositionSettings settings = myPanel.apply();
+    if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
       if (myModifiableRootModel == null) {
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
         new WriteAction() {
           protected void run(final Result result) {
-            addLibraries(model);
+            addLibraries(model, settings);
             model.commit();
           }
         }.execute();
       }
       else {
-        addLibraries(myModifiableRootModel);
+        addLibraries(myModifiableRootModel, settings);
       }
       super.doOKAction();
     }
   }
 
-  private void addLibraries(ModifiableRootModel model) {
+  private void addLibraries(ModifiableRootModel model, final LibraryCompositionSettings settings) {
     if (myBeforeLibraryAdded != null) {
       myBeforeLibraryAdded.run(model);
     }
-    myPanel.getSettings().addLibraries(model, myAddedLibraries, myLibrariesContainer);
+    settings.addLibraries(model, myAddedLibraries, myLibrariesContainer);
   }
 
   public List<Library> getAddedLibraries() {

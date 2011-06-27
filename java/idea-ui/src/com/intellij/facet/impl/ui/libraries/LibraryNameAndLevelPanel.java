@@ -19,6 +19,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.ui.EnumComboBoxModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,6 +34,7 @@ class LibraryNameAndLevelPanel {
   private JComboBox myLevelComboBox;
   private JPanel myPanel;
   private JLabel myLevelLabel;
+  private String myDefaultLibraryName;
 
   LibraryNameAndLevelPanel(String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
     if (level != null) {
@@ -69,5 +71,12 @@ class LibraryNameAndLevelPanel {
 
   public JPanel getPanel() {
     return myPanel;
+  }
+
+  public void updateDefaultName(@NotNull String defaultLibraryName) {
+    if (myDefaultLibraryName != null && myDefaultLibraryName.equals(getLibraryName())) {
+      myLibraryNameField.setText(defaultLibraryName);
+    }
+    myDefaultLibraryName = defaultLibraryName;
   }
 }

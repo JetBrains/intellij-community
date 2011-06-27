@@ -24,12 +24,12 @@ import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
-import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
-import com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl;
+import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -87,7 +87,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     String missingJars = IdeBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
     LibraryInfo[] missingLibraries = info.getLibraryInfos();
-    CustomLibraryDescription description = new CustomLibraryDescriptionImpl(missingLibraries, myDescription.getDefaultLibraryName());
+    CustomLibraryDescription description = new OldCustomLibraryDescription(missingLibraries, myDescription.getDefaultLibraryName());
     return new ValidationResult(missingJars, new LibrariesQuickFix(description));
   }
 

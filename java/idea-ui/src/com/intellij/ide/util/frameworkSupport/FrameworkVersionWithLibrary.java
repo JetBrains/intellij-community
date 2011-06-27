@@ -15,6 +15,9 @@
  */
 package com.intellij.ide.util.frameworkSupport;
 
+import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class FrameworkVersionWithLibrary extends FrameworkVersion {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.frameworkSupport.FrameworkVersionWithLibrary");
   private CustomLibraryDescription myLibraryDescription;
 
   public FrameworkVersionWithLibrary(@NotNull String versionName, boolean isDefault, CustomLibraryDescription libraryDescription) {
@@ -31,5 +35,12 @@ public class FrameworkVersionWithLibrary extends FrameworkVersion {
 
   public CustomLibraryDescription getLibraryDescription() {
     return myLibraryDescription;
+  }
+
+  public static FrameworkVersionWithLibrary createVersion(Class<? extends DownloadableLibraryType> typeClass) {
+    final DownloadableLibraryType libraryType = LibraryType.EP_NAME.findExtension(typeClass);
+    LOG.assertTrue(libraryType != null, typeClass);
+    CustomLibraryDescription description = new CustomLibraryDescriptionImpl(libraryType);
+    return new FrameworkVersionWithLibrary("latest", true, description);
   }
 }

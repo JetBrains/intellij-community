@@ -16,7 +16,7 @@
 
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
+import com.intellij.framework.library.DownloadableFileDescription;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,27 +60,30 @@ public class LibraryDownloader {
   private static final int READ_TIMEOUT = 60*1000;
   @NonNls private static final String LIB_SCHEMA = "lib://";
 
-  private LibraryDownloadInfo[] myLibraryInfos;
+  private List<? extends DownloadableFileDescription> myFileDescriptions;
   private JComponent myParent;
   private @Nullable Project myProject;
-  private String myDirectoryForDownloadedLibrariesPath;
-  private final @Nullable String myLibraryPresentableName;
+  private String myDirectoryForDownloadedFilesPath;
+  private String myDialogTitle;
 
-  public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @Nullable Project project, JComponent parent,
-                           @Nullable String directoryForDownloadedLibrariesPath, @Nullable String libraryPresentableName) {
+  public LibraryDownloader(final List<? extends DownloadableFileDescription> fileDescriptions, final @Nullable Project project, JComponent parent,
+                           @Nullable String directoryForDownloadedFilePath, @Nullable String libraryPresentableName) {
     myProject = project;
-    myLibraryInfos = libraryInfos;
+    myFileDescriptions = fileDescriptions;
     myParent = parent;
-    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
-    myLibraryPresentableName = libraryPresentableName;
+    myDirectoryForDownloadedFilesPath = directoryForDownloadedFilePath;
+    myDialogTitle = IdeBundle.message("progress.download.libraries.title");
+    if (libraryPresentableName != null) {
+      myDialogTitle = IdeBundle.message("progress.download.0.libraries.title", StringUtil.capitalize(libraryPresentableName));
+    }
   }
 
   public VirtualFile[] download() {
     VirtualFile dir = null;
-    if (myDirectoryForDownloadedLibrariesPath != null) {
-      File ioDir = new File(FileUtil.toSystemDependentName(myDirectoryForDownloadedLibrariesPath));
+    if (myDirectoryForDownloadedFilesPath != null) {
+      File ioDir = new File(FileUtil.toSystemDependentName(myDirectoryForDownloadedFilesPath));
       ioDir.mkdirs();
-      dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myDirectoryForDownloadedLibrariesPath);
+      dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myDirectoryForDownloadedFilesPath);
     }
 
     if (dir == null) {
@@ -94,32 +98,27 @@ public class LibraryDownloader {
 
   private VirtualFile[] doDownload(final VirtualFile dir) {
     HttpConfigurable.getInstance().setAuthenticator();
-    final List<Pair<LibraryDownloadInfo, File>> downloadedFiles = new ArrayList<Pair<LibraryDownloadInfo, File>>();
+    final List<Pair<DownloadableFileDescription, File>> downloadedFiles = new ArrayList<Pair<DownloadableFileDescription, File>>();
     final List<VirtualFile> existingFiles = new ArrayList<VirtualFile>();
     final Ref<Exception> exceptionRef = Ref.create(null);
-    final Ref<LibraryDownloadInfo> currentLibrary = new Ref<LibraryDownloadInfo>();
-
-    String dialogTitle = IdeBundle.message("progress.download.libraries.title");
-    if (myLibraryPresentableName != null) {
-      dialogTitle = IdeBundle.message("progress.download.0.libraries.title", StringUtil.capitalize(myLibraryPresentableName));
-    }
+    final Ref<DownloadableFileDescription> currentFile = new Ref<DownloadableFileDescription>();
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         try {
-          for (int i = 0; i < myLibraryInfos.length; i++) {
-            LibraryDownloadInfo info = myLibraryInfos[i];
-            currentLibrary.set(info);
+          for (int i = 0; i < myFileDescriptions.size(); i++) {
+            DownloadableFileDescription description = myFileDescriptions.get(i);
+            currentFile.set(description);
             if (indicator != null) {
               indicator.checkCanceled();
-              indicator.setText(IdeBundle.message("progress.0.of.1.file.downloaded.text", i, myLibraryInfos.length));
+              indicator.setText(IdeBundle.message("progress.0.of.1.file.downloaded.text", i, myFileDescriptions.size()));
             }
 
-            final VirtualFile existing = dir.findChild(getExpectedFileName(info));
+            final VirtualFile existing = dir.findChild(description.getDefaultFileName());
             long size = existing != null ? existing.getLength() : -1;
 
-            if (!download(info, size, downloadedFiles)) {
+            if (!download(description, size, downloadedFiles)) {
               existingFiles.add(existing);
             }
           }
@@ -131,7 +130,7 @@ public class LibraryDownloader {
           exceptionRef.set(e);
         }
       }
-    }, dialogTitle, true, myProject, myParent);
+    }, myDialogTitle, true, myProject, myParent);
 
     Exception exception = exceptionRef.get();
     if (exception == null) {
@@ -139,12 +138,11 @@ public class LibraryDownloader {
         return moveToDir(existingFiles, downloadedFiles, dir);
       }
       catch (IOException e) {
-        final String title = IdeBundle.message("progress.download.libraries.title");
         if (myProject != null) {
-          Messages.showErrorDialog(myProject, title, e.getMessage());
+          Messages.showErrorDialog(myProject, myDialogTitle, e.getMessage());
         }
         else {
-          Messages.showErrorDialog(myParent, title, e.getMessage());
+          Messages.showErrorDialog(myParent, myDialogTitle, e.getMessage());
         }
         return VirtualFile.EMPTY_ARRAY;
       }
@@ -153,10 +151,10 @@ public class LibraryDownloader {
     deleteFiles(downloadedFiles);
     if (exception instanceof IOException) {
       String message = IdeBundle.message("error.library.download.failed", exception.getMessage());
-      if (currentLibrary.get() != null) {
-        message += ": " + currentLibrary.get().getDownloadUrl();
+      if (currentFile.get() != null) {
+        message += ": " + currentFile.get().getDownloadUrl();
       }
-      final boolean tryAgain = IOExceptionDialog.showErrorDialog(IdeBundle.message("progress.download.libraries.title"), message);
+      final boolean tryAgain = IOExceptionDialog.showErrorDialog(myDialogTitle, message);
       if (tryAgain) {
         return doDownload(dir);
       }
@@ -164,7 +162,8 @@ public class LibraryDownloader {
     return VirtualFile.EMPTY_ARRAY;
   }
 
-  private @Nullable VirtualFile chooseDirectoryForLibraries() {
+  @Nullable
+  private VirtualFile chooseDirectoryForLibraries() {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(IdeBundle.message("dialog.directory.for.libraries.title"));
 
@@ -179,14 +178,14 @@ public class LibraryDownloader {
     return files.length > 0 ? files[0] : null;
   }
 
-  private static VirtualFile[] moveToDir(final List<VirtualFile> existingFiles, final List<Pair<LibraryDownloadInfo, File>> downloadedFiles, final VirtualFile dir) throws IOException {
+  private static VirtualFile[] moveToDir(final List<VirtualFile> existingFiles, final List<Pair<DownloadableFileDescription, File>> downloadedFiles, final VirtualFile dir) throws IOException {
     List<VirtualFile> files = new ArrayList<VirtualFile>();
 
     final File ioDir = VfsUtil.virtualToIoFile(dir);
-    for (Pair<LibraryDownloadInfo, File> pair : downloadedFiles) {
-      final LibraryDownloadInfo info = pair.getFirst();
-      final boolean dontTouch = info.getDownloadUrl().startsWith(LIB_SCHEMA) || info.getDownloadUrl().startsWith(LocalFileSystem.PROTOCOL_PREFIX);
-      final File toFile = dontTouch? pair.getSecond() : generateName(info, ioDir);
+    for (Pair<DownloadableFileDescription, File> pair : downloadedFiles) {
+      final DownloadableFileDescription description = pair.getFirst();
+      final boolean dontTouch = description.getDownloadUrl().startsWith(LIB_SCHEMA) || description.getDownloadUrl().startsWith(LocalFileSystem.PROTOCOL_PREFIX);
+      final File toFile = dontTouch? pair.getSecond() : generateName(description, ioDir);
       if (!dontTouch) {
         FileUtil.rename(pair.getSecond(), toFile);
       }
@@ -218,43 +217,43 @@ public class LibraryDownloader {
     return VfsUtil.toVirtualFileArray(files);
   }
 
-  private static String getExpectedFileName(LibraryDownloadInfo info) {
-    return info.getFileNamePrefix() + info.getFileNameSuffix();
+  private static File generateName(DownloadableFileDescription info, final File dir) {
+    final String fileName = info.generateFileName(new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return !new File(dir, s).exists();
+      }
+    });
+    return new File(dir, fileName);
   }
 
-  private static File generateName(LibraryDownloadInfo info, final File dir) {
-    String prefix = info.getFileNamePrefix();
-    String suffix = info.getFileNameSuffix();
-    File file = new File(dir, prefix + suffix);
-    int count = 1;
-    while (file.exists()) {
-      file = new File(dir, prefix + "_" + count + suffix);
-      count++;
-    }
-    return file;
-  }
-
-  private static void deleteFiles(final List<Pair<LibraryDownloadInfo, File>> pairs) {
-    for (Pair<LibraryDownloadInfo, File> pair : pairs) {
+  private static void deleteFiles(final List<Pair<DownloadableFileDescription, File>> pairs) {
+    for (Pair<DownloadableFileDescription, File> pair : pairs) {
       FileUtil.delete(pair.getSecond());
     }
     pairs.clear();
   }
 
-  private boolean download(final LibraryDownloadInfo libraryInfo, final long existingFileSize, final List<Pair<LibraryDownloadInfo, File>> downloadedFiles) throws IOException {
+  private static boolean download(final DownloadableFileDescription fileDescription,
+                                  final long existingFileSize,
+                                  final List<Pair<DownloadableFileDescription, File>> downloadedFiles) throws IOException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final String presentableUrl = libraryInfo.getPresentableUrl();
-    final String url = libraryInfo.getDownloadUrl();
+    final String presentableUrl = fileDescription.getPresentableDownloadUrl();
+    final String url = fileDescription.getDownloadUrl();
     if (url.startsWith(LIB_SCHEMA)) {
-      indicator.setText2(IdeBundle.message("progress.locate.jar.text", getExpectedFileName(libraryInfo)));
-      final String path = url.substring(LIB_SCHEMA.length()).replace('/', File.separatorChar);
+      indicator.setText2(IdeBundle.message("progress.locate.jar.text", fileDescription.getPresentableFileName()));
+      final String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LIB_SCHEMA));
       final File file = PathManager.findFileInLibDirectory(path);
-      downloadedFiles.add(Pair.create(libraryInfo, file));
-    } else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-      String path = url.substring(LocalFileSystem.PROTOCOL_PREFIX.length()).replace('/', File.separatorChar).replace('\\', File.separatorChar);
+      downloadedFiles.add(Pair.create(fileDescription, file));
+    }
+    else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+      String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LocalFileSystem.PROTOCOL_PREFIX));
       File file = new File(path);
-      if (file.exists()) downloadedFiles.add(Pair.create(libraryInfo, file));
-    } else {
+      if (file.exists()) {
+        downloadedFiles.add(Pair.create(fileDescription, file));
+      }
+    }
+    else {
       indicator.setText2(IdeBundle.message("progress.connecting.to.dowload.jar.text", presentableUrl));
       indicator.setIndeterminate(true);
       HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
@@ -280,13 +279,13 @@ public class LibraryDownloader {
         tempFile = FileUtil.createTempFile("downloaded", "jar");
         input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, indicator);
         output = new BufferedOutputStream(new FileOutputStream(tempFile));
-        indicator.setText2(IdeBundle.message("progress.download.jar.text", getExpectedFileName(libraryInfo), presentableUrl));
+        indicator.setText2(IdeBundle.message("progress.download.jar.text", fileDescription.getPresentableFileName(), presentableUrl));
         indicator.setIndeterminate(size == -1);
 
         NetUtils.copyStreamContent(indicator, input, output, size);
 
         deleteFile = false;
-        downloadedFiles.add(Pair.create(libraryInfo, tempFile));
+        downloadedFiles.add(Pair.create(fileDescription, tempFile));
       }
       finally {
         if (input != null) {

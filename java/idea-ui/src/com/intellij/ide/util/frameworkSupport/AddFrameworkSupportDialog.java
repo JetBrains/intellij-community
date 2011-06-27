@@ -3,7 +3,7 @@ package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
-import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -29,18 +28,12 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
   private final AddSupportForFrameworksPanel myAddSupportPanel;
   private final Module myModule;
 
-  private AddFrameworkSupportDialog(@NotNull Module module, final String contentRootPath, final List<FrameworkSupportProvider> providers) {
+  private AddFrameworkSupportDialog(@NotNull Module module, final @NotNull String contentRootPath, final List<FrameworkSupportProvider> providers) {
     super(module.getProject(), true);
     setTitle(ProjectBundle.message("dialog.title.add.frameworks.support"));
     myModule = module;
-    final FrameworkSupportModelImpl model = new FrameworkSupportModelImpl(module.getProject(), null);
-    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, LibrariesContainerFactory.createContainer(module.getProject()),
-                                                         model, new Computable<String>() {
-        public String compute() {
-        return contentRootPath;
-      }
-    }) {
-
+    final FrameworkSupportModelBase model = new FrameworkSupportModelImpl(module.getProject(), contentRootPath);
+    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, LibrariesContainerFactory.createContainer(module.getProject()), model) {
       @Override
       protected void onFrameworkStateChanged() {
         setOKActionEnabled(isOKActionEnabled());

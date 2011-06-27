@@ -34,16 +34,19 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class FrameworkSupportModelImpl extends UserDataHolderBase implements FrameworkSupportModel {
+public abstract class FrameworkSupportModelBase extends UserDataHolderBase implements FrameworkSupportModel {
   private final Project myProject;
   private final ModuleBuilder myModuleBuilder;
   private final EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
   private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
 
-  public FrameworkSupportModelImpl(final @Nullable Project project, @Nullable ModuleBuilder builder) {
+  public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder) {
     myProject = project;
     myModuleBuilder = builder;
   }
+
+  @NotNull
+  public abstract String getBaseDirectoryForLibrariesPath();
 
   public void registerComponent(@NotNull final FrameworkSupportProvider provider, @NotNull final FrameworkSupportNode node) {
     mySettingsMap.put(provider.getId(), node);

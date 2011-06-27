@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -33,8 +34,6 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibrar
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -87,11 +86,11 @@ public class CreateCustomLibraryAction extends CustomLibraryActionBase {
       Collections.addAll(libraries, context.getProjectLibrariesProvider().getModifiableModel().getLibraries());
       Collections.addAll(libraries, context.getGlobalLibrariesProvider().getModifiableModel().getLibraries());
 
-      final Condition<List<VirtualFile>> condition = creator.getDescription().getSuitableLibraryCondition();
+      final LibraryFilter condition = creator.getDescription().getSuitableLibraryFilter();
       Predicate<Library> suitablePredicate = new Predicate<Library>() {
         @Override
         public boolean apply(Library input) {
-          return condition.value(Arrays.asList(context.getLibraryFiles(input, OrderRootType.CLASSES)));
+          return condition.isSuitableLibrary(Arrays.asList(context.getLibraryFiles(input, OrderRootType.CLASSES)), ((LibraryEx)input).getType());
         }
       };
       final Predicate<Library> notAddedLibrariesCondition = LibraryEditingUtil.getNotAddedLibrariesCondition(context.getModulesConfigurator().getRootModel(module));

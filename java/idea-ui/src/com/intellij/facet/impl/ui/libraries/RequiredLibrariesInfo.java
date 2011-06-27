@@ -35,18 +35,10 @@ import java.util.List;
  * @author nik
  */
 public class RequiredLibrariesInfo {
-
   private final List<LibraryInfo> myLibraryInfos = new ArrayList<LibraryInfo>();
-
-  public RequiredLibrariesInfo() {
-  }
 
   public RequiredLibrariesInfo(LibraryInfo... libs) {
     myLibraryInfos.addAll(new ArrayList<LibraryInfo>(Arrays.asList(libs)));
-  }
-
-  public void addLibraryInfo(LibraryInfo lib) {
-    myLibraryInfos.add(lib);
   }
 
   @Nullable

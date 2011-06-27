@@ -116,7 +116,7 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
     suitableTypes.add(null);
     final Module module = classpathPanel.getRootModel().getModule();
     for (LibraryType libraryType : LibraryType.EP_NAME.getExtensions()) {
-      if (libraryType.isSuitableModule(module, classpathPanel.getModuleConfigurationState().getFacetsProvider())) {
+      if (libraryType.getCreateActionName() != null && libraryType.isSuitableModule(module, classpathPanel.getModuleConfigurationState().getFacetsProvider())) {
         suitableTypes.add(libraryType);
       }
     }

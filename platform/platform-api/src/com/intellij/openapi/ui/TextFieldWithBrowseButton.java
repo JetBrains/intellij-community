@@ -53,16 +53,16 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     this(new JTextField(10/* to prevent field to be infinitely resized in grid-box layouts */), browseActionListener);
   }
 
-  public void addBrowseFolderListener(@Nullable String title, @Nullable String description, Project project, FileChooserDescriptor fileChooserDescriptor) {
+  public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     installPathCompletion(project, fileChooserDescriptor);
   }
 
-  protected void installPathCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor) {
+  protected void installPathCompletion(final @Nullable Project project, final FileChooserDescriptor fileChooserDescriptor) {
     installPathCompletion(project, fileChooserDescriptor, null);
   }
 
-  protected void installPathCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor, Disposable parent) {
+  protected void installPathCompletion(final @Nullable Project project, final FileChooserDescriptor fileChooserDescriptor, @Nullable Disposable parent) {
     final Application application = ApplicationManager.getApplication();
      if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
      FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, parent);

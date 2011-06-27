@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.libraries;
+package com.intellij.framework.library;
 
-import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -23,22 +23,15 @@ import java.util.List;
 /**
  * @author nik
  */
-public class LibraryDownloadDescription {
-  private final String myDefaultLibraryName;
-  private final List<LibraryDownloadInfo> myDownloads;
-
-  public LibraryDownloadDescription(@NotNull String defaultLibraryName, @NotNull List<LibraryDownloadInfo> downloads) {
-    myDefaultLibraryName = defaultLibraryName;
-    myDownloads = downloads;
-  }
+public interface FrameworkLibraryVersion {
+  @NotNull
+  String getDefaultLibraryName();
 
   @NotNull
-  public String getDefaultLibraryName() {
-    return myDefaultLibraryName;
-  }
+  String getVersionString();
 
   @NotNull
-  public List<LibraryDownloadInfo> getDownloads() {
-    return myDownloads;
-  }
+  List<DownloadableFileDescription> getLibraryFiles();
+
+  boolean isCompatibleWith(@NotNull FrameworkVersion frameworkVersion);
 }

@@ -49,7 +49,7 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   /**
    * @return text to show in 'New Library' popup
    */
-  @NotNull
+  @Nullable
   public abstract String getCreateActionName();
 
   @NotNull
@@ -72,7 +72,7 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   }
 
   @Nullable
-  public abstract LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<P> properties);
+  public abstract LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<P> editorComponent);
 
   @Override
   public P detect(@NotNull List<VirtualFile> classesRoots) {

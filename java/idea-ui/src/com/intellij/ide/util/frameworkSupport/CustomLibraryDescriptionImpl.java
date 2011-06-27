@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,78 +15,46 @@
  */
 package com.intellij.ide.util.frameworkSupport;
 
-import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
-import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
-import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
-import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.util.Condition;
+import com.intellij.framework.library.DownloadableLibraryDescription;
+import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class CustomLibraryDescriptionImpl extends CustomLibraryDescription {
-  private final LibraryInfo[] myLibraryInfos;
-  private String myDefaultLibraryName;
-  private final LibraryDownloadDescription myDownloadDescription;
-  private final Condition<List<VirtualFile>> mySuitableLibraryCondition;
+public class CustomLibraryDescriptionImpl extends CustomLibraryDescriptionBase {
+  private final DownloadableLibraryType myLibraryType;
 
-  public CustomLibraryDescriptionImpl(@NotNull LibraryInfo[] libraryInfos, @NotNull String defaultLibraryName) {
-    myLibraryInfos = libraryInfos;
-    myDefaultLibraryName = defaultLibraryName;
-    List<LibraryDownloadInfo> downloads = new ArrayList<LibraryDownloadInfo>();
-    for (LibraryInfo info : libraryInfos) {
-      ContainerUtil.addIfNotNull(downloads, info.getDownloadingInfo());
-    }
-    myDownloadDescription = !downloads.isEmpty() ? new LibraryDownloadDescription(defaultLibraryName, downloads) : null;
-    mySuitableLibraryCondition = new Condition<List<VirtualFile>>() {
-      @Override
-      public boolean value(List<VirtualFile> virtualFiles) {
-        RequiredLibrariesInfo info = new RequiredLibrariesInfo(myLibraryInfos);
-        return info.checkLibraries(virtualFiles) == null;
-      }
-    };
+  public CustomLibraryDescriptionImpl(@NotNull DownloadableLibraryType downloadableLibraryType) {
+    super(downloadableLibraryType.getLibraryCategoryName());
+    myLibraryType = downloadableLibraryType;
   }
 
   @Override
-  public LibraryDownloadDescription getDownloadDescription() {
-    return myDownloadDescription;
+  public DownloadableLibraryDescription getDownloadableDescription() {
+    return myLibraryType.getLibraryDescription();
+  }
+
+  @Override
+  public DownloadableLibraryType getDownloadableLibraryType() {
+    return myLibraryType;
   }
 
   @NotNull
   @Override
-  public Condition<List<VirtualFile>> getSuitableLibraryCondition() {
-    return mySuitableLibraryCondition;
-  }
-
-  @Override
-  public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, false, false, true);
-    descriptor.setTitle(IdeBundle.message("new.library.file.chooser.title"));
-    descriptor.setDescription(IdeBundle.message("new.library.file.chooser.description"));
-    final VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, contextDirectory);
-    if (files.length == 0) {
-      return null;
-    }
-    return new NewLibraryConfiguration(myDefaultLibraryName) {
+  public LibraryFilter getSuitableLibraryFilter() {
+    return new LibraryFilter() {
       @Override
-      public void addRoots(@NotNull LibraryEditor editor) {
-        for (VirtualFile file : files) {
-          editor.addRoot(file, OrderRootType.CLASSES);
-        }
+      public boolean isSuitableLibrary(@NotNull List<VirtualFile> classesRoots,
+                                       @Nullable LibraryType<?> type) {
+        return myLibraryType.equals(type);
       }
     };
   }

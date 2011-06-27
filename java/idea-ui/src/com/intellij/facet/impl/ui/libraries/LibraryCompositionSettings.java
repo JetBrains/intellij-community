@@ -15,20 +15,23 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
+import com.intellij.framework.library.FrameworkLibraryVersion;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +41,9 @@ import java.util.Map;
 */
 public class LibraryCompositionSettings implements Disposable {
   private final CustomLibraryDescription myLibraryDescription;
-  private final String myBaseDirectoryPath;
+  private FrameworkVersion myCurrentFrameworkVersion;
+  private String myBaseDirectoryPath;
+  private final List<? extends FrameworkLibraryVersion> myAllVersions;
   private LibrariesContainer.LibraryLevel myNewLibraryLevel;
   private NewLibraryEditor myNewLibraryEditor;
   private Library mySelectedLibrary;
@@ -47,14 +52,57 @@ public class LibraryCompositionSettings implements Disposable {
   private Map<Library, ExistingLibraryEditor> myExistingLibraryEditors = new HashMap<Library, ExistingLibraryEditor>();
 
   public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
-                                    final @NotNull String baseDirectoryFiles) {
+                                    final @NotNull String baseDirectoryPath,
+                                    @Nullable FrameworkVersion currentFrameworkVersion,
+                                    final List<? extends FrameworkLibraryVersion> allVersions) {
     myLibraryDescription = libraryDescription;
+    myCurrentFrameworkVersion = currentFrameworkVersion;
     myNewLibraryLevel = libraryDescription.getDefaultLevel();
-    myBaseDirectoryPath = baseDirectoryFiles;
-    final LibraryDownloadDescription downloadDescription = myLibraryDescription.getDownloadDescription();
-    if (downloadDescription != null) {
-      myDownloadSettings = new LibraryDownloadSettings(downloadDescription, baseDirectoryFiles);
+    myBaseDirectoryPath = baseDirectoryPath;
+    myAllVersions = allVersions;
+    final List<? extends FrameworkLibraryVersion> versions = getCompatibleVersions();
+    if (!versions.isEmpty()) {
+      myDownloadSettings = createDownloadSettings(versions.get(0));
     }
+  }
+
+  private LibraryDownloadSettings createDownloadSettings(final FrameworkLibraryVersion version) {
+    return new LibraryDownloadSettings(version, myLibraryDescription.getDownloadableLibraryType(),
+                                                     myNewLibraryLevel, getDefaultDownloadPath(myBaseDirectoryPath));
+  }
+
+  public void updateDownloadableVersions(@Nullable FrameworkVersion version) {
+    myCurrentFrameworkVersion = version;
+    if (version != null && myDownloadSettings != null) {
+      if (!myDownloadSettings.getVersion().isCompatibleWith(version)) {
+        final FrameworkLibraryVersion newLibraryVersion = ContainerUtil.getFirstItem(getCompatibleVersions());
+        if (newLibraryVersion != null) {
+          myDownloadSettings = createDownloadSettings(newLibraryVersion);
+        }
+        else {
+          myDownloadSettings = null;
+        }
+      }
+    }
+  }
+
+  public List<? extends FrameworkLibraryVersion> getCompatibleVersions() {
+    if (myCurrentFrameworkVersion == null) return myAllVersions;
+    final List<FrameworkLibraryVersion> result = new ArrayList<FrameworkLibraryVersion>();
+    for (FrameworkLibraryVersion version : myAllVersions) {
+      if (version.isCompatibleWith(myCurrentFrameworkVersion)) {
+        result.add(version);
+      }
+    }
+    return result;
+  }
+
+  private static String getDefaultDownloadPath(@NotNull String baseDirectoryPath) {
+    return baseDirectoryPath + "/lib";
+  }
+
+  public void setDownloadSettings(LibraryDownloadSettings downloadSettings) {
+    myDownloadSettings = downloadSettings;
   }
 
   public ExistingLibraryEditor getOrCreateEditor(@NotNull Library library) {
@@ -82,11 +130,21 @@ public class LibraryCompositionSettings implements Disposable {
     return myBaseDirectoryPath;
   }
 
+  public void changeBaseDirectoryPath(@NotNull String baseDirectoryPath) {
+    if (!myBaseDirectoryPath.equals(baseDirectoryPath)) {
+      if (myDownloadSettings != null &&
+          myDownloadSettings.getDirectoryForDownloadedLibrariesPath().equals(getDefaultDownloadPath(myBaseDirectoryPath))) {
+        myDownloadSettings.setDirectoryForDownloadedLibrariesPath(getDefaultDownloadPath(baseDirectoryPath));
+      }
+      myBaseDirectoryPath = baseDirectoryPath;
+    }
+  }
+
   public void setDownloadLibraries(final boolean downloadLibraries) {
     myDownloadLibraries = downloadLibraries;
   }
 
-  public void setSelectedExistingLibrary(Library library) {
+  public void setSelectedExistingLibrary(@Nullable Library library) {
     mySelectedLibrary = library;
   }
 
@@ -139,7 +197,7 @@ public class LibraryCompositionSettings implements Disposable {
     return library;
   }
 
-  public void setNewLibraryEditor(NewLibraryEditor libraryEditor) {
+  public void setNewLibraryEditor(@Nullable NewLibraryEditor libraryEditor) {
     myNewLibraryEditor = libraryEditor;
   }
 

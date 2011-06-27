@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.libraries.ui;
+package com.intellij.framework.library;
 
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author nik
  */
-public interface LibraryEditorComponent<P extends LibraryProperties> {
-  @NotNull
-  P getProperties();
-  
-  LibraryEditor getLibraryEditor();
+public interface DownloadableLibraryDescription {
 
-  @Nullable
-  VirtualFile getBaseDirectory();
+  void fetchLibraryVersions(@NotNull LibraryVersionsCallback callback);
 
-  @Nullable
-  VirtualFile getExistingRootDirectory();
+  abstract class LibraryVersionsCallback {
+    public abstract void onSuccess(@NotNull List<? extends FrameworkLibraryVersion> versions);
 
-  void updateRootsTree();
+    public void onError(@NotNull String errorMessage) {
+    }
+  }
 }

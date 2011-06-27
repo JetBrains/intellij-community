@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class NewLibraryEditor implements LibraryEditor {
+public class NewLibraryEditor extends LibraryEditorBase {
   private String myLibraryName;
   private final MultiMap<OrderRootType, LightFilePointer> myRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
@@ -51,6 +51,11 @@ public class NewLibraryEditor implements LibraryEditor {
     myType = type;
     myProperties = properties;
     myRoots = new MultiMap<OrderRootType, LightFilePointer>();
+  }
+
+  @Override
+  public Collection<OrderRootType> getOrderRootTypes() {
+    return myRoots.keySet();
   }
 
   @Override
@@ -148,11 +153,6 @@ public class NewLibraryEditor implements LibraryEditor {
   }
 
   @Override
-  public boolean isJarDirectory(String url) {
-    return isJarDirectory(url, OrderRootType.CLASSES);
-  }
-
-  @Override
   public boolean isJarDirectory(String url, OrderRootType rootType) {
     return myJarDirectories.contains(rootType, url);
   }
@@ -186,7 +186,7 @@ public class NewLibraryEditor implements LibraryEditor {
     }
   }
 
-  public void copyRoots(ExistingLibraryEditor editor) {
+  public void copyRoots(LibraryEditor editor) {
     for (OrderRootType type : myRoots.keySet()) {
       for (LightFilePointer pointer : myRoots.get(type)) {
         editor.addRoot(pointer.getUrl(), type);

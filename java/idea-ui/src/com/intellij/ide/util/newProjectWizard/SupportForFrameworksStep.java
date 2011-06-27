@@ -4,8 +4,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
-import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.CommitStepException;
@@ -14,7 +13,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
@@ -28,19 +26,13 @@ import java.util.List;
  */
 public class SupportForFrameworksStep extends ModuleWizardStep {
   private final AddSupportForFrameworksPanel mySupportForFrameworksPanel;
-  private final FrameworkSupportModelImpl myFrameworkSupportModel;
+  private final FrameworkSupportModelBase myFrameworkSupportModel;
   private boolean myCommitted;
 
   public SupportForFrameworksStep(final ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     List<FrameworkSupportProvider> providers = FrameworkSupportUtil.getProviders(builder);
-    myFrameworkSupportModel = new FrameworkSupportModelImpl(librariesContainer.getProject(), builder);
-    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, librariesContainer,
-                                                                   myFrameworkSupportModel,
-                                                                   new Computable<String>() {
-      public String compute() {
-        return getBaseDirectory(builder);
-      }
-    });
+    myFrameworkSupportModel = new FrameworkSupportModelInWizard(librariesContainer, builder);
+    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, librariesContainer, myFrameworkSupportModel);
     builder.addModuleConfigurationUpdater(new ModuleBuilder.ModuleConfigurationUpdater() {
       public void update(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel) {
         mySupportForFrameworksPanel.addSupport(module, rootModel);
@@ -49,13 +41,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   }
 
   private static String getBaseDirectory(final ModuleBuilder builder) {
-    String path = null;
-    if (builder instanceof JavaModuleBuilder) {
-      path = builder.getContentEntryPath();
-    }
-    if (path == null) {
-      path = builder.getModuleFileDirectory();
-    }
+    final String path = builder.getContentEntryPath();
     return path != null ? FileUtil.toSystemIndependentName(path) : "";
   }
 
@@ -99,5 +85,20 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   }
 
   public void updateDataModel() {
+  }
+
+  private static class FrameworkSupportModelInWizard extends FrameworkSupportModelBase {
+    private final ModuleBuilder myBuilder;
+
+    public FrameworkSupportModelInWizard(LibrariesContainer librariesContainer, ModuleBuilder builder) {
+      super(librariesContainer.getProject(), builder);
+      myBuilder = builder;
+    }
+
+    @NotNull
+    @Override
+    public String getBaseDirectoryForLibrariesPath() {
+      return getBaseDirectory(myBuilder);
+    }
   }
 }

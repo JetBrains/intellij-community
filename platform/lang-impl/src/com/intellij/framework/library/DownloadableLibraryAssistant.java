@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.libraries.ui;
+package com.intellij.framework.library;
 
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.net.URL;
 
 /**
  * @author nik
  */
-public interface LibraryEditorComponent<P extends LibraryProperties> {
+public abstract class DownloadableLibraryAssistant {
+  public static DownloadableLibraryAssistant getInstance() {
+    return ServiceManager.getService(DownloadableLibraryAssistant.class);
+  }
+
   @NotNull
-  P getProperties();
-  
-  LibraryEditor getLibraryEditor();
+  public abstract DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName);
 
-  @Nullable
-  VirtualFile getBaseDirectory();
-
-  @Nullable
-  VirtualFile getExistingRootDirectory();
-
-  void updateRootsTree();
+  @NotNull
+  public abstract DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull URL... localUrls);
 }

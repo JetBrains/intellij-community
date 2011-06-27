@@ -20,11 +20,10 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelAdapter;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
-import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -32,15 +31,11 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorFactory;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,20 +58,17 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private JPanel myFrameworksPanel;
   private List<List<FrameworkSupportNode>> myGroups;
   private final LibrariesContainer myLibrariesContainer;
-  private final Computable<String> myBaseDirForLibrariesGetter;
   private final List<FrameworkSupportProvider> myProviders;
-  private final FrameworkSupportModelImpl myModel;
+  private final FrameworkSupportModelBase myModel;
   private final JPanel myOptionsPanel;
   private final FrameworksTree myFrameworksTree;
-  private final Set<String> myInitializedOptionsPanelIds = new HashSet<String>();
+  private final Map<FrameworkSupportNode, FrameworkSupportOptionsComponent> myInitializedOptionsComponents = new HashMap<FrameworkSupportNode, FrameworkSupportOptionsComponent>();
   private FrameworkSupportNode myLastSelectedNode;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final @NotNull LibrariesContainer librariesContainer,
-                                      final FrameworkSupportModelImpl model,
-                                      Computable<String> baseDirForLibrariesGetter) {
+                                      final FrameworkSupportModelBase model) {
     myModel = model;
     myLibrariesContainer = librariesContainer;
-    myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
     myProviders = providers;
     createNodes();
 
@@ -131,9 +123,12 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void applyLibraryOptionsForSelected() {
     if (myLastSelectedNode != null) {
-      final LibraryOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel();
-      if (optionsPanel != null) {
-        optionsPanel.apply();
+      final FrameworkSupportOptionsComponent optionsComponent = myInitializedOptionsComponents.get(myLastSelectedNode);
+      if (optionsComponent != null) {
+        final LibraryOptionsPanel optionsPanel = optionsComponent.getLibraryOptionsPanel();
+        if (optionsPanel != null) {
+          optionsPanel.apply();
+        }
       }
     }
   }
@@ -157,71 +152,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   private void initializeOptionsPanel(final FrameworkSupportNode node) {
-    final String id = node.getProvider().getId();
-    if (!myInitializedOptionsPanelIds.contains(id)) {
-      VerticalFlowLayout layout = new VerticalFlowLayout();
-      layout.setVerticalFill(true);
-      final JPanel optionsPanel = new JPanel(layout);
-
-      JComponent separator = SeparatorFactory.createSeparator(node.getTitle() + " Settings", null);
-      separator.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 5, 5));
-      optionsPanel.add(separator);
-
-      final FrameworkSupportConfigurable configurable = node.getConfigurable();
-      final JComponent component = configurable.getComponent();
-      if (component != null) {
-        optionsPanel.add(component);
-      }
-
-      final boolean addSeparator = component != null;
-      final JPanel librariesOptionsPanelWrapper = new JPanel(new BorderLayout());
-      optionsPanel.add(librariesOptionsPanelWrapper);
-      configurable.addListener(new FrameworkSupportConfigurableListener() {
-        public void frameworkVersionChanged() {
-          updateLibrariesPanel(librariesOptionsPanelWrapper, node, addSeparator);
-        }
-      });
-      myModel.addFrameworkListener(new FrameworkSupportModelAdapter() {
-        @Override
-        public void wizardStepUpdated() {
-          if (node.isSettingsObsolete()) {
-            updateLibrariesPanel(librariesOptionsPanelWrapper, node, addSeparator);
-          }
-        }
-      }, this);
-      addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper, addSeparator);
-      myOptionsPanel.add(id, optionsPanel);
-      myInitializedOptionsPanelIds.add(id);
-    }
-  }
-
-  private void updateLibrariesPanel(JPanel librariesOptionsPanelWrapper, FrameworkSupportNode node, boolean addSeparator) {
-    librariesOptionsPanelWrapper.removeAll();
-    addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper, addSeparator);
-    librariesOptionsPanelWrapper.revalidate();
-  }
-
-  private void addLibrariesOptionsPanel(FrameworkSupportNode node, JPanel librariesOptionsPanelWrapper, boolean addSeparator) {
-    final LibraryCompositionSettings libraryCompositionSettings = node.getLibraryCompositionSettings(true);
-    final LibraryOptionsPanel oldPanel = node.getLibraryCompositionOptionsPanel();
-    LibraryOptionsPanel newPanel = oldPanel;
-    if (oldPanel == null || !oldPanel.getSettings().equals(libraryCompositionSettings)) {
-      if (libraryCompositionSettings != null) {
-        newPanel = new LibraryOptionsPanel(libraryCompositionSettings, myLibrariesContainer, node.getConfigurable().getComponent() != null);
-      }
-      else {
-        newPanel = null;
-      }
-    }
-    node.setLibraryCompositionOptionsPanel(newPanel);
-
-    if (newPanel != null) {
-      if (addSeparator) {
-        JComponent separator = SeparatorFactory.createSeparator("Libraries", null);
-        separator.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
-        librariesOptionsPanelWrapper.add(BorderLayout.NORTH, separator);
-      }
-      librariesOptionsPanelWrapper.add(BorderLayout.CENTER, newPanel.getMainPanel());
+    if (!myInitializedOptionsComponents.containsKey(node)) {
+      FrameworkSupportOptionsComponent optionsComponent = new FrameworkSupportOptionsComponent(myModel, myLibrariesContainer, node, this);
+      final String id = node.getProvider().getId();
+      myOptionsPanel.add(id, optionsComponent.getMainPanel());
+      myInitializedOptionsComponents.put(node, optionsComponent);
     }
   }
 
@@ -233,12 +168,15 @@ public class AddSupportForFrameworksPanel implements Disposable {
     List<LibraryCompositionSettings> list = new ArrayList<LibraryCompositionSettings>();
     List<FrameworkSupportNode> selected = getFrameworkNodes(true);
     for (FrameworkSupportNode node : selected) {
-      final LibraryCompositionSettings settings = node.getLibraryCompositionSettings(false);
-      if (settings != null) {
-        list.add(settings);
-      }
+      ContainerUtil.addIfNotNull(list, getLibraryCompositionSettings(node));
     }
     return list;
+  }
+
+  @Nullable
+  private LibraryCompositionSettings getLibraryCompositionSettings(FrameworkSupportNode node) {
+    final FrameworkSupportOptionsComponent optionsComponent = myInitializedOptionsComponents.get(node);
+    return optionsComponent != null ? optionsComponent.getLibraryCompositionSettings() : null;
   }
 
   public boolean downloadLibraries() {
@@ -281,29 +219,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
       String underlyingFrameworkId = provider.getUnderlyingFrameworkId();
       FrameworkSupportNode parentNode = null;
       if (underlyingFrameworkId != null) {
-        FrameworkSupportProvider parentProvider = findProvider(underlyingFrameworkId, myProviders);
+        FrameworkSupportProvider parentProvider = FrameworkSupportUtil.findProvider(underlyingFrameworkId, myProviders);
         if (parentProvider == null) {
           LOG.info("Cannot find id = " + underlyingFrameworkId);
           return null;
         }
         parentNode = createNode(parentProvider, nodes, groups);
       }
-      node = new FrameworkSupportNode(provider, parentNode, myModel, myBaseDirForLibrariesGetter, this);
+      node = new FrameworkSupportNode(provider, parentNode, myModel, this);
       nodes.put(provider.getId(), node);
       groups.put(provider.getGroupId(), node);
     }
     return node;
-  }
-
-  @Nullable
-  private static FrameworkSupportProvider findProvider(@NotNull String id, final List<FrameworkSupportProvider> providers) {
-    for (FrameworkSupportProvider provider : providers) {
-      if (id.equals(provider.getId())) {
-        return provider;
-      }
-    }
-    LOG.info("Cannot find framework support provider '" + id + "'");
-    return null;
   }
 
   public JComponent getMainPanel() {
@@ -346,7 +273,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     for (FrameworkSupportNode node : selectedFrameworks) {
       FrameworkSupportConfigurable configurable = node.getConfigurable();
       selectedConfigurables.add(configurable);
-      final LibraryCompositionSettings settings = node.getLibraryCompositionSettings(false);
+      final LibraryCompositionSettings settings = getLibraryCompositionSettings(node);
       Library library = settings != null ? settings.addLibraries(rootModel, addedLibraries, myLibrariesContainer) : null;
       configurable.addSupport(module, rootModel, library);
     }
@@ -362,54 +289,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   private void sortFrameworks(final List<FrameworkSupportNode> nodes) {
-    final Comparator<FrameworkSupportProvider> comparator = getFrameworkSupportProvidersComparator(myProviders);
+    final Comparator<FrameworkSupportProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
     Collections.sort(nodes, new Comparator<FrameworkSupportNode>() {
       public int compare(final FrameworkSupportNode o1, final FrameworkSupportNode o2) {
         return comparator.compare(o1.getProvider(), o2.getProvider());
       }
     });
-  }
-
-  public static Comparator<FrameworkSupportProvider> getFrameworkSupportProvidersComparator(final List<FrameworkSupportProvider> providers) {
-    DFSTBuilder<FrameworkSupportProvider>
-      builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(
-      new ProvidersGraph(providers))));
-    if (!builder.isAcyclic()) {
-      Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
-      LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
-    }
-
-    return builder.comparator();
-  }
-
-  private static class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportProvider> {
-    private final List<FrameworkSupportProvider> myFrameworkSupportProviders;
-
-    public ProvidersGraph(final List<FrameworkSupportProvider> frameworkSupportProviders) {
-      myFrameworkSupportProviders = new ArrayList<FrameworkSupportProvider>(frameworkSupportProviders);
-    }
-
-    public Collection<FrameworkSupportProvider> getNodes() {
-      return myFrameworkSupportProviders;
-    }
-
-    public Iterator<FrameworkSupportProvider> getIn(final FrameworkSupportProvider provider) {
-      String[] ids = provider.getPrecedingFrameworkProviderIds();
-      List<FrameworkSupportProvider> dependencies = new ArrayList<FrameworkSupportProvider>();
-      String underlyingId = provider.getUnderlyingFrameworkId();
-      if (underlyingId != null) {
-        FrameworkSupportProvider underlyingProvider = findProvider(underlyingId, myFrameworkSupportProviders);
-        if (underlyingProvider != null) {
-          dependencies.add(underlyingProvider);
-        }
-      }
-      for (String id : ids) {
-        FrameworkSupportProvider dependency = findProvider(id, myFrameworkSupportProviders);
-        if (dependency != null) {
-          dependencies.add(dependency);
-        }
-      }
-      return dependencies.iterator();
-    }
   }
 }

@@ -4,10 +4,9 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
-import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
-import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -24,19 +23,20 @@ import java.util.*;
  * @author nik
  */
 public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
-  private FrameworkSupportModelImpl myFrameworkSupportModel;
+  private FrameworkSupportModelBase myFrameworkSupportModel;
   private Map<FrameworkSupportProvider, FrameworkSupportConfigurable> myConfigurables;
   private Map<FrameworkSupportProvider, FrameworkSupportNode> myNodes;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFrameworkSupportModel = new FrameworkSupportModelImpl(getProject(), null);
+    myFrameworkSupportModel = new FrameworkSupportModelImpl(getProject(), "");
     myNodes = new HashMap<FrameworkSupportProvider, FrameworkSupportNode>();
     final FrameworkSupportProvider[] providers = FrameworkSupportProvider.EXTENSION_POINT.getExtensions().clone();
-    Arrays.sort(providers, AddSupportForFrameworksPanel.getFrameworkSupportProvidersComparator(new ArrayList<FrameworkSupportProvider>(Arrays.asList(providers))));
+    Arrays.sort(providers, FrameworkSupportUtil
+      .getFrameworkSupportProvidersComparator(new ArrayList<FrameworkSupportProvider>(Arrays.asList(providers))));
     for (FrameworkSupportProvider provider : providers) {
-      final FrameworkSupportNode node = new FrameworkSupportNode(provider, null, myFrameworkSupportModel, null, getTestRootDisposable());
+      final FrameworkSupportNode node = new FrameworkSupportNode(provider, null, myFrameworkSupportModel, getTestRootDisposable());
       myNodes.put(provider, node);
       myFrameworkSupportModel.registerComponent(provider, node);
     }

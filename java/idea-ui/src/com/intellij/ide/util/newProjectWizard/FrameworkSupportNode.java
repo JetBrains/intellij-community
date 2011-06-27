@@ -15,24 +15,20 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
-import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
-import com.intellij.ide.util.frameworkSupport.*;
-import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
 * @author nik
@@ -42,15 +38,10 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   private final FrameworkSupportNode myParentNode;
   private final FrameworkSupportConfigurable myConfigurable;
   private final List<FrameworkSupportNode> myChildren = new ArrayList<FrameworkSupportNode>();
-  private LibraryCompositionSettings myLibraryCompositionSettings;
-  private final Computable<String> myBaseDirForLibrariesGetter;
-  private LibraryOptionsPanel myLibraryCompositionOptionsPanel;
-  private Map<FrameworkVersion, CustomLibraryDescription> myLibraryDescriptions = new HashMap<FrameworkVersion, CustomLibraryDescription>();
 
-  public FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelImpl model,
-                             Computable<String> baseDirForLibrariesGetter, Disposable parentDisposable) {
+  public FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelBase model,
+                              Disposable parentDisposable) {
     super(provider);
-    myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
     setChecked(false);
     myProvider = provider;
     myParentNode = parentNode;
@@ -67,33 +58,6 @@ public class FrameworkSupportNode extends CheckedTreeNode {
 
   public List<FrameworkSupportNode> getChildren() {
     return myChildren;
-  }
-
-  @Nullable
-  public CustomLibraryDescription getOrCreateLibraryDescription() {
-    FrameworkVersion version = myConfigurable.getSelectedVersion();
-    if (version == null) return null;
-
-    if (version instanceof FrameworkVersionWithLibrary) {
-      return ((FrameworkVersionWithLibrary)version).getLibraryDescription();
-    }
-
-    if (version.getLibraries().length == 0) return null;
-
-    CustomLibraryDescription description = myLibraryDescriptions.get(version);
-    if (description == null) {
-      description = new CustomLibraryDescriptionImpl(version.getLibraries(), StringUtil.notNullize(version.getLibraryName()));
-      myLibraryDescriptions.put(version, description);
-    }
-    return description;
-  }
-
-  public LibraryOptionsPanel getLibraryCompositionOptionsPanel() {
-    return myLibraryCompositionOptionsPanel;
-  }
-
-  public void setLibraryCompositionOptionsPanel(LibraryOptionsPanel libraryCompositionOptionsPanel) {
-    myLibraryCompositionOptionsPanel = libraryCompositionOptionsPanel;
   }
 
   public void setConfigurableComponentEnabled(final boolean enable) {
@@ -113,30 +77,6 @@ public class FrameworkSupportNode extends CheckedTreeNode {
 
   public FrameworkSupportConfigurable getConfigurable() {
     return myConfigurable;
-  }
-
-  private boolean isObsolete(@NotNull LibraryCompositionSettings settings) {
-    return !settings.getBaseDirectoryPath().equals(myBaseDirForLibrariesGetter.compute())
-           || !Comparing.equal(settings.getLibraryDescription(), getOrCreateLibraryDescription());
-  }
-
-  public boolean isSettingsObsolete() {
-    return myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings);
-  }
-
-  @Nullable
-  public LibraryCompositionSettings getLibraryCompositionSettings(final boolean recreateIfObsolete) {
-    if (myLibraryCompositionSettings == null || recreateIfObsolete && isObsolete(myLibraryCompositionSettings)) {
-      final CustomLibraryDescription description = getOrCreateLibraryDescription();
-      if (description != null) {
-        myLibraryCompositionSettings = new LibraryCompositionSettings(description, myBaseDirForLibrariesGetter.compute());
-        Disposer.register(myConfigurable, myLibraryCompositionSettings);
-      }
-      else {
-        myLibraryCompositionSettings = null;
-      }
-    }
-    return myLibraryCompositionSettings;
   }
 
   public static void sortByTitle(List<FrameworkSupportNode> nodes) {

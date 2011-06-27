@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -40,6 +42,14 @@ public abstract class FrameworkSupportConfigurable implements Disposable {
   public FrameworkVersion getSelectedVersion() {
     //noinspection ConstantConditions
     return null;
+  }
+
+  public List<FrameworkVersion> getVersions() {
+    return Collections.emptyList();
+  }
+
+  public boolean isLibraryOnly() {
+    return false;
   }
 
   public void onFrameworkSelectionChanged(boolean selected) {

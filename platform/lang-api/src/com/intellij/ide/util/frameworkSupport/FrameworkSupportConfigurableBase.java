@@ -38,6 +38,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
   private JComboBox myVersionComboBox;
   private final FrameworkSupportProviderBase myFrameworkSupportProvider;
   protected final FrameworkSupportModel myFrameworkSupportModel;
+  private final List<FrameworkVersion> myVersions;
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;
 
@@ -46,9 +47,10 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
   }
 
   public FrameworkSupportConfigurableBase(FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model,
-                                          List<FrameworkVersion> versions, @Nullable String versionLabelText) {
+                                          @NotNull List<FrameworkVersion> versions, @Nullable String versionLabelText) {
     myFrameworkSupportProvider = frameworkSupportProvider;
     myFrameworkSupportModel = model;
+    myVersions = versions;
     if (versions.size() > 0) {
       myDescriptionLabel.setText(versionLabelText);
       String maxValue = "";
@@ -79,14 +81,20 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
         }
       });
     }
-    else {
+
+    if (versions.size() < 2) {
       myDescriptionLabel.setVisible(false);
       myVersionComboBox.setVisible(false);
     }
   }
 
   public JComponent getComponent() {
-    return myMainPanel;
+    return myVersions.size() > 1 ? myMainPanel : null;
+  }
+
+  @NotNull
+  public List<FrameworkVersion> getVersions() {
+    return myVersions;
   }
 
   @NotNull

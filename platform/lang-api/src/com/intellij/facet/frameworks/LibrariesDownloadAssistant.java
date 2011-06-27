@@ -1,6 +1,5 @@
 package com.intellij.facet.frameworks;
 
-import com.intellij.facet.frameworks.actions.GetVersionInfoAction;
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.facet.frameworks.beans.Artifacts;
@@ -20,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 public class LibrariesDownloadAssistant {
   private static final Logger LOG = Logger.getInstance("#com.intellij.LibrariesDownloadAssistant");
@@ -35,7 +36,7 @@ public class LibrariesDownloadAssistant {
   }
 
   @Nullable
-  public static Artifact[] getDownloadServiceVersions(@NotNull String id) {
+  private static Artifact[] getDownloadServiceVersions(@NotNull String id) {
     final URL url = createVersionsUrl(id);
     if (url == null) return null;
     final Artifacts allArtifacts = deserialize(url);
@@ -97,33 +98,12 @@ public class LibrariesDownloadAssistant {
   }
 
   @Nullable
-  public static Artifact getVersion(@NotNull String id, @NotNull String versionId) {
-    final URL url = GetVersionInfoAction.create(id, versionId).getUrl();
-    if (url == null) return null;
-
-    final Artifacts allArtifacts = XmlSerializer.deserialize(url, Artifacts.class);
-
-    if (allArtifacts == null) return null;
-
-    final Artifact[] versions = allArtifacts.getArtifacts();
-
-    assert versions.length == 1;
-
-    return versions[0];
-  }
-
-  @Nullable
   public static Artifact findVersion(@NotNull final String versionId, @NotNull final URL... urls) {
     return findVersion(getVersions(urls), versionId);
   }
 
   @Nullable
-  public static Artifact findVersion(@NotNull final String groupId, @NotNull final String versionId) {
-    return findVersion(getVersions(groupId), versionId);
-  }
-
-  @Nullable
-  public static Artifact findVersion(@Nullable Artifact[] versions, @NotNull final String versionId) {
+  private static Artifact findVersion(@Nullable Artifact[] versions, @NotNull final String versionId) {
     return versions == null ? null : ContainerUtil.find(versions, new Condition<Artifact>() {
       public boolean value(final Artifact springVersion) {
         return versionId.equals(springVersion.getVersion());
@@ -147,7 +127,7 @@ public class LibrariesDownloadAssistant {
   }
 
   @NotNull
-  public static List<LibraryInfo> convert(final String urlPrefix, @NotNull ArtifactItem[] jars) {
+  private static List<LibraryInfo> convert(final String urlPrefix, @NotNull ArtifactItem[] jars) {
     return ContainerUtil.mapNotNull(jars, new Function<ArtifactItem, LibraryInfo>() {
       @Override
       public LibraryInfo fun(ArtifactItem artifactItem) {

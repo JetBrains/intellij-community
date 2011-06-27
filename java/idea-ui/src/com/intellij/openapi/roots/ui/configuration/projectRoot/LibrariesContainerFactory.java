@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -79,10 +81,11 @@ public class LibrariesContainerFactory {
 
   @NotNull
   private static Library createLibraryInTable(final @NotNull NewLibraryEditor editor, final LibraryTable table) {
-    LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
-    Library library = modifiableModel.createLibrary(getUniqueLibraryName(editor.getName(), modifiableModel));
+    LibraryTableBase.ModifiableModelEx modifiableModel = (LibraryTableBase.ModifiableModelEx) table.getModifiableModel();
+    Library library = modifiableModel.createLibrary(getUniqueLibraryName(editor.getName(), modifiableModel), editor.getType());
     final Library.ModifiableModel model = library.getModifiableModel();
     editor.applyRoots(model);
+    ((LibraryEx.ModifiableModelEx)model).setProperties(editor.getProperties());
     model.commit();
     modifiableModel.commit();
     return library;
@@ -252,9 +255,10 @@ public class LibrariesContainerFactory {
         LOG.error("cannot create module library in this context");
       }
 
-      LibraryTable.ModifiableModel model = provider.getModifiableModel();
-      Library library = model.createLibrary(getUniqueLibraryName(libraryEditor.getName(), model));
+      LibraryTableBase.ModifiableModelEx model = (LibraryTableBase.ModifiableModelEx)provider.getModifiableModel();
+      Library library = model.createLibrary(getUniqueLibraryName(libraryEditor.getName(), model), libraryEditor.getType());
       ExistingLibraryEditor createdLibraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
+      createdLibraryEditor.setProperties(libraryEditor.getProperties());
       libraryEditor.copyRoots(createdLibraryEditor);
       return library;
     }

@@ -19,12 +19,14 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -32,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -45,7 +46,7 @@ import java.util.Set;
 */
 public class GroovyLibraryDescription extends CustomLibraryDescription {
   private static final String GROOVY_FRAMEWORK_NAME = "Groovy";
-  private final Condition<List<VirtualFile>> myCondition;
+  private final LibraryFilter myCondition;
   private String myEnvVariable;
   private final String myFrameworkName;
 
@@ -69,10 +70,11 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   private GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind<?>> libraryKinds, String frameworkName) {
     myEnvVariable = envVariable;
-    myCondition = new Condition<List<VirtualFile>>() {
+    myCondition = new LibraryFilter() {
       @Override
-      public boolean value(List<VirtualFile> virtualFiles) {
-        return LibraryPresentationManager.getInstance().isLibraryOfKind(virtualFiles, libraryKinds);
+      public boolean isSuitableLibrary(@NotNull List<VirtualFile> classesRoots,
+                                       @Nullable LibraryType<?> type) {
+        return LibraryPresentationManager.getInstance().isLibraryOfKind(classesRoots, libraryKinds);
       }
     };
     myFrameworkName = frameworkName;
@@ -99,7 +101,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @NotNull
   @Override
-  public Condition<List<VirtualFile>> getSuitableLibraryCondition() {
+  public LibraryFilter getSuitableLibraryFilter() {
     return myCondition;
   }
 

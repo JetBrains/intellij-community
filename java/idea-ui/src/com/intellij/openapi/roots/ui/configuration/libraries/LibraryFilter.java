@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.libraries.ui;
+package com.intellij.openapi.roots.ui.configuration.libraries;
 
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author nik
  */
-public interface LibraryEditorComponent<P extends LibraryProperties> {
-  @NotNull
-  P getProperties();
-  
-  LibraryEditor getLibraryEditor();
+public abstract class LibraryFilter {
 
-  @Nullable
-  VirtualFile getBaseDirectory();
+  public abstract boolean isSuitableLibrary(@NotNull List<VirtualFile> classesRoots, @Nullable LibraryType<?> type);
 
-  @Nullable
-  VirtualFile getExistingRootDirectory();
-
-  void updateRootsTree();
 }

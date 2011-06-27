@@ -15,12 +15,15 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
+import com.intellij.framework.library.DownloadableFileDescription;
+import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.framework.library.FrameworkLibraryVersion;
+import com.intellij.framework.library.LibraryVersionProperties;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,83 +33,93 @@ import java.util.List;
  * @author nik
  */
 public class LibraryDownloadSettings {
-  private final LibraryDownloadDescription myDescription;
+  private FrameworkLibraryVersion myVersion;
+  private final DownloadableLibraryType myLibraryType;
   private String myDirectoryForDownloadedLibrariesPath;
-  private String myLibraryName;
-  private boolean myDownloadSources = true;
-  private boolean myDownloadJavadocs = true;
-  private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
-  private List<LibraryDownloadInfo> mySelectedDownloads;
+  private final String myLibraryName;
+  private final boolean myDownloadSources;
+  private final boolean myDownloadJavaDocs;
+  private final LibrariesContainer.LibraryLevel myLibraryLevel;
+  private final List<DownloadableFileDescription> mySelectedDownloads;
 
-  public LibraryDownloadSettings(LibraryDownloadDescription description, String baseDirectoryForDownloadedFiles) {
-    myDescription = description;
-    myDirectoryForDownloadedLibrariesPath = baseDirectoryForDownloadedFiles + "/lib";
-    myLibraryName = description.getDefaultLibraryName();
-    mySelectedDownloads = description.getDownloads();
+  public LibraryDownloadSettings(@NotNull FrameworkLibraryVersion libraryVersion,
+                                 @Nullable DownloadableLibraryType libraryType,
+                                 final LibrariesContainer.LibraryLevel libraryLevel, final String downloadedLibrariesPath) {
+    this(libraryVersion, libraryType, downloadedLibrariesPath, libraryVersion.getDefaultLibraryName(), libraryLevel,
+         libraryVersion.getLibraryFiles(), true, true);
   }
 
-  public LibraryDownloadDescription getDescription() {
-    return myDescription;
+  public LibraryDownloadSettings(@NotNull FrameworkLibraryVersion libraryVersion, @Nullable DownloadableLibraryType libraryType,
+                                 @NotNull String directoryForDownloadedLibrariesPath, @NotNull String libraryName,
+                                 @NotNull LibrariesContainer.LibraryLevel libraryLevel,
+                                 @NotNull List<DownloadableFileDescription> selectedDownloads,
+                                 boolean downloadSources, boolean downloadJavaDocs) {
+    myVersion = libraryVersion;
+    myLibraryType = libraryType;
+    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
+    myLibraryName = libraryName;
+    myDownloadSources = downloadSources;
+    myDownloadJavaDocs = downloadJavaDocs;
+    myLibraryLevel = libraryLevel;
+    mySelectedDownloads = selectedDownloads;
   }
 
-  public boolean isDownloadJavadocs() {
-    return myDownloadJavadocs;
+  @NotNull
+  public FrameworkLibraryVersion getVersion() {
+    return myVersion;
   }
 
-  public void setDownloadJavadocs(boolean downloadJavadocs) {
-    myDownloadJavadocs = downloadJavadocs;
+  public boolean isDownloadJavaDocs() {
+    return myDownloadJavaDocs;
   }
 
   public boolean isDownloadSources() {
     return myDownloadSources;
   }
 
-  public void setDownloadSources(boolean downloadSources) {
-    myDownloadSources = downloadSources;
-  }
-
   public String getLibraryName() {
     return myLibraryName;
-  }
-
-  public void setLibraryName(String libraryName) {
-    myLibraryName = libraryName;
   }
 
   public String getDirectoryForDownloadedLibrariesPath() {
     return myDirectoryForDownloadedLibrariesPath;
   }
 
-  public void setDirectoryForDownloadedLibrariesPath(String directoryForDownloadedLibrariesPath) {
-    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
-  }
-
-  public List<LibraryDownloadInfo> getSelectedDownloads() {
+  public List<DownloadableFileDescription> getSelectedDownloads() {
     return mySelectedDownloads;
-  }
-
-  public void setSelectedDownloads(List<LibraryDownloadInfo> selectedDownloads) {
-    mySelectedDownloads = selectedDownloads;
   }
 
   public LibrariesContainer.LibraryLevel getLibraryLevel() {
     return myLibraryLevel;
   }
 
-  public void setLibraryLevel(LibrariesContainer.LibraryLevel libraryLevel) {
-    myLibraryLevel = libraryLevel;
+  public DownloadableLibraryType getLibraryType() {
+    return myLibraryType;
+  }
+
+  public void setVersion(FrameworkLibraryVersion version) {
+    myVersion = version;
+  }
+
+  public void setDirectoryForDownloadedLibrariesPath(String directoryForDownloadedLibrariesPath) {
+    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
   }
 
   @Nullable
   public NewLibraryEditor download(JComponent parent) {
-    LibraryDownloadInfo[] toDownload = mySelectedDownloads.toArray(new LibraryDownloadInfo[mySelectedDownloads.size()]);
-    LibraryDownloader downloader = new LibraryDownloader(toDownload, null, parent, myDirectoryForDownloadedLibrariesPath, myLibraryName);
+    LibraryDownloader downloader = new LibraryDownloader(mySelectedDownloads, null, parent, myDirectoryForDownloadedLibrariesPath, myLibraryName);
     VirtualFile[] files = downloader.download();
-    if (files.length != toDownload.length) {
+    if (files.length != mySelectedDownloads.size()) {
       return null;
     }
 
-    final NewLibraryEditor libraryEditor = new NewLibraryEditor();
+    final NewLibraryEditor libraryEditor;
+    if (myLibraryType != null) {
+      libraryEditor = new NewLibraryEditor(myLibraryType, new LibraryVersionProperties(myVersion.getVersionString()));
+    }
+    else {
+      libraryEditor = new NewLibraryEditor();
+    }
     libraryEditor.setName(myLibraryName);
     for (VirtualFile file : files) {
       libraryEditor.addRoot(file, OrderRootType.CLASSES);

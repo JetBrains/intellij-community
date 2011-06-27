@@ -112,7 +112,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     if (project != null && librariesConfigurable instanceof ProjectLibrariesConfigurable) {
       final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
       for (LibraryType<?> extension : extensions) {
-        if (!getSuitableModules(configurable, extension).isEmpty()) {
+        if (extension.getCreateActionName() != null && !getSuitableModules(configurable, extension).isEmpty()) {
           suitableTypes.add(extension);
         }
       }

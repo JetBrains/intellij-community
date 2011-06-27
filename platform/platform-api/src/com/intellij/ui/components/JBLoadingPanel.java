@@ -32,10 +32,10 @@ public class JBLoadingPanel extends JPanel {
   private final JPanel myPanel;
   final LoadingDecorator myDecorator;
 
-  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable disposable) {
+  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent) {
     super(new BorderLayout());
-    myPanel = manager == null ? new JPanel() : new JPanel(new BorderLayout());
-    myDecorator = new LoadingDecorator(myPanel, disposable, -1) {
+    myPanel = manager == null ? new JPanel() : new JPanel(manager);
+    myDecorator = new LoadingDecorator(myPanel, parent, -1) {
       @Override
       protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
         final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
@@ -48,8 +48,8 @@ public class JBLoadingPanel extends JPanel {
     super.add(myDecorator.getComponent(), BorderLayout.CENTER);
   }
 
-  public JBLoadingPanel(Disposable disposable) {
-    this(null, disposable);
+  public JBLoadingPanel(@NotNull Disposable parent) {
+    this(null, parent);
   }
 
   public void setLoadingText(String text) {

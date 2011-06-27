@@ -15,21 +15,29 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
+import com.intellij.framework.library.DownloadableFileDescription;
+import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.framework.library.FrameworkLibraryVersion;
+import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +45,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class DownloadingOptionsDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.libraries.DownloadingOptionsDialog");
   private JPanel myPanel;
   private CheckBoxList myFilesList;
   private TextFieldWithBrowseButton myDirectoryField;
@@ -45,25 +54,47 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   private JLabel myFilesToDownloadLabel;
   private JLabel myCopyDownloadedFilesToLabel;
   private JPanel myNameWrappingPanel;
-  private final LibraryDownloadSettings mySettings;
+  private JPanel myVersionPanel;
+  private JComboBox myVersionComboBox;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
-  private LibraryDownloadDescription myDownloadDescription;
+  private DownloadableLibraryType myLibraryType;
+  private FrameworkLibraryVersion myLastSelectedVersion;
 
-  protected DownloadingOptionsDialog(@NotNull Component parent, @NotNull LibraryDownloadSettings settings) {
+  public DownloadingOptionsDialog(@NotNull Component parent, @NotNull final LibraryDownloadSettings settings, @NotNull List<? extends FrameworkLibraryVersion> versions,
+                                  final boolean showNameAndLevel) {
     super(parent, true);
     setTitle("Downloading Options");
-    mySettings = settings;
+    myLibraryType = settings.getLibraryType();
+    LOG.assertTrue(!versions.isEmpty());
 
-    myDownloadDescription = settings.getDescription();
-    final List<LibraryDownloadInfo> downloads = myDownloadDescription.getDownloads();
-    myFilesList.setModel(new CollectionListModel(ContainerUtil.map2Array(downloads, JCheckBox.class, new Function<LibraryDownloadInfo, JCheckBox>() {
+    if (showNameAndLevel) {
+      myNameAndLevelPanel = new LibraryNameAndLevelPanel(settings.getLibraryName(), settings.getLibraryLevel());
+      myNameWrappingPanel.add(myNameAndLevelPanel.getPanel());
+    }
+    else {
+      myNameAndLevelPanel = null;
+    }
+
+    for (FrameworkLibraryVersion version : versions) {
+      myVersionComboBox.addItem(version);
+    }
+    myVersionComboBox.setRenderer(new ListCellRendererWrapper<FrameworkLibraryVersion>(myVersionComboBox) {
       @Override
-      public JCheckBox fun(LibraryDownloadInfo libraryInfo) {
-        return new JCheckBox(libraryInfo.getFileNamePrefix(), mySettings.getSelectedDownloads().contains(libraryInfo));
+      public void customize(JList list, FrameworkLibraryVersion value, int index, boolean selected, boolean hasFocus) {
+        setText(value.getVersionString());
       }
-    })));
-    myFilesToDownloadLabel.setLabelFor(myFilesList);
+    });
+    myVersionComboBox.setSelectedItem(settings.getVersion());
+    myVersionPanel.setVisible(versions.size() > 1);
+    onVersionChanged(settings.getSelectedDownloads());
+    myVersionComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        onVersionChanged(null);
+      }
+    });
 
+    myFilesToDownloadLabel.setLabelFor(myFilesList);
     myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
                                              ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
@@ -76,11 +107,28 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     myDownloadJavadocsCheckBox.setVisible(false);
 
     myDownloadSourcesCheckBox.setSelected(settings.isDownloadSources());
-    myDownloadJavadocsCheckBox.setSelected(settings.isDownloadJavadocs());
-
-    myNameAndLevelPanel = new LibraryNameAndLevelPanel(settings.getLibraryName(), settings.getLibraryLevel());
-    myNameWrappingPanel.add(myNameAndLevelPanel.getPanel());
+    myDownloadJavadocsCheckBox.setSelected(settings.isDownloadJavaDocs());
     init();
+  }
+
+  private void onVersionChanged(final @Nullable List<DownloadableFileDescription> selected) {
+    final FrameworkLibraryVersion version = getSelectedVersion();
+    if (Comparing.equal(myLastSelectedVersion, version)) return;
+
+    if (version != null) {
+      final List<DownloadableFileDescription> downloads = version.getLibraryFiles();
+      myFilesList.setModel(new CollectionListModel(
+        ContainerUtil.map2Array(downloads, JCheckBox.class, new Function<DownloadableFileDescription, JCheckBox>() {
+          @Override
+          public JCheckBox fun(DownloadableFileDescription description) {
+            return new JCheckBox(description.getPresentableFileName(), selected == null || selected.contains(description));
+          }
+        })));
+      if (myNameAndLevelPanel != null) {
+        myNameAndLevelPanel.updateDefaultName(version.getDefaultLibraryName());
+      }
+    }
+    myLastSelectedVersion = version;
   }
 
   @Override
@@ -93,22 +141,54 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     return myFilesList;
   }
 
-  @Override
-  protected void doOKAction() {
-    mySettings.setLibraryName(myNameAndLevelPanel.getLibraryName());
-    mySettings.setLibraryLevel(myNameAndLevelPanel.getLibraryLevel());
-    mySettings.setDirectoryForDownloadedLibrariesPath(FileUtil.toSystemIndependentName(myDirectoryField.getText()));
+  @Nullable
+  public FrameworkLibraryVersion getSelectedVersion() {
+    return (FrameworkLibraryVersion)myVersionComboBox.getSelectedItem();
+  }
 
-    List<LibraryDownloadInfo> selected = new ArrayList<LibraryDownloadInfo>();
-    List<LibraryDownloadInfo> downloads = myDownloadDescription.getDownloads();
+  @Nullable
+  public static LibraryDownloadSettings showDialog(@NotNull JComponent parent,
+                                                   @NotNull LibraryDownloadSettings settings,
+                                                   List<? extends FrameworkLibraryVersion> versions,
+                                                   boolean showNameAndLevel) {
+    final DownloadingOptionsDialog dialog = new DownloadingOptionsDialog(parent, settings, versions, showNameAndLevel);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return null;
+    }
+
+    return dialog.createSettings();
+  }
+
+  private List<DownloadableFileDescription> getSelectedDownloads(FrameworkLibraryVersion version) {
+    List<DownloadableFileDescription> selected = new ArrayList<DownloadableFileDescription>();
+    List<DownloadableFileDescription> downloads = version.getLibraryFiles();
     for (int i = 0; i < downloads.size(); i++) {
       if (myFilesList.isItemSelected(i)) {
         selected.add(downloads.get(i));
       }
     }
-    mySettings.setSelectedDownloads(selected);
-    mySettings.setDownloadSources(myDownloadSourcesCheckBox.isSelected());
-    mySettings.setDownloadJavadocs(myDownloadJavadocsCheckBox.isSelected());
-    super.doOKAction();
+    return selected;
+  }
+
+  private LibraryDownloadSettings createSettings() {
+    final FrameworkLibraryVersion version = getSelectedVersion();
+    LOG.assertTrue(version != null);
+    String libraryName;
+    LibrariesContainer.LibraryLevel libraryLevel;
+    if (myNameAndLevelPanel != null) {
+      libraryName = myNameAndLevelPanel.getLibraryName();
+      libraryLevel = myNameAndLevelPanel.getLibraryLevel();
+    }
+    else {
+      libraryName = version.getDefaultLibraryName();
+      libraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
+    }
+
+    final String path = FileUtil.toSystemIndependentName(myDirectoryField.getText());
+    List<DownloadableFileDescription> selected = getSelectedDownloads(version);
+
+    return new LibraryDownloadSettings(version, myLibraryType, path, libraryName, libraryLevel, selected,
+                                       myDownloadSourcesCheckBox.isSelected(), myDownloadJavadocsCheckBox.isSelected());
   }
 }

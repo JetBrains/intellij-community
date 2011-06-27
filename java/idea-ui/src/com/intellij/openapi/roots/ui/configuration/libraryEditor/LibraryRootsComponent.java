@@ -180,6 +180,39 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myContextModule = module;
   }
 
+  @Override
+  @Nullable
+  public VirtualFile getExistingRootDirectory() {
+    for (OrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
+      final VirtualFile[] existingRoots = getLibraryEditor().getFiles(orderRootType);
+      if (existingRoots.length > 0) {
+        VirtualFile existingRoot = existingRoots[0];
+        if (existingRoot.getFileSystem() instanceof JarFileSystem) {
+          existingRoot = JarFileSystem.getInstance().getVirtualFileForJar(existingRoot);
+        }
+        if (existingRoot != null) {
+          if (existingRoot.isDirectory()) {
+            return existingRoot;
+          }
+          else {
+            return existingRoot.getParent();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  @Nullable
+  public VirtualFile getBaseDirectory() {
+    if (myProject != null) {
+      //todo[nik] perhaps we shouldn't select project base dir if global library is edited
+      return myProject.getBaseDir();
+    }
+    return null;
+  }
+
   public LibraryEditor getLibraryEditor() {
     return myLibraryEditorComputable.compute();
   }
@@ -252,6 +285,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
   }
 
+  @Override
   public void updateRootsTree() {
     if (myTreeBuilder != null) {
       myTreeBuilder.queueUpdate();
@@ -281,35 +315,15 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
     @Nullable
     private VirtualFile getFileToSelect() {
-      VirtualFile toSelect = myLastChosen;
-      if (toSelect == null) {
-        for (OrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
-          final VirtualFile[] existingRoots = getLibraryEditor().getFiles(orderRootType);
-          if (existingRoots.length > 0) {
-            VirtualFile existingRoot = existingRoots [0];
-            if (existingRoot.getFileSystem() instanceof JarFileSystem) {
-              existingRoot = JarFileSystem.getInstance().getVirtualFileForJar(existingRoot);
-            }
-            if (existingRoot != null) {
-              if (existingRoot.isDirectory()) {
-                toSelect = existingRoot;
-              }
-              else {
-                toSelect = existingRoot.getParent();
-              }
-            }
-            break;
-          }
-        }
+      if (myLastChosen != null) {
+        return myLastChosen;
       }
-      if (toSelect == null) {
-        final Project project = myProject;
-        if (project != null) {
-          //todo[nik] perhaps we shouldn't select project base dir if global library is edited
-          toSelect = project.getBaseDir();
-        }
+
+      final VirtualFile directory = getExistingRootDirectory();
+      if (directory != null) {
+        return directory;
       }
-      return toSelect;
+      return getBaseDirectory();
     }
   }
 

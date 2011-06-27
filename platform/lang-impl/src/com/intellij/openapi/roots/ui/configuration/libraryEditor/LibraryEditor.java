@@ -47,6 +47,8 @@ public interface LibraryEditor {
 
   void removeRoot(String url, OrderRootType rootType);
 
+  void removeAllRoots();
+
   boolean hasChanges();
 
   boolean isJarDirectory(String url);

@@ -15,18 +15,27 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
+import com.intellij.framework.library.DownloadableLibraryDescription;
+import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureDialogCellAppearanceUtils;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;
 import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,7 +64,8 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class LibraryOptionsPanel {
+public class LibraryOptionsPanel implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel");
   private JLabel myMessageLabel;
   private JPanel myPanel;
   private JButton myConfigureButton;
@@ -67,11 +77,13 @@ public class LibraryOptionsPanel {
   private JRadioButton myUseLibraryRadioButton;
   private JLabel myUseLibraryLabel;
   private JLabel myHiddenLabel;
+  private JPanel myContainerPanel;
   private ButtonGroup myButtonGroup;
 
-  private final LibraryCompositionSettings mySettings;
+  private LibraryCompositionSettings mySettings;
   private final LibrariesContainer myLibrariesContainer;
-  private final SortedComboBoxModel<LibraryEditor> myLibraryComboBoxModel;
+  private SortedComboBoxModel<LibraryEditor> myLibraryComboBoxModel;
+  private boolean myDisposed;
 
   private enum Choice {
     USE_LIBRARY,
@@ -81,11 +93,46 @@ public class LibraryOptionsPanel {
 
   private RadioButtonEnumModel<Choice> myButtonEnumModel;
 
-  public LibraryOptionsPanel(@NotNull LibraryCompositionSettings settings,
+  public LibraryOptionsPanel(final @NotNull CustomLibraryDescription libraryDescription,
+                                    final @NotNull String baseDirectoryPath,
+                                    @Nullable final FrameworkVersion currentFrameworkVersion,
                              @NotNull final LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
-    mySettings = settings;
     myLibrariesContainer = librariesContainer;
+    final DownloadableLibraryDescription description = libraryDescription.getDownloadableDescription();
+    if (description != null) {
+      showCard("loading");
+      final ModalityState modalityState = ModalityState.current();
+      description.fetchLibraryVersions(new DownloadableLibraryDescription.LibraryVersionsCallback() {
+        @Override
+        public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!myDisposed) {
+                showSettingsPanel(libraryDescription, baseDirectoryPath, currentFrameworkVersion, showDoNotCreateOption, versions);
+              }
+            }
+          }, modalityState);
+        }
+      });
+    }
+    else {
+      showSettingsPanel(libraryDescription, baseDirectoryPath, currentFrameworkVersion, showDoNotCreateOption,
+                        new ArrayList<FrameworkLibraryVersion>());
+    }
+  }
+
+  private void showCard(final String editing) {
+    ((CardLayout)myContainerPanel.getLayout()).show(myContainerPanel, editing);
+  }
+
+  private void showSettingsPanel(CustomLibraryDescription libraryDescription,
+                                 String baseDirectoryPath,
+                                 FrameworkVersion currentFrameworkVersion,
+                                 boolean showDoNotCreateOption, final List<? extends FrameworkLibraryVersion> versions) {
+    //todo[nik] create mySettings only in apply() method
+    mySettings = new LibraryCompositionSettings(libraryDescription, baseDirectoryPath, currentFrameworkVersion, versions);
     List<Library> libraries = calculateSuitableLibraries();
 
     myButtonEnumModel = RadioButtonEnumModel.bindEnum(Choice.class, myButtonGroup);
@@ -107,7 +154,7 @@ public class LibraryOptionsPanel {
     });
 
     for (Library library : libraries) {
-      ExistingLibraryEditor libraryEditor = librariesContainer.getLibraryEditor(library);
+      ExistingLibraryEditor libraryEditor = myLibrariesContainer.getLibraryEditor(library);
       if (libraryEditor == null) {
         libraryEditor = mySettings.getOrCreateEditor(library);
       }
@@ -154,13 +201,21 @@ public class LibraryOptionsPanel {
       }
     });
     updateState();
+    showCard("editing");
   }
 
   private void doConfigure() {
     switch (myButtonEnumModel.getSelected()) {
       case DOWNLOAD:
-        new DownloadingOptionsDialog(myPanel, mySettings.getDownloadSettings()).show();
+        final LibraryDownloadSettings oldDownloadSettings = mySettings.getDownloadSettings();
+        LOG.assertTrue(oldDownloadSettings != null);
+        final LibraryDownloadSettings newDownloadSettings = DownloadingOptionsDialog.showDialog(myPanel, oldDownloadSettings,
+                                                                                                mySettings.getCompatibleVersions(), true);
+        if (newDownloadSettings != null) {
+          mySettings.setDownloadSettings(newDownloadSettings);
+        }
         break;
+
       case USE_LIBRARY:
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item instanceof LibraryEditor) {
@@ -175,10 +230,25 @@ public class LibraryOptionsPanel {
           }
         }
         break;
-      default:
+
+      case SETUP_LIBRARY_LATER:
         break;
     }
     updateState();
+  }
+
+  public void changeBaseDirectoryPath(@NotNull String directoryForLibrariesPath) {
+    if (mySettings != null) {
+      mySettings.changeBaseDirectoryPath(directoryForLibrariesPath);
+      updateState();
+    }
+  }
+
+  public void updateDownloadableVersions(FrameworkVersion version) {
+    if (mySettings != null) {
+      mySettings.updateDownloadableVersions(version);
+      updateState();
+    }
   }
 
   private void doCreate() {
@@ -197,11 +267,11 @@ public class LibraryOptionsPanel {
   }
 
   private List<Library> calculateSuitableLibraries() {
-    final Condition<List<VirtualFile>> condition = mySettings.getLibraryDescription().getSuitableLibraryCondition();
+    final LibraryFilter filter = mySettings.getLibraryDescription().getSuitableLibraryFilter();
     List<Library> suitableLibraries = new ArrayList<Library>();
     for (Library library : myLibrariesContainer.getAllLibraries()) {
       final VirtualFile[] files = myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES);
-      if (condition.value(Arrays.asList(files))) {
+      if (filter.isSuitableLibrary(Arrays.asList(files), ((LibraryEx)library).getType())) {
         suitableLibraries.add(library);
       }
     }
@@ -285,7 +355,10 @@ public class LibraryOptionsPanel {
     return mySettings;
   }
 
-  public void apply() {
+  @Nullable
+  public LibraryCompositionSettings apply() {
+    if (mySettings == null) return null;
+
     final Choice option = myButtonEnumModel.getSelected();
     mySettings.setDownloadLibraries(option == Choice.DOWNLOAD);
 
@@ -303,10 +376,16 @@ public class LibraryOptionsPanel {
     else {
       mySettings.setNewLibraryEditor(null);
     }
+    return mySettings;
   }
 
   public JComponent getMainPanel() {
-    return myPanel;
+    return myContainerPanel;
+  }
+
+  @Override
+  public void dispose() {
+    myDisposed = true;
   }
 
   private static class LibraryListCellRenderer extends ColoredListCellRenderer {

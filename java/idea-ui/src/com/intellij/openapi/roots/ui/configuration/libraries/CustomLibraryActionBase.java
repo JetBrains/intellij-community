@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -59,7 +60,7 @@ public abstract class CustomLibraryActionBase extends DumbAwareAction {
       if (library == null) continue;
 
       final VirtualFile[] files = myContext.getLibraryFiles(library, OrderRootType.CLASSES);
-      if (description.getSuitableLibraryCondition().value(Arrays.asList(files))) {
+      if (description.getSuitableLibraryFilter().isSuitableLibrary(Arrays.asList(files), ((LibraryEx)library).getType())) {
         existingEntries.add(entry);
       }
     }

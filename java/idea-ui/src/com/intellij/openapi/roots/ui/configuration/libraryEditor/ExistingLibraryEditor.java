@@ -26,7 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExistingLibraryEditor implements LibraryEditor, Disposable {
+import java.util.Arrays;
+import java.util.Collection;
+
+public class ExistingLibraryEditor extends LibraryEditorBase implements Disposable {
   private final Library myLibrary;
   private final LibraryEditorListener myListener;
   private String myLibraryName = null;
@@ -66,6 +69,10 @@ public class ExistingLibraryEditor implements LibraryEditor, Disposable {
       myLibraryProperties.loadState(getOriginalProperties().getState());
     }
     return myLibraryProperties;
+  }
+
+  public void setProperties(LibraryProperties properties) {
+    myLibraryProperties = properties;
   }
 
   private LibraryProperties getOriginalProperties() {
@@ -168,11 +175,6 @@ public class ExistingLibraryEditor implements LibraryEditor, Disposable {
   }
 
   @Override
-  public boolean isJarDirectory(String url) {
-    return isJarDirectory(url, OrderRootType.CLASSES);
-  }
-
-  @Override
   public boolean isJarDirectory(String url, OrderRootType rootType) {
     if (myModel != null) {
       return myModel.isJarDirectory(url, rootType);
@@ -186,5 +188,10 @@ public class ExistingLibraryEditor implements LibraryEditor, Disposable {
       return myModel.isValid(url, orderRootType);
     }
     return myLibrary.isValid(url, orderRootType);
+  }
+
+  @Override
+  public Collection<OrderRootType> getOrderRootTypes() {
+    return Arrays.asList(OrderRootType.getAllTypes());
   }
 }
