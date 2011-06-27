@@ -35,7 +35,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -99,8 +98,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private DaemonCodeAnalyzerSettings myLastSettings;
 
   private IntentionHintComponent myLastIntentionHint; //guarded by this
-  private volatile boolean myDisposed;
-  private volatile boolean myInitialized;
+  private volatile boolean myDisposed;     // the only possible transition: false -> true
+  private volatile boolean myInitialized;  // the only possible transition: false -> true
 
   @NonNls private static final String DISABLE_HINTS_TAG = "disable_hints";
   @NonNls private static final String FILE_TAG = "file";
