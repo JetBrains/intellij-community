@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.93" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.94" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1037,16 +1037,18 @@ class ModuleRedeclarator(object):
     # We list all such Ys keyed by X, all fully-qualified names:
     # {"real_definer_module": ("fake_reexporter_module",..)}
     KNOWN_FAKE_REEXPORTERS = {
-        "gtk._gtk": ('gtk',),
-        "gobject._gobject": ('gobject',),
-        "numpy.core.multiarray": ('numpy', 'numpy.core'),
-        "numpy.core._dotblas": ('numpy', 'numpy.core'),
-        "numpy.core.umath": ('numpy', 'numpy.core'),
         bin_collections_name: ('collections',),
         "_functools": ('functools',),
         "_socket": ('socket',), # .error, etc
-        "gnomecanvas": ("gnome.canvas",),
         "pyexpat": ('xml.parsers.expat',),
+        "_bsddb": ('bsddb.db',),
+        "pysqlite2._sqlite": ('pysqlite2.dbapi2',), # errors
+        "numpy.core.multiarray": ('numpy', 'numpy.core'),
+        "numpy.core._dotblas": ('numpy', 'numpy.core'),
+        "numpy.core.umath": ('numpy', 'numpy.core'),
+        "gtk._gtk": ('gtk', 'gtk.gdk',),
+        "gobject._gobject": ('gobject',),
+        "gnomecanvas": ("gnome.canvas",),
     }
 
     # names that look genuinely exported but aren't.
@@ -1056,13 +1058,15 @@ class ModuleRedeclarator(object):
     #    'xml.parsers.expat': ('ExpatError', 'error'),
     }
 
-    KNOWN_FAKE_BASES = [] # list of classes that pretend to be base classes but are mere wrappers.
+    KNOWN_FAKE_BASES = []
+    # list of classes that pretend to be base classes but are mere wrappers, and their defining modules
+    # [(class, module),...] -- real objects, not names
     try:
         import sip as sip_module # Qt specifically likes it
         if hasattr(sip_module, 'wrapper'):
-            KNOWN_FAKE_BASES.append(sip_module.wrapper)
+            KNOWN_FAKE_BASES.append((sip_module.wrapper, sip_module))
         if hasattr(sip_module, 'simplewrapper'):
-            KNOWN_FAKE_BASES.append(sip_module.simplewrapper)
+            KNOWN_FAKE_BASES.append((sip_module.simplewrapper, sip_module))
         del sip_module
     except:
         pass
@@ -1642,10 +1646,12 @@ class ModuleRedeclarator(object):
             skip_qualifiers = [p_modname, BUILTIN_MOD_NAME, 'exceptions']
             skip_qualifiers.extend(self.KNOWN_FAKE_REEXPORTERS.get(p_modname, ()))
             bases_list = [] # what we'll render in the class decl
-            for base in bases: # somehow import every base class
-                if base in self.KNOWN_FAKE_BASES:
+            for base in bases:
+                if [1 for (cls, mdl) in self.KNOWN_FAKE_BASES if cls == base and mdl != self.module]:
+                    # our base is a wrapper and our module is not its defining module
                     skipped_bases.append(str(base))
                     continue
+                # somehow import every base class
                 base_name = base.__name__
                 qual_module_name = self.qualifierOf(base, skip_qualifiers)
                 got_existing_import = False
@@ -1662,7 +1668,7 @@ class ModuleRedeclarator(object):
                 else:
                     bases_list.append(base_name)
             base_def = "(" + ", ".join(bases_list) + ")"
-        out(indent, "class ", p_name, base_def, ":", skipped_bases and "# skipped bases: " + ", ".join(skipped_bases) or "")
+        out(indent, "class ", p_name, base_def, ":", skipped_bases and " # skipped bases: " + ", ".join(skipped_bases) or "")
         self.outDocAttr(out, p_class, indent + 1)
         # inner parts
         methods = {}
@@ -2098,19 +2104,18 @@ def redoModule(name, out_name, mod_file_name, doing_builtins, imported_module_na
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
     # sys.modules
     mod = sys.modules[name]
-    if not mod:
+    if mod:
+        action("opening %r", out_name)
+        outfile = fopen(out_name, "w")
+        action("restoring")
+        r = ModuleRedeclarator(mod, outfile, mod_file_name, doing_builtins=doing_builtins)
+        r.redo(name, imported_module_names)
+        action("flushing")
+        r.flush()
+        action("closing %r", out_name)
+        outfile.close()
+    else:
         report("Failed to find imported module in sys.modules")
-        #sys.exit(0)
-
-    action("opening %r", out_name)
-    outfile = fopen(out_name, "w")
-    action("restoring")
-    r = ModuleRedeclarator(mod, outfile, mod_file_name, doing_builtins=doing_builtins)
-    r.redo(name, imported_module_names)
-    action("flushing")
-    r.flush()
-    action("closing %r", out_name)
-    outfile.close()
 
 # find_binaries functionality
 
