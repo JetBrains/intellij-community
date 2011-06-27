@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.93" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.94" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1037,24 +1037,33 @@ class ModuleRedeclarator(object):
     # We list all such Ys keyed by X, all fully-qualified names:
     # {"real_definer_module": ("fake_reexporter_module",..)}
     KNOWN_FAKE_REEXPORTERS = {
-        "gtk._gtk": ('gtk',),
-        "gobject._gobject": ('gobject',),
-        "numpy.core.multiarray": ('numpy', 'numpy.core'),
-        "numpy.core._dotblas": ('numpy', 'numpy.core'),
-        "numpy.core.umath": ('numpy', 'numpy.core'),
         bin_collections_name: ('collections',),
         "_functools": ('functools',),
         "_socket": ('socket',), # .error, etc
-        "gnomecanvas": ("gnome.canvas",),
         "pyexpat": ('xml.parsers.expat',),
+        "_bsddb": ('bsddb.db',),
+        "pysqlite2._sqlite": ('pysqlite2.dbapi2',), # errors
+        "numpy.core.multiarray": ('numpy', 'numpy.core'),
+        "numpy.core._dotblas": ('numpy', 'numpy.core'),
+        "numpy.core.umath": ('numpy', 'numpy.core'),
+        "gtk._gtk": ('gtk', 'gtk.gdk',),
+        "gobject._gobject": ('gobject',),
+        "gnomecanvas": ("gnome.canvas",),
     }
 
-    # names that look genuinely exported but aren't.
-    # e.g. 'xml.parsers.expat.ExpatError' is actually defined in pyexpat, and xml.parsers.expat imports it from there.
-    # {'qualified_purported_module': ('name',..)}
-    KNOWN_FAKE_EXPORTS = {
-    #    'xml.parsers.expat': ('ExpatError', 'error'),
-    }
+    KNOWN_FAKE_BASES = []
+    # list of classes that pretend to be base classes but are mere wrappers, and their defining modules
+    # [(class, module),...] -- real objects, not names
+    try:
+        import sip as sip_module # Qt specifically likes it
+        if hasattr(sip_module, 'wrapper'):
+            KNOWN_FAKE_BASES.append((sip_module.wrapper, sip_module))
+        if hasattr(sip_module, 'simplewrapper'):
+            KNOWN_FAKE_BASES.append((sip_module.simplewrapper, sip_module))
+        del sip_module
+    except:
+        pass
+
 
     # Some builtin classes effectively change __init__ signature without overriding it.
     # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
@@ -1625,11 +1634,17 @@ class ModuleRedeclarator(object):
                 seen[p_class] = p_name
         bases = getBases(p_class)
         base_def = ""
+        skipped_bases = []
         if bases:
             skip_qualifiers = [p_modname, BUILTIN_MOD_NAME, 'exceptions']
             skip_qualifiers.extend(self.KNOWN_FAKE_REEXPORTERS.get(p_modname, ()))
             bases_list = [] # what we'll render in the class decl
-            for base in bases: # somehow import every base class
+            for base in bases:
+                if [1 for (cls, mdl) in self.KNOWN_FAKE_BASES if cls == base and mdl != self.module]:
+                    # our base is a wrapper and our module is not its defining module
+                    skipped_bases.append(str(base))
+                    continue
+                # somehow import every base class
                 base_name = base.__name__
                 qual_module_name = self.qualifierOf(base, skip_qualifiers)
                 got_existing_import = False
@@ -1646,20 +1661,19 @@ class ModuleRedeclarator(object):
                 else:
                     bases_list.append(base_name)
             base_def = "(" + ", ".join(bases_list) + ")"
-        out(indent, "class ", p_name, base_def, ":")
+        out(indent, "class ", p_name, base_def, ":", skipped_bases and " # skipped bases: " + ", ".join(skipped_bases) or "")
         self.outDocAttr(out, p_class, indent + 1)
         # inner parts
         methods = {}
         properties = {}
         others = {}
         we_are_the_base_class = p_modname == BUILTIN_MOD_NAME and p_name == "object"
-        has_dict = hasattr(p_class, "__dict__")
-        if has_dict:
-            field_source = p_class.__dict__
-        else:
-            field_source = dir(p_class) # this includes unwanted inherited methods, but no dict + inheritance is rare
         try:
-            field_keys = field_source.keys() # Jython 2.5.1 _codecs fail here
+            if hasattr(p_class, "__dict__"):
+                field_source = p_class.__dict__
+                field_keys = field_source.keys() # Jython 2.5.1 _codecs fail here
+            else:
+                field_keys = dir(p_class) # this includes unwanted inherited methods, but no dict + inheritance is rare
         except:
             field_keys = ()
         for item_name in field_keys:
@@ -1810,8 +1824,8 @@ class ModuleRedeclarator(object):
         vars_complex = {}
         funcs = {}
         classes = {}
-        our_package = packageOf(p_name)
         for item_name in self.module.__dict__:
+            note("looking at %s", item_name)
             if item_name in ("__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
                 continue # handled otherwise
             try:
@@ -1831,20 +1845,23 @@ class ModuleRedeclarator(object):
                     mod_name = getattr(item, '__module__', None)
                 except:
                     pass
-            import_from_top = our_package.startswith(packageOf(mod_name, True)) # e.g. p_name="pygame.rect" and mod_name="pygame"
+            # we assume that module foo.bar never imports foo; foo may import foo.bar. (see pygame and pygame.rect)
+            maybe_import_mod_name = mod_name or ""
+            import_is_from_top = len(p_name) > len(maybe_import_mod_name) and p_name.startswith(maybe_import_mod_name)
+            note("mod_name = %s, prospective = %s,  from top = %s", mod_name, maybe_import_mod_name, import_is_from_top)
             want_to_import = False
             if (mod_name
                 and mod_name != BUILTIN_MOD_NAME
                 and mod_name != p_name
                 and mod_name not in surely_not_imported_mods
-                and not import_from_top
+                and not import_is_from_top
             ):
                 # import looks valid, but maybe it's a .py file? we're certain not to import from .py
                 # e.g. this rules out _collections import collections and builtins import site.
                 try:
                     imported = __import__(mod_name) # ok to repeat, Python caches for us
                     if imported:
-                        qualifieds = name.split(".")[1:]
+                        qualifieds = mod_name.split(".")[1:]
                         for qual in qualifieds:
                             imported = getattr(imported, qual, None)
                             if not imported:
@@ -2080,19 +2097,18 @@ def redoModule(name, out_name, mod_file_name, doing_builtins, imported_module_na
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
     # sys.modules
     mod = sys.modules[name]
-    if not mod:
+    if mod:
+        action("opening %r", out_name)
+        outfile = fopen(out_name, "w")
+        action("restoring")
+        r = ModuleRedeclarator(mod, outfile, mod_file_name, doing_builtins=doing_builtins)
+        r.redo(name, imported_module_names)
+        action("flushing")
+        r.flush()
+        action("closing %r", out_name)
+        outfile.close()
+    else:
         report("Failed to find imported module in sys.modules")
-        #sys.exit(0)
-
-    action("opening %r", out_name)
-    outfile = fopen(out_name, "w")
-    action("restoring")
-    r = ModuleRedeclarator(mod, outfile, mod_file_name, doing_builtins=doing_builtins)
-    r.redo(name, imported_module_names)
-    action("flushing")
-    r.flush()
-    action("closing %r", out_name)
-    outfile.close()
 
 # find_binaries functionality
 
