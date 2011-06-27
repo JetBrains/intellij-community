@@ -104,6 +104,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
 
+    String enteredName = null;
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (activeIntroducer == null) {
@@ -119,6 +120,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
         expr = (PsiExpression)activeIntroducer.getExpr();
         localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
         occurences = (PsiExpression[])activeIntroducer.getOccurrences();
+        enteredName = activeIntroducer.getInputName();
       }
     }
 
@@ -127,7 +129,8 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       currentMethodConstructor,
       localVariable != null, declareStatic, occurences,
       allowInitInMethod, allowInitInMethodIfAll,
-      typeSelectorManager
+      typeSelectorManager,
+      enteredName
     );
     dialog.show();
 

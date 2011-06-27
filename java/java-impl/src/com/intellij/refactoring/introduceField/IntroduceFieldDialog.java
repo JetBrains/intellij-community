@@ -30,6 +30,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +43,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   private final Project myProject;
   private final PsiClass myParentClass;
   private final PsiExpression myInitializerExpression;
+  private String myEnteredName;
   private final PsiLocalVariable myLocalVariable;
   private final boolean myIsInvokedOnDeclaration;
   private final boolean myWillBeDeclaredStatic;
@@ -61,11 +63,12 @@ class IntroduceFieldDialog extends DialogWrapper {
                               PsiLocalVariable localVariable,
                               boolean isCurrentMethodConstructor, boolean isInvokedOnDeclaration, boolean willBeDeclaredStatic,
                               PsiExpression[] occurrences, boolean allowInitInMethod, boolean allowInitInMethodIfAll,
-                              TypeSelectorManager typeSelectorManager) {
+                              TypeSelectorManager typeSelectorManager, String enteredName) {
     super(project, true);
     myProject = project;
     myParentClass = parentClass;
     myInitializerExpression = initializerExpression;
+    myEnteredName = enteredName;
     myCentralPanel =
       new IntroduceFieldDialogPanel(parentClass, initializerExpression, localVariable, isCurrentMethodConstructor, isInvokedOnDeclaration,
                                      willBeDeclaredStatic, occurrences, allowInitInMethod, allowInitInMethodIfAll,
@@ -170,7 +173,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     namePrompt.setLabelFor(myNameField.getFocusableComponent());
 
     myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
-                                                          createGenerator(myWillBeDeclaredStatic, myLocalVariable, myInitializerExpression, myIsInvokedOnDeclaration));
+                                                          createGenerator(myWillBeDeclaredStatic, myLocalVariable, myInitializerExpression, myIsInvokedOnDeclaration, myEnteredName));
     myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
     return panel;
@@ -193,7 +196,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   static NameSuggestionsGenerator createGenerator(final boolean willBeDeclaredStatic,
                                                   final PsiLocalVariable localVariable,
                                                   final PsiExpression initializerExpression,
-                                                  final boolean isInvokedOnDeclaration) {
+                                                  final boolean isInvokedOnDeclaration, final String enteredName) {
     return new NameSuggestionsGenerator() {
       private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(localVariable != null ? localVariable.getProject()
                                                                                                                      : initializerExpression.getProject());
@@ -206,7 +209,7 @@ class IntroduceFieldDialog extends DialogWrapper {
         }
         final SuggestedNameInfo nameInfo = myCodeStyleManager.suggestVariableName(variableKind, propertyName, initializerExpression, type);
         final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(myCodeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
-        return new SuggestedNameInfo.Delegate(strings, nameInfo);
+        return new SuggestedNameInfo.Delegate(enteredName != null ? ArrayUtil.mergeArrays(new String[]{enteredName}, strings) : strings, nameInfo);
       }
     };
   }

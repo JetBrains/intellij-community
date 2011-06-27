@@ -180,7 +180,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, getCommandName(), getCommandName());
   }
 
-  protected String getInputName() {
+  public String getInputName() {
     return myConstantName;
   }
 

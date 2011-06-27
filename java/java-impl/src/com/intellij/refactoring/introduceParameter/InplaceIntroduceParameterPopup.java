@@ -117,7 +117,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
   @Override
   protected String[] suggestNames(PsiType defaultType, String propName) {
-    return IntroduceParameterHandler.createNameSuggestionGenerator(myExpr, propName, myProject)
+    return IntroduceParameterHandler.createNameSuggestionGenerator(myExpr, propName, myProject, null)
       .getSuggestedNameInfo(defaultType).names;
   }
 

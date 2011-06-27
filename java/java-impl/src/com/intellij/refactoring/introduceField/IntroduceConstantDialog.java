@@ -47,6 +47,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -73,6 +74,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private final PsiLocalVariable myLocalVariable;
   private final boolean myInvokedOnDeclaration;
   private final PsiExpression[] myOccurrences;
+  private String myEnteredName;
   private final int myOccurrencesCount;
   private PsiClass myTargetClass;
   private final TypeSelectorManager myTypeSelectorManager;
@@ -98,13 +100,13 @@ class IntroduceConstantDialog extends DialogWrapper {
   private final JCheckBox myIntroduceEnumConstantCb = new JCheckBox(RefactoringBundle.message("introduce.constant.enum.cb"), true);
 
   IntroduceConstantDialog(Project project,
-                                 PsiClass parentClass,
-                                 PsiExpression initializerExpression,
-                                 PsiLocalVariable localVariable,
-                                 boolean isInvokedOnDeclaration,
-                                 PsiExpression[] occurrences,
-                                 PsiClass targetClass,
-                                 TypeSelectorManager typeSelectorManager) {
+                          PsiClass parentClass,
+                          PsiExpression initializerExpression,
+                          PsiLocalVariable localVariable,
+                          boolean isInvokedOnDeclaration,
+                          PsiExpression[] occurrences,
+                          PsiClass targetClass,
+                          TypeSelectorManager typeSelectorManager, String enteredName) {
     super(project, true);
     myProject = project;
     myParentClass = parentClass;
@@ -112,6 +114,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myLocalVariable = localVariable;
     myInvokedOnDeclaration = isInvokedOnDeclaration;
     myOccurrences = occurrences;
+    myEnteredName = enteredName;
     myOccurrencesCount = occurrences.length;
     myTargetClass = targetClass;
     myTypeSelectorManager = typeSelectorManager;
@@ -222,7 +225,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
     final NameSuggestionsManager nameSuggestionsManager =
       new NameSuggestionsManager(myTypeSelector, myNameField, createNameSuggestionGenerator(propertyName, myInitializerExpression,
-                                                                                            myCodeStyleManager));
+                                                                                            myCodeStyleManager, myEnteredName));
 
     nameSuggestionsManager.setLabelsFor(myTypeLabel, myNameSuggestionLabel);
     //////////
@@ -282,14 +285,15 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   protected static NameSuggestionsGenerator createNameSuggestionGenerator(final String propertyName,
                                                                           final PsiExpression psiExpression,
-                                                                          final JavaCodeStyleManager codeStyleManager) {
+                                                                          final JavaCodeStyleManager codeStyleManager,
+                                                                          final String enteredName) {
     return new NameSuggestionsGenerator() {
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         final SuggestedNameInfo nameInfo =
             codeStyleManager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, propertyName, psiExpression, type);
         final String[] strings = JavaCompletionUtil
           .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
-        return new SuggestedNameInfo.Delegate(strings, nameInfo);
+        return new SuggestedNameInfo.Delegate(enteredName != null ? ArrayUtil.mergeArrays(new String[]{enteredName}, strings): strings, nameInfo);
       }
 
     };

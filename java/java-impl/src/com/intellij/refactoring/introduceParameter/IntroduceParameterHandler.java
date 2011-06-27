@@ -61,6 +61,7 @@ import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -270,14 +271,15 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
   protected static NameSuggestionsGenerator createNameSuggestionGenerator(final PsiExpression expr,
                                                                           final String propName,
-                                                                          final Project project) {
+                                                                          final Project project,
+                                                                          final String enteredName) {
     return new NameSuggestionsGenerator() {
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
         final SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
         final String[] strings = JavaCompletionUtil
           .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info);
-        return new SuggestedNameInfo.Delegate(strings, info);
+        return new SuggestedNameInfo.Delegate(enteredName != null ? ArrayUtil.mergeArrays(new String[]{enteredName}, strings): strings, info);
       }
 
     };
@@ -403,6 +405,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       if (myExpr != null) {
         isInplaceAvailableOnDataContext &= myExpr.isPhysical();
       }
+
+      String enteredName = null;
       if (isInplaceAvailableOnDataContext) {
         final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(myEditor);
         if (activeIntroducer == null) {
@@ -422,6 +426,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
           myExpr = (PsiExpression)activeIntroducer.getExpr();
           myLocalVar = (PsiLocalVariable)activeIntroducer.getLocalVariable();
           occurences = (PsiExpression[])activeIntroducer.getOccurrences();
+          enteredName = activeIntroducer.getInputName();
         }
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -438,7 +443,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
           RefactoringUtil.highlightAllOccurences(myProject, occurences, myEditor);
         }
         new IntroduceParameterDialog(myProject, classMemberRefs, occurences, myLocalVar, myExpr,
-                                     createNameSuggestionGenerator(myExpr, propName, myProject),
+                                     createNameSuggestionGenerator(myExpr, propName, myProject, enteredName),
                                      typeSelectorManager, methodToSearchFor, method, getParamsToRemove(method, occurences), mustBeFinal).show();
         if (myEditor != null) {
           myEditor.getSelectionModel().removeSelection();

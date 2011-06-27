@@ -27,15 +27,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
-import com.intellij.refactoring.introduceParameter.VisibilityListener;
-import com.intellij.refactoring.introduceVariable.FinalListener;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -138,7 +134,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
   @Override
   protected String[] suggestNames(PsiType defaultType, String propName) {
-    return IntroduceFieldDialog.createGenerator(myStatic, (PsiLocalVariable)getLocalVariable(), myExpr, getLocalVariable() != null)
+    return IntroduceFieldDialog.createGenerator(myStatic, (PsiLocalVariable)getLocalVariable(), myExpr, getLocalVariable() != null, null)
             .getSuggestedNameInfo(defaultType).names;
   }
 
