@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.text.Document;
-import javax.swing.text.html.HTMLDocument;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
@@ -65,11 +64,7 @@ public class TipUIUtil {
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       replaced = replaced.replace("&majorVersion;", ApplicationInfo.getInstance().getMajorVersion());
       replaced = replaced.replace("&minorVersion;", ApplicationInfo.getInstance().getMinorVersion());
-      browser.read(new StringReader(replaced), null);
-      final Document document = browser.getDocument();
-      if (document instanceof HTMLDocument) {
-        ((HTMLDocument)document).setBase(url);
-      }
+      browser.read(new StringReader(replaced), url);
     }
     catch (IOException e) {
       setCantReadText(browser);

@@ -1,0 +1,46 @@
+body {
+    background: #ffffff;
+    margin-bottom: 3px;
+}
+p, h1 {
+   font-family: 'Malgun Gothic', 'Meiryo UI', 'MS Reference Sans Serif', verdana, arial, sans-serif;
+}
+.code, .shortcut, pre {
+    font-family: "Courier New", Courier, monospace;
+}
+p, h1, pre {
+    margin-left: 7px;
+    margin-top: 3px;
+    margin-right: 2px;
+    margin-bottom: 0;
+    font-size: 10px;
+    color: #3f3f3f;
+}
+.image, pre {
+    margin-top: 6px;
+    margin-bottom: 3px;
+}
+pre {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #d0d0d0;
+    background-color: #fbfbfb;
+    padding-left: 7px;
+    padding-top: 3px;
+    padding-bottom: 6px;
+}
+h1, .control, .shortcut {
+    font-weight: bold;
+}
+h1 .product, .emphasis {
+    color: #264db5;
+}
+h1 .version, .caret {
+    color: #f58220;
+}
+pre .emphasis, .code .emphasis {
+    color: #990000;
+}
+pre .keyword, .code .keyword {
+    color: #000080;
+}
