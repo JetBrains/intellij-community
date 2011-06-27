@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -339,9 +339,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
                                                          final boolean hasFocus,
                                                          final int row,
                                                          final int column) {
-            final JCheckBox checkbox = (JCheckBox) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            checkbox.setEnabled(false);
-            return checkbox;
+            final Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setEnabled(false);
+            return renderer;
           }
         };
       }
