@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
@@ -30,8 +31,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -109,9 +108,17 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
                                                          int column) {
 
             if (!table.isCellEditable(row, table.convertColumnIndexToModel(column))) {
-              return defaultRenderer.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
+              final Component c = defaultRenderer.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
+              c.setBackground(UIUtil.getTableCellBackground(table, row));
+              if (hasFocus && c instanceof JComponent) {
+                final ListSelectionModel selModel = table.getSelectionModel();
+                final Color color = (selModel.getMaxSelectionIndex() - selModel.getMinSelectionIndex()) == 0
+                                    ? table.getSelectionBackground() : table.getForeground();
+                ((JComponent)c).setBorder(BorderFactory.createLineBorder(color));
+              }
               //Color bg = table.getBackground().darker();
               //component.setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230));
+              return c;
             }
             Component component = original.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
@@ -191,11 +198,22 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
       return new ColoredTableCellRenderer() {
         public void customizeCellRenderer(JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
-          setBackground(table.getBackground());
+          final Color cellBg = UIUtil.getTableCellBackground(table, row);
+          setBackground(cellBg);
           setForeground(table.getForeground());
+          final ListSelectionModel selModel = table.getSelectionModel();
+          final Color color = (selModel.getMaxSelectionIndex() - selModel.getMinSelectionIndex()) == 0
+                              ? table.getSelectionBackground() : table.getForeground();
+          setBorder(BorderFactory.createLineBorder(hasFocus ? color : cellBg));
 
           if (value == null) return;
           append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
+        }
+
+        @Override
+        protected void applyAdditionalHints(Graphics g) {
+          super.applyAdditionalHints(g);
+          UISettings.setupAntialiasing(g);
         }
       };
     }

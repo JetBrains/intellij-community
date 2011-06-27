@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.HashSet;
@@ -56,6 +58,11 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
         myEditorTextField.addDocumentListener(listener);
       }
       myEditorTextField.setDocument(myDocument);
+      if (UIUtil.isTableDecorationEnabled(table)) {
+        final Color cellBg = UIUtil.getTableCellBackground(table, row);
+        myEditorTextField.setBackground(cellBg);
+        myEditorTextField.setBorder(new LineBorder(cellBg));
+      }
     }
 
     return myEditorTextField;

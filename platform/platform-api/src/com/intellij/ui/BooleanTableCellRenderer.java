@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
@@ -38,7 +37,7 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSel, boolean hasFocus, int row, int column) {
-    final Color bg = table.getBackground();
+    final Color bg = UIUtil.getTableCellBackground(table, row);
     final Color fg = table.getForeground();
     final Color selBg = table.getSelectionBackground();
     final Color selFg = table.getSelectionForeground();
@@ -49,7 +48,14 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
     }
 
     setForeground(isSel ? selFg : fg);
-    if (isSel) super.setBackground(selBg); else setBackground(bg);
+    myPanel.setForeground(getForeground());
+    setBackground(bg);
+    myPanel.setBackground(getBackground());
+    //if (isSel) {
+    //  super.setBackground(selBg);
+    //} else {
+    //  setBackground(bg);
+    //}
 
     if (value instanceof String) {
       setSelected(Boolean.parseBoolean((String)value));
@@ -57,10 +63,15 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
       setSelected(((Boolean)value).booleanValue());
     }
 
-    setBorder(hasFocus ? UIUtil.getTableFocusCellHighlightBorder() : IdeBorderFactory.createEmptyBorder(1));
 
     setEnabled(table.isCellEditable(row, column));
-
-    return this;
+    setBorder(null);
+    myPanel.removeAll();
+    myPanel.add(this, BorderLayout.CENTER);
+    final ListSelectionModel selModel = table.getSelectionModel();
+    final Color color = (selModel.getMaxSelectionIndex() - selModel.getMinSelectionIndex()) == 0
+                        ? table.getSelectionBackground() : table.getForeground();
+    myPanel.setBorder(hasFocus ? BorderFactory.createLineBorder(color) : IdeBorderFactory.createEmptyBorder(1));
+    return myPanel;
   }
 }

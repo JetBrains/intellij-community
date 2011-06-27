@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,31 @@
 
 package com.intellij.ui;
 
-import javax.swing.JTable;
+import com.intellij.util.ui.UIUtil;
+
+import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
+/**
+ * @author max
+ * @author Konstantin Bulenkov
+ */
 public abstract class ColoredTableCellRenderer extends SimpleColoredRenderer implements TableCellRenderer {
-  public final Component getTableCellRendererComponent(
-    JTable table,
-    Object value,
-    boolean isSelected,
-    boolean hasFocus,
-    int row,
-    int column
-  ){
+  public final Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int col) {
     clear();
-    setPaintFocusBorder(hasFocus);
-    acquireState(table, isSelected, hasFocus, row, column);
+    setPaintFocusBorder(hasFocus && table.getCellSelectionEnabled());
+    acquireState(table, isSelected, hasFocus, row, col);
     getCellState().updateRenderer(this);
-    customizeCellRenderer(table, value, isSelected, hasFocus, row, column);
+    customizeCellRenderer(table, value, isSelected, hasFocus, row, col);
+
+    if (UIUtil.isTableDecorationEnabled(table)) {
+      if (getBackground().getRGB() != table.getSelectionBackground().getRGB()) {
+        setBackground(UIUtil.getTableCellBackground(table, row));
+        setOpaque(true);
+      }
+    }
     return this;
   }
 

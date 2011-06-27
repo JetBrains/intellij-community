@@ -50,6 +50,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -377,6 +378,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         return editor;
       }
     };
+    UIUtil.setTableDecorationEnabled(myParametersTable);
     myParametersTable.setCellSelectionEnabled(true);
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("parameters.border.title")));

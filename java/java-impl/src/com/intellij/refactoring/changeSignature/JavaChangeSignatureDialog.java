@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,10 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
-import com.intellij.refactoring.ui.*;
+import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
+import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
+import com.intellij.refactoring.ui.JavaComboBoxVisibilityPanel;
+import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -44,6 +47,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +114,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     myExceptionsModel.setTypeInfos(myMethod.getMethod());
 
     final JBTable table = new JBTable(myExceptionsModel);
+    UIUtil.setTableDecorationEnabled(table);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
     cellEditor.addDocumentListener(new DocumentAdapter() {

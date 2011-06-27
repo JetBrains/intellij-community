@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -183,6 +184,23 @@ public class DualView extends JPanel {
 
   private void changeViewTo(JTable view) {
     myCurrentView = view;
+    UIUtil.setTableDecorationEnabled(myCurrentView);
+    final TableCellRenderer renderer = myCurrentView.getDefaultRenderer(Object.class);
+    myCurrentView.setDefaultRenderer(Object.class, new TableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
+        final Component c = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        if (c instanceof JComponent && !isSelected && !hasFocus) {
+          c.setBackground(UIUtil.getTableCellBackground(table, row));
+        }
+        return c;
+      }
+    });
   }
 
   private void copySelection(SelectionProvider from, SelectionProvider to) {
@@ -228,7 +246,19 @@ public class DualView extends JPanel {
       public TableCellRenderer getCellRenderer(int row, int column) {
         return createWrappedRenderer(super.getCellRenderer(row, column));
       }
+
+      @Override
+      public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        final Component c = super.prepareRenderer(renderer, row, column);
+        if (c instanceof JComponent && !myFlatView.getCellSelectionEnabled()) {
+          ((JComponent)c).setBorder(null);
+        }
+        return c;
+      }
     };
+    myFlatView.setCellSelectionEnabled(false);
+    myFlatView.setColumnSelectionAllowed(false);
+    myFlatView.setRowSelectionAllowed(true);
 
     refreshFlatModel();
 

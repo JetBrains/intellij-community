@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.HashSet;
@@ -51,6 +53,11 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
       for (DocumentListener listener : myListeners) {
         editorTextField.addDocumentListener(listener);
       }
+    }
+    if (UIUtil.isTableDecorationEnabled(table)) {
+      final Color cellBg = UIUtil.getTableCellBackground(table, row);
+      editorTextField.setBackground(cellBg);
+      editorTextField.setBorder(new LineBorder(cellBg));
     }
     return editorTextField;
   }

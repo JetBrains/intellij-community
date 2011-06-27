@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,11 +184,19 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (component instanceof JComponent) {
-        ((JComponent)component).setToolTipText(myTooltipText);
+      final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      if (c instanceof JComponent) {
+        ((JComponent)c).setToolTipText(myTooltipText);
       }
-      return component;
+      if (isSelected || hasFocus) {
+        c.setBackground(table.getSelectionBackground());
+        c.setForeground(table.getSelectionForeground());
+      } else {
+        c.setBackground(UIUtil.getTableCellBackground(table, row));
+        c.setForeground(UIUtil.getTableForeground());
+      }
+
+      return c;
     }
   }
 
@@ -263,11 +271,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       }
     }
 
-    @Override
-    protected void paintComponent(final Graphics g) {
-      // skip border erasing code in SimpleColoredRenderer
-      doPaint(g);
-    }
+
   }
 
   private static class MessageColumnInfo extends VcsColumnInfo<String> {

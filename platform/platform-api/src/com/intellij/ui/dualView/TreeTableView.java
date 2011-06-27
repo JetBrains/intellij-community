@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -58,6 +59,9 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
                                                     boolean hasFocus) {
         JComponent result = (JComponent)myBaseRenderer.getTreeCellRendererComponent(tree1, value, selected, expanded, leaf, row, hasFocus);
         result.setOpaque(!selected);
+        if (UIUtil.isTableDecorationEnabled(TreeTableView.this)) {
+          result.setBackground(UIUtil.getTableCellBackground(TreeTableView.this, row));
+        }
         return result;
       }
     });
@@ -181,7 +185,8 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
         rendererComponent.setForeground(table.getSelectionForeground());
       }
       else {
-        rendererComponent.setBackground(table.getBackground());
+        final Color bg = table.getBackground();
+        rendererComponent.setBackground(UIUtil.isTableDecorationEnabled(table) ? UIUtil.getTableCellBackground(table, row) : bg);
         rendererComponent.setForeground(table.getForeground());
       }
       rendererComponent.setOpaque(isSelected);
