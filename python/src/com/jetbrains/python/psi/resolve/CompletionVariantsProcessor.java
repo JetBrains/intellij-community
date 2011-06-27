@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.codeInsight.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.PyFunctionInsertHandler;
 import com.jetbrains.python.psi.*;
@@ -96,7 +96,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   protected void addImportedElement(String referencedName, NameDefiner definer, PyElement expr) {
     Icon icon = expr.getIcon(0);
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
-    if (icon == null) icon = Icons.VARIABLE_ICON;
+    if (icon == null) icon = PlatformIcons.VARIABLE_ICON;
     LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.create(expr, referencedName).setIcon(icon));
     if (definer instanceof PyImportElement) { // set notice to imported module name if needed
       PsiElement maybeFromImport = definer.getParent();

@@ -2,6 +2,7 @@ from django_debug import is_django_render_call, get_template_file_name, get_temp
 from django_debug import find_django_render_frame
 from django_frame import just_raised
 from django_frame import is_django_exception_break_context
+from django_frame import DjangoTemplateFrame
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
 import traceback #@Reimport
@@ -98,7 +99,7 @@ class PyDBFrame:
                 else:
                     flag = False
                     try:
-                        if mainDebugger.django_exception_break and get_exception_name(exception) in ['django.template.base.VariableDoesNotExist', 'django.template.base.TemplateDoesNotExist', 'django.template.base.TemplateSyntaxError'] and just_raised(trace) and is_django_exception_break_context(frame):
+                        if mainDebugger.django_exception_break and get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and just_raised(trace) and is_django_exception_break_context(frame):
                             render_frame = find_django_render_frame(frame)
                             if render_frame:
                                 suspend_frame = suspend_django(self, mainDebugger, thread, render_frame, CMD_ADD_DJANGO_EXCEPTION_BREAK)
@@ -124,12 +125,29 @@ class PyDBFrame:
                         django_breakpoint = django_breakpoints_for_file[template_line]
 
                         if django_breakpoint.is_triggered(frame):
-                            frame = suspend_django(self, mainDebugger, thread, frame)
                             flag = True
+                            new_frame = DjangoTemplateFrame(frame)
 
-                if not flag:
-                    return self.trace_dispatch
+                            if django_breakpoint.condition is not None:
+                                try:
+                                    val = eval(django_breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
+                                    if not val:
+                                        flag = False
+                                except:
+                                    sys.stderr.write('Error while evaluating condition \'%s\': %s\n' % (django_breakpoint.condition, sys.exc_info()[1]))
+                                    sys.stderr.flush()
 
+                            if django_breakpoint.expression is not None:
+                                    try:
+                                        try:
+                                            val = eval(django_breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
+                                        except:
+                                            val = sys.exc_info()[1]
+                                    finally:
+                                        if val is not None:
+                                            thread.additionalInfo.message = val
+                            if flag:
+                                frame = suspend_django(self, mainDebugger, thread, frame)
 
             #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
             #(one for the line and the other for the return).
@@ -158,7 +176,7 @@ class PyDBFrame:
                             val = sys.exc_info()[1]
                     finally:
                         if val is not None:
-                            thread.log_expression = val
+                            thread.additionalInfo.message = val
 
                 self.setSuspend(thread, CMD_SET_BREAK)
 
@@ -178,7 +196,6 @@ class PyDBFrame:
 
             elif info.pydev_step_cmd == CMD_STEP_OVER:
                 if is_django_suspended(thread):
-
                     django_stop = event == 'call' and is_django_render_call(frame)
 
                     stop = False

@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -18,6 +19,7 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
   }
 
   public void testBlankLineAroundClasses() {
+    CodeStyleSettingsManager.getSettings(myFixture.getProject()).BLANK_LINES_AROUND_CLASS = 2;
     doTest();
   }
 

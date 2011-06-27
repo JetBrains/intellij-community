@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="ultimate-verifier" />
+    <orderEntry type="module" module-name="xml" />
   </component>
 </module>
 

@@ -80,7 +80,8 @@ public class PythonAllTestsSuite {
     PyCompletionPatternsTest.class,
     PyCompatibilityInspectionTest.class,
     PyUnresolvedReferencesInspectionTest.class,
-    PyUnusedImportTest.class
+    PyUnusedImportTest.class,
+    PyDeprecationTest.class
   };
 
   public static TestSuite suite() {

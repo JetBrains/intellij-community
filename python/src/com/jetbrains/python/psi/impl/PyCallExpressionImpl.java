@@ -51,7 +51,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   @Override
   public <T extends PsiElement> T getArgument(int index, Class<T> argClass) {
     PyExpression[] args = getArguments();
-    return args.length >= index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
+    return args.length > index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
   }
 
   public void addArgument(PyExpression expression) {

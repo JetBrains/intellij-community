@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -62,4 +61,11 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    * Return true if the file contains a 'from __future__ import ...' statement with given feature.
    */
   boolean hasImportFromFuture(FutureFeature feature);
+
+  /**
+   * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..
+   *
+   * @return the deprecation message or null if the function is not deprecated.
+   */
+  String getDeprecationMessage();
 }

@@ -306,6 +306,9 @@ public class PyBlock implements ASTBlock {
       }
       return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_CLASS);
     }
+    if (type2 == PyElementTypes.CLASS_DECLARATION && !(parentType instanceof PyFileElementType)) {
+      return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_CLASS);
+    }
     if (type1 == PyElementTypes.FUNCTION_DECLARATION &&
               (type2 == PyElementTypes.CLASS_DECLARATION || type2 == PyElementTypes.FUNCTION_DECLARATION) &&
         parentType instanceof PyFileElementType) {

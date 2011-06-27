@@ -28,15 +28,10 @@ import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/../testData/stubs/")
 public class PyStubsTest extends PyLightFixtureTestCase {
-  private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
   @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/stubs/";
-  }
-
-  private static void assertNotParsed(PyFile file) {
-    assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
   }
 
   public void testStubStructure() {

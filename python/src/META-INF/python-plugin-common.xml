@@ -71,6 +71,9 @@
 
     <bundledColorSchemesProvider implementation="com.jetbrains.python.PythonBundledColorSchemeProvider"/>
 
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyElement"
+                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
+
     <!-- Run/Debug -->
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
@@ -690,6 +693,10 @@
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction" text="Python Package"
             description="Create a new directory and __init__.py inside it" icon="/nodes/packageClosed.png">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+
+    <action id="CompuleQrc" class="com.jetbrains.pyqt.CompileQrcAction" text="Compile .qrc file">
+      <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
   </actions>
 
