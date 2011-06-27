@@ -60,6 +60,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myDirtBuilder = new DirtBuilder(myGuess);
 
     myProgressHolder = new MyProgressHolder();
+    ((ChangeListManagerImpl) myChangeListManager).setDirtyScopeManager(this);
   }
 
   public void projectOpened() {

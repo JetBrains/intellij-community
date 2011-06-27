@@ -29,7 +29,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -70,7 +73,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private static final ScheduledExecutorService ourUpdateAlarm = ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater", Thread.MIN_PRIORITY + 1);
 
   private final Modifier myModifier;
@@ -80,7 +82,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private ChangeListWorker myWorker;
   private VcsException myUpdateException = null;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
   private final Object myDataLock = new Object();
@@ -90,13 +91,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final IgnoredFilesComponent myIgnoredIdeaLevel;
   private ProgressIndicator myUpdateChangesProgressIndicator;
 
-  public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
-
   public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<LocalChangeListsLoadedListener>(
     "LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
 
   private boolean myShowLocalChangesInvalidated;
 
+  // notifies myListeners on the same thread that local changes update is done
   private final DelayedNotificator myDelayedNotificator;
 
   private final VcsListener myVcsListener = new VcsListener() {
@@ -105,9 +105,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   };
   private final ChangelistConflictTracker myConflictTracker;
+  private VcsDirtyScopeManager myDirtyScopeManager;
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
+  }
+
+  void setDirtyScopeManager(VcsDirtyScopeManager dirtyScopeManager) {
+    myDirtyScopeManager = dirtyScopeManager;
   }
 
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
@@ -275,19 +280,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  private VcsDirtyScopeManagerImpl getVcsManager() {
-    try {
-      return ((VcsDirtyScopeManagerImpl) VcsDirtyScopeManager.getInstance(myProject));
-    }
-    catch(ProcessCanceledException ex) {
-      return null;
-    }
-    catch(Exception ex) {
-      LOG.error(ex);
-      return null;
-    }
-  }
-
   private void filterOutIgnoredFiles(final List<VcsDirtyScope> scopes) {
     try {
       synchronized (myDataLock) {
@@ -339,10 +331,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (! vcsManager.hasActiveVcss()) return;
 
-    final VcsDirtyScopeManagerImpl dirtyScopeManager = getVcsManager();
-    if (dirtyScopeManager == null) return;
-
-    final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
+    final VcsInvalidated invalidated = myDirtyScopeManager.retrieveScopes();
     if (invalidated == null || invalidated.isEmpty()) {
       // a hack here; but otherwise everything here should be refactored ;)
       if (invalidated != null && invalidated.isEmpty() && invalidated.isEverythingDirty()) {
@@ -447,7 +436,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       LOG.error(ex);
     }
     finally {
-      dirtyScopeManager.changesProcessed();
+      myDirtyScopeManager.changesProcessed();
       
       synchronized (myDataLock) {
         myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
