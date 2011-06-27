@@ -9,13 +9,34 @@
 (built-in) 1.93 # skeletons of all built-in modules are built together
 # Note: modules like itertools, etc are "(built-in)" and are ignored if given separately
 
-# pygame._numericsndarray 1.81
+PyQt4.Qsci 1.94
+PyQt4.QtAssistant 1.94
+PyQt4.QtCore 1.94
+PyQt4.QtDesigner 1.94
+PyQt4.QtGui 1.94
+PyQt4.QtHelp 1.94
+PyQt4.QtNetwork 1.94
+PyQt4.QtScriptTools 1.94
+PyQt4.QtScript 1.94
+PyQt4.QtSvg 1.94
+PyQt4.QtTest 1.94
+PyQt4.Qt 1.94
+PyQt4.QtWebKit 1.94
+PyQt4.QtXmlPatterns 1.94
+PyQt4.QtXml 1.94
+
+pygame.fastevent 1.94
+pygame.image 1.94
+
+sip 1.94
+
+pysqlite2._sqlite 1.94
+_bsddb 1.94
+
+h5py.h5  1.94
+h5py.h5i 1.94
+h5py.h5g 1.94
 
 #numpy 0.9 # older than default is ok
-#numpy.core 1.2
-#numpy.core.multiarray 1.2
-#numpy.random 1.3
-
-#pygame.rect 1.4
 
 
