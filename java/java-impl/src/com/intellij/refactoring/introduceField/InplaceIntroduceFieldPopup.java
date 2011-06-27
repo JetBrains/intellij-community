@@ -195,7 +195,12 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       return myWholePanel;
     }
 
-    @Override
+  @Override
+  protected String getActionName() {
+    return "IntroduceField";
+  }
+
+  @Override
     protected String getCommandName() {
       return IntroduceFieldHandler.REFACTORING_NAME;
     }

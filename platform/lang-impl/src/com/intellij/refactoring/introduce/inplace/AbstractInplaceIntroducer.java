@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduce.inplace;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -29,6 +30,8 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -76,8 +79,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
     myExprText = expr != null ? expr.getText() : null;
     myLocalName = localVariable != null ? localVariable.getName() : null;
+    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    final Shortcut[] shortcuts = keymap.getShortcuts(getActionName());
+    if (shortcuts.length > 0) {
+      setAdvertisementText("Press " + shortcuts[0] + " to show dialog");
+    }
   }
 
+  protected abstract String getActionName();
   protected abstract String getCommandName();
 
   protected abstract V createFieldToStartTemplateOn(boolean replaceAll, String[] names);

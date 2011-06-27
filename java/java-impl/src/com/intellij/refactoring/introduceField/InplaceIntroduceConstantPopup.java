@@ -361,6 +361,11 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
     return myWholePanel;
   }
 
+  @Override
+  protected String getActionName() {
+    return "IntroduceConstant";
+  }
+
   public String getCommandName() {
     return IntroduceConstantHandler.REFACTORING_NAME;
   }

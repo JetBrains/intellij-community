@@ -203,6 +203,11 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);
   }
 
+  @Override
+  protected String getActionName() {
+    return "IntroduceParameter";
+  }
+
   public String getCommandName() {
     return IntroduceParameterHandler.REFACTORING_NAME;
   }
