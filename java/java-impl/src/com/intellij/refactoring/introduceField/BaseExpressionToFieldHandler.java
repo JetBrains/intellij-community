@@ -206,7 +206,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
 
     final Runnable runnable =
-      new ConvertToFieldRunnable(selectedExpr, settings, type, occurrences, occurenceManager,
+      new ConvertToFieldRunnable(settings.getSelectedExpr(), settings, type, settings.getOccurrences(), occurenceManager,
                                  anchorStatementIfAll, tempAnchorElement, editor,
                                  myParentClass);
 
@@ -482,6 +482,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final TargetDestination myTargetClass;
     private final boolean myAnnotateAsNonNls;
     private final boolean myIntroduceEnumConstant;
+    private PsiExpression mySelectedExpr;
+    private PsiExpression[] myOccurrences;
 
     public PsiLocalVariable getLocalVariable() {
       return myLocalVariable;
@@ -534,7 +536,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myIntroduceEnumConstant;
     }
 
-    public Settings(String fieldName, boolean replaceAll,
+    public Settings(String fieldName,
+                    PsiExpression selectedExpr,
+                    PsiExpression[] occurrences,
+                    boolean replaceAll,
                     boolean declareStatic, boolean declareFinal,
                     InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
                     boolean deleteLocalVariable,
@@ -543,6 +548,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                     final boolean introduceEnumConstant) {
 
       myFieldName = fieldName;
+      myOccurrences = occurrences;
+      mySelectedExpr = selectedExpr;
       myReplaceAll = replaceAll;
       myDeclareStatic = declareStatic;
       myDeclareFinal = declareFinal;
@@ -556,7 +563,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myIntroduceEnumConstant = introduceEnumConstant;
     }
 
-    public Settings(String fieldName, boolean replaceAll,
+    public Settings(String fieldName,
+                    PsiExpression selectedExpression,
+                    PsiExpression[] occurrences,
+                    boolean replaceAll,
                     boolean declareStatic, boolean declareFinal,
                     InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
                     boolean deleteLocalVariable,
@@ -564,9 +574,20 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                     final boolean annotateAsNonNls,
                     final boolean introduceEnumConstant) {
 
-      this(fieldName, replaceAll, declareStatic, declareFinal, initializerPlace, visibility, localVariableToRemove, forcedType, deleteLocalVariable, new TargetDestination(targetClass), annotateAsNonNls, introduceEnumConstant);
+      this(fieldName, selectedExpression, occurrences, replaceAll, declareStatic, declareFinal, initializerPlace, visibility, localVariableToRemove, forcedType, deleteLocalVariable, new TargetDestination(targetClass), annotateAsNonNls, introduceEnumConstant);
     }
 
+    public PsiExpression getSelectedExpr() {
+      return mySelectedExpr;
+    }
+
+    public PsiExpression[] getOccurrences() {
+      return myOccurrences;
+    }
+
+    public void setOccurrences(PsiExpression[] occurrences) {
+      myOccurrences = occurrences;
+    }
   }
 
   public static class TargetDestination {

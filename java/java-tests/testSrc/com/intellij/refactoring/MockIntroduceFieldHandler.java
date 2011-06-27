@@ -24,7 +24,7 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
   protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr, PsiType type,
                                            PsiExpression[] occurences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     SuggestedNameInfo name = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.FIELD, null, expr, type);
-    return new Settings(name.names[0], true, myDeclareStatic, true, myInitializationPlace,
+    return new Settings(name.names[0],  expr, occurences, true, myDeclareStatic, true, myInitializationPlace,
             PsiModifier.PUBLIC,
             null,
             getFieldType(type), true, (TargetDestination)null, false, false);

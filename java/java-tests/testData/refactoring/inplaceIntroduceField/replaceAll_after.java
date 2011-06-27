@@ -15,10 +15,9 @@
  */
 class Test {
 
-    private String x;
+    private final String x = "";
 
     void simpleMethod() {
-        x = "";
         System.out.println(x);
         System.out.println(x);
     }

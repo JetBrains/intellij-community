@@ -25,7 +25,6 @@ import com.intellij.refactoring.ui.TypeSelectorManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -65,26 +64,29 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
     final PsiMethod setUpMethod = TestUtil.findSetUpMethod(myParentClass);
     final boolean setupEnabled = myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD) > -1;
-    if (myInitializerExpression != null && PsiTreeUtil.isAncestor(setUpMethod, myInitializerExpression, false) && setupEnabled ||
-        ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD && TestUtil.isTestClass(myParentClass) &&
-        setupEnabled) {
+    if (setupEnabled && (myInitializerExpression != null && PsiTreeUtil.isAncestor(setUpMethod, myInitializerExpression, false) ||
+                         TestUtil.isTestClass(myParentClass))) {
       myInitialisersPlaceModel.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
     }
-    else if (ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) {
-      if (myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) > -1) {
-        myInitialisersPlaceModel.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
-      } else {
-        selectInCurrentMethod();
-      }
-    } else if (ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) {
-      if (myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) > -1) {
-        myInitialisersPlaceModel.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
-      } else {
-        selectInCurrentMethod();
-      }
-    } else {
+    else if (myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) > -1 && myParentClass.getConstructors().length > 0) {
+      myInitialisersPlaceModel.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
+    }
+    else if (myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) > -1) {
+      myInitialisersPlaceModel.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
+    }
+    else {
       selectInCurrentMethod();
     }
+  }
+
+  @Override
+  protected void initializeControls(PsiExpression initializerExpression,
+                                    BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
+  }
+
+  @Override
+  public boolean isDeclareFinal() {
+    return allowFinal();
   }
 
   private void selectInCurrentMethod() {
@@ -107,7 +109,11 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   }
 
   public String getFieldVisibility() {
-    return (String)myVisibilityCombo.getSelectedItem();
+    String visibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
+    if (visibility == null) {
+      visibility = PsiModifier.PRIVATE;
+    }
+    return visibility;
   }
 
   protected JComponent createInitializerPlacePanel(final ItemListener itemListener, final ItemListener finalUpdater) {
@@ -116,10 +122,8 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
    JPanel groupPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gridBagConstraints =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                             new Insets(0, 5, 0, 0), 0, 0);
-    gridBagConstraints.insets.top = 5;
-
+      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                             new Insets(0, 0, 0, 0), 0, 0);
 
     myInitialisersPlaceModel = new DefaultComboBoxModel();
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
@@ -132,6 +136,8 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     if (myInitialisersPlaceModel.getSize() > 1) {
       final JLabel initLabel = new JLabel(RefactoringBundle.message("initialize.in.border.title") + ":");
       initLabel.setDisplayedMnemonic('i');
+      gridBagConstraints.insets.left = 5;
+      gridBagConstraints.anchor = GridBagConstraints.WEST;
       groupPanel.add(initLabel, gridBagConstraints);
       JComboBox initializersCombo = new JComboBox(myInitialisersPlaceModel);
       InplaceCombosUtil.appendActions(initializersCombo, myParentClass.getProject());
@@ -156,32 +162,18 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       gridBagConstraints.gridx = 1;
       gridBagConstraints.insets.top = 0;
       gridBagConstraints.insets.left = 0;
-      gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
       groupPanel.add(initializersCombo, gridBagConstraints);
       myInitializerCombo = initializersCombo;
-    } else if (myInitialisersPlaceModel.getSize() == 1){
+    } /*else if (myInitialisersPlaceModel.getSize() == 1){
       gridBagConstraints.gridwidth = 2;
       groupPanel.add(new JLabel("Initialize field in " +
                                 getPresentableText((BaseExpressionToFieldHandler.InitializationPlace)myInitialisersPlaceModel.getElementAt(0))),
                      gridBagConstraints);
       gridBagConstraints.gridwidth = 1;
-    }
+    }*/
 
 
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 1;
-    gridBagConstraints.insets.top = 8;
-    gridBagConstraints.insets.left = 5;
-    String visibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
-    if (visibility == null) {
-      visibility = PsiModifier.PRIVATE;
-    }
-    myVisibilityCombo = InplaceCombosUtil.createVisibilityCombo(groupPanel, gridBagConstraints, myParentClass.getProject(),
-                                                                visibility);
-
-    mainPanel.add(groupPanel, BorderLayout.CENTER);
-
-    return mainPanel;
+    return groupPanel;
   }
 
   @Nullable
@@ -220,15 +212,6 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     return true;
   }
 
-  public void addVisibilityListener(final ChangeListener changeListener) {
-    myVisibilityCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        changeListener.stateChanged(null);
-      }
-    });
-  }
-
   public void setInitializeInFieldDeclaration() {
     LOG.assertTrue(myInitializerCombo != null);
     myInitializerCombo.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
@@ -236,6 +219,10 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   public void setVisibility(String visibility) {
     myVisibilityCombo.setSelectedItem(visibility);
+  }
+
+  @Override
+  protected void updateCbFinal() {
   }
 
   @Override
@@ -255,14 +242,20 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     return false;
   }
 
+  @Override
+  protected JPanel appendCheckboxes(ItemListener itemListener) {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    appendOccurrences(itemListener, new GridBagConstraints(0,0,1,1,0,0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0), panel);
+    return panel;
+  }
+
   protected JPanel composeWholePanel(JComponent initializerPlacePanel, JPanel checkboxPanel) {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints =
-      new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                              new Insets(0, 0, 0, 0), 0, 0);
-    constraints.insets.bottom = 5;
     panel.add(initializerPlacePanel, constraints);
-    constraints.insets.left = 5;
+    constraints.gridy++;
     panel.add(checkboxPanel, constraints);
     return panel;
   }

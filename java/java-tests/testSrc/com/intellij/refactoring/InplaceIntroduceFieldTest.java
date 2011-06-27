@@ -48,53 +48,12 @@ public class InplaceIntroduceFieldTest extends LightCodeInsightTestCase {
     });
   }
 
-  public void testMakeFinal() throws Exception {
-    final boolean oldCreateFinals = IntroduceFieldCentralPanel.ourLastCbFinalState;
-    try {
-      IntroduceFieldCentralPanel.ourLastCbFinalState = false;
-      doTest(new Pass<InplaceIntroduceFieldPopup>() {
-        @Override
-        public void pass(InplaceIntroduceFieldPopup inplaceIntroduceFieldPopup) {
-          inplaceIntroduceFieldPopup.setInitializeInFieldDeclaration();
-          inplaceIntroduceFieldPopup.setCreateFinal(true);
-        }
-      });
-      assertTrue(IntroduceFieldCentralPanel.ourLastCbFinalState);
-    }
-    finally {
-      IntroduceFieldCentralPanel.ourLastCbFinalState = oldCreateFinals;
-    }
-  }
-
   public void testReplaceAll() throws Exception {
 
     doTest(new Pass<InplaceIntroduceFieldPopup>() {
       @Override
       public void pass(InplaceIntroduceFieldPopup inplaceIntroduceFieldPopup) {
         inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
-      }
-    });
-  }
-
-  public void testMakeProtected() throws Exception {
-
-    doTest(new Pass<InplaceIntroduceFieldPopup>() {
-      @Override
-      public void pass(InplaceIntroduceFieldPopup inplaceIntroduceFieldPopup) {
-        inplaceIntroduceFieldPopup.setVisibility(PsiModifier.PACKAGE_LOCAL);
-        inplaceIntroduceFieldPopup.setVisibility(PsiModifier.PRIVATE);
-        inplaceIntroduceFieldPopup.setVisibility(PsiModifier.PROTECTED);
-      }
-    });
-  }
-
-  public void testMakeProtectedFromLocal() throws Exception {
-    doTest(new Pass<InplaceIntroduceFieldPopup>() {
-      @Override
-      public void pass(InplaceIntroduceFieldPopup inplaceIntroduceFieldPopup) {
-        inplaceIntroduceFieldPopup.setVisibility(PsiModifier.PACKAGE_LOCAL);
-        inplaceIntroduceFieldPopup.setVisibility(PsiModifier.PRIVATE);
-        inplaceIntroduceFieldPopup.setVisibility(PsiModifier.PROTECTED);
       }
     });
   }

@@ -83,11 +83,11 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     myExprMarker = exprMarker;
   }
 
-  protected E getExpr() {
+  public E getExpr() {
     return myExpr != null && myExpr.isValid() && myExpr.isPhysical() ? myExpr : null;
   }
 
-  protected E[] getOccurrences() {
+  public E[] getOccurrences() {
     return myOccurrences;
   }
 
@@ -133,8 +133,7 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
       .setHideOnClickOutside(false)
       .setHideOnKeyOutside(false)
       .setHideOnAction(false)
-      .setCloseButtonEnabled(true)
-      .setTitle(myTitle);
+      .setCloseButtonEnabled(true);
 
     final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
     final Point screenPoint = target.getScreenPoint();

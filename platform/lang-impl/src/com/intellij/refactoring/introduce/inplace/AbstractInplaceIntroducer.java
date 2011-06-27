@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -37,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -53,6 +55,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   private final String myLocalName;
 
   protected String myConstantName;
+  public static final Key<AbstractInplaceIntroducer> ACTIVE_INTRODUCE = Key.create("ACTIVE_INTRODUCE");
 
   public AbstractInplaceIntroducer(Project project,
                                    Editor editor,
@@ -123,6 +126,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           setElementToRename(variable);
           started = AbstractInplaceIntroducer.super.performInplaceRename(false, nameSuggestions);
           updateTitle(variable);
+          if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
+            myEditor.putUserData(ACTIVE_INTRODUCE, AbstractInplaceIntroducer.this);
+          }
         }
         result.set(started);
         if (!started && variable != null) {
@@ -140,9 +146,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   protected void updateTitle(V variable) {
-    if (myBalloon != null) {
+    /*if (myBalloon != null) {
       myBalloon.setTitle(variable.getText());
-    }
+    }*/
   }
 
   public void restartInplaceIntroduceTemplate() {
@@ -177,6 +183,10 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   public void finish() {
+    final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+    if (templateState != null) {
+      myEditor.putUserData(ACTIVE_INTRODUCE, null);
+    }
     super.finish();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final V variable = getVariable();
@@ -320,7 +330,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
   }
 
-  protected V getLocalVariable() {
+  public V getLocalVariable() {
     if (myLocalVariable != null && myLocalVariable.isValid()) {
       return myLocalVariable;
     }
@@ -338,5 +348,21 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
     }
     return myLocalVariable;
+  }
+
+  public static void stopIntroduce(Editor editor) {
+    final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    if (templateState != null) {
+      templateState.gotoEnd(true);
+    }
+  }
+
+  @Nullable
+  public static AbstractInplaceIntroducer getActiveIntroducer(Editor editor) {
+    final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    if (templateState != null) {
+      return editor.getUserData(ACTIVE_INTRODUCE);
+    }
+    return null;
   }
 }

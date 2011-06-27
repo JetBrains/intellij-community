@@ -93,7 +93,6 @@ public abstract class IntroduceFieldCentralPanel {
 
   public abstract void setVisibility(String visibility);
   public abstract String getFieldVisibility();
-  public abstract void addVisibilityListener(ChangeListener changeListener);
 
   protected void initializeControls(PsiExpression initializerExpression,
                                     BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
@@ -152,7 +151,7 @@ public abstract class IntroduceFieldCentralPanel {
     return true;
   }
 
-  private JPanel appendCheckboxes(ItemListener itemListener) {
+  protected JPanel appendCheckboxes(ItemListener itemListener) {
     GridBagConstraints gbConstraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1,1,0,0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0);
     JPanel panel = new JPanel(new GridBagLayout());
     myCbFinal = new StateRestoringCheckBox();
@@ -161,18 +160,7 @@ public abstract class IntroduceFieldCentralPanel {
     myCbFinal.addItemListener(itemListener);
     gbConstraints.gridy++;
     panel.add(myCbFinal, gbConstraints);
-
-    if (myOccurrencesCount > 1) {
-      myCbReplaceAll = new NonFocusableCheckBox();
-      myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurrences.of.expression.0.occurrences", myOccurrencesCount));
-      gbConstraints.gridy++;
-      panel.add(myCbReplaceAll, gbConstraints);
-      myCbReplaceAll.addItemListener(itemListener);
-      if (myIsInvokedOnDeclaration) {
-        myCbReplaceAll.setEnabled(false);
-        myCbReplaceAll.setSelected(true);
-      }
-    }
+    appendOccurrences(itemListener, gbConstraints, panel);
 
     if (myLocalVariable != null) {
       gbConstraints.gridy++;
@@ -199,6 +187,20 @@ public abstract class IntroduceFieldCentralPanel {
     return panel;
   }
 
+  public void appendOccurrences(ItemListener itemListener, GridBagConstraints gbConstraints, JPanel panel) {
+    if (myOccurrencesCount > 1) {
+      myCbReplaceAll = new NonFocusableCheckBox();
+      myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurrences.of.expression.0.occurrences", myOccurrencesCount));
+      gbConstraints.gridy++;
+      panel.add(myCbReplaceAll, gbConstraints);
+      myCbReplaceAll.addItemListener(itemListener);
+      if (myIsInvokedOnDeclaration) {
+        myCbReplaceAll.setEnabled(false);
+        myCbReplaceAll.setSelected(true);
+      }
+    }
+  }
+
   private void updateTypeSelector() {
     if (myCbReplaceAll != null) {
       myTypeSelectorManager.setAllOccurences(myCbReplaceAll.isSelected());
@@ -215,7 +217,7 @@ public abstract class IntroduceFieldCentralPanel {
     }
   }
 
-  private void updateCbFinal() {
+  protected void updateCbFinal() {
     if (!allowFinal()) {
       myCbFinal.makeUnselectable(false);
     } else {
@@ -224,7 +226,8 @@ public abstract class IntroduceFieldCentralPanel {
   }
 
   protected boolean allowFinal() {
-    return !myHasWriteAccess && isReplaceAllOccurrences();
+    if (myHasWriteAccess && isReplaceAllOccurrences()) return false;
+    return true;
   }
 
   public void addOccurrenceListener(ItemListener itemListener) {
@@ -255,7 +258,7 @@ public abstract class IntroduceFieldCentralPanel {
 
 
   public void saveFinalState() {
-    if (myCbFinal.isEnabled()) {
+    if (myCbFinal != null && myCbFinal.isEnabled()) {
       ourLastCbFinalState = myCbFinal.isSelected();
     }
   }

@@ -93,7 +93,7 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
                                                                             final PsiLocalVariable local,
                                                                             final PsiExpression[] occurences,
                                                                             final boolean isStatic) {
-        return new BaseExpressionToFieldHandler.Settings("i", true, false, false,
+        return new BaseExpressionToFieldHandler.Settings("i", null, occurences, true, false, false,
                                                          BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD,
                                                          PsiModifier.PRIVATE, local, local.getType(), true, (BaseExpressionToFieldHandler.TargetDestination)null, false,
                                                          false);

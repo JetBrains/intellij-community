@@ -285,6 +285,8 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
   protected void performIntroduce() {
     final BaseExpressionToFieldHandler.Settings settings =
       new BaseExpressionToFieldHandler.Settings(getInputName(),
+                                                getExpr(),
+                                                getOccurrences(),
                                                 isReplaceAllOccurrences(), true,
                                                 true,
                                                 BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,

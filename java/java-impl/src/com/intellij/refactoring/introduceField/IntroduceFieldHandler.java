@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurences.*;
@@ -104,12 +105,20 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
 
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
-      myInplaceIntroduceFieldPopup =
-        new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
-                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, expr != null ? createOccurenceManager(expr, parentClass) : null,
-                                       project);
-      if (myInplaceIntroduceFieldPopup.startInplaceIntroduceTemplate()) {
-        return null;
+      final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+      if (activeIntroducer == null) {
+        myInplaceIntroduceFieldPopup =
+          new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
+                                         allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, expr != null ? createOccurenceManager(expr, parentClass) : null,
+                                         project);
+        if (myInplaceIntroduceFieldPopup.startInplaceIntroduceTemplate()) {
+          return null;
+        }
+      } else {
+        AbstractInplaceIntroducer.stopIntroduce(editor);
+        expr = (PsiExpression)activeIntroducer.getExpr();
+        localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
+        occurences = (PsiExpression[])activeIntroducer.getOccurrences();
       }
     }
 
@@ -134,11 +143,11 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
 
 
-    return new Settings(dialog.getEnteredName(), dialog.isReplaceAllOccurrences(),
-                        declareStatic, dialog.isDeclareFinal(),
-                        dialog.getInitializerPlace(), dialog.getFieldVisibility(),
-                        localVariable,
-                        dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
+    return new Settings(dialog.getEnteredName(), expr, occurences, dialog.isReplaceAllOccurrences(),
+                                           declareStatic, dialog.isDeclareFinal(),
+                                           dialog.getInitializerPlace(), dialog.getFieldVisibility(),
+                                           localVariable,
+                                           dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
   }
 
   public InplaceIntroduceFieldPopup getInplaceIntroduceFieldPopup() {

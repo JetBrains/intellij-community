@@ -25,7 +25,6 @@ import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ItemListener;
 
@@ -55,10 +54,10 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   }
 
   protected void initializeControls(PsiExpression initializerExpression, BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
-    super.initializeControls(initializerExpression, ourLastInitializerPlace);
     initializeInitializerPlace(initializerExpression, ourLastInitializerPlace);
     String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
     myVisibilityPanel.setVisibility(ourLastVisibility);
+    super.initializeControls(initializerExpression, ourLastInitializerPlace);
   }
 
   protected void initializeInitializerPlace(PsiExpression initializerExpression,
@@ -215,10 +214,6 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
       if (!setEnabledInitializationPlaces(child, initializer)) return false;
     }
     return true;
-  }
-
-  public void addVisibilityListener(ChangeListener changeListener) {
-    myVisibilityPanel.addListener(changeListener);
   }
 
   public void setInitializeInFieldDeclaration() {

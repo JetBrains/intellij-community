@@ -62,6 +62,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
   private JPanel myWholePanel;
 
   static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
+  private JLabel myLabel = new JLabel("###################");
 
   public InplaceIntroduceFieldPopup(PsiLocalVariable localVariable,
                                     PsiClass parentClass,
@@ -98,28 +99,22 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
                                myOccurrences, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
 
-    myWholePanel = new JPanel(new GridBagLayout());
+    myWholePanel = new JPanel(new BorderLayout());
     myWholePanel.setBorder(null);
+    myLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 0));
+    myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
+    myWholePanel.add(myLabel, BorderLayout.NORTH);
 
-    GridBagConstraints gc =
-      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                             new Insets(0,0,0,0), 0, 0);
+    final JComponent centerPanel = myIntroduceFieldPanel.createCenterPanel();
 
+    myWholePanel.add(centerPanel, BorderLayout.WEST);
 
-    gc.gridy++;
-    gc.insets.top = 5;
-
-    myWholePanel.add(myIntroduceFieldPanel.createCenterPanel(), gc);
-    JComponent typeChooser = typeComponent();
-    if (typeChooser != null) {
-      gc.gridy++ ;
-      gc.insets.left = 5;
-      gc.insets.right = 5;
-      myWholePanel.add(typeChooser, gc);
-    }
     myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
+  }
 
-
+  @Override
+  protected void updateTitle(PsiVariable variable) {
+    myLabel.setText(variable.getText());
   }
 
   protected PsiField createFieldToStartTemplateOn(final String[] names,
@@ -190,39 +185,6 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
     @Override
     protected JComponent getComponent() {
-      final VisibilityListener visibilityListener = new VisibilityListener(myEditor) {
-        @Override
-        protected String getVisibility() {
-          return myIntroduceFieldPanel.getFieldVisibility();
-        }
-      };
-      myIntroduceFieldPanel.addVisibilityListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-            @Override
-            protected void run(Result result) throws Throwable {
-              PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              visibilityListener.perform(getVariable());
-              updateTitle(getVariable());
-            }
-          }.execute();
-        }
-      });
-      final FinalListener finalListener = new FinalListener(myEditor);
-      myIntroduceFieldPanel.addFinalListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-          new WriteCommandAction(myProject, getCommandName(), getCommandName()){
-            @Override
-            protected void run(Result result) throws Throwable {
-              PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              finalListener.perform(myIntroduceFieldPanel.isDeclareFinal(), getVariable());
-              updateTitle(getVariable());
-            }
-          }.execute();
-        }
-      });
       myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
         @Override
         public void itemStateChanged(ItemEvent e) {
@@ -266,7 +228,10 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
     protected void performIntroduce() {
       ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
       final BaseExpressionToFieldHandler.Settings settings =
-        new BaseExpressionToFieldHandler.Settings(getInputName(), myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
+        new BaseExpressionToFieldHandler.Settings(getInputName(),
+                                                  getExpr(),
+                                                  getOccurrences(),
+                                                  myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
                                                   myIntroduceFieldPanel.isDeclareFinal(),
                                                   myIntroduceFieldPanel.getInitializerPlace(),
                                                   myIntroduceFieldPanel.getFieldVisibility(), (PsiLocalVariable)getLocalVariable(),

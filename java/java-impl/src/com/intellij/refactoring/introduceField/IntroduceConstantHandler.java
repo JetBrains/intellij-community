@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -146,10 +147,18 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
-      if (new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
-                                        anchorElement, anchorElementIfAll,
-                                        expr != null ? createOccurenceManager(expr, parentClass) : null).startInplaceIntroduceTemplate() ){
-        return null;
+      final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+      if (activeIntroducer == null) {
+        if (new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
+                                              anchorElement, anchorElementIfAll,
+                                              expr != null ? createOccurenceManager(expr, parentClass) : null).startInplaceIntroduceTemplate() ){
+          return null;
+        }
+      } else {
+        AbstractInplaceIntroducer.stopIntroduce(editor);
+        expr = (PsiExpression)activeIntroducer.getExpr();
+        localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
+        occurences = (PsiExpression[])activeIntroducer.getOccurrences();
       }
     }
 
@@ -164,10 +173,11 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       }
       return null;
     }
-    return new Settings(dialog.getEnteredName(), dialog.isReplaceAllOccurrences(), true, true,
-                        BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
-                        dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(), dialog.isAnnotateAsNonNls(),
-                        dialog.introduceEnumConstant());
+    return new Settings(dialog.getEnteredName(), expr, occurences, dialog.isReplaceAllOccurrences(), true, true,
+                                           InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
+                                           dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(),
+                                           dialog.isAnnotateAsNonNls(),
+                                           dialog.introduceEnumConstant());
   }
 
   private static void highlightError(Project project, Editor editor, PsiElement errorElement) {
