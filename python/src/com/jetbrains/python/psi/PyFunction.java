@@ -54,6 +54,13 @@ extends
   PyType getReturnTypeFromDocString();
 
   /**
+   * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..
+   *
+   * @return the deprecation message or null if the function is not deprecated.
+   */
+  String getDeprecationMessage();
+
+  /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().
    */
   enum Flag {

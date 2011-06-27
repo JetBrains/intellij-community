@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Function;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -99,7 +99,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         final PyClass cls = (PyClass)element;
         for (PyClass anc : cls.iterateAncestorClasses()) {
           if (anc == the_exception) {
-            e.setIcon(Icons.EXCEPTION_CLASS_ICON);
+            e.setIcon(PlatformIcons.EXCEPTION_CLASS_ICON);
             break;
           }
         }

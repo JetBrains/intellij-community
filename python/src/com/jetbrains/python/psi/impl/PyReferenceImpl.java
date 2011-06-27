@@ -11,8 +11,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.django.util.PythonDataflowUtil;
@@ -418,7 +418,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       PsiFile f = realContext.getContainingFile();
       if (f instanceof PyFile) {
         for (String name : PyModuleType.getPossibleInstanceMembers()) {
-          ret.add(LookupElementBuilder.create(name).setIcon(Icons.FIELD_ICON));
+          ret.add(LookupElementBuilder.create(name).setIcon(PlatformIcons.FIELD_ICON));
         }
       }
     }

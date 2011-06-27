@@ -76,7 +76,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     PsiElement arg4 = marks.get("<arg4>");
     feignCtrlP(arg4.getTextOffset()).check("a, b, *c", new String[]{"*c"});
     feignCtrlP(arg4.getTextOffset()+1).check("a, b, *c", new String[]{"*c"});
-    feignCtrlP(arg4.getTextOffset()+2).check("a, b, *c", new String[]{});
+    feignCtrlP(arg4.getTextOffset()+2).check("a, b, *c", new String[]{"*c"}); // sticks to *arg
   }
 
   public void testKwdFunction() {

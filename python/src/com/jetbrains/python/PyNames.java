@@ -12,54 +12,59 @@ import java.util.regex.Pattern;
 /**
  * @author dcheryasov
  */
+@NonNls
 public class PyNames {
   private PyNames() {
   }
 
-  @NonNls public static final String INIT = "__init__";
-  @NonNls public static final String DOT_PY = ".py";
-  @NonNls public static final String INIT_DOT_PY = INIT + DOT_PY;
+  public static final String INIT = "__init__";
+  public static final String DOT_PY = ".py";
+  public static final String INIT_DOT_PY = INIT + DOT_PY;
 
-  @NonNls public static final String NEW = "__new__";
-  @NonNls public static final String GETATTR = "__getattr__";
-  @NonNls public static final String GETATTRIBUTE = "__getattribute__";
-  @NonNls public static final String CLASS = "__class__";
-  @NonNls public static final String METACLASS = "__metaclass__";
+  public static final String NEW = "__new__";
+  public static final String GETATTR = "__getattr__";
+  public static final String GETATTRIBUTE = "__getattribute__";
+  public static final String CLASS = "__class__";
+  public static final String METACLASS = "__metaclass__";
 
-  @NonNls public static final String SUPER = "super";
+  public static final String SUPER = "super";
 
-  @NonNls public static final String OBJECT = "object";
-  @NonNls public static final String NONE = "None";
-  @NonNls public static final String TRUE = "True";
-  @NonNls public static final String FALSE = "False";
-  @NonNls public static final String FAKE_OLD_BASE = "___Classobj";
+  public static final String OBJECT = "object";
+  public static final String NONE = "None";
+  public static final String TRUE = "True";
+  public static final String FALSE = "False";
+  public static final String FAKE_OLD_BASE = "___Classobj";
 
-  @NonNls public static final String FUTURE_MODULE = "__future__";
+  public static final String FUTURE_MODULE = "__future__";
 
-  @NonNls public static final String CLASSMETHOD = "classmethod";
-  @NonNls public static final String STATICMETHOD = "staticmethod";
+  public static final String CLASSMETHOD = "classmethod";
+  public static final String STATICMETHOD = "staticmethod";
 
-  @NonNls public static final String PROPERTY = "property";
+  public static final String PROPERTY = "property";
 
-  @NonNls public static final String ALL = "__all__";
-  @NonNls public static final String SLOTS = "__slots__";
-  @NonNls public static final String DEBUG = "__debug__";
+  public static final String ALL = "__all__";
+  public static final String SLOTS = "__slots__";
+  public static final String DEBUG = "__debug__";
 
-  @NonNls public static final String ISINSTANCE = "isinstance";
+  public static final String ISINSTANCE = "isinstance";
 
-  @NonNls public static final String DOCFORMAT = "__docformat__";
+  public static final String DOCFORMAT = "__docformat__";
 
-  @NonNls public static final String DIRNAME = "dirname";
-  @NonNls public static final String ABSPATH = "abspath";
-  @NonNls public static final String JOIN = "join";
-  @NonNls public static final String REPLACE = "replace";
-  @NonNls public static final String FILE = "__file__";
+  public static final String DIRNAME = "dirname";
+  public static final String ABSPATH = "abspath";
+  public static final String JOIN = "join";
+  public static final String REPLACE = "replace";
+  public static final String FILE = "__file__";
+
+  public static final String WARN = "warn";
+  public static final String DEPRECATION_WARNING = "DeprecationWarning";
+  public static final String PENDING_DEPRECATION_WARNING = "PendingDeprecationWarning";
 
   /**
    * Contains all known predefined names of "__foo__" form.
    */
   public static ImmutableSet<String> UnderscoredAttributes = ImmutableSet.of(
-    "__all__",
+      "__all__",
     "__author__",
     "__bases__",
     "__dict__",

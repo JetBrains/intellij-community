@@ -138,7 +138,7 @@ public class PySkeletonRefresher {
       parent_dir,
       new String[]{home_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-L", "-s", getExtraSyspath()},
       PythonSdkType.getVirtualEnvAdditionalEnv(home_path),
-      MINUTE * 2
+      MINUTE * 4 // see PY-3898
     );
     if (run_result.getExitCode() != 0) {
       StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(home_path);

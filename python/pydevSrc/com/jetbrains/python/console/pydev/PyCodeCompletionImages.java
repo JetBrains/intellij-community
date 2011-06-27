@@ -1,6 +1,6 @@
 package com.jetbrains.python.console.pydev;
 
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -16,9 +16,9 @@ public class PyCodeCompletionImages {
     public static Icon getImageForType(int type){
       switch (type) {
         case IToken.TYPE_CLASS:
-          return Icons.CLASS_ICON;
+          return PlatformIcons.CLASS_ICON;
         case IToken.TYPE_FUNCTION:
-          return Icons.METHOD_ICON;
+          return PlatformIcons.METHOD_ICON;
         default:
           return null;
       }

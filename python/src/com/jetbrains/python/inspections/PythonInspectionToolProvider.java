@@ -61,6 +61,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PySetFunctionToLiteralInspection.class,
       PyDecoratorInspection.class,
       PyTypeCheckerInspection.class,
+      PyDeprecationInspection.class,
     };
   }
 }

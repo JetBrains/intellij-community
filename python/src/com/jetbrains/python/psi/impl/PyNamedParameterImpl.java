@@ -6,8 +6,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.StructuredDocString;
@@ -128,7 +128,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   }
 
   public Icon getIcon(final int flags) {
-    return Icons.PARAMETER_ICON;
+    return PlatformIcons.PARAMETER_ICON;
   }
 
   public PyNamedParameter getAsNamed() {
