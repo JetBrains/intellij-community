@@ -24,13 +24,15 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ComboBoxVisibilityPanel extends VisibilityPanelBase /*implements ShortcutProvider*/ {
+public class ComboBoxVisibilityPanel extends VisibilityPanelBase {
   private final JLabel myLabel;
   private final JComboBox myComboBox;
   private final Map<String, String> myNamesMap = new HashMap<String, String>();
@@ -48,6 +50,13 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase /*implements Sh
       @Override
       public void actionPerformed(ActionEvent e) {
         myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(ComboBoxVisibilityPanel.this));
+      }
+    });
+
+    myComboBox.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myComboBox.showPopup();
       }
     });
     DialogUtil.registerMnemonic(myLabel, myComboBox);
