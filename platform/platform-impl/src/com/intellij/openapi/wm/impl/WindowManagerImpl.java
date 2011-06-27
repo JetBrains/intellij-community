@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
@@ -236,7 +235,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
 
     return null;
-
   }
 
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
@@ -308,7 +306,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
-  public void setWindowMask(final Window window, final Shape mask) {
+  public void setWindowMask(final Window window, @Nullable final Shape mask) {
     try {
       if (AWTUtilitiesWrapper.isTranslucencySupported(AWTUtilitiesWrapper.PERPIXEL_TRANSPARENT)) {
         AWTUtilitiesWrapper.setWindowShape(window, mask);
@@ -326,7 +324,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   public void setWindowShadow(Window window, WindowShadowMode mode) {
     if (window instanceof JWindow) {
       JRootPane root = ((JWindow)window).getRootPane();
-
       root.putClientProperty("Window.shadow", mode == WindowShadowMode.DISABLED ? Boolean.FALSE : Boolean.TRUE);
       root.putClientProperty("Window.style", mode == WindowShadowMode.SMALL ? "small" : null);
     }
@@ -336,7 +333,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     try {
       if (!isAlphaModeSupported()) return;
 
-      WindowUtils.setWindowMask(window, (Shape)null);
+      setWindowMask(window, null);
       setAlphaMode(window, 0f);
       setWindowShadow(window, WindowShadowMode.NORMAL);
     }
