@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -28,6 +29,9 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.Keymap;
@@ -40,11 +44,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -59,6 +66,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   protected String myConstantName;
   public static final Key<AbstractInplaceIntroducer> ACTIVE_INTRODUCE = Key.create("ACTIVE_INTRODUCE");
+
+  protected JLabel myLabel = new JLabel("###################");
+  private DocumentAdapter myDocumentAdapter;
 
   public AbstractInplaceIntroducer(Project project,
                                    Editor editor,
@@ -79,6 +89,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
     myExprText = expr != null ? expr.getText() : null;
     myLocalName = localVariable != null ? localVariable.getName() : null;
+
+    myLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 0));
+    myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
+
+
     final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     final Shortcut[] shortcuts = keymap.getShortcuts(getActionName());
     if (shortcuts.length > 0) {
@@ -134,6 +149,18 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           initOccurrencesMarkers();
           setElementToRename(variable);
           started = AbstractInplaceIntroducer.super.performInplaceRename(false, nameSuggestions);
+          myDocumentAdapter = new DocumentAdapter() {
+            @Override
+            public void documentChanged(DocumentEvent e) {
+              final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+              if (templateState != null) {
+                final String variableValue =
+                  templateState.getVariableValue(VariableInplaceRenamer.PRIMARY_VARIABLE_NAME).getText();
+                updateTitle(variable, variableValue);
+              }
+            }
+          };
+          myEditor.getDocument().addDocumentListener(myDocumentAdapter);
           updateTitle(variable);
           if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
             myEditor.putUserData(ACTIVE_INTRODUCE, AbstractInplaceIntroducer.this);
@@ -154,10 +181,12 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     return result.get();
   }
 
+  protected void updateTitle(V variable, String value) {
+    myLabel.setText(variable.getText().replace(variable.getName(), value));
+  }
+
   protected void updateTitle(V variable) {
-    /*if (myBalloon != null) {
-      myBalloon.setTitle(variable.getText());
-    }*/
+    myLabel.setText(variable.getText());
   }
 
   public void restartInplaceIntroduceTemplate() {
@@ -196,6 +225,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     if (templateState != null) {
       myEditor.putUserData(ACTIVE_INTRODUCE, null);
     }
+    myEditor.getDocument().removeDocumentListener(myDocumentAdapter);
     super.finish();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final V variable = getVariable();

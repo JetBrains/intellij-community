@@ -58,7 +58,6 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
   private JPanel myWholePanel;
 
   static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
-  private JLabel myLabel = new JLabel("###################");
 
   public InplaceIntroduceFieldPopup(PsiLocalVariable localVariable,
                                     PsiClass parentClass,
@@ -97,8 +96,6 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
     myWholePanel = new JPanel(new BorderLayout());
     myWholePanel.setBorder(null);
-    myLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 0));
-    myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
     myWholePanel.add(myLabel, BorderLayout.NORTH);
 
     final JComponent centerPanel = myIntroduceFieldPanel.createCenterPanel();
@@ -106,11 +103,6 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
     myWholePanel.add(centerPanel, BorderLayout.WEST);
 
     myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
-  }
-
-  @Override
-  protected void updateTitle(PsiVariable variable) {
-    myLabel.setText(variable.getText());
   }
 
   protected PsiField createFieldToStartTemplateOn(final String[] names,

@@ -70,7 +70,8 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.setBorder(null);
-
+    myWholePanel.add(myLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                                             new Insets(0,5,0,5), 0,0));
     myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
                                               myEditor, myOccurrences, classMemberRefs, myMustBeFinal) {
       @Override

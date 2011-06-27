@@ -102,6 +102,8 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
     myWholePanel = new JPanel(new GridBagLayout());
     GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
+    gc.gridwidth = 2;
+    myWholePanel.add(myLabel, gc);
 
     gc.gridwidth = 1;
     gc.gridy = 1;
