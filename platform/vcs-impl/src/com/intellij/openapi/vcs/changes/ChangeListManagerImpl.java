@@ -332,22 +332,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     if (! vcsManager.hasActiveVcss()) return;
 
     final VcsInvalidated invalidated = myDirtyScopeManager.retrieveScopes();
-    if (invalidated == null || invalidated.isEmpty()) {
-      // a hack here; but otherwise everything here should be refactored ;)
-      if (invalidated != null && invalidated.isEmpty() && invalidated.isEverythingDirty()) {
-        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-      }
-      return;
-    }
+    if (checkScopeIsEmpty(invalidated)) return;
+
     final boolean wasEverythingDirty = invalidated.isEverythingDirty();
     final List<VcsDirtyScope> scopes = invalidated.getScopes();
-
-    if (! wasEverythingDirty) {
-      filterOutIgnoredFiles(scopes);
-      if (scopes.isEmpty()) {
-        return;
-      }
-    }
 
     try {
       checkIfDisposed();
@@ -368,28 +356,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
-      final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
-      // do actual requests about file statuses
-      final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
-        dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
-
       // todo should also ask self flag
       myUpdateChangesProgressIndicator = createProgressIndicator(atomicSectionsAware);
 
-      for (final VcsDirtyScope scope : scopes) {
-        atomicSectionsAware.checkShouldExit();
-
-        final AbstractVcs vcs = scope.getVcs();
-        if (vcs == null) continue;
-        final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope) scope);
-
-        myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
-        dataHolder.notifyStartProcessingChanges(adjustedScope);
-
-        actualUpdate(builder, adjustedScope, vcs, dataHolder, gate);
-
-        if (myUpdateException != null) break;
-      }
+      iterateScopes(atomicSectionsAware, dataHolder, scopes);
 
       final boolean takeChanges = (myUpdateException == null);
       if (takeChanges) {
@@ -400,10 +370,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       synchronized (myDataLock) {
         // do same modifications to change lists as was done during update + do delayed notifications
         dataHolder.notifyEnd();
-        myModifier.exitUpdate();
-        // should be applied for notifications to be delivered (they were delayed)
-        myModifier.apply(dataHolder.getChangeListWorker());
-        myModifier.clearQueue();
+        // should be applied for notifications to be delivered (they were delayed) - anyway whether we take changes or not
+        myModifier.finishUpdate(dataHolder.getChangeListWorker());
         // update member from copy
         if (takeChanges) {
           clearCurrentRevisionsCache(invalidated);
@@ -442,6 +410,49 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
       }
+    }
+  }
+
+  private boolean checkScopeIsAllIgnored(VcsInvalidated invalidated) {
+    if (! invalidated.isEverythingDirty()) {
+      filterOutIgnoredFiles(invalidated.getScopes());
+      if (invalidated.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
+    if (invalidated == null || invalidated.isEmpty()) {
+      // a hack here; but otherwise everything here should be refactored ;)
+      if (invalidated != null && invalidated.isEmpty() && invalidated.isEverythingDirty()) {
+        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      }
+      return true;
+    }
+    return checkScopeIsAllIgnored(invalidated);
+  }
+
+  private void iterateScopes(AtomicSectionsAware atomicSectionsAware, DataHolder dataHolder, List<VcsDirtyScope> scopes) {
+    final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
+    // do actual requests about file statuses
+    final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
+      dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
+
+    for (final VcsDirtyScope scope : scopes) {
+      atomicSectionsAware.checkShouldExit();
+
+      final AbstractVcs vcs = scope.getVcs();
+      if (vcs == null) continue;
+      final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope) scope);
+
+      myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
+      dataHolder.notifyStartProcessingChanges(adjustedScope);
+
+      actualUpdate(builder, adjustedScope, vcs, dataHolder, gate);
+
+      if (myUpdateException != null) break;
     }
   }
 
