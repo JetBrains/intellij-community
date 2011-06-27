@@ -41,9 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static git4idea.ui.GitUIUtil.notifyError;
-import static git4idea.ui.GitUIUtil.notifyImportantError;
-import static git4idea.ui.GitUIUtil.notifyMessage;
+import static git4idea.ui.GitUIUtil.*;
 
 /**
  * Handles update process (pull via merge or rebase) for several roots.
@@ -117,13 +115,13 @@ public class GitUpdateProcess {
   }
 
   private boolean updateImpl(boolean forceRebase, ContinuationContext context) {
-    try {
-      // check if update is possible
-      if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) { return false; }
-      if (!checkTrackedBranchesConfigured()) { return false; }
+    // define updaters for roots
+    final Map<VirtualFile, GitUpdater> updaters = new HashMap<VirtualFile, GitUpdater>();
+    // check if update is possible
+    if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) { return false; }
+    if (!checkTrackedBranchesConfigured()) { return false; }
 
-      // define updaters for roots
-      final Map<VirtualFile, GitUpdater> updaters = new HashMap<VirtualFile, GitUpdater>();
+    try {
       for (VirtualFile root : myRoots) {
         final GitUpdater updater = forceRebase
                                    ? new GitRebaseUpdater(myProject, root, this, myProgressIndicator, myUpdatedFiles)
@@ -133,54 +131,61 @@ public class GitUpdateProcess {
         }
         LOG.info("update| root=" + root + " ,updater=" + updater);
       }
+    } catch (VcsException e) {
+      LOG.info(e);
+      notifyError(myProject, "Git update failed", e.getMessage(), true, e);
+      return false;
+    }
 
-      // save local changes if needed (update via merge may perform without saving).
-      final Collection<VirtualFile> rootsToSave = new HashSet<VirtualFile>(1);
-      for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
-        VirtualFile root = entry.getKey();
-        GitUpdater updater = entry.getValue();
-        if (updater.isSaveNeeded()) {
-          rootsToSave.add(root);
-          LOG.info("update| root " + root + " needs save");
-        }
+    // save local changes if needed (update via merge may perform without saving).
+    final Collection<VirtualFile> rootsToSave = new HashSet<VirtualFile>(1);
+    for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
+      VirtualFile root = entry.getKey();
+      GitUpdater updater = entry.getValue();
+      if (updater.isSaveNeeded()) {
+        rootsToSave.add(root);
+        LOG.info("update| root " + root + " needs save");
       }
+    }
+
+    try {
       mySaver.saveLocalChanges(rootsToSave);
-
-      // update each root
-      boolean incomplete = false;
-      boolean success = true;
-      VirtualFile currentlyUpdatedRoot = null;
-      try {
-        for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
-          currentlyUpdatedRoot = entry.getKey();
-          GitUpdater updater = entry.getValue();
-          GitUpdateResult res = updater.update();
-          LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
-          if (res == GitUpdateResult.INCOMPLETE) {
-            incomplete = true;
-          }
-          success &= res.isSuccess();
-        }
-      } catch (VcsException e) {
-        String rootName = (currentlyUpdatedRoot == null) ? "" : currentlyUpdatedRoot.getName();
-        LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
-        notifyImportantError(myProject, "Error updating " + rootName,
-                             "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
-      } finally {
-        if (!incomplete) {
-          restoreLocalChanges(context);
-        } else {
-          mySaver.notifyLocalChangesAreNotRestored();
-        }
-      }
-      return success;
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
-      notifyError(myProject, "Couldn't save local changes",
+      notifyError(myProject, "Git update failed",
                   "Tried to save uncommitted changes in " + mySaver.getSaverName() + " before update, but failed with an error.<br/>" +
                   "Update was cancelled.", true, e);
       return false;
     }
+
+    // update each root
+    boolean incomplete = false;
+    boolean success = true;
+    VirtualFile currentlyUpdatedRoot = null;
+    try {
+      for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
+        currentlyUpdatedRoot = entry.getKey();
+        GitUpdater updater = entry.getValue();
+        GitUpdateResult res = updater.update();
+        LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
+        if (res == GitUpdateResult.INCOMPLETE) {
+          incomplete = true;
+        }
+        success &= res.isSuccess();
+      }
+    } catch (VcsException e) {
+      String rootName = (currentlyUpdatedRoot == null) ? "" : currentlyUpdatedRoot.getName();
+      LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
+      notifyImportantError(myProject, "Error updating " + rootName,
+                           "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
+    } finally {
+      if (!incomplete) {
+        restoreLocalChanges(context);
+      } else {
+        mySaver.notifyLocalChangesAreNotRestored();
+      }
+    }
+    return success;
   }
 
   public void restoreLocalChanges(ContinuationContext context) {
