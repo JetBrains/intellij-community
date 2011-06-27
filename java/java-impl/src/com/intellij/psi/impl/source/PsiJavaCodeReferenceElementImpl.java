@@ -297,7 +297,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           return ((PsiPackage)target).getQualifiedName();
         }
         else {
-          LOG.assertTrue(target == null);
+          LOG.assertTrue(target == null, target);
           return getTextSkipWhiteSpaceAndComments();
         }
       case PACKAGE_NAME_KIND:
