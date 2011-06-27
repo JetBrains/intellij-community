@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.facet;
 
+import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
@@ -22,6 +23,7 @@ import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
@@ -32,24 +34,30 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.newProject.AndroidModuleType;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkType;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
+import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * @author yole
  */
 public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfiguration> {
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.facet.AndroidFacetType");
 
   public AndroidFacetType() {
     super(AndroidFacet.ID, "android", "Android");
@@ -98,6 +106,10 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
   }
 
   private static void setupPlatform(@NotNull Module module) {
+    if (tryToImportFromPropertyFiles(module)) {
+      return;
+    }
+
     PropertiesComponent component = PropertiesComponent.getInstance();
     if (component.isValueSet(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY)) {
       String defaultPlatformName = component.getValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY);
@@ -112,6 +124,97 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
         return;
       }
     }
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  private static String getPropertyValue(@NotNull Module module, @NotNull String propertyFileName, @NotNull String propertyKey) {
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      final VirtualFile vFile = contentRoot.findChild(propertyFileName);
+      if (vFile != null) {
+        final Properties properties = new Properties();
+        try {
+          properties.load(new FileInputStream(new File(vFile.getPath())));
+          final String value = properties.getProperty(propertyKey);
+          if (value != null) {
+            return value;
+          }
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Sdk findSuitableAndroidSdk(@NotNull String targetHashString, @Nullable String sdkDir) {
+    final List<Sdk> androidSdks = ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance());
+    for (Sdk sdk : androidSdks) {
+      final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+      if (data != null) {
+        final AndroidPlatform androidPlatform = data.getAndroidPlatform();
+        if (androidPlatform != null) {
+          final String baseDir = FileUtil.toSystemIndependentName(androidPlatform.getSdk().getLocation());
+          if ((sdkDir == null || FileUtil.pathsEqual(baseDir, sdkDir)) &&
+              targetHashString.equals(androidPlatform.getTarget().hashString())) {
+            return sdk;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean tryToImportFromPropertyFiles(@NotNull Module module) {
+    final String targetHashString = getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, "target");
+    if (targetHashString == null) {
+      return false;
+    }
+
+    String sdkDir = getPropertyValue(module, SdkConstants.FN_LOCAL_PROPERTIES, "sdk.dir");
+    if (sdkDir != null) {
+      sdkDir = FileUtil.toSystemIndependentName(sdkDir);
+    }
+
+    final Sdk sdk = findSuitableAndroidSdk(targetHashString, sdkDir);
+    if (sdk != null) {
+      setSdk(module, sdk);
+      return true;
+    }
+
+    if (sdkDir != null && tryToCreateAndSetAndroidSdk(module, sdkDir, targetHashString)) {
+      return true;
+    }
+
+    final String androidHomeValue = System.getenv(AndroidSdkUtils.ANDROID_HOME_ENV);
+    if (androidHomeValue != null &&
+        tryToCreateAndSetAndroidSdk(module, FileUtil.toSystemIndependentName(androidHomeValue), targetHashString)) {
+      return true;
+    }
+
+    for (String dir : AndroidSdkUtils.getAndroidSdkPathsFromExistingPlatforms()) {
+      if (tryToCreateAndSetAndroidSdk(module, dir, targetHashString)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean tryToCreateAndSetAndroidSdk(@NotNull Module module, @NotNull String baseDir, @NotNull String targetHashString) {
+    final AndroidSdk sdkObject = AndroidSdk.parse(baseDir, new EmptySdkLog());
+    if (sdkObject != null) {
+      final IAndroidTarget target = sdkObject.findTargetByHashString(targetHashString);
+      if (target != null) {
+        final Sdk androidSdk = AndroidSdkUtils.createNewAndroidPlatform(target, sdkObject.getLocation(), true);
+        if (androidSdk != null) {
+          setSdk(module, androidSdk);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public boolean isSuitableModuleType(ModuleType moduleType) {

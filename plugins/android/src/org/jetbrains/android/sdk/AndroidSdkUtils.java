@@ -30,13 +30,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.util.OrderRoot;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -48,6 +49,7 @@ import java.util.List;
  */
 public class AndroidSdkUtils {
   public static final String DEFAULT_PLATFORM_NAME_PROPERTY = "AndroidPlatformName";
+  @NonNls public static final String ANDROID_HOME_ENV = "ANDROID_HOME";
 
   private AndroidSdkUtils() {
   }
@@ -238,5 +240,23 @@ public class AndroidSdkUtils {
 
   public static boolean targetHasId(@NotNull IAndroidTarget target, @NotNull String id) {
     return id.equals(target.getVersion().getApiString()) || id.equals(target.getVersionName());
+  }
+
+  @NotNull
+  public static Collection<String> getAndroidSdkPathsFromExistingPlatforms() {
+    final List<Sdk> androidSdks = ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance());
+    final Set<String> result = new HashSet<String>(androidSdks.size());
+
+    for (Sdk androidSdk : androidSdks) {
+      final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)androidSdk.getSdkAdditionalData();
+      if (data != null) {
+        final AndroidPlatform androidPlatform = data.getAndroidPlatform();
+        if (androidPlatform != null) {
+          result.add(FileUtil.toSystemIndependentName(androidPlatform.getSdk().getLocation()));
+        }
+      }
+    }
+
+    return result;
   }
 }

@@ -19,13 +19,11 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
@@ -141,7 +139,7 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
 
   @Nullable
   private Sdk findOrCreateAndroidPlatform(MavenProject project) {
-    String sdkPath = System.getenv("ANDROID_HOME");
+    String sdkPath = System.getenv(AndroidSdkUtils.ANDROID_HOME_ENV);
     LOG.info("android home: " + sdkPath);
 
     if (sdkPath != null) {
@@ -151,7 +149,7 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
       }
     }
 
-    final Collection<String> candidates = suggestAndroidSdkPaths();
+    final Collection<String> candidates = AndroidSdkUtils.getAndroidSdkPathsFromExistingPlatforms();
     LOG.info("suggested sdks: " + candidates);
 
     for (String candidate : candidates) {
@@ -197,25 +195,6 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
       }
     }
     return null;
-  }
-
-  @NotNull
-  private static Collection<String> suggestAndroidSdkPaths() {
-    final List<Sdk> androidSdks = ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance());
-    final Set<String> result = new HashSet<String>(androidSdks.size());
-
-    for (Sdk androidSdk : androidSdks) {
-      final VirtualFile sdkHome = androidSdk.getHomeDirectory();
-
-      if (sdkHome != null && sdkHome.exists() && sdkHome.isValid() && sdkHome.isDirectory()) {
-        final String path = sdkHome.getPath();
-        if (path != null) {
-          result.add(path);
-        }
-      }
-    }
-
-    return result;
   }
 
   private void configurePaths(AndroidFacet facet, MavenProject project) {
