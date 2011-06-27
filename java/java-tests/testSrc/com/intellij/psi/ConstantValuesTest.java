@@ -197,6 +197,28 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(Boolean.TRUE, field.computeConstantValue());
   }
 
+  public void testBoolean2(){
+    PsiField field = myClass.findFieldByName("BOOL_CONST2", false);
+    assertNotNull(field);
+    final PsiExpression initializer = field.getInitializer();
+    assertNotNull(initializer);
+    assertEquals(PsiType.BOOLEAN, initializer.getType());
+    assertEquals("false && foo()", initializer.getText());
+
+    assertEquals(Boolean.FALSE, field.computeConstantValue());
+  }
+
+  public void testBoolean3(){
+    PsiField field = myClass.findFieldByName("BOOL_CONST3", false);
+    assertNotNull(field);
+    final PsiExpression initializer = field.getInitializer();
+    assertNotNull(initializer);
+    assertEquals(PsiType.BOOLEAN, initializer.getType());
+    assertEquals("true || foo()", initializer.getText());
+
+    assertEquals(Boolean.TRUE, field.computeConstantValue());
+  }
+
   public void testFloat(){
     PsiField field = myClass.findFieldByName("FLOAT_CONST", false);
     assertNotNull(field);
