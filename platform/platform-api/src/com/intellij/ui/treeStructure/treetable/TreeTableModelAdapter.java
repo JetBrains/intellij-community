@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.ui.treeStructure.treetable;
-
-import com.intellij.util.ui.Table;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -39,9 +37,9 @@ import javax.swing.tree.TreePath;
 public class TreeTableModelAdapter extends AbstractTableModel {
   private final JTree tree;
   private final TreeTableModel treeTableModel;
-  private final Table table;
+  private final JTable table;
 
-  public TreeTableModelAdapter(TreeTableModel treeTableModel, JTree tree, Table table) {
+  public TreeTableModelAdapter(TreeTableModel treeTableModel, JTree tree, JTable table) {
     this.tree = tree;
     this.treeTableModel = treeTableModel;
     this.table = table;

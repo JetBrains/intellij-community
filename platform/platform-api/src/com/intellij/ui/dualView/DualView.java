@@ -34,7 +34,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -122,7 +121,7 @@ public class DualView extends JPanel {
     addWidthListenersTo(myFlatView);
   }
 
-  private void addWidthListenersTo(Table treeView) {
+  private void addWidthListenersTo(JTable treeView) {
     TableColumnModel columnModel = treeView.getColumnModel();
     int columnCount = columnModel.getColumnCount();
     for (int i = 0; i < columnCount; i++) {

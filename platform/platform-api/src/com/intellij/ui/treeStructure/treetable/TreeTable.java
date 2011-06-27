@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.ui.treeStructure.treetable;
 
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -42,7 +42,7 @@ import java.util.Set;
  * @author Philip Milne
  * @author Scott Violet
  */
-public class TreeTable extends Table {
+public class TreeTable extends JBTable {
   /** A subclass of JTree. */
   private TreeTableTree myTree;
   private TreeTableModel myTableModel;
@@ -52,7 +52,6 @@ public class TreeTable extends Table {
     super();
 
     setModel(treeTableModel);
-
   }
 
   @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
