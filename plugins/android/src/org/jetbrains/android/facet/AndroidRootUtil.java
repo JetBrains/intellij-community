@@ -154,7 +154,8 @@ public class AndroidRootUtil {
   private static void fillExternalLibrariesAndModules(final Module module,
                                                       final Set<VirtualFile> outputDirs,
                                                       @Nullable final Set<VirtualFile> libraries,
-                                                      final Set<Module> visited) {
+                                                      final Set<Module> visited,
+                                                      final boolean exportedLibrariesOnly) {
     if (!visited.add(module)) {
       return;
     }
@@ -166,8 +167,9 @@ public class AndroidRootUtil {
             continue;
           }
           if (libraries != null && entry instanceof LibraryOrderEntry) {
-            Library library = ((LibraryOrderEntry)entry).getLibrary();
-            if (library != null) {
+            final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+            final Library library = libraryOrderEntry.getLibrary();
+            if (library != null && (!exportedLibrariesOnly || libraryOrderEntry.isExported())) {
               for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
                 if (file.exists()) {
                   if (file.getFileSystem() instanceof JarFileSystem) {
@@ -199,8 +201,11 @@ public class AndroidRootUtil {
                   outputDirs.add(classDirForTests);
                 }
               }
+              fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited, true);
             }
-            fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited);
+            else {
+              fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited, exportedLibrariesOnly);
+            }
           }
         }
       }
@@ -211,14 +216,14 @@ public class AndroidRootUtil {
   public static List<VirtualFile> getExternalLibraries(Module module) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     OrderedSet<VirtualFile> libs = new OrderedSet<VirtualFile>();
-    fillExternalLibrariesAndModules(module, files, libs, new HashSet<Module>());
+    fillExternalLibrariesAndModules(module, files, libs, new HashSet<Module>(), false);
     return libs;
   }
 
   @NotNull
   public static Set<VirtualFile> getDependentModules(Module module, VirtualFile moduleOutputDir) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
-    fillExternalLibrariesAndModules(module, files, null, new HashSet<Module>());
+    fillExternalLibrariesAndModules(module, files, null, new HashSet<Module>(), false);
     files.remove(moduleOutputDir);
     return files;
   }
