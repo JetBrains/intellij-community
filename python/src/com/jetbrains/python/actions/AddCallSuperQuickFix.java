@@ -24,7 +24,7 @@ import java.util.List;
  */
 public class AddCallSuperQuickFix implements LocalQuickFix {
   private final PyClass mySuper;
-  private final String mySuperName;
+  private String mySuperName;
 
   public AddCallSuperQuickFix(PyClass superClass, String superName) {
     mySuper = superClass;
@@ -44,10 +44,23 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PyFunction problemFunction = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class);
+    if (problemFunction == null) return;
     PyFunction superInit = mySuper.findMethodByName(PyNames.INIT, false);
-    StringBuilder superCall = new StringBuilder(mySuperName);
+    StringBuilder superCall = new StringBuilder();
+    PyClass klass = problemFunction.getContainingClass();
+    boolean addComma = true;
+    if (klass != null && klass.isNewStyleClass()) {
+      addComma = false;
+      if (LanguageLevel.forElement(klass).isPy3K())
+        superCall.append("super().__init__(");
+      else
+        superCall.append("super("+klass.getName()+", self).__init__(");
+    }
+    else {
+      superCall.append(mySuperName);
+      superCall.append(".__init__(self");
+    }
     StringBuilder newFunction = new StringBuilder("def __init__(self");
-    superCall.append(".__init__(self");
 
     PyParameter[] parameters = problemFunction.getParameterList().getParameters();
     List<String> problemParams = new ArrayList<String>();
@@ -82,29 +95,35 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       else {
         param = p.getText();
         if (param.startsWith("**")) {
-          if (starName == null)
-            starName = p.getText();
-          continue;
-        }
-        if (param.startsWith("*")) {
           if (doubleStarName == null)
             doubleStarName = p.getText();
           continue;
         }
+        if (param.startsWith("*")) {
+          if (starName == null)
+            starName = p.getText();
+          continue;
+        }
       }
-      superCall.append(",").append(param);
+      if (addComma)
+        superCall.append(",");
+      superCall.append(param);
       if (!functionParams.contains(param))
         newFunction.append(",").append(param);
+      addComma = true;
     }
     for(String p : problemParams)
       newFunction.append(",").append(p);
     if (starName != null) {
       newFunction.append(",").append(starName);
-      superCall.append(",").append(starName);
+      if (addComma) superCall.append(",");
+      superCall.append(starName);
+      addComma = true;
     }
     if (doubleStarName != null) {
+      if (addComma) superCall.append(",");
+      superCall.append(doubleStarName);
       newFunction.append(",").append(doubleStarName);
-      superCall.append(",").append(doubleStarName);
     }
 
     superCall.append(")");
