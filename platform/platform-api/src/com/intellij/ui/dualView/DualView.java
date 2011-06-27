@@ -184,23 +184,26 @@ public class DualView extends JPanel {
 
   private void changeViewTo(JTable view) {
     myCurrentView = view;
-    UIUtil.setTableDecorationEnabled(myCurrentView);
-    final TableCellRenderer renderer = myCurrentView.getDefaultRenderer(Object.class);
-    myCurrentView.setDefaultRenderer(Object.class, new TableCellRenderer() {
-      @Override
-      public Component getTableCellRendererComponent(JTable table,
-                                                     Object value,
-                                                     boolean isSelected,
-                                                     boolean hasFocus,
-                                                     int row,
-                                                     int column) {
-        final Component c = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        if (c instanceof JComponent && !isSelected && !hasFocus) {
-          c.setBackground(UIUtil.getTableCellBackground(table, row));
+    if (myCurrentView != null) {
+      myCurrentView.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+      UIUtil.setTableDecorationEnabled(myCurrentView);
+      final TableCellRenderer renderer = myCurrentView.getDefaultRenderer(Object.class);
+      myCurrentView.setDefaultRenderer(Object.class, new TableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+                                                       Object value,
+                                                       boolean isSelected,
+                                                       boolean hasFocus,
+                                                       int row,
+                                                       int column) {
+          final Component c = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          if (c instanceof JComponent && !isSelected && !hasFocus) {
+            c.setBackground(UIUtil.getTableCellBackground(table, row));
+          }
+          return c;
         }
-        return c;
-      }
-    });
+      });
+    }
   }
 
   private void copySelection(SelectionProvider from, SelectionProvider to) {
