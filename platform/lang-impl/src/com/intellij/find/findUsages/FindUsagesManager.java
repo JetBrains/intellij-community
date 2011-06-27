@@ -316,23 +316,17 @@ public class FindUsagesManager implements JDOMExternalizable {
     if (handler == null) return false;
     UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
       new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
-    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
-    SearchScope oldScope = findUsagesOptions.searchScope;
-    try {
-      findUsagesOptions.searchScope = scope;
-      UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
-      final AtomicBoolean used = new AtomicBoolean();
-      usageSearcher.generate(new Processor<Usage>() {
-        public boolean process(final Usage usage) {
-          used.set(true);
-          return false;
-        }
-      });
-      return used.get();
-    }
-    finally {
-      findUsagesOptions.searchScope = oldScope;
-    }
+    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions().clone();
+    findUsagesOptions.searchScope = scope;
+    UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
+    final AtomicBoolean used = new AtomicBoolean();
+    usageSearcher.generate(new Processor<Usage>() {
+      public boolean process(final Usage usage) {
+        used.set(true);
+        return false;
+      }
+    });
+    return used.get();
   }
 
   // return null on failure or cancel
