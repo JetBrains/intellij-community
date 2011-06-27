@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -193,7 +194,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     AndroidPlatform platform = configuration.getAndroidPlatform();
     if (platform == null) {
       Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
-      ModulesConfigurator.showFacetSettingsDialog(facet, null);
+      ModulesConfigurator.showDialog(project, module.getName(), ClasspathEditor.NAME, false);
       return null;
     }
 
