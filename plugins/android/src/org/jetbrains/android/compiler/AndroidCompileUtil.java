@@ -376,7 +376,7 @@ public class AndroidCompileUtil {
       result.add(resourcesDir.getPath());
     }
     for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
-      VirtualFile depResourceDir = AndroidAptCompiler.getResourceDirForApkCompiler(depFacet.getModule(), facet);
+      VirtualFile depResourceDir = AndroidAptCompiler.getResourceDirForApkCompiler(depFacet.getModule(), depFacet);
       if (depResourceDir != null) {
         result.add(depResourceDir.getPath());
       }
