@@ -64,6 +64,10 @@ import java.util.regex.Pattern;
  * @author max
  */
 public class UIUtil {
+
+  private static final String TABLE_DECORATION_KEY = "TABLE_DECORATION_KEY";
+  private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
+
   public enum FontSize { NORMAL, SMALL }
 
   public static final char MNEMONIC = 0x1B;
@@ -480,6 +484,14 @@ public class UIUtil {
     return UIManager.getColor("Table.gridColor");
   }
 
+  public static Color getTableCellBackground(JTable table, int row) {
+    final Color bg = table.getBackground();
+    if (isTableDecorationEnabled(table) && getTableBackground().getRGB() == bg.getRGB()) {
+      return row % 2 == 0 ? bg : DECORATED_ROW_BG_COLOR;
+    }
+    return bg;
+  }
+
   public static Color getListBackground() {
     // Fixes most of the GTK+ L&F glitches
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
@@ -664,6 +676,16 @@ public class UIUtil {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAlloyLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Alloy");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderWindowsLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().contains("Windows");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderMetalLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().equals("Metal");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -2262,6 +2284,30 @@ public class UIUtil {
     if (c == null || !c.isShowing()) return true;
 
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane;
+  }
+
+  public static void setTableDecorationEnabled(@NotNull JTable table) {
+    if (isTableDecorationSupported()) {
+      table.putClientProperty(TABLE_DECORATION_KEY, true);
+      table.getColumnModel().setColumnMargin(0);
+      table.setShowVerticalLines(false);
+      table.setShowHorizontalLines(false);
+    }
+  }
+
+  private static boolean isTableDecorationSupported() {
+    return isUnderAlloyLookAndFeel()
+      || isUnderNativeMacLookAndFeel()
+      || isUnderQuaquaLookAndFeel()
+      || isUnderMetalLookAndFeel()
+      || isUnderWindowsLookAndFeel()
+      ;
+  }
+
+  public static boolean isTableDecorationEnabled(JTable table) {
+    final Object property = table.getClientProperty(TABLE_DECORATION_KEY);
+    return isTableDecorationSupported()
+           && property instanceof Boolean && ((Boolean)property).booleanValue();
   }
 
 }
