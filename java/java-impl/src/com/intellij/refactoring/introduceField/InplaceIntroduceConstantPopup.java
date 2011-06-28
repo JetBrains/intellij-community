@@ -16,6 +16,8 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -218,14 +220,33 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
 
   @Override
   protected void performPostIntroduceTasks() {
-    if (myMoveToAnotherClassCb.isSelected()) {
+  }
+
+  @Override
+  protected void moveOffsetAfter(boolean success) {
+    if (success && myMoveToAnotherClassCb.isSelected()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          MoveMembersImpl.doMove(myProject, new PsiElement[]{myParentClass.findFieldByName(getInputName(), false)}, null, null);
+          myEditor.putUserData(ACTIVE_INTRODUCE, InplaceIntroduceConstantPopup.this);
+          try {
+            final IntroduceConstantHandler constantHandler = new IntroduceConstantHandler();
+            final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();
+            if (localVariable != null) {
+              constantHandler.invokeImpl(myProject, localVariable, myEditor);
+            }
+            else {
+              constantHandler.invokeImpl(myProject, myExpr, myEditor);
+            }
+          }
+          finally {
+            myEditor.putUserData(ACTIVE_INTRODUCE, null);
+          }
         }
       });
+      return;
     }
+    super.moveOffsetAfter(success);
   }
 
   @Override

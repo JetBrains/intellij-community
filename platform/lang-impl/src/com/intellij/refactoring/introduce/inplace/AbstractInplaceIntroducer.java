@@ -398,10 +398,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Nullable
   public static AbstractInplaceIntroducer getActiveIntroducer(Editor editor) {
-    final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-    if (templateState != null) {
-      return editor.getUserData(ACTIVE_INTRODUCE);
-    }
-    return null;
+    return editor.getUserData(ACTIVE_INTRODUCE);
   }
 }
