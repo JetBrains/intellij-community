@@ -30,10 +30,10 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -212,12 +212,13 @@ public class PluginDownloader {
       }
 
       pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
-      pi.setIndeterminate(connection.getContentLength() == -1);
+      final int contentLength = connection.getContentLength();
+      pi.setIndeterminate(contentLength == -1);
 
       try {
         final OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
         try {
-          StreamUtil.copyStreamContent(is, fos);
+          NetUtils.copyStreamContent(pi, is, fos, contentLength);
         }
         finally {
           fos.close();
