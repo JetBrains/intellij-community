@@ -16,6 +16,7 @@
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -24,9 +25,12 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -222,13 +226,23 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
 
   protected void performRefactoring(UsageInfo[] usages) {
-    for (PsiElement element : myRenameProcessor.getElements()) {
-      RenameUtil.doRename(element, myNewName, extractUsagesForElement(element, usages), myProject, new RefactoringElementListener() {
-        public void elementMoved(@NotNull PsiElement newElement) {}
 
-        public void elementRenamed(@NotNull PsiElement newElement) {}
-      });
+    for (final PsiElement element : myRenameProcessor.getElements()) {
+      try {
+        RenameUtil.doRename(element, myNewName, extractUsagesForElement(element, usages), myProject, new RefactoringElementListener() {
+          public void elementMoved(@NotNull PsiElement newElement) {
+          }
+
+          public void elementRenamed(@NotNull PsiElement newElement) {
+          }
+        });
+      }
+      catch (final IncorrectOperationException e) {
+        RenameUtil.showErrorMessage(e, element, myProject);
+        return;
+      }
     }
+
 
     for (UsageInfo usage : usages) {
       final SmartPsiElementPointer pointerToInvert = myToInvert.get(usage);

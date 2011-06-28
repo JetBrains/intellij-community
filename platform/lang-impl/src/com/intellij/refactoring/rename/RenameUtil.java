@@ -172,7 +172,7 @@ public class RenameUtil {
   }
 
   public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
-                              final RefactoringElementListener listener) {
+                              final RefactoringElementListener listener) throws IncorrectOperationException{
     final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : CopyReferenceAction.elementToFqn(element);
     if (fqn != null) {
@@ -189,22 +189,22 @@ public class RenameUtil {
       };
       UndoManager.getInstance(project).undoableActionPerformed(action);
     }
-    try {
-      processor.renameElement(element, newName, usages, listener);
+    processor.renameElement(element, newName, usages, listener);
+  }
+
+  public static void showErrorMessage(final IncorrectOperationException e, final PsiElement element, final Project project) {
+    // may happen if the file or package cannot be renamed. e.g. locked by another application
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new RuntimeException(e);
+      //LOG.error(e);
+      //return;
     }
-    catch (final IncorrectOperationException e) {
-      // may happen if the file or package cannot be renamed. e.g. locked by another application
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new RuntimeException(e);
-        //LOG.error(e);
-        //return;
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        final String helpID = RenamePsiElementProcessor.forElement(element).getHelpID(element);
+        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), helpID, project);
       }
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), processor.getHelpID(element), project);
-          }
-        });
-    }
+    });
   }
 
   public static void doRenameGenericNamedElement(PsiElement namedElement, String newName, UsageInfo[] usages,

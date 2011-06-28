@@ -318,13 +318,20 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     List<Runnable> postRenameCallbacks = new ArrayList<Runnable>();
 
     final MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usages);
-    for (PsiElement element : myAllRenames.keySet()) {
+    for (final PsiElement element : myAllRenames.keySet()) {
       String newName = myAllRenames.get(element);
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
-      Runnable postRenameCallback = RenamePsiElementProcessor.forElement(element).getPostRenameCallback(element, newName, elementListener);
+      final RenamePsiElementProcessor renamePsiElementProcessor = RenamePsiElementProcessor.forElement(element);
+      Runnable postRenameCallback = renamePsiElementProcessor.getPostRenameCallback(element, newName, elementListener);
       final Collection<UsageInfo> infos = classified.get(element);
-      RenameUtil.doRename(element, newName, infos.toArray(new UsageInfo[infos.size()]), myProject, elementListener);
+      try {
+        RenameUtil.doRename(element, newName, infos.toArray(new UsageInfo[infos.size()]), myProject, elementListener);
+      }
+      catch (final IncorrectOperationException e) {
+        RenameUtil.showErrorMessage(e, element, myProject);
+        return;
+      }
       if (postRenameCallback != null) {
         postRenameCallbacks.add(postRenameCallback);
       }
