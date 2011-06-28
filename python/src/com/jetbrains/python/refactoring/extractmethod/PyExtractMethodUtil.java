@@ -26,6 +26,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -286,7 +287,13 @@ public class PyExtractMethodUtil {
         Map<PsiElement, String> allRenames = new java.util.HashMap<PsiElement, String>();
         allRenames.put(parameter, newName);
         UsageInfo[] usages = RenameUtil.findUsages(parameter, newName, false, false, allRenames);
-        RenameUtil.doRename(parameter, newName, usages, project, new RefactoringElementListenerComposite());
+        try {
+          RenameUtil.doRename(parameter, newName, usages, project, new RefactoringElementListenerComposite());
+        }
+        catch (IncorrectOperationException e) {
+          RenameUtil.showErrorMessage(e, parameter, project);
+          return;
+        }
       }
     }
     // Change signature according to pass settings and
