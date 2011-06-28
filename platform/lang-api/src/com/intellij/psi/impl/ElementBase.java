@@ -60,7 +60,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   };
   private static final Key<TIntObjectHashMap<Icon>> BASE_ICONS = Key.create("BASE_ICONS");
 
-  private static final Icon VISIBILITY_ICON_PLACEHOLDER = new EmptyIcon(PlatformIcons.PUBLIC_ICON);
+  private static final Icon VISIBILITY_ICON_PLACEHOLDER = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
   public static final Icon ICON_PLACEHOLDER = IconLoader.getIcon("/nodes/nodePlaceholder.png");
 
   @Nullable

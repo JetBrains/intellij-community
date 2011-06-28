@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -602,7 +602,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   public Icon getEmptyHandle() {
     if (myEmptyHandle == null) {
       final Icon expand = getExpandedHandle();
-      myEmptyHandle = expand != null ? new EmptyIcon(expand) : EmptyIcon.create(0);
+      myEmptyHandle = expand != null ? EmptyIcon.create(expand) : EmptyIcon.create(0);
     }
 
     return myEmptyHandle;

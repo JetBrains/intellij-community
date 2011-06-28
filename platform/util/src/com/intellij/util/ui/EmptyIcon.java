@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author max
@@ -29,7 +30,8 @@ import java.util.HashMap;
  * @see com.intellij.util.ui.ColorIcon
  */
 public class EmptyIcon implements Icon {
-  private static final HashMap<Integer, Icon> cache = new HashMap<Integer, Icon>();
+  private static final Map<Integer, Icon> cache = new HashMap<Integer, Icon>();
+
   public static final Icon ICON_16 = create(16);
   public static final Icon ICON_18 = create(18);
   public static final Icon ICON_8 = create(8);
@@ -46,10 +48,16 @@ public class EmptyIcon implements Icon {
     return icon == null ? new EmptyIcon(size, size) : icon;
   }
 
+  public static Icon create(int width, int height) {
+    return width == height ? create(width) : new EmptyIcon(width, height);
+  }
+
+  public static Icon create(@NotNull Icon base) {
+    return create(base.getIconWidth(), base.getIconHeight());
+  }
+
   /**
-   * @deprecated use EmptyIcon.create for caching
-   *
-   * @param size icon's size
+   * @deprecated use {@linkplain #create(int)} for caching.
    */
   public EmptyIcon(int size) {
     this(size, size);
@@ -60,6 +68,9 @@ public class EmptyIcon implements Icon {
     this.height = height;
   }
 
+  /**
+   * @deprecated use {@linkplain #create(javax.swing.Icon)} for caching.
+   */
   public EmptyIcon(@NotNull Icon base) {
     this(base.getIconWidth(), base.getIconHeight());
   }
