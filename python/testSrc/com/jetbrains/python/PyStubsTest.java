@@ -316,9 +316,17 @@ public class PyStubsTest extends PyLightFixtureTestCase {
   }
 
   public void testIfNameMain() {  // PY-4008
+    ensureVariableNotInIndex("xyzzy");
+  }
+
+  public void testVariableInComprehension() {  // PY-4029
+    ensureVariableNotInIndex("xyzzy");
+  }
+
+  private void ensureVariableNotInIndex(String name) {
     getTestFile();
     GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
-    Collection<PyTargetExpression> result = PyVariableNameIndex.find("xyzzy", myFixture.getProject(), scope);
+    Collection<PyTargetExpression> result = PyVariableNameIndex.find(name, myFixture.getProject(), scope);
     assertEquals(0, result.size());
   }
 
