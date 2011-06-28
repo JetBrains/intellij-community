@@ -67,27 +67,29 @@ public class FileWatcher {
 
   private final Object LOCK = new Object();
   private final Lock SET_ROOTS_LOCK = new ReentrantLock(true);
+
   private List<String> myDirtyPaths = new ArrayList<String>();
   private List<String> myDirtyRecursivePaths = new ArrayList<String>();
   private List<String> myDirtyDirs = new ArrayList<String>();
   private List<String> myManualWatchRoots = new ArrayList<String>();
+
   private final List<Pair<String, String>> myMapping = new ArrayList<Pair<String, String>>();
   private List<Pair<String, String>> myCanonicalMapping = new ArrayList<Pair<String, String>>();
 
   private List<String> myRecursiveWatchRoots = new ArrayList<String>();
   private List<String> myFlatWatchRoots = new ArrayList<String>();
 
-  private boolean myFailureShownToTheUser = false;
-
   private Process notifierProcess;
   private BufferedReader notifierReader;
   private BufferedWriter notifierWriter;
 
-  private static final FileWatcher ourInstance = new FileWatcher();
+  private boolean myFailureShownToTheUser = false;
   private int attemptCount = 0;
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
   private boolean isShuttingDown = false;
   private final ManagingFS myManagingFS;
+
+  private static final FileWatcher ourInstance = new FileWatcher();
 
   public static FileWatcher getInstance() {
     return ourInstance;
@@ -167,29 +169,27 @@ public class FileWatcher {
       t = (System.nanoTime() - t) / 1000;
       LOG.info((recursive.size() + flat.size()) + " paths checked, " + mapping.size() + " mapped, " + t + " mks");
 
-      synchronized (LOCK) {
+      if (isAlive()) {
         try {
-          myRecursiveWatchRoots = recursive;
-          myFlatWatchRoots = flat;
-          myCanonicalMapping.clear();
-
-          if (isAlive()) {
-            myMapping.clear();
-            myCanonicalMapping = mapping;
-
-            writeLine(ROOTS_COMMAND);
-            for (String path : checkedRecursive) {
-              writeLine(path);
-            }
-            for (String path : checkedFlat) {
-              writeLine("|" + path);
-            }
-            writeLine("#");
+          writeLine(ROOTS_COMMAND);
+          for (String path : checkedRecursive) {
+            writeLine(path);
           }
+          for (String path : checkedFlat) {
+            writeLine("|" + path);
+          }
+          writeLine("#");
         }
         catch (IOException e) {
           LOG.error(e);
         }
+      }
+
+      synchronized (LOCK) {
+        myRecursiveWatchRoots = recursive;
+        myFlatWatchRoots = flat;
+        myMapping.clear();
+        myCanonicalMapping = mapping;
       }
     }
     finally {
@@ -234,12 +234,6 @@ public class FileWatcher {
     }
 
     return false;
-  }
-
-  private void setManualWatchRoots(List<String> roots) {
-    synchronized (LOCK) {
-      myManualWatchRoots = roots;
-    }
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
@@ -300,7 +294,7 @@ public class FileWatcher {
     }
   }
 
-  private void notifyOnFailure(String cause, NotificationListener listener) {
+  private void notifyOnFailure(String cause, @Nullable NotificationListener listener) {
     if (!myFailureShownToTheUser) {
       myFailureShownToTheUser = true;
       Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "External file sync may be slow", cause, NotificationType.WARNING, listener));
@@ -364,7 +358,9 @@ public class FileWatcher {
             }
             while (true);
 
-            setManualWatchRoots(roots);
+            synchronized (LOCK) {
+              myManualWatchRoots = roots;
+            }
           }
           else if (MESSAGE_COMMAND.equals(command)) {
             final String message = readLine();
@@ -386,8 +382,10 @@ public class FileWatcher {
             }
             while (true);
 
-            myMapping.clear();
-            myMapping.addAll(pairs);
+            synchronized (LOCK) {
+              myMapping.clear();
+              myMapping.addAll(pairs);
+            }
           }
           else {
             final String path = readLine();
@@ -397,17 +395,19 @@ public class FileWatcher {
               continue;
             }
 
-            final String watchedPath = checkWatchable(path);
-            if (watchedPath != null) {
-              try {
-                onPathChange(ChangeKind.valueOf(command), watchedPath);
+            synchronized (LOCK) {
+              final String watchedPath = checkWatchable(path);
+              if (watchedPath != null) {
+                try {
+                  onPathChange(ChangeKind.valueOf(command), watchedPath);
+                }
+                catch (IllegalArgumentException e) {
+                  LOG.error("Illegal watcher command: " + command);
+                }
               }
-              catch (IllegalArgumentException e) {
-                LOG.error("Illegal watcher command: " + command);
+              else if (LOG.isDebugEnabled()) {
+                LOG.debug("Not watchable, filtered: " + path);
               }
-            }
-            else if (LOG.isDebugEnabled()) {
-              LOG.debug("Not watchable, filtered: " + path);
             }
           }
         }
@@ -463,28 +463,26 @@ public class FileWatcher {
   private String checkWatchable(String path) {
     if (path == null) return null;
 
-    synchronized (LOCK) {
-      for (Pair<String, String> mapping : myCanonicalMapping) {
-        if (path.startsWith(mapping.first)) {
-          path = mapping.second + path.substring(mapping.first.length());
-          break;
-        }
+    for (Pair<String, String> mapping : myCanonicalMapping) {
+      if (path.startsWith(mapping.first)) {
+        path = mapping.second + path.substring(mapping.first.length());
+        break;
       }
+    }
 
-      for (String root : myRecursiveWatchRoots) {
-        if (FileUtil.startsWith(path, root)) {
-          return path;
-        }
+    for (String root : myRecursiveWatchRoots) {
+      if (FileUtil.startsWith(path, root)) {
+        return path;
       }
+    }
 
-      for (String root : myFlatWatchRoots) {
-        if (FileUtil.pathsEqual(path, root)) {
-          return path;
-        }
-        final File parentFile = new File(path).getParentFile();
-        if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) {
-          return path;
-        }
+    for (String root : myFlatWatchRoots) {
+      if (FileUtil.pathsEqual(path, root)) {
+        return path;
+      }
+      final File parentFile = new File(path).getParentFile();
+      if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) {
+        return path;
       }
     }
 
@@ -492,36 +490,34 @@ public class FileWatcher {
   }
 
   private void onPathChange(final ChangeKind changeKind, final String path) {
-    synchronized (LOCK) {
-      switch (changeKind) {
-        case STATS:
-        case CHANGE:
+    switch (changeKind) {
+      case STATS:
+      case CHANGE:
+        addPath(path, myDirtyPaths);
+        break;
+
+      case CREATE:
+      case DELETE:
+        final File parentFile = new File(path).getParentFile();
+        if (parentFile != null) {
+          addPath(parentFile.getPath(), myDirtyPaths);
+        }
+        else {
           addPath(path, myDirtyPaths);
-          break;
+        }
+        break;
 
-        case CREATE:
-        case DELETE:
-          final File parentFile = new File(path).getParentFile();
-          if (parentFile != null) {
-            addPath(parentFile.getPath(), myDirtyPaths);
-          }
-          else {
-            addPath(path, myDirtyPaths);
-          }
-          break;
+      case DIRTY:
+        addPath(path, myDirtyDirs);
+        break;
 
-        case DIRTY:
-          addPath(path, myDirtyDirs);
-          break;
+      case RECDIRTY:
+        addPath(path, myDirtyRecursivePaths);
+        break;
 
-        case RECDIRTY:
-          addPath(path, myDirtyRecursivePaths);
-          break;
-
-        case RESET:
-          reset();
-          break;
-      }
+      case RESET:
+        reset();
+        break;
     }
   }
 
