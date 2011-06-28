@@ -444,15 +444,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       }
     );
 
-    extend(CompletionType.BASIC, inStatement.andNot(PY3K),
-           new CompletionProvider<CompletionParameters>() {
-             @Override
-             protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
-                                           @NotNull CompletionResultSet result) {
-               putKeywords(new String[]{"print"}, TailType.SPACE, result);
-             }
-           });
+    extend(CompletionType.BASIC, inStatement.andNot(PY3K), new PyKeywordCompletionProvider(TailType.SPACE, "print"));
   }
 
   private void addBreak() {
