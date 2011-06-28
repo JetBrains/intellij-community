@@ -414,7 +414,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null), BorderLayout.NORTH);
     panel.add(mySignatureArea, BorderLayout.CENTER);
     mySignatureArea.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
-    //mySignatureArea.setPreferredSize(new Dimension(-1, 130));
+    mySignatureArea.setPreferredSize(new Dimension(-1, 130));
     mySignatureArea.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR));
     mySignatureArea.addFocusListener(new FocusAdapter() {
       @Override
