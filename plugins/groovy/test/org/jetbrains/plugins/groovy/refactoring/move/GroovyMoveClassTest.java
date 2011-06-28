@@ -26,7 +26,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -37,15 +36,9 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import junit.framework.AssertionFailedError;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * @author Maxim.Medvedev
@@ -213,77 +206,6 @@ public class GroovyMoveClassTest extends CodeInsightTestCase {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  public static void assertDirsEquals(File d1, VirtualFile d2) {
-    final File[] ch1 = d1.listFiles();
-    final VirtualFile[] ch2 = d2.getChildren();
-    Arrays.sort(ch1, new Comparator<File>() {
-      @Override
-      public int compare(File o1, File o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
-
-    Arrays.sort(ch2, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
-
-    assertEquals("check dir '"+d1.getName()+"': ", ch1.length, ch2.length);
-    for (int i = 1; i < ch1.length; i++) {
-      assertEquals(ch1[i].isDirectory(), ch2[i].isDirectory());
-      if (ch1[i].isDirectory() && !".svn".equals(ch1[i].getName())) {
-        assertDirsEquals(ch1[i], ch2[i]);
-      }
-      else {
-        assertEquals(ch1[i].getName(), ch2[i].getName());
-        try {
-          assertFilesEqual(ch1[i], ch2[i]);
-        }
-        catch (IOException e) {
-          assertTrue(false);
-        }
-      }
-    }
-  }
-
-  public static void assertFilesEqual(File f1, VirtualFile f2) throws IOException {
-
-    final byte[] bytes1 = contentsToByteArray(f1);
-    final byte[] bytes2 = f2.contentsToByteArray();
-
-    String s1 = StringUtil.convertLineSeparators(new String(bytes1));
-    String s2 = StringUtil.convertLineSeparators(new String(bytes2));
-
-    try {
-      assertEquals(s1, s2);
-    }
-    catch (AssertionFailedError e) {
-      System.out.println(f1.getPath() + "\n" + f2.getPath());
-      throw e;
-    }
-  }
-
-  private static byte[] contentsToByteArray(File f) throws IOException {
-    int b;
-    final FileReader fileReader = new FileReader(f);
-    try {
-      ArrayList<Byte> bytes = new ArrayList<Byte>();
-      while ((b = fileReader.read()) >= 0) {
-        bytes.add((byte)b);
-      }
-      final byte[] res = new byte[bytes.size()];
-      for (int i = 0; i < res.length; i++) {
-        res[i] = bytes.get(i);
-      }
-      return res;
-    }
-    finally {
-      fileReader.close();
     }
   }
 }

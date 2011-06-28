@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
@@ -428,7 +429,18 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
       return;
     }
-    final GrTopStatement newPackage = GroovyPsiElementFactory.getInstance(getProject()).createTopElementFromText("package " + packageName);
+
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    final GrPackageDefinition newPackage = (GrPackageDefinition)factory.createTopElementFromText("package " + packageName);
+
+    if (currentPackage != null) {
+      final GrCodeReferenceElement packageReference = currentPackage.getPackageReference();
+      if (packageReference != null) {
+        packageReference.replace(newPackage.getPackageReference());
+        return;
+      }
+    }
+
     final ASTNode newNode = newPackage.getNode();
     if (currentPackage != null) {
       final ASTNode currNode = currentPackage.getNode();

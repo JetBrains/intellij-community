@@ -1,5 +1,4 @@
 package b
-
 class A {
   def foo() {
     print new B()

@@ -1,4 +1,5 @@
 package a
+
 import b.Foo
 
 class Y {

@@ -19,18 +19,17 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -108,11 +107,17 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
 
     performAction(fileNames, newDirName, VfsUtil.getRelativePath(actualRoot, myFixture.getTempDirFixture().getFile(""), '/'));
 
-    File expectedRoot = new File(getTestDataPath() + testName + "/after");
+    final VirtualFile expectedRoot = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + getTestName(true) + "/after");
+    //File expectedRoot = new File(getTestDataPath() + testName + "/after");
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
 
     VirtualFileManager.getInstance().refresh(false);
-    GroovyMoveClassTest.assertDirsEquals(expectedRoot, actualRoot);
+    try {
+      PlatformTestUtil.assertDirectoriesEqual(expectedRoot, actualRoot, VirtualFileFilter.ALL);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 

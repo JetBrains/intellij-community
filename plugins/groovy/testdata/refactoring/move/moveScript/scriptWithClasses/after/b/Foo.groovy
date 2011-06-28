@@ -1,4 +1,5 @@
-package a
+package b
+
 import a.Y
 
 class A {

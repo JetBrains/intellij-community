@@ -211,7 +211,7 @@
     <refactoring.inlineHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>
     <refactoring.moveClassHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyClassHandler"/>
     <refactoring.moveMemberHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyMemberHandler"/>
-    <refactoring.moveHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyScriptHandler" id="moveGroovyScript" order="before moveFileOrDir, before moveJavaFileOrDir"/>
+
     <refactoring.helper implementation="org.jetbrains.plugins.groovy.refactoring.GroovyImportOptimizerRefactoringHelper"/>
     <codeInsight.lineMarkerProvider language="Groovy"
                                     implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
