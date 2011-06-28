@@ -407,6 +407,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       }
 
       String enteredName = null;
+      boolean replaceAllOccurrences = false;
       if (isInplaceAvailableOnDataContext) {
         final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(myEditor);
         if (activeIntroducer == null) {
@@ -427,6 +428,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
           myLocalVar = (PsiLocalVariable)activeIntroducer.getLocalVariable();
           occurences = (PsiExpression[])activeIntroducer.getOccurrences();
           enteredName = activeIntroducer.getInputName();
+          replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
         }
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -442,9 +444,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         if (myEditor != null) {
           RefactoringUtil.highlightAllOccurences(myProject, occurences, myEditor);
         }
-        new IntroduceParameterDialog(myProject, classMemberRefs, occurences, myLocalVar, myExpr,
-                                     createNameSuggestionGenerator(myExpr, propName, myProject, enteredName),
-                                     typeSelectorManager, methodToSearchFor, method, getParamsToRemove(method, occurences), mustBeFinal).show();
+        final IntroduceParameterDialog dialog =
+          new IntroduceParameterDialog(myProject, classMemberRefs, occurences, myLocalVar, myExpr,
+                                       createNameSuggestionGenerator(myExpr, propName, myProject, enteredName),
+                                       typeSelectorManager, methodToSearchFor, method, getParamsToRemove(method, occurences), mustBeFinal);
+        dialog.setReplaceAllOccurrences(replaceAllOccurrences);
+        dialog.show();
         if (myEditor != null) {
           myEditor.getSelectionModel().removeSelection();
         }

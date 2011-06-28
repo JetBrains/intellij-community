@@ -283,6 +283,12 @@ class IntroduceConstantDialog extends DialogWrapper {
     return myPanel;
   }
 
+  public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {
+    if (myCbReplaceAll != null) {
+      myCbReplaceAll.setSelected(replaceAllOccurrences);
+    }
+  }
+
   protected static NameSuggestionsGenerator createNameSuggestionGenerator(final String propertyName,
                                                                           final PsiExpression psiExpression,
                                                                           final JavaCodeStyleManager codeStyleManager,

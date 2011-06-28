@@ -134,15 +134,6 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
     myIntroduceFieldPanel.setReplaceAllOccurrences(replaceAllOccurrences);
   }
 
-  @TestOnly
-  public void setCreateFinal(boolean createFinal) {
-    myIntroduceFieldPanel.setCreateFinal(createFinal);
-  }
-
-  public void setInitializeInFieldDeclaration() {
-    myIntroduceFieldPanel.setInitializeInFieldDeclaration();
-  }
-
   public void setVisibility(String visibility) {
     myIntroduceFieldPanel.setVisibility(visibility);
   }
@@ -155,7 +146,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
 
     @Override
-    protected boolean isReplaceAllOccurrences() {
+    public boolean isReplaceAllOccurrences() {
       return myIntroduceFieldPanel.isReplaceAllOccurrences();
     }
 

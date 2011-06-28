@@ -110,7 +110,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected abstract void performIntroduce();
   protected void performPostIntroduceTasks() {}
 
-  protected abstract boolean isReplaceAllOccurrences();
+  public abstract boolean isReplaceAllOccurrences();
   protected abstract JComponent getComponent();
 
   protected abstract void saveSettings(V variable);

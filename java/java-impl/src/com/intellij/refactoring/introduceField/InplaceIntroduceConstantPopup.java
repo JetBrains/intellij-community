@@ -193,7 +193,7 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected boolean isReplaceAllOccurrences() {
+  public boolean isReplaceAllOccurrences() {
     return myReplaceAllCb.isSelected();
   }
 

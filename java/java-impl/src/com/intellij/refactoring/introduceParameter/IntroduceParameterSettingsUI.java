@@ -281,4 +281,10 @@ public abstract class IntroduceParameterSettingsUI {
     panel.add(myCbReplaceAllOccurences, gbConstraints);
     myCbReplaceAllOccurences.setSelected(false);
   }
+
+  public void setReplaceAllOccurrences(boolean replaceAll) {
+    if (myCbReplaceAllOccurences != null) {
+      myCbReplaceAllOccurences.setSelected(replaceAll);
+    }
+  }
 }

@@ -126,7 +126,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   }
 
   @Override
-  protected boolean isReplaceAllOccurrences() {
+  public boolean isReplaceAllOccurrences() {
     return myPanel.isReplaceAllOccurences();
   }
 

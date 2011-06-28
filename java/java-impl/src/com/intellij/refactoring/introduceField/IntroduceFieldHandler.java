@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
+import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurences.*;
@@ -105,6 +106,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
 
     String enteredName = null;
+    boolean replaceAll = false;
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (activeIntroducer == null) {
@@ -121,6 +123,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
         localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
         occurences = (PsiExpression[])activeIntroducer.getOccurrences();
         enteredName = activeIntroducer.getInputName();
+        replaceAll = activeIntroducer.isReplaceAllOccurrences();
       }
     }
 
@@ -132,6 +135,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       typeSelectorManager,
       enteredName
     );
+    dialog.setReplaceAllOccurrences(replaceAll);
     dialog.show();
 
     if (!dialog.isOK()) {

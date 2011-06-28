@@ -286,6 +286,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     }
   }
 
+  public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {
+    myPanel.setReplaceAllOccurrences(replaceAllOccurrences);
+  }
+
   private class IntroduceParameterSettingsPanel extends IntroduceParameterSettingsUI {
     public IntroduceParameterSettingsPanel(Project project,
                                            PsiLocalVariable onLocalVariable,

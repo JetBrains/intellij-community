@@ -236,10 +236,6 @@ public abstract class IntroduceFieldCentralPanel {
     }
   }
 
-  public void addFinalListener(ItemListener itemListener) {
-    myCbFinal.addItemListener(itemListener);
-  }
-
   public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {
     if (myCbReplaceAll != null) {
       myCbReplaceAll.setSelected(replaceAllOccurrences);

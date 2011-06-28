@@ -86,6 +86,10 @@ class IntroduceFieldDialog extends DialogWrapper {
     updateButtons();
   }
 
+  public void setReplaceAllOccurrences(boolean replaceAll) {
+    myCentralPanel.setReplaceAllOccurrences(replaceAll);
+  }
+
   public String getEnteredName() {
     return myNameField.getEnteredName();
   }

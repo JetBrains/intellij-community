@@ -146,6 +146,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     }
 
     String enteredName = null;
+    boolean replaceAllOccurrences = true;
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
@@ -161,6 +162,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
         localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
         occurences = (PsiExpression[])activeIntroducer.getOccurrences();
         enteredName = activeIntroducer.getInputName();
+        replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
       }
     }
 
@@ -168,6 +170,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     final IntroduceConstantDialog dialog =
       new IntroduceConstantDialog(project, parentClass, expr, localVariable, localVariable != null, occurences, getParentClass(),
                                   typeSelectorManager, enteredName);
+    dialog.setReplaceAllOccurrences(replaceAllOccurrences);
     dialog.show();
     if (!dialog.isOK()) {
       if (occurences.length > 1) {
