@@ -157,6 +157,9 @@ public class FunctionParsing extends Parsing {
       }
       else {
         parameter.rollbackTo();
+        if (atToken(endToken)) {
+          break;
+        }
         PsiBuilder.Marker invalidElements = myBuilder.mark();
         while (!atToken(endToken) && !atToken(PyTokenTypes.LINE_BREAK) && !atToken(PyTokenTypes.COMMA) && !atToken(null)) {
           nextToken();
