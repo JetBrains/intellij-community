@@ -474,16 +474,12 @@ public class PlatformTestUtil {
 
         int expectedOnMyMachine = expected;
         if (adjustForCPU) {
-          // most of our algorithms are quadratic. sad but true.
-          double speed = 1.0 * Timings.CPU_TIMING / Timings.ETALON_CPU_TIMING;
-          double delta = speed < 1
-                     ? 0.9 + Math.pow(speed - 0.7, 2)
-                     : 0.45 + Math.pow(speed - 0.25, 2);
-          expectedOnMyMachine *= delta;
+          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING);
+
           expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 / JobSchedulerImpl.CORES_COUNT : expectedOnMyMachine;
         }
         if (adjustForIO) {
-          expectedOnMyMachine = Math.max(1, (int)(1.0 * expectedOnMyMachine * (1 + Math.pow(1.0 * Timings.IO_TIMING / Timings.ETALON_IO_TIMING - 1,2))));
+          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING);
         }
         final double acceptableChangeFactor = 1.1;
 
@@ -519,6 +515,16 @@ public class PlatformTestUtil {
         }
         break;
       }
+    }
+
+    private static int adjust(int expectedOnMyMachine, long thisTiming, long ethanolTiming) {
+      // most of our algorithms are quadratic. sad but true.
+      double speed = 1.0 * thisTiming / ethanolTiming;
+      double delta = speed < 1
+                 ? 0.9 + Math.pow(speed - 0.7, 2)
+                 : 0.45 + Math.pow(speed - 0.25, 2);
+      expectedOnMyMachine *= delta;
+      return expectedOnMyMachine;
     }
   }
 
