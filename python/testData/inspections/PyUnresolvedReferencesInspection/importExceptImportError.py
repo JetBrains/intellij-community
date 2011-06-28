@@ -42,8 +42,18 @@ def f():
 # PY-3869
 def f(x):
     try:
-        from foo import bar
+        from foo import bar #pass
     except ImportError:
         def bar(x):
             return x
     return bar(x)
+
+# PY-3919
+def f(x):
+    try:
+        from foo import Bar #pass
+    except ImportError:
+        class Bar(object):
+            pass
+    return Bar()
+
