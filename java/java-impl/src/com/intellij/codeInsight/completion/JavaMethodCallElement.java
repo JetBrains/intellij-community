@@ -98,7 +98,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     final int startOffset = context.getStartOffset();
     final OffsetKey refStart = context.trackOffset(startOffset, true);
-    if (shouldInsertTypeParameters(context)) {
+    if (shouldInsertTypeParameters(context, startOffset)) {
       qualifyMethodCall(file, startOffset, document);
       insertExplicitTypeParameters(context, refStart);
     }
@@ -129,7 +129,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   }
 
-  private boolean shouldInsertTypeParameters(InsertionContext context) {
+  private boolean shouldInsertTypeParameters(InsertionContext context, int offset) {
     final PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
     if (PsiTreeUtil.getParentOfType(leaf, PsiExpressionList.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
       if (PsiTreeUtil.getParentOfType(leaf, PsiConditionalExpression.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
@@ -143,31 +143,35 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       }
     }
 
-    return SmartCompletionDecorator.hasUnboundTypeParams(getObject());
+    return SmartCompletionDecorator.hasUnboundTypeParams(getObject(), getExpectedTypeForExplicitTypeParameters(context, offset));
   }
 
-  private boolean insertExplicitTypeParameters(InsertionContext context, OffsetKey refStart) {
+  @Nullable
+  private static PsiType getExpectedTypeForExplicitTypeParameters(InsertionContext context, final int offset) {
     context.commitDocument();
 
-    PsiExpression expression = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getOffset(refStart), PsiExpression.class, false);
-    if (expression == null) return true;
+    PsiExpression expression = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiExpression.class, false);
+    if (expression == null) return null;
 
     for (final ExpectedTypeInfo type : ExpectedTypesProvider.getExpectedTypes(expression, true)) {
       if (type.isInsertExplicitTypeParams()) {
-        final String typeParams = getTypeParamsText(type.getType());
-        if (typeParams == null) {
-          return true;
-        }
-
-        context.getDocument().insertString(context.getOffset(refStart), typeParams);
-
-        JavaCompletionUtil.shortenReference(context.getFile(), context.getOffset(refStart));
-
-        break;
+        return type.getType();
       }
     }
+    return null;
+  }
 
-    return true;
+  private void insertExplicitTypeParameters(InsertionContext context, OffsetKey refStart) {
+    context.commitDocument();
+
+    PsiType psiType = getExpectedTypeForExplicitTypeParameters(context, context.getOffset(refStart));
+    if (psiType != null) {
+      final String typeParams = getTypeParamsText(psiType);
+      if (typeParams != null) {
+        context.getDocument().insertString(context.getOffset(refStart), typeParams);
+        JavaCompletionUtil.shortenReference(context.getFile(), context.getOffset(refStart));
+      }
+    }
   }
 
   private void qualifyMethodCall(PsiFile file, final int startOffset, final Document document) {

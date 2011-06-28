@@ -971,7 +971,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testFilterPrivateConstructors() throws Throwable { doTest(); }
 
   public void testExplicitMethodTypeParametersQualify() throws Throwable { doTest(); }
-
+  public void testExplicitMethodTypeParametersOverZealous() throws Throwable { doTest(); }
   public void testExplicitMethodTypeParametersFromSuperClass() throws Throwable { doTest(); }
 
   public void testWildcardedInstanceof() throws Throwable { doTest(); }
