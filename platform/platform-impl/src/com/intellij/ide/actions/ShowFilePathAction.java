@@ -168,7 +168,7 @@ public class ShowFilePathAction extends AnAction {
     return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isGnome || SystemInfo.isKDE || Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
-  public static void open(final File ioFile, File toSelect) {
+  public static void open(@NotNull File ioFile, @Nullable File toSelect) {
     try {
       if (SystemInfo.isWindows || SystemInfo.isMac) {
         final String path = toSelect == null ? ioFile.getCanonicalPath() : toSelect.exists() ? toSelect.getCanonicalPath() : ioFile.getCanonicalPath();
