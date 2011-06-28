@@ -25,6 +25,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -559,9 +560,23 @@ public class GrClassImplUtil {
     builder.setNavigationElement(method);
     builder.addModifier(PsiModifier.PUBLIC);
     final PsiParameter[] originalParameters = method.getParameterList().getParameters();
+
+    final PsiClass containingClass = method.getContainingClass();
+    boolean isRaw = containingClass != null && PsiUtil.isRawSubstitutor(containingClass, substitutor);
+    if (isRaw) {
+      PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
+      substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, methodTypeParameters);
+    }
+
     for (int i = 0, originalParametersLength = originalParameters.length; i < originalParametersLength; i++) {
       PsiParameter originalParameter = originalParameters[i];
-      PsiType type = substitutor.substitute(originalParameter.getType());
+      PsiType type;
+      if (isRaw) {
+        type = TypeConversionUtil.erasure(substitutor.substitute(originalParameter.getType()));
+      }
+      else {
+        type = substitutor.substitute(originalParameter.getType());
+      }
       if (type == null) {
         type = PsiType.getJavaLangObject(clazz.getManager(), clazz.getResolveScope());
       }
