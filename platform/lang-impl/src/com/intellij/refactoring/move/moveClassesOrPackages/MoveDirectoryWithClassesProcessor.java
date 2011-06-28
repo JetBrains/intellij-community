@@ -186,6 +186,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
   @Override
   protected void performPsiSpoilingRefactoring() {
+    if (myNonCodeUsages == null) return; //refactoring was aborted
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     if (myMoveCallback != null) {
       myMoveCallback.refactoringCompleted();
