@@ -138,7 +138,7 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
 
   private JPanel createLeftPanel() {
     final JPanel left = new JPanel(new GridBagLayout());
-    myMoveToAnotherClassCb = new JCheckBox("Move to another class");
+    myMoveToAnotherClassCb = new JCheckBox("Move to another class", JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS);
     myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
     left.add(myMoveToAnotherClassCb,
@@ -224,27 +224,30 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
 
   @Override
   protected void moveOffsetAfter(boolean success) {
-    if (success && myMoveToAnotherClassCb.isSelected()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myEditor.putUserData(ACTIVE_INTRODUCE, InplaceIntroduceConstantPopup.this);
-          try {
-            final IntroduceConstantHandler constantHandler = new IntroduceConstantHandler();
-            final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();
-            if (localVariable != null) {
-              constantHandler.invokeImpl(myProject, localVariable, myEditor);
+    if (success) {
+      JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS = myMoveToAnotherClassCb.isSelected();
+      if (myMoveToAnotherClassCb.isSelected()) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            myEditor.putUserData(ACTIVE_INTRODUCE, InplaceIntroduceConstantPopup.this);
+            try {
+              final IntroduceConstantHandler constantHandler = new IntroduceConstantHandler();
+              final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();
+              if (localVariable != null) {
+                constantHandler.invokeImpl(myProject, localVariable, myEditor);
+              }
+              else {
+                constantHandler.invokeImpl(myProject, myExpr, myEditor);
+              }
             }
-            else {
-              constantHandler.invokeImpl(myProject, myExpr, myEditor);
+            finally {
+              myEditor.putUserData(ACTIVE_INTRODUCE, null);
             }
           }
-          finally {
-            myEditor.putUserData(ACTIVE_INTRODUCE, null);
-          }
-        }
-      });
-      return;
+        });
+        return;
+      }
     }
     super.moveOffsetAfter(success);
   }

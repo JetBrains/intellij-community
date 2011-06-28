@@ -90,6 +90,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public boolean INHERITANCE_TO_DELEGATION_DELEGATE_OTHER;
   //public boolean REPLACE_CONSTRUCTOR_WITH_FACTORY_PREVIEW_USAGES;
   public String INTRODUCE_CONSTANT_VISIBILITY;
+  public boolean INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS = false;
   public boolean CONVERT_TO_INSTANCE_METHOD_PREVIEW_USAGES = true;
 
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS = null;
