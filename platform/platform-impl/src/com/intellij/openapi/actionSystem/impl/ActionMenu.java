@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -33,15 +34,12 @@ import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.plaf.MenuItemUI;
-import javax.swing.plaf.basic.BasicMenuUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public final class ActionMenu extends JMenu {
-  private static final String MARK = "__TOP_LEVEL__";
-
   private final String myPlace;
   private DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -66,8 +64,6 @@ public final class ActionMenu extends JMenu {
                     final PresentationFactory presentationFactory,
                     final boolean enableMnemonics,
                     final boolean topLevel) {
-    super(topLevel ? MARK : "");  // super() invokes updateUI() before myTopLevel got chance to set
-
     myContext = context;
     myPlace = place;
     myGroup = ActionRef.fromAction(group);
@@ -75,6 +71,8 @@ public final class ActionMenu extends JMenu {
     myPresentation = myPresentationFactory.getPresentation(group);
     myMnemonicEnabled = enableMnemonics;
     myTopLevel = topLevel;
+
+    updateUI();
 
     init();
 
@@ -133,13 +131,12 @@ public final class ActionMenu extends JMenu {
 
   @Override
   public void setUI(final MenuItemUI ui) {
-    final MenuItemUI newUi = !isTopLevel() && UIUtil.isUnderGTKLookAndFeel() && ui instanceof BasicMenuUI
-                             ? new GtkMenuUI((BasicMenuUI)ui) : ui;
+    final MenuItemUI newUi = !isTopLevel() && UIUtil.isUnderGTKLookAndFeel() && GtkMenuUI.isUiAcceptable(ui) ? new GtkMenuUI(ui) : ui;
     super.setUI(newUi);
   }
 
   private boolean isTopLevel() {
-    return myTopLevel || getText() == MARK;
+    return myTopLevel;
   }
 
   private void init() {
@@ -181,14 +178,16 @@ public final class ActionMenu extends JMenu {
   }
 
   private void updateIcon() {
-    Presentation presentation = myPresentation;
-    Icon icon = presentation.getIcon();
-    setIcon(icon);
-    if (presentation.getDisabledIcon() != null) {
-      setDisabledIcon(presentation.getDisabledIcon());
-    }
-    else {
-      setDisabledIcon(IconLoader.getDisabledIcon(icon));
+    if (UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+      final Presentation presentation = myPresentation;
+      final Icon icon = presentation.getIcon();
+      setIcon(icon);
+      if (presentation.getDisabledIcon() != null) {
+        setDisabledIcon(presentation.getDisabledIcon());
+      }
+      else {
+        setDisabledIcon(IconLoader.getDisabledIcon(icon));
+      }
     }
   }
 
@@ -223,7 +222,6 @@ public final class ActionMenu extends JMenu {
       clearItems();
       addStubItem();
     }
-
 
     public void menuSelected(MenuEvent e) {
       fillMenu();

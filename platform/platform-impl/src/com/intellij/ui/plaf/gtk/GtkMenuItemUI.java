@@ -15,42 +15,86 @@
  */
 package com.intellij.ui.plaf.gtk;
 
+import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.plaf.synth.SynthUI;
 
 import javax.swing.*;
+import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.basic.BasicMenuItemUI;
+import javax.swing.plaf.synth.SynthContext;
 import java.awt.*;
 
 public class GtkMenuItemUI extends BasicMenuItemUI {
-  private final BasicMenuItemUI myOriginalUI;
+  private static Icon myCachedCheckIcon = null;
 
-  public GtkMenuItemUI(final BasicMenuItemUI originalUI) {
-    myOriginalUI = originalUI;
+  private final BasicMenuItemUI myOriginalUI;
+  private JCheckBoxMenuItem myHiddenItem;
+
+  public GtkMenuItemUI(final MenuItemUI originalUI) {
+    assert isUiAcceptable(originalUI) : originalUI;
+    myOriginalUI = (BasicMenuItemUI)originalUI;
+  }
+
+  public static boolean isUiAcceptable(final MenuItemUI ui) {
+    return ui instanceof BasicMenuItemUI && ui instanceof SynthUI;
   }
 
   @Override
   public void installUI(final JComponent c) {
     super.installUI(c);
 
-    final JComponent temp = new JMenuItem();
-    myOriginalUI.installUI(temp);
-    menuItem.setBorder(temp.getBorder());
+    myHiddenItem = new JCheckBoxMenuItem();
+    myOriginalUI.installUI(myHiddenItem);
+    menuItem.setBorder(myHiddenItem.getBorder());
+    final Icon icon = getCheckIconFromContext(myOriginalUI, myHiddenItem);
+    checkIcon = isCheckBoxItem() ? icon : EmptyIcon.create(icon);
+  }
+
+  @Override
+  public void uninstallUI(final JComponent c) {
+    super.uninstallUI(c);
+
+    myOriginalUI.uninstallUI(myHiddenItem);
+    myHiddenItem = null;
+    resetCachedCheckIcon();
+  }
+
+  private static Icon getCheckIconFromContext(final BasicMenuItemUI originalUI, final JCheckBoxMenuItem item) {
+    if (myCachedCheckIcon == null) {
+      final SynthContext context = ((SynthUI)originalUI).getContext(item);
+      myCachedCheckIcon = context.getStyle().getIcon(context, "CheckBoxMenuItem.checkIcon");
+    }
+    return myCachedCheckIcon;
+  }
+
+  private boolean isCheckBoxItem() {
+    return menuItem instanceof JCheckBoxMenuItem ||
+           menuItem instanceof ActionMenuItem && ((ActionMenuItem)menuItem).isToggleable();
+  }
+
+  private static void resetCachedCheckIcon() {
+    myCachedCheckIcon = null;
   }
 
   @Override
   public void update(final Graphics g, final JComponent c) {
+    myHiddenItem.setSelected(menuItem.isSelected());
+
     if (UIUtil.isMurrineBasedTheme()) {
       acceleratorFont = menuItem.getFont();
       final Color fg = GtkPaintingUtil.getForeground(myOriginalUI, menuItem);
       acceleratorForeground = UIUtil.mix(fg, menuItem.getBackground(), menuItem.isSelected() ? 0.4 : 0.2);
       disabledForeground = fg;
     }
-    if (checkIcon != null && !(checkIcon instanceof IconWrapper)) {
+    if (checkIcon != null && !(checkIcon instanceof IconWrapper) && !(checkIcon instanceof EmptyIcon)) {
       checkIcon = new IconWrapper(checkIcon, (SynthUI)myOriginalUI);
     }
+
     super.update(g, c);
   }
+
 
   @Override
   protected void paintText(final Graphics g, final JMenuItem menuItem, final Rectangle textRect, final String text) {

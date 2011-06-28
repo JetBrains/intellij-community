@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.plaf.MenuItemUI;
-import javax.swing.plaf.basic.BasicMenuItemUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -59,6 +58,8 @@ public class ActionMenuItem extends JMenuItem {
   private AnActionEvent myEvent;
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private final boolean myEnableMnemonics;
+  private final boolean myToggleable;
+  private boolean myToggled;
 
   public ActionMenuItem(final AnAction action,
                         final Presentation presentation,
@@ -71,9 +72,13 @@ public class ActionMenuItem extends JMenuItem {
     myPlace = place;
     myContext = context;
     myEnableMnemonics = enableMnemonics;
+    myToggleable = action instanceof Toggleable;
+
     myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0);
     addActionListener(new ActionTransmitter());
     setBorderPainted(false);
+
+    updateUI();
 
     if (prepareNow) {
       init();
@@ -177,8 +182,7 @@ public class ActionMenuItem extends JMenuItem {
 
   @Override
   public void setUI(final MenuItemUI ui) {
-    final MenuItemUI newUi = UIUtil.isUnderGTKLookAndFeel() && ui instanceof BasicMenuItemUI
-                             ? new GtkMenuItemUI((BasicMenuItemUI)ui) : ui;
+    final MenuItemUI newUi = UIUtil.isUnderGTKLookAndFeel() && GtkMenuItemUI.isUiAcceptable(ui) ? new GtkMenuItemUI(ui) : ui;
     super.setUI(newUi);
   }
 
@@ -220,10 +224,11 @@ public class ActionMenuItem extends JMenuItem {
       IdeFocusManager.findInstanceByContext(myContext).runOnOwnContext(myContext, new Runnable() {
         @Override
         public void run() {
-          AnActionEvent event = new AnActionEvent(
+          final AnActionEvent event = new AnActionEvent(
             new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
-            myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers());
-          AnAction action = myAction.getAction();
+            myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers()
+          );
+          final AnAction action = myAction.getAction();
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
             ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
             actionManager.fireBeforeActionPerformed(action, myContext, event);
@@ -240,15 +245,18 @@ public class ActionMenuItem extends JMenuItem {
   }
 
   private void updateIcon(AnAction action) {
-    if (action instanceof Toggleable && myPresentation.getIcon() == null) {
+    if (isToggleable() && myPresentation.getIcon() == null) {
       action.update(myEvent);
-      if (Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY))) {
-        setIcon(ourCheckedIcon);
-        setDisabledIcon(IconLoader.getDisabledIcon(ourCheckedIcon));
-      }
-      else {
-        setIcon(ourUncheckedIcon);
-        setDisabledIcon(IconLoader.getDisabledIcon(ourUncheckedIcon));
+      myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
+      if (!(getUI() instanceof GtkMenuItemUI)) {
+        if (myToggled) {
+          setIcon(ourCheckedIcon);
+          setDisabledIcon(IconLoader.getDisabledIcon(ourCheckedIcon));
+        }
+        else {
+          setIcon(ourUncheckedIcon);
+          setDisabledIcon(IconLoader.getDisabledIcon(ourUncheckedIcon));
+        }
       }
     }
     else {
@@ -263,6 +271,15 @@ public class ActionMenuItem extends JMenuItem {
         }
       }
     }
+  }
+
+  public boolean isToggleable() {
+    return myToggleable;
+  }
+
+  @Override
+  public boolean isSelected() {
+    return myToggled;
   }
 
   private final class MenuItemSynchronizer implements PropertyChangeListener, Disposable {

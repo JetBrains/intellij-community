@@ -19,21 +19,27 @@ import com.intellij.util.ui.UIUtil;
 import sun.swing.plaf.synth.SynthUI;
 
 import javax.swing.*;
+import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.basic.BasicMenuUI;
 import java.awt.*;
 
 public class GtkMenuUI extends BasicMenuUI {
   private final BasicMenuUI myOriginalUI;
 
-  public GtkMenuUI(final BasicMenuUI originalUI) {
-    myOriginalUI = originalUI;
+  public GtkMenuUI(final MenuItemUI originalUI) {
+    assert isUiAcceptable(originalUI) : originalUI;
+    myOriginalUI = (BasicMenuUI)originalUI;
+  }
+
+  public static boolean isUiAcceptable(final MenuItemUI ui) {
+    return ui instanceof BasicMenuUI && ui instanceof SynthUI;
   }
 
   @Override
   public void installUI(final JComponent c) {
     super.installUI(c);
 
-    final JComponent temp = new JMenu();
+    final JMenu temp = new JMenu();
     myOriginalUI.installUI(temp);
     menuItem.setBorder(temp.getBorder());
   }
