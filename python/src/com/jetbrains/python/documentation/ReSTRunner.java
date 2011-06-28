@@ -22,7 +22,7 @@ public class ReSTRunner {
 
   @Nullable
   public static String formatDocstring(Module module, String text) {
-    Sdk sdk = PythonSdkType.findPythonSdk(module);
+    Sdk sdk = PythonSdkType.findPython2Sdk(module);
     if (sdk == null) {
       return null;
     }

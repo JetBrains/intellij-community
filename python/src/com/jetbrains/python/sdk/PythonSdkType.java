@@ -727,5 +727,20 @@ public class PythonSdkType extends SdkType {
     }
     return false;
   }
+
+  @Nullable
+  public static Sdk findPython2Sdk(Module module) {
+    Sdk moduleSDK = findPythonSdk(module);
+    if (moduleSDK != null && !getLanguageLevelForSdk(moduleSDK).isPy3K()) {
+      return moduleSDK;
+    }
+    List<Sdk> allSdks = getAllSdks();
+    for (Sdk sdk : allSdks) {
+      if (!getLanguageLevelForSdk(sdk).isPy3K()) {
+        return sdk;
+      }
+    }
+    return null;
+  }
 }
 
