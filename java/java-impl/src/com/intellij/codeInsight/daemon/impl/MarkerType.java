@@ -43,8 +43,8 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public enum MarkerType {
-  OVERRIDING_METHOD(new NullableFunction<PsiElement, String>() {
+public class MarkerType {
+  public static final MarkerType OVERRIDING_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return null;
@@ -80,8 +80,8 @@ public enum MarkerType {
                   new MethodCellRenderer(showMethodNames));
 
     }
-  }),
-  OVERRIDEN_METHOD(new NullableFunction<PsiElement, String>() {
+  });
+  public static final MarkerType OVERRIDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return null;
@@ -136,8 +136,8 @@ public enum MarkerType {
       PsiElementListNavigator.openTargets(e, overridings, title, renderer);
 
     }
-  }),
-  SUBCLASSED_CLASS(new NullableFunction<PsiElement, String>() {
+  });
+  public static final MarkerType SUBCLASSED_CLASS = new MarkerType(new NullableFunction<PsiElement, String>() {
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) return null;
@@ -197,7 +197,7 @@ public enum MarkerType {
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
 
-  MarkerType(Function<PsiElement, String> tooltip, final LineMarkerNavigator navigator) {
+  public MarkerType(Function<PsiElement, String> tooltip, final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
     handler = new GutterIconNavigationHandler<PsiElement>() {
       public void navigate(MouseEvent e, PsiElement elt) {

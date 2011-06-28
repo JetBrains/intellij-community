@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProc
 
 import java.beans.Introspector;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -486,5 +487,14 @@ public class GroovyPropertyUtils {
     final PsiClass fieldClass = field.getContainingClass();
     if (!field.getManager().areElementsEquivalent(accessorClass, fieldClass)) return false;
     return accessor.hasModifierProperty(GrModifier.STATIC) == field.hasModifierProperty(GrModifier.STATIC);
+  }
+
+  public static List<GrAccessorMethod> collectAccessorsFromField(GrField field) {
+    List<GrAccessorMethod> accessors = new ArrayList<GrAccessorMethod>();
+    final GrAccessorMethod[] getters = field.getGetters();
+    Collections.addAll(accessors, getters);
+    final GrAccessorMethod setter = field.getSetter();
+    if (setter != null) accessors.add(setter);
+    return accessors;
   }
 }
