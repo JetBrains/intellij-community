@@ -24,7 +24,6 @@ import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.impl.DownloadableFileDescriptionImpl;
 import com.intellij.framework.library.impl.DownloadableLibraryDescriptionImpl;
 import com.intellij.framework.library.impl.FrameworkLibraryVersionImpl;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;
@@ -88,7 +87,7 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
     return mySuitableLibraryCondition;
   }
 
-  public static CustomLibraryDescription createByVersions(List<FrameworkVersion> versions) {
+  public static CustomLibraryDescription createByVersions(List<? extends FrameworkVersion> versions) {
     String defaultLibraryName = null;
     List<FrameworkVersion> withLibraries = new ArrayList<FrameworkVersion>();
     for (FrameworkVersion version : versions) {

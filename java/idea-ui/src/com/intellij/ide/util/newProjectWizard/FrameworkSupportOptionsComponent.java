@@ -99,7 +99,7 @@ public class FrameworkSupportOptionsComponent {
 
   @Nullable
   private CustomLibraryDescription createLibraryDescription() {
-    List<FrameworkVersion> versions = myConfigurable.getVersions();
+    List<? extends FrameworkVersion> versions = myConfigurable.getVersions();
     if (versions.isEmpty()) return null;
 
     if (versions.get(0) instanceof FrameworkVersionWithLibrary) {

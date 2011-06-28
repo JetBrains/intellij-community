@@ -93,7 +93,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
   }
 
   @NotNull
-  public List<FrameworkVersion> getVersions() {
+  public List<? extends FrameworkVersion> getVersions() {
     return myVersions;
   }
 

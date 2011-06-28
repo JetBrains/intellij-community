@@ -25,12 +25,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
 * @author peter
 */
 public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
-  private FrameworkVersionWithLibrary myVersion;
+  private FrameworkVersion myVersion;
 
   public GroovySupportConfigurable() {
   }
@@ -41,6 +43,11 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
       myVersion = new FrameworkVersionWithLibrary("", true, new GroovyLibraryDescription());
     }
     return myVersion;
+  }
+
+  @Override
+  public List<? extends FrameworkVersion> getVersions() {
+    return Collections.singletonList(getSelectedVersion());
   }
 
   public JComponent getComponent() {

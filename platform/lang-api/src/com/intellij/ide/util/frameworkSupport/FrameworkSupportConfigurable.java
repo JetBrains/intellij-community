@@ -44,7 +44,7 @@ public abstract class FrameworkSupportConfigurable implements Disposable {
     return null;
   }
 
-  public List<FrameworkVersion> getVersions() {
+  public List<? extends FrameworkVersion> getVersions() {
     return Collections.emptyList();
   }
 
