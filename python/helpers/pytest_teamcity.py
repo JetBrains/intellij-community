@@ -63,6 +63,8 @@ if PYVERSION > [1,3,4]:
     messages.testFinished(name)
 
   def pytest_sessionfinish(session, exitstatus):
+    if current_suite:
+      messages.testSuiteFinished(current_suite)
     if current_file_suite:
       messages.testSuiteFinished(current_file_suite)
 
