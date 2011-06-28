@@ -16,12 +16,12 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,10 +38,10 @@ public class AddRemoveUpDownPanel extends JPanel {
 
     Icon getIcon() {
       switch (this) {
-        case ADD: return PlatformIcons.ADD_ICON;
-        case REMOVE: return PlatformIcons.DELETE_ICON;
-        case UP: return PlatformIcons.MOVE_UP_ICON;
-        case DOWN: return PlatformIcons.MOVE_DOWN_ICON;
+        case ADD:    return PlatformIcons.TABLE_ADD_ROW;
+        case REMOVE: return PlatformIcons.TABLE_REMOVE_ROW;
+        case UP:     return PlatformIcons.TABLE_MOVE_ROW_UP;
+        case DOWN:   return PlatformIcons.TABLE_MOVE_ROW_DOWN;
       }
       return null;
     }
@@ -83,7 +83,7 @@ public class AddRemoveUpDownPanel extends JPanel {
 
   public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, boolean isHorizontal,
                               @Nullable AnActionButton[] additionalActions, Buttons... buttons) {
-    super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, false, false));
+    super(new BorderLayout());
     AnActionButton[] actions = new AnActionButton[buttons.length];
     for (int i = 0; i < buttons.length; i++) {
       Buttons button = buttons[i];
@@ -103,12 +103,12 @@ public class AddRemoveUpDownPanel extends JPanel {
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
                                                                                   new DefaultActionGroup(myActions),
                                                                                   isHorizontal);
-    add(toolbar.getComponent());
+    toolbar.getComponent().setBorder(null);
+    add(toolbar.getComponent(), BorderLayout.CENTER);
   }
 
   @Override
   public void addNotify() {
-    super.addNotify();
     final JRootPane pane = getRootPane();
     for (AnActionButton button : myActions) {
       final Shortcut shortcut = button.getShortcut();
@@ -116,6 +116,7 @@ public class AddRemoveUpDownPanel extends JPanel {
         button.registerCustomShortcutSet(new CustomShortcutSet(shortcut), pane);
       }
     }
+    super.addNotify(); // call after all to construct actions tooltips properly
   }
 
   public void setEnabled(Buttons button, boolean enabled) {

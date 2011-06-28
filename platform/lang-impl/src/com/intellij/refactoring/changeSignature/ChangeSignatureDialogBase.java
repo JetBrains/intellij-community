@@ -45,6 +45,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -380,27 +381,16 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     };
     UIUtil.setTableDecorationEnabled(myParametersTable);
     myParametersTable.setCellSelectionEnabled(true);
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("parameters.border.title")));
-
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myParametersTable);
-
-    JPanel tablePanel = new JPanel(new BorderLayout());
-    tablePanel.add(scrollPane, BorderLayout.CENTER);
-
-    tablePanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-    panel.add(tablePanel, BorderLayout.CENTER);
-
-    myParametersTable.setPreferredScrollableViewportSize(new Dimension(450, myParametersTable.getRowHeight() * 8));
     myParametersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
     myParametersTable.setSurrendersFocusOnKeystroke(true);
     myPropagateParamChangesButton.setShortcut(KeyboardShortcut.fromString("alt G"));
-    final JPanel buttonsPanel = EditableRowTable.createButtonsTable(myParametersTable, myParametersTableModel,
-                                                              false, true, false, myPropagateParamChangesButton);
+    final JPanel buttonsPanel = EditableRowTable.wrapToTableWithButtons(myParametersTable,
+                                                                        myParametersTableModel,
+                                                                        new CustomLineBorder(1, 0, 0, 0),
+                                                                        myPropagateParamChangesButton);
     myPropagateParamChangesButton.setEnabled(false);
     myPropagateParamChangesButton.setVisible(false);
-    panel.add(buttonsPanel, BorderLayout.EAST);
 
     myParametersTableModel.addTableModelListener(
       new TableModelListener() {
@@ -411,8 +401,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     );
 
     customizeParametersTable(myParametersTable);
-
-    return panel;
+    return buttonsPanel;
   }
 
   protected void customizeParametersTable(TableView<ParameterTableModelItemBase<P>> table) {
@@ -425,7 +414,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null), BorderLayout.NORTH);
     panel.add(mySignatureArea, BorderLayout.CENTER);
     mySignatureArea.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
-    mySignatureArea.setPreferredSize(new Dimension(-1, 130));
+    //mySignatureArea.setPreferredSize(new Dimension(-1, 130));
     mySignatureArea.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR));
     mySignatureArea.addFocusListener(new FocusAdapter() {
       @Override

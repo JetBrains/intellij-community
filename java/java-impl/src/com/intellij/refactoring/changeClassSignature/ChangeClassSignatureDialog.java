@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,17 @@ package com.intellij.refactoring.changeClassSignature;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
+import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Table;
@@ -105,13 +107,16 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myTable.setFocusCycleRoot(true);
 
 
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("changeClassSignature.parameters.panel.border.title")));
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
-
-    panel.add(scrollPane, BorderLayout.CENTER);
-    final JPanel buttonsTable = EditableRowTable.createButtonsTable(myTable, myTableModel, true);
-    panel.add(buttonsTable, BorderLayout.EAST);
+    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+    panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("changeClassSignature.parameters.panel.border.title"), myTable));
+    panel.add(EditableRowTable.wrapToTableWithButtons(myTable, myTableModel, new CustomLineBorder(0, 1, 1, 1)));
+    //JPanel panel = new JPanel(new BorderLayout());
+    //panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("changeClassSignature.parameters.panel.border.title")));
+    //JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    //
+    //panel.add(scrollPane, BorderLayout.CENTER);
+    //final JPanel buttonsTable = EditableRowTable.createButtonsTable(myTable, myTableModel, true);
+    //panel.add(buttonsTable, BorderLayout.EAST);
     return panel;
   }
 

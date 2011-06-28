@@ -39,8 +39,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.EditableRowTable;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
@@ -54,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -98,12 +96,19 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   protected boolean mayPropagateExceptions() {
-    final ThrownExceptionInfo[] thrownExceptions = myExceptionsModel.getThrownExceptions();
+    final ThrownExceptionInfo[] exceptions = myExceptionsModel.getThrownExceptions();
     final PsiClassType[] types = myMethod.getMethod().getThrowsList().getReferencedTypes();
-    if (thrownExceptions.length <= types.length) return false;
-    for (int i = 0; i < types.length; i++) {
-      if (thrownExceptions[i].getOldIndex() != i) return false;
+
+    if (exceptions.length <= types.length) {
+      return false;
     }
+
+    for (int i = 0; i < types.length; i++) {
+      if (exceptions[i].getOldIndex() != i) {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -127,15 +132,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
     });
     table.getColumnModel().getColumn(0).setCellEditor(cellEditor);
-    final JPanel panel = new JPanel(new BorderLayout());
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    final JPanel tablePanel = new JPanel(new BorderLayout());
-    tablePanel.add(scrollPane, BorderLayout.CENTER);
-
-    tablePanel.setBorder(IdeBorderFactory.createEmptyBorder(4));
-    panel.add(tablePanel, BorderLayout.CENTER);
-
-    table.setPreferredScrollableViewportSize(new Dimension(450, table.getRowHeight() * 8));
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
@@ -151,18 +147,21 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             myExceptionPropagationTree = chooser.get().getTree();
           }
         };
-        chooser.set(
-          new JavaCallerChooser(myMethod.getMethod(), myProject, RefactoringBundle.message("changeSignature.exception.caller.chooser"),
-                                myExceptionPropagationTree, callback));
+        chooser.set(new JavaCallerChooser(myMethod.getMethod(),
+                                          myProject,
+                                          RefactoringBundle.message("changeSignature.exception.caller.chooser"),
+                                          myExceptionPropagationTree,
+                                          callback));
         chooser.get().show();
       }
     };
     myPropExceptionsButton.setShortcut(KeyboardShortcut.fromString("alt X"));
 
 
-    final JPanel buttonsPanel = EditableRowTable.createButtonsTable(table, myExceptionsModel, false, true, false, myPropExceptionsButton);
-
-    panel.add(buttonsPanel, BorderLayout.EAST);
+    final JPanel panel = EditableRowTable.wrapToTableWithButtons(table,
+                                                                        myExceptionsModel,
+                                                                        new CustomLineBorder(1,0,0,0),
+                                                                        myPropExceptionsButton);
 
     myExceptionsModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {

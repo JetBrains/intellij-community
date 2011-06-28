@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,9 @@ import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * User: anna
@@ -246,13 +248,14 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         createChangeSignatureProcessor(info, method).run();
         return true;
       }
+      final JavaMethodDescriptor descriptor = new JavaMethodDescriptor(info.getMethod()) {
+        @Override
+        public String getReturnTypeText() {
+          return info.getNewReturnType().getTypeText();
+        }
+      };
       final JavaChangeSignatureDialog dialog =
-        new JavaChangeSignatureDialog(method.getProject(), new JavaMethodDescriptor(info.getMethod()) {
-          @Override
-          public String getReturnTypeText() {
-            return info.getNewReturnType().getTypeText();
-          }
-        }, true, method) {
+        new JavaChangeSignatureDialog(method.getProject(), descriptor, true, method) {
           protected BaseRefactoringProcessor createRefactoringProcessor() {
             return createChangeSignatureProcessor(info, method);
           }

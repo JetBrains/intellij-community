@@ -16,8 +16,10 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -113,7 +115,10 @@ public class EditableRowTable {
       }
     };
 
-    if (!iconsOnly) {
+    if (iconsOnly) {
+      p.set(new AddRemoveUpDownPanel(listener, table, isHorizontal, actions, AddRemoveUpDownPanel.Buttons.ALL));
+      panel.add(p.get(), BorderLayout.NORTH);
+    } else {
       addButton.set(new JButton());
       addButton.get().setText(addMnemonics ? UIBundle.message("row.add") : UIBundle.message("row.add.without.mnemonic"));
       addButton.get().setDefaultCapable(false);
@@ -159,9 +164,6 @@ public class EditableRowTable {
       });
       gbConstraints.weighty = 1;
       panel.add(new JPanel(), gbConstraints);
-    } else {
-      p.set(new AddRemoveUpDownPanel(listener, table, isHorizontal, actions, AddRemoveUpDownPanel.Buttons.ALL));
-      panel.add(p.get(), BorderLayout.NORTH);
     }
 
     table.getSelectionModel().addListSelectionListener(
@@ -214,5 +216,18 @@ public class EditableRowTable {
         add.setEnabled(true);
       }
     }
+  }
+
+  public static JPanel wrapToTableWithButtons(final JTable table,
+                                              final RowEditableTableModel tableModel,
+                                              @Nullable Border buttonsBorder,
+                                              final AnActionButton... buttons) {
+    final JPanel buttonsPanel = createButtonsTable(table, tableModel, true, true, true, buttons);
+    buttonsPanel.setBorder(buttonsBorder);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+    final JPanel panel = new JPanel(new BorderLayout()/*new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)*/);
+    panel.add(scrollPane, BorderLayout.CENTER);
+    panel.add(buttonsPanel, BorderLayout.SOUTH);
+    return panel;
   }
 }
