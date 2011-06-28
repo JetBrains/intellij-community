@@ -161,6 +161,7 @@ ldap
 libxml
 likec
 linestring
+linkplain
 lldb
 llvm
 localhost
@@ -370,6 +371,7 @@ tinyblob
 tinyint
 tinytext
 todo
+toggleable
 tokenize
 tokenizer
 tooltip
