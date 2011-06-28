@@ -255,7 +255,9 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       @Override public void visitElement(final RefEntity refEntity) {
         if (getProblemElements().containsKey(refEntity)) {
           CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
-          exportResults(descriptions, refEntity, parentNode);
+          if (descriptions != null) {
+            exportResults(descriptions, refEntity, parentNode);
+          }
         }
       }
     });
