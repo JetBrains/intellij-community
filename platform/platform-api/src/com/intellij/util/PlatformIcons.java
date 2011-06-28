@@ -146,4 +146,9 @@ public interface PlatformIcons {
   Icon REMOVE_BIG = IconLoader.getIcon("/actions/removeBig.png");
   Icon UP_BIG = IconLoader.getIcon("/actions/upBig.png");
   Icon DOWN_BIG = IconLoader.getIcon("/actions/downBig.png");
+
+  Icon TABLE_ADD_ROW = IconLoader.getIcon("/actions/tableAdd.png");
+  Icon TABLE_REMOVE_ROW = IconLoader.getIcon("/actions/tableRemove.png");
+  Icon TABLE_MOVE_ROW_UP = IconLoader.getIcon("/actions/tableMoveUp.png");
+  Icon TABLE_MOVE_ROW_DOWN = IconLoader.getIcon("/actions/tableMoveDown.png");
 }
