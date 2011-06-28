@@ -65,7 +65,6 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
 
   private JCheckBox myMoveToAnotherClassCb;
 
-  private JPanel myWholePanel;
   private final PsiClass myParentClass;
 
   public InplaceIntroduceConstantPopup(Project project,
@@ -97,7 +96,6 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
     myInitializerText = getExprText(expr, localVariable);
 
 
-    myWholePanel = new JPanel(new GridBagLayout());
     GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     myWholePanel.add(myLabel, gc);

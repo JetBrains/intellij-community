@@ -55,8 +55,6 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
   private final IntroduceFieldCentralPanel myIntroduceFieldPanel;
 
-  private JPanel myWholePanel;
-
   static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
   public InplaceIntroduceFieldPopup(PsiLocalVariable localVariable,
@@ -94,8 +92,6 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
                                myOccurrences, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
 
-    myWholePanel = new JPanel(new BorderLayout());
-    myWholePanel.setBorder(null);
     myWholePanel.add(myLabel, BorderLayout.NORTH);
 
     final JComponent centerPanel = myIntroduceFieldPanel.createCenterPanel();

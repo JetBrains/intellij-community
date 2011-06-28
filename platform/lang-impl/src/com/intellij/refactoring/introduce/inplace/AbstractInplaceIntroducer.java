@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -45,7 +46,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +73,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   protected SimpleColoredComponent myLabel = new SimpleColoredComponent();
   private DocumentAdapter myDocumentAdapter;
+  protected final JPanel myWholePanel;
 
   public AbstractInplaceIntroducer(Project project,
                                    Editor editor,
@@ -94,6 +98,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     myLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 0));
     myLabel.append("#########################");
 
+    myWholePanel = new JPanel(new GridBagLayout());
+    myWholePanel.setBorder(null);
 
     final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     final Shortcut[] shortcuts = keymap.getShortcuts(getActionName());
@@ -157,7 +163,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
               if (templateState != null) {
                 final String variableValue =
                   templateState.getVariableValue(VariableInplaceRenamer.PRIMARY_VARIABLE_NAME).getText();
-                updateTitle(variable, variableValue);
+                updateTitle(getVariable(), variableValue);
               }
             }
           };
@@ -185,11 +191,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void updateTitle(V variable, String value) {
     myLabel.clear();
     myLabel.append(variable.getText().replace(variable.getName(), value));
+    myWholePanel.revalidate();
+    ((BalloonImpl)myBalloon).revalidate(new PositionTracker.Static<Balloon>(myTarget));
   }
 
   protected void updateTitle(V variable) {
     myLabel.clear();
     myLabel.append(variable.getText());
+    myWholePanel.revalidate();
+    ((BalloonImpl)myBalloon).revalidate(new PositionTracker.Static<Balloon>(myTarget));
   }
 
   public void restartInplaceIntroduceTemplate() {

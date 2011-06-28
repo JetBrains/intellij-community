@@ -60,6 +60,7 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
 
   protected Balloon myBalloon;
   protected String myTitle;
+  protected RelativePoint myTarget;
 
   public AbstractInplaceVariableIntroducer(PsiNamedElement elementToRename,
                                            Editor editor,
@@ -142,7 +143,8 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
       y -= myEditor.getLineHeight();
     }
-    myBalloon.show(new RelativePoint(new Point(screenPoint.x, y)), Balloon.Position.above);
+    myTarget = new RelativePoint(new Point(screenPoint.x, y));
+    myBalloon.show(myTarget, Balloon.Position.above);
   }
 
   @Override
