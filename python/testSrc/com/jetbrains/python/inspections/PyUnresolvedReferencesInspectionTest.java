@@ -36,6 +36,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase
     doTest();
   }
 
+  public void testMro() {  // PY-3989
+    doTest();
+  }
+
   public void testConditionalImports() { // PY-983
     myFixture.configureByFiles(TEST_DIRECTORY + getTestName(true) + ".py",
                                TEST_DIRECTORY + "lib1.py",

@@ -175,6 +175,15 @@ public class PyClassType extends UserDataHolderBase implements PyType {
         }
       }
     }
+    if (isDefinition() && myClass.isNewStyleClass()) {
+      PyClassType typeType = PyBuiltinCache.getInstance(myClass).getObjectType("type");
+      if (typeType != null) {
+        List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext);
+        if (typeMembers != null && !typeMembers.isEmpty()) {
+          return typeMembers;
+        }
+      }
+    }
     return Collections.emptyList();
   }
 
@@ -237,6 +246,13 @@ public class PyClassType extends UserDataHolderBase implements PyType {
     addOwnClassMembers(location, namesAlready, suppressParentheses, ret);
 
     addInheritedMembers(prefix, location, context, ret);
+
+    if (isDefinition() && myClass.isNewStyleClass()) {
+      PyClassType typeType = PyBuiltinCache.getInstance(myClass).getObjectType("type");
+      if (typeType != null) {
+        Collections.addAll(ret, typeType.getCompletionVariants(prefix, location, context));
+      }
+    }
 
     return ret.toArray();
   }

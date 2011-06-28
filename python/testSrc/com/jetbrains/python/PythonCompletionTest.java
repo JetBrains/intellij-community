@@ -392,4 +392,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testDuplicateColon() {  // PY-2652
     doTest();
   }
+
+  public void testMro() {  // PY-3989
+    doTest();
+  }
 }
