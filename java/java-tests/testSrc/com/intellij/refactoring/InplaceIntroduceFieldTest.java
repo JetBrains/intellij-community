@@ -125,6 +125,9 @@ public class InplaceIntroduceFieldTest extends LightCodeInsightTestCase {
       state.gotoEnd(false);
       checkResultByFile(BASE_PATH + name + "_after.java");
     }
+    catch (Throwable e) {
+      e.printStackTrace();
+    }
     finally {
       myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
       templateManager.setTemplateTesting(false);

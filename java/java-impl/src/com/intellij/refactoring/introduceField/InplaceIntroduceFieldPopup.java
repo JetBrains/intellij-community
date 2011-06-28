@@ -92,11 +92,14 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
                                myOccurrences, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
 
-    myWholePanel.add(myLabel, BorderLayout.NORTH);
+    final GridBagConstraints constraints =
+      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                             new Insets(0, 0, 0, 0), 0, 0);
+    myWholePanel.add(myLabel, constraints);
 
     final JComponent centerPanel = myIntroduceFieldPanel.createCenterPanel();
 
-    myWholePanel.add(centerPanel, BorderLayout.WEST);
+    myWholePanel.add(centerPanel, constraints);
 
     myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
   }

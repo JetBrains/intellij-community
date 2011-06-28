@@ -227,8 +227,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       }
       myLabel.append(")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-    myWholePanel.revalidate();
-    ((BalloonImpl)myBalloon).revalidate(new PositionTracker.Static<Balloon>(myTarget));
+    revalidate();
   }
 
   @Override

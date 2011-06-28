@@ -48,6 +48,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,16 +191,21 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   protected void updateTitle(V variable, String value) {
     myLabel.clear();
-    myLabel.append(variable.getText().replace(variable.getName(), value));
-    myWholePanel.revalidate();
-    ((BalloonImpl)myBalloon).revalidate(new PositionTracker.Static<Balloon>(myTarget));
+    myLabel.append(variable.getText().replace(variable.getName(), value), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    revalidate();
   }
 
   protected void updateTitle(V variable) {
     myLabel.clear();
-    myLabel.append(variable.getText());
+    myLabel.append(variable.getText(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    revalidate();
+  }
+
+  protected void revalidate() {
     myWholePanel.revalidate();
-    ((BalloonImpl)myBalloon).revalidate(new PositionTracker.Static<Balloon>(myTarget));
+    if (myTarget != null) {
+      ((BalloonImpl)myBalloon).revalidate(new PositionTracker.Static<Balloon>(myTarget));
+    }
   }
 
   public void restartInplaceIntroduceTemplate() {
