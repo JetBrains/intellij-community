@@ -1,7 +1,9 @@
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,7 +46,9 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
-                     result.addElement(LookupElementBuilder.create(superMethod.getName() + superMethod.getParameterList().getText() + ":"));
+                     String text = superMethod.getName() + superMethod.getParameterList().getText();
+                     LookupElementBuilder element = LookupElementBuilder.create(text);
+                     result.addElement(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
                      seenNames.add(superMethod.getName());
                    }
                  }

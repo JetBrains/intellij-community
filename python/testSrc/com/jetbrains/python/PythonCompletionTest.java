@@ -388,4 +388,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testAlias() {  // PY-3672
     doTest();
   }
+
+  public void testDuplicateColon() {  // PY-2652
+    doTest();
+  }
 }
