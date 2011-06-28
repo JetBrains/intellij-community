@@ -209,6 +209,10 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       }
     }
 
+    public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
+      return myIntroduceFieldPanel.getInitializerPlace();
+    }
+
     protected void performIntroduce() {
       ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
       final BaseExpressionToFieldHandler.Settings settings =

@@ -124,6 +124,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
         occurences = (PsiExpression[])activeIntroducer.getOccurrences();
         enteredName = activeIntroducer.getInputName();
         replaceAll = activeIntroducer.isReplaceAllOccurrences();
+        IntroduceFieldDialog.ourLastInitializerPlace = ((InplaceIntroduceFieldPopup)activeIntroducer).getInitializerPlace();
       }
     }
 

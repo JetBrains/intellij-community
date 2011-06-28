@@ -408,6 +408,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
       String enteredName = null;
       boolean replaceAllOccurrences = false;
+      boolean delegate = false;
       if (isInplaceAvailableOnDataContext) {
         final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(myEditor);
         if (activeIntroducer == null) {
@@ -429,6 +430,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
           occurences = (PsiExpression[])activeIntroducer.getOccurrences();
           enteredName = activeIntroducer.getInputName();
           replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
+          delegate = ((InplaceIntroduceParameterPopup)activeIntroducer).isGenerateDelegate();
         }
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -449,6 +451,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                        createNameSuggestionGenerator(myExpr, propName, myProject, enteredName),
                                        typeSelectorManager, methodToSearchFor, method, getParamsToRemove(method, occurences), mustBeFinal);
         dialog.setReplaceAllOccurrences(replaceAllOccurrences);
+        dialog.setGenerateDelegate(delegate);
         dialog.show();
         if (myEditor != null) {
           myEditor.getSelectionModel().removeSelection();

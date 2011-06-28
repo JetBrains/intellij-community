@@ -160,7 +160,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
                                       (PsiLocalVariable)getLocalVariable(), isDeleteLocalVariable, getInputName(),
                                       myPanel.isReplaceAllOccurences(),
                                       myPanel.getReplaceFieldsWithGetters(), myMustBeFinal || myPanel.isGenerateFinal(),
-                                      myPanel.isGenerateDelegate(),
+                                      isGenerateDelegate(),
                                       getType(),
                                       parametersToRemove);
     final Runnable runnable = new Runnable() {
@@ -191,6 +191,10 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);
+  }
+
+  public boolean isGenerateDelegate() {
+    return myPanel.isGenerateDelegate();
   }
 
   @Override

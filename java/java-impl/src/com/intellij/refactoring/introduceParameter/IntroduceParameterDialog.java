@@ -290,6 +290,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myPanel.setReplaceAllOccurrences(replaceAllOccurrences);
   }
 
+  public void setGenerateDelegate(boolean delegate) {
+    myPanel.setGenerateDelegate(delegate);
+  }
+
   private class IntroduceParameterSettingsPanel extends IntroduceParameterSettingsUI {
     public IntroduceParameterSettingsPanel(Project project,
                                            PsiLocalVariable onLocalVariable,
@@ -307,6 +311,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     protected void updateControls(JCheckBox[] removeParamsCb) {
       super.updateControls(removeParamsCb);
       updateFinalState();
+    }
+
+    public void setGenerateDelegate(boolean delegate) {
+      myCbGenerateDelegate.setSelected(delegate);
     }
   }
 }

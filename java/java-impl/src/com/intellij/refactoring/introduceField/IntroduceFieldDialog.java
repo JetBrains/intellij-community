@@ -38,7 +38,7 @@ import java.awt.*;
 class IntroduceFieldDialog extends DialogWrapper {
 
 
-  static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
+  public static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
   private final Project myProject;
   private final PsiClass myParentClass;

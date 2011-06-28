@@ -59,7 +59,7 @@ public abstract class IntroduceParameterSettingsUI {
   protected final boolean myIsLocalVariable;
 
   protected JCheckBox myCbReplaceAllOccurences = null;
-  private JCheckBox myCbGenerateDelegate = null;
+  protected JCheckBox myCbGenerateDelegate = null;
 
   public IntroduceParameterSettingsUI(Project project,
                                       PsiLocalVariable onLocalVariable,
