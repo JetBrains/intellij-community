@@ -113,43 +113,15 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     }
 
     Object rOperandValue = getStoredValue(expression.getROperand());
-
-    PsiJavaToken operationSign = expression.getOperationSign();
-    final IElementType tokenType = operationSign.getTokenType();
-
-    Object value = null;
-    if (tokenType == JavaTokenType.ANDAND) {
-      if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue()) {
-        myResult = Boolean.FALSE;
-        return;
-      }
-      if (rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
-        myResult = Boolean.FALSE;
-        return;
-      }
-      if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() && ((Boolean)rOperandValue).booleanValue());
-      }
-    }
-    else if (tokenType == JavaTokenType.OROR) {
-      if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue()) {
-        myResult = Boolean.TRUE;
-        return;
-      }
-      if (rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
-        myResult = Boolean.TRUE;
-        return;
-      }
-      if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() || ((Boolean)rOperandValue).booleanValue());
-      }
-    }
-
     if (rOperandValue == null) {
       myResult = null;
       return;
     }
 
+    PsiJavaToken operationSign = expression.getOperationSign();
+    final IElementType tokenType = operationSign.getTokenType();
+
+    Object value = null;
     if (tokenType == JavaTokenType.PLUS) {
       if (lOperandValue instanceof String || rOperandValue instanceof String) {
         value = myInterner.intern(lOperandValue.toString() + rOperandValue.toString());
@@ -206,6 +178,32 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
           value = Integer.valueOf(l - r);
           checkAdditionOverflow(((Integer)value).intValue() >= 0, l >= 0, r < 0, expression);
         }
+      }
+    }
+    else if (tokenType == JavaTokenType.ANDAND) {
+      if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue()) {
+        myResult = Boolean.FALSE;
+        return;
+      }
+      if (rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
+        myResult = Boolean.FALSE;
+        return;
+      }
+      if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
+        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() && ((Boolean)rOperandValue).booleanValue());
+      }
+    }
+    else if (tokenType == JavaTokenType.OROR) {
+      if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue()) {
+        myResult = Boolean.TRUE;
+        return;
+      }
+      if (rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
+        myResult = Boolean.TRUE;
+        return;
+      }
+      if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
+        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() || ((Boolean)rOperandValue).booleanValue());
       }
     }
     else if (tokenType == JavaTokenType.LT) {

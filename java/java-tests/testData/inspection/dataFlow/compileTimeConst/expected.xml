@@ -15,4 +15,10 @@
   <problem_class>Constant conditions &amp; exceptions</problem_class>
   <description>Condition &lt;code&gt;b&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
 </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constant conditions &amp; exceptions</problem_class>
+    <description>Condition &lt;code&gt;CONST&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
+  </problem>
 </problems>

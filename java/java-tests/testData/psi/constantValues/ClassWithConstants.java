@@ -9,12 +9,6 @@ public class ClassWithConstants {
   public static final byte BYTE_CONST = 4;
   public static final char CHAR_CONST = '5';
   public static final boolean BOOL_CONST = true;
-
-  public static final boolean BOOL_CONST2 = false && foo();
-  public static final boolean BOOL_CONST3 = true || foo();
-  static boolean foo() {
-    return false;
-  }
   public static final float FLOAT_CONST = 1.234f;
   public static final double DOUBLE_CONST = 3.456;
   public static final java.lang.String STRING_CONST = "a\r\n\"bcd";
