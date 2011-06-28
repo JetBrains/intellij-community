@@ -131,6 +131,18 @@ public class EventLog implements Notifications {
     return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
   }
 
+  public static void toggleLog(final Project project) {
+    final ToolWindow eventLog = getEventLog(project);
+    if (eventLog != null) {
+      if (!eventLog.isVisible()) {
+        eventLog.activate(null, true);
+        getLogModel(project).logShown();
+      } else {
+        eventLog.hide(null);
+      }
+    }
+  }
+
   public static class ProjectTracker extends AbstractProjectComponent {
     private volatile EventLogConsole myConsole;
     private List<Notification> myInitial = new CopyOnWriteArrayList<Notification>();

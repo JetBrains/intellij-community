@@ -114,7 +114,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.setLayout(new BorderLayout());
     myRefreshAndInfoPanel.setOpaque(false);
     myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
-    myRefreshAndInfoPanel.add(myInfoPanel, BorderLayout.CENTER);
+    myRefreshAndInfoPanel.add(myInfoPanel.geTextPanel(), BorderLayout.CENTER);
 
     myProgressIcon = new AsyncProcessIcon("Background process");
     myProgressIcon.setOpaque(false);

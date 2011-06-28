@@ -19,6 +19,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -296,6 +297,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
     final StatusBar statusBar = getStatusBar();
+
+    IdeNotificationArea notificationArea = new IdeNotificationArea();
+    statusBar.addWidget(notificationArea, "before Memory");
 
     final PositionPanel positionPanel = new PositionPanel(project);
     statusBar.addWidget(positionPanel, "before FatalError");
