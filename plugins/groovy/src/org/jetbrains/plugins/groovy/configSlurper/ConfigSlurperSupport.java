@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.extensions;
+package org.jetbrains.plugins.groovy.configSlurper;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 import java.util.List;
 
@@ -33,6 +36,11 @@ public abstract class ConfigSlurperSupport {
 
   @Nullable
   public abstract PropertiesProvider getProvider(@NotNull GroovyFile file);
+
+  @Nullable
+  public Pair<PropertiesProvider, GroovyFile> getConfigSlurperInfo(@NotNull GrExpression qualifier, @NotNull PsiElement qualifierResolve) {
+    return null;
+  }
 
   public interface PropertiesProvider {
     void collectVariants(@NotNull List<String> prefix, @NotNull PairConsumer<String, Boolean> consumer);

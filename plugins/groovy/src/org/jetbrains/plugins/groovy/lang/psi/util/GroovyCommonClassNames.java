@@ -31,6 +31,7 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_LANG_INT_RANGE = "groovy.lang.IntRange";
   @NonNls public static final String GROOVY_LANG_OBJECT_RANGE = "groovy.lang.ObjectRange";
   @NonNls public static final String GROOVY_LANG_DELEGATE = "groovy.lang.Delegate";
+  @NonNls public static final String GROOVY_UTIL_CONFIG_OBJECT = "groovy.util.ConfigObject";
   @NonNls public static final String JAVA_UTIL_REGEX_PATTERN = "java.util.regex.Pattern";
   @NonNls public static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
   @NonNls public static final String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
