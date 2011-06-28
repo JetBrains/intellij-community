@@ -152,8 +152,8 @@ public class XmlUtil {
   @NonNls public static final String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
   @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
-  public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
-  public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
+  @NonNls public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
+  @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
   public static final Key<PsiAnchor> ORIGINAL_ELEMENT = Key.create("ORIGINAL_ELEMENT");
 
 
@@ -1154,7 +1154,7 @@ public class XmlUtil {
 
     if (type == null) {
       String ns = xmlTag.getNamespace();
-      if (XmlUtil.ourSchemaUrisList.indexOf(ns) >= 0) {
+      if (ourSchemaUrisList.indexOf(ns) >= 0) {
         type = xmlTag.getAttributeValue("type", null);
       }
     }
@@ -1341,8 +1341,7 @@ public class XmlUtil {
       final char ch = unquotedValue.charAt(i);
       if (!Character.isJavaIdentifierPart(ch) && ch != ':' && ch != '-') {
         final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class);
-        if (file != null) return !tagFromTemplateFramework(file.getRootTag());
-        return false;
+        return file != null && !tagFromTemplateFramework(file.getRootTag());
       }
     }
     return true;
@@ -1371,7 +1370,7 @@ public class XmlUtil {
       if (dependingElement == null) break;
     }
 
-    if (currentElement instanceof XmlFile) {
+    if (currentElement != null) {
       final String name = _element.getName();
       if (_element instanceof XmlEntityDecl) {
         final XmlEntityDecl cachedEntity = XmlEntityRefImpl.getCachedEntity((PsiFile)currentElement, name);
@@ -1385,13 +1384,9 @@ public class XmlUtil {
           if (element instanceof PsiNamedElement) {
             final String elementName = ((PsiNamedElement)element).getName();
 
-            if (elementName.equals(name) && _element.getClass().isInstance(element)) {
-              result[0] = (PsiNamedElement)element;
-              return false;
-            }
-            else if (lastEntityRef != null &&
-                     element instanceof XmlEntityDecl &&
-                     elementName.equals(lastEntityRef.getText().substring(1, lastEntityRef.getTextLength() - 1))) {
+            if (elementName.equals(name) && _element.getClass().isInstance(element)
+                || lastEntityRef != null && element instanceof XmlEntityDecl &&
+                   elementName.equals(lastEntityRef.getText().substring(1, lastEntityRef.getTextLength() - 1))) {
               result[0] = (PsiNamedElement)element;
               return false;
             }
@@ -1651,9 +1646,12 @@ public class XmlUtil {
     return StringUtil.escapeXml(text);
   }
 
-  @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetToolkit.getUtf8Bytes("<?xml");
-  @NonNls private static final byte[] ENCODING_BYTES = CharsetToolkit.getUtf8Bytes("encoding");
-  @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes("?>");
+  @NonNls private static final String XML_PROLOG_START = "<?xml";
+  @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_START);
+  @NonNls private static final String ENCODING = "encoding";
+  @NonNls private static final byte[] ENCODING_BYTES = CharsetToolkit.getUtf8Bytes(ENCODING);
+  @NonNls private static final String XML_PROLOG_END = "?>";
+  @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_END);
 
   @Nullable
   public static String extractXmlEncodingFromProlog(final byte[] content) {
@@ -1692,10 +1690,50 @@ public class XmlUtil {
     }
     return null;
   }
+  @Nullable
+  private static String detect(@NotNull String text) {
+    int index = 0;
 
-  private static int skipWhiteSpace(int start, final byte[] bytes) {
+    index = skipWhiteSpace(index, text);
+    if (!StringUtil.startsWith(text, index, XML_PROLOG_START)) return null;
+    index += XML_PROLOG_START.length();
+    while (index < text.length()) {
+      index = skipWhiteSpace(index, text);
+      if (StringUtil.startsWith(text, index, XML_PROLOG_END)) return null;
+      if (StringUtil.startsWith(text, index, ENCODING)) {
+        index += ENCODING.length();
+        index = skipWhiteSpace(index, text);
+        if (index >= text.length() || text.charAt(index) != '=') continue;
+        index++;
+        index = skipWhiteSpace(index, text);
+        if (index >= text.length()) continue;
+        char quote = text.charAt(index);
+        if (quote != '\'' && quote != '\"') continue;
+        index++;
+        StringBuilder encoding = new StringBuilder();
+        while (index < text.length()) {
+          char c = text.charAt(index);
+          if (c == quote) return encoding.toString();
+          encoding.append(c);
+          index++;
+        }
+      }
+      index++;
+    }
+    return null;
+  }
+
+  private static int skipWhiteSpace(int start, @NotNull byte[] bytes) {
     while (start < bytes.length) {
       char c = (char)bytes[start];
+      if (!Character.isWhitespace(c)) break;
+      start++;
+    }
+    return start;
+  }
+  private static int skipWhiteSpace(int start, @NotNull String text) {
+    while (start < text.length()) {
+      char c = text.charAt(start);
       if (!Character.isWhitespace(c)) break;
       start++;
     }
@@ -1704,7 +1742,7 @@ public class XmlUtil {
 
   @Nullable
   public static String extractXmlEncodingFromProlog(String text) {
-    return detect(CharsetToolkit.getUtf8Bytes(text));
+    return detect(text);
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,

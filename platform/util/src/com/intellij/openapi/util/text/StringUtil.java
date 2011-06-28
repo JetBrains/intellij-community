@@ -1399,6 +1399,17 @@ public class StringUtil {
 
     return true;
   }
+  public static boolean startsWith(@NotNull CharSequence text, int startIndex,@NotNull CharSequence prefix) {
+    int l1 = text.length() - startIndex;
+    int l2 = prefix.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (text.charAt(i + startIndex) != prefix.charAt(i)) return false;
+    }
+
+    return true;
+  }
 
   public static boolean endsWith(@NotNull CharSequence text, @NotNull CharSequence suffix) {
     int l1 = text.length();
