@@ -36,6 +36,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.util.Function;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
       if (gotoData != null && gotoData.source != null) {
-        show(project, editor, file, gotoData.source, gotoData.targets, gotoData.additionalActions);
+        show(project, editor, file, gotoData);
       }
     }
     catch (IndexNotReadyException e) {
@@ -77,9 +78,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   private void show(Project project,
                     Editor editor,
                     PsiFile file,
-                    final PsiElement sourceElement,
-                    final PsiElement[] targets,
-                    final List<AdditionalAction> additionalActions) {
+                    final GotoData gotoData) {
+    final PsiElement[] targets = gotoData.targets;
+    final List<AdditionalAction> additionalActions = gotoData.additionalActions;
+
     if (targets.length == 0 && additionalActions.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, getNotFoundMessage(project, editor, file));
       return;
@@ -100,7 +102,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     for (PsiElement eachTarget : targets) {
       PsiElementListCellRenderer renderer = null;
       for (GotoTargetRendererProvider eachProvider : providers) {
-        renderer = eachProvider.getRenderer(eachTarget);
+        renderer = eachProvider.getRenderer(eachTarget, gotoData);
         if (renderer != null) break;
       }
       if (renderer == null) {
@@ -110,8 +112,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
 
 
-    String name = ((PsiNamedElement)sourceElement).getName();
-    String title = getChooserTitle(sourceElement, name, targets.length);
+    String name = ((PsiNamedElement)gotoData.source).getName();
+    String title = getChooserTitle(gotoData.source, name, targets.length);
 
     if (shouldSortTargets()) {
       Arrays.sort(targets, new Comparator<PsiElement>() {
@@ -218,10 +220,26 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     public final PsiElement[] targets;
     public final List<AdditionalAction> additionalActions;
 
+    private final boolean hasDifferentNames;
+
     public GotoData(PsiElement source, PsiElement[] targets, List<AdditionalAction> additionalActions) {
       this.source = source;
       this.targets = targets;
       this.additionalActions = additionalActions;
+
+      final Set<String> names = new HashSet<String>();
+      for (PsiElement target : targets) {
+        if (target instanceof PsiNamedElement) {
+          names.add(((PsiNamedElement)target).getName());
+          if (names.size() > 1) break;
+        }
+      }
+
+      hasDifferentNames = names.size() > 1;
+    }
+
+    public boolean hasDifferentNames() {
+      return hasDifferentNames;
     }
   }
 

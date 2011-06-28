@@ -15,12 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
+import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -31,6 +34,13 @@ public class GroovyImplementationSearch implements QueryExecutor<PsiElement, Psi
     if (source instanceof GrAccessorMethod) {
       GrField property = ((GrAccessorMethod)source).getProperty();
       return consumer.process(property);
+    }
+    else if (source instanceof GrField) {
+      for (GrAccessorMethod method : GroovyPropertyUtils.collectAccessorsFromField((GrField)source)) {
+        for (PsiMethod impl : MethodImplementationsSearch.getMethodImplementations(method)) {
+          if (!consumer.process(impl)) return false;
+        }
+      }
     }
     return true;
   }
