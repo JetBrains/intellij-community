@@ -8,6 +8,7 @@ class Foo implements Comparable<Foo> {
         return null  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @Override
     int compareTo(Foo o) {
         return 0  //To change body of implemented methods use File | Settings | File Templates.
     }
