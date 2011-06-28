@@ -256,7 +256,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     final JPanel subPanel = new JPanel(new BorderLayout());
     final List<Pair<String, JPanel>> panels = createAdditionalPanels();
     if (myMethod.canChangeParameters()) {
-      final JPanel parametersPanel = createParametersPanel();
+      final JPanel parametersPanel = createParametersPanel(!panels.isEmpty());
       if (!panels.isEmpty()) {
         parametersPanel.setBorder(IdeBorderFactory.createEmptyBorder(0));
       }
@@ -346,7 +346,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     return "refactoring.ChangeSignatureDialog";
   }
 
-  protected JPanel createParametersPanel() {
+  protected JPanel createParametersPanel(boolean hasTabsInDialog) {
     myParametersTable = new TableView<ParameterTableModelItemBase<P>>(myParametersTableModel) {
       @Override
       public void editingStopped(ChangeEvent e) {
@@ -385,9 +385,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
     myParametersTable.setSurrendersFocusOnKeystroke(true);
     myPropagateParamChangesButton.setShortcut(KeyboardShortcut.fromString("alt G"));
+    final CustomLineBorder border = hasTabsInDialog ? new CustomLineBorder(1, 0, 0, 0) : new CustomLineBorder(0, 1, 1, 1);
     final JPanel buttonsPanel = EditableRowTable.wrapToTableWithButtons(myParametersTable,
                                                                         myParametersTableModel,
-                                                                        new CustomLineBorder(1, 0, 0, 0),
+                                                                        border,
                                                                         myPropagateParamChangesButton);
     myPropagateParamChangesButton.setEnabled(false);
     myPropagateParamChangesButton.setVisible(false);
