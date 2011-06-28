@@ -1,5 +1,5 @@
 package com.siyeh.igtest.style.field_final;
-import java.awt.*; import java.awt.event.KeyEvent;
+import java.awt.*; import java.awt.event.KeyEvent;import java.io.File;import java.io.IOException;
 public class FieldMayBeFinal {
 
     private static String string;
@@ -238,5 +238,55 @@ class ZX {
 
         };
     }
+}
+class InspectionTest
+{
+    private Object field;
 
+    public InspectionTest(Object field)
+    {
+        this.field = field;
+    }
+
+    public InspectionTest()
+    {
+        try
+        {
+            File file = new File("test");
+            if (!file.canRead())
+            {
+                return;
+            }
+            file.createNewFile();
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        this.field = new Object();
+    }
+}
+class InspectionTest2
+{
+    private Object field;
+
+    public InspectionTest2(Object field)
+    {
+        this.field = field;
+    }
+
+    public InspectionTest2()
+    {
+        try
+        {
+            File file = new File("test");
+            file.createNewFile();
+            this.field = new Object();
+        }
+        catch (IOException e)
+        {
+            this.field = null;
+        }
+    }
 }
