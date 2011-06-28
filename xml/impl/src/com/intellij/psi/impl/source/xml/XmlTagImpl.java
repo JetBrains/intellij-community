@@ -689,7 +689,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   @NotNull
   public String getNamespace() {
-    LOG.assertTrue(isValid());
     String cachedNamespace = myCachedNamespace;
     final long curModCount = getManager().getModificationTracker().getModificationCount();
     if (cachedNamespace != null && myModCount == curModCount) {

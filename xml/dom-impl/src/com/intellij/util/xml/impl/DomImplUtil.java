@@ -143,13 +143,18 @@ public class DomImplUtil {
     return null;
   }
 
-  public static List<XmlTag> findSubTags(@NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
-    assert tag.isValid();
-    XmlTag[] subTags = tag.getSubTags();
-    for (XmlTag subTag : subTags) {
-      assert subTag.isValid() : "tag.getSubTags() returned invalid, tag=" + tag + ", subTag.parent=" + subTag.getNode().getTreeParent();
+  public static List<XmlTag> findSubTags(@NotNull final XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
+    if (!tag.isValid()) {
+      throw new AssertionError("Invalid tag");
     }
-    return findSubTags(subTags, name, file);
+    return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {
+      public boolean value(XmlTag childTag) {
+        if (!childTag.isValid()) {
+          throw new AssertionError("tag.getSubTags() returned invalid, tag=" + tag + ", subTag.parent=" + childTag.getNode().getTreeParent());
+        }
+        return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
+      }
+    });
   }
 
   public static List<XmlTag> findSubTags(final XmlTag[] tags, final EvaluatedXmlName name, final XmlFile file) {
