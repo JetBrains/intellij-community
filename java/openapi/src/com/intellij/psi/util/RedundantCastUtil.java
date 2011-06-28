@@ -447,6 +447,8 @@ public class RedundantCastUtil {
     }
     else if (castType instanceof PsiClassType && ((PsiClassType)castType).hasParameters()) {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).isRaw()) return true;
+    } else if (castType instanceof PsiClassType && ((PsiClassType)castType).isRaw()) {
+      if (opType instanceof PsiClassType && ((PsiClassType)opType).hasParameters()) return true;
     }
 
     PsiElement parent = typeCast.getParent();
