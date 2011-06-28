@@ -236,9 +236,16 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
           final Project project = facet.getModule().getProject();
           StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
             public void run() {
-              setupAndroidPlatformInNeccessary(facet.getModule());
+              final Module module = facet.getModule();
+              setupAndroidPlatformInNeccessary(module);
 
               final AndroidFacet androidFacet = (AndroidFacet)facet;
+
+              final String androidLibraryPropValue = getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, "android.library");
+              if (androidLibraryPropValue != null && androidLibraryPropValue.equals("true")) {
+                androidFacet.getConfiguration().LIBRARY_PROJECT = true;
+              }
+
               Manifest manifest = androidFacet.getManifest();
               if (manifest != null) {
                 if (AndroidUtils.getDefaultActivityName(manifest) != null) {
