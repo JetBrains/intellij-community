@@ -18,10 +18,6 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.actions.ShowFilePathAction;
-import com.intellij.notification.*;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -31,7 +27,6 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -110,35 +105,6 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       LocalHistoryLog.LOG.warn("cannot recreate storage", ex);
       isCompletelyBroken = true;
     }
-
-    notifyUser("Local History storage file has become corrupted and was rebuilt.");
-  }
-
-  public static void notifyUser(String message) {
-    final String logFile = PathManager.getLogPath();
-
-    Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                              "Local History is broken",
-                                              message + "<br>" +
-                                              "<br>" +
-                                              "Please create a <a href=\"url\">YouTrack issue</><br>" +
-                                              "and attach log files from <a href=\"file\">" + logFile,
-                                              NotificationType.ERROR,
-                                              new NotificationListener() {
-                                                @Override
-                                                public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                            @NotNull HyperlinkEvent event) {
-                                                  if ("url".equals(event.getDescription())) {
-                                                    BrowserUtil.launchBrowser("http://youtrack.jetbrains.net/issues/#newissue=yes");
-                                                  }
-                                                  else {
-                                                    File file = new File(logFile);
-                                                    ShowFilePathAction.open(file, new File(logFile));
-                                                  }
-                                                }
-                                              }),
-                             NotificationDisplayType.STICKY_BALLOON,
-                             null);
   }
 
   public synchronized void close() {
