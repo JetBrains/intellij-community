@@ -229,7 +229,10 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
       final String prefix = generatedClassesPackage.replace('.', File.separatorChar);
 
       if (sourcePath.startsWith(prefix)) {
-        sourcePath = sourcePath.substring(prefix.length() + 1);
+        sourcePath = sourcePath.substring(prefix.length());
+        if (sourcePath.startsWith(File.separator)) {
+          sourcePath = sourcePath.substring(1);
+        }
       }
     }
 
