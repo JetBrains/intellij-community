@@ -4,6 +4,7 @@ import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
@@ -35,16 +36,20 @@ public class AppEngineSdkUtil {
 
   public static void saveWhiteList(File cachedWhiteList, Map<String, Set<String>> classesWhiteList) {
     try {
-      cachedWhiteList.getParentFile().mkdirs();
+      FileUtil.createParentDirs(cachedWhiteList);
       PrintWriter writer = new PrintWriter(cachedWhiteList);
-      for (String packageName : classesWhiteList.keySet()) {
-        writer.println("." + packageName);
-        final Set<String> classes = classesWhiteList.get(packageName);
-        for (String aClass : classes) {
-          writer.println(aClass);
+      try {
+        for (String packageName : classesWhiteList.keySet()) {
+          writer.println("." + packageName);
+          final Set<String> classes = classesWhiteList.get(packageName);
+          for (String aClass : classes) {
+            writer.println(aClass);
+          }
         }
       }
-      writer.close();
+      finally {
+        writer.close();
+      }
     }
     catch (IOException e) {
       LOG.error(e);

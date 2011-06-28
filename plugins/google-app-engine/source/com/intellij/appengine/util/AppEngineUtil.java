@@ -2,6 +2,7 @@ package com.intellij.appengine.util;
 
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.facet.FacetManager;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.javaee.artifact.JavaeeArtifactUtil;
 import com.intellij.javaee.web.artifact.WebArtifactUtil;
 import com.intellij.javaee.web.facet.WebFacet;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,16 +37,13 @@ public class AppEngineUtil {
   }
 
   public static void setupAppEngineArtifactCombobox(@NotNull Project project, final @NotNull JComboBox comboBox, final boolean withAppEngineFacetOnly) {
-    comboBox.setRenderer(new DefaultListCellRenderer() {
+    comboBox.setRenderer(new ListCellRendererWrapper<Artifact>(comboBox) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final Component renderer = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value instanceof Artifact) {
-          final Artifact artifact = (Artifact)value;
-          setIcon(artifact.getArtifactType().getIcon());
-          setText(artifact.getName());
+      public void customize(JList list, Artifact value, int index, boolean selected, boolean hasFocus) {
+        if (value != null) {
+          setIcon(value.getArtifactType().getIcon());
+          setText(value.getName());
         }
-        return renderer;
       }
     });
 
