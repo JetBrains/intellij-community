@@ -1,12 +1,9 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -15,11 +12,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
 import com.jetbrains.python.actions.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -146,6 +139,7 @@ public class PyMethodParametersInspection extends PyInspection {
             }
             if (flags.isMetaclassMethod()) {
               String expected_name;
+              String alternativeName = null;
               if (PyNames.NEW.equals(method_name) || flags.isClassMethod()) {
                 expected_name = MCS;
               }
@@ -154,8 +148,9 @@ public class PyMethodParametersInspection extends PyInspection {
               }
               else {
                 expected_name = PyNames.CANONICAL_SELF;
+                alternativeName = CLS;
               }
-              if (!expected_name.equals(pname)) {
+              if (!expected_name.equals(pname) && (alternativeName == null || !alternativeName.equals(pname))) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
                   PyBundle.message("INSP.usually.named.$0", expected_name),
