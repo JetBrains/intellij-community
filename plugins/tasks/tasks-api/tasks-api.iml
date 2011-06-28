@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="library" name="http-client-3.1" level="project" />
   </component>
 </module>
 

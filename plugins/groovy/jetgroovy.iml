@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="IntelliLang-java" scope="TEST" />
     <orderEntry type="module" module-name="IntelliLang-xml" scope="TEST" />
+    <orderEntry type="module" module-name="jam-support-openapi" />
   </component>
 </module>
 

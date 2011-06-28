@@ -22,7 +22,6 @@
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
-    <orderEntry type="library" exported="" name="cli-parser" level="project" />
   </component>
 </module>
 
