@@ -60,6 +60,8 @@ public class PyNames {
   public static final String DEPRECATION_WARNING = "DeprecationWarning";
   public static final String PENDING_DEPRECATION_WARNING = "PendingDeprecationWarning";
 
+  public static final String NAME = "__name__";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */

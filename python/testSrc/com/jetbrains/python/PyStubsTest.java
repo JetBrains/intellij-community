@@ -315,6 +315,13 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNotParsed(file);
   }
 
+  public void testIfNameMain() {  // PY-4008
+    getTestFile();
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
+    Collection<PyTargetExpression> result = PyVariableNameIndex.find("xyzzy", myFixture.getProject(), scope);
+    assertEquals(0, result.size());
+  }
+
   // ---
 
   private PyFile getTestFile() {
