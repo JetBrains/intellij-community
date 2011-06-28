@@ -44,6 +44,7 @@ public class PyByteLiteralInspection extends PyInspection {
                          !pyfile.hasImportFromFuture(UNICODE_LITERALS)
         );
       }
+      boolean hasProblem = false;
       char first_char = Character.toLowerCase(node.getText().charAt(0));
       if (first_char == 'b' || (default_bytes && first_char != 'u')) {
         String value = node.getStringValue();
@@ -51,10 +52,13 @@ public class PyByteLiteralInspection extends PyInspection {
         for (int i = 0; i < length; ++i) {
           char c = value.charAt(i);
           if (((int) c) > 255) {
-            registerProblem(node, "Byte literal contains characters > 255");
+            hasProblem = true;
+            break;
           }
         }
       }
+      if (hasProblem)
+        registerProblem(node, "Byte literal contains characters > 255");
     }
   }
 }
