@@ -17,8 +17,9 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
+import com.intellij.codeInsight.navigation.actions.GotoSuperAction;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -39,6 +40,8 @@ import java.util.List;
 
 public class JavaGotoSuperHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID);
+
     int offset = editor.getCaretModel().getOffset();
     PsiElement[] superElements = findSuperElements(file, offset);
     if (superElements == null || superElements.length == 0) return;

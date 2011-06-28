@@ -20,18 +20,21 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.lang.CodeInsightActions;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  *
  */
 public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
+
+  @NonNls public static final String FEATURE_ID = "navigation.goto.super";
 
   protected CodeInsightActionHandler getHandler() {
     return this;

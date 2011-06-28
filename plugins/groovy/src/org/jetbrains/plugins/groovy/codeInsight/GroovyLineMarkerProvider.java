@@ -82,7 +82,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       if (!(parent instanceof GrField)) return null;
       final GrField field = (GrField)parent;
 
-      final List<GrAccessorMethod> accessors = GroovyPropertyUtils.collectAccessorsFromField(field);
+      final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors(field);
       StringBuilder builder = new StringBuilder();
       builder.append("<html><body>");
       int count = 0;
@@ -115,7 +115,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       PsiElement parent = element.getParent();
       if (!(parent instanceof GrField)) return;
       final GrField field = (GrField)parent;
-      final List<GrAccessorMethod> accessors = GroovyPropertyUtils.collectAccessorsFromField(field);
+      final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors(field);
       final ArrayList<PsiMethod> superMethods = new ArrayList<PsiMethod>();
       for (GrAccessorMethod method : accessors) {
         Collections.addAll(superMethods, method.findSuperMethods(false));
@@ -133,7 +133,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof GrField)) return null;
-      final List<GrAccessorMethod> accessors = GroovyPropertyUtils.collectAccessorsFromField((GrField)parent);
+      final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors((GrField)parent);
 
       PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
 
@@ -170,7 +170,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       final CommonProcessors.CollectProcessor<PsiMethod> collectProcessor = new CommonProcessors.CollectProcessor<PsiMethod>(new THashSet<PsiMethod>());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
-          for (GrAccessorMethod method : GroovyPropertyUtils.collectAccessorsFromField(field)) {
+          for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
             OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(collectProcessor);
           }
         }
@@ -218,7 +218,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiNameIdentifierOwner) {
       if (parent instanceof GrField) {
-        for (GrAccessorMethod method : GroovyPropertyUtils.collectAccessorsFromField((GrField)parent)) {
+        for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)parent)) {
           MethodSignatureBackedByPsiMethod superSignature = null;
           try {
             superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
@@ -315,7 +315,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       if (!"java.lang.Object".equals(parentClass.getQualifiedName())) {
         classes.add(parentClass);
       }
-      accessors.addAll(GroovyPropertyUtils.collectAccessorsFromField(field));
+      accessors.addAll(GroovyPropertyUtils.getFieldAccessors(field));
     }
 
     for (final PsiClass aClass : classes) {

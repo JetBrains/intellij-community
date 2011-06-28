@@ -215,7 +215,7 @@
     <refactoring.helper implementation="org.jetbrains.plugins.groovy.refactoring.GroovyImportOptimizerRefactoringHelper"/>
     <codeInsight.lineMarkerProvider language="Groovy"
                                     implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
-    <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
+    <codeInsight.gotoSuper language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.navigation.actions.GroovyGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor" id="groovyBasic"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>

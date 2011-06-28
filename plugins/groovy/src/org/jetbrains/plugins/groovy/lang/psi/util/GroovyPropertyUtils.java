@@ -489,7 +489,7 @@ public class GroovyPropertyUtils {
     return accessor.hasModifierProperty(GrModifier.STATIC) == field.hasModifierProperty(GrModifier.STATIC);
   }
 
-  public static List<GrAccessorMethod> collectAccessorsFromField(GrField field) {
+  public static List<GrAccessorMethod> getFieldAccessors(GrField field) {
     List<GrAccessorMethod> accessors = new ArrayList<GrAccessorMethod>();
     final GrAccessorMethod[] getters = field.getGetters();
     Collections.addAll(accessors, getters);

@@ -36,7 +36,7 @@ public class GroovyImplementationSearch implements QueryExecutor<PsiElement, Psi
       return consumer.process(property);
     }
     else if (source instanceof GrField) {
-      for (GrAccessorMethod method : GroovyPropertyUtils.collectAccessorsFromField((GrField)source)) {
+      for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)source)) {
         for (PsiMethod impl : MethodImplementationsSearch.getMethodImplementations(method)) {
           if (!consumer.process(impl)) return false;
         }
