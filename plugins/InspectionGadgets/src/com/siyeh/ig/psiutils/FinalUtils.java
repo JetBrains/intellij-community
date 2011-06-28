@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Bas Leijdekkers
+ * Copyright 2009-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,478 +15,624 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+// todo handle variable initialization in loops
 public class FinalUtils {
 
-    private FinalUtils() {
-    }
+    private FinalUtils() {}
 
-    public static boolean canFieldBeFinal(PsiField field) {
-        if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
+    public static boolean canBeFinal(PsiField field) {
+        PsiClass containingClass = field.getContainingClass();
+        if (containingClass == null) {
             return false;
         }
-        if (field.hasModifierProperty(PsiModifier.FINAL)) {
-            return false;
+        final boolean fieldIsStatic =
+                field.hasModifierProperty(PsiModifier.STATIC);
+        final PsiField[] fields = containingClass.getFields();
+        final DefiniteAssignmentVisitor visitor =
+                new DefiniteAssignmentVisitor(field);
+        if (field.hasInitializer()) {
+            visitor.setDefiniteAssignment(true, false);
         }
-        final ImplicitUsageProvider[] implicitUsageProviders =
-                Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-        for(ImplicitUsageProvider provider: implicitUsageProviders){
-            if(provider.isImplicitWrite(field)){
-                return false;
-            }
-        }
-        if (field.hasModifierProperty(PsiModifier.STATIC)) {
-            if (!staticFieldMayBeFinal(field)) {
-                return false;
-            }
-        } else {
-            if (!fieldMayBeFinal(field)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean fieldMayBeFinal(PsiField field) {
-        final PsiClass aClass = field.getContainingClass();
-        if (aClass == null) {
-            return false;
-        }
-        final PsiExpression initializer = field.getInitializer();
-        final PsiClassInitializer[] classInitializers =
-                aClass.getInitializers();
-        boolean assignedInInitializer = initializer != null;
-        boolean isInitialized = assignedInInitializer;
-        for (PsiClassInitializer classInitializer : classInitializers) {
-            if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-                continue;
-            }
-            if (VariableAccessUtils.variableIsAssigned(field,
-                    classInitializer, false)) {
-                if (assignedInInitializer) {
-                    return false;
-                } else if (variableIsAssignedOnceAndOnlyOnce(field,
-                        classInitializer)){
-                    isInitialized = true;
-                }
-                assignedInInitializer = true;
-            }
-        }
-        final PsiMethod[] methods = aClass.getMethods();
-        for (PsiMethod method : methods) {
-            if (method.hasModifierProperty(PsiModifier.STATIC)) {
-                continue;
-            }
-            if (method.isConstructor() && !assignedInInitializer) {
-                if (!VariableAccessUtils.variableIsAssigned(field, method,
-                        false)) {
-                    return false;
-                } else if (variableIsAssignedOnceAndOnlyOnce(field, method)){
-                    isInitialized = true;
-                }
-            } else if (VariableAccessUtils.variableIsAssigned(field, method,
-                    false)) {
-                return false;
-            }
-        }
-        final PsiField[] fields = aClass.getFields();
         for (PsiField aField : fields) {
-            if (aField.hasModifierProperty(PsiModifier.STATIC)) {
+            if (!fieldIsStatic &&
+                    aField.hasModifierProperty(PsiModifier.STATIC)) {
                 continue;
             }
-            if (aField.equals(field)) {
-                continue;
-            }
-            final PsiExpression expression = aField.getInitializer();
-            if (expression == null) {
-                continue;
-            }
-            if (VariableAccessUtils.variableIsAssigned(field, expression)) {
-                if (assignedInInitializer || isInitialized) {
+            final PsiExpression initializer = aField.getInitializer();
+            if (initializer != null) {
+                initializer.accept(visitor);
+                if (!visitor.isFinalCandidate()) {
                     return false;
-                } else {
-                    isInitialized = true;
                 }
             }
         }
-        if (!isInitialized) {
+        final PsiClassInitializer[] initializers =
+                containingClass.getInitializers();
+        for (PsiClassInitializer initializer : initializers) {
+            if (fieldIsStatic ^
+                    initializer.hasModifierProperty(PsiModifier.STATIC)) {
+                continue;
+            }
+            initializer.accept(visitor);
+            if (!visitor.isFinalCandidate()) {
+                return false;
+            }
+        }
+        if (!fieldIsStatic) {
+            final boolean definitelyAssigned = visitor.isDefinitelyAssigned();
+            final boolean definitelyUnassigned = visitor.isDefinitelyUnassigned();
+            final PsiMethod[] constructors = containingClass.getConstructors();
+            for (PsiMethod constructor : constructors) {
+                visitor.setDefiniteAssignment(definitelyAssigned,
+                        definitelyUnassigned);
+                constructor.accept(visitor);
+                if (!visitor.isDefinitelyAssigned()) {
+                    return false;
+                }
+                if (!visitor.isFinalCandidate()) {
+                    return false;
+                }
+            }
+        }
+        if (!visitor.isDefinitelyAssigned()) {
             return false;
         }
-        final PsiElement[] children = aClass.getChildren();
-        final ClassVisitor visitor = new ClassVisitor(field);
-        for (PsiElement child : children) {
-            child.accept(visitor);
-            if (visitor.isVariableAssignedInClass()) {
-                return false;
-            }
+        if (!visitor.isFinalCandidate()) {
+            return false;
         }
-        PsiClass containingClass = aClass.getContainingClass();
-        final AssignmentVisitor assignmentVisitor =
-                new AssignmentVisitor(field, aClass);
-        while (containingClass != null) {
-            containingClass.accept(assignmentVisitor);
-            if (assignmentVisitor.isVariableAssigned()) {
+        visitor.setDefiniteAssignment(true, false);
+        checkMembers(fieldIsStatic, containingClass, null, visitor);
+        if (!visitor.isFinalCandidate()) {
+            return false;
+        }
+        PsiClass aClass = containingClass.getContainingClass();
+        while (aClass != null) {
+            checkMembers(fieldIsStatic, aClass, containingClass, visitor);
+            if (!visitor.isFinalCandidate()) {
                 return false;
             }
-            containingClass = containingClass.getContainingClass();
+            containingClass = aClass;
+            aClass = containingClass.getContainingClass();
         }
         return true;
     }
 
-    private static boolean staticFieldMayBeFinal(PsiField field) {
-        final PsiExpression initializer = field.getInitializer();
-        final PsiClass aClass = field.getContainingClass();
-        if (aClass == null) {
-            return false;
-        }
-        final PsiClassInitializer[] classInitializers =
-                aClass.getInitializers();
-        boolean assignedInInitializer = initializer != null;
-        for (PsiClassInitializer classInitializer : classInitializers) {
-            if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-                if (VariableAccessUtils.variableIsAssigned(field,
-                        classInitializer, false)) {
-                    if (assignedInInitializer) {
-                        return false;
-                    } else if (variableIsAssignedOnceAndOnlyOnce(field,
-                            classInitializer)) {
-                        assignedInInitializer = true;
-                    }
-                }
-            } else if (VariableAccessUtils.variableIsAssigned(field,
-                    classInitializer,  false)) {
-                return false;
-            }
-        }
-        final PsiField[] fields = aClass.getFields();
-        for (PsiField aField : fields) {
-            if (aField.equals(field)) {
-                continue;
-            }
-            final PsiExpression expression = aField.getInitializer();
-            if (expression == null) {
-                continue;
-            }
-            if (VariableAccessUtils.variableIsAssigned(field, expression)) {
-                if (!aField.hasModifierProperty(PsiModifier.STATIC)) {
-                    return false;
-                } else if (assignedInInitializer) {
-                    return false;
-                } else {
-                    assignedInInitializer = true;
-                }
-            }
-        }
-        if (!assignedInInitializer) {
-            return false;
-        }
-        final PsiMethod[] methods = aClass.getMethods();
+    private static void checkMembers(boolean fieldIsStatic,
+                                     PsiClass containingClass,
+                                     @Nullable PsiClass skipClass,
+                                     DefiniteAssignmentVisitor visitor) {
+        final PsiMethod[] methods = containingClass.getMethods();
         for (PsiMethod method : methods) {
-            if (VariableAccessUtils.variableIsAssigned(field, method,
-                    false)) {
-                return false;
+            if (method.isConstructor()) {
+                continue;
             }
-        }
-        final PsiElement[] children = aClass.getChildren();
-        final ClassVisitor visitor = new ClassVisitor(field);
-        for (PsiElement child : children) {
-            child.accept(visitor);
-            if (visitor.isVariableAssignedInClass()) {
-                return false;
-            }
-        }
-        PsiClass containingClass = aClass.getContainingClass();
-        final AssignmentVisitor assignmentVisitor =
-                new AssignmentVisitor(field, aClass);
-        while (containingClass != null) {
-            containingClass.accept(assignmentVisitor);
-            if (assignmentVisitor.isVariableAssigned()) {
-                return false;
-            }
-            containingClass = containingClass.getContainingClass();
-        }
-        return true;
-    }
-
-    private static boolean variableIsAssignedOnceAndOnlyOnce(
-            @NotNull PsiVariable variable, @Nullable PsiElement contenxt) {
-        if (contenxt == null) {
-            return false;
-        }
-        final AssignmentCountVisitor visitor =
-                new AssignmentCountVisitor(variable);
-        contenxt.accept(visitor);
-        final int count = visitor.getAssignmentCount();
-        return count == 1;
-    }
-
-    private static class ClassVisitor extends JavaRecursiveElementVisitor {
-
-        private final PsiVariable variable;
-        private boolean variableAssignedInClass = false;
-
-        ClassVisitor(PsiVariable variable) {
-            this.variable = variable;
-        }
-
-        @Override
-        public void visitClass(PsiClass aClass) {
-            if (variableAssignedInClass) {
+            // todo add unit test
+            // must check static methods too, even if field is not static, and reverse
+            method.accept(visitor);
+            if (!visitor.isFinalCandidate()) {
                 return;
             }
-            if (VariableAccessUtils.variableIsAssigned(variable, aClass)) {
-                variableAssignedInClass = true;
+        }
+        final PsiClass[] innerClasses = containingClass.getInnerClasses();
+        for (PsiClass innerClass : innerClasses) {
+            if (innerClass == skipClass) {
+                continue;
             }
+            // todo add unit to prove this wrong
+            if (fieldIsStatic ^
+                    innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+                continue;
+            }
+            innerClass.accept(visitor);
+            if (!visitor.isFinalCandidate()) {
+                return;
+            }
+        }
+    }
+
+    private static boolean isReadAccess(PsiReferenceExpression expression) {
+        final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression,
+                PsiParenthesizedExpression.class);
+        if (!(parent instanceof PsiAssignmentExpression)) {
+            return true;
+        }
+        final PsiAssignmentExpression assignmentExpression =
+                (PsiAssignmentExpression) parent;
+        final PsiExpression lhs = assignmentExpression.getLExpression();
+        if (!PsiTreeUtil.isAncestor(lhs, expression, false)) {
+            return true;
+        }
+        final IElementType tokenType =
+                assignmentExpression.getOperationTokenType();
+        return tokenType != JavaTokenType.EQ;
+    }
+
+    private static boolean isWriteAccess(PsiReferenceExpression expression) {
+        final PsiElement parent =
+                PsiTreeUtil.skipParentsOfType(expression,
+                        PsiParenthesizedExpression.class);
+        if (parent instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression) parent;
+            final PsiExpression lhs = assignmentExpression.getLExpression();
+            return PsiTreeUtil.isAncestor(lhs, expression, false);
+        } else if (parent instanceof PsiPrefixExpression) {
+            final PsiPrefixExpression prefixExpression =
+                    (PsiPrefixExpression) parent;
+            final IElementType tokenType =
+                    prefixExpression.getOperationTokenType();
+            return tokenType == JavaTokenType.PLUSPLUS ||
+                    tokenType == JavaTokenType.MINUSMINUS;
+        } else if (parent instanceof PsiPostfixExpression) {
+            final PsiPostfixExpression postfixExpression =
+                    (PsiPostfixExpression) parent;
+            final IElementType tokenType =
+                    postfixExpression.getOperationTokenType();
+            return tokenType == JavaTokenType.PLUSPLUS ||
+                    tokenType == JavaTokenType.MINUSMINUS;
+        }
+        return false;
+    }
+
+    private static class DefiniteAssignmentVisitor
+            extends JavaRecursiveElementVisitor {
+
+        private static final byte NOT_CONSTANT = 0;
+        private static final byte CONSTANT_TRUE = 1;
+        private static final byte CONSTANT_FALSE = 2;
+
+        private final PsiField field;
+
+        private byte constant = NOT_CONSTANT;
+        private boolean definitelyAssigned = false;
+        private boolean definitelyUnassigned = true;
+        private boolean finalCandidate = true;
+
+        private DefiniteAssignmentVisitor(PsiField field) {
+            this.field = field;
+        }
+
+        public boolean isDefinitelyAssigned() {
+            return definitelyAssigned;
+        }
+
+        public boolean isDefinitelyUnassigned() {
+            return definitelyUnassigned;
+        }
+
+        public void setDefiniteAssignment(boolean da, boolean du) {
+            definitelyAssigned = da;
+            definitelyUnassigned = du;
+        }
+
+        public boolean isFinalCandidate() {
+            return finalCandidate;
         }
 
         @Override
         public void visitElement(PsiElement element) {
-            if (variableAssignedInClass) {
+            if (!isFinalCandidate()) {
                 return;
             }
             super.visitElement(element);
         }
 
-        public boolean isVariableAssignedInClass() {
-            return variableAssignedInClass;
-        }
-    }
-
-    private static class AssignmentVisitor
-            extends JavaRecursiveElementVisitor {
-
-        private final PsiVariable variable;
-        private final PsiClass excludedClass;
-        private boolean variableAssigned = false;
-
-        AssignmentVisitor(PsiVariable variable, PsiClass excludedClass) {
-            this.variable = variable;
-            this.excludedClass = excludedClass;
-        }
-
         @Override
-        public void visitClass(PsiClass aClass) {
-            if (variableAssigned) {
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            if (PsiType.BOOLEAN.equals(expression.getType())) {
+                final Object constant =
+                        ExpressionUtils.computeConstantExpression(expression);
+                if (Boolean.TRUE == constant) {
+                    this.constant = CONSTANT_TRUE;
+                } else if (Boolean.FALSE == constant) {
+                    this.constant = CONSTANT_FALSE;
+                }
+            }
+            final PsiExpression qualifierExpression =
+                    expression.getQualifierExpression();
+            if (qualifierExpression != null &&
+                    !(qualifierExpression instanceof PsiThisExpression)) {
+                final PsiElement target = expression.resolve();
+                if (!field.equals(target)) {
+                    return;
+                }
+                if (isWriteAccess(expression)) {
+                    finalCandidate = false;
+                }
                 return;
             }
-            if (aClass.equals(excludedClass)) {
-                return;
+            if (isPrePostFixExpression(expression)) {
+                final PsiElement target = expression.resolve();
+                if (!field.equals(target)) {
+                    return;
+                }
+                if (!definitelyAssigned || !definitelyUnassigned) {
+                    finalCandidate = false;
+                } else {
+                    definitelyUnassigned = false;
+                }
+            } else if (isReadAccess(expression)) {
+                final PsiElement target = expression.resolve();
+                if (!field.equals(target)) {
+                    return;
+                }
+                if (!definitelyAssigned) {
+                    finalCandidate = false;
+                }
             }
-            super.visitClass(aClass);
+            super.visitReferenceExpression(expression);
         }
 
-        @Override
-        public void visitMethod(PsiMethod method) {
-            if (variableAssigned) {
-                return;
+        private static boolean isPrePostFixExpression(
+                PsiReferenceExpression expression) {
+            final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression,
+                    PsiParenthesizedExpression.class);
+            if (parent instanceof PsiPrefixExpression) {
+                final PsiPrefixExpression prefixExpression =
+                        (PsiPrefixExpression) parent;
+                final IElementType tokenType =
+                        prefixExpression.getOperationTokenType();
+                if (tokenType == JavaTokenType.PLUSPLUS ||
+                        tokenType == JavaTokenType.MINUSMINUS) {
+                    return true;
+                }
             }
-            super.visitMethod(method);
-            if (VariableAccessUtils.variableIsAssigned(variable, method)) {
-                variableAssigned = true;
+            else if (parent instanceof PsiPostfixExpression) {
+                final PsiPostfixExpression postfixExpression =
+                        (PsiPostfixExpression) parent;
+                final IElementType tokenType =
+                        postfixExpression.getOperationTokenType();
+                if (tokenType == JavaTokenType.PLUSPLUS ||
+                        tokenType == JavaTokenType.MINUSMINUS) {
+                    return true;
+                }
             }
-        }
-
-        @Override
-        public void visitClassInitializer(PsiClassInitializer initializer) {
-            if (variableAssigned) {
-                return;
-            }
-            super.visitClassInitializer(initializer);
-            if (VariableAccessUtils.variableIsAssigned(variable,
-                    initializer)) {
-                variableAssigned = true;
-            }
-        }
-
-        public boolean isVariableAssigned() {
-            return variableAssigned;
-        }
-    }
-
-    private static class AssignmentCountVisitor
-            extends JavaRecursiveElementVisitor {
-
-        private final PsiVariable variable;
-        private int assignmentCount = 0;
-
-        public AssignmentCountVisitor(PsiVariable variable) {
-            this.variable = variable;
-        }
-
-        @Override
-        public void visitElement(PsiElement element) {
-            if (assignmentCount > 1) {
-                return;
-            }
-            super.visitElement(element);
+            return false;
         }
 
         @Override
         public void visitAssignmentExpression(
-                PsiAssignmentExpression assignment) {
-            final PsiExpression arg = assignment.getLExpression();
-            if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
-                assignmentCount++;
+                PsiAssignmentExpression expression) {
+            if (!finalCandidate) {
+                return;
             }
-            super.visitAssignmentExpression(assignment);
+            final PsiExpression rhs = expression.getRExpression();
+            if (rhs != null) {
+                rhs.accept(this);
+            }
+            final PsiExpression lhs = ParenthesesUtils.stripParentheses(
+                    expression.getLExpression());
+            if (!(lhs instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) lhs;
+            final PsiExpression qualifierExpression =
+                    referenceExpression.getQualifierExpression();
+            if (qualifierExpression != null &&
+                    !(qualifierExpression instanceof PsiThisExpression)) {
+                visitReferenceExpression(referenceExpression);
+                return;
+            }
+            final PsiElement target = referenceExpression.resolve();
+            if (!field.equals(target)) {
+                return;
+            }
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (!JavaTokenType.EQ.equals(tokenType)) {
+                finalCandidate = false;
+            }
+            if (definitelyUnassigned) {
+                definitelyAssigned = true;
+                definitelyUnassigned = false;
+            } else {
+                finalCandidate = false;
+            }
+        }
+
+        @Override
+        public void visitAssertStatement(PsiAssertStatement statement) {
+            final PsiExpression condition = statement.getAssertCondition();
+            final boolean da = definitelyAssigned;
+            final boolean du = definitelyUnassigned;
+            if (condition != null) {
+                condition.accept(this);
+            }
+            final PsiExpression description = statement.getAssertDescription();
+            if (description != null) {
+                description.accept(this);
+            }
+            definitelyAssigned &= da;
+            definitelyUnassigned &= du;
+        }
+
+        @Override
+        public void visitLiteralExpression(PsiLiteralExpression expression) {
+            final Object value = expression.getValue();
+            if (value instanceof Boolean) {
+                final Boolean aBoolean = (Boolean) value;
+                if (Boolean.TRUE == aBoolean) {
+                    constant = CONSTANT_TRUE;
+                } else if (Boolean.FALSE == aBoolean) {
+                    constant = CONSTANT_FALSE;
+                } else {
+                    throw new AssertionError();
+                }
+            } else {
+                constant = NOT_CONSTANT;
+            }
         }
 
         @Override
         public void visitPrefixExpression(PsiPrefixExpression expression) {
-            final PsiJavaToken operationSign = expression.getOperationSign();
-            final IElementType tokenType = operationSign.getTokenType();
-            if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                    !tokenType.equals(JavaTokenType.MINUSMINUS)){
-                return;
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (JavaTokenType.EXCL != tokenType) {
+
             }
             final PsiExpression operand = expression.getOperand();
-            if(VariableAccessUtils.mayEvaluateToVariable(operand, variable)){
-                assignmentCount++;
+            if (operand != null) {
+                operand.accept(this);
             }
-            super.visitPrefixExpression(expression);
-        }
-
-        @Override
-        public void visitPostfixExpression(PsiPostfixExpression expression) {
-            final PsiJavaToken operationSign = expression.getOperationSign();
-            final IElementType tokenType = operationSign.getTokenType();
-            if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                    !tokenType.equals(JavaTokenType.MINUSMINUS)){
-                return;
-            }
-            final PsiExpression operand = expression.getOperand();
-            if(VariableAccessUtils.mayEvaluateToVariable(operand, variable)){
-                assignmentCount++;
-            }
-            super.visitPostfixExpression(expression);
-        }
-
-        @Override
-        public void visitForeachStatement(PsiForeachStatement statement) {
-            final PsiStatement body = statement.getBody();
-            if (VariableAccessUtils.variableIsAssigned(variable, body)) {
-                assignmentCount += 2;
-            }
-        }
-
-        @Override
-        public void visitForStatement(PsiForStatement statement) {
-            final PsiStatement initialization = statement.getInitialization();
-            if (initialization != null) {
-                initialization.accept(this);
-            }
-            final PsiExpression condition = statement.getCondition();
-            if (VariableAccessUtils.variableIsAssigned(variable, condition)) {
-                assignmentCount += 2;
-            }
-            final PsiStatement update = statement.getUpdate();
-            if (VariableAccessUtils.variableIsAssigned(variable, update)) {
-                assignmentCount += 2;
-            }
-            final PsiStatement body = statement.getBody();
-            if (VariableAccessUtils.variableIsAssigned(variable, body)) {
-                assignmentCount += 2;
-            }
-        }
-
-        @Override
-        public void visitWhileStatement(PsiWhileStatement statement) {
-            if (VariableAccessUtils.variableIsAssigned(variable, statement)) {
-                assignmentCount += 2;
-            }
-        }
-
-        @Override
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
-            if (VariableAccessUtils.variableIsAssigned(variable, statement)) {
-                assignmentCount += 2;
-            }
-        }
-
-        @Override
-        public void visitTryStatement(PsiTryStatement statement) {
-            final int tmp = assignmentCount;
-            final PsiCodeBlock block = statement.getTryBlock();
-            if (block != null) {
-                block.accept(this);
-            }
-            if (assignmentCount < 2 && assignmentCount > tmp) {
-                final PsiCodeBlock[] blocks = statement.getCatchBlocks();
-                for (PsiCodeBlock catchBlock : blocks) {
-                    if (!ExceptionUtils.blockThrowsException(catchBlock)) {
-                        assignmentCount += 2;
-                    }
-                }
-            }
-            final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
-            if (finallyBlock != null) {
-                finallyBlock.accept(this);
+            if (constant == CONSTANT_FALSE) {
+                constant = CONSTANT_TRUE;
+            } else if (constant == CONSTANT_TRUE) {
+                constant = CONSTANT_FALSE;
             }
         }
 
         @Override
         public void visitIfStatement(PsiIfStatement statement) {
             final PsiExpression condition = statement.getCondition();
+            constant = NOT_CONSTANT;
             if (condition != null) {
                 condition.accept(this);
             }
-            final Object constant =
-                    ExpressionUtils.computeConstantExpression(condition);
+            final byte constant = this.constant;
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiStatement elseBranch = statement.getElseBranch();
-            if (constant == Boolean.TRUE) {
-                if (thenBranch != null) {
-                    final AssignmentCountVisitor visitor =
-                            new AssignmentCountVisitor(variable);
-                    thenBranch.accept(visitor);
-                    assignmentCount += visitor.getAssignmentCount();
+            if (thenBranch == null) {
+                return;
+            }
+            final boolean da = definitelyAssigned;
+            final boolean du = definitelyUnassigned;
+            if (constant == CONSTANT_FALSE) {
+                satisfyVacuously();
+            }
+            thenBranch.accept(this);
+            if (elseBranch == null) {
+                if (constant != CONSTANT_TRUE) {
+                    definitelyAssigned &= da;
+                    definitelyUnassigned &= du;
                 }
-            } else if (constant == Boolean.FALSE) {
-                if (elseBranch != null) {
-                    final AssignmentCountVisitor visitor =
-                            new AssignmentCountVisitor(variable);
-                    elseBranch.accept(visitor);
-                    assignmentCount += visitor.getAssignmentCount();
+                return;
+            }
+            final boolean thenDa = definitelyAssigned;
+            final boolean thenDu = definitelyUnassigned;
+            definitelyAssigned = da;
+            definitelyUnassigned = du;
+            if (constant == CONSTANT_TRUE) {
+                satisfyVacuously();
+            }
+            elseBranch.accept(this);
+            if (constant == CONSTANT_TRUE) {
+                definitelyAssigned = thenDa;
+                definitelyUnassigned = thenDu;
+            } else if (constant != CONSTANT_FALSE) {
+                definitelyAssigned &= thenDa;
+                definitelyUnassigned &= thenDu;
+            }
+        }
+
+        @Override
+        public void visitConditionalExpression(
+                PsiConditionalExpression expression) {
+            final PsiType type = expression.getType();
+            final boolean booleanConditional = PsiType.BOOLEAN.equals(type);
+            final PsiExpression condition = expression.getCondition();
+            constant = NOT_CONSTANT;
+            condition.accept(this);
+            final byte constant = this.constant;
+            final PsiExpression thenExpression = expression.getThenExpression();
+            final PsiExpression elseExpression = expression.getElseExpression();
+            final boolean da = definitelyAssigned;
+            final boolean du = definitelyUnassigned;
+            if (constant == CONSTANT_FALSE) {
+                satisfyVacuously();
+            }
+            if (thenExpression != null) {
+                thenExpression.accept(this);
+            }
+            final boolean thenDa = definitelyAssigned;
+            final boolean thenDu = definitelyUnassigned;
+            definitelyAssigned = da;
+            definitelyUnassigned = du;
+            byte constantOut = NOT_CONSTANT;
+            if (constant == CONSTANT_TRUE) {
+                if (booleanConditional) {
+                    constantOut = this.constant;
+                }
+                satisfyVacuously();
+            }
+            if (elseExpression != null) {
+                elseExpression.accept(this);
+            }
+            if (constant == CONSTANT_TRUE) {
+                definitelyAssigned = thenDa;
+                definitelyUnassigned = thenDu;
+                this.constant = constantOut;
+            } else if (constant != CONSTANT_FALSE) {
+                definitelyAssigned &= thenDa;
+                definitelyUnassigned &= thenDu;
+                this.constant = NOT_CONSTANT;
+            }
+        }
+
+        @Override
+        public void visitBinaryExpression(PsiBinaryExpression expression) {
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (JavaTokenType.ANDAND.equals(tokenType)) {
+                final PsiExpression lhs = expression.getLOperand();
+                constant = NOT_CONSTANT;
+                lhs.accept(this);
+                final int constant = this.constant;
+                final boolean da = definitelyAssigned;
+                final boolean du = definitelyUnassigned;
+                if (constant == CONSTANT_FALSE) {
+                    satisfyVacuously();
+                }
+                final PsiExpression rhs = expression.getROperand();
+                if (rhs != null) {
+                    rhs.accept(this);
+                }
+                if (constant == CONSTANT_FALSE) {
+                    this.constant = CONSTANT_FALSE;
+                } else if (constant == NOT_CONSTANT) {
+                    this.constant = NOT_CONSTANT;
+                }
+                if (constant == CONSTANT_FALSE) {
+                    definitelyAssigned = da;
+                    definitelyUnassigned = du;
+                }
+            } else if (JavaTokenType.OROR.equals(tokenType)) {
+                final PsiExpression lhs = expression.getLOperand();
+                constant = NOT_CONSTANT;
+                lhs.accept(this);
+                final int constant = this.constant;
+                final boolean da = definitelyAssigned;
+                final boolean du = definitelyUnassigned;
+                if (constant == CONSTANT_TRUE) {
+                    satisfyVacuously();
+                }
+                final PsiExpression rhs = expression.getROperand();
+                if (rhs != null) {
+                    rhs.accept(this);
+                }
+                if (constant == CONSTANT_TRUE) {
+                    this.constant = CONSTANT_TRUE;
+                } else if (constant == NOT_CONSTANT) {
+                    this.constant = NOT_CONSTANT;
+                }
+                if (constant == CONSTANT_TRUE) {
+                    definitelyAssigned = da;
+                    definitelyUnassigned = du;
                 }
             } else {
-                final int thenAssignmentCount;
-                if (thenBranch != null) {
-                    final AssignmentCountVisitor visitor =
-                            new AssignmentCountVisitor(variable);
-                    thenBranch.accept(visitor);
-                    thenAssignmentCount = visitor.getAssignmentCount();
-                } else {
-                    thenAssignmentCount = 0;
+                final PsiType type = expression.getType();
+                if (PsiType.BOOLEAN.equals(type)) {
+                    final Object constant =
+                            ExpressionUtils.computeConstantExpression(expression);
+                    if (constant instanceof Boolean) {
+                        if (Boolean.TRUE == constant) {
+                            this.constant = CONSTANT_TRUE;
+                        } else if (Boolean.FALSE == constant) {
+                            this.constant = CONSTANT_FALSE;
+                        } else {
+                            this.constant = NOT_CONSTANT;
+                        }
+                    }
                 }
-                final int elseAssignmentCount;
-                if (elseBranch != null) {
-                    final AssignmentCountVisitor visitor =
-                            new AssignmentCountVisitor(variable);
-                    elseBranch.accept(visitor);
-                    elseAssignmentCount = visitor.getAssignmentCount();
-                } else {
-                    elseAssignmentCount = 0;
-                }
-                if (thenAssignmentCount != elseAssignmentCount ||
-                        thenAssignmentCount > 1) {
-                    assignmentCount += 2;
-                } else {
-                    assignmentCount += thenAssignmentCount;
+                if (this.constant == NOT_CONSTANT) {
+                    super.visitBinaryExpression(expression);
                 }
             }
         }
 
-        /**
-         * @return does not return numbers greater than 3
-         */
-        public int getAssignmentCount() {
-            return assignmentCount;
+        @Override
+        public void visitMethodCallExpression(
+                PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            if (qualifierExpression != null) {
+                return;
+            }
+            @NonNls final String referenceName =
+                    methodExpression.getReferenceName();
+            if ("this".equals(referenceName)) {
+                definitelyUnassigned = false;
+                definitelyAssigned = true;
+            }
+        }
+
+        @Override
+        public void visitReturnStatement(PsiReturnStatement statement) {
+            final PsiExpression returnValue = statement.getReturnValue();
+            if (returnValue != null) {
+                returnValue.accept(this);
+            }
+            if (!definitelyAssigned || definitelyUnassigned) {
+                finalCandidate = false;
+            }
+            satisfyVacuously();
+        }
+
+        @Override
+        public void visitThrowStatement(PsiThrowStatement statement) {
+            final PsiExpression exception = statement.getException();
+            if (exception != null) {
+                exception.accept(this);
+            }
+            satisfyVacuously();
+        }
+
+        @Override
+        public void visitBreakStatement(PsiBreakStatement statement) {
+            satisfyVacuously();
+        }
+
+        @Override
+        public void visitContinueStatement(PsiContinueStatement statement) {
+            satisfyVacuously();
+        }
+
+        private void satisfyVacuously() {
+            definitelyAssigned = true;
+            definitelyUnassigned = true;
+        }
+
+        private static boolean completesNormally(PsiStatement statement) {
+            if (statement == null) {
+                return true;
+            }
+            if (statement instanceof PsiReturnStatement ||
+                    statement instanceof PsiBreakStatement ||
+                    statement instanceof PsiThrowStatement ||
+                    statement instanceof PsiContinueStatement) {
+                return false;
+            }
+            if (statement instanceof PsiBlockStatement) {
+                final PsiBlockStatement blockStatement =
+                        (PsiBlockStatement) statement;
+                final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+                final PsiStatement[] statements = codeBlock.getStatements();
+                final int length = statements.length;
+                if (length == 0) {
+                    return true;
+                }
+                final PsiStatement lastStatement = statements[length - 1];
+                return completesNormally(lastStatement);
+            }
+            if (statement instanceof PsiIfStatement) {
+                final PsiIfStatement ifStatement = (PsiIfStatement) statement;
+                final PsiStatement thenBranch = ifStatement.getThenBranch();
+                return completesNormally(thenBranch);
+            }
+            if (statement instanceof PsiLoopStatement) {
+                final PsiLoopStatement loopStatement =
+                        (PsiLoopStatement) statement;
+                final PsiStatement body = loopStatement.getBody();
+                return completesNormally(body);
+            }
+            return true;
         }
     }
 }

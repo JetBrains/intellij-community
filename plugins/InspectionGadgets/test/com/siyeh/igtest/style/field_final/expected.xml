@@ -30,4 +30,26 @@
     <description>Field &lt;code&gt;hostName&lt;/code&gt; may be 'final' #loc</description>
   </problem>
 
+  <problem>
+    <file>FieldMayBeFinal.java</file>
+    <line>210</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Field may be final</problem_class>
+    <description>Field &lt;code&gt;x&lt;/code&gt; may be 'final' #loc</description>
+  </problem>
+
+  <problem>
+    <file>FieldMayBeFinal.java</file>
+    <line>211</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Field may be final</problem_class>
+    <description>Field &lt;code&gt;y&lt;/code&gt; may be 'final' #loc</description>
+  </problem>
+
+  <problem>
+    <file>FieldMayBeFinal.java</file>
+    <line>212</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Field may be final</problem_class>
+    <description>Field &lt;code&gt;z&lt;/code&gt; may be 'final' #loc</description>
+  </problem>
+
+
 </problems>

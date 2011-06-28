@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -60,9 +61,14 @@ public class FieldMayBeFinalInspection extends BaseInspection {
         @Override
         public void visitField(PsiField field) {
             super.visitField(field);
-            if (FinalUtils.canFieldBeFinal(field)) {
-                registerVariableError(field, field);
+            if (field.hasModifierProperty(PsiModifier.FINAL) ||
+                    !field.hasModifierProperty(PsiModifier.PRIVATE)) {
+                return;
             }
+            if (!FinalUtils.canBeFinal(field)) {
+                return;
+            }
+            registerVariableError(field, field);
         }
     }
 }

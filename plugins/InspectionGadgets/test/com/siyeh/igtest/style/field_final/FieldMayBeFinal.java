@@ -137,12 +137,12 @@ public class FieldMayBeFinal {
         private boolean b;
         private boolean c;
 
-        AssigmentInForeach(int[] is) {
+        /*AssigmentInForeach(int[] is) {
             b = false;
             for (int i : is) {
                 b = c = i == 10;
             }
-        }
+        }*/
     }
 
     static class StaticVariableModifiedInInstanceVariableInitializer {
@@ -151,6 +151,92 @@ public class FieldMayBeFinal {
 
         private final int count = COUNT++;
 
+    }
+
+    static class FalsePositive1 {
+        private int i;
+
+        FalsePositive1() {
+            System.out.println(i);
+            i = 1;
+        }
+    }
+}
+class NotFinal {
+    private static final NotFinal INSTANCE = new NotFinal();
+
+    private boolean isInitialized;
+
+    private NotFinal() {
+        isInitialized = false;
+    }
+
+    public static synchronized void initialize() {
+        INSTANCE.isInitialized = true;
+    }
+}
+class AAA {
+    private String test;
+
+    public AAA(int num) {
+        if(num < 0) {
+            return;
+        }
+
+        test = "ok";
+    }
+
+    public void feep() {
+        System.out.println("test = " + test);
+    }
+}
+class X {
+    private int x;
+
+    X() {
+        x += 1;
+    }
+}
+class XX {
+    private int xx;
+    XX() {
+        if (true) {
+            return;
+        }
+        xx = 1;
+    }
+}
+class Y {
+    private int x; // can be final
+    private int y; // can be final
+    private int z = y = 1; // can be final
+
+    Y() {
+        x = 1;
+    }
+
+    Y(String s) {
+        this();
+    }
+}
+class Z {
+    Q q = new Q();
+    class Q {
+        private int i =1;
+    }
+    class R {
+        {
+            q.i = 2;
+        }
+    }
+}
+class ZX {
+    private int i;
+
+    ZX() {
+        if (false && (i = 1) == 1) {
+
+        };
     }
 
 }
