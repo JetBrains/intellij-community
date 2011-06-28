@@ -90,7 +90,7 @@ public class VfsUtil {
    * @param file      the file
    * @param ancestor  parent file
    * @param separator character to use as files separator
-   * @return the relative path
+   * @return the relative path or {@code null} if {@code ancestor} is not ancestor for {@code file}
    */
   @Nullable
   public static String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
