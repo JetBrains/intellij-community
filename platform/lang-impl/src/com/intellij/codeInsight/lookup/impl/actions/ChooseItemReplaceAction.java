@@ -54,7 +54,7 @@ public class ChooseItemReplaceAction extends EditorAction {
         lookup.refreshUi(); // to bring the list model up to date
 
         CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
-        if (completion != null && completion.isAutopopupCompletion() && hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR)) {
+        if (completion != null && completion.isAutopopupCompletion() && hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR) && !lookup.isSelectionTouched()) {
           return false;
         }
 

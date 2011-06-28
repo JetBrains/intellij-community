@@ -819,5 +819,21 @@ public class UTest {
     assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[2]).qualifiedName
   }
 
+  public void testTabShouldPreferLookupsToLiveTemplate() {
+    myFixture.configureByText "a.java", """
+class LiveComplete {
+    public void innerThing() { }
+    public void context() {
+      <caret>
+    }
+}
+"""
+    type 'inn'
+    assert myFixture.lookupElementStrings == ['inn', 'innerThing']
+    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
+    type '\t'
+    assert myFixture.file.text.contains("innerThing();")
+  }
+
 
 }
