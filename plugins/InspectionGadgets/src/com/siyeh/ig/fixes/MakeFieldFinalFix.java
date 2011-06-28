@@ -35,7 +35,7 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
 
     @Nullable
     public static InspectionGadgetsFix buildFix(PsiField field) {
-        if (!FinalUtils.canFieldBeFinal(field)) {
+        if (!FinalUtils.canBeFinal(field)) {
             return null;
         }
         final String name = field.getName();

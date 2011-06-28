@@ -45,7 +45,7 @@ public class MakeFieldStaticFinalFix extends InspectionGadgetsFix {
         if (initializer == null) {
             return null;
         }
-        if (!FinalUtils.canFieldBeFinal(field)) {
+        if (!FinalUtils.canBeFinal(field)) {
             return null;
         }
         return new MakeFieldStaticFinalFix(field.getName());
