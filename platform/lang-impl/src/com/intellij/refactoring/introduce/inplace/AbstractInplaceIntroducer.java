@@ -45,6 +45,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.ui.SimpleColoredComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected String myConstantName;
   public static final Key<AbstractInplaceIntroducer> ACTIVE_INTRODUCE = Key.create("ACTIVE_INTRODUCE");
 
-  protected JLabel myLabel = new JLabel("###################");
+  protected SimpleColoredComponent myLabel = new SimpleColoredComponent();
   private DocumentAdapter myDocumentAdapter;
 
   public AbstractInplaceIntroducer(Project project,
@@ -91,7 +92,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     myLocalName = localVariable != null ? localVariable.getName() : null;
 
     myLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 0));
-    myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
+    myLabel.append("#########################");
 
 
     final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
@@ -161,7 +162,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             }
           };
           myEditor.getDocument().addDocumentListener(myDocumentAdapter);
-          updateTitle(variable);
+          updateTitle(getVariable());
           if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
             myEditor.putUserData(ACTIVE_INTRODUCE, AbstractInplaceIntroducer.this);
           }
@@ -182,11 +183,13 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   protected void updateTitle(V variable, String value) {
-    myLabel.setText(variable.getText().replace(variable.getName(), value));
+    myLabel.clear();
+    myLabel.append(variable.getText().replace(variable.getName(), value));
   }
 
   protected void updateTitle(V variable) {
-    myLabel.setText(variable.getText());
+    myLabel.clear();
+    myLabel.append(variable.getText());
   }
 
   public void restartInplaceIntroduceTemplate() {
@@ -237,7 +240,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected void addReferenceAtCaret(Collection<PsiReference> refs) {
-    super.addReferenceAtCaret(refs);
+    //super.addReferenceAtCaret(refs);
     final V variable = getLocalVariable();
     if (variable != null) {
       for (PsiReference reference : ReferencesSearch.search(variable)) {

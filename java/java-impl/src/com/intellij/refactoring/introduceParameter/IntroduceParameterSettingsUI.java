@@ -245,6 +245,11 @@ public abstract class IntroduceParameterSettingsUI {
     }
   }
 
+  public boolean isParamToRemove(PsiParameter param) {
+    final int parameterIndex = ((PsiMethod)param.getDeclarationScope()).getParameterList().getParameterIndex(param);
+    return myParametersToRemove[parameterIndex] != null;
+  }
+
   protected void createLocalVariablePanel(GridBagConstraints gbConstraints, JPanel panel, JavaRefactoringSettings settings) {
     if(myIsLocalVariable && !myIsInvokedOnDeclaration) {
       myCbDeleteLocalVariable = new StateRestoringCheckBox();

@@ -25,7 +25,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.Nullable;
@@ -195,6 +197,36 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
   public boolean isGenerateDelegate() {
     return myPanel.isGenerateDelegate();
+  }
+
+  @Override
+  protected void updateTitle(PsiVariable variable) {
+    updateTitle(variable, variable.getName());
+  }
+
+  @Override
+  protected void updateTitle(PsiVariable variable, String value) {
+    final PsiElement declarationScope = ((PsiParameter)variable).getDeclarationScope();
+    if (declarationScope instanceof PsiMethod) {
+      final PsiMethod psiMethod = (PsiMethod)declarationScope;
+      myLabel.clear();
+      myLabel.append(psiMethod.getName() + " (", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      boolean frst = true;
+      for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
+        if (frst) {
+          frst = false;
+        } else {
+          myLabel.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        final SimpleTextAttributes attr = variable == parameter ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES :
+                                            myPanel.isParamToRemove(parameter) ?
+                                              new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, UIUtil.getInactiveTextColor()) :
+                                              SimpleTextAttributes.GRAYED_ATTRIBUTES;
+        myLabel.append(parameter.getType().getPresentableText() + " ", attr);
+        myLabel.append(variable == parameter ? value : parameter.getName(), attr);
+      }
+      myLabel.append(")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
   }
 
   @Override
