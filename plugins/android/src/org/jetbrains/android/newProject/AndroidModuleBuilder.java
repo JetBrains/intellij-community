@@ -75,11 +75,7 @@ import static com.android.sdklib.SdkConstants.FN_DEFAULT_PROPERTIES;
 import static org.jetbrains.android.util.AndroidUtils.createChildDirectoryIfNotExist;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Jun 26, 2009
- * Time: 7:32:27 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class AndroidModuleBuilder extends JavaModuleBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.newProject.AndroidModuleBuilder");
@@ -135,12 +131,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       createDirectoryStructure(contentRoot, sourceRoot, facet);
     }
     else {
-      // todo: after X release
-      /*if (myProjectType == ProjectType.LIBRARY) {
-        ExcludedEntriesConfiguration configuration =
-          ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
-        configuration.addExcludeEntryDescription(new ExcludeEntryDescription(contentRoot, true, false, project));
-      }*/
       createProjectByAndroidTool(contentRoot, sourceRoot, facet);
     }
   }
@@ -458,10 +448,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       configuration.LIBRARY_PROJECT = true;
     }
     model.addFacet(facet);
-    /*if (configuration.ADD_ANDROID_LIBRARY) {
-      LibraryOrderEntry libraryEntry = rootModel.addLibraryEntry(myPlatform.getLibrary());
-      libraryEntry.setScope(DependencyScope.PROVIDED);
-    }*/
     model.commit();
     return facet;
   }
