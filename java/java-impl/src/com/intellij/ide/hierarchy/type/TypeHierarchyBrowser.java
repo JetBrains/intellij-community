@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.hierarchy.type;
 
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.ide.hierarchy.JavaHierarchyUtil;
-import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -131,7 +128,7 @@ public final class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   public static class BaseOnThisTypeAction extends TypeHierarchyBrowserBase.BaseOnThisTypeAction {
-    protected boolean isEnabled(final TypeHierarchyBrowserBase browser, final PsiElement psiElement) {
+    protected boolean isEnabled(final HierarchyBrowserBaseEx browser, final PsiElement psiElement) {
       return super.isEnabled(browser, psiElement) && !"java.lang.Object".equals(((PsiClass)psiElement).getQualifiedName());
     }
   }
