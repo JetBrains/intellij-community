@@ -13,10 +13,4 @@
     </component>
   </project-components>
 
-  <module-components>
-    <component>
-      <interface-class>com.intellij.openapi.roots.impl.OldModuleRootsKeeper</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.OldModuleRootsKeeper</implementation-class>
-    </component>
-  </module-components>
 </components>
