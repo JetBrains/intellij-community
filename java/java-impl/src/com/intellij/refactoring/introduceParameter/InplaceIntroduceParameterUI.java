@@ -33,14 +33,10 @@ import java.util.List;
  */
 public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSettingsUI {
   private JComboBox myReplaceFieldsCb;
-  private JCheckBox myFinalCb;
   private boolean myHasWriteAccess = false;
   private Project myProject;
   private TypeSelectorManager myTypeSelectorManager;
-  private Editor myEditor;
   private PsiExpression[] myOccurrences;
-  private List<UsageInfo> myClassMemberRefs;
-  private boolean myMustBeFinal;
 
   public InplaceIntroduceParameterUI(Project project,
                                      PsiLocalVariable onLocalVariable,
@@ -53,10 +49,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     super(project, onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     myProject = project;
     myTypeSelectorManager = typeSelectorManager;
-    myEditor = editor;
     myOccurrences = occurrences;
-    myClassMemberRefs = classMemberRefs;
-    myMustBeFinal = mustBeFinal;
 
     for (PsiExpression occurrence : myOccurrences) {
       if (PsiUtil.isAccessedForWriting(occurrence)) {
@@ -112,32 +105,12 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
   }
 
   public boolean isGenerateFinal() {
-    return myFinalCb == null || myFinalCb.isSelected();
+    return hasFinalModifier();
   }
 
-  @Override
-  protected void updateControls(JCheckBox[] removeParamsCb) {
-    super.updateControls(removeParamsCb);
-    final boolean writeUsageWouldBeReplaced = writeUsageWouldBeReplaced();
-    if (myFinalCb != null) {
-      if (writeUsageWouldBeReplaced) {
-        myFinalCb.setSelected(false);
-      }
-      myFinalCb.setEnabled(!writeUsageWouldBeReplaced);
-    }
-  }
-
-  protected boolean writeUsageWouldBeReplaced() {
-    return myHasWriteAccess && isReplaceAllOccurences();
-  }
-
-  public void append2MainPanel(JPanel myWholePanel) {
+  public void appendOccurrencesDelegate(JPanel myWholePanel) {
     final GridBagConstraints gc =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
-
-    gc.insets = new Insets(0, 0, 0, 0);
-    gc.gridwidth = 1;
-    gc.fill = GridBagConstraints.NONE;
+      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     if (myOccurrences.length > 1 && !myIsInvokedOnDeclaration) {
       gc.gridy++;
       createOccurrencesCb(gc, myWholePanel, myOccurrences.length);
@@ -145,60 +118,6 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     gc.gridy++;
     gc.insets.left = 0;
     createDelegateCb(gc, myWholePanel);
-
-
-    final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
-    final JPanel rightPanel = new JPanel(new GridBagLayout());
-    final GridBagConstraints rgc =
-      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                             new Insets(0, 0, 0, 5), 0, 0);
-    createLocalVariablePanel(rgc, rightPanel, settings);
-    createRemoveParamsPanel(rgc, rightPanel);
-    if (Util.anyFieldsWithGettersPresent(myClassMemberRefs)) {
-      rgc.gridy++;
-      rightPanel.add(createReplaceFieldsWithGettersPanel(), rgc);
-    }
-
-    gc.gridx = 1;
-    gc.gridheight = myCbReplaceAllOccurences != null ? 3 : 2;
-    gc.gridy = 1;
-    myWholePanel.add(rightPanel, gc);
-
-    if (!myMustBeFinal) {
-      myFinalCb = new NonFocusableCheckBox("Declare final");
-      myFinalCb.setMnemonic('f');
-      myFinalCb.setSelected(hasFinalModifier());
-      final FinalListener finalListener = new FinalListener(myEditor);
-      myFinalCb.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          new WriteCommandAction(myProject, IntroduceParameterHandler.REFACTORING_NAME, IntroduceParameterHandler.REFACTORING_NAME) {
-            @Override
-            protected void run(Result result) throws Throwable {
-              PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              finalListener.perform(myFinalCb.isSelected(), getParameter());
-              final Balloon balloon = getBalloon();
-              if (balloon != null) {
-                balloon.setTitle(getParameter().getText());
-              }
-            }
-          }.execute();
-        }
-      });
-      myWholePanel.add(myFinalCb,
-                       new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                              GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
-    }
-  }
-
-  protected abstract Balloon getBalloon();
-
-  @Override
-  protected void saveSettings(JavaRefactoringSettings settings) {
-    super.saveSettings(settings);
-    if (myFinalCb != null && myFinalCb.isEnabled()) {
-      settings.INTRODUCE_PARAMETER_CREATE_FINALS = myFinalCb.isSelected();
-    }
   }
 
   public boolean hasFinalModifier() {

@@ -20,7 +20,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -85,18 +84,8 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
         if (myParameterIndex < 0) return;
         restartInplaceIntroduceTemplate();
       }
-
-      @Override
-      protected Balloon getBalloon() {
-        return myBalloon;
-      }
     };
-    myPanel.append2MainPanel(myWholePanel);
-    JComponent typeChooser = typeComponent();
-    if (typeChooser != null) {
-      myWholePanel.add(typeChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                                             new Insets(0,5,0,5), 0,0));
-    }
+    myPanel.appendOccurrencesDelegate(myWholePanel);
   }
 
   @Override
