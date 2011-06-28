@@ -63,21 +63,23 @@
           <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </hspacer>
-      <component id="92f6c" class="javax.swing.JLabel" binding="myHeapCurrentValueLabel">
+      <component id="1027f" class="com.intellij.ui.components.JBLabel" binding="myHeapCurrentValueLabel">
         <constraints>
           <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <font style="2"/>
+          <style value="SMALL"/>
           <text value="Label"/>
         </properties>
       </component>
-      <component id="6525d" class="javax.swing.JLabel" binding="myPermGenCurrentValueLabel">
+      <component id="59bf8" class="com.intellij.ui.components.JBLabel" binding="myPermGenCurrentValueLabel">
         <constraints>
           <grid row="2" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <font style="2"/>
+          <style value="SMALL"/>
           <text value="Label"/>
         </properties>
       </component>
@@ -103,11 +105,12 @@
           <text value="Label"/>
         </properties>
       </component>
-      <component id="c70ed" class="javax.swing.JLabel" binding="mySettingsFileHintLabel">
+      <component id="c26a1" class="com.intellij.ui.components.JBLabel" binding="mySettingsFileHintLabel">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="6" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
+          <style value="SMALL"/>
           <text value="Label"/>
         </properties>
       </component>

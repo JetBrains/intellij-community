@@ -105,6 +105,7 @@ fi
 # If vmoptions file exists - use it
 if [ -e "$IDEA_VM_OPTIONS" ]; then
   JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
+  JVM_ARGS="$JVM_ARGS \"-Didea.vmOptionsFile=$IDEA_VM_OPTIONS\""
 
   # don't extract vm options from Info.plist in mac bundle
   INFO_PLIST_PARSER_OPTIONS=""
