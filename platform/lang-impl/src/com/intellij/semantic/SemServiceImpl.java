@@ -21,14 +21,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -324,7 +330,7 @@ public class SemServiceImpl extends SemService{
 
     FileChunk(PsiElement root) {
       if (root instanceof PsiFile) {
-        if (!(root instanceof PsiFileImpl) || ((PsiFileImpl)root).getStubTree() == null) {
+        if (!(root instanceof PsiFileEx) || ((PsiFileEx)root).isContentsLoaded()) {
           final ASTNode node = root.getNode();
           if (node instanceof LazyParseableElement && ((LazyParseableElement)node).isParsed()) {
             final PsiElement child = root.getFirstChild();
