@@ -82,16 +82,23 @@ public class CompletionLookupArranger extends LookupArranger {
     for (List<LookupElement> group : groups) {
       for (LookupElement element : group) {
         if (model.contains(element)) {
-          for (final CompletionPreselectSkipper skipper : skippers) {
-            if (!skipper.skipElement(element, myLocation)) {
-              return sorted.indexOf(element);
-            }
+          if (!shouldSkip(skippers, element)) {
+            return sorted.indexOf(element);
           }
         }
       }
     }
 
     return sorted.size() - 1;
+  }
+
+  private boolean shouldSkip(CompletionPreselectSkipper[] skippers, LookupElement element) {
+    for (final CompletionPreselectSkipper skipper : skippers) {
+      if (skipper.skipElement(element, myLocation)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static String composeContextWithValue(final StatisticsInfo info) {
