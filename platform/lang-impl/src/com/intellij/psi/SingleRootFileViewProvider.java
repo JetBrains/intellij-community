@@ -54,7 +54,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
-  public static final Key<Boolean> ourNoSizeLimitKey = Key.create("no.size.limit");
+  private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   private final PsiManager myManager;
   private final VirtualFile myVirtualFile;
@@ -256,17 +256,24 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return new PsiPlainTextFileImpl(this);
   }
 
-  public static boolean isTooLarge(final VirtualFile vFile) {
-    if (Boolean.TRUE.equals(vFile.getUserData(ourNoSizeLimitKey))) return false;
+  public static boolean isTooLarge(@NotNull VirtualFile vFile) {
+    if (!checkFileSizeLimit(vFile)) return false;
     return fileSizeIsGreaterThan(vFile, PersistentFS.MAX_INTELLISENSE_FILESIZE);
   }
 
-  public static boolean isTooLarge(final VirtualFile vFile, final long contentSize) {
-    if (Boolean.TRUE.equals(vFile.getUserData(ourNoSizeLimitKey))) return false;
+  private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
+    return !Boolean.TRUE.equals(vFile.getUserData(OUR_NO_SIZE_LIMIT_KEY));
+  }
+  public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {
+    vFile.putUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
+  }
+
+  public static boolean isTooLarge(@NotNull VirtualFile vFile, final long contentSize) {
+    if (!checkFileSizeLimit(vFile)) return false;
     return contentSize > PersistentFS.MAX_INTELLISENSE_FILESIZE;
   }
 
-  private static boolean fileSizeIsGreaterThan(final VirtualFile vFile, final long maxInBytes) {
+  private static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxInBytes) {
     if (vFile instanceof LightVirtualFile) {
       // This is optimization in order to avoid conversion of [large] file contents to bytes
       final int lengthInChars = ((LightVirtualFile)vFile).getContent().length();

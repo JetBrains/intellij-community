@@ -183,10 +183,12 @@ public class BlockSupportImpl extends BlockSupport {
 
       FileViewProvider copy = viewProvider.createCopy(lightFile);
       copy.getLanguages();
-      final PsiFileImpl newFile = (PsiFileImpl)copy.getPsi(fileImpl.getLanguage());
+      Language language = fileImpl.getLanguage();
+      SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
+      final PsiFileImpl newFile = (PsiFileImpl)copy.getPsi(language);
 
       if (newFile == null) {
-        LOG.error("View provider " + viewProvider + " refused to parse text with " + fileImpl.getLanguage() +
+        LOG.error("View provider " + viewProvider + " refused to parse text with " + language +
                   "; base: " + viewProvider.getBaseLanguage() + "; copy: " + copy.getBaseLanguage() + "; fileType: " + fileType);
         return null;
       }

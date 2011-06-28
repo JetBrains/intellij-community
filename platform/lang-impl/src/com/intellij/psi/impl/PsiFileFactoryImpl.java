@@ -67,7 +67,9 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                     boolean markAsCopy,
                                     boolean noSizeLimit) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
-    if (noSizeLimit) virtualFile.putUserData(SingleRootFileViewProvider.ourNoSizeLimitKey, Boolean.TRUE);
+    if (noSizeLimit) {
+      SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
+    }
     return trySetupPsiForFile(virtualFile, language, physical, markAsCopy);
   }
 
