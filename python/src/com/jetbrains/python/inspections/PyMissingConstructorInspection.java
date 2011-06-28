@@ -104,9 +104,15 @@ public class PyMissingConstructorInspection extends PyInspection {
                 if (ref != null)
                   callingClass = ref.resolve();
               }
+              if (PyNames.SUPER.equals(tmp) && (PyNames.INIT.equals(callee.getName()))) {
+                PyExpression[] args = ((PyCallExpression)qualifier).getArguments();
+                if (args.length > 0) {
+                  if (args[0].getText().equals(cl.getName()))
+                    return true;
+                }
+              }
             }
             else {
-              tmp = qualifier.getText();
               PsiReference ref = qualifier.getReference();
               if (ref != null)
                 callingClass = ref.resolve();
@@ -118,8 +124,6 @@ public class PyMissingConstructorInspection extends PyInspection {
                 }
               }
             }
-            if (PyNames.SUPER.equals(tmp) && (PyNames.INIT.equals(callee.getName())))
-              return true;
           }
         }
         return false;
