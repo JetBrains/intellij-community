@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -177,7 +178,23 @@ public class VMOptions {
   }
 
   @NonNls
+  @NotNull
   public static String getSettingsFilePath() {
+    File f = new File(doGetSettingsFilePath()).getAbsoluteFile();
+    try {
+      f = f.getCanonicalFile();
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+    }
+    return f.getPath();
+  }
+
+  @NotNull
+  private static String doGetSettingsFilePath() {
+    String vmOptionsFile = System.getProperty("idea.vmOptionsFile");
+    if (!StringUtil.isEmptyOrSpaces(vmOptionsFile)) return vmOptionsFile;
+
     final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
     if (SystemInfo.isMac) {
       return PathManager.getHomePath() + INFO_PLIST;
