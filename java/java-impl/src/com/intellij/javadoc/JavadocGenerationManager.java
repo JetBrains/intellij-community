@@ -23,7 +23,8 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -31,15 +32,16 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public final class JavadocGenerationManager extends AbstractProjectComponent implements JDOMExternalizable {
+public final class JavadocGenerationManager implements JDOMExternalizable, NamedComponent {
   private final JavadocConfiguration myConfiguration;
+  private final Project myProject;
 
-  public static JavadocGenerationManager getInstance(Project project) {
-    return project.getComponent(JavadocGenerationManager.class);
+  public static JavadocGenerationManager getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, JavadocGenerationManager.class);
   }
 
   JavadocGenerationManager(Project project) {
-    super(project);
+    myProject = project;
     myConfiguration = new JavadocConfiguration(project);
   }
 
