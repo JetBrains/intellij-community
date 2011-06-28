@@ -3,7 +3,7 @@ public class Y {
 
     public void foo(boolean param) {
         boolean b = CONST || param;
-        if (CONST) {
+        if (b) {
         }
     }
 }
