@@ -150,7 +150,11 @@ public class FunctionParsing extends Parsing {
         }
         if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
           if (!getExpressionParser().parseSingleExpression(false)) {
-            myBuilder.error(message("PARSE.expected.expression"));
+            PsiBuilder.Marker invalidElements = myBuilder.mark();
+            while(!atAnyOfTokens(endToken, PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
+              nextToken();
+            }
+            invalidElements.error(message("PARSE.expected.expression"));
           }
         }
         parameter.done(PyElementTypes.NAMED_PARAMETER);

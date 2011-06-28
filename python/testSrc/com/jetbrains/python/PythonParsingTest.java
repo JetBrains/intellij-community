@@ -271,6 +271,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testKeywordAsDefaultParameterValue() {  // PY-3713
+    doTest();
+  }
+
   public void testTrailingCommaInArgList() {  // PY-4016
     doTest();
   }
