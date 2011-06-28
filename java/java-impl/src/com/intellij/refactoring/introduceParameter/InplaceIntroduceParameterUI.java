@@ -26,6 +26,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.List;
 
 /**
@@ -114,6 +116,13 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     if (myOccurrences.length > 1 && !myIsInvokedOnDeclaration) {
       gc.gridy++;
       createOccurrencesCb(gc, myWholePanel, myOccurrences.length);
+      myCbReplaceAllOccurences.addItemListener(
+        new ItemListener() {
+          public void itemStateChanged(ItemEvent e) {
+            updateControls(new JCheckBox[0]);
+          }
+        }
+      );
     }
     gc.gridy++;
     gc.insets.left = 0;
