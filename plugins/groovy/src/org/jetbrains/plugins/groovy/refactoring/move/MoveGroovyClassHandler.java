@@ -112,19 +112,8 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       }
       else if (((GroovyFile)file).getClasses().length > 1) {
         correctSelfReferences(aClass, newPackage);
-        String modifiersText = null;
-        if (newPackage.getQualifiedName().equals(((GroovyFile)file).getPackageName())) {
-          final GrPackageDefinition packageDefinition = ((GroovyFile)file).getPackageDefinition();
-          if (packageDefinition != null) {
-            final PsiModifierList modifierList = packageDefinition.getModifierList();
-            if (modifierList != null) {
-              modifiersText = modifierList.getText();
-            }
-          }
-        }
-        final PsiClass created = ((GroovyFile)GroovyTemplatesFactory
-          .createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION,
-                              "GroovyClass.groovy")).getClasses()[0];
+
+        final PsiClass created = ((GroovyFile)GroovyTemplatesFactory.createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION, "GroovyClass.groovy")).getClasses()[0];
         PsiDocComment docComment = aClass.getDocComment();
         if (docComment != null) {
           final PsiDocComment createdDocComment = created.getDocComment();
@@ -137,16 +126,30 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
           docComment.delete();
         }
         newClass = (PsiClass)created.replace(aClass);
-        if (modifiersText != null) {
-          final GrPackageDefinition newPackageDefinition = (GrPackageDefinition)GroovyPsiElementFactory.getInstance(aClass.getProject())
-            .createTopElementFromText(modifiersText + " package " + newPackage.getQualifiedName());
-          ((GroovyFile)newClass.getContainingFile()).setPackage(newPackageDefinition);
-        }
+
+        setPackageModifiers((GroovyFile)file, ((GroovyFile)newClass.getContainingFile()), newPackage);
+
         correctOldClassReferences(newClass, aClass);
         aClass.delete();
       }
     }
     return newClass;
+  }
+
+  private static void setPackageModifiers(GroovyFile file, GroovyFile newFile, PsiPackage newPackage) {
+    String modifiersText = null;
+    final GrPackageDefinition packageDefinition = file.getPackageDefinition();
+    if (packageDefinition != null) {
+      final PsiModifierList modifierList = packageDefinition.getModifierList();
+      if (modifierList != null) {
+        modifiersText = modifierList.getText();
+      }
+    }
+    if (modifiersText != null && modifiersText.trim().length() > 0) {
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
+      final GrPackageDefinition newPackageDefinition = (GrPackageDefinition)factory.createTopElementFromText(modifiersText + " package " + newPackage.getQualifiedName());
+      newFile.setPackage(newPackageDefinition);
+    }
   }
 
   private static GroovyFile generateNewScript(GroovyFile file, PsiPackage newPackage) {
@@ -188,6 +191,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
 
     newFile.setName(file.getName());
     newFile.setPackageName(newPackage.getQualifiedName());
+    setPackageModifiers(file, newFile, newPackage);
 
     GroovyChangeContextUtil.decodeContextInfo(newFile, null, null);
     return newFile;
