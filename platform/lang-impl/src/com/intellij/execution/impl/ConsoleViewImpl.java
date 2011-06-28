@@ -360,6 +360,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       runnable.run();
     }
     else {
+      if (mySpareTimeAlarm.isDisposed()) return;
       mySpareTimeAlarm.addRequest(
         new Runnable() {
           public void run() {
