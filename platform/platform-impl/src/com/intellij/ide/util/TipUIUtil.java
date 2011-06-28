@@ -22,16 +22,13 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.text.Document;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
-import java.text.MessageFormat;
 
 /**
  * @author dsl
@@ -81,13 +78,6 @@ public class TipUIUtil {
     }
   }
 
-  @NonNls public static final String FONT = SystemInfo.isMac ? "Courier" : "Verdana";
-  public static final String COLOR = "#993300";
-  public static final String SIZE = SystemInfo.isMac ? "4" : "3";
-  @NonNls public static final String SHORTCUT_HTML_TEMPLATE = "<font  style=\"font-family: " + FONT +
-                                                              "; font-weight:bold;\" size=\"" + SIZE +
-                                                              "\"  color=\"" + COLOR + "\">{0}</font>";
-
   private static void updateShortcuts(StringBuffer text) {
     int lastIndex = 0;
     while(true) {
@@ -107,9 +97,8 @@ public class TipUIUtil {
           break;
         }
       }
-      final String replacement = MessageFormat.format(SHORTCUT_HTML_TEMPLATE, shortcutText);
-      text.replace(lastIndex, actionIdEnd + 1, replacement);
-      lastIndex += replacement.length();
+      text.replace(lastIndex, actionIdEnd + 1, shortcutText);
+      lastIndex += shortcutText.length();
     }
   }
 }
