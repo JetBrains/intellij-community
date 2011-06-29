@@ -26,12 +26,14 @@ import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyLiteralCollectionType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,8 @@ import java.util.Map;
 public class PyBuiltinCache {
   public static final @NonNls String BUILTIN_FILE = "__builtin__.py";
   @NonNls public static final String BUILTIN_FILE_3K = "builtins.py";
+
+  private PyType STRING_TYPE_PY2 = null;
 
   /**
    * Used in cases when a virtual file as absent in test mode; then the project may store its own SDK.
@@ -265,7 +269,13 @@ public class PyBuiltinCache {
       return getObjectType("str");
     }
     else {
-      return getObjectType("unicode");
+      if (STRING_TYPE_PY2 == null) {
+        final List<PyType> types = new ArrayList<PyType>();
+        types.add(getObjectType("str"));
+        types.add(getObjectType("unicode"));
+        STRING_TYPE_PY2 = new PyUnionType(types);
+      }
+      return STRING_TYPE_PY2;
     }
   }
 

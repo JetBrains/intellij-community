@@ -66,7 +66,7 @@ def test_str_unicode():
     s1.decode(ENC)
     str_to_none(s1.encode(ENC))
     unicode_to_none(<warning descr="Expected type 'unicode', got 'str' instead">s1.encode(ENC)</warning>)
-    string_to_none(<warning descr="Expected type 'unicode', got 'str' instead">s1.encode(ENC)</warning>)
+    string_to_none(s1.encode(ENC))
     str_or_unicode_to_none(s1.encode(ENC))
     b2.decode(ENC)
     b2.encode(ENC)
@@ -77,13 +77,13 @@ def test_str_unicode():
 def f_list_tuple(spam, eggs):
     """
     :type spam: list of string
-    :type eggs: (bool, int, string)
+    :type eggs: (bool, int, unicode)
     """
     return spam, eggs
 
 
 def test_list_tuple():
-    f_list_tuple(<warning descr="Expected type 'list of unicode', got 'list of int' instead">[1, 2, 3]</warning>,
+    f_list_tuple(<warning descr="Expected type 'list of one of (str, unicode)', got 'list of int' instead">[1, 2, 3]</warning>,
                  (<warning descr="Expected type 'tuple(bool,int,unicode)', got 'tuple(bool,int,str)' instead">False, 2, ''</warning>))
 
 
