@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
       PyExpression callee = node.getCallee();
       if (callee != null) {
         PyType calleeType = myTypeEvalContext.getType(callee);
-        if (calleeType != null && calleeType instanceof PyClassType) {
+        if (calleeType instanceof PyClassType) {
           PyClassType classType = (PyClassType) calleeType;
           if (isMethodType(node, classType)) {
             return;
@@ -56,10 +57,13 @@ public class PyCallingNonCallableInspection extends PyInspection {
             if (calls == null || calls.size() == 0) {
               PyClass pyClass = classType.getPyClass();
               if (pyClass != null) {
-                registerProblem(node, "'" + pyClass.getName() + "' object is not callable");
+                registerProblem(node, String.format("'%s' object is not callable", pyClass.getName()));
               }
             }
           }
+        }
+        if (calleeType instanceof PyModuleType) {
+          registerProblem(node, String.format("'%s' module is not callable", callee.getName()));
         }
       }
     }

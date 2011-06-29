@@ -13,4 +13,7 @@ def concealer():
 
     pr = prog()
     pr()
-           
+
+def test_module():
+    import sys
+    <warning descr="'sys' module is not callable">sys()</warning>
