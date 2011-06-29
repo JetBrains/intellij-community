@@ -112,7 +112,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     super.handleInsert(context);
   }
 
-  public static boolean hasUnboundTypeParams(final PsiMethod method) {
+  public static boolean hasUnboundTypeParams(final PsiMethod method, PsiType expectedType) {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return false;
 
@@ -147,7 +147,14 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
       if (!parameter.getType().accept(typeParamSearcher).booleanValue()) return false;
     }
 
-    return true;
+    PsiSubstitutor substitutor = calculateMethodReturnTypeSubstitutor(method, expectedType);
+    for (PsiTypeParameter parameter : typeParameters) {
+      if (!TypeConversionUtil.typeParameterErasure(parameter).equals(substitutor.substitute(parameter))) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public static PsiSubstitutor calculateMethodReturnTypeSubstitutor(PsiMethod method, final PsiType expected) {
