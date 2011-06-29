@@ -46,6 +46,7 @@ public abstract class GroovyNamedArgumentProvider {
   public static final StringTypeCondition TYPE_STRING = new StringTypeCondition(CommonClassNames.JAVA_LANG_STRING);
   public static final StringTypeCondition TYPE_MAP = new StringTypeCondition(CommonClassNames.JAVA_UTIL_MAP);
   public static final StringTypeCondition TYPE_BOOL = new StringTypeCondition(CommonClassNames.JAVA_LANG_BOOLEAN);
+  public static final StringTypeCondition TYPE_CLASS = new StringTypeCondition(CommonClassNames.JAVA_LANG_CLASS);
   public static final StringTypeCondition TYPE_INTEGER = new StringTypeCondition(CommonClassNames.JAVA_LANG_INTEGER);
   public static final ArgumentDescriptor TYPE_ANY = new ArgumentDescriptor();
   public static final ArgumentDescriptor TYPE_ANY_NOT_FIRST = new ArgumentDescriptor().setShowFirst(false);
