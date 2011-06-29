@@ -25,18 +25,19 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.JavaModuleType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.newProject.AndroidModuleType;
 import org.jetbrains.android.sdk.*;
@@ -128,21 +129,31 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
-  private static String getPropertyValue(@NotNull Module module, @NotNull String propertyFileName, @NotNull String propertyKey) {
+  private static Pair<Properties, VirtualFile> readPropertyFile(@NotNull Module module, @NotNull String propertyFileName) {
     for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
       final VirtualFile vFile = contentRoot.findChild(propertyFileName);
       if (vFile != null) {
         final Properties properties = new Properties();
         try {
           properties.load(new FileInputStream(new File(vFile.getPath())));
-          final String value = properties.getProperty(propertyKey);
-          if (value != null) {
-            return value;
-          }
+          return new Pair<Properties, VirtualFile>(properties, vFile);
         }
         catch (IOException e) {
           LOG.info(e);
         }
+      }
+    }
+    return null;
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  private static String getPropertyValue(@NotNull Module module, @NotNull String propertyFileName, @NotNull String propertyKey) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, propertyFileName);
+    if (pair != null) {
+      final String value = pair.first.getProperty(propertyKey);
+      if (value != null) {
+        return value;
       }
     }
     return null;
@@ -221,6 +232,55 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
     return moduleType instanceof JavaModuleType || moduleType instanceof AndroidModuleType;
   }
 
+  @Nullable
+  private static VirtualFile findFileByAbsoluteOrRelativePath(@NotNull VirtualFile baseDir, @NotNull String path) {
+    VirtualFile libDir = LocalFileSystem.getInstance().findFileByPath(path);
+    return libDir != null ? libDir : LocalFileSystem.getInstance().findFileByPath(baseDir.getPath() + '/' + path);
+  }
+
+  private static void updateBackwardDependencies(@NotNull Module module) {
+    for (Module module1 : ModuleManager.getInstance(module.getProject()).getModules()) {
+      if (module1 != module) {
+        updateDependencies(module1, module);
+      }
+    }
+  }
+
+  private static void updateDependencies(@NotNull Module module, @Nullable Module allowedDepModule) {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, SdkConstants.FN_DEFAULT_PROPERTIES);
+    if (pair != null) {
+      final VirtualFile baseDir = pair.second.getParent();
+      String libDirPath;
+      int i = 1;
+      do {
+        libDirPath = pair.first.getProperty("android.library.reference." + i);
+        if (libDirPath != null) {
+          final VirtualFile libDir = findFileByAbsoluteOrRelativePath(baseDir, FileUtil.toSystemIndependentName(libDirPath));
+          if (libDir != null) {
+            final Module depModule = ModuleUtil.findModuleForFile(libDir, module.getProject());
+
+            if (depModule != null &&
+                (allowedDepModule == null || allowedDepModule == depModule) &&
+                ArrayUtil.find(ModuleRootManager.getInstance(depModule).getContentRoots(), libDir) >= 0 &&
+                !ModuleRootManager.getInstance(module).isDependsOn(depModule)) {
+              model.addModuleOrderEntry(depModule);
+            }
+          }
+        }
+        i++;
+      }
+      while (libDirPath != null);
+    }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model.commit();
+      }
+    });
+  }
+
   public void registerDetectors(FacetDetectorRegistry<AndroidFacetConfiguration> detectorRegistry) {
     FacetDetector<VirtualFile, AndroidFacetConfiguration> detector = new FacetDetector<VirtualFile, AndroidFacetConfiguration>() {
       public AndroidFacetConfiguration detectFacet(VirtualFile source, Collection<AndroidFacetConfiguration> existentFacetConfigurations) {
@@ -244,7 +304,10 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
               final String androidLibraryPropValue = getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, "android.library");
               if (androidLibraryPropValue != null && androidLibraryPropValue.equals("true")) {
                 androidFacet.getConfiguration().LIBRARY_PROJECT = true;
+                updateBackwardDependencies(module);
               }
+
+              updateDependencies(module, null);
 
               Manifest manifest = androidFacet.getManifest();
               if (manifest != null) {
