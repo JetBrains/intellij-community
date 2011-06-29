@@ -175,7 +175,10 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     if (elementType != null) {
-       return new PyCollectionTypeImpl(listClass, false, elementType);
+      final PyType it = PyTypeParser.getTypeByName(this, "Iterator");
+      if (it instanceof PyClassType) {
+        return new PyCollectionTypeImpl(((PyClassType)it).getPyClass(), false, elementType);
+      }
     }
     return null;
   }

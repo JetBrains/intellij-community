@@ -157,7 +157,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public boolean isSubclass(PyClass parent) {
-    if (this == parent) return true;
+    if (this == parent || isSubclassOfABC(new PyClassRef(parent))) {
+      return true;
+    }
     for (PyClass superclass : iterateAncestorClasses()) {
       if (parent == superclass) return true;
     }
@@ -166,7 +168,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Override
   public boolean isSubclass(String superClassQName) {
-    if (getQualifiedName().equals(superClassQName)) return true;
+    if (getQualifiedName().equals(superClassQName) || isSubclassOfABC(new PyClassRef(superClassQName))) {
+      return true;
+    }
     for (PyClassRef superclass : iterateAncestors()) {
       if (superClassQName.equals(superclass.getQualifiedName())) return true;
     }
@@ -561,6 +565,43 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     return null;
+  }
+
+  private boolean isSubclassOfABC(PyClassRef superRef) {
+    final String superQName = superRef.getQualifiedName();
+    final PyClass superClass = superRef.getPyClass();
+    final String superName = superClass != null ? superClass.getName() : superQName;
+    if (superName != null) {
+      final boolean isContainer = hasMethod("__contains__");
+      if ("Container".equals(superName)) {
+        return isContainer;
+      }
+      if ("Hashable".equals(superName)) {
+        return hasMethod("__hash__");
+      }
+      final boolean isIterable = hasMethod("__iter__");
+      if ("Iterable".equals(superName)) {
+        return isIterable;
+      }
+      if ("Iterator".equals(superName)) {
+        return isIterable && hasMethod("next");
+      }
+      final boolean isSized = hasMethod("__len__");
+      if ("Sized".equals(superName)) {
+        return isSized;
+      }
+      if ("Callable".equals(superName)) {
+        return hasMethod("__call__");
+      }
+      if ("Sequence".equals(superName)) {
+        return isSized && isIterable && isContainer && hasMethod("__getitem__");
+      }
+    }
+    return false;
+  }
+
+  private boolean hasMethod(String name) {
+    return findMethodByName(name, true) != null;
   }
 
   private static class PropertyImpl extends PropertyBunch<PyFunction> implements Property {
