@@ -47,7 +47,7 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
  * Time: 6:02:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.IDeviceChangeListener {
+public class DeviceChooser extends DialogWrapper {
   public static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
 
   private final AndroidFacet myFacet;
@@ -95,16 +95,6 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
     if (selectedSerials != null) {
       resetSelection(selectedSerials);
     }
-    /*try {
-      AdbManager.run(new Runnable() {
-        public void run() {
-          AndroidDebugBridge.addDeviceChangeListener(DeviceChooser.this);
-        }
-      }, false);
-    }
-    catch (AdbNotRespondingException e) {
-      Messages.showErrorDialog(facet.getModule().getProject(), e.getMessage(), CommonBundle.getErrorTitle());
-    }*/
   }
 
   private void resetSelection(@NotNull String[] selectedSerials) {
@@ -158,12 +148,6 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
   private static String getDeviceState(@NotNull IDevice device) {
     IDevice.DeviceState state = device.getState();
     return state != null ? capitalize(state.name().toLowerCase()) : "";
-  }
-
-  @Override
-  protected void dispose() {
-    super.dispose();
-    AndroidDebugBridge.removeDeviceChangeListener(this);
   }
 
   @Override
@@ -231,32 +215,6 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
     public void actionPerformed(ActionEvent e) {
       updateTable();
     }
-  }
-
-  public void deviceConnected(IDevice device) {
-    /*ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        updateTable();
-      }
-    });*/
-  }
-
-  public void deviceDisconnected(IDevice device) {
-    /*ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        updateTable();
-      }
-    });*/
-  }
-
-  public void deviceChanged(IDevice device, int changeMask) {
-    /*if ((changeMask & (IDevice.CHANGE_STATE | IDevice.CHANGE_BUILD_INFO)) != 0) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          updateTable();
-        }
-      });
-    }*/
   }
 
   private class MyDeviceTableModel extends AbstractTableModel {
