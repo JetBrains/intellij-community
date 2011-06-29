@@ -176,7 +176,7 @@ public class IfStatementWithIdenticalBranchesInspection
                     return;
                 }
                 final Match match = finder.isDuplicate(branch, true);
-                if (match != null) {
+                if (match != null && match.getReturnValue() == null) {
                     registerStatementError(ifStatement, statement);
                     return;
                 }

@@ -1,5 +1,9 @@
 package com.siyeh.igtest.controlflow.if_statement_with_identical_branches;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 public class IfStatementWithIdenticalBranches {
 
     void one() {
@@ -99,4 +103,28 @@ public class IfStatementWithIdenticalBranches {
 
         }
     }
+}
+
+class NotADup {
+    public String getElementDescription(Object element, Collection location, Dup d, Dup d1) {
+        if (location instanceof List) {
+            if (element instanceof String) {
+                return notNullize(element);
+            }
+        } else if (location instanceof Set) {
+            if (element instanceof String) {
+                return message(element);
+            }
+        }
+        return null;
+    }
+
+    private String notNullize(Object element) {
+        return null;
+    }
+
+    private String message(String element) {
+        return null;
+    }
+
 }
