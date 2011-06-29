@@ -44,6 +44,7 @@ import java.util.ArrayList;
 
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.constant.title");
+  protected InplaceIntroduceConstantPopup myInplaceIntroduceConstantPopup;
 
   public IntroduceConstantHandler() {
     super(true);
@@ -151,9 +152,11 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (activeIntroducer == null) {
-        if (new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
-                                              anchorElement, anchorElementIfAll,
-                                              expr != null ? createOccurenceManager(expr, parentClass) : null).startInplaceIntroduceTemplate() ){
+        myInplaceIntroduceConstantPopup =
+          new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
+                                            anchorElement, anchorElementIfAll,
+                                            expr != null ? createOccurenceManager(expr, parentClass) : null);
+        if (myInplaceIntroduceConstantPopup.startInplaceIntroduceTemplate() ){
           return null;
         }
       } else {
@@ -195,6 +198,11 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
   protected String getRefactoringName() {
     return REFACTORING_NAME;
+  }
+
+  @Override
+  public AbstractInplaceIntroducer getInplaceIntroducer() {
+    return myInplaceIntroduceConstantPopup;
   }
 
   @Nullable

@@ -196,6 +196,11 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
   }
 
   @Override
+  public void setReplaceAllOccurrences(boolean allOccurrences) {
+    myReplaceAllCb.setSelected(allOccurrences);
+  }
+
+  @Override
   protected PsiElement checkLocalScope() {
     return myParentClass;
   }

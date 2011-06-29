@@ -469,7 +469,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     }
   }
 
-  public InplaceIntroduceParameterPopup getInplaceIntroduceParameterPopup() {
-      return myInplaceIntroduceParameterPopup;
+  @Override
+  public AbstractInplaceIntroducer getInplaceIntroducer() {
+    return myInplaceIntroduceParameterPopup;
   }
 }

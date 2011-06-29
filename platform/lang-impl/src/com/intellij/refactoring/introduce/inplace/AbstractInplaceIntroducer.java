@@ -119,6 +119,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void performPostIntroduceTasks() {}
 
   public abstract boolean isReplaceAllOccurrences();
+  public abstract void setReplaceAllOccurrences(boolean allOccurrences);
   protected abstract JComponent getComponent();
 
   protected abstract void saveSettings(V variable);
@@ -276,18 +277,18 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       for (E expression : getOccurrences()) {
         stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
       }
-
-      final V localVariable = getLocalVariable();
-      if (localVariable != null) {
-        final PsiElement nameIdentifier = localVariable.getNameIdentifier();
-        if (nameIdentifier != null) {
-          int length = nameIdentifier.getTextLength();
-          stringUsages.add(Pair.<PsiElement, TextRange>create(nameIdentifier, new TextRange(0, length)));
-        }
-      }
     }
     else if (getExpr() != null) {
       stringUsages.add(Pair.<PsiElement, TextRange>create(getExpr(), new TextRange(0, getExpr().getTextLength())));
+    }
+
+    final V localVariable = getLocalVariable();
+    if (localVariable != null) {
+      final PsiElement nameIdentifier = localVariable.getNameIdentifier();
+      if (nameIdentifier != null) {
+        int length = nameIdentifier.getTextLength();
+        stringUsages.add(Pair.<PsiElement, TextRange>create(nameIdentifier, new TextRange(0, length)));
+      }
     }
   }
 
@@ -402,7 +403,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       }
       PsiNameIdentifierOwner identifierOwner = PsiTreeUtil.getParentOfType(containingFile.findElementAt(myLocalMarker.getStartOffset()),
                                                                            PsiNameIdentifierOwner.class, false);
-      return identifierOwner.getClass() == myLocalVariable.getClass() ? (V)identifierOwner : null;
+      return identifierOwner != null && identifierOwner.getClass() == myLocalVariable.getClass() ? (V)identifierOwner : null;
 
     }
     return myLocalVariable;

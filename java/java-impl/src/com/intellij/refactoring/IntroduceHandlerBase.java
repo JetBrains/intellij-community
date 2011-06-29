@@ -22,7 +22,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author dsl
@@ -75,4 +77,7 @@ public abstract class IntroduceHandlerBase {
    */
   protected abstract boolean invokeImpl(Project project, PsiLocalVariable localVariable,
                                         Editor editor);
+
+  @TestOnly
+  public abstract AbstractInplaceIntroducer getInplaceIntroducer();
 }

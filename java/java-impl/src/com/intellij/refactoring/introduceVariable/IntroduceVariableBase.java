@@ -48,6 +48,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.*;
+import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -907,5 +908,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       }
       conflicts.putValue(occurence, RefactoringBundle.message("introducing.variable.may.break.code.logic"));
     }
+  }
+
+  @Override
+  public AbstractInplaceIntroducer getInplaceIntroducer() {
+    return null;
   }
 }

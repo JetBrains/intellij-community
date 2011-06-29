@@ -158,7 +158,8 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                                            dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
   }
 
-  public InplaceIntroduceFieldPopup getInplaceIntroduceFieldPopup() {
+  @Override
+  public AbstractInplaceIntroducer getInplaceIntroducer() {
     return myInplaceIntroduceFieldPopup;
   }
 

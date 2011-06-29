@@ -15,46 +15,32 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.introduceParameter.InplaceIntroduceParameterPopup;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
+import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  * Date: 3/16/11
  */
-public class InplaceIntroduceParameterTest extends AbstractInplaceIntroduceTest {
+public class InplaceIntroduceConstantTest extends AbstractInplaceIntroduceTest {
 
-  private static final String BASE_PATH = "/refactoring/inplaceIntroduceParameter/";
+  private static final String BASE_PATH = "/refactoring/inplaceIntroduceConstant/";
 
   public void testReplaceAll() throws Exception {
+
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
         inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
       }
     });
-  }
-
-  @Override
-  protected String getBasePath() {
-    return BASE_PATH;
-  }
-
-  @Override
-  protected MyIntroduceHandler createIntroduceHandler() {
-    return new MyIntroduceParameterHandler();
   }
 
   public void testEscapePosition() throws Exception {
@@ -65,9 +51,17 @@ public class InplaceIntroduceParameterTest extends AbstractInplaceIntroduceTest 
     doTestEscape();
   }
 
+  @Override
+  protected String getBasePath() {
+    return BASE_PATH;
+  }
 
-  private static class MyIntroduceParameterHandler extends IntroduceParameterHandler implements MyIntroduceHandler {
+  @Override
+  protected MyIntroduceHandler createIntroduceHandler() {
+    return new MyIntroduceConstantHandler();
+  }
 
+  public static class MyIntroduceConstantHandler extends IntroduceConstantHandler implements MyIntroduceHandler  {
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
       return super.invokeImpl(project, selectedExpr, editor);

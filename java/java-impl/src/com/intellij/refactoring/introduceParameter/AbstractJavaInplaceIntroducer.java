@@ -2,15 +2,12 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -18,23 +15,14 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.introduceField.InplaceCombosUtil;
-import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * User: anna
  */
 public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntroducer<PsiVariable, PsiExpression> {
   protected TypeSelectorManagerImpl myTypeSelectorManager;
-  protected TypeSelector myTypeSelector;
 
   public AbstractJavaInplaceIntroducer(final Project project,
                                        Editor editor,
@@ -44,25 +32,6 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
                                        TypeSelectorManagerImpl typeSelectorManager, String title) {
     super(project, editor, expr, localVariable, occurrences, title);
     myTypeSelectorManager = typeSelectorManager;
-    myTypeSelector = myTypeSelectorManager.getTypeSelector();
-    JComponent component = myTypeSelector.getComponent();
-    if (component instanceof JComboBox) {
-      ((JComboBox)component).addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final PsiVariable variable = getVariable();
-          if (variable != null) {
-            new WriteCommandAction(project, getCommandName(), getCommandName()) {
-              @Override
-              protected void run(com.intellij.openapi.application.Result result) throws Throwable {
-                variable.getTypeElement().replace(JavaPsiFacade.getElementFactory(myProject).createTypeElement(myTypeSelector.getSelectedType()));
-              }
-            }.execute();
-            updateTitle(variable);
-          }
-        }
-      });
-    }
   }
 
   protected abstract PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType);
@@ -83,7 +52,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   @Override
   protected PsiVariable createFieldToStartTemplateOn(boolean replaceAll, String[] names) {
     myTypeSelectorManager.setAllOccurences(replaceAll);
-    return createFieldToStartTemplateOn(names, myTypeSelector.getSelectedType());
+    return createFieldToStartTemplateOn(names, getType());
   }
 
   @Override
@@ -98,26 +67,11 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   @Override
   protected void saveSettings(PsiVariable psiVariable) {
-    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myTypeSelectorManager.getDefaultType());//myDefaultType.getType());
+    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), getType());//myDefaultType.getType());
   }
 
   protected PsiType getType() {
-    return myTypeSelector.getSelectedType();
-  }
-
-  @Nullable
-  protected JComponent typeComponent() {
-    JComponent component = myTypeSelector.getComponent();
-    if (component instanceof JLabel) return null;
-    LOG.assertTrue(component instanceof JComboBox);
-    InplaceCombosUtil.appendActions((JComboBox)component, myProject);
-    JPanel panel = new JPanel(new BorderLayout());
-    JLabel label = new JLabel("Type: ");
-    label.setLabelFor(component);
-    label.setDisplayedMnemonic('T');
-    panel.add(label, BorderLayout.WEST);
-    panel.add(component, BorderLayout.CENTER);
-    return panel;
+    return myTypeSelectorManager.getDefaultType();
   }
 
   @Nullable
