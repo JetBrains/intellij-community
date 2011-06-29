@@ -16,4 +16,4 @@ def concealer():
 
 def test_module():
     import sys
-    <warning descr="'sys' module is not callable">sys()</warning>
+    <warning descr="'sys' is not callable">sys()</warning>

@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
@@ -48,22 +49,16 @@ public class PyCallingNonCallableInspection extends PyInspection {
         PyType calleeType = myTypeEvalContext.getType(callee);
         if (calleeType instanceof PyClassType) {
           PyClassType classType = (PyClassType) calleeType;
+          PyClass cls = classType.getPyClass();
           if (isMethodType(node, classType)) {
             return;
           }
-          if (!classType.isDefinition()) {
-            final List<? extends RatedResolveResult> calls = classType.resolveMember("__call__", null, AccessDirection.READ,
-                                                                                     PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext));
-            if (calls == null || calls.size() == 0) {
-              PyClass pyClass = classType.getPyClass();
-              if (pyClass != null) {
-                registerProblem(node, String.format("'%s' object is not callable", pyClass.getName()));
-              }
-            }
+          if (cls != null && !cls.isSubclass(PyNames.CALLABLE)) {
+            registerProblem(node, String.format("'%s' object is not callable", cls.getName()));
           }
         }
-        if (calleeType instanceof PyModuleType) {
-          registerProblem(node, String.format("'%s' module is not callable", callee.getName()));
+        else if (calleeType != null) {
+          registerProblem(node, String.format("'%s' is not callable", callee.getName()));
         }
       }
     }
