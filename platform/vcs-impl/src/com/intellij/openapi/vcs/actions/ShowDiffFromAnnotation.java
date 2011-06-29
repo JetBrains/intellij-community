@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineNumberListener;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
@@ -42,7 +43,10 @@ import com.intellij.util.containers.CacheOneStepIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -125,6 +129,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
             int idx = findSelfInList(changes, targetPath[0]);
             final ShowDiffUIContext context = new ShowDiffUIContext(true);
             context.setDiffNavigationContext(createDiffNavigationContext(actualNumber));
+            if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
             ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), idx, myVcs.getProject(), context);
           }
         }

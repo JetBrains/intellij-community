@@ -279,7 +279,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
   }
 
-  protected void refreshFiles(final Collection<FilePath> additionalDirectly, @Nullable final ContinuationContext context) {
+  protected void refreshFiles(final Collection<FilePath> additionalDirectly, @Nullable final ContinuationPause context) {
     final List<FilePath> directlyAffected = myVerifier.getDirectlyAffected();
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
     directlyAffected.addAll(additionalDirectly);

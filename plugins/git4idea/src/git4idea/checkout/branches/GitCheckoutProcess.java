@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.GatheringContinuationContext;
+import com.intellij.util.continuation.SemaphoreContinuationContext;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -48,6 +49,7 @@ import git4idea.checkout.branches.GitBranchConfigurations.ChangeListInfo;
 import git4idea.commands.*;
 import git4idea.stash.GitShelveUtils;
 import git4idea.ui.GitUIUtil;
+import git4idea.update.GitUpdateLikeProcess;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -184,8 +186,10 @@ public class GitCheckoutProcess {
     try {
       myRoots = GitUtil.getGitRoots(myConfig.getProject(), myConfig.getVcs());
       saveAll();
-      waitForChanges();
+//      waitForChanges();
       myProjectManager.blockReloadingProjectOnExternalChanges();
+      // todo here not tested!! since now is not used in UI
+      myChangeManager.freeze(new SemaphoreContinuationContext(), GitUpdateLikeProcess.REASON);
       try {
         GitBranchConfiguration oldConfiguration = checkCurrentConfiguration();
         if (oldConfiguration == null) {
@@ -256,6 +260,7 @@ public class GitCheckoutProcess {
         }
       }
       finally {
+        myChangeManager.letGo();
         myProjectManager.unblockReloadingProjectOnExternalChanges();
       }
       // launch project update?
@@ -593,8 +598,10 @@ public class GitCheckoutProcess {
       }
     };
     continuation.addExceptionHandler(VcsException.class, exceptionConsumer);
+    // todo remove this
     final GatheringContinuationContext initContext = new GatheringContinuationContext();
-    GitShelveUtils.doSystemUnshelve(myProject, shelve, myShelveManager, new Runnable() {
+    GitShelveUtils.doSystemUnshelve(myProject, shelve, myShelveManager, initContext);
+    /*GitShelveUtils.doSystemUnshelve(myProject, shelve, myShelveManager, new Runnable() {
                                       @Override
                                       public void run() {
                                         final HashMap<Pair<String, String>, String> parsedChanges =
@@ -640,7 +647,7 @@ public class GitCheckoutProcess {
                                           exceptionConsumer.consume(new VcsException(t));
                                         }
                                       }
-                                    }, initContext);
+                                    }, initContext);*/
     continuation.run(initContext.getList());
   }
 

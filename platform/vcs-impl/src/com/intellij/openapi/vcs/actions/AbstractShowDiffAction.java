@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -88,6 +89,8 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
   protected void actionPerformed(VcsContext vcsContext) {
     final Project project = vcsContext.getProject();
+    if (project == null) return;
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + vcsContext.getActionName() + " now")) return;
     final VirtualFile selectedFile = vcsContext.getSelectedFiles()[0];
     final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     final Document document = fileDocumentManager.getDocument(selectedFile);

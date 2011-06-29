@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -59,4 +59,6 @@ public interface VcsContext {
 
   @Nullable
   Change[] getSelectedChanges();
+
+  String getActionName();
 }

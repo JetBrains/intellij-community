@@ -37,9 +37,11 @@ public class GitRevert extends BasicAction {
 
   @Override
   public boolean perform(@NotNull final Project project, GitVcs vcs, @NotNull final List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles) {
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (changeListManager.isFreezedWithNotification("Can not revert now")) return true;
     final List<Change> changes = new ArrayList<Change>(affectedFiles.length);
     for (VirtualFile f : affectedFiles) {
-      Change ch = ChangeListManager.getInstance(project).getChange(f);
+      Change ch = changeListManager.getChange(f);
       if (ch != null) {
         changes.add(ch);
       }

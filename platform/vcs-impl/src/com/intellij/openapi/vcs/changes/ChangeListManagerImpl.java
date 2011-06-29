@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -44,12 +45,14 @@ import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.Rethrow;
 import org.jdom.Element;
@@ -61,6 +64,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author max
@@ -95,6 +99,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     "LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
 
   private boolean myShowLocalChangesInvalidated;
+  private AtomicReference<String> myFreezeName;
 
   // notifies myListeners on the same thread that local changes update is done
   private final DelayedNotificator myDelayedNotificator;
@@ -117,6 +122,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
+    myFreezeName = new AtomicReference<String>(null);
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
@@ -136,8 +142,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (((LocalChangeList)oldDefaultList).hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
-          oldDefaultList.getChanges().isEmpty() &&
-          !((LocalChangeList)oldDefaultList).isReadOnly()) {
+            oldDefaultList.getChanges().isEmpty() &&
+            !((LocalChangeList)oldDefaultList).isReadOnly()) {
 
           invokeAfterUpdate(new Runnable() {
             public void run() {
@@ -265,6 +271,31 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   static class DisposedException extends RuntimeException {}
+
+  public void freeze(final ContinuationPause context, final String reason) {
+    myUpdater.setIgnoreBackgroundOperation(true);
+    // this update is nessesary for git, to refresh local changes before
+    invokeAfterUpdate(new Runnable() {
+      @Override
+      public void run() {
+        myUpdater.setIgnoreBackgroundOperation(false);
+        myUpdater.pause();
+        myFreezeName.set(reason);
+        context.ping();
+      }
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.NON_MODAL);
+    context.suspend();
+  }
+
+  @Override
+  public void letGo() {
+    myUpdater.go();
+    myFreezeName.set(null);
+  }
+
+  public String isFreezed() {
+    return myFreezeName.get();
+  }
 
   public void scheduleUpdate() {
     myUpdater.schedule();
@@ -1251,5 +1282,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       final AbstractVcs vcs = myVcsManager.getVcsFor(vf);
       return vcs == null ? null : vcs.getKeyInstanceMethod();
     }
+  }
+
+  public boolean isFreezedWithNotification(String modalTitle) {
+    final String freezeReason = isFreezed();
+    if (freezeReason != null) {
+      if (modalTitle != null) {
+        Messages.showErrorDialog(myProject, freezeReason, modalTitle);
+      } else {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, freezeReason, MessageType.WARNING);
+      }
+    }
+    return freezeReason != null;
   }
 }

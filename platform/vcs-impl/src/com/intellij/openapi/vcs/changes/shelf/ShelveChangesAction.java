@@ -31,6 +31,11 @@ public class ShelveChangesAction extends AbstractCommitChangesAction {
     return VcsBundle.message("shelve.changes.action");
   }
 
+  @Override
+  protected String getMnemonicsFreeActionName(VcsContext context) {
+    return getActionName(context);
+  }
+
   @Override @Nullable
   protected CommitExecutor getExecutor(Project project) {
     return new ShelveChangesCommitExecutor(project);

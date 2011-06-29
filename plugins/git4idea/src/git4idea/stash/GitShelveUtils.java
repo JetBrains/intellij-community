@@ -15,7 +15,6 @@
  */
 package git4idea.stash;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.AsynchronousExecution;
 import com.intellij.openapi.project.Project;
@@ -24,8 +23,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
@@ -61,13 +58,11 @@ public class GitShelveUtils {
    * @param project           the project
    * @param shelvedChangeList the shelved change list
    * @param shelveManager     the shelve manager
-   * @param restoreListsRunnable
    */
   @AsynchronousExecution
   public static void doSystemUnshelve(final Project project,
                                       final ShelvedChangeList shelvedChangeList,
                                       final ShelveChangesManager shelveManager,
-                                      @NotNull final Runnable restoreListsRunnable,
                                       final @NotNull ContinuationContext context) {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
@@ -99,12 +94,6 @@ public class GitShelveUtils {
       public void run(ContinuationContext context) {
         GitVcs.getInstance(project).getVFSListener().setEventsSuppressed(false);
         addFilesAfterUnshelve(project, shelvedChangeList, projectPath, context);
-        ChangeListManager.getInstance(project).invokeAfterUpdate(new Runnable() {
-            @Override
-            public void run() {
-              restoreListsRunnable.run();
-            }
-          }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT, "Restoring changelists", ModalityState.NON_MODAL);
       }
     });
   }

@@ -66,8 +66,10 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    if (project == null || changes == null) return;
+    if (changes == null) return;
 
     final boolean needsConvertion = checkIfThereAreFakeRevisions(project, changes);
     final List<Change> changesInList = e.getData(VcsDataKeys.CHANGES_IN_LIST_KEY);

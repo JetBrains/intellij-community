@@ -21,12 +21,8 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitVcs;
@@ -36,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * Saves and restores uncommitted local changes - it is used before and after the update process.
@@ -53,9 +47,6 @@ public abstract class GitChangesSaver {
   protected final ChangeListManagerEx myChangeManager;
   protected final ProgressIndicator myProgressIndicator;
   protected final String myStashMessage;
-  private final VcsDirtyScopeManager myDirtyScopeManager;
-
-  protected List<LocalChangeList> myChangeLists; // Copy of local change lists - saved before update, used after update to sort changes
 
   /**
    * Returns an instance of the proper GitChangesSaver depending on the chosen save changes policy.
@@ -83,7 +74,6 @@ public abstract class GitChangesSaver {
     myProgressIndicator = indicator;
     myStashMessage = stashMessage;
     myChangeManager = (ChangeListManagerEx)ChangeListManagerEx.getInstance(myProject);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
   /**
@@ -94,7 +84,6 @@ public abstract class GitChangesSaver {
     if (rootsToSave == null || rootsToSave.isEmpty()) {
       return;
     }
-    myChangeLists = myChangeManager.getChangeListsCopy();
     save(rootsToSave);
   }
 
@@ -103,7 +92,7 @@ public abstract class GitChangesSaver {
    * @param context
    */
   public void restoreLocalChanges(ContinuationContext context) {
-    load(getRestoreListsRunnable(), context);
+    load(context);
   }
 
   public void notifyLocalChangesAreNotRestored() {
@@ -117,28 +106,6 @@ public abstract class GitChangesSaver {
     }
   }
 
-  public List<LocalChangeList> getChangeLists() {
-    return myChangeLists == null ? myChangeManager.getChangeLists() : myChangeLists;
-  }
-
-  /**
-   * Utility method - gets {@link FilePath}s of changed files in a single collection.
-   */
-  public Collection<FilePath> getChangedFiles() {
-    final HashSet<FilePath> files = new HashSet<FilePath>();
-    for (LocalChangeList changeList : getChangeLists()) {
-      for (Change c : changeList.getChanges()) {
-        if (c.getAfterRevision() != null) {
-          files.add(c.getAfterRevision().getFile());
-        }
-        if (c.getBeforeRevision() != null) {
-          files.add(c.getBeforeRevision().getFile());
-        }
-      }
-    }
-    return files;
-  }
-
   /**
    * Saves local changes - specific for chosen save strategy.
    * @param rootsToSave local changes should be saved on these roots.
@@ -147,10 +114,9 @@ public abstract class GitChangesSaver {
 
   /**
    * Loads the changes - specific for chosen save strategy.
-   * @param restoreListsRunnable
    * @param exceptionConsumer
    */
-  protected abstract void load(@Nullable Runnable restoreListsRunnable, ContinuationContext exceptionConsumer);
+  protected abstract void load(ContinuationContext exceptionConsumer);
 
   /**
    * @return true if there were local changes to save.
@@ -167,25 +133,6 @@ public abstract class GitChangesSaver {
    */
   protected abstract void showSavedChanges();
 
-  private Runnable getRestoreListsRunnable() {
-    return new Runnable() {
-      public void run() {
-        if (myChangeLists == null) {
-          return;
-        }
-        LOG.info("restoreChangeLists " + myChangeLists);
-        for (LocalChangeList changeList : myChangeLists) {
-          final Collection<Change> changes = changeList.getChanges();
-          LOG.debug( "restoreProjectChangesAfterUpdate.invokeAfterUpdate changeList: " + changeList.getName() + " changes: " + changes.size());
-          if (!changes.isEmpty()) {
-            LOG.debug("After restoring files: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
-            myChangeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
-          }
-        }
-      }
-    };
-  }
-
   protected class ShowSavedChangesNotificationListener implements NotificationListener {
     @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
@@ -194,3 +141,4 @@ public abstract class GitChangesSaver {
     }
   }
 }
+

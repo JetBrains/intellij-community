@@ -42,6 +42,7 @@ public class CachedVcsContext implements VcsContext {
   private final FilePath mySelectedFilePath;
   private final ChangeList[] mySelectedChangeLists;
   private final Change[] mySelectedChanges;
+  private final String myActionName;
 
   public CachedVcsContext(VcsContext baseContext) {
     myProject = baseContext.getProject();
@@ -58,6 +59,7 @@ public class CachedVcsContext implements VcsContext {
     mySelectedFilePath = baseContext.getSelectedFilePath();
     mySelectedChangeLists = baseContext.getSelectedChangeLists();
     mySelectedChanges = baseContext.getSelectedChanges();
+    myActionName = baseContext.getActionName();
   }
 
   public String getPlace() {
@@ -116,5 +118,10 @@ public class CachedVcsContext implements VcsContext {
   @Nullable
   public Change[] getSelectedChanges() {
     return mySelectedChanges;
+  }
+
+  @Override
+  public String getActionName() {
+    return myActionName;
   }
 }

@@ -42,7 +42,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public VcsContext createContextOn(final AnActionEvent event) {
-    return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace());
+    return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace(), event.getPresentation().getText());
   }
 
   public FilePath createFilePathOn(@NotNull final VirtualFile virtualFile) {

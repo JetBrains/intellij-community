@@ -37,15 +37,22 @@ public class VcsContextWrapper implements VcsContext {
   protected final DataContext myContext;
   protected final int myModifiers;
   private final String myPlace;
+  private final String myActionName;
 
-  public VcsContextWrapper(DataContext context, int modifiers, String place) {
+  public VcsContextWrapper(DataContext context, int modifiers, String place, String actionName) {
     myContext = context;
     myModifiers = modifiers;
     myPlace = place;
+    myActionName = actionName;
   }
 
   public String getPlace() {
     return myPlace;
+  }
+
+  @Override
+  public String getActionName() {
+    return myActionName;
   }
 
   public static VcsContext createCachedInstanceOn(AnActionEvent event) {
@@ -53,7 +60,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public static VcsContextWrapper createInstanceOn(final AnActionEvent event) {
-    return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace());
+    return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace(), event.getPresentation().getText());
   }
 
   public Project getProject() {

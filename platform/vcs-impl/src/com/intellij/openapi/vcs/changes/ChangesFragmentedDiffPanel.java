@@ -64,8 +64,6 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     assert ! myDiffs.isEmpty();
 
     myPanel = new JPanel(new BorderLayout());
-
-    buildUi();
   }
 
   @Override
@@ -75,7 +73,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myPanel.removeAll();
   }
 
-  private void buildUi() {
+  public void buildUi() {
     final JPanel topPanel = new JPanel(new BorderLayout());
     final JPanel wrapper = new JPanel();
     final BoxLayout boxLayout = new BoxLayout(wrapper, BoxLayout.X_AXIS);

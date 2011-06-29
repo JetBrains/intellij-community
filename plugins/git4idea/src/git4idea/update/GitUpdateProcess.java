@@ -61,6 +61,9 @@ public class GitUpdateProcess {
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
   private GeneralSettings myGeneralSettings;
+  private boolean myResult;
+  private final Map<VirtualFile, GitUpdater> myUpdaters;
+  private final Collection<VirtualFile> myRootsToSave;
 
   public GitUpdateProcess(@NotNull Project project,
                           @NotNull ProgressIndicator progressIndicator,
@@ -74,6 +77,8 @@ public class GitUpdateProcess {
     mySaver = GitChangesSaver.getSaver(myProject, myProgressIndicator,
       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
     myGeneralSettings = GeneralSettings.getInstance();
+    myUpdaters = new HashMap<VirtualFile, GitUpdater>();
+    myRootsToSave = new HashSet<VirtualFile>(1);
   }
 
   /**
@@ -103,31 +108,28 @@ public class GitUpdateProcess {
       return false;
     }
 
-    final Boolean[] result = new Boolean[1];
-    result[0] = false;
     new GitUpdateLikeProcess(myProject) {
       @Override
       protected void runImpl(ContinuationContext context) {
-        result[0] = updateImpl(forceRebase, context);
+        myResult = updateImpl(forceRebase, context);
       }
     }.execute();
-    return result[0];
+    return myResult;
   }
 
   private boolean updateImpl(boolean forceRebase, ContinuationContext context) {
     // define updaters for roots
-    final Map<VirtualFile, GitUpdater> updaters = new HashMap<VirtualFile, GitUpdater>();
     // check if update is possible
-    if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) { return false; }
-    if (!checkTrackedBranchesConfigured()) { return false; }
+    if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) return false;
+    if (!checkTrackedBranchesConfigured()) return false;
 
     try {
       for (VirtualFile root : myRoots) {
         final GitUpdater updater = forceRebase
-                                   ? new GitRebaseUpdater(myProject, root, this, myProgressIndicator, myUpdatedFiles)
-                                   : GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles);
+                                   ? new GitRebaseUpdater(myProject, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles)
+                                   : GitUpdater.getUpdater(myProject, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles);
         if (updater.isUpdateNeeded()) {
-          updaters.put(root, updater);
+          myUpdaters.put(root, updater);
         }
         LOG.info("update| root=" + root + " ,updater=" + updater);
       }
@@ -137,19 +139,19 @@ public class GitUpdateProcess {
       return false;
     }
 
+    if (myUpdaters.isEmpty()) return false;
     // save local changes if needed (update via merge may perform without saving).
-    final Collection<VirtualFile> rootsToSave = new HashSet<VirtualFile>(1);
-    for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
+    for (Map.Entry<VirtualFile, GitUpdater> entry : myUpdaters.entrySet()) {
       VirtualFile root = entry.getKey();
       GitUpdater updater = entry.getValue();
       if (updater.isSaveNeeded()) {
-        rootsToSave.add(root);
+        myRootsToSave.add(root);
         LOG.info("update| root " + root + " needs save");
       }
     }
 
     try {
-      mySaver.saveLocalChanges(rootsToSave);
+      mySaver.saveLocalChanges(myRootsToSave);
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
       notifyError(myProject, "Git update failed",
@@ -163,7 +165,7 @@ public class GitUpdateProcess {
     boolean success = true;
     VirtualFile currentlyUpdatedRoot = null;
     try {
-      for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
+      for (Map.Entry<VirtualFile, GitUpdater> entry : myUpdaters.entrySet()) {
         currentlyUpdatedRoot = entry.getKey();
         GitUpdater updater = entry.getValue();
         GitUpdateResult res = updater.update();

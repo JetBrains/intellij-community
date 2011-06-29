@@ -24,6 +24,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
@@ -43,6 +44,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     assert changes != null;
     List<Change> changesToLocal = new ArrayList<Change>();

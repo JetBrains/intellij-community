@@ -20,21 +20,19 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
+import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
-import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Kirill Likhodedov
@@ -54,30 +52,31 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   @Override
   protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
-    ArrayList<Change> changes = new ArrayList<Change>();
-    for (LocalChangeList l : myChangeLists) {
-      changes.addAll(filterChangesByRoots(l.getChanges(), rootsToSave)); // adding only changes from roots which are to be saved
+    final Map<VirtualFile,Collection<Change>> map = new LocalChangesUnderRoots(myProject).getChangesUnderRoots(rootsToSave);
+    final List<Change> changes = new ArrayList<Change>();
+    for (Collection<Change> changeCollection : map.values()) {
+      changes.addAll(changeCollection);
     }
-    if (!changes.isEmpty()) {
+    if (! changes.isEmpty()) {
       String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
       List<VcsException> exceptions = new ArrayList<VcsException>(1);
       myShelvedChangeList = GitShelveUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, exceptions);
       myProgressIndicator.setText(oldProgressTitle);
-      if (!exceptions.isEmpty()) {
+      if (! exceptions.isEmpty()) {
         LOG.info("save " + exceptions, exceptions.get(0));
         throw exceptions.get(0);
       }
     }
   }
 
-  protected void load(Runnable restoreListsRunnable, ContinuationContext context) {
+  protected void load(ContinuationContext context) {
     if (myShelvedChangeList != null) {
       LOG.info("load ");
       String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.getString("update.unshelving.changes"));
       if (myShelvedChangeList != null) {
-        GitShelveUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, restoreListsRunnable, context);
+        GitShelveUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, context);
       }
       myProgressIndicator.setText(oldProgressTitle);
     }
@@ -95,32 +94,4 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   @Override protected void showSavedChanges() {
     myShelveViewManager.activateView(myShelvedChangeList);
   }
-
-  /**
-   * Goes through the changes and returns only those of them which belong to any of the given roots,
-   * throwing away the changes which don't belong to any of the given roots.
-   */
-  private static @NotNull Collection<Change> filterChangesByRoots(@NotNull Collection<Change> changes, @NotNull Collection<VirtualFile> rootsToSave) {
-    Collection<Change> filteredChanges = new HashSet<Change>();
-    for (Change change : changes) {
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      if (beforeRevision != null) {
-        final VirtualFile root = GitUtil.getGitRootOrNull(beforeRevision.getFile());
-        if (root != null && rootsToSave.contains(root)) {
-          filteredChanges.add(change);
-          continue;
-        }
-      }
-
-      final ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null) {
-        final VirtualFile root = GitUtil.getGitRootOrNull(afterRevision.getFile());
-        if (root != null && rootsToSave.contains(root)) {
-          filteredChanges.add(change);
-        }
-      }
-    }
-    return filteredChanges;
-  }
-
 }

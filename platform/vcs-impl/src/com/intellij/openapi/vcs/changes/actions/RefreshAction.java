@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
@@ -39,6 +40,7 @@ public class RefreshAction extends AnAction implements DumbAware {
   }
 
   public static void doRefresh(final Project project) {
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     FileDocumentManager.getInstance().saveAllDocuments();
     VirtualFileManager.getInstance().refresh(true, new Runnable() {
       public void run() {
