@@ -76,13 +76,7 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
     info.first.collectVariants(info.second, new PairConsumer<String, Boolean>() {
       @Override
       public void consume(String variant, Boolean isFinal) {
-        int i = variant.indexOf('.');
-        if (i == -1) {
-          res.add(variant);
-        }
-        else {
-          res.add(variant.substring(0, i));
-        }
+        res.add(variant);
       }
     });
 
