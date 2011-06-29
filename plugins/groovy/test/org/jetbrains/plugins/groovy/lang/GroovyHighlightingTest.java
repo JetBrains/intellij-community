@@ -44,8 +44,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
-      final VirtualFile groovyJar =
-        JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_8LibraryName()+"!/");
+      final VirtualFile groovyJar = JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_8LibraryName()+"!/");
+      assertTrue(groovyJar != null);
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
       modifiableModel.commit();
     }
@@ -426,6 +426,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testDelegatedMethodIsImplemented() {
+    doTest();
+  }
+
+  public void testEnumImplementsAllGroovyObjectMethods() {
     doTest();
   }
 }
