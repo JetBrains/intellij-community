@@ -226,6 +226,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     MapArgumentCompletionProvider.register(this);
     GroovyConfigSlurperCompletionProvider.register(this);
+    MapKeysCompletionProvider.register(this);
 
     // class name stuff
 

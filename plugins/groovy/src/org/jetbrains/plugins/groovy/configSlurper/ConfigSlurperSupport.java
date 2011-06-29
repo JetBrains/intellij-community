@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.configSlurper;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,7 @@ public abstract class ConfigSlurperSupport {
   public abstract PropertiesProvider getProvider(@NotNull GroovyFile file);
 
   @Nullable
-  public Pair<PropertiesProvider, GroovyFile> getConfigSlurperInfo(@NotNull GrExpression qualifier, @NotNull PsiElement qualifierResolve) {
+  public PropertiesProvider getConfigSlurperInfo(@NotNull GrExpression qualifier, @NotNull PsiElement qualifierResolve) {
     return null;
   }
 

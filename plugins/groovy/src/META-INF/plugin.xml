@@ -42,6 +42,7 @@
 
     <extensionPoint name="namedArgumentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider"/>
     <extensionPoint name="namedArguments" beanClass="org.jetbrains.plugins.groovy.extensions.SimpleGroovyNamedArgumentProvider"/>
+    <extensionPoint name="mapContentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyMapContentProvider"/>
 
     <extensionPoint name="unresolvedHighlightFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter"/>
     <extensionPoint name="unresolvedHighlightFileFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFileFilter"/>
@@ -71,6 +72,9 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>
+
+    <mapContentProvider implementation="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperMapContentProvider"/>
+    <referenceTypeEnhancer implementation="org.jetbrains.plugins.groovy.configSlurper.GroovyMapValueTypeEhancer"/>
 
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedReferenceFilterByFile"/>
 
