@@ -152,19 +152,21 @@ public class GitShelveUtils {
   /**
    * Shelve changes
    *
+   *
    * @param project       the context project
    * @param shelveManager the shelve manager
    * @param changes       the changes to process
    * @param description   the description of for the shelve
    * @param exceptions    the generated exceptions
+   * @param rollback
    * @return created shelved change list or null in case failure
    */
   @Nullable
   public static ShelvedChangeList shelveChanges(final Project project, final ShelveChangesManager shelveManager, Collection<Change> changes,
                                                 final String description,
-                                                final List<VcsException> exceptions) {
+                                                final List<VcsException> exceptions, boolean rollback) {
     try {
-      ShelvedChangeList shelve = shelveManager.shelveChanges(changes, description);
+      ShelvedChangeList shelve = shelveManager.shelveChanges(changes, description, rollback);
       project.getMessageBus().syncPublisher(ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(GitStashUtils.class));
       return shelve;
     }

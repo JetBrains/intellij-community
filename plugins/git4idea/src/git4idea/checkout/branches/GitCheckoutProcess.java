@@ -753,7 +753,7 @@ public class GitCheckoutProcess {
     if (progress != null) {
       progress.setText("Creating shelve: " + description);
     }
-    ShelvedChangeList shelved = GitShelveUtils.shelveChanges(myProject, myShelveManager, toShelve, description, myExceptions);
+    ShelvedChangeList shelved = GitShelveUtils.shelveChanges(myProject, myShelveManager, toShelve, description, myExceptions, true);
     if (shelved == null) {
       return null;
     }

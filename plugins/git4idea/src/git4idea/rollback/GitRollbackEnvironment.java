@@ -29,6 +29,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitFileUtils;
+import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -235,5 +236,13 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    */
   public static GitRollbackEnvironment getInstance(final Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, GitRollbackEnvironment.class);
+  }
+
+  public static void resetHardLocal(final Project project, final VirtualFile root) {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RESET);
+    handler.setNoSSH(true);
+    handler.addParameters("--hard");
+    handler.endOptions();
+    GitHandlerUtil.runInCurrentThread(handler, null);
   }
 }

@@ -42,7 +42,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
-import com.intellij.openapi.vcs.impl.VcsFileTypeFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -154,7 +153,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
   }*/
 
-  public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage) throws IOException, VcsException {
+  public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage, final boolean rollback) throws IOException, VcsException {
     final List<Change> textChanges = new ArrayList<Change>();
     final List<ShelvedBinaryFile> binaryFiles = new ArrayList<ShelvedBinaryFile>();
     for(Change change: changes) {
@@ -188,7 +187,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       myShelvedChangeLists.add(changeList);
       ProgressManager.checkCanceled();
 
-      new RollbackWorker(myProject, false).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
+      if (rollback) {
+        new RollbackWorker(myProject, false).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
+      }
     }
     finally {
       notifyStateChanged();

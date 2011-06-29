@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import git4idea.i18n.GitBundle;
+import git4idea.rollback.GitRollbackEnvironment;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -61,11 +62,15 @@ public class GitShelveChangesSaver extends GitChangesSaver {
       String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
       List<VcsException> exceptions = new ArrayList<VcsException>(1);
-      myShelvedChangeList = GitShelveUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, exceptions);
+      myShelvedChangeList = GitShelveUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, exceptions, false);
       myProgressIndicator.setText(oldProgressTitle);
       if (! exceptions.isEmpty()) {
         LOG.info("save " + exceptions, exceptions.get(0));
         throw exceptions.get(0);
+      } else {
+        for (VirtualFile root : rootsToSave) {
+          GitRollbackEnvironment.resetHardLocal(myProject, root);
+        }
       }
     }
   }

@@ -673,7 +673,8 @@ public class QuickMerge {
                 FileDocumentManager.getInstance().saveAllDocuments();
               }
             }, ModalityState.NON_MODAL);
-          ShelveChangesManager.getInstance(myProject).shelveChanges(changes, myIntersection.getComment(name) + " (auto shelve before merge)");
+          ShelveChangesManager.getInstance(myProject).shelveChanges(changes, myIntersection.getComment(name) + " (auto shelve before merge)",
+                                                                    true);
           session.addAllFiles(ChangesUtil.getFilesFromChanges(changes));
         }
         catch (IOException e) {
