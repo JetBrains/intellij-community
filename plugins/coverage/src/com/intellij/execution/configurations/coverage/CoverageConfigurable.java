@@ -24,6 +24,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.util.JreVersionDetector;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
@@ -188,16 +189,12 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
         runnersModel.addElement(new CoverageRunnerItem(runner));
       }
     }
-    myCoverageRunnerCb.setRenderer(new DefaultListCellRenderer(){
+    myCoverageRunnerCb.setRenderer(new ListCellRendererWrapper<CoverageRunnerItem>(myCoverageRunnerCb.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      public void customize(JList list, CoverageRunnerItem value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {
-          setText(((CoverageRunnerItem)value).getPresentableName());
+          setText(value.getPresentableName());
         }
-        return rendererComponent;
       }
     });
     myCoverageRunnerCb.addActionListener(new ActionListener() {
