@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceTypeEnhancer;
@@ -113,13 +114,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     for (GroovyResolveResult result : results) {
       final PsiElement element = result.getElement();
       if (element instanceof PsiMember) {
+        if (((PsiMember)element).hasModifierProperty(PsiModifier.PRIVATE)) continue;
         final PsiClass containingClass = ((PsiMember)element).getContainingClass();
         if (containingClass != null) {
           if (!InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_MAP)) continue;
           final String name = containingClass.getQualifiedName();
           if (name != null && name.startsWith("java.")) continue;
+          if (containingClass.getLanguage() != GroovyFileType.GROOVY_LANGUAGE && !InheritanceUtil.isInheritor(containingClass, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)) {
+            continue;
+          }
         }
-        if (!((PsiMember)element).hasModifierProperty(PsiModifier.PRIVATE)) continue;
       }
       filtered.add(result);
     }
