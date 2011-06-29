@@ -17,10 +17,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -185,7 +182,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       startRunnable.run();
     }
     else {
-      compileAndRun(startRunnable, profile, state, new Runnable() {
+      final RunnerSettings runnerSettings = env.getRunnerSettings();
+      compileAndRun(startRunnable, runnerSettings != null ? runnerSettings.getRunProfile() : profile, state, new Runnable() {
         public void run() {
           if (!project.isDisposed()) {
             project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);
