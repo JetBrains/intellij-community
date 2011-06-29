@@ -33,6 +33,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -53,7 +55,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
   private int myAnchorIdxIfAll = -1;
   private final OccurenceManager myOccurenceManager;
 
-  private final IntroduceFieldCentralPanel myIntroduceFieldPanel;
+  private final IntroduceFieldPopupPanel myIntroduceFieldPanel;
 
   static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
@@ -112,6 +114,9 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       public PsiField compute() {
         PsiField field = elementFactory.createField(getInputName() != null ? getInputName() : names[0], defaultType);
         field = (PsiField)myParentClass.add(field);
+        if (myExprText != null) {
+          updateInitializer(elementFactory, field);
+        }
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
         final String visibility = myIntroduceFieldPanel.getFieldVisibility();
         if (visibility != null) {
@@ -137,11 +142,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
     myIntroduceFieldPanel.setVisibility(visibility);
   }
 
-  public static void setInitializationPlace(BaseExpressionToFieldHandler.InitializationPlace place) {
-    ourLastInitializerPlace = place;
-  }
-
-    private RangeMarker myFieldRangeStart;
+  private RangeMarker myFieldRangeStart;
 
 
     @Override
@@ -172,6 +173,16 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
       return myWholePanel;
     }
+
+  private void updateInitializer(PsiElementFactory elementFactory, PsiField variable) {
+    if (variable != null) {
+      if (myIntroduceFieldPanel.getInitializerPlace() == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) {
+        variable.setInitializer(elementFactory.createExpressionFromText(myExprText, variable));
+      } else {
+        variable.setInitializer(null);
+      }
+    }
+  }
 
   @Override
   protected String getActionName() {

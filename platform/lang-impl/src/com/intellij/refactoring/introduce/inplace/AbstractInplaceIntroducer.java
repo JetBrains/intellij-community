@@ -66,7 +66,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected final V myLocalVariable;
   protected RangeMarker myLocalMarker;
 
-  private final String myExprText;
+  protected final String myExprText;
   private final String myLocalName;
 
   protected String myConstantName;
