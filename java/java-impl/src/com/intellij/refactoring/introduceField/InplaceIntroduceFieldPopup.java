@@ -23,12 +23,15 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -136,6 +139,28 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
   public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {
     myIntroduceFieldPanel.setReplaceAllOccurrences(replaceAllOccurrences);
+  }
+
+  @Override
+  protected void updateTitle(@Nullable PsiVariable variable, String value) {
+    if (variable == null || !variable.hasInitializer()) {
+      super.updateTitle(variable, value);
+    } else {
+      myLabel.clear();
+      final PsiExpression initializer = variable.getInitializer();
+      assert initializer != null;
+      String text = variable.getText().replace(variable.getName(), value);
+      text = text.replace(initializer.getText(), PsiExpressionTrimRenderer.render(initializer));
+      myLabel.append(text, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      revalidate();
+    }
+  }
+
+  @Override
+  protected void updateTitle(@Nullable PsiVariable variable) {
+    if (variable != null){
+      updateTitle(variable, variable.getName());
+    }
   }
 
   public void setVisibility(String visibility) {

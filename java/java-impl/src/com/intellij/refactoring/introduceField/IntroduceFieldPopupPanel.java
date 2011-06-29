@@ -117,12 +117,10 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   }
 
   protected JComponent createInitializerPlacePanel(final ItemListener itemListener, final ItemListener finalUpdater) {
-    JPanel mainPanel = new JPanel();
-    mainPanel.setLayout(new BorderLayout());
 
    JPanel groupPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gridBagConstraints =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              new Insets(0, 0, 0, 0), 0, 0);
 
     myInitialisersPlaceModel = new DefaultComboBoxModel();
@@ -164,15 +162,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       gridBagConstraints.insets.left = 0;
       groupPanel.add(initializersCombo, gridBagConstraints);
       myInitializerCombo = initializersCombo;
-    } /*else if (myInitialisersPlaceModel.getSize() == 1){
-      gridBagConstraints.gridwidth = 2;
-      groupPanel.add(new JLabel("Initialize field in " +
-                                getPresentableText((BaseExpressionToFieldHandler.InitializationPlace)myInitialisersPlaceModel.getElementAt(0))),
-                     gridBagConstraints);
-      gridBagConstraints.gridwidth = 1;
-    }*/
-
-
+    }
     return groupPanel;
   }
 
@@ -252,7 +242,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   protected JPanel composeWholePanel(JComponent initializerPlacePanel, JPanel checkboxPanel) {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                              new Insets(0, 0, 0, 0), 0, 0);
     panel.add(initializerPlacePanel, constraints);
     constraints.gridy++;
