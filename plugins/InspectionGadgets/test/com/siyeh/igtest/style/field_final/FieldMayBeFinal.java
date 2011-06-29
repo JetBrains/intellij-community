@@ -290,3 +290,18 @@ class InspectionTest2
         }
     }
 }
+class ActionMenu {
+    private boolean myMnemonicEnabled;
+
+    public ActionMenu(final boolean enableMnemonics) {
+        myMnemonicEnabled = enableMnemonics;
+    }
+
+    private boolean isTopLevel() {
+        return true;
+    }
+
+    public void setMnemonicEnabled(boolean enable) {
+        myMnemonicEnabled = enable;
+    }
+}

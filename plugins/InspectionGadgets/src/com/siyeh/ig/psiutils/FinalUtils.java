@@ -86,7 +86,6 @@ public class FinalUtils {
         if (!visitor.isFinalCandidate()) {
             return false;
         }
-        visitor.setDefiniteAssignment(true, false);
         checkMembers(fieldIsStatic, containingClass, null, visitor);
         if (!visitor.isFinalCandidate()) {
             return false;
@@ -112,6 +111,7 @@ public class FinalUtils {
             if (method.isConstructor()) {
                 continue;
             }
+            visitor.setDefiniteAssignment(true, false);
             // todo add unit test
             // must check static methods too, even if field is not static, and reverse
             method.accept(visitor);
@@ -129,6 +129,7 @@ public class FinalUtils {
                     innerClass.hasModifierProperty(PsiModifier.STATIC)) {
                 continue;
             }
+            visitor.setDefiniteAssignment(true, false);
             innerClass.accept(visitor);
             if (!visitor.isFinalCandidate()) {
                 return;
