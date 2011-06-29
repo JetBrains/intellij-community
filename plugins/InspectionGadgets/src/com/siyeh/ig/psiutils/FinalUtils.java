@@ -40,10 +40,6 @@ public class FinalUtils {
             visitor.setDefiniteAssignment(true, false);
         }
         for (PsiField aField : fields) {
-            if (!fieldIsStatic &&
-                    aField.hasModifierProperty(PsiModifier.STATIC)) {
-                continue;
-            }
             final PsiExpression initializer = aField.getInitializer();
             if (initializer != null) {
                 initializer.accept(visitor);
@@ -55,10 +51,6 @@ public class FinalUtils {
         final PsiClassInitializer[] initializers =
                 containingClass.getInitializers();
         for (PsiClassInitializer initializer : initializers) {
-            if (fieldIsStatic ^
-                    initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                continue;
-            }
             initializer.accept(visitor);
             if (!visitor.isFinalCandidate()) {
                 return false;
@@ -66,7 +58,8 @@ public class FinalUtils {
         }
         if (!fieldIsStatic) {
             final boolean definitelyAssigned = visitor.isDefinitelyAssigned();
-            final boolean definitelyUnassigned = visitor.isDefinitelyUnassigned();
+            final boolean definitelyUnassigned =
+                    visitor.isDefinitelyUnassigned();
             final PsiMethod[] constructors = containingClass.getConstructors();
             for (PsiMethod constructor : constructors) {
                 visitor.setDefiniteAssignment(definitelyAssigned,
@@ -102,18 +95,16 @@ public class FinalUtils {
         return true;
     }
 
-    private static void checkMembers(boolean fieldIsStatic,
+    private static void checkMembers(boolean checkConstructors,
                                      PsiClass containingClass,
                                      @Nullable PsiClass skipClass,
                                      DefiniteAssignmentVisitor visitor) {
         final PsiMethod[] methods = containingClass.getMethods();
         for (PsiMethod method : methods) {
-            if (method.isConstructor()) {
+            if (!checkConstructors && method.isConstructor()) {
                 continue;
             }
             visitor.setDefiniteAssignment(true, false);
-            // todo add unit test
-            // must check static methods too, even if field is not static, and reverse
             method.accept(visitor);
             if (!visitor.isFinalCandidate()) {
                 return;
@@ -122,11 +113,6 @@ public class FinalUtils {
         final PsiClass[] innerClasses = containingClass.getInnerClasses();
         for (PsiClass innerClass : innerClasses) {
             if (innerClass == skipClass) {
-                continue;
-            }
-            // todo add unit to prove this wrong
-            if (fieldIsStatic ^
-                    innerClass.hasModifierProperty(PsiModifier.STATIC)) {
                 continue;
             }
             visitor.setDefiniteAssignment(true, false);

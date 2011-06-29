@@ -305,3 +305,50 @@ class ActionMenu {
         myMnemonicEnabled = enable;
     }
 }
+class H {
+    private int h = 1;
+
+    static void H(H h) {
+        h.h = 2;
+    }
+}
+class I  {
+    private int i = 1;
+
+    static class J {
+        void i(I i) {
+            i.i = 1;
+        }
+    }
+}
+class J {
+    private static int j = 1;
+
+    class K {
+        void f() {
+            J.j = 2;
+        }
+    }
+}
+class K {
+    private int k = 1;
+    private static int l = new K().k = 2;
+
+    K() {
+        l = 2;
+    }
+}
+class L {
+    private static int l = 1;
+
+    {
+        l = 3;
+    }
+}
+class M {
+    private int m = 1;
+
+    static {
+        new M().m = 2;
+    }
+}
