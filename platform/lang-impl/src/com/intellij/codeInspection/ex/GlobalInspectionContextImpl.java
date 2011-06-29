@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -561,7 +561,10 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
           throw e;
         }
         catch (Exception e) {
-          LOG.error("In file:" + file, e);
+          LOG.error("In file: " + file, e);
+        }
+        catch (AssertionError e) {
+          LOG.error("In file: " + file, e);
         }
         finally {
           psiManager.dropFileCaches(file);
