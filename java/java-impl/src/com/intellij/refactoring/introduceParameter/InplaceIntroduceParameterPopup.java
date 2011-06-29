@@ -200,12 +200,13 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   }
 
   @Override
-  protected void updateTitle(PsiVariable variable) {
+  protected void updateTitle(@Nullable PsiVariable variable) {
+    if (variable == null) return;
     updateTitle(variable, variable.getName());
   }
 
   @Override
-  protected void updateTitle(PsiVariable variable, String value) {
+  protected void updateTitle(@Nullable PsiVariable variable, String value) {
     final PsiElement declarationScope = variable != null ? ((PsiParameter)variable).getDeclarationScope() : null;
     if (declarationScope instanceof PsiMethod) {
       final PsiMethod psiMethod = (PsiMethod)declarationScope;
@@ -226,8 +227,8 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
         myLabel.append(variable == parameter ? value : parameter.getName(), attr);
       }
       myLabel.append(")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      revalidate();
     }
-    revalidate();
   }
 
   @Override

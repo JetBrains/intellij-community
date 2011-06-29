@@ -72,7 +72,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected String myConstantName;
   public static final Key<AbstractInplaceIntroducer> ACTIVE_INTRODUCE = Key.create("ACTIVE_INTRODUCE");
 
-  protected SimpleColoredComponent myLabel = new SimpleColoredComponent();
+  protected final SimpleColoredComponent myLabel = new SimpleColoredComponent();
   private DocumentAdapter myDocumentAdapter;
   protected final JPanel myWholePanel;
 
@@ -190,13 +190,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     return result.get();
   }
 
-  protected void updateTitle(V variable, String value) {
+  protected void updateTitle(@Nullable V variable, String value) {
+    if (variable == null) return;
     myLabel.clear();
     myLabel.append(variable.getText().replace(variable.getName(), value), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     revalidate();
   }
 
-  protected void updateTitle(V variable) {
+  protected void updateTitle(@Nullable V variable) {
+    if (variable == null) return;
     myLabel.clear();
     myLabel.append(variable.getText(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     revalidate();
