@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,10 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
     final FSItem fsItem = convert(parent);
-    assert fsItem != null: "cannot find parent directory: " + parent.getPath();
+    if (fsItem == null) {
+      FSRecords.invalidateCaches();
+      throw new IllegalStateException("cannot find parent directory: " + parent.getPath());
+    }
     assert fsItem.isDirectory(): "parent is not a directory: " + parent.getPath();
 
     final FSDir fsDir = (FSDir)fsItem;
@@ -103,7 +107,10 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   public void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
-    assert fsItem != null: "failed to delete file " + file.getPath();
+    if (fsItem == null) {
+      FSRecords.invalidateCaches();
+      throw new IllegalStateException("failed to delete file " + file.getPath());
+    }
     fsItem.getParent().removeChild(fsItem);
   }
 
