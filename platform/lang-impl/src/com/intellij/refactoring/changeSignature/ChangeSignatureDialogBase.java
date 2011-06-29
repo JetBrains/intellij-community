@@ -19,15 +19,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -83,7 +77,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   protected EditorTextField myReturnTypeField;
   protected TableView<ParameterTableModelItemBase<P>> myParametersTable;
   protected final ParameterTableModelBase<P> myParametersTableModel;
-  private EditorTextField mySignatureArea;
+  private MethodSignatureComponent mySignatureArea;
   private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   protected VisibilityPanelBase myVisibilityPanel;
@@ -411,12 +405,9 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   private JComponent createSignaturePanel() {
     mySignatureArea = createSignaturePreviewComponent();
     JPanel panel = new JPanel(new BorderLayout());
-    //panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("signature.preview.border.title")));
     panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null), BorderLayout.NORTH);
     panel.add(mySignatureArea, BorderLayout.CENTER);
-    mySignatureArea.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
     mySignatureArea.setPreferredSize(new Dimension(-1, 130));
-    mySignatureArea.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR));
     mySignatureArea.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -427,12 +418,8 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     return panel;
   }
 
-  protected EditorTextField createSignaturePreviewComponent() {
-    return new EditorTextField(EditorFactory.getInstance().createDocument(calculateSignature()),
-                               getProject(),
-                               getFileType(),
-                               true,
-                               false);
+  protected MethodSignatureComponent createSignaturePreviewComponent() {
+    return new MethodSignatureComponent(calculateSignature(), getProject(),getFileType());
   }
 
   protected void updateSignature() {
@@ -454,15 +441,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   private void doUpdateSignature() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    String signature = calculateSignature();
-    mySignatureArea.setText(signature);
-    final Editor editor = mySignatureArea.getEditor();
-    if (editor != null) {
-      ((EditorEx)editor).setHorizontalScrollbarVisible(true);
-      ((EditorEx)editor).setVerticalScrollbarVisible(true);
-      editor.getScrollingModel().scrollVertically(0);
-      editor.getScrollingModel().scrollHorizontally(0);
-    }
+    mySignatureArea.setSignature(calculateSignature());
   }
 
   protected void updatePropagateButtons() {
