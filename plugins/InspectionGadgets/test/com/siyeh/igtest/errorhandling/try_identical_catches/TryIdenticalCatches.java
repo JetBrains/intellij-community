@@ -13,6 +13,24 @@ class TryIdenticalCatches {
     }
   }
 
+  String nonIdenticalButDuplicated(Object o) {
+        try {
+        } catch (NullPointerException e) {
+            if (o instanceof String) {
+                return a((String) o);
+            }
+        } catch (NumberFormatException e) {
+            if (o instanceof String) {
+                return b((String) o);
+            }
+        }
+        return null;
+  }
+
+  String a(String s) { return s;}
+  String b(String s) { return s;}
+
+
   public void identical(boolean value) {
     try {
       if (value) {

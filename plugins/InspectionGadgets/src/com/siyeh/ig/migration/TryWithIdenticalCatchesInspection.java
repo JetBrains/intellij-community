@@ -95,7 +95,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
           final PsiCodeBlock otherCatchBlock = otherSection.getCatchBlock();
           if (otherCatchBlock == null) continue;
           Match match = finder.isDuplicate(otherCatchBlock, true);
-          if (match != null) {
+          if (match != null && match.getReturnValue() == null) {
             PsiJavaToken rParenth = otherSection.getRParenth();
             if (rParenth != null) {
                 registerError(otherSection, 0, rParenth.getStartOffsetInParent() + 1, i);
