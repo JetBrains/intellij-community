@@ -38,6 +38,8 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
     final Object o = node.getUserObject();
 
+    setToolTipText(null);
+
     if (o == null || "ROOT".equals(o)) {
       // invisible
     } else if (o instanceof String) {
