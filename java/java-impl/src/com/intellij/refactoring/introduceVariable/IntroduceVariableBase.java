@@ -294,6 +294,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         text = stripped;
       }
 
+      if (literalExpression != null && text.equals(literalExpression.getText())) return literalExpression;
+
       final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
       tempExpr = elementFactory.createExpressionFromText(text, parent);
 
