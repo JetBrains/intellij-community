@@ -38,6 +38,7 @@ import java.awt.event.MouseEvent;
 class StatusPanel {
   private boolean myLogMode;
   private boolean myDirty;
+  private boolean myAfterClick;
   private final Alarm myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final TextPanel myTextPanel = new TextPanel();
 
@@ -46,8 +47,18 @@ class StatusPanel {
     myTextPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (myLogMode) {
+        if (myLogMode || myAfterClick) {
           EventLog.toggleLog(getActiveProject());
+          myAfterClick = true;
+          myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        myAfterClick = false;
+        if (!myLogMode) {
+          myTextPanel.setCursor(Cursor.getDefaultCursor());
         }
       }
     });
@@ -85,14 +96,9 @@ class StatusPanel {
       new Runnable() {
         @Override
         public void run() {
-          String text;
-          if (statusMessage != null) {
-            text = EventLog.formatForLog(statusMessage).first;
-            if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
-              text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
-            }
-          } else {
-            text = "";
+          String text = EventLog.formatForLog(statusMessage).first;
+          if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
+            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
           }
           myTextPanel.setText(text);
           myLogAlarm.addRequest(this, 30000);
