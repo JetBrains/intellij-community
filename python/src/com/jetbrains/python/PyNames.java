@@ -60,6 +60,22 @@ public class PyNames {
   public static final String DEPRECATION_WARNING = "DeprecationWarning";
   public static final String PENDING_DEPRECATION_WARNING = "PendingDeprecationWarning";
 
+  public static final String CONTAINER = "Container";
+  public static final String HASHABLE = "Hashable";
+  public static final String ITERABLE = "Iterable";
+  public static final String ITERATOR = "Iterator";
+  public static final String SIZED = "Sized";
+  public static final String CALLABLE = "Callable";
+  public static final String SEQUENCE = "Sequence";
+
+  public static final String CONTAINS = "__contains__";
+  public static final String HASH = "__hash__";
+  public static final String ITER = "__iter__";
+  public static final String NEXT = "next";
+  public static final String LEN = "__len__";
+  public static final String CALL = "__call__";
+  public static final String GETITEM = "__getitem__";
+
   public static final String NAME = "__name__";
 
   /**

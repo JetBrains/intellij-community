@@ -572,29 +572,29 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyClass superClass = superRef.getPyClass();
     final String superName = superClass != null ? superClass.getName() : superQName;
     if (superName != null) {
-      final boolean isContainer = hasMethod("__contains__");
-      if ("Container".equals(superName)) {
+      final boolean isContainer = hasMethod(PyNames.CONTAINS);
+      if (PyNames.CONTAINER.equals(superName)) {
         return isContainer;
       }
-      if ("Hashable".equals(superName)) {
-        return hasMethod("__hash__");
+      if (PyNames.HASHABLE.equals(superName)) {
+        return hasMethod(PyNames.HASH);
       }
-      final boolean isIterable = hasMethod("__iter__");
-      if ("Iterable".equals(superName)) {
+      final boolean isIterable = hasMethod(PyNames.ITER);
+      if (PyNames.ITERABLE.equals(superName)) {
         return isIterable;
       }
-      if ("Iterator".equals(superName)) {
-        return isIterable && hasMethod("next");
+      if (PyNames.ITERATOR.equals(superName)) {
+        return isIterable && hasMethod(PyNames.NEXT);
       }
-      final boolean isSized = hasMethod("__len__");
-      if ("Sized".equals(superName)) {
+      final boolean isSized = hasMethod(PyNames.LEN);
+      if (PyNames.SIZED.equals(superName)) {
         return isSized;
       }
-      if ("Callable".equals(superName)) {
-        return hasMethod("__call__");
+      if (PyNames.CALLABLE.equals(superName)) {
+        return hasMethod(PyNames.CALL);
       }
-      if ("Sequence".equals(superName)) {
-        return isSized && isIterable && isContainer && hasMethod("__getitem__");
+      if (PyNames.SEQUENCE.equals(superName)) {
+        return isSized && isIterable && isContainer && hasMethod(PyNames.GETITEM);
       }
     }
     return false;
