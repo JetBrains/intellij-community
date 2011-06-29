@@ -16,6 +16,6 @@
 class Test {
 
     void simpleMethod() {
-        boolean <caret>BB = false;
+        boolean <caret>bb = false;
     }
 }

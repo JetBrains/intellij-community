@@ -333,6 +333,23 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
           }
         }
+        if (myLocalMarker != null) {
+          final PsiElement refVariableElement = containingFile.findElementAt(myLocalMarker.getStartOffset());
+          if (refVariableElement != null) {
+            final PsiElement parent = refVariableElement.getParent();
+            if (parent instanceof PsiNamedElement) {
+              ((PsiNamedElement)parent).setName(myLocalName);
+            }
+          }
+
+          final V localVariable = getLocalVariable();
+          if (localVariable != null && localVariable.isPhysical()) {
+            final PsiElement nameIdentifier = localVariable.getNameIdentifier();
+            if (nameIdentifier != null) {
+              myLocalMarker = myEditor.getDocument().createRangeMarker(nameIdentifier.getTextRange());
+            }
+          }
+        }
         final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
         for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
           RangeMarker marker = occurrenceMarkers.get(i);

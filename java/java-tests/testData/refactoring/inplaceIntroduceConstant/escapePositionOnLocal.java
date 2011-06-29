@@ -15,6 +15,6 @@
  */
 class Test {
     void simpleMethod() {
-        boolean B<caret>B = false;
+        boolean b<caret>b = false;
     }
 }
