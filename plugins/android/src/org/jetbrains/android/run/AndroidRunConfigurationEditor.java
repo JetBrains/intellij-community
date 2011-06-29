@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -36,8 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -163,17 +162,14 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
         combo.setSelectedItem(avd);
       }
       else {
-        BasicComboBoxRenderer renderer = new BasicComboBoxRenderer() {
+        combo.setRenderer(new ListCellRendererWrapper(combo.getRenderer()) {
           @Override
-          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
             if (value == null) {
               setText("<html><font color='red'>" + avd + "</font></html>");
             }
-            return this;
           }
-        };
-        combo.setRenderer(renderer);
+        });
         combo.setSelectedItem(null);
         incorrectPreferredAvd = avd;
       }

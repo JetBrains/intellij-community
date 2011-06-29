@@ -16,6 +16,7 @@
 package org.jetbrains.android.sdk;
 
 import com.android.sdklib.IAndroidTarget;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
@@ -52,28 +52,22 @@ class AndroidSdkConfigurableForm {
   public AndroidSdkConfigurableForm(@NotNull SdkModel sdkModel, @NotNull final SdkModificator sdkModificator) {
     mySdkModel = sdkModel;
     myInternalJdkComboBox.setModel(myJdksModel);
-    myInternalJdkComboBox.setRenderer(new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    myInternalJdkComboBox.setRenderer(new ListCellRendererWrapper(myInternalJdkComboBox.getRenderer()) {
+      @Override
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Sdk) {
           setText(((Sdk)value).getName());
         }
-        return rendererComponent;
       }
     });
     myBuildTargetComboBox.setModel(myBuildTargetsModel);
 
-    myBuildTargetComboBox.setRenderer(new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    myBuildTargetComboBox.setRenderer(new ListCellRendererWrapper(myBuildTargetComboBox.getRenderer()) {
+      @Override
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof IAndroidTarget) {
           setText(AndroidSdkUtils.getTargetPresentableName((IAndroidTarget)value));
         }
-        return rendererComponent;
       }
     });
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.module.Module;
@@ -24,7 +25,6 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -57,14 +57,12 @@ class ChooseModuleStep extends ExportSignedPackageWizardStep {
     }
 
     myModuleCombo.setModel(new CollectionComboBoxModel(facets, selection));
-    myModuleCombo.setRenderer(new DefaultListCellRenderer() {
+    myModuleCombo.setRenderer(new ListCellRendererWrapper<AndroidFacet>(myModuleCombo.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final Module module = ((AndroidFacet)value).getModule();
+      public void customize(JList list, AndroidFacet value, int index, boolean selected, boolean hasFocus) {
+        final Module module = value.getModule();
         setText(module.getName());
         setIcon(module.getModuleType().getNodeIcon(false));
-        return this;
       }
     });
     myModuleCombo.addActionListener(new ActionListener() {

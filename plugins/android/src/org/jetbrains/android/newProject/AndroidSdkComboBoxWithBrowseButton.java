@@ -16,6 +16,7 @@
 package org.jetbrains.android.newProject;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -26,7 +27,6 @@ import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.util.AndroidBundle;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -38,10 +38,9 @@ public class AndroidSdkComboBoxWithBrowseButton extends ComboboxWithBrowseButton
   public AndroidSdkComboBoxWithBrowseButton() {
     final JComboBox sdkCombobox = getComboBox();
 
-    sdkCombobox.setRenderer(new DefaultListCellRenderer() {
+    sdkCombobox.setRenderer(new ListCellRendererWrapper(sdkCombobox.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Sdk) {
           setText(((Sdk)value).getName());
           setIcon(((Sdk)value).getSdkType().getIcon());
@@ -49,7 +48,6 @@ public class AndroidSdkComboBoxWithBrowseButton extends ComboboxWithBrowseButton
         else {
           setText("<html><font color='red'>[none]</font></html>");
         }
-        return this;
       }
     });
 

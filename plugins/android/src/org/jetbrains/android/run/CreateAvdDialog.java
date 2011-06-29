@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.android.prefs.AndroidLocation;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -49,11 +50,8 @@ import java.util.Map;
 import static com.android.prefs.AndroidLocation.FOLDER_AVD;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
+ * @author Eugene.Kudelevsky
  * Date: May 9, 2009
- * Time: 8:16:35 PM
- * To change this template use File | Settings | File Templates.
  */
 public class CreateAvdDialog extends DialogWrapper {
   private JTextField myNameField;
@@ -182,20 +180,17 @@ public class CreateAvdDialog extends DialogWrapper {
         }
       }
     });
-    mySkinField.setRenderer(new DefaultListCellRenderer() {
+    mySkinField.setRenderer(new ListCellRendererWrapper(mySkinField.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         String presentation = value != null ? getSkinPresentation((String)value) : null;
-        return super.getListCellRendererComponent(list, presentation, index, isSelected, cellHasFocus);
+        setText(presentation);
       }
     });
-    myTargetBox.setRenderer(new DefaultListCellRenderer() {
+    myTargetBox.setRenderer(new ListCellRendererWrapper<IAndroidTarget>(myTargetBox.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        IAndroidTarget target = (IAndroidTarget)value;
-        setText(AndroidSdkUtils.getPresentableTargetName(target));
-        return this;
+      public void customize(JList list, IAndroidTarget value, int index, boolean selected, boolean hasFocus) {
+        setText(AndroidSdkUtils.getPresentableTargetName(value));
       }
     });
     IAndroidTarget target = facet.getConfiguration().getAndroidTarget();

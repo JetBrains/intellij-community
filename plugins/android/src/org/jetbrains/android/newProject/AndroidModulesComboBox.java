@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.newProject;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,6 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,12 +30,10 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public class AndroidModulesComboBox extends JComboBox {
-
   public AndroidModulesComboBox() {
-    setRenderer(new DefaultListCellRenderer() {
+    setRenderer(new ListCellRendererWrapper(getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Module) {
           final Module module = (Module)value;
           setText(module.getName());
@@ -44,7 +42,6 @@ public class AndroidModulesComboBox extends JComboBox {
         else {
           setText("<html><font color='red'>[none]</font></html>");
         }
-        return this;
       }
     });
   }

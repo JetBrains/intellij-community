@@ -1,5 +1,6 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -133,12 +134,11 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
   protected JComponent createEditor() {
     myModulesModel = new DefaultComboBoxModel();
     myModulesBox.setModel(myModulesModel);
-    myModulesBox.setRenderer(new ModuleCellRenderer());
+    myModulesBox.setRenderer(new ModuleCellRenderer(myModulesBox.getRenderer()));
 
     return myMainPanel;
   }
 
   protected void disposeEditor() {
   }
-
 }
