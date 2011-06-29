@@ -44,7 +44,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
   private final Project myProject;
   private final PsiAnonymousClass myAnonClass;
-  private final boolean myNeedsThis;
+  private final boolean myShowCanBeStatic;
 
   private NameSuggestionsField myNameField;
   private final ParameterTablePanel.VariableData[] myVariableData;
@@ -52,11 +52,11 @@ class AnonymousToInnerDialog extends DialogWrapper{
   private JCheckBox myCbMakeStatic;
 
   public AnonymousToInnerDialog(Project project, PsiAnonymousClass anonClass, final VariableInfo[] variableInfos,
-                                boolean needsThis) {
+                                boolean showCanBeStatic) {
     super(project, true);
     myProject = project;
     myAnonClass = anonClass;
-    myNeedsThis = needsThis;
+    myShowCanBeStatic = showCanBeStatic;
 
     setTitle(AnonymousToInnerHandler.REFACTORING_NAME);
 
@@ -108,12 +108,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
   }
 
   public boolean isMakeStatic() {
-    if(myNeedsThis) {
-      return false;
-    }
-    else {
-      return myCbMakeStatic.isSelected();
-    }
+    return myCbMakeStatic.isSelected();
   }
 
   public String getClassName() {
@@ -203,7 +198,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     gbConstraints.gridy = 0;
     panel.add(myNameField, gbConstraints);
 
-    if(!myNeedsThis) {
+    if(!myShowCanBeStatic) {
       myCbMakeStatic = new NonFocusableCheckBox();
       myCbMakeStatic.setText(RefactoringBundle.message("anonymousToInner.make.class.static.checkbox.text"));
       //myCbMakeStatic.setDisplayedMnemonicIndex(11);

@@ -133,19 +133,20 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   protected boolean showRefactoringDialog() {
+    final boolean anInterface = myTargetClass.isInterface();
     final boolean needsThis = needsThis() || PsiUtil.isInnerClass(myTargetClass);
     final AnonymousToInnerDialog dialog = new AnonymousToInnerDialog(
         myProject,
         myAnonClass,
         myVariableInfos,
-        needsThis);
+        needsThis || anInterface);
     dialog.show();
     if (!dialog.isOK()) {
       return false;
     }
     myNewClassName = dialog.getClassName();
     myVariableInfos = dialog.getVariableInfos();
-    myMakeStatic = dialog.isMakeStatic();
+    myMakeStatic = !needsThis && (anInterface || dialog.isMakeStatic());
     return true;
   }
 
@@ -305,10 +306,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     if (!myTargetClass.isInterface()) {
       PsiUtil.setModifierProperty(aClass, PsiModifier.PRIVATE, true);
-    }
-    PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(myAnonClass, PsiModifierListOwner.class);
-    if (owner != null && owner.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
+      PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(myAnonClass, PsiModifierListOwner.class);
+      if (owner != null && owner.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
+      }
+    } else {
+      PsiUtil.setModifierProperty(aClass, PsiModifier.PACKAGE_LOCAL, true);
     }
     PsiJavaCodeReferenceElement baseClassRef = myAnonClass.getBaseClassReference();
     PsiClass baseClass = (PsiClass)baseClassRef.resolve();
@@ -352,7 +355,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       aClass.add(constructor);
     }
 
-    if (!needsThis() && myMakeStatic) {
+    if (!needsThis() && myMakeStatic && !myTargetClass.isInterface()) {
       PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
     }
     PsiElement lastChild = aClass.getLastChild();
