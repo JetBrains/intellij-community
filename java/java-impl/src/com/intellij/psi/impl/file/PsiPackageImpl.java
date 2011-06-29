@@ -20,28 +20,23 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
-import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
@@ -50,21 +45,19 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.ui.RowIcon;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
-public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Queryable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageImpl");
+public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
 
-  private final PsiManagerEx myManager;
-  private final String myQualifiedName;
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
 
@@ -72,32 +65,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
   private final Object myPublicClassNamesCacheLock = new String("package classnames cache lock");
 
   public PsiPackageImpl(PsiManagerEx manager, String qualifiedName) {
-    myManager = manager;
-    myQualifiedName = qualifiedName;
+    super(manager, qualifiedName);
   }
 
-  public boolean equals(Object o) {
-    return o instanceof PsiPackageImpl
-           && myManager == ((PsiPackageImpl)o).myManager
-           && myQualifiedName.equals(((PsiPackageImpl)o).myQualifiedName);
-  }
-
-  public int hashCode() {
-    return myQualifiedName.hashCode();
-  }
-
-  @NotNull
-  public String getQualifiedName() {
-    return myQualifiedName;
-  }
-
-  @NotNull
-  public PsiDirectory[] getDirectories() {
-    final Collection<PsiDirectory> collection = getAllDirectories();
-    return ContainerUtil.toArray(collection, new PsiDirectory[collection.size()]);
-  }
-
-  private Collection<PsiDirectory> getAllDirectories() {
+  protected Collection<PsiDirectory> getAllDirectories() {
     if (myDirectories == null) {
       myDirectories = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new CachedValueProvider<Collection<PsiDirectory>>() {
         public Result<Collection<PsiDirectory>> compute() {
@@ -111,58 +82,14 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
     return myDirectories.getValue();
   }
 
-  @NotNull
-  public PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope) {
-    List<PsiDirectory> result = null;
-    final Collection<PsiDirectory> directories = getAllDirectories();
-    for (final PsiDirectory directory : directories) {
-      if (scope.contains(directory.getVirtualFile())) {
-        if (result == null) result = new ArrayList<PsiDirectory>();
-        result.add(directory);
-      }
-    }
-    return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(new PsiDirectory[result.size()]);
-  }
-
-  public RowIcon getElementIcon(final int elementFlags) {
-    return createLayeredIcon(PlatformIcons.PACKAGE_ICON, elementFlags);
-  }
-
-  public String getName() {
-    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-    if (myQualifiedName.length() == 0) return null;
-    int index = myQualifiedName.lastIndexOf('.');
-    if (index < 0) {
-      return myQualifiedName;
-    }
-    else {
-      return myQualifiedName.substring(index + 1);
-    }
-  }
-
-  @Nullable
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    checkSetName(name);
-    PsiDirectory[] dirs = getDirectories();
-    for (PsiDirectory dir : dirs) {
-      dir.setName(name);
-    }
-    String nameAfterRename = RenameUtil.getQualifiedNameAfterRename(getQualifiedName(), name);
-    return getFacade().findPackage(nameAfterRename);
-  }
-
-  public void checkSetName(@NotNull String name) throws IncorrectOperationException {
-    PsiDirectory[] dirs = getDirectories();
-    for (PsiDirectory dir : dirs) {
-      dir.checkSetName(name);
-    }
+  @Override
+  protected PsiElement findPackage(String qName) {
+    return getFacade().findPackage(qName);
   }
 
   public void handleQualifiedNameChange(@NotNull final String newQualifiedName) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    final String oldQualifedName = myQualifiedName;
+    final String oldQualifedName = getQualifiedName();
     final boolean anyChanged = changePackagePrefixes(oldQualifedName, newQualifiedName);
     if (anyChanged) {
       UndoManager.getInstance(myManager.getProject()).undoableActionPerformed(new GlobalUndoableAction() {
@@ -221,7 +148,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
         final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
         for (final SourceFolder sourceFolder : sourceFolders) {
           final String packagePrefix = sourceFolder.getPackagePrefix();
-          if (packagePrefix.startsWith(myQualifiedName)) {
+          if (packagePrefix.startsWith(getQualifiedName())) {
             final VirtualFile file = sourceFolder.getFile();
             if (file != null) {
               result.add(file);
@@ -234,15 +161,15 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  public PsiPackage getParentPackage() {
-    if (myQualifiedName.length() == 0) return null;
-    int lastDot = myQualifiedName.lastIndexOf('.');
-    if (lastDot < 0) {
-      return new PsiPackageImpl(myManager, "");
-    }
-    else {
-      return new PsiPackageImpl(myManager, myQualifiedName.substring(0, lastDot));
-    }
+  @Override
+  public PsiPackageImpl getParentPackage() {
+    return (PsiPackageImpl)super.getParentPackage();
+  }
+
+
+  @Override
+  protected PsiPackageImpl createInstance(PsiManagerEx manager, String qName) {
+    return new PsiPackageImpl(myManager, qName);
   }
 
   @NotNull
@@ -250,116 +177,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
     return StdFileTypes.JAVA.getLanguage();
   }
 
-  public PsiManager getManager() {
-    return myManager;
-  }
-
-  @NotNull
-  public PsiElement[] getChildren() {
-    LOG.error("method not implemented");
-    return PsiElement.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  public PsiElement getParent() {
-    return getParentPackage();
-  }
-
-  @Nullable
-  public PsiFile getContainingFile() {
-    return null;
-  }
-
-  @Nullable
-  public TextRange getTextRange() {
-    return null;
-  }
-
-  public int getStartOffsetInParent() {
-    return -1;
-  }
-
-  public int getTextLength() {
-    return -1;
-  }
-
-  public PsiElement findElementAt(int offset) {
-    return null;
-  }
-
-  public int getTextOffset() {
-    return -1;
-  }
-
-  @Nullable
-  public String getText() {
-    return null;
-  }
-
-  @NotNull
-  public char[] textToCharArray() {
-    return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
-  }
-
-  public boolean textMatches(@NotNull CharSequence text) {
-    return false;
-  }
-
-  public boolean textMatches(@NotNull PsiElement element) {
-    return false;
-  }
-
-  public PsiElement copy() {
-    LOG.error("method not implemented");
-    return null;
-  }
-
-  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void delete() throws IncorrectOperationException {
-    checkDelete();
-    PsiDirectory[] dirs = getDirectories();
-    for (PsiDirectory dir : dirs) {
-      dir.delete();
-    }
-  }
-
-  public void checkDelete() throws IncorrectOperationException {
-    for (PsiDirectory dir : getDirectories()) {
-      dir.checkDelete();
-    }
-  }
-
-  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
   public boolean isValid() {
     final CommonProcessors.FindFirstProcessor<PsiDirectory> processor = new CommonProcessors.FindFirstProcessor<PsiDirectory>();
     getFacade().processPackageDirectories(this, allScope(), processor);
-    return processor.getFoundValue() != null || getFacade().packagePrefixExists(myQualifiedName);
-  }
-
-  public boolean isWritable() {
-    PsiDirectory[] dirs = getDirectories();
-    for (PsiDirectory dir : dirs) {
-      if (!dir.isWritable()) return false;
-    }
-    return true;
+    return processor.getFoundValue() != null || getFacade().packagePrefixExists(getQualifiedName());
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -532,10 +353,6 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
     return isValid();
   }
 
-  public boolean canNavigateToSource() {
-    return false;
-  }
-
   public void navigate(final boolean requestFocus) {
     ToolWindow window = ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW);
     window.activate(null);
@@ -552,14 +369,6 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
         projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
       }
     });
-  }
-
-  public boolean isPhysical() {
-    return true;
-  }
-
-  public ASTNode getNode() {
-    return null;
   }
 
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
@@ -603,8 +412,4 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
     return getParentPackage();
   }
 
-  public void putInfo(Map<String, String> info) {
-    info.put("packageName", getName());
-    info.put("packageQualifiedName", getQualifiedName());
-  }
 }

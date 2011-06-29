@@ -54,7 +54,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
   @Nullable
   protected abstract T getPackage(PsiDirectory psiDirectory);
 
-  protected abstract BaseRefactoringProcessor createProcessor(final String newName,
+  protected abstract BaseRefactoringProcessor createProcessor(final String newQName,
                                                               final Project project,
                                                               final PsiDirectory[] dirsToRename,
                                                               boolean searchInComments,
@@ -159,8 +159,8 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     final RenameDialog dialog = new RenameDialog(project, contextDirectory, nameSuggestionContext, editor) {
       @Override
       protected void doAction() {
-        String newName = StringUtil.getQualifiedName(StringUtil.getPackageName(getQualifiedName(aPackage)), getNewName());
-        BaseRefactoringProcessor moveProcessor = createProcessor(newName, project, dirsToRename, isSearchInComments(),
+        String newQName = StringUtil.getQualifiedName(StringUtil.getPackageName(getQualifiedName(aPackage)), getNewName());
+        BaseRefactoringProcessor moveProcessor = createProcessor(newQName, project, dirsToRename, isSearchInComments(),
                                                                  isSearchInNonJavaFiles());
         invokeRefactoring(moveProcessor);
       }
