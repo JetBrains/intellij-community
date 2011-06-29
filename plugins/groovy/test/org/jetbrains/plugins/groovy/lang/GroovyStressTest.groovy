@@ -81,6 +81,9 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText 'a.groovy', story * 200 + "<caret>"
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
+    myFixture.type 'foo {}\n'
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+
     def start = System.currentTimeMillis()
 
     story.toCharArray().each {
@@ -88,7 +91,7 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
-    IdeaTestUtil.assertTiming "slow", 7000, (System.currentTimeMillis() - start)
+    IdeaTestUtil.assertTiming "slow", 10000, (System.currentTimeMillis() - start)
   }
 
   public void testManyAnnotatedFields() {
