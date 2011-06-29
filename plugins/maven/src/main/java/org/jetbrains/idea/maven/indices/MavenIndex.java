@@ -651,7 +651,7 @@ public class MavenIndex {
       if (exceptions[0] != null) throw exceptions[0];
     }
 
-    private void safeClose(PersistentEnumerator enumerator, MavenIndexException[] exceptions) {
+    private void safeClose(Closeable enumerator, MavenIndexException[] exceptions) {
       try {
         if (enumerator != null) enumerator.close();
       }

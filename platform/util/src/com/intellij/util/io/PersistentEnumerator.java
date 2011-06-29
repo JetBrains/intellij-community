@@ -35,7 +35,7 @@ import java.util.List;
  * @author max
  * @author jeka
  */
-public class PersistentEnumerator<Data> implements Forceable {
+public class PersistentEnumerator<Data> implements Forceable, Closeable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
   protected static final int DATA_OFFSET = 8;
