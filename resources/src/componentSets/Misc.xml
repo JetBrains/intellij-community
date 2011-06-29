@@ -5,12 +5,4 @@
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
     </component>
   </application-components>
-
-  <project-components>
-    <component>
-      <interface-class>com.intellij.javadoc.JavadocGenerationManager</interface-class>
-      <implementation-class>com.intellij.javadoc.JavadocGenerationManager</implementation-class>
-    </component>
-  </project-components>
-
 </components>

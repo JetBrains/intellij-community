@@ -23,16 +23,27 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
-import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public final class JavadocGenerationManager implements JDOMExternalizable, NamedComponent {
+@State(name = "JavadocGenerationManager",
+       storages = {
+         @Storage(
+           id="other",
+           file = "$PROJECT_FILE$"
+         )
+       }
+)
+public final class JavadocGenerationManager implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.javadoc.JavadocGenerationManager");
   private final JavadocConfiguration myConfiguration;
   private final Project myProject;
 
@@ -45,17 +56,26 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Named
     myConfiguration = new JavadocConfiguration(project);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "JavadocGenerationManager";
+  @Override
+  public Element getState() {
+    final Element state = new Element("state");
+    try {
+      myConfiguration.writeExternal(state);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return state;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    myConfiguration.readExternal(element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    myConfiguration.writeExternal(element);
+  @Override
+  public void loadState(Element state) {
+    try {
+      myConfiguration.readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public JavadocConfiguration getConfiguration() {
