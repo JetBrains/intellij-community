@@ -38,16 +38,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -608,16 +604,30 @@ public class ResolveUtil {
     return false;
   }
 
-  public static boolean referenceIsKeyOfMap(GrReferenceExpression ref) {
+  public static boolean isKeyOfMap(GrReferenceExpression ref) {
+    if (ref.multiResolve(false).length > 0) return false;
+    return mayBeKeyOfMap(ref);
+  }
+
+  public static boolean mayBeKeyOfMap(GrReferenceExpression ref) {
+    final GrExpression qualifier = getSelfOrWithQualifier(ref);
+    if (qualifier == null) return false;
+    if (qualifier instanceof GrThisSuperReferenceExpression) return false;
+    if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return false;
+    return InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
+  }
+
+
+  @Nullable
+  public static GrExpression getSelfOrWithQualifier(GrReferenceExpression ref) {
     final GrExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null) {
-      return InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
+      return qualifier;
     }
 
     PsiElement place = ref;
     while (true) {
-      final GrClosableBlock closure =
-        PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, GrMethod.class, GroovyFile.class, GrTypeDefinitionBody.class);
+      final GrClosableBlock closure = PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, GrMember.class, GroovyFile.class);
       if (closure == null) break;
       place = closure;
       PsiElement clParent = closure.getParent();
@@ -629,12 +639,13 @@ public class ResolveUtil {
           ((GrReferenceExpression)expression).resolve() instanceof GrGdkMethod) {
         final GrExpression withQualifier = ((GrReferenceExpression)expression).getQualifierExpression();
         if (withQualifier != null) {
-          return InheritanceUtil.isInheritor(withQualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
+          return withQualifier;
         }
       }
     }
-    return false;
+    return null;
   }
+
 
   @NotNull
   public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,

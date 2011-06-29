@@ -83,7 +83,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
         if (!name.equals(ref.getReferenceName()) || PsiUtil.isLValue(ref) || ref.resolve() != null) {
           return true;
         }
-        if (!(ref.getParent() instanceof GrMethodCall) && ResolveUtil.referenceIsKeyOfMap(ref)) {
+        if (!(ref.getParent() instanceof GrMethodCall) && ResolveUtil.isKeyOfMap(ref)) {
           return true;
         }
 

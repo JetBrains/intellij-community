@@ -93,7 +93,7 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
 
   private static boolean isInvokedOnMap(GrMethodCall call) {
     GrExpression expr = call.getInvokedExpression();
-    return expr instanceof GrReferenceExpression && ResolveUtil.referenceIsKeyOfMap((GrReferenceExpression)expr);
+    return expr instanceof GrReferenceExpression && ResolveUtil.isKeyOfMap((GrReferenceExpression)expr);
   }
 
   private static boolean isSetterInvocation(GrMethodCall call) {

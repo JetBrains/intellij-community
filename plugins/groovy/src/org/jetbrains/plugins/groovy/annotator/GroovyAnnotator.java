@@ -198,7 +198,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (qualifier == null && isDeclarationAssignment(referenceExpression)) return;
 
       // If it is reference to map.key we shouldn't highlight key unresolved
-      if (!(parent instanceof GrCall) && ResolveUtil.referenceIsKeyOfMap(referenceExpression)) {
+      if (!(parent instanceof GrCall) && ResolveUtil.isKeyOfMap(referenceExpression)) {
         PsiElement refNameElement = referenceExpression.getReferenceNameElement();
         PsiElement elt = refNameElement == null ? referenceExpression : refNameElement;
         Annotation annotation = myHolder.createInfoAnnotation(elt, null);

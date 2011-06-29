@@ -714,4 +714,21 @@ def foo() { println <caret>aaa }
 """)
     assert !ref.resolve()
   }
+
+  public void testConfigObject() {
+    def ref = configureByText('''
+def config = new ConfigObject()
+print config.config<caret>File''')
+    assert ref.resolve()
+  }
+
+  public void testDontResolvePropertyInMap() {
+    def ref = configureByText('''
+def map = new HashMap()
+print map.cla<caret>ss''')
+
+    assert !ref.resolve()
+  }
+
+
 }

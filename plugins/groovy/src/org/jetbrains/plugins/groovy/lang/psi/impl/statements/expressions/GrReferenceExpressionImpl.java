@@ -79,23 +79,58 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
            getParent() instanceof GrReferenceExpressionImpl && ((GrReferenceExpressionImpl)getParent()).findClassOrPackageAtFirst();
   }
 
-  private boolean checkForMapKey() {
-    final GrExpression qualifier = getQualifierExpression();
+  private boolean isDefinitelyKeyOfMap() {
+    final GrExpression qualifier = ResolveUtil.getSelfOrWithQualifier(this);
     if (qualifier == null) return false;
     if (qualifier instanceof GrReferenceExpression) { //key in 'java.util.Map.key' is not access to map, it is access to static property of field
       final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
       if (resolved instanceof PsiClass) return false;
     }
 
-    return InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
+    final PsiType type = qualifier.getType();
+    if (type == null) return false;
+
+    if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return false;
+
+    final String canonicalText = type.getCanonicalText();
+    if (canonicalText.startsWith("java.")) return true;
+    if (GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(canonicalText)) return false;
+    if (canonicalText.startsWith("groovy.")) return true;
+
+    return false;
   }
 
-  public GroovyResolveResult[] resolveTypeOrProperty() {
+  private GroovyResolveResult[] resolveTypeOrProperty() {
+    if (isDefinitelyKeyOfMap()) return GroovyResolveResult.EMPTY_ARRAY;
+
+    final GroovyResolveResult[] results = resolveTypeOrPropertyInner();
+    if (results.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
+
+    if (!ResolveUtil.mayBeKeyOfMap(this)) return results;
+
+    //filter out all members from super classes. We should return only accessible members from map classes
+    List<GroovyResolveResult> filtered = new ArrayList<GroovyResolveResult>();
+    for (GroovyResolveResult result : results) {
+      final PsiElement element = result.getElement();
+      if (element instanceof PsiMember) {
+        final PsiClass containingClass = ((PsiMember)element).getContainingClass();
+        if (containingClass != null) {
+          if (!InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_MAP)) continue;
+          final String name = containingClass.getQualifiedName();
+          if (name != null && name.startsWith("java.")) continue;
+        }
+        if (!((PsiMember)element).hasModifierProperty(PsiModifier.PRIVATE)) continue;
+      }
+      filtered.add(result);
+    }
+
+    return ContainerUtil.toArray(filtered, new GroovyResolveResult[filtered.size()]);
+  }
+
+  private GroovyResolveResult[] resolveTypeOrPropertyInner() {
     String name = getReferenceName();
 
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
-
-    if (checkForMapKey()) return GroovyResolveResult.EMPTY_ARRAY;
 
     EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
                                            ? ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE
@@ -536,6 +571,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return qualifier.getType();
     }
   }
+
 
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     @Nullable
