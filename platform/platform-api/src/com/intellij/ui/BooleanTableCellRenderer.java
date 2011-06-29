@@ -41,7 +41,8 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
     final Color fg = table.getForeground();
     final Color selBg = table.getSelectionBackground();
     final Color selFg = table.getSelectionForeground();
-
+    myPanel.removeAll();
+    myPanel.setBorder(null);
     myPanel.setBackground(isSel ? selBg : bg);
     if (value == null) {
       return myPanel;
@@ -66,7 +67,6 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
 
     setEnabled(table.isCellEditable(row, column));
     setBorder(null);
-    myPanel.removeAll();
     myPanel.add(this, BorderLayout.CENTER);
     final ListSelectionModel selModel = table.getSelectionModel();
     final Color color = (selModel.getMaxSelectionIndex() - selModel.getMinSelectionIndex()) == 0
