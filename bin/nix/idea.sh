@@ -87,12 +87,7 @@ if [ -z "$IDEA_VM_OPTIONS" ]; then
 fi
 
 REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar $IDEA_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
-
-# If vmoptions file exists - use it
-if [ -e "$IDEA_VM_OPTIONS" ]; then
-  JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
-  JVM_ARGS="$JVM_ARGS \"-Didea.vmOptionsFile=$IDEA_VM_OPTIONS\""
-fi
+JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
 JVM_ARGS=`eval echo $JVM_ARGS $REQUIRED_JVM_ARGS`
 
 CLASSPATH=../lib/bootstrap.jar
