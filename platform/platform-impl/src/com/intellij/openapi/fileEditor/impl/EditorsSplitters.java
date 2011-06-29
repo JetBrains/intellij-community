@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,28 +149,25 @@ public class EditorsSplitters extends JPanel {
     super.paintComponent(g);
     
     if (showEmptyText()) {
-      final boolean aquaLookAndFeel = UIUtil.isUnderAquaLookAndFeel();
+      final boolean darkerColors = UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderGTKLookAndFeel();
       UIUtil.applyRenderingHints(g);
-      g.setColor(aquaLookAndFeel ? new Color(100, 100, 100) : Color.LIGHT_GRAY);
+      g.setColor(darkerColors ? new Color(100, 100, 100) : Color.LIGHT_GRAY);
       g.setFont(UIUtil.getLabelFont().deriveFont(18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.4f);
-      painter.appendLine("No files are open").underlined(aquaLookAndFeel ? new Color(150, 150, 150) : Color.LIGHT_GRAY)
-        .appendLine("Open Project View with " +
-                    KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet()
+      painter.appendLine("No files are open").underlined(darkerColors ? new Color(150, 150, 150) : Color.LIGHT_GRAY)
+        .appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
+          KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet()
         .appendLine("Open Recent files with " + getActionShortcutText("RecentFiles")).smaller().withBullet()
         .appendLine("Open Navigation Bar with " + getActionShortcutText("ShowNavBar")).smaller().withBullet()
-        .appendLine("Drag'n'Drop file(s) here from " + SystemInfo.nativeFileManagerName).smaller().withBullet().draw(g,
-                                              new PairFunction<Integer, Integer, Pair<Integer, Integer>>() {
-                                                @Override
-                                                public Pair<Integer, Integer> fun(
-                                                  Integer width,
-                                                  Integer height) {
-                                                  final Dimension s = getSize();
-                                                  return Pair.create((s.width - width) / 2,
-                                                                     (s.height - height) / 2);
-                                                }
-                                              });
+        .appendLine("Drag'n'Drop file(s) here from " + SystemInfo.nativeFileManagerName).smaller().withBullet()
+        .draw(g, new PairFunction<Integer, Integer, Pair<Integer, Integer>>() {
+          @Override
+          public Pair<Integer, Integer> fun(Integer width, Integer height) {
+            final Dimension s = getSize();
+            return Pair.create((s.width - width) / 2, (s.height - height) / 2);
+          }
+        });
     }
   }
 
