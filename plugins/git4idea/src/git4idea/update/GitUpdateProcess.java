@@ -139,7 +139,7 @@ public class GitUpdateProcess {
       return false;
     }
 
-    if (myUpdaters.isEmpty()) return false;
+    if (myUpdaters.isEmpty()) return true;
     // save local changes if needed (update via merge may perform without saving).
     for (Map.Entry<VirtualFile, GitUpdater> entry : myUpdaters.entrySet()) {
       VirtualFile root = entry.getKey();
