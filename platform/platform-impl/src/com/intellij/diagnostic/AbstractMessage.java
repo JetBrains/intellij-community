@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.notification.Notification;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 
 import java.util.Calendar;
@@ -27,6 +28,7 @@ public abstract class AbstractMessage {
   private SubmittedReportInfo mySubmissionInfo;
   private String myScrID;
   private String myAdditionalInfo;
+  private Notification myNotification;
 
   private final Date myDate;
 
@@ -44,6 +46,10 @@ public abstract class AbstractMessage {
 
   public void setRead(boolean aReadFlag) {
     myIsRead = aReadFlag;
+    if (myNotification != null && aReadFlag) {
+      myNotification.expire();
+      myNotification = null;
+    }
   }
 
   public void setSubmitted(SubmittedReportInfo info) {
@@ -52,6 +58,10 @@ public abstract class AbstractMessage {
 
   public SubmittedReportInfo getSubmissionInfo() {
     return mySubmissionInfo;
+  }
+
+  public void setNotification(Notification notification) {
+    myNotification = notification;
   }
 
   public boolean isSubmitting() {

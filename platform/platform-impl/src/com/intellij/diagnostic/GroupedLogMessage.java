@@ -38,6 +38,14 @@ public class GroupedLogMessage extends AbstractMessage {
     return result.toString();
   }
 
+  @Override
+  public void setRead(boolean aReadFlag) {
+    for (AbstractMessage message : myMessages) {
+      message.setRead(aReadFlag);
+    }
+    super.setRead(aReadFlag);
+  }
+
   public Throwable getThrowable() {
     return myMessages.get(0).getThrowable();
   }

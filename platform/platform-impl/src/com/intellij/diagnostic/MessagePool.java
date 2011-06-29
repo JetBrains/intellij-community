@@ -58,7 +58,11 @@ public class MessagePool {
     LogMessage message = new LogMessage(aEvent);
     if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
       myFatalsGrouper.add(message);
-      NOTIFICATION_GROUP.createNotification("Exception", message.getMessage(), NotificationType.ERROR, null).notify(null);
+      Throwable throwable = message.getThrowable();
+      String title = throwable == null ? "IDE Fatal Error" : throwable.getClass().getSimpleName();
+      Notification notification = NOTIFICATION_GROUP.createNotification(title, message.getMessage(), NotificationType.ERROR, null);
+      notification.notify(null);
+      message.setNotification(notification);
     } else if (myIdeFatals.size() == MAX_POOL_SIZE_FOR_FATALS) {
       myFatalsGrouper.add(new LogMessage(new LoggingEvent(DiagnosticBundle.message("error.monitor.too.many.errors"),
                                                           Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException())));
@@ -86,6 +90,10 @@ public class MessagePool {
   }
 
   public void clearFatals() {
+    for (AbstractMessage fatal : myIdeFatals) {
+      fatal.setRead(true); // expire notifications
+    }
+
     myIdeFatals.clear();
     notifyListenersClear();
   }

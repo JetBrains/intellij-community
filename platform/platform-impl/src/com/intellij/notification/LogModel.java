@@ -100,7 +100,7 @@ public class LogModel {
       handler.run();
     }
 
-    if (notification == getStatusMessage() && notification.isImportant()) {
+    if (notification == getStatusMessage()) {
       setStatusToImportant();
     }
   }
