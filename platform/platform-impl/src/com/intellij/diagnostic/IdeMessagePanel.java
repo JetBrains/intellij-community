@@ -34,6 +34,7 @@ import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
 public class IdeMessagePanel extends JPanel implements MessagePoolListener, CustomStatusBarWidget {
+  public static final String FATAL_ERROR = "FatalError";
   private final IconPane myIdeFatal;
 
   private final IconPane[] myIcons;
@@ -72,7 +73,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Cust
 
   @NotNull
   public String ID() {
-    return "FatalError";
+    return FATAL_ERROR;
   }
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
@@ -89,7 +90,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Cust
     return this;
   }
 
-  private void openFatals() {
+  public void openFatals() {
     if (myDialog != null) return;
     if (myOpeningInProgress) return;
     myOpeningInProgress = true;

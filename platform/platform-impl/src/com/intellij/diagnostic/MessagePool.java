@@ -18,10 +18,17 @@ package com.intellij.diagnostic;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.notification.*;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
 import org.apache.log4j.spi.LoggingEvent;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,7 +67,21 @@ public class MessagePool {
       myFatalsGrouper.add(message);
       Throwable throwable = message.getThrowable();
       String title = throwable == null ? "IDE Fatal Error" : throwable.getClass().getSimpleName();
-      Notification notification = NOTIFICATION_GROUP.createNotification(title, message.getMessage(), NotificationType.ERROR, null);
+      Notification notification = NOTIFICATION_GROUP.createNotification(title, "<a href='xxx'>" + message.getMessage() + "</a>", NotificationType.ERROR, new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          Object source = event.getSource();
+          if (source instanceof Component) {
+            Window window = SwingUtilities.getWindowAncestor((Component)source);
+            if (window instanceof IdeFrame) {
+              StatusBarWidget widget = ((IdeStatusBarImpl)((IdeFrame)window).getStatusBar()).getWidget(IdeMessagePanel.FATAL_ERROR);
+              if (widget instanceof IdeMessagePanel) {
+                ((IdeMessagePanel)widget).openFatals();
+              }
+            }
+          }
+        }
+      });
       notification.notify(null);
       message.setNotification(notification);
     } else if (myIdeFatals.size() == MAX_POOL_SIZE_FOR_FATALS) {

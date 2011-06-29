@@ -598,6 +598,12 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  @Nullable
+  public StatusBarWidget getWidget(String id) {
+    WidgetBean bean = myWidgetMap.get(id);
+    return bean == null ? null : bean.widget;
+  }
+
   private interface StatusBarWrapper {
     void beforeUpdate();
   }
