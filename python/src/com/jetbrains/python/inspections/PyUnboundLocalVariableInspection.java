@@ -94,13 +94,13 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         else {
           anchor = node;
         }
-        ScopeVariable variable = null;
+        ScopeVariable variable;
         try {
           variable = scope.getDeclaredVariable(anchor, name);
         }
         catch (DFALimitExceededException e) {
           largeFunctions.add(owner);
-          registerProblem(owner, PyBundle.message("INSP.unbound.function.too.large", owner.getName()));
+          registerLargeFunction(owner);
           return;
         }
         if (variable == null) {
@@ -180,7 +180,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                 }
                 catch (DFALimitExceededException e) {
                   largeFunctions.add(owner);
-                  registerProblem(owner, PyBundle.message("INSP.unbound.function.too.large", owner.getName()));
+                  registerLargeFunction(owner);
                   return ControlFlowUtil.Operation.BREAK;
                 }
               }
@@ -222,6 +222,13 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                         null,
                         new AddGlobalQuickFix());
 
+      }
+
+      private void registerLargeFunction(ScopeOwner owner) {
+        registerProblem((owner instanceof PyFunction) ? ((PyFunction)owner).getNameIdentifier() : owner,
+                        PyBundle.message("INSP.unbound.function.too.large", owner.getName()),
+                        ProblemHighlightType.WEAK_WARNING,
+                        null);
       }
     };
   }
