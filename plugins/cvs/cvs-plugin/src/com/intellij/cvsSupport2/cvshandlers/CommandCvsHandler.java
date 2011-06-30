@@ -125,9 +125,11 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createCheckoutFileHandler(FilePath[] files,
-                                                     CvsConfiguration configuration) {
+                                                     CvsConfiguration configuration,
+                                                     PerformInBackgroundOption option) {
     return new CommandCvsHandler(CvsBundle.message("operation.name.check.out.files"), new CheckoutFilesOperation(files, configuration),
-                                 FileSetToBeUpdated.selectedFiles(files));
+                                 FileSetToBeUpdated.selectedFiles(files),
+                                 (option == null) ? PerformInBackgroundOption.DEAF : option);
   }
 
   public static CvsHandler createCheckoutHandler(CvsEnvironment environment,
