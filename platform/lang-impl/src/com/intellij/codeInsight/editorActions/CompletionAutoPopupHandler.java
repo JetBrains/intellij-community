@@ -97,20 +97,19 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       public void run() {
         if (CompletionServiceImpl.getCompletionPhase() != phase) return;
 
-        if (project.isDisposed() || !file.isValid()) return;
         if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
         if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway
         if (DumbService.getInstance(project).isDumb()) return;
 
-        // retrieve the injected file from scratch since our typing might have destroyed the old one completely
-        Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
-        PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
-        invokeAutoPopupCompletion(project, newEditor);
+        invokeCompletion(CompletionType.BASIC, false, true, project, editor, 0, false);
       }
     };
-    AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
+    AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
+      @Override
+      public void run() {
+        runLaterWithCommitted(project, editor.getDocument(), request);
+      }
+    }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
   }
 
     public static void invokeAutoPopupCompletion(final Project project, final Editor editor) {
@@ -149,11 +148,46 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
               // no luck, will try later
               return;
             }
-            try {
-              new CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup)
-                .invokeCompletion(project, editor, time, hasModifiers);
-            }
-            catch (IndexNotReadyException ignored) {
+            invokeCompletion(completionType, invokedExplicitly, autopopup, project, editor, time, hasModifiers);
+          }
+        }, project.getDisposed());
+      }
+    });
+  }
+
+  public static void invokeCompletion(CompletionType completionType,
+                                      boolean invokedExplicitly,
+                                      boolean autopopup,
+                                      Project project, Editor editor, int time, boolean hasModifiers) {
+    // retrieve the injected file from scratch since our typing might have destroyed the old one completely
+    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
+    if (file == null) return;
+
+    PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
+    try {
+      new CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup).invokeCompletion(project, newEditor, time, hasModifiers);
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+  }
+
+  public static void runLaterWithCommitted(@NotNull final Project project, final Document document, final Runnable runnable) {
+    final long beforeStamp = document.getModificationStamp();
+    PsiDocumentManager.getInstance(project).performWhenAllDocumentsAreCommitted("start completion when all docs committed", new Runnable() {
+      @Override
+      public void run() {
+        // later because we may end up in write action here if there was a synchronous commit
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (beforeStamp != document.getModificationStamp()) {
+              // no luck, will try later
+              runLaterWithCommitted(project, document, runnable);
+            } else {
+              runnable.run();
             }
           }
         }, project.getDisposed());

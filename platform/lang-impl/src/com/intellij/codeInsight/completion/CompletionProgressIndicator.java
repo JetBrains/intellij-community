@@ -616,7 +616,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionServiceImpl.setCompletionPhase(phase);
 
     final Project project = getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    CompletionAutoPopupHandler.runLaterWithCommitted(project, myEditor.getDocument(), new Runnable() {
       @Override
       public void run() {
         if (phase != CompletionServiceImpl.getCompletionPhase()) {
@@ -625,8 +625,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
         closeAndFinish(false);
 
-        CompletionAutoPopupHandler.completeWhenAllDocumentsCommitted(project, myEditor, myParameters.getCompletionType(), false,
-                                                                     isAutopopupCompletion(), myParameters.getInvocationCount(), false);
+        CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(), false,
+                                                    isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(), false);
       }
     });
   }
