@@ -73,6 +73,8 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
 
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethodsContributor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoCloneContributor"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>

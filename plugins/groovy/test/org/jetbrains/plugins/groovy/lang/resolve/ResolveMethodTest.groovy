@@ -733,4 +733,11 @@ class Foo {
   void testCategory() {
     assertNotNull(resolve('a.groovy'))
   }
+
+  void testAutoClone() {
+    def element = resolve('a.groovy')
+    assertInstanceOf element, PsiMethod
+    assertTrue element.containingClass.name == 'Foo'
+    assertSize 1, element.throwsList.referencedTypes
+  }
 }
