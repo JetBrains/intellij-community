@@ -31,6 +31,7 @@ import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,6 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   private JLabel myFilesToDownloadLabel;
   private JLabel myCopyDownloadedFilesToLabel;
   private JPanel myNameWrappingPanel;
-  private JPanel myVersionPanel;
   private JComboBox myVersionComboBox;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private DownloadableLibraryType myLibraryType;
@@ -67,14 +67,9 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     myLibraryType = settings.getLibraryType();
     LOG.assertTrue(!versions.isEmpty());
 
-    if (showNameAndLevel) {
-      myNameAndLevelPanel = new LibraryNameAndLevelPanel(settings.getLibraryName(), settings.getLibraryLevel());
-      myNameWrappingPanel.add(myNameAndLevelPanel.getPanel());
-    }
-    else {
-      myNameAndLevelPanel = null;
-    }
+    final FormBuilder builder = new FormBuilder(false, 5);
 
+    myVersionComboBox = new JComboBox();
     for (FrameworkLibraryVersion version : versions) {
       myVersionComboBox.addItem(version);
     }
@@ -85,7 +80,18 @@ public class DownloadingOptionsDialog extends DialogWrapper {
       }
     });
     myVersionComboBox.setSelectedItem(settings.getVersion());
-    myVersionPanel.setVisible(versions.size() > 1);
+    if (versions.size() > 1) {
+      builder.addLabeledComponent("&Version:", myVersionComboBox);
+    }
+
+    if (showNameAndLevel) {
+      myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, settings.getLibraryName(), settings.getLibraryLevel());
+    }
+    else {
+      myNameAndLevelPanel = null;
+    }
+    myNameWrappingPanel.add(builder.getPanel());
+
     onVersionChanged(settings.getSelectedDownloads());
     myVersionComboBox.addActionListener(new ActionListener() {
       @Override

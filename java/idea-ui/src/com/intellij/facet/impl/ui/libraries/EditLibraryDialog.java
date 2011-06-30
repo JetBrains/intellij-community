@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsCom
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.FormBuilder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +37,7 @@ public class EditLibraryDialog extends DialogWrapper {
   private LibraryCompositionSettings mySettings;
   private LibraryEditor myLibraryEditor;
   private LibraryRootsComponent myLibraryRootsComponent;
+  private FormBuilder myBuilder;
 
   public EditLibraryDialog(Component parent, LibraryCompositionSettings settings, final LibraryEditor libraryEditor) {
     super(parent, true);
@@ -49,7 +51,8 @@ public class EditLibraryDialog extends DialogWrapper {
     final boolean newLibrary = libraryEditor instanceof NewLibraryEditor;
     setTitle((newLibrary ? "Create" : "Edit") + " Library");
 
-    myNameAndLevelPanel = new LibraryNameAndLevelPanel(libraryEditor.getName(), newLibrary ? settings.getNewLibraryLevel() : null);
+    myBuilder = new FormBuilder();
+    myNameAndLevelPanel = new LibraryNameAndLevelPanel(myBuilder, libraryEditor.getName(), newLibrary ? settings.getNewLibraryLevel() : null);
     init();
   }
 
@@ -57,7 +60,7 @@ public class EditLibraryDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JComponent editor = myLibraryRootsComponent.getComponent();
     myEditorPanel.add(editor);
-    myNameAndLevelPanelWrapper.add(myNameAndLevelPanel.getPanel());
+    myNameAndLevelPanelWrapper.add(myBuilder.getPanel());
     return myPanel;
   }
 

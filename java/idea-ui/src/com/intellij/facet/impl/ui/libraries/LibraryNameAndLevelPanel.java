@@ -19,6 +19,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +37,13 @@ class LibraryNameAndLevelPanel {
   private JLabel myLevelLabel;
   private String myDefaultLibraryName;
 
-  LibraryNameAndLevelPanel(String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
+  LibraryNameAndLevelPanel(FormBuilder formBuilder, String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
+    myLibraryNameField = new JTextField();
+    formBuilder.addLabeledComponent("&Name:", myLibraryNameField);
+    myLibraryNameField.setText(libraryName);
+    myLevelComboBox = new JComboBox();
     if (level != null) {
+      formBuilder.addLabeledComponent("&Level:", myLevelComboBox);
       final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<LibrariesContainer.LibraryLevel, String>();
       levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
       levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
@@ -54,11 +60,6 @@ class LibraryNameAndLevelPanel {
       myLevelComboBox.setModel(new EnumComboBoxModel<LibrariesContainer.LibraryLevel>(LibrariesContainer.LibraryLevel.class));
       myLevelComboBox.setSelectedItem(level);
     }
-    else {
-      myLevelLabel.setVisible(false);
-      myLevelComboBox.setVisible(false);
-    }
-    myLibraryNameField.setText(libraryName);
   }
 
   public String getLibraryName() {
@@ -67,10 +68,6 @@ class LibraryNameAndLevelPanel {
 
   public LibrariesContainer.LibraryLevel getLibraryLevel() {
     return (LibrariesContainer.LibraryLevel)myLevelComboBox.getSelectedItem();
-  }
-
-  public JPanel getPanel() {
-    return myPanel;
   }
 
   public void updateDefaultName(@NotNull String defaultLibraryName) {
