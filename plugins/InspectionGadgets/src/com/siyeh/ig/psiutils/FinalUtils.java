@@ -21,6 +21,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Set;
+
 // todo handle variable initialization in loops
 public class FinalUtils {
 
@@ -57,14 +60,15 @@ public class FinalUtils {
             }
         }
         if (!fieldIsStatic) {
-            final boolean definitelyAssigned = visitor.isDefinitelyAssigned();
-            final boolean definitelyUnassigned =
-                    visitor.isDefinitelyUnassigned();
+            final boolean da = visitor.isDefinitelyAssigned();
+            final boolean du = visitor.isDefinitelyUnassigned();
             final PsiMethod[] constructors = containingClass.getConstructors();
             for (PsiMethod constructor : constructors) {
-                visitor.setDefiniteAssignment(definitelyAssigned,
-                        definitelyUnassigned);
-                constructor.accept(visitor);
+                final PsiCodeBlock body = constructor.getBody();
+                if (body != null) {
+                    visitor.setDefiniteAssignment(da, du);
+                    body.accept(visitor);
+                }
                 if (!visitor.isDefinitelyAssigned()) {
                     return false;
                 }
@@ -85,7 +89,8 @@ public class FinalUtils {
         }
         PsiClass aClass = containingClass.getContainingClass();
         while (aClass != null) {
-            checkMembers(fieldIsStatic, aClass, containingClass, visitor);
+            visitor.setSkipClass(containingClass);
+            aClass.accept(visitor);
             if (!visitor.isFinalCandidate()) {
                 return false;
             }
@@ -104,7 +109,6 @@ public class FinalUtils {
             if (!checkConstructors && method.isConstructor()) {
                 continue;
             }
-            visitor.setDefiniteAssignment(true, false);
             method.accept(visitor);
             if (!visitor.isFinalCandidate()) {
                 return;
@@ -115,7 +119,6 @@ public class FinalUtils {
             if (innerClass == skipClass) {
                 continue;
             }
-            visitor.setDefiniteAssignment(true, false);
             innerClass.accept(visitor);
             if (!visitor.isFinalCandidate()) {
                 return;
@@ -175,11 +178,13 @@ public class FinalUtils {
         private static final byte CONSTANT_FALSE = 2;
 
         private final PsiField field;
+        private final Set<PsiStatement> exits = new HashSet();
 
         private byte constant = NOT_CONSTANT;
         private boolean definitelyAssigned = false;
         private boolean definitelyUnassigned = true;
         private boolean finalCandidate = true;
+        private PsiClass skipClass = null;
 
         private DefiniteAssignmentVisitor(PsiField field) {
             this.field = field;
@@ -191,6 +196,10 @@ public class FinalUtils {
 
         public boolean isDefinitelyUnassigned() {
             return definitelyUnassigned;
+        }
+
+        public void setSkipClass(PsiClass skipClass) {
+            this.skipClass = skipClass;
         }
 
         public void setDefiniteAssignment(boolean da, boolean du) {
@@ -208,6 +217,27 @@ public class FinalUtils {
                 return;
             }
             super.visitElement(element);
+        }
+
+        @Override
+        public void visitMethod(PsiMethod method) {
+            definitelyAssigned = true;
+            definitelyUnassigned = false;
+            super.visitMethod(method);
+        }
+
+        @Override
+        public void visitClass(PsiClass aClass) {
+            if (aClass == skipClass) {
+                return;
+            }
+            final boolean da = definitelyAssigned;
+            final boolean du = definitelyUnassigned;
+            definitelyAssigned = true;
+            definitelyUnassigned = false;
+            super.visitClass(aClass);
+            definitelyAssigned = da;
+            definitelyUnassigned = du;
         }
 
         @Override
@@ -255,33 +285,6 @@ public class FinalUtils {
                 }
             }
             super.visitReferenceExpression(expression);
-        }
-
-        private static boolean isPrePostFixExpression(
-                PsiReferenceExpression expression) {
-            final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression,
-                    PsiParenthesizedExpression.class);
-            if (parent instanceof PsiPrefixExpression) {
-                final PsiPrefixExpression prefixExpression =
-                        (PsiPrefixExpression) parent;
-                final IElementType tokenType =
-                        prefixExpression.getOperationTokenType();
-                if (tokenType == JavaTokenType.PLUSPLUS ||
-                        tokenType == JavaTokenType.MINUSMINUS) {
-                    return true;
-                }
-            }
-            else if (parent instanceof PsiPostfixExpression) {
-                final PsiPostfixExpression postfixExpression =
-                        (PsiPostfixExpression) parent;
-                final IElementType tokenType =
-                        postfixExpression.getOperationTokenType();
-                if (tokenType == JavaTokenType.PLUSPLUS ||
-                        tokenType == JavaTokenType.MINUSMINUS) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         @Override
@@ -375,6 +378,30 @@ public class FinalUtils {
         }
 
         @Override
+        public void visitWhileStatement(PsiWhileStatement statement) {
+            final PsiExpression condition = statement.getCondition();
+            final PsiStatement body = statement.getBody();
+            final boolean da = definitelyAssigned;
+            final boolean du = definitelyUnassigned;
+            for (int i = 0; i < 2; i++) {
+                if (condition != null) {
+                    condition.accept(this);
+                }
+                final byte constant = this.constant;
+                if (constant == CONSTANT_FALSE) {
+                    satisfyVacuously();
+                }
+                if (body != null) {
+                    body.accept(this);
+                }
+            }
+            if (constant != CONSTANT_TRUE /*|| exits.remove(statement)*/) {
+                definitelyAssigned &= da;
+                definitelyUnassigned &= du;
+            }
+        }
+
+        @Override
         public void visitIfStatement(PsiIfStatement statement) {
             final PsiExpression condition = statement.getCondition();
             constant = NOT_CONSTANT;
@@ -408,13 +435,8 @@ public class FinalUtils {
                 satisfyVacuously();
             }
             elseBranch.accept(this);
-            if (constant == CONSTANT_TRUE) {
-                definitelyAssigned = thenDa;
-                definitelyUnassigned = thenDu;
-            } else if (constant != CONSTANT_FALSE) {
-                definitelyAssigned &= thenDa;
-                definitelyUnassigned &= thenDu;
-            }
+            definitelyAssigned &= thenDa;
+            definitelyUnassigned &= thenDu;
         }
 
         @Override
@@ -525,7 +547,7 @@ public class FinalUtils {
                         }
                     }
                 }
-                if (this.constant == NOT_CONSTANT) {
+                if (constant == NOT_CONSTANT) {
                     super.visitBinaryExpression(expression);
                 }
             }
@@ -573,6 +595,10 @@ public class FinalUtils {
 
         @Override
         public void visitBreakStatement(PsiBreakStatement statement) {
+            final PsiStatement exit = statement.findExitedStatement();
+            if (exit != null) {
+                exits.add(exit);
+            }
             satisfyVacuously();
         }
 
@@ -586,40 +612,31 @@ public class FinalUtils {
             definitelyUnassigned = true;
         }
 
-        private static boolean completesNormally(PsiStatement statement) {
-            if (statement == null) {
-                return true;
-            }
-            if (statement instanceof PsiReturnStatement ||
-                    statement instanceof PsiBreakStatement ||
-                    statement instanceof PsiThrowStatement ||
-                    statement instanceof PsiContinueStatement) {
-                return false;
-            }
-            if (statement instanceof PsiBlockStatement) {
-                final PsiBlockStatement blockStatement =
-                        (PsiBlockStatement) statement;
-                final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-                final PsiStatement[] statements = codeBlock.getStatements();
-                final int length = statements.length;
-                if (length == 0) {
+        private static boolean isPrePostFixExpression(
+                PsiReferenceExpression expression) {
+            final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression,
+                    PsiParenthesizedExpression.class);
+            if (parent instanceof PsiPrefixExpression) {
+                final PsiPrefixExpression prefixExpression =
+                        (PsiPrefixExpression) parent;
+                final IElementType tokenType =
+                        prefixExpression.getOperationTokenType();
+                if (tokenType == JavaTokenType.PLUSPLUS ||
+                        tokenType == JavaTokenType.MINUSMINUS) {
                     return true;
                 }
-                final PsiStatement lastStatement = statements[length - 1];
-                return completesNormally(lastStatement);
             }
-            if (statement instanceof PsiIfStatement) {
-                final PsiIfStatement ifStatement = (PsiIfStatement) statement;
-                final PsiStatement thenBranch = ifStatement.getThenBranch();
-                return completesNormally(thenBranch);
+            else if (parent instanceof PsiPostfixExpression) {
+                final PsiPostfixExpression postfixExpression =
+                        (PsiPostfixExpression) parent;
+                final IElementType tokenType =
+                        postfixExpression.getOperationTokenType();
+                if (tokenType == JavaTokenType.PLUSPLUS ||
+                        tokenType == JavaTokenType.MINUSMINUS) {
+                    return true;
+                }
             }
-            if (statement instanceof PsiLoopStatement) {
-                final PsiLoopStatement loopStatement =
-                        (PsiLoopStatement) statement;
-                final PsiStatement body = loopStatement.getBody();
-                return completesNormally(body);
-            }
-            return true;
+            return false;
         }
     }
 }
