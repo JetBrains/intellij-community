@@ -318,7 +318,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   String toStringEx() {
-    return toString() + "&handler=" + super.toString() + "&cd=" + myChildDescription + "&ps=" + myParentStrategy;
+    return myType.toString() + " @" + hashCode() + "&handler=" + super.toString() + "&cd=" + myChildDescription + "&ps=" + myParentStrategy;
   }
 
   @Nullable
