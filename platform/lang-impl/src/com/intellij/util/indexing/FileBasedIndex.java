@@ -316,10 +316,14 @@ public class FileBasedIndex implements ApplicationComponent {
       myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
         int lastModCount = 0;
         public void run() {
-          if (lastModCount == myLocalModCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
-            flushAllIndices();
-          }
-          lastModCount = myLocalModCount;
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            public void run() {
+              if (lastModCount == myLocalModCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
+                flushAllIndices();
+              }
+              lastModCount = myLocalModCount;
+            }
+          });
         }
       }, 5000, 5000, TimeUnit.MILLISECONDS);
 
