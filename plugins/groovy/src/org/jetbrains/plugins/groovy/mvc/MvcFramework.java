@@ -547,7 +547,7 @@ public abstract class MvcFramework {
           VirtualFile file = psiFile.getVirtualFile();
           if (file != null && file.getFileSystem() instanceof JarFileSystem) {
             VirtualFile parent = file.getParent();
-            if (parent != null && parent.findChild("Bootstrap.class") != null) {
+            if (parent != null && parent.findChild("Console.class") != null) {
               scriptRoot = parent;
               break;
             }
