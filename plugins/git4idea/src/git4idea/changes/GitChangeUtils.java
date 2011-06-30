@@ -22,8 +22,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -266,7 +264,7 @@ public class GitChangeUtils {
    * @return change list for the respective revision
    * @throws VcsException in case of problem with running git
    */
-  public static CommittedChangeList getRevisionChanges(Project project, VirtualFile root, String revisionName, boolean skipDiffsForMerge) throws VcsException {
+  public static GitCommittedChangeList getRevisionChanges(Project project, VirtualFile root, String revisionName, boolean skipDiffsForMerge) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     h.setNoSSH(true);
     h.setSilent(true);
@@ -366,7 +364,7 @@ public class GitChangeUtils {
    * @return the parsed changelist
    * @throws VcsException if there is a problem with running git
    */
-  public static CommittedChangeList parseChangeList(Project project, VirtualFile root, StringScanner s, boolean skipDiffsForMerge, GitHandler handler) throws VcsException {
+  public static GitCommittedChangeList parseChangeList(Project project, VirtualFile root, StringScanner s, boolean skipDiffsForMerge, GitHandler handler) throws VcsException {
     ArrayList<Change> changes = new ArrayList<Change>();
     // parse commit information
     final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
@@ -422,8 +420,8 @@ public class GitChangeUtils {
         }
       }
     }
-    return new CommittedChangeListImpl(commentSubject + "(" + revisionNumber + ")", fullComment, committerName, number, commitDate,
-                                       changes);
+    return new GitCommittedChangeList(commentSubject + "(" + revisionNumber + ")", fullComment, committerName, number, commitDate,
+                                       changes, revisionNumber);
   }
 
   public static long longForSHAHash(String revisionNumber) {

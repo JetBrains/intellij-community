@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.changes.GitChangeUtils;
+import git4idea.changes.GitCommittedChangeList;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
@@ -410,7 +410,7 @@ public class GitUtil {
   public static void getLocalCommittedChanges(final Project project,
                                               final VirtualFile root,
                                               final Consumer<GitSimpleHandler> parametersSpecifier,
-                                              final Consumer<CommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
+                                              final Consumer<GitCommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.setNoSSH(true);
@@ -443,14 +443,14 @@ public class GitUtil {
     }
   }
 
-  public static List<CommittedChangeList> getLocalCommittedChanges(final Project project,
+  public static List<GitCommittedChangeList> getLocalCommittedChanges(final Project project,
                                                                    final VirtualFile root,
                                                                    final Consumer<GitSimpleHandler> parametersSpecifier)
     throws VcsException {
-    final List<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
+    final List<GitCommittedChangeList> rc = new ArrayList<GitCommittedChangeList>();
 
-    getLocalCommittedChanges(project, root, parametersSpecifier, new Consumer<CommittedChangeList>() {
-      public void consume(CommittedChangeList committedChangeList) {
+    getLocalCommittedChanges(project, root, parametersSpecifier, new Consumer<GitCommittedChangeList>() {
+      public void consume(GitCommittedChangeList committedChangeList) {
         rc.add(committedChangeList);
       }
     }, false);

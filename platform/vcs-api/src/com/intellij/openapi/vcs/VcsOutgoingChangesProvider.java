@@ -16,11 +16,10 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -31,11 +30,6 @@ public interface VcsOutgoingChangesProvider <T extends CommittedChangeList> exte
   Pair<VcsRevisionNumber, List<T>> getOutgoingChanges(final VirtualFile vcsRoot, final boolean findRemote) throws VcsException;
   @Nullable
   VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException;
-  @NotNull
-  <U> Collection<U> whichAreOutgoingChanges(final Collection<U> revisions,
-                                            final Convertor<U, VcsRevisionNumber> convertor,
-                                            Convertor<U, FilePath> filePatchConvertor,
-                                            final VirtualFile vcsRoot) throws VcsException;
-
+  Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot) throws VcsException;
   Date getRevisionDate(final VcsRevisionNumber revision);
 }
