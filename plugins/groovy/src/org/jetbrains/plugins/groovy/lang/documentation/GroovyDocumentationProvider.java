@@ -32,6 +32,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
@@ -73,7 +74,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrVariable) {
       GrVariable variable = (GrVariable)element;
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       if (element instanceof GrField) {
         final PsiClass parentClass = ((GrField)element).getContainingClass();
         if (parentClass != null) {
@@ -99,7 +100,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
     else if (element instanceof GrReferenceExpression) {
       GrReferenceExpression refExpr = (GrReferenceExpression)element;
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       PsiType type = null;
       if (refExpr.getParent() instanceof GrAssignmentExpression) {
         GrAssignmentExpression assignment = (GrAssignmentExpression)refExpr.getParent();
@@ -116,7 +117,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       return buffer.toString();
     }
     else if (element instanceof PsiMethod) {
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       PsiMethod method = (PsiMethod)element;
       if (method instanceof GrGdkMethod) {
         buffer.append("[GDK] ");
@@ -152,6 +153,15 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         }
       }
       buffer.append(")");
+      final PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
+      if (referencedTypes.length > 0) {
+        buffer.append("\nthrows ");
+        for (PsiClassType referencedType : referencedTypes) {
+          appendTypeString(buffer, referencedType);
+          buffer.append(", ");
+        }
+        buffer.delete(buffer.length() - 2, buffer.length());
+      }
       return buffer.toString();
     }
     else if (element instanceof GrTypeDefinition) {
@@ -162,7 +172,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return null;
   }
 
-  private static void appendInferredType(PsiElement originalElement, StringBuffer buffer) {
+  private static void appendInferredType(PsiElement originalElement, StringBuilder buffer) {
     if (originalElement != null) {
       if (originalElement instanceof GrReferenceExpression) {
         final PsiType inferredType = ((GrReferenceExpression)originalElement).getType();
@@ -176,8 +186,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     buffer.append("[cannot infer type]");
   }
 
-  private static void generateModifiers(StringBuffer buffer, PsiElement element) {
-    String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
+  private static void generateModifiers(StringBuilder buffer, PsiElement element) {
+    String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
 
     if (modifiers.length() > 0) {
       buffer.append(modifiers);
@@ -185,13 +195,13 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
   }
 
-  private static void newLine(StringBuffer buffer) {
+  private static void newLine(StringBuilder buffer) {
     buffer.append(LINE_SEPARATOR);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String generateClassInfo(PsiClass aClass) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     GroovyFile file = (GroovyFile)aClass.getContainingFile();
 
     String packageName = file.getPackageName();
@@ -260,7 +270,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
 
-  private static void appendTypeString(StringBuffer buffer, PsiType type) {
+  private static void appendTypeString(StringBuilder buffer, PsiType type) {
     if (type != null) {
       buffer.append(StringUtil.escapeXml(type.getCanonicalText()));
     }
@@ -333,15 +343,16 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     final GroovyResolveResult[] candidates = expr.multiResolve(false);
     final String text = expr.getText();
     if (candidates.length > 0) {
-      @NonNls final StringBuffer sb = new StringBuffer();
+      @NonNls final StringBuilder sb = new StringBuilder();
       for (final GroovyResolveResult candidate : candidates) {
         final PsiElement element = candidate.getElement();
         if (!(element instanceof PsiMethod)) {
           continue;
         }
-        final String str = PsiFormatUtil.formatMethod((PsiMethod)element, candidate.getSubstitutor(),
-                                                      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_PARAMETERS,
-                                                      PsiFormatUtil.SHOW_TYPE);
+        final String str = PsiFormatUtil
+          .formatMethod((PsiMethod)element, candidate.getSubstitutor(),
+                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_PARAMETERS,
+                        PsiFormatUtilBase.SHOW_TYPE);
         createElementLink(sb, element, str);
       }
       return CodeInsightBundle.message("javadoc.candiates", text, sb);
@@ -349,7 +360,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return CodeInsightBundle.message("javadoc.candidates.not.found", text);
   }
 
-  private static void createElementLink(@NonNls final StringBuffer sb, final PsiElement element, final String str) {
+  private static void createElementLink(@NonNls final StringBuilder sb, final PsiElement element, final String str) {
     sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
     sb.append(JavaDocUtil.getReferenceText(element.getProject(), element));
     sb.append("\">");
