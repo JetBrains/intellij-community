@@ -2112,15 +2112,25 @@ def redoModule(name, out_name, mod_file_name, doing_builtins, imported_module_na
 
 # find_binaries functionality
 
-def is_binary_lib_name(path, f):
-    suffixes = ('.so', '.pyd')
-    for suf in suffixes:
-        if f.endswith(suf):
-            return True
+BIN_MODULE_FNAME_PAT = re.compile('([a-zA-Z_]+[0-9a-zA-Z]*)\\.(?:pyc|pyo|(?:[a-zA-Z_]+-\\d\\d[a-zA-Z]*\\.)?(?:so|pyd))')
+# possible binary module filename: letter,    alphanum                    architecture per PEP-3149
+
+def cut_binary_lib_suffix(path, f):
+    """
+    @param path where f lives
+    @param f file name of a possible binary lib file (no path)
+    @return f without a binary suffix (that is, an importable name) if path+f is indeed a binary lib, or None.
+    Note: if for .pyc or .pyo file a .py is found, None is returned.
+    """
+    ret = None
+    m = BIN_MODULE_FNAME_PAT.match(f)
+    if m:
+        ret = m.group(1)
     if f.endswith('.pyc') or f.endswith('.pyo'):
-        fullname = os.path.join(path, f[:-1])
-        return not os.path.exists(fullname)
-    return False
+        fullname = os.path.join(path, f[:-1]) # check for __pycache__ is made outside
+        if os.path.exists(fullname):
+            ret = None
+    return ret
 
 mac_stdlib_pattern = re.compile("/System/Library/Frameworks/Python\\.framework/Versions/(.+)/lib/python\\1/(.+)")
 mac_skip_modules = ["test", "ctypes/test", "distutils/tests", "email/test",
@@ -2164,8 +2174,6 @@ def find_binaries(paths):
         return {}
     if IS_JAVA: # jython can't have binary modules
         return {}
-    reasonable_name_rx = re.compile("^\w(?<![0-9])\w*(\.\w(?<![0-9])\w*)*$", re.UNICODE)
-    # ^^^ any dot-separated words consisting of \w and not starting with a digit
     paths = sortedNoCase(paths)
     for path in paths:
         for root, dirs, files in os.walk(path):
@@ -2180,8 +2188,8 @@ def find_binaries(paths):
                 prefix += '.'
             note("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
             for f in files:
-                if is_binary_lib_name(root, f) and not is_skipped_module(root, f):
-                    name = f[:f.rindex('.')]
+                name = cut_binary_lib_suffix(root, f)
+                if name and not is_skipped_module(root, f):
                     note("cutout: %s", name)
                     if preprefix:
                         note("prefixes: %s %s", prefix, preprefix)
@@ -2190,8 +2198,7 @@ def find_binaries(paths):
                             res.pop(pre_name) # there might be a dupe, if paths got both a/b and a/b/c
                         note("done with %s", name)
                     the_name = prefix + name
-                    if reasonable_name_rx.match(the_name): # lest smth like lib-dynload sneaks in
-                        res[the_name.upper()] = (the_name, root + SEP + f)
+                    res[the_name.upper()] = (the_name, root + SEP + f)
     return list(res.values())
 
 if sys.platform == 'cli':
