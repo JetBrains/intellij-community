@@ -66,7 +66,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private NameSuggestionsField.DataChanged myParameterNameChangedListener;
 
-  private IntroduceParameterSettingsPanel myPanel;
+  private final IntroduceParameterSettingsPanel myPanel;
   private boolean myHasWriteAccess = false;
 
   IntroduceParameterDialog(@NotNull Project project,

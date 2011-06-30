@@ -73,7 +73,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
   @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
 
-  protected static String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
+  protected static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
 
   public static SuggestedNameInfo getSuggestedName(PsiType type, final PsiExpression expression) {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());

@@ -59,8 +59,8 @@ public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer
 
   private JCheckBox myCanBeFinalCb;
 
-  private boolean myCantChangeFinalModifier;
-  private String myTitle;
+  private final boolean myCantChangeFinalModifier;
+  private final String myTitle;
   private String myExpressionText;
   protected final SmartTypePointer myDefaultType;
   protected final TypeExpression myExpression;

@@ -44,7 +44,7 @@ public class OccurrencesChooser {
   public static enum ReplaceChoice {
     NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all {0} occurrences");
 
-    private String myDescription;
+    private final String myDescription;
 
     ReplaceChoice(String description) {
       myDescription = description;

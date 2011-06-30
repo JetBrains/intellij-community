@@ -85,7 +85,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     IN_SETUP_METHOD
   }
 
-  private boolean myIsConstant;
+  private final boolean myIsConstant;
   private PsiClass myParentClass;
 
   protected BaseExpressionToFieldHandler(boolean isConstant) {
@@ -482,7 +482,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final TargetDestination myTargetClass;
     private final boolean myAnnotateAsNonNls;
     private final boolean myIntroduceEnumConstant;
-    private PsiExpression mySelectedExpr;
+    private final PsiExpression mySelectedExpr;
     private PsiExpression[] myOccurrences;
 
     public PsiLocalVariable getLocalVariable() {

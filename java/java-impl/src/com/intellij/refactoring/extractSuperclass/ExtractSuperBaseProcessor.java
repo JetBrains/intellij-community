@@ -45,7 +45,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor");
   protected PsiDirectory myTargetDirectory;
   protected final String myNewClassName;
-  protected MemberInfo[] myMemberInfos;
+  protected final MemberInfo[] myMemberInfos;
   protected final DocCommentPolicy myJavaDocPolicy;
 
 

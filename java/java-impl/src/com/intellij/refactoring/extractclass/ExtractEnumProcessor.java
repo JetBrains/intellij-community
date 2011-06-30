@@ -42,9 +42,9 @@ import com.intellij.util.containers.MultiMap;
 import java.util.*;
 
 public class ExtractEnumProcessor {
-  private Project myProject;
-  private List<PsiField> myEnumConstants;
-  private PsiClass myClass;
+  private final Project myProject;
+  private final List<PsiField> myEnumConstants;
+  private final PsiClass myClass;
 
   private TypeMigrationProcessor myTypeMigrationProcessor;
   private List<PsiField> myFields;
@@ -183,7 +183,7 @@ public class ExtractEnumProcessor {
   }
 
   private static class EnumTypeMigrationUsageInfo extends FixableUsageInfo {
-    private UsageInfo myUsageInfo;
+    private final UsageInfo myUsageInfo;
 
     public EnumTypeMigrationUsageInfo(UsageInfo usageInfo) {
       super(usageInfo.getElement());

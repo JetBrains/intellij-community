@@ -43,7 +43,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   private final Project myProject;
   private final PsiClass myParentClass;
   private final PsiExpression myInitializerExpression;
-  private String myEnteredName;
+  private final String myEnteredName;
   private final PsiLocalVariable myLocalVariable;
   private final boolean myIsInvokedOnDeclaration;
   private final boolean myWillBeDeclaredStatic;
@@ -51,7 +51,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
   private NameSuggestionsField myNameField;
 
-  private IntroduceFieldCentralPanel myCentralPanel;
+  private final IntroduceFieldCentralPanel myCentralPanel;
 
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;

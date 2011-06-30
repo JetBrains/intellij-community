@@ -78,7 +78,6 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
                                        PsiElement anchorElementIfAll, OccurenceManager occurenceManager) {
     super(project, editor, expr, localVariable, occurrences, typeSelectorManager, IntroduceConstantHandler.REFACTORING_NAME);
     myParentClass = parentClass;
-    myTypeSelectorManager = typeSelectorManager;
     myAnchorElement = anchorElement;
     myAnchorElementIfAll = anchorElementIfAll;
     for (int i = 0, occurrencesLength = occurrences.length; i < occurrencesLength; i++) {

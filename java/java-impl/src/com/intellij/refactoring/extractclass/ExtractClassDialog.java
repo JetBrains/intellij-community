@@ -55,8 +55,8 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final JTextField sourceClassTextField;
   private JCheckBox myGenerateAccessorsCb;
   private final JavaVisibilityPanel myVisibilityPanel;
-  private JCheckBox extractAsEnum;
-  private List<MemberInfo> enumConstants = new ArrayList<MemberInfo>();
+  private final JCheckBox extractAsEnum;
+  private final List<MemberInfo> enumConstants = new ArrayList<MemberInfo>();
 
   ExtractClassDialog(PsiClass sourceClass, PsiMember selectedMember) {
     super(sourceClass.getProject(), true);

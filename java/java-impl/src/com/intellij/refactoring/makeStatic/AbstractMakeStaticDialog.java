@@ -36,8 +36,8 @@ import com.intellij.usageView.UsageViewUtil;
 import javax.swing.*;
 
 public abstract class AbstractMakeStaticDialog extends RefactoringDialog {
-  protected PsiTypeParameterListOwner myMember;
-  protected String myMemberName;
+  protected final PsiTypeParameterListOwner myMember;
+  protected final String myMemberName;
 
   public AbstractMakeStaticDialog(Project project, PsiTypeParameterListOwner member) {
     super(project, true);

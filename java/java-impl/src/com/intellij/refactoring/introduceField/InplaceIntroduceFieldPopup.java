@@ -47,10 +47,10 @@ import java.awt.event.ItemListener;
  */
 public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
 
-  private PsiClass myParentClass;
-  private boolean myStatic;
+  private final PsiClass myParentClass;
+  private final boolean myStatic;
   private final Editor myEditor;
-  private Project myProject;
+  private final Project myProject;
 
   private PsiElement myAnchorElement;
   private int myAnchorIdx = -1;

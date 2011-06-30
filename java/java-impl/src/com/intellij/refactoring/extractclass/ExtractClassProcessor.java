@@ -75,8 +75,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final String delegateFieldName;
   private final boolean requiresBackpointer;
   private boolean delegationRequired = false;
-  private ExtractEnumProcessor myExtractEnumProcessor;
-  private PsiClass myClass;
+  private final ExtractEnumProcessor myExtractEnumProcessor;
+  private final PsiClass myClass;
 
   public ExtractClassProcessor(PsiClass sourceClass,
                                List<PsiField> fields,

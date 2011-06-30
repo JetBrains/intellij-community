@@ -20,16 +20,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
@@ -51,7 +48,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   private final boolean myMustBeFinal;
 
   private int myParameterIndex = -1;
-  private InplaceIntroduceParameterUI myPanel;
+  private final InplaceIntroduceParameterUI myPanel;
 
 
   InplaceIntroduceParameterPopup(final Project project,
@@ -74,7 +71,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     myWholePanel.add(myLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                                              new Insets(0,5,0,5), 0,0));
     myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
-                                              myEditor, myOccurrences, classMemberRefs, myMustBeFinal) {
+                                              myOccurrences) {
       @Override
       protected PsiParameter getParameter() {
         return InplaceIntroduceParameterPopup.this.getParameter();

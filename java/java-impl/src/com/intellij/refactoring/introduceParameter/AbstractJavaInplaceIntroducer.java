@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  */
 public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntroducer<PsiVariable, PsiExpression> {
-  protected TypeSelectorManagerImpl myTypeSelectorManager;
+  protected final TypeSelectorManagerImpl myTypeSelectorManager;
 
   public AbstractJavaInplaceIntroducer(final Project project,
                                        Editor editor,

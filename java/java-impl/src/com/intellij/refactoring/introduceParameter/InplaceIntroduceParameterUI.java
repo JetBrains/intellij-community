@@ -36,9 +36,9 @@ import java.util.List;
 public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSettingsUI {
   private JComboBox myReplaceFieldsCb;
   private boolean myHasWriteAccess = false;
-  private Project myProject;
-  private TypeSelectorManager myTypeSelectorManager;
-  private PsiExpression[] myOccurrences;
+  private final Project myProject;
+  private final TypeSelectorManager myTypeSelectorManager;
+  private final PsiExpression[] myOccurrences;
 
   public InplaceIntroduceParameterUI(Project project,
                                      PsiLocalVariable onLocalVariable,
@@ -46,8 +46,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
                                      PsiMethod methodToReplaceIn,
                                      TIntArrayList parametersToRemove,
                                      TypeSelectorManager typeSelectorManager,
-                                     Editor editor,
-                                     PsiExpression[] occurrences, List<UsageInfo> classMemberRefs, boolean mustBeFinal) {
+                                     PsiExpression[] occurrences) {
     super(project, onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     myProject = project;
     myTypeSelectorManager = typeSelectorManager;

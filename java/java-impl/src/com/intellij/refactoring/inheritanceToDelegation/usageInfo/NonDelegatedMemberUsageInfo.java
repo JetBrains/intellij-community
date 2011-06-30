@@ -21,7 +21,7 @@ import com.intellij.psi.*;
  * @author dsl
  */
 public class NonDelegatedMemberUsageInfo extends InheritanceToDelegationUsageInfo {
-  public PsiElement nonDelegatedMember;
+  public final PsiElement nonDelegatedMember;
 
   public NonDelegatedMemberUsageInfo(PsiElement element, PsiElement nonDelegatedMember,
                                      FieldAccessibility delegateFieldVisibility) {

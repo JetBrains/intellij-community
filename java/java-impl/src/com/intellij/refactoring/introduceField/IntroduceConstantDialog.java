@@ -74,7 +74,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private final PsiLocalVariable myLocalVariable;
   private final boolean myInvokedOnDeclaration;
   private final PsiExpression[] myOccurrences;
-  private String myEnteredName;
+  private final String myEnteredName;
   private final int myOccurrencesCount;
   private PsiClass myTargetClass;
   private final TypeSelectorManager myTypeSelectorManager;
