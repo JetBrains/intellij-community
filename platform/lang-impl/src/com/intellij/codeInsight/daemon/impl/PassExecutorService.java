@@ -478,7 +478,7 @@ public abstract class PassExecutorService implements Disposable {
       synchronized (PassExecutorService.class) {
         StringBuilder s = new StringBuilder();
         for (Object o : info) {
-          s.append(o.toString());
+          s.append(o.toString()).append(" ");
         }
         String message = StringUtil.repeatSymbol(' ', getThreadNum() * 4)
                          + " " + pass + " "
