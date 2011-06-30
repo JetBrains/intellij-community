@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
   }
 
   private Map<CvsRootProvider, ArrayList<File>> buildRootsToFilesMap() throws CannotFindCvsRootException {
-    HashMap<CvsRootProvider,ArrayList<File>> result = new com.intellij.util.containers.HashMap<CvsRootProvider, ArrayList<File>>();
+    HashMap<CvsRootProvider,ArrayList<File>> result = new HashMap<CvsRootProvider, ArrayList<File>>();
     for (File file : myFiles) {
       CvsRootProvider cvsRoot = CvsRootProvider.createOn(file);
       if (cvsRoot == null) {
@@ -145,5 +145,4 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
       command.getFileObjects().addFileObject(fileObject);
     }
   }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.FilePath;
 /**
  * author: lesya
  */
-
 public class CheckoutFilesOperation extends CompositeOperaton {
 
   public CheckoutFilesOperation(FilePath[] files, CvsConfiguration cvsConfiguration) {
@@ -33,16 +32,15 @@ public class CheckoutFilesOperation extends CompositeOperaton {
     }
   }
 
-
   private void addFile(FilePath file, CvsConfiguration cvsConfiguration) {
-    addOperation(
+    final CheckoutFileOperation operation =
       new CheckoutFileOperation(file.getVirtualFileParent(), cvsConfiguration, file.getName(),
                                 CvsEntriesManager.getInstance().getEntryFor(file.getVirtualFileParent(), file.getName()),
-                                cvsConfiguration.MAKE_NEW_FILES_READONLY, file.isDirectory()));
+                                cvsConfiguration.MAKE_NEW_FILES_READONLY, file.isDirectory());
+    addOperation(operation);
   }                                                                                           
 
   public int getFilesToProcessCount() {
     return CvsHandler.UNKNOWN_COUNT;
   }
-
 }
