@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author: Eugene Zhuravlev
- * Date: Mar 6, 2003
- * Time: 12:10:11 PM
- */
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.ide.plugins.PluginManager;
@@ -35,6 +30,10 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 
+/**
+ * @author Eugene Zhuravlev
+ * Date: Mar 6, 2003
+ */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
 public class PluginClassLoader extends UrlClassLoader {
   private final ClassLoader[] myParents;
@@ -67,7 +66,7 @@ public class PluginClassLoader extends UrlClassLoader {
       return c;
     }
     PluginManager.addPluginClass(name, myPluginId);
-    throw new ClassNotFoundException(name);
+    throw new ClassNotFoundException(name + " [" + myPluginId + "]");
   }
 
   @Nullable
