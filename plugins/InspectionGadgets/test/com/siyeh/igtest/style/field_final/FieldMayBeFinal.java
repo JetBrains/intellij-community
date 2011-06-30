@@ -352,3 +352,21 @@ class M {
         new M().m = 2;
     }
 }
+class N {
+    private int n;
+    N() {
+        if (true && (n = 1) == 1) {}
+    }
+}
+class O {
+    private int o;
+    O() {
+        if (false || (o = 1) == 1) {}
+    }
+}
+class P {
+    private int p;
+    P() {
+        if (true || (p = 1) == 1) {}
+    }
+}

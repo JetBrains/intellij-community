@@ -490,7 +490,7 @@ public class FinalUtils {
                 final PsiExpression lhs = expression.getLOperand();
                 constant = NOT_CONSTANT;
                 lhs.accept(this);
-                final int constant = this.constant;
+                final byte constant = this.constant;
                 final boolean da = definitelyAssigned;
                 final boolean du = definitelyUnassigned;
                 if (constant == CONSTANT_FALSE) {
@@ -500,14 +500,14 @@ public class FinalUtils {
                 if (rhs != null) {
                     rhs.accept(this);
                 }
-                if (constant == CONSTANT_FALSE) {
+                if (this.constant == CONSTANT_TRUE) {
+                    this.constant = constant;
+                } else if (constant == CONSTANT_FALSE) {
                     this.constant = CONSTANT_FALSE;
-                } else if (constant == NOT_CONSTANT) {
-                    this.constant = NOT_CONSTANT;
-                }
-                if (constant == CONSTANT_FALSE) {
                     definitelyAssigned = da;
                     definitelyUnassigned = du;
+                } else if (constant == NOT_CONSTANT) {
+                    this.constant = NOT_CONSTANT;
                 }
             } else if (JavaTokenType.OROR.equals(tokenType)) {
                 final PsiExpression lhs = expression.getLOperand();
@@ -536,7 +536,8 @@ public class FinalUtils {
                 final PsiType type = expression.getType();
                 if (PsiType.BOOLEAN.equals(type)) {
                     final Object constant =
-                            ExpressionUtils.computeConstantExpression(expression);
+                            ExpressionUtils.computeConstantExpression(
+                                    expression);
                     if (constant instanceof Boolean) {
                         if (Boolean.TRUE == constant) {
                             this.constant = CONSTANT_TRUE;
@@ -545,6 +546,8 @@ public class FinalUtils {
                         } else {
                             this.constant = NOT_CONSTANT;
                         }
+                    } else {
+                        this.constant = NOT_CONSTANT;
                     }
                 }
                 if (constant == NOT_CONSTANT) {
