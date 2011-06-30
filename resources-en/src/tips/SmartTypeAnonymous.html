@@ -1,16 +1,18 @@
 <html>
-<body style="font-family: Verdana; font-size: 13;" LEFTMARGIN="25" TOPMARGIN="25">
-<table cellpadding="15" width="98%" border="0">
-  <tr>
-    <td>It's very easy to generate the whole anonymous implementation of some interface, for example, of some listener,
-      by using the SmartType code completion. For example, you may type
-<pre>
-  Component component;
-  component.addMouseListener(
-    <font style="font-family: Verdana; font-weight:bold;" size="3" color="#000080">new</font>&nbsp;<font style="font-family: Verdana; font-weight:bold;" size="3" color="#005555"><i>&lt;caret is here&gt;</i></font>&nbsp;
-  );
-</pre>
-and press &shortcut:SmartTypeCompletion; to see what happens.
+<head>
+    <link rel="stylesheet" type="text/css" href="css/tips.css">
+</head>
+<body>
 
-</td></tr></table></body>
+
+    <p>It's very easy to generate the whole anonymous implementation of some interface, for example, of some listener,
+      by using the SmartType code completion. For example, type</p>
+<pre>
+Component component;
+component.addMouseListener(
+    <span class="keyword">new</span>&nbsp;<span class="caret">&lt;caret is here&gt;</span>&nbsp;);
+</pre>
+<p>and press <span class="shortcut">&shortcut:SmartTypeCompletion;</span> to see what happens.</p>
+
+</body>
 </html>

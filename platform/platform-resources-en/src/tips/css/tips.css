@@ -1,46 +1,56 @@
 body {
     background: #ffffff;
-    margin-bottom: 3px;
-}
-p, h1 {
-   font-family: 'Malgun Gothic', 'Meiryo UI', 'MS Reference Sans Serif', verdana, arial, sans-serif;
-}
-.code, .shortcut, pre {
-    font-family: "Courier New", Courier, monospace;
-}
-p, h1, pre {
-    margin-left: 7px;
-    margin-top: 3px;
+    margin-left: 10px;
     margin-right: 2px;
-    margin-bottom: 0;
+    margin-bottom: 6px;
+}
+h1, p {
+   font-family: 'MS Reference Sans Serif', verdana, arial, sans-serif;
+}
+.code, .code_emphasis, .code_keyword, pre, .shortcut {
+    font-family: 'Lucida Console', monospace;
+}
+h1, p, pre {
     font-size: 10px;
-    color: #3f3f3f;
+    /*color: #3f3f3f;*/
+}
+p {
+    margin-top: 6px;
+}
+h1, p {
+    margin-bottom: 0;
+}
+h1, .image, pre {
+    margin-top: 10px;
 }
 .image, pre {
-    margin-top: 6px;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
 }
 pre {
+    margin-right: 6px;
     border-style: solid;
     border-width: 1px;
     border-color: #d0d0d0;
     background-color: #fbfbfb;
-    padding-left: 7px;
-    padding-top: 3px;
+    padding-left: 10px;
+    padding-top: 6px;
     padding-bottom: 6px;
 }
-h1, .control, .shortcut {
+.control, h1 {
     font-weight: bold;
 }
-h1 .product, .emphasis {
-    color: #264db5;
+.control {
+    color: #808080;
 }
-h1 .version, .caret {
-    color: #f58220;
-}
-pre .emphasis, .code .emphasis {
+.caret, .code_emphasis, .code_keyword, .emphasis, .shortcut {
     color: #990000;
 }
-pre .keyword, .code .keyword {
+pre .keyword{
     color: #000080;
+}
+h1 .product {
+    color: #264db5;
+}
+h1 .version {
+    color: #f58220;
 }
