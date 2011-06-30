@@ -15,11 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -38,12 +39,13 @@ import javax.swing.*;
 /**
  * User: anna
  */
-public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBaseIntentionAction implements Iconable {
+public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBaseIntentionAction implements Iconable, LowPriorityAction {
    public static final Icon REFACTORING_BULB = IconLoader.getIcon("/actions/refactoringBulb.png");
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     final PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
     if (parameter != null) {
+      if (!parameter.getLanguage().isKindOf(StdLanguages.JAVA)) return false;
       final PsiElement declarationScope = parameter.getDeclarationScope();
       if (declarationScope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)declarationScope;
