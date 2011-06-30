@@ -298,7 +298,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
     final StatusBar statusBar = getStatusBar();
 
-    IdeNotificationArea notificationArea = new IdeNotificationArea();
+    final IdeNotificationArea notificationArea = new IdeNotificationArea();
     statusBar.addWidget(notificationArea, "before Memory");
 
     final PositionPanel positionPanel = new PositionPanel(project);
@@ -323,6 +323,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       public void dispose() {
         statusBar.removeWidget(encodingPanel.ID());
         statusBar.removeWidget(positionPanel.ID());
+        statusBar.removeWidget(notificationArea.ID());
         statusBar.removeWidget(readOnlyAttributePanel.ID());
         if (finalInsertOverwritePanel != null) statusBar.removeWidget(finalInsertOverwritePanel.ID());
 
