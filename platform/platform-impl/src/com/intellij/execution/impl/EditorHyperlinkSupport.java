@@ -146,7 +146,7 @@ public class EditorHyperlinkSupport {
     return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
   }
 
-  public void highlightHyperlinks(final Filter myCustomFilter, final Filter myPredefinedMessageFilter, final int line1, final int endLine) {
+  public void highlightHyperlinks(final Filter customFilter, final Filter predefinedMessageFilter, final int line1, final int endLine) {
     final Document document = myEditor.getDocument();
 
     final int startLine = Math.max(0, line1);
@@ -157,15 +157,12 @@ public class EditorHyperlinkSupport {
         endOffset++; // add '\n'
       }
       final String text = getLineText(document, line, true);
-      Filter.Result result = myCustomFilter.applyFilter(text, endOffset);
+      Filter.Result result = customFilter.applyFilter(text, endOffset);
       if (result == null) {
-        result = myPredefinedMessageFilter.applyFilter(text, endOffset);
+        result = predefinedMessageFilter.applyFilter(text, endOffset);
       }
-      if (result != null) {
-        final int highlightStartOffset = result.highlightStartOffset;
-        final int highlightEndOffset = result.highlightEndOffset;
-        final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
-        addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo);
+      if (result != null && result.hyperlinkInfo != null) {
+        addHyperlink(result.highlightStartOffset, result.highlightEndOffset, result.highlightAttributes, result.hyperlinkInfo);
       }
     }
   }
