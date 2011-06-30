@@ -226,6 +226,9 @@ public class DomUtil {
       final SmartList<DomElement> result = new SmartList<DomElement>();
       if (attributes) {
         for (final XmlAttribute attribute : tag.getAttributes()) {
+          if (!attribute.isValid()) {
+            throw new AssertionError("Invalid attr: parent.valid=" + tag.isValid());
+          }
           ContainerUtil.addIfNotNull(domManager.getDomElement(attribute), result);
         }
       }
