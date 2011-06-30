@@ -26,6 +26,7 @@ import java.util.*;
 public class CustomMembersGenerator extends GroovyObjectSupport implements GdslMembersHolderConsumer {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator");
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
+  public static final String THROWS = "throws";
   private final Set<Map> myMethods = new HashSet<Map>();
   private final Project myProject;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
@@ -138,6 +139,17 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       for (Map.Entry<Object, Object> entry : params.entrySet()) {
         entry.setValue(stringifyType(entry.getValue()));
       }
+    }
+    final Object toThrow = args.get(THROWS);
+    if (toThrow instanceof List) {
+      final ArrayList<String> list = new ArrayList<String>();
+      for (Object o : (List)toThrow) {
+        list.add(stringifyType(o));
+      }
+      args.put(THROWS, list);
+    }
+    else if (toThrow != null) {
+      args.put(THROWS, Collections.singletonList(stringifyType(toThrow)));
     }
     myMethods.add(args);
   }

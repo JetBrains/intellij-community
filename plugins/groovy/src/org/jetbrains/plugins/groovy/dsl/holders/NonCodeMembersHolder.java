@@ -25,6 +25,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 import java.util.ArrayList;
@@ -74,6 +75,16 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
       final Object bindsTo = prop.get("bindsTo");
       if (bindsTo instanceof PsiElement) {
         method.setNavigationElement((PsiElement)bindsTo);
+      }
+
+      final Object toThrow = prop.get(CustomMembersGenerator.THROWS);
+      if (toThrow instanceof List) {
+        for (Object o : ((List)toThrow)) {
+          final PsiType psiType = convertToPsiType(String.valueOf(o), place);
+          if (psiType instanceof PsiClassType) {
+            method.addException((PsiClassType)psiType);
+          }
+        }
       }
 
       myMethods.add(method);
