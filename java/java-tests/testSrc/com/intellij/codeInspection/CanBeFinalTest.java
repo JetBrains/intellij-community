@@ -30,6 +30,10 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest("canBeFinal/" + getTestName(false), tool);
   }
 
+  public void testsimpleClassInheritanceField() throws Exception {
+    doTest();
+  }
+
   public void testsimpleClassInheritance() throws Exception {
     doTest();
   }
