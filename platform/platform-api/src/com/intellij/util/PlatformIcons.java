@@ -151,4 +151,6 @@ public interface PlatformIcons {
   Icon TABLE_REMOVE_ROW = IconLoader.getIcon("/actions/tableRemove.png");
   Icon TABLE_MOVE_ROW_UP = IconLoader.getIcon("/actions/tableMoveUp.png");
   Icon TABLE_MOVE_ROW_DOWN = IconLoader.getIcon("/actions/tableMoveDown.png");
+
+  Icon COMBOBOX_ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
 }
