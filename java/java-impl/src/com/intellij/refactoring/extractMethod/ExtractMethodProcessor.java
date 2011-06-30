@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package com.intellij.refactoring.extractMethod;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
-import com.intellij.codeInsight.intention.impl.AddNullableNotNullAnnotationFix;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
@@ -72,7 +70,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -488,9 +485,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
                                                          myThrownExceptions, myStatic, myCanBeStatic, myCanBeChainedConstructor, myInitialMethodName,
                                                          myRefactoringName, myHelpId, myElements) {
-      {
-        init();
-      }
       protected boolean areTypesDirected() {
         return direct;
       }

@@ -21,27 +21,30 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Function;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public abstract class ParameterTablePanel extends JPanel {
   private final Project myProject;
   private final VariableData[] myVariableData;
@@ -49,8 +52,6 @@ public abstract class ParameterTablePanel extends JPanel {
 
   private final JBTable myTable;
   private final MyTableModel myTableModel;
-  private final JButton myUpButton;
-  private final JButton myDownButton;
   private final JComboBox myTypeRendererCombo;
 
   public VariableData[] getVariableData() {
@@ -94,8 +95,9 @@ public abstract class ParameterTablePanel extends JPanel {
     DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
 
-    myTable.setTableHeader(null);
+
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myTable.setCellSelectionEnabled(true);
     myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN).setCellRenderer(new CheckBoxTableCellRenderer());
     myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN).setMaxWidth(new JCheckBox().getPreferredSize().width);
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_NAME_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
@@ -132,32 +134,56 @@ public abstract class ParameterTablePanel extends JPanel {
         }
       }
     });
-    
-    myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellEditor(new AbstractTableCellEditor() {
+
+
+    final TableColumn typeColumn = myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN);
+    typeColumn.setCellEditor(new AbstractTableCellEditor() {
       TypeSelector myCurrentSelector;
+      final JBComboBoxTableCellEditorComponent myEditorComponent = new JBComboBoxTableCellEditorComponent();
 
       @Nullable
       public Object getCellEditorValue() {
-        return myCurrentSelector.getSelectedType();
+        return myEditorComponent.getEditorValue();
       }
 
-      public Component getTableCellEditorComponent(final JTable table, final Object value, final boolean isSelected, final int row, final int column) {
+      public Component getTableCellEditorComponent(final JTable table,
+                                                   final Object value,
+                                                   final boolean isSelected,
+                                                   final int row,
+                                                   final int column) {
+        myEditorComponent.setCell(table, row, column);
+        myEditorComponent.setOptions(myParameterTypeSelectors[row].getTypes());
+        myEditorComponent.setDefaultValue(getVariableData()[row].type);
+        myEditorComponent.setToString(new Function<Object, String>() {
+          @Override
+          public String fun(Object o) {
+            return ((PsiType)o).getPresentableText();
+          }
+        });
+
         myCurrentSelector = myParameterTypeSelectors[row];
-        return myCurrentSelector.getComponent();
+        return myEditorComponent;
       }
     });
 
-    myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
-      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        if (myParameterTypeSelectors[row].getComponent() instanceof JComboBox) {
-          myTypeRendererCombo.setSelectedIndex(row);
-          return myTypeRendererCombo;
-        }
 
-        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        VariableData data = getVariableData()[row];
-        setText(data.type.getPresentableText());
-        return this;
+
+    myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
+      private JLabel myLabel;
+      private JPanel myPanel;
+      {
+        myLabel = new JLabel();
+        myPanel = new JPanel(new BorderLayout());
+        //myPanel.setOpaque(false);
+        myPanel.add(myLabel, BorderLayout.CENTER);
+        myPanel.add(new JBLabel(PlatformIcons.COMBOBOX_ARROW_ICON), BorderLayout.EAST);
+
+      }
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        myLabel.setText(String.valueOf(value));
+        myPanel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+        myLabel.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
+        return myPanel;
       }
     });
 
@@ -187,32 +213,32 @@ public abstract class ParameterTablePanel extends JPanel {
         }
       }
     });
-    // F2 should edit the name
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "edit_parameter_name");
-    actionMap.put("edit_parameter_name", new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        if (!myTable.isEditing()) {
-          int row = myTable.getSelectedRow();
-          if (row >= 0 && row < myTableModel.getRowCount()) {
-            TableUtil.editCellAt(myTable, row, MyTableModel.PARAMETER_NAME_COLUMN);
-          }
-        }
-      }
-    });
+    //// F2 should edit the name
+    //inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "edit_parameter_name");
+    //actionMap.put("edit_parameter_name", new AbstractAction() {
+    //  public void actionPerformed(ActionEvent e) {
+    //    if (!myTable.isEditing()) {
+    //      int row = myTable.getSelectedRow();
+    //      if (row >= 0 && row < myTableModel.getRowCount()) {
+    //        TableUtil.editCellAt(myTable, row, MyTableModel.PARAMETER_NAME_COLUMN);
+    //      }
+    //    }
+    //  }
+    //});
 
-    // make ENTER work when the table has focus
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "invokeImpl");
-    actionMap.put("invokeImpl", new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        TableCellEditor editor = myTable.getCellEditor();
-        if (editor != null) {
-          editor.stopCellEditing();
-        }
-        else {
-          doEnterAction();
-        }
-      }
-    });
+    //// make ENTER work when the table has focus
+    //inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "invokeImpl");
+    //actionMap.put("invokeImpl", new AbstractAction() {
+    //  public void actionPerformed(ActionEvent e) {
+    //    TableCellEditor editor = myTable.getCellEditor();
+    //    if (editor != null) {
+    //      editor.stopCellEditing();
+    //    }
+    //    else {
+    //      doEnterAction();
+    //    }
+    //  }
+    //});
 
     // make ESCAPE work when the table has focus
     actionMap.put("doCancel", new AbstractAction() {
@@ -227,72 +253,15 @@ public abstract class ParameterTablePanel extends JPanel {
       }
     });
 
-    JPanel listPanel = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
-    listPanel.add(scrollPane, BorderLayout.CENTER);
-    listPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+    final AddRemoveUpDownPanel.Buttons[] upDownButtons = {AddRemoveUpDownPanel.Buttons.UP, AddRemoveUpDownPanel.Buttons.DOWN};
+    JPanel listPanel = EditableRowTable.wrapToTableWithButtons(myTable, myTableModel,
+                                                               new CustomLineBorder(0, 1, 1, 1),
+                                                               upDownButtons);
     add(listPanel, BorderLayout.CENTER);
 
-    JPanel buttonsPanel = new JPanel();
-    buttonsPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-    add(buttonsPanel, BorderLayout.EAST);
-
-    buttonsPanel.setLayout(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.insets = new Insets(2, 4, 2, 4);
-
-    myUpButton = new JButton();
-    myUpButton.setText(UIBundle.message("row.move.up"));
-    myUpButton.setDefaultCapable(false);
-    buttonsPanel.add(myUpButton, gbConstraints);
-
-    myDownButton = new JButton();
-    myDownButton.setText(UIBundle.message("row.move.down"));
-    myDownButton.setDefaultCapable(false);
-    buttonsPanel.add(myDownButton, gbConstraints);
-
-    gbConstraints.weighty = 1;
-    buttonsPanel.add(new JPanel(), gbConstraints);
-
-    myUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myTable.isEditing()) {
-          final boolean isStopped = myTable.getCellEditor().stopCellEditing();
-          if (!isStopped) return;
-        }
-        moveSelectedItem(-1);
-        updateSignature();
-        myTable.requestFocus();
-      }
-    });
-
-    myDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myTable.isEditing()) {
-          final boolean isStopped = myTable.getCellEditor().stopCellEditing();
-          if (!isStopped) return;
-        }
-        moveSelectedItem(+1);
-        updateSignature();
-        myTable.requestFocus();
-      }
-    });
-
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        updateMoveButtons();
-      }
-    });
-    if (getVariableData().length <= 1) {
-      myUpButton.setEnabled(false);
-      myDownButton.setEnabled(false);
-    }
-    else {
+    if (getVariableData().length > 1) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
-    updateMoveButtons();
   }
 
   protected boolean isUsedAfter(PsiVariable variable) {
@@ -314,51 +283,13 @@ public abstract class ParameterTablePanel extends JPanel {
     return result.toArray(new PsiExpression[result.size()]);
   }
 
-  private void updateMoveButtons() {
-    int row = myTable.getSelectedRow();
-    if (0 <= row && row < getVariableData().length) {
-      myUpButton.setEnabled(row > 0);
-      myDownButton.setEnabled(row < getVariableData().length - 1);
-    }
-    else {
-      myUpButton.setEnabled(false);
-      myDownButton.setEnabled(false);
-    }
-  }
-
-  private void moveSelectedItem(int moveIncrement) {
-    int row = myTable.getSelectedRow();
-    if (row < 0 || row >= getVariableData().length) return;
-    int targetRow = row + moveIncrement;
-    if (targetRow < 0 || targetRow >= getVariableData().length) return;
-
-    VariableData currentItem = getVariableData()[row];
-    getVariableData()[row] = getVariableData()[targetRow];
-    getVariableData()[targetRow] = currentItem;
-
-    TypeSelector currentSelector = myParameterTypeSelectors[row];
-    myParameterTypeSelectors[row] = myParameterTypeSelectors[targetRow];
-    myParameterTypeSelectors[targetRow] = currentSelector;
-    
-    myTypeRendererCombo.setModel(new DefaultComboBoxModel(getVariableData()));
-
-    myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
-    myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
-  }
 
   public void setEnabled(boolean enabled) {
     myTable.setEnabled(enabled);
-    if (!enabled) {
-      myUpButton.setEnabled(false);
-      myDownButton.setEnabled(false);
-    }
-    else {
-      updateMoveButtons();
-    }
     super.setEnabled(enabled);
   }
 
-  private class MyTableModel extends AbstractTableModel {
+  private class MyTableModel extends AbstractTableModel implements RowEditableTableModel {
     public static final int CHECKMARK_COLUMN = 0;
     public static final int PARAMETER_TYPE_COLUMN = 1;
     public static final int PARAMETER_NAME_COLUMN = 2;
@@ -414,6 +345,16 @@ public abstract class ParameterTablePanel extends JPanel {
       }
     }
 
+    @Override
+    public String getColumnName(int column) {
+      switch (column) {
+        case CHECKMARK_COLUMN: return "";
+        case PARAMETER_TYPE_COLUMN: return "Type";
+        case PARAMETER_NAME_COLUMN: return "Name";
+      }
+      return "";
+    }
+
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN:
@@ -432,6 +373,35 @@ public abstract class ParameterTablePanel extends JPanel {
         return Boolean.class;
       }
       return super.getColumnClass(columnIndex);
+    }
+
+    @Override
+    public void addRow() {
+      throw new IllegalAccessError("Not implemented");
+    }
+
+    @Override
+    public void removeRow(int index) {
+      throw new IllegalAccessError("Not implemented");
+    }
+
+    @Override
+    public void exchangeRows(int row, int targetRow) {
+      if (row < 0 || row >= getVariableData().length) return;
+      if (targetRow < 0 || targetRow >= getVariableData().length) return;
+
+      final VariableData currentItem = getVariableData()[row];
+      getVariableData()[row] = getVariableData()[targetRow];
+      getVariableData()[targetRow] = currentItem;
+
+      TypeSelector currentSelector = myParameterTypeSelectors[row];
+      myParameterTypeSelectors[row] = myParameterTypeSelectors[targetRow];
+      myParameterTypeSelectors[targetRow] = currentSelector;
+
+      myTypeRendererCombo.setModel(new DefaultComboBoxModel(getVariableData()));
+
+      myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
+      myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
     }
   }
 

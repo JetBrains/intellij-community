@@ -33,11 +33,12 @@ public class EditableRowTable {
   private EditableRowTable() {}
 
   public static JPanel createButtonsTable(final JTable table, final RowEditableTableModel tableModel, boolean addMnemonics) {
-    return createButtonsTable(table, tableModel, addMnemonics, true, false);
+    return createButtonsTable(table, tableModel, addMnemonics, true, false, AddRemoveUpDownPanel.Buttons.ALL);
   }
 
   public static JPanel createButtonsTable(final JTable table, final RowEditableTableModel tableModel,
                                           boolean addMnemonics, boolean iconsOnly, boolean isHorizontal,
+                                          AddRemoveUpDownPanel.Buttons[] buttonsToShow,
                                           AnActionButton...actions) {
     JPanel panel = new JPanel();
     panel.setBorder(iconsOnly ? IdeBorderFactory.createEmptyBorder(0) : BorderFactory.createEmptyBorder(4, 4, 4, 4));
@@ -116,7 +117,7 @@ public class EditableRowTable {
     };
 
     if (iconsOnly) {
-      p.set(new AddRemoveUpDownPanel(listener, table, isHorizontal, actions, AddRemoveUpDownPanel.Buttons.ALL));
+      p.set(new AddRemoveUpDownPanel(listener, table, isHorizontal, actions, buttonsToShow));
       panel.add(p.get(), BorderLayout.NORTH);
     } else {
       addButton.set(new JButton());
@@ -219,15 +220,23 @@ public class EditableRowTable {
   }
 
   public static JPanel wrapToTableWithButtons(final JTable table,
-                                              final RowEditableTableModel tableModel,
-                                              @Nullable Border buttonsBorder,
-                                              final AnActionButton... buttons) {
-    final JPanel buttonsPanel = createButtonsTable(table, tableModel, true, true, true, buttons);
+                                                final RowEditableTableModel tableModel,
+                                                @Nullable Border buttonsBorder,
+                                                final AddRemoveUpDownPanel.Buttons[] buttonsToShow,
+                                                final AnActionButton... extraButtons) {
+    final JPanel buttonsPanel = createButtonsTable(table, tableModel, true, true, true, buttonsToShow, extraButtons);
     buttonsPanel.setBorder(buttonsBorder);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    final JPanel panel = new JPanel(new BorderLayout()/*new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)*/);
+    final JPanel panel = new JPanel(new BorderLayout());
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.add(buttonsPanel, BorderLayout.SOUTH);
     return panel;
+  }
+
+  public static JPanel wrapToTableWithButtons(final JTable table,
+                                              final RowEditableTableModel tableModel,
+                                              @Nullable Border buttonsBorder,
+                                              final AnActionButton... extraButtons) {
+    return wrapToTableWithButtons(table, tableModel, buttonsBorder, AddRemoveUpDownPanel.Buttons.ALL,extraButtons);
   }
 }

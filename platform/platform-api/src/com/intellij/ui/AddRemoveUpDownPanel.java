@@ -130,6 +130,18 @@ public class AddRemoveUpDownPanel extends JPanel {
     this(listener, contentPane, false, additionalActions, Buttons.ADD, Buttons.REMOVE, Buttons.UP, Buttons.DOWN);
   }
 
+  //public static void hideButtons(JPanel panelWithButtons, Buttons... buttons) {
+  //  final AddRemoveUpDownPanel panel = UIUtil.findComponentOfType(panelWithButtons, AddRemoveUpDownPanel.class);
+  //  assert panel != null : "Seems this panel isn't a result of EditableRowTable.wrapToTableWithButtons() wrapper";
+  //  for (Buttons button : buttons) {
+  //    final TableActionButton actionButton = panel.myButtons.get(button);
+  //    if (actionButton != null) {
+  //      actionButton.setVisible(false);
+  //      actionButton.setEnabled(false);
+  //    }
+  //  }
+  //}
+
   static class TableActionButton extends AnActionButton {
     private final Buttons myButton;
     private final Listener myListener;
