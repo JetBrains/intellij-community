@@ -18,13 +18,13 @@ package com.intellij.cvsSupport2.cvsoperations.cvsCheckOut;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
-import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperaton;
+import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperation;
 import com.intellij.openapi.vcs.FilePath;
 
 /**
  * author: lesya
  */
-public class CheckoutFilesOperation extends CompositeOperaton {
+public class CheckoutFilesOperation extends CompositeOperation {
 
   public CheckoutFilesOperation(FilePath[] files, CvsConfiguration cvsConfiguration) {
     for (FilePath file : files) {

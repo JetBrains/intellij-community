@@ -159,14 +159,14 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   public static CvsHandler createBranchOrTagHandler(FilePath[] selectedFiles, String branchName,
                                                     boolean switchToThisAction, boolean overrideExisting,
                                                     boolean isTag, boolean makeNewFilesReadOnly, Project project) {
-    CompositeOperaton operation = new CompositeOperaton();
+    CompositeOperation operation = new CompositeOperation();
     operation.addOperation(new BranchOperation(selectedFiles, branchName, overrideExisting, isTag));
     if (switchToThisAction) {
       operation.addOperation(new UpdateOperation(selectedFiles, branchName, makeNewFilesReadOnly, project));
     }
     return new CommandCvsHandler(isTag ? CvsBundle.message("operation.name.create.tag")
-                                 : CvsBundle.message("operation.name.create.branch"), operation,
-                                                                                                   FileSetToBeUpdated.selectedFiles(selectedFiles));
+                                       : CvsBundle.message("operation.name.create.branch"), operation,
+                                 FileSetToBeUpdated.selectedFiles(selectedFiles));
   }
 
   public static CvsHandler createCommitHandler(FilePath[] selectedFiles,
@@ -403,7 +403,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createGetFileFromRepositoryHandler(CvsLightweightFile[] cvsLightweightFiles, boolean makeNewFilesReadOnly) {
-    CompositeOperaton compositeOperaton = new CompositeOperaton();
+    CompositeOperation compositeOperaton = new CompositeOperation();
     final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
     for (CvsLightweightFile cvsLightweightFile : cvsLightweightFiles) {
       File root = cvsLightweightFile.getRoot();
@@ -414,8 +414,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       }
       String alternativeCheckoutPath = getAlternativeCheckoutPath(cvsLightweightFile, workingDirectory);
       CheckoutProjectOperation checkoutFileOperation = new CheckoutProjectOperation(new String[]{cvsLightweightFile.getModuleName()},
-                                                                                    entriesManager
-                                                                                      .getCvsConnectionSettingsFor(root),
+                                                                                    entriesManager.getCvsConnectionSettingsFor(root),
                                                                                     makeNewFilesReadOnly,
                                                                                     workingDirectory,
                                                                                     alternativeCheckoutPath,

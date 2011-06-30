@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
-import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperaton;
+import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
@@ -176,16 +176,12 @@ class MergeInfo implements MergeDataProvider{
       public String getToStirng(Object obj) {
         return ((VirtualFile)obj).getName();
       }
-    },
-                                                                         CvsBundle.message("message.choose.stored.file.version.title"),
-                                                                         ListSelectionModel.SINGLE_SELECTION);
+    }, CvsBundle.message("message.choose.stored.file.version.title"), ListSelectionModel.SINGLE_SELECTION);
     selectFromListDialog.show();
 
     if (!selectFromListDialog.isOK()) return null;
 
-
     return (VirtualFile)selectFromListDialog.getSelection()[0];
-
   }
 
 
@@ -200,7 +196,7 @@ class MergeInfo implements MergeDataProvider{
       final GetFileContentOperation originalFileContentOperation = GetFileContentOperation.
         createForFile(myFile, new SimpleRevision(secondRevision));
 
-      CompositeOperaton compositeOperaton = new CompositeOperaton();
+      CompositeOperation compositeOperaton = new CompositeOperation();
       compositeOperaton.addOperation(fileToMergeWithContentOperation);
       compositeOperaton.addOperation(originalFileContentOperation);
 
