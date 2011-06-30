@@ -41,8 +41,8 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
 
   public String myDefaultNullable = AnnotationUtil.NULLABLE;
   public String myDefaultNotNull = AnnotationUtil.NOT_NULL;
-  public JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
-  public JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
+  public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
+  public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
 
   public static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, "javax.annotation.Nullable", "edu.umd.cs.findbugs.annotations.Nullable"};
   public static final String[] DEFAULT_NOT_NULLS = {AnnotationUtil.NOT_NULL, "javax.annotation.Nonnull",  "edu.umd.cs.findbugs.annotations.NonNull"};

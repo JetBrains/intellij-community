@@ -35,7 +35,7 @@ import java.util.*;
  * Date: Jul 30, 2010
  */
 public class PsiDiamondType extends PsiType {
-  private PsiManager myManager;
+  private final PsiManager myManager;
   private final PsiTypeElement myTypeElement;
   private static final Logger LOG = Logger.getInstance("#" + PsiDiamondType.class.getName());
 
@@ -277,7 +277,7 @@ public class PsiDiamondType extends PsiType {
       }
     };
 
-    private List<PsiType> myInferredTypes = new ArrayList<PsiType>();
+    private final List<PsiType> myInferredTypes = new ArrayList<PsiType>();
     private String myErrorMessage;
 
     private String myNewExpressionPresentableText;

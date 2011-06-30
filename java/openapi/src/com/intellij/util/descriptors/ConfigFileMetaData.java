@@ -27,13 +27,13 @@ import java.util.Arrays;
  */
 public class ConfigFileMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.descriptors.ConfigFileMetaData");
-  private String myTitle;
-  private String myId;
-  private String myFileName;
-  private String myDirectoryPath;
-  private ConfigFileVersion[] myVersions;
-  private ConfigFileVersion myDefaultVersion;
-  private boolean myOptional;
+  private final String myTitle;
+  private final String myId;
+  private final String myFileName;
+  private final String myDirectoryPath;
+  private final ConfigFileVersion[] myVersions;
+  private final ConfigFileVersion myDefaultVersion;
+  private final boolean myOptional;
   private final boolean myFileNameFixed;
   private final boolean myUnique;
 

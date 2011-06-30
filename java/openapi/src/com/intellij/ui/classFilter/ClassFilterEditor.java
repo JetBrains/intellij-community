@@ -54,11 +54,11 @@ import java.util.List;
 public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText {
   protected JBTable myTable = null;
   protected FilterTableModel myTableModel = null;
-  private JButton myAddClassButton;
-  protected JButton myAddPatternButton;
-  private JButton myRemoveButton;
-  protected Project myProject;
-  private ClassFilter myChooserFilter;
+  private final JButton myAddClassButton;
+  protected final JButton myAddPatternButton;
+  private final JButton myRemoveButton;
+  protected final Project myProject;
+  private final ClassFilter myChooserFilter;
 
   public ClassFilterEditor(Project project) {
     this (project, null);
