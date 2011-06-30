@@ -4,13 +4,11 @@ import org.apache.tools.ant.BuildException
 import org.codehaus.gant.GantBinding
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.artifacts.ArtifactBuilder
+import org.jetbrains.jps.builders.BuildUtil
 import org.jetbrains.jps.resolvers.LibraryResolver
 import org.jetbrains.jps.resolvers.ModuleResolver
 import org.jetbrains.jps.resolvers.PathEntry
 import org.jetbrains.jps.resolvers.Resolver
-import org.jetbrains.jps.builders.BuildUtil
-
-import org.jetbrains.ether.dependencyView.Callbacks
 
 /**
  * @author max
@@ -275,5 +273,5 @@ class Project {
 
   def ClasspathKind getCompileClasspathKind (final boolean tests) {
     return builder.getCompileClasspathKind (tests)
-  }                           \
+  }
 }
