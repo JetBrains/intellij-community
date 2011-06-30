@@ -18,9 +18,9 @@ package git4idea.update;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.util.continuation.*;
 import com.intellij.util.ui.UIUtil;
 
@@ -31,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
  */
 public abstract class GitUpdateLikeProcess {
   public static final String GIT_UPDATING = "Git: updating";
+  public static final String REASON = "Local changes are not available until Git update is finished.";
   private final Project myProject;
   private GeneralSettings myGeneralSettings;
   private ProjectManagerEx myProjectManager;
@@ -42,6 +43,8 @@ public abstract class GitUpdateLikeProcess {
   }
 
   public void execute() {
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+
     final boolean saveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
     final boolean syncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
     myProjectManager.blockReloadingProjectOnExternalChanges();
@@ -67,9 +70,17 @@ public abstract class GitUpdateLikeProcess {
         myProjectManager.unblockReloadingProjectOnExternalChanges();
         myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
         myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
+        changeListManager.letGo();
       }
     };
-    final TaskDescriptor[] next = {new TaskDescriptor(GIT_UPDATING, Where.POOLED) {
+    final TaskDescriptor[] next = {
+      new TaskDescriptor(GIT_UPDATING, Where.POOLED) {
+        @Override
+        public void run(ContinuationContext context) {
+          changeListManager.freeze(context, REASON);
+        }
+      },
+      new TaskDescriptor(GIT_UPDATING, Where.POOLED) {
         @Override
         public void run(final ContinuationContext context) {
           runImpl(context);

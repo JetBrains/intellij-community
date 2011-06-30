@@ -142,10 +142,15 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   public void loadCommittedChanges(ChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<CommittedChangeList> consumer)
+                                   final AsynchConsumer<CommittedChangeList> consumer)
     throws VcsException {
     try {
-      getCommittedChangesImpl(settings, location, maxCount, consumer);
+      getCommittedChangesImpl(settings, location, maxCount, new Consumer<GitCommittedChangeList>() {
+        @Override
+        public void consume(GitCommittedChangeList gitCommittedChangeList) {
+          consumer.consume(gitCommittedChangeList);
+        }
+      });
     }
     finally {
       consumer.finished();
@@ -160,8 +165,8 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
 
     final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
 
-    getCommittedChangesImpl(settings, location, maxCount, new Consumer<CommittedChangeList>() {
-      public void consume(CommittedChangeList committedChangeList) {
+    getCommittedChangesImpl(settings, location, maxCount, new Consumer<GitCommittedChangeList>() {
+      public void consume(GitCommittedChangeList committedChangeList) {
         result.add(committedChangeList);
       }
     });
@@ -170,7 +175,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   }
 
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount,
-                                                            final Consumer<CommittedChangeList> consumer)
+                                                            final Consumer<GitCommittedChangeList> consumer)
     throws VcsException {
     GitRepositoryLocation l = (GitRepositoryLocation)location;
     final Long beforeRev = settings.getChangeBeforeFilter();

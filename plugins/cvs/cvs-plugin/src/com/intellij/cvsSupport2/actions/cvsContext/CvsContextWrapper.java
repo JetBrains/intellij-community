@@ -63,6 +63,10 @@ public class CvsContextWrapper implements CvsContext {
     return ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(CvsVcs2.getInstance(project), getSelectedFiles());
   }
 
+  @Override
+  public String getActionName() {
+    return myVcsContext.getActionName();
+  }
 
   public Collection<String> getDeletedFileNames() {
     return CvsDataKeys.DELETED_FILE_NAMES.getData(myContext);

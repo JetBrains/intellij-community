@@ -18,37 +18,28 @@ package git4idea.stash;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.ui.UIUtil;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
-import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeConflictResolver;
 import git4idea.ui.GitUIUtil;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -69,13 +60,13 @@ public class GitStashChangesSaver extends GitChangesSaver {
   @Override
   protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
-    Map<VirtualFile, Collection<Change>> changes = groupChangesByRoots(rootsToSave);
+    final Map<VirtualFile, Collection<Change>> changes = new LocalChangesUnderRoots(myProject).getChangesUnderRoots(rootsToSave);
     convertSeparatorsIfNeeded(changes);
     stash(changes.keySet());
   }
 
   @Override
-  protected void load(@Nullable final Runnable restoreListsRunnable, ContinuationContext context) {
+  protected void load(ContinuationContext context) {
     for (VirtualFile root : myStashedRoots) {
       try {
         loadRoot(root);
@@ -85,16 +76,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
         return;
       }
     }
-    final List<File> files = ObjectsConvertor.fp2jiof(getChangedFiles());
-    LocalFileSystem.getInstance().refreshIoFiles(files);
-    if (restoreListsRunnable != null) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          myChangeManager.invokeAfterUpdate(restoreListsRunnable, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE,
-                                            GitBundle.getString("update.restoring.change.lists"), ModalityState.NON_MODAL);
-        }
-      });
-    }
+    // we'll refresh more but this way we needn't compute what files under roots etc
+    LocalFileSystem.getInstance().refreshIoFiles(myChangeManager.getAffectedPaths());
   }
 
     @Override
@@ -181,38 +164,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
         LOG.info("unstash failed " + handler.errors());
         GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + GitUIUtil.stringifyErrors(handler.errors()));
       }
-    }
-  }
-
-  // Sort changes from myChangesLists by their git roots.
-  // And use only supplied roots, ignoring changes from other roots.
-  private Map<VirtualFile, Collection<Change>> groupChangesByRoots(Collection<VirtualFile> rootsToSave) {
-    final Map<VirtualFile, Collection<Change>> sortedChanges = new HashMap<VirtualFile, Collection<Change>>();
-    for (LocalChangeList l : myChangeLists) {
-      final Collection<Change> changeCollection = l.getChanges();
-      for (Change c : changeCollection) {
-        if (c.getAfterRevision() != null) {
-          storeChangeInMap(sortedChanges, c, c.getAfterRevision(), rootsToSave);
-        } else if (c.getBeforeRevision() != null) {
-          storeChangeInMap(sortedChanges, c, c.getBeforeRevision(), rootsToSave);
-        }
-      }
-    }
-    return sortedChanges;
-  }
-
-  private static void storeChangeInMap(Map<VirtualFile, Collection<Change>> sortedChanges,
-                                       Change c,
-                                       ContentRevision contentRevision,
-                                       Collection<VirtualFile> rootsToSave) {
-    final VirtualFile root = GitUtil.getGitRootOrNull(contentRevision.getFile());
-    if (root != null && rootsToSave.contains(root)) {
-      Collection<Change> changes = sortedChanges.get(root);
-      if (changes == null) {
-        changes = new ArrayList<Change>();
-        sortedChanges.put(root, changes);
-      }
-      changes.add(c);
     }
   }
 

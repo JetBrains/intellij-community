@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -57,20 +56,12 @@ public class IdeaTextPatchBuilder {
         continue;
       }
       final VcsOutgoingChangesProvider<?> provider = root.vcs.getOutgoingChangesProvider();
-      final Collection<Change> outGoingOnly = provider.whichAreOutgoingChanges(rootChanges, new Convertor<Change, VcsRevisionNumber>() {
-        public VcsRevisionNumber convert(Change ch) {
-          return (ch.getBeforeRevision() == null ? ch.getAfterRevision() : ch.getBeforeRevision()).getRevisionNumber();
-        }
-      }, new Convertor<Change, FilePath>() {
-        public FilePath convert(Change ch) {
-          return (ch.getBeforeRevision() == null ? ch.getAfterRevision() : ch.getBeforeRevision()).getFile();
-        }
-      }, root.path);
-
-      rootChanges.removeAll(outGoingOnly);
+      final Collection<Change> basedOnLocal = provider.filterLocalChangesBasedOnLocalCommits(rootChanges, root.path);
+      rootChanges.removeAll(basedOnLocal);
       addConvertChanges(rootChanges, result);
 
-      for (Change change : outGoingOnly) {
+      for (Change change : basedOnLocal) {
+        // dates are here instead of numbers
         result.add(new BeforeAfter<AirContentRevision>(convertRevision(change.getBeforeRevision(), provider),
                                                        convertRevision(change.getAfterRevision(), provider)));
       }

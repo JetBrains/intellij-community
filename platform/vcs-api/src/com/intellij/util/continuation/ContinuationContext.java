@@ -19,11 +19,9 @@ import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public interface ContinuationContext {
+public interface ContinuationContext extends ContinuationPause {
   @CalledInAny
   void next(TaskDescriptor... next);
   @CalledInAny
@@ -43,9 +41,6 @@ public interface ContinuationContext {
 
   void keepExisting(final Object disaster, final Object cure);
   void throwDisaster(final Object disaster, final Object cure);
-
-  void suspend();
-  void ping();
 
   void removeNewTasksPatcher(@NotNull final Consumer<TaskDescriptor> consumer);
   void addNewTasksPatcher(@NotNull final Consumer<TaskDescriptor> consumer);

@@ -28,8 +28,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -41,12 +45,14 @@ import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.Rethrow;
 import org.jdom.Element;
@@ -58,6 +64,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author max
@@ -70,7 +77,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private static final ScheduledExecutorService ourUpdateAlarm = ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater", Thread.MIN_PRIORITY + 1);
 
   private final Modifier myModifier;
@@ -80,7 +86,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private ChangeListWorker myWorker;
   private VcsException myUpdateException = null;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
   private final Object myDataLock = new Object();
@@ -90,13 +95,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final IgnoredFilesComponent myIgnoredIdeaLevel;
   private ProgressIndicator myUpdateChangesProgressIndicator;
 
-  public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
-
   public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<LocalChangeListsLoadedListener>(
     "LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
 
   private boolean myShowLocalChangesInvalidated;
+  private AtomicReference<String> myFreezeName;
 
+  // notifies myListeners on the same thread that local changes update is done
   private final DelayedNotificator myDelayedNotificator;
 
   private final VcsListener myVcsListener = new VcsListener() {
@@ -105,13 +110,19 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   };
   private final ChangelistConflictTracker myConflictTracker;
+  private VcsDirtyScopeManager myDirtyScopeManager;
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
   }
 
+  void setDirtyScopeManager(VcsDirtyScopeManager dirtyScopeManager) {
+    myDirtyScopeManager = dirtyScopeManager;
+  }
+
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
+    myFreezeName = new AtomicReference<String>(null);
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
@@ -131,8 +142,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (((LocalChangeList)oldDefaultList).hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
-          oldDefaultList.getChanges().isEmpty() &&
-          !((LocalChangeList)oldDefaultList).isReadOnly()) {
+            oldDefaultList.getChanges().isEmpty() &&
+            !((LocalChangeList)oldDefaultList).isReadOnly()) {
 
           invokeAfterUpdate(new Runnable() {
             public void run() {
@@ -261,6 +272,31 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   static class DisposedException extends RuntimeException {}
 
+  public void freeze(final ContinuationPause context, final String reason) {
+    myUpdater.setIgnoreBackgroundOperation(true);
+    // this update is nessesary for git, to refresh local changes before
+    invokeAfterUpdate(new Runnable() {
+      @Override
+      public void run() {
+        myUpdater.setIgnoreBackgroundOperation(false);
+        myUpdater.pause();
+        myFreezeName.set(reason);
+        context.ping();
+      }
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.NON_MODAL);
+    context.suspend();
+  }
+
+  @Override
+  public void letGo() {
+    myUpdater.go();
+    myFreezeName.set(null);
+  }
+
+  public String isFreezed() {
+    return myFreezeName.get();
+  }
+
   public void scheduleUpdate() {
     myUpdater.schedule();
   }
@@ -272,19 +308,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private class ActualUpdater implements LocalChangesUpdater {
     public void execute(AtomicSectionsAware atomicSectionsAware) {
       updateImmediately(atomicSectionsAware);
-    }
-  }
-
-  private VcsDirtyScopeManagerImpl getVcsManager() {
-    try {
-      return ((VcsDirtyScopeManagerImpl) VcsDirtyScopeManager.getInstance(myProject));
-    }
-    catch(ProcessCanceledException ex) {
-      return null;
-    }
-    catch(Exception ex) {
-      LOG.error(ex);
-      return null;
     }
   }
 
@@ -339,26 +362,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (! vcsManager.hasActiveVcss()) return;
 
-    final VcsDirtyScopeManagerImpl dirtyScopeManager = getVcsManager();
-    if (dirtyScopeManager == null) return;
+    final VcsInvalidated invalidated = myDirtyScopeManager.retrieveScopes();
+    if (checkScopeIsEmpty(invalidated)) return;
 
-    final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
-    if (invalidated == null || invalidated.isEmpty()) {
-      // a hack here; but otherwise everything here should be refactored ;)
-      if (invalidated != null && invalidated.isEmpty() && invalidated.isEverythingDirty()) {
-        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-      }
-      return;
-    }
     final boolean wasEverythingDirty = invalidated.isEverythingDirty();
     final List<VcsDirtyScope> scopes = invalidated.getScopes();
-
-    if (! wasEverythingDirty) {
-      filterOutIgnoredFiles(scopes);
-      if (scopes.isEmpty()) {
-        return;
-      }
-    }
 
     try {
       checkIfDisposed();
@@ -379,28 +387,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
-      final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
-      // do actual requests about file statuses
-      final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
-        dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
-
       // todo should also ask self flag
       myUpdateChangesProgressIndicator = createProgressIndicator(atomicSectionsAware);
 
-      for (final VcsDirtyScope scope : scopes) {
-        atomicSectionsAware.checkShouldExit();
-
-        final AbstractVcs vcs = scope.getVcs();
-        if (vcs == null) continue;
-        final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope) scope);
-
-        myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
-        dataHolder.notifyStartProcessingChanges(adjustedScope);
-
-        actualUpdate(builder, adjustedScope, vcs, dataHolder, gate);
-
-        if (myUpdateException != null) break;
-      }
+      iterateScopes(atomicSectionsAware, dataHolder, scopes);
 
       final boolean takeChanges = (myUpdateException == null);
       if (takeChanges) {
@@ -411,10 +401,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       synchronized (myDataLock) {
         // do same modifications to change lists as was done during update + do delayed notifications
         dataHolder.notifyEnd();
-        myModifier.exitUpdate();
-        // should be applied for notifications to be delivered (they were delayed)
-        myModifier.apply(dataHolder.getChangeListWorker());
-        myModifier.clearQueue();
+        // should be applied for notifications to be delivered (they were delayed) - anyway whether we take changes or not
+        myModifier.finishUpdate(dataHolder.getChangeListWorker());
         // update member from copy
         if (takeChanges) {
           clearCurrentRevisionsCache(invalidated);
@@ -447,12 +435,55 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       LOG.error(ex);
     }
     finally {
-      dirtyScopeManager.changesProcessed();
+      myDirtyScopeManager.changesProcessed();
       
       synchronized (myDataLock) {
         myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
       }
+    }
+  }
+
+  private boolean checkScopeIsAllIgnored(VcsInvalidated invalidated) {
+    if (! invalidated.isEverythingDirty()) {
+      filterOutIgnoredFiles(invalidated.getScopes());
+      if (invalidated.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
+    if (invalidated == null || invalidated.isEmpty()) {
+      // a hack here; but otherwise everything here should be refactored ;)
+      if (invalidated != null && invalidated.isEmpty() && invalidated.isEverythingDirty()) {
+        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      }
+      return true;
+    }
+    return checkScopeIsAllIgnored(invalidated);
+  }
+
+  private void iterateScopes(AtomicSectionsAware atomicSectionsAware, DataHolder dataHolder, List<VcsDirtyScope> scopes) {
+    final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
+    // do actual requests about file statuses
+    final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
+      dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
+
+    for (final VcsDirtyScope scope : scopes) {
+      atomicSectionsAware.checkShouldExit();
+
+      final AbstractVcs vcs = scope.getVcs();
+      if (vcs == null) continue;
+      final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope) scope);
+
+      myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
+      dataHolder.notifyStartProcessingChanges(adjustedScope);
+
+      actualUpdate(builder, adjustedScope, vcs, dataHolder, gate);
+
+      if (myUpdateException != null) break;
     }
   }
 
@@ -1251,5 +1282,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       final AbstractVcs vcs = myVcsManager.getVcsFor(vf);
       return vcs == null ? null : vcs.getKeyInstanceMethod();
     }
+  }
+
+  public boolean isFreezedWithNotification(String modalTitle) {
+    final String freezeReason = isFreezed();
+    if (freezeReason != null) {
+      if (modalTitle != null) {
+        Messages.showErrorDialog(myProject, freezeReason, modalTitle);
+      } else {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, freezeReason, MessageType.WARNING);
+      }
+    }
+    return freezeReason != null;
   }
 }

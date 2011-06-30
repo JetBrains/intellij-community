@@ -20,8 +20,8 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -56,6 +56,11 @@ public class CvsContextAdapter implements CvsContext{
   }
 
   public Collection<String> getDeletedFileNames() {
+    return null;
+  }
+
+  @Override
+  public String getActionName() {
     return null;
   }
 

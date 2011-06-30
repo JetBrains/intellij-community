@@ -88,7 +88,7 @@ public class ShelveChangesCommitExecutor implements CommitExecutorWithHelp {
         return;
       }
       try {
-        final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage);
+        final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage, true);
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
 
         Change[] changesArray = changes.toArray(new Change[changes.size()]);

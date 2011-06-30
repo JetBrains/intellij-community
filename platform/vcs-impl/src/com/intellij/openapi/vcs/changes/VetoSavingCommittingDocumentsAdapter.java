@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponen
   }
 
   public void beforeDocumentSaving(Document document) throws VetoDocumentSavingException {
-    final Object beingCommitted = document.getUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY);
+    final Object beingCommitted = document.getUserData(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY);
     if (beingCommitted == SAVE_DENIED) {
       throw new VetoDocumentSavingException();
     }
@@ -78,7 +79,7 @@ public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponen
         final Document[] unsavedDocuments = myFileDocumentManager.getUnsavedDocuments();
         Project commitOwnerProject = null;
         for (Document unsavedDocument : unsavedDocuments) {
-          final Object data = unsavedDocument.getUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY);
+          final Object data = unsavedDocument.getUserData(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY);
           if (data instanceof Project) {
             commitOwnerProject = (Project) data;
             documentsToWarn.add(unsavedDocument);
@@ -87,7 +88,7 @@ public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponen
         if (!documentsToWarn.isEmpty()) {
           boolean allowSave = showAllowSaveDialog(commitOwnerProject, documentsToWarn);
           for (Document document : documentsToWarn) {
-            document.putUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY, allowSave ? null : SAVE_DENIED);
+            document.putUserData(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY, allowSave ? null : SAVE_DENIED);
           }
         }
       }

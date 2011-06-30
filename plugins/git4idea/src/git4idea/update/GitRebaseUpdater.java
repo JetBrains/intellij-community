@@ -31,6 +31,7 @@ import git4idea.rebase.GitRebaser;
 import git4idea.ui.GitUIUtil;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -43,10 +44,10 @@ public class GitRebaseUpdater extends GitUpdater {
 
   public GitRebaseUpdater(Project project,
                           VirtualFile root,
-                          GitUpdateProcess gitUpdateProcess,
+                          final Map<VirtualFile, GitBranchPair> trackedBranches,
                           ProgressIndicator progressIndicator,
                           UpdatedFiles updatedFiles) {
-    super(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
+    super(project, root, trackedBranches, progressIndicator, updatedFiles);
     myRebaser = new GitRebaser(myProject, myProgressIndicator);
   }
 
@@ -56,7 +57,7 @@ public class GitRebaseUpdater extends GitUpdater {
 
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
-    GitBranchPair gitBranchPair = myUpdateProcess.getTrackedBranches().get(myRoot);
+    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
     String remoteBranch = gitBranchPair.getTracked().getName();
 
     final GitLineHandler rebaseHandler = new GitLineHandler(myProject, myRoot, GitCommand.REBASE);

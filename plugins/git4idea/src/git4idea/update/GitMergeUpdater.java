@@ -23,10 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,10 +51,10 @@ public class GitMergeUpdater extends GitUpdater {
 
   public GitMergeUpdater(Project project,
                          VirtualFile root,
-                         GitUpdateProcess gitUpdateProcess,
+                         final Map<VirtualFile, GitBranchPair> trackedBranches,
                          ProgressIndicator progressIndicator,
                          UpdatedFiles updatedFiles) {
-    super(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
+    super(project, root, trackedBranches, progressIndicator, updatedFiles);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -68,7 +65,7 @@ public class GitMergeUpdater extends GitUpdater {
     final GitMerger merger = new GitMerger(myProject);
     final GitLineHandler mergeHandler = new GitLineHandler(myProject, myRoot, GitCommand.MERGE);
     mergeHandler.addParameters("--no-stat", "-v");
-    mergeHandler.addParameters(myUpdateProcess.getTrackedBranches().get(myRoot).getTracked().getName());
+    mergeHandler.addParameters(myTrackedBranches.get(myRoot).getTracked().getName());
 
     final MergeLineListener mergeLineListener = new MergeLineListener();
     mergeHandler.addLineListener(mergeLineListener);
@@ -153,14 +150,15 @@ public class GitMergeUpdater extends GitUpdater {
     }
 
     // git log --name-status master..origin/master
-    GitBranchPair gitBranchPair = myUpdateProcess.getTrackedBranches().get(myRoot);
+    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
     String currentBranch = gitBranchPair.getBranch().getName();
     String remoteBranch = gitBranchPair.getTracked().getName();
     try {
-      Collection<String> remotelyChanged = getRemotelyChangedPaths(currentBranch, remoteBranch);
-      Collection<FilePath> locallyChanged = myUpdateProcess.getSaver().getChangedFiles();
-      for (FilePath localPath : locallyChanged) {
-        if (remotelyChanged.contains(localPath.getPath())) { // found a file which was changed locally and remotely => need to save
+      final Collection<String> remotelyChanged = getRemotelyChangedPaths(currentBranch, remoteBranch);
+      final List<File> locallyChanged = myChangeListManager.getAffectedPaths();
+      for (File localPath : locallyChanged) {
+        if (remotelyChanged.contains(FilePathsHelper.convertPath(localPath.getPath()))) {
+         // found a file which was changed locally and remotely => need to save
           return true;
         }
       }

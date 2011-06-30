@@ -62,6 +62,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -254,19 +255,22 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   private void changeDetails() {
     if (! myDetailsOn) {
-      mySplitter.setSecondComponent(null);
+      setChangeDetailsPanel(null);
     } else {
       final Change[] selectedChanges = myView.getSelectedChanges();
       if (selectedChanges.length == 0) {
-        mySplitter.setSecondComponent(myNothingSelected);
+        setChangeDetailsPanel(myNothingSelected);
       } else {
+        final String freezed = ChangeListManager.getInstance(myProject).isFreezed();
+        if (freezed != null) {
+          setChangeDetailsPanel(VcsChangeDetailsManager.errorPanel(freezed, false));
+          return;
+        }
         Pair<JPanel, Disposable> details = null;
         FilePath filePath = null;
         for (Change change : selectedChanges) {
           if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
-            mySplitter.setSecondComponent(myNotLoadedYet);
-            mySplitter.revalidate();
-            mySplitter.repaint();
+            setChangeDetailsPanel(myNotLoadedYet);
             return;
           }
           filePath = ChangesUtil.getFilePath(change);
@@ -287,9 +291,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
           myDetailsFilePath = filePath;
           panel = details.getFirst();
         }
-        mySplitter.setSecondComponent(panel);
+        setChangeDetailsPanel(panel);
       }
     }
+  }
+
+  private void setChangeDetailsPanel(@Nullable final JComponent component) {
+    mySplitter.setSecondComponent(component);
     mySplitter.revalidate();
     mySplitter.repaint();
   }

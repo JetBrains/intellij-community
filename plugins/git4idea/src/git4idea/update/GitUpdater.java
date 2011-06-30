@@ -18,11 +18,14 @@ package git4idea.update;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -39,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Updates a single repository via merge or rebase.
@@ -50,7 +54,7 @@ public abstract class GitUpdater {
 
   protected final Project myProject;
   protected final VirtualFile myRoot;
-  protected final GitUpdateProcess myUpdateProcess;
+  protected final Map<VirtualFile, GitBranchPair> myTrackedBranches;
   protected final ProgressIndicator myProgressIndicator;
   protected final UpdatedFiles myUpdatedFiles;
   protected final AbstractVcsHelper myVcsHelper;
@@ -60,12 +64,12 @@ public abstract class GitUpdater {
 
   protected GitUpdater(Project project,
                        VirtualFile root,
-                       GitUpdateProcess gitUpdateProcess,
+                       Map<VirtualFile, GitBranchPair> trackedBranches,
                        ProgressIndicator progressIndicator,
                        UpdatedFiles updatedFiles) {
     myProject = project;
     myRoot = root;
-    myUpdateProcess = gitUpdateProcess;
+    myTrackedBranches = trackedBranches;
     myProgressIndicator = progressIndicator;
     myUpdatedFiles = updatedFiles;
     myVcsHelper = AbstractVcsHelper.getInstance(project);
@@ -82,41 +86,41 @@ public abstract class GitUpdater {
    * @return {@link GitMergeUpdater} or {@link GitRebaseUpdater}.
    */
   public static GitUpdater getUpdater(Project project,
-                                      GitUpdateProcess gitUpdateProcess,
+                                      Map<VirtualFile, GitBranchPair> trackedBranches,
                                       VirtualFile root,
                                       ProgressIndicator progressIndicator,
                                       UpdatedFiles updatedFiles) {
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     if (settings == null) {
-      return getDefaultUpdaterForBranch(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
+      return getDefaultUpdaterForBranch(project, root, trackedBranches, progressIndicator, updatedFiles);
     }
     switch (settings.getUpdateType()) {
       case REBASE:
-        return new GitRebaseUpdater(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
+        return new GitRebaseUpdater(project, root, trackedBranches, progressIndicator, updatedFiles);
       case MERGE:
-        return new GitMergeUpdater(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
+        return new GitMergeUpdater(project, root, trackedBranches, progressIndicator, updatedFiles);
       case BRANCH_DEFAULT:
         // use default for the branch
-        return getDefaultUpdaterForBranch(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
+        return getDefaultUpdaterForBranch(project, root, trackedBranches, progressIndicator, updatedFiles);
     }
-    return getDefaultUpdaterForBranch(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
+    return getDefaultUpdaterForBranch(project, root, trackedBranches, progressIndicator, updatedFiles);
   }
 
   private static GitUpdater getDefaultUpdaterForBranch(Project project,
                                                        VirtualFile root,
-                                                       GitUpdateProcess gitUpdateProcess,
+                                                       Map<VirtualFile, GitBranchPair> trackedBranches,
                                                        ProgressIndicator progressIndicator,
                                                        UpdatedFiles updatedFiles) {
     try {
       final GitBranch branchName = GitBranch.current(project, root);
       final String rebase = GitConfigUtil.getValue(project, root, "branch." + branchName + ".rebase");
       if (rebase != null && rebase.equalsIgnoreCase("true")) {
-        return new GitRebaseUpdater(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
+        return new GitRebaseUpdater(project, root, trackedBranches, progressIndicator, updatedFiles);
       }
     } catch (VcsException e) {
       LOG.info("getDefaultUpdaterForBranch branch", e);
     }
-    return new GitMergeUpdater(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
+    return new GitMergeUpdater(project, root, trackedBranches, progressIndicator, updatedFiles);
   }
 
   public GitUpdateResult update() throws VcsException {
@@ -141,11 +145,11 @@ public abstract class GitUpdater {
    * @return true if update is needed, false otherwise.
    */
   public boolean isUpdateNeeded() throws VcsException {
-    GitBranchPair gitBranchPair = myUpdateProcess.getTrackedBranches().get(myRoot);
+    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
     String currentBranch = gitBranchPair.getBranch().getName();
+    assert gitBranchPair.getTracked() != null;
     String remoteBranch = gitBranchPair.getTracked().getName();
-    Collection<String> remotelyChanged = getRemotelyChangedPaths(currentBranch, remoteBranch);
-    if (remotelyChanged.isEmpty()) {
+    if (! hasRemotelyChangedPaths(currentBranch, remoteBranch)) {
       LOG.info("isSaveNeeded No remote changes, save is not needed");
       return false;
     }
@@ -177,6 +181,31 @@ public abstract class GitUpdater {
    * <code>git diff --name-only master..origin/master</code>
    */
   protected @NotNull Collection<String> getRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
+    final Collection<String> remoteChanges = new HashSet<String>();
+    iterateRemotelyChangedPaths(currentBranch, remoteBranch, new Processor<String>() {
+      @Override
+      public boolean process(String s) {
+        remoteChanges.add(s);
+        return false;
+      }
+    });
+    return remoteChanges;
+  }
+
+  protected boolean hasRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
+    final Ref<Boolean> ref = new Ref<Boolean>(false);
+    iterateRemotelyChangedPaths(currentBranch, remoteBranch, new Processor<String>() {
+      @Override
+      public boolean process(String s) {
+        ref.set(true);
+        return true;
+      }
+    });
+    return ref.get();
+  }
+
+  private void iterateRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch,
+                                                    final Processor<String> pathsConsumer) throws VcsException {
     final GitSimpleHandler toPull = new GitSimpleHandler(myProject, myRoot, GitCommand.DIFF);
     toPull.addParameters("--name-only", "--pretty=format:");
     toPull.addParameters(currentBranch + ".." + remoteBranch);
@@ -185,16 +214,13 @@ public abstract class GitUpdater {
     toPull.setStderrSuppressed(true);
     final String output = toPull.run();
 
-    final Collection<String> remoteChanges = new HashSet<String>();
     for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
       final String relative = s.line();
       if (StringUtil.isEmptyOrSpaces(relative)) {
         continue;
       }
       final String path = myRoot.getPath() + "/" + GitUtil.unescapePath(relative);
-      remoteChanges.add(path);
+      if (pathsConsumer.process(FilePathsHelper.convertPath(path))) break;
     }
-    return remoteChanges;
   }
-
 }

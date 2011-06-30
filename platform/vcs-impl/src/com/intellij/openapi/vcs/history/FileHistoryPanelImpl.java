@@ -843,6 +843,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         showDifferences(myVcs.getProject(), sel.get(0), sel.get(sel.size() - 1));
       }
       else if (selectionSize == 1) {
+        if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
         final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
         if (currentRevisionNumber != null) {
           showDifferences(myVcs.getProject(), getFirstSelectedRevision(), new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
@@ -912,6 +913,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     protected void actionPerformed() {
+      if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
       final VcsFileRevision revision = getFirstSelectedRevision();
       if (getVirtualFile() != null) {
         if (!new ReplaceFileConfirmationDialog(myVcs.getProject(), VcsBundle.message("acton.name.get.revision"))

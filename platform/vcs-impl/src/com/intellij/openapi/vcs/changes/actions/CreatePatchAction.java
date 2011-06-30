@@ -31,6 +31,11 @@ public class CreatePatchAction extends AbstractCommitChangesAction {
     return VcsBundle.message("create.patch.commit.action.title");
   }
 
+  @Override
+  protected String getMnemonicsFreeActionName(VcsContext context) {
+    return getActionName(context);
+  }
+
   @Override @Nullable
   protected CommitExecutor getExecutor(Project project) {
     return CreatePatchCommitExecutor.getInstance(project);

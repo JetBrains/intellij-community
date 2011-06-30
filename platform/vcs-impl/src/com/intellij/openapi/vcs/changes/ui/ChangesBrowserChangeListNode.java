@@ -16,14 +16,14 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -50,7 +50,10 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       for(ChangeListDecorator decorator: myDecorators) {
         decorator.decorateChangeList(list, renderer, selected, expanded, hasFocus);
       }
-      if (myClManager.isInUpdate()) {
+      final String freezed = myClManager.isFreezed();
+      if (freezed != null) {
+        renderer.append(" " + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      } else if (myClManager.isInUpdate()) {
         renderer.append(" " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       if (! myChangeListRemoteState.getState()) {

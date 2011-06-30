@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.*;
@@ -55,6 +56,9 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
 
   public static void showShelvedChangesDiff(final DataContext dc) {
     final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    if (project == null) return;
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
+
     ShelvedChangeList[] changeLists = ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY.getData(dc);
     if (changeLists == null) {
       changeLists = ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY.getData(dc);

@@ -50,6 +50,7 @@ public class UpdateRequestsQueue {
   private final Object myLock;
   private volatile boolean myStarted;
   private volatile boolean myStopped;
+  private volatile boolean myIgnoreBackgroundOperation;
 
   private boolean myRequestSubmitted;
   private final List<Runnable> myWaitingUpdateCompletionQueue;
@@ -113,6 +114,19 @@ public class UpdateRequestsQueue {
     }
   }
 
+  public void pause() {
+    synchronized (myLock) {
+      myStopped = true;
+    }
+  }
+
+  public void go() {
+    synchronized (myLock) {
+      myStopped = false;
+    }
+    schedule();
+  }
+
   public void stop() {
     LOG.debug("Calling stop for project: " + myProject.getName());
     final List<Runnable> waiters = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
@@ -168,15 +182,31 @@ public class UpdateRequestsQueue {
     LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
   }
 
+  // true = do not execute
+  private boolean checkHeavyOperations() {
+    if (myIgnoreBackgroundOperation) return false;
+    return myPlVcsManager.isBackgroundVcsOperationRunning() || myTrackHeavyLatch && HeavyProcessLatch.INSTANCE.isRunning();
+  }
+
+  // true = do not execute
+  private boolean checkLifeCycle() {
+    return (! myStarted) || (! ((StartupManagerImpl) myStartupManager).startupActivityPassed());
+  }
+
   private class MyRunnable implements Runnable {
     public void run() {
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
 
       try {
         synchronized (myLock) {
-          if ((! myStopped) && ((! myStarted) || myPlVcsManager.isBackgroundVcsOperationRunning()) ||
-            (! ((StartupManagerImpl) myStartupManager).startupActivityPassed()) || myTrackHeavyLatch && HeavyProcessLatch.INSTANCE.isRunning()) {
-            LOG.debug("MyRunnable: not started, not stopped, reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
+          if (myStopped) {
+            myRequestSubmitted = false;
+            LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
+            return;
+          }
+
+          if (checkLifeCycle() || checkHeavyOperations()) {
+            LOG.debug("MyRunnable: reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
             myRequestSubmitted = false;
             // try again after time
             schedule();
@@ -185,11 +215,6 @@ public class UpdateRequestsQueue {
 
           copy.addAll(myWaitingUpdateCompletionQueue);
           myRequestSubmitted = false;
-
-          if (myStopped) {
-            LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
-            return;
-          }
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
@@ -217,5 +242,9 @@ public class UpdateRequestsQueue {
         LOG.debug("MyRunnable: Runnables executed, project: " + myProject.getName() + ", runnable: " + hashCode());
       }
     }
+  }
+
+  public void setIgnoreBackgroundOperation(boolean ignoreBackgroundOperation) {
+    myIgnoreBackgroundOperation = ignoreBackgroundOperation;
   }
 }

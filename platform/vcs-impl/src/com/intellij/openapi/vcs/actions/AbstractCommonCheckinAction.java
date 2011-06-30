@@ -36,8 +36,8 @@ import java.util.Collections;
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   public void actionPerformed(final VcsContext context) {
     final Project project = context.getProject();
-
     if (project == null) return;
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + getMnemonicsFreeActionName(context) + " now")) return;
 
     if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
       return;
@@ -67,6 +67,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       }
     }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current());
   }
+
+  protected abstract String getMnemonicsFreeActionName(VcsContext context);
 
   @Nullable
   protected CommitExecutor getExecutor(Project project) {

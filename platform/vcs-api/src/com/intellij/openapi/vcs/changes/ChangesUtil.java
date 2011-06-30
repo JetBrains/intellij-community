@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -215,6 +216,23 @@ public class ChangesUtil {
       }
     }
     return filePath;
+  }
+
+  @Nullable
+  public static VirtualFile findValidParentUnderReadAction(final FilePath file) {
+    if (file.getVirtualFile() != null) return file.getVirtualFile();
+    final Computable<VirtualFile> computable = new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return findValidParent(file);
+      }
+    };
+    final Application application = ApplicationManager.getApplication();
+    if (application.isReadAccessAllowed()) {
+      return computable.compute();
+    } else {
+      return application.runReadAction(computable);
+    }
   }
 
   @Nullable

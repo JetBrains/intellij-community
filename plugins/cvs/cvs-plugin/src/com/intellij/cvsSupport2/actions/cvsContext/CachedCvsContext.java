@@ -65,6 +65,11 @@ public class CachedCvsContext implements CvsContext{
     return myVcsContext.getSelectedFile();
   }
 
+  @Override
+  public String getActionName() {
+    return myVcsContext.getActionName();
+  }
+
   public VirtualFile[] getSelectedFiles() {
     return myVcsContext.getSelectedFiles();
   }

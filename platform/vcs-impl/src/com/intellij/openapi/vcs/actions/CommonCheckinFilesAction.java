@@ -30,25 +30,35 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   protected String getActionName(final VcsContext dataContext) {
+    final String checkinActionName = getCheckinActionName(dataContext);
+    return modifyCheckinActionName(dataContext, checkinActionName);
+  }
+
+  private String modifyCheckinActionName(final VcsContext dataContext, String checkinActionName) {
     final FilePath[] roots = getRoots(dataContext);
-    if (roots == null || roots.length == 0) return getCheckinActionName(dataContext);
+    if (roots == null || roots.length == 0) return checkinActionName;
     final FilePath first = roots[0];
     if (roots.length == 1) {
       if (first.isDirectory()) {
-        return VcsBundle.message("action.name.checkin.directory", getCheckinActionName(dataContext));
+        return VcsBundle.message("action.name.checkin.directory", checkinActionName);
       }
       else {
-        return VcsBundle.message("action.name.checkin.file", getCheckinActionName(dataContext));
+        return VcsBundle.message("action.name.checkin.file", checkinActionName);
       }
     }
     else {
       if (first.isDirectory()) {
-        return VcsBundle.message("action.name.checkin.directories", getCheckinActionName(dataContext));
+        return VcsBundle.message("action.name.checkin.directories", checkinActionName);
       }
       else {
-        return VcsBundle.message("action.name.checkin.files", getCheckinActionName(dataContext));
+        return VcsBundle.message("action.name.checkin.files", checkinActionName);
       }
     }
+  }
+
+  @Override
+  protected String getMnemonicsFreeActionName(VcsContext context) {
+    return modifyCheckinActionName(context, VcsBundle.message("vcs.command.name.checkin.no.mnemonics"));
   }
 
   @Override

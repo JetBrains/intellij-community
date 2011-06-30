@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -90,11 +91,13 @@ public class RollbackAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    FileDocumentManager.getInstance().saveAllDocuments();
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       return;
     }
+    final String title = ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(e.getPlace()) ? null : "Can not rollback now";
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (missingFiles != null && !missingFiles.isEmpty()) {

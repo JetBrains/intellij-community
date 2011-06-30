@@ -40,10 +40,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FilePathByPathComparator;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.continuation.Continuation;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
+import com.intellij.util.continuation.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.NestedCopyType;
@@ -331,7 +328,7 @@ public class QuickMerge {
       createChangelist(context);
     }
 
-    private void createChangelist(final ContinuationContext context) {
+    private void createChangelist(final ContinuationPause context) {
       final ChangeListManager listManager = ChangeListManager.getInstance(myProject);
       String name = myTitle;
       int i = 1;
@@ -676,7 +673,8 @@ public class QuickMerge {
                 FileDocumentManager.getInstance().saveAllDocuments();
               }
             }, ModalityState.NON_MODAL);
-          ShelveChangesManager.getInstance(myProject).shelveChanges(changes, myIntersection.getComment(name) + " (auto shelve before merge)");
+          ShelveChangesManager.getInstance(myProject).shelveChanges(changes, myIntersection.getComment(name) + " (auto shelve before merge)",
+                                                                    true);
           session.addAllFiles(ChangesUtil.getFilesFromChanges(changes));
         }
         catch (IOException e) {

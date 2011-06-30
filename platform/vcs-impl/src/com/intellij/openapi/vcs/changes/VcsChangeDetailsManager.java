@@ -54,8 +54,10 @@ public class VcsChangeDetailsManager {
   private final List<Convertor<Change, Pair<JPanel, Disposable>>> myDedicatedList;
   // todo also check for size
   private final LinkedList<DiffPanel> myDiffPanelCache;
+  private final Project myProject;
 
   public VcsChangeDetailsManager(final Project project) {
+    myProject = project;
     myDedicatedList = new ArrayList<Convertor<Change,Pair<JPanel, Disposable>>>();
 
     myDiffPanelCache = new LinkedList<DiffPanel>();
@@ -147,20 +149,23 @@ public class VcsChangeDetailsManager {
 
     @Override
     public Pair<JPanel, Disposable> convert(Change o) {
+      final List<BeforeAfter<ShiftedSimpleContent>> requestForChange;
       try {
-        final List<BeforeAfter<ShiftedSimpleContent>> requestForChange = myRequestFromChange.createRequestForChange(o, extraLines);
+        requestForChange = myRequestFromChange.createRequestForChange(o, extraLines);
         if (requestForChange == null) return null;
         if (requestForChange.isEmpty()) {
           return new Pair<JPanel, Disposable>(
             errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false), null);
         }
-        final ChangesFragmentedDiffPanel panel =
-          new ChangesFragmentedDiffPanel(myProject, requestForChange, myDiffPanelCache, changeDescription(o));
-        return new Pair<JPanel, Disposable>(panel.getPanel(), panel);
       }
       catch (VcsException e) {
         return new Pair<JPanel, Disposable>(errorPanel(e.getMessage(), true), null);
       }
+
+      final ChangesFragmentedDiffPanel panel =
+        new ChangesFragmentedDiffPanel(myProject, requestForChange, myDiffPanelCache, changeDescription(o));
+      panel.buildUi();
+      return new Pair<JPanel, Disposable>(panel.getPanel(), panel);
     }
 
   }

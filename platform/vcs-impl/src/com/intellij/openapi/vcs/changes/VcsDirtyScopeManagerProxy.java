@@ -123,4 +123,9 @@ class VcsDirtyScopeManagerProxy extends VcsDirtyScopeManager {
       manager.dirDirtyRecursively(dir);
     }
   }
+
+  @Override
+  public void changesProcessed() {
+    throw new UnsupportedOperationException();
+  }
 }
