@@ -527,6 +527,35 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       //Do nothing
     }
 
+    @Override
+    public void visitMessageWithStatus(@NotNull Message msg) {
+      final String name = msg.getMessageName();
+        final Map<String, String> msgAttrs = msg.getAttributes();
+
+      final String text = msgAttrs.get(ATTR_KEY_TEXT);
+      if (!StringUtil.isEmpty(text)){
+        // msg status
+        final String status = msgAttrs.get(ATTR_KEY_STATUS);
+        if (status.equals(ATTR_VALUE_STATUS_ERROR)) {
+          // error msg
+
+          final String stackTrace = msgAttrs.get(ATTR_KEY_ERROR_DETAILS);
+          fireOnErrorMsg(text, stackTrace);
+        } else if (status.equals(ATTR_VALUE_STATUS_WARNING)) {
+          // warning msg
+
+          // let's show warning via stderr
+          fireOnUncapturedOutput(text, ProcessOutputTypes.STDERR);
+        } else {
+          // some other text
+
+          // we cannot pass output type here but it is a service message
+          // let's think that is was stdout
+          fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
+        }
+      }
+    }
+
     public void visitServiceMessage(@NotNull final ServiceMessage msg) {
       final String name = msg.getMessageName();
 
@@ -539,25 +568,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
         final String text = msgAttrs.get(ATTR_KEY_TEXT);
         if (!StringUtil.isEmpty(text)){
-          // msg status
-          final String status = msgAttrs.get(ATTR_KEY_STATUS);
-          if (status.equals(ATTR_VALUE_STATUS_ERROR)) {
-            // error msg
+          // some other text
 
-            final String stackTrace = msgAttrs.get(ATTR_KEY_ERROR_DETAILS);
-            fireOnErrorMsg(text, stackTrace);
-          } else if (status.equals(ATTR_VALUE_STATUS_WARNING)) {
-            // warning msg
-
-            // let's show warning via stderr
-            fireOnUncapturedOutput(text, ProcessOutputTypes.STDERR);
-          } else {
-            // some other text
-
-            // we cannot pass output type here but it is a service message
-            // let's think that is was stdout
-            fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
-          }
+          // we cannot pass output type here but it is a service message
+          // let's think that is was stdout
+          fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
         }
       } else if (TEST_REPORTER_ATTACHED.equals(name)) {
         fireOnTestFrameworkAttached();
