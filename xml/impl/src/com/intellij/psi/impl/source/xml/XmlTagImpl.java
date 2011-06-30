@@ -44,10 +44,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.BidirectionalMap;
@@ -78,7 +75,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private volatile String myName = null;
   private volatile XmlAttribute[] myAttributes = null;
   private volatile Map<String, String> myAttributeValueMap = null;
-  private volatile XmlTag[] myTags = null;
+  private CachedValue<XmlTag[]> myTags = null;
   private volatile XmlTagValue myValue = null;
   private volatile Map<String, CachedValue<XmlNSDescriptor>> myNSDescriptorsMap = null;
   private volatile String myCachedNamespace;
@@ -118,7 +115,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     myAttributeValueMap = null;
     myHaveNamespaceDeclarations = false;
     myValue = null;
-    myTags = null;
     myNSDescriptorsMap = null;
     super.clearCaches();
   }
@@ -603,16 +599,23 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   @NotNull
   public XmlTag[] getSubTags() {
-    XmlTag[] tags = myTags;
-    if (tags == null) {
-      final List<XmlTag> result = new ArrayList<XmlTag>();
+    CachedValue<XmlTag[]> value = myTags;
+    if (value == null) {
+      value = myTags = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<XmlTag[]>() {
+        @Override
+        public Result<XmlTag[]> compute() {
+          final List<XmlTag> result = new ArrayList<XmlTag>();
 
       fillSubTags(result);
 
       final int s = result.size();
-      myTags = tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
+      XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
+          return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+
+        }
+      }, false);
     }
-    return tags;
+    return value.getValue();
   }
 
   protected void fillSubTags(final List<XmlTag> result) {
