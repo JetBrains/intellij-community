@@ -309,10 +309,14 @@ public class FSRecords implements Forceable {
         int lastModCount = 0;
 
         public void run() {
-          if (lastModCount == ourLocalModificationCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
-            flushSome();
-          }
-          lastModCount = ourLocalModificationCount;
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            public void run() {
+              if (lastModCount == ourLocalModificationCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
+                flushSome();
+              }
+              lastModCount = ourLocalModificationCount;
+            }
+          });
         }
       }, 5000, 5000, TimeUnit.MILLISECONDS);
     }

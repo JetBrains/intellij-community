@@ -21,7 +21,9 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -314,10 +316,14 @@ public class FileBasedIndex implements ApplicationComponent {
       myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
         int lastModCount = 0;
         public void run() {
-          if (lastModCount == myLocalModCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
-            flushAllIndices();
-          }
-          lastModCount = myLocalModCount;
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            public void run() {
+              if (lastModCount == myLocalModCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
+                flushAllIndices();
+              }
+              lastModCount = myLocalModCount;
+            }
+          });
         }
       }, 5000, 5000, TimeUnit.MILLISECONDS);
 
