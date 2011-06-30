@@ -15,30 +15,22 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultModuleEditorsProvider implements ModuleComponent, ModuleConfigurationEditorProvider {
-  @NotNull
-  public String getComponentName() {
-    return "DefaultModuleEditorsProvider";
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
-  public void projectOpened() {}
-  public void projectClosed() {}
-  public void moduleAdded() {}
-
+public class DefaultModuleEditorsProvider implements ModuleConfigurationEditorProvider {
   public ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state) {
     ModifiableRootModel rootModel = state.getRootModel();
     Module module = rootModel.getModule();
+    if (!(module.getModuleType() instanceof JavaModuleType)) {
+      return ModuleConfigurationEditor.EMPTY;
+    }
+
     String moduleName = module.getName();
     List<ModuleConfigurationEditor> editors = new ArrayList<ModuleConfigurationEditor>();
     editors.add(new ContentEntriesEditor(moduleName, state));

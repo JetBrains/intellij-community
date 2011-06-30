@@ -19,11 +19,14 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ModuleConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -60,6 +63,7 @@ import java.util.List;
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
+  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
 
   public static final String MODULE_TAB = "moduleTab";
   private final Project myProject;
@@ -175,16 +179,15 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private void createEditors(Module module) {
     ModuleConfigurationEditorProvider[] providers = collectProviders(module);
     ModuleConfigurationState state = createModuleConfigurationState();
-    List<ModuleLevelConfigurablesEditorProvider> moduleLevelProviders = new ArrayList<ModuleLevelConfigurablesEditorProvider>();
     for (ModuleConfigurationEditorProvider provider : providers) {
-      if (provider instanceof ModuleLevelConfigurablesEditorProvider) {
-        moduleLevelProviders.add((ModuleLevelConfigurablesEditorProvider)provider);
-        continue;
-      }
-      processEditorsProvider(provider, state);
+      ContainerUtil.addAll(myEditors, provider.createEditors(state));
     }
-    for (ModuleLevelConfigurablesEditorProvider provider : moduleLevelProviders) {
-      processEditorsProvider(provider, state);
+
+    for (final Configurable moduleConfigurable : myModule.getComponents(Configurable.class)) {
+      myEditors.add(new ModuleConfigurableWrapper(moduleConfigurable));
+    }
+    for(ModuleConfigurableEP extension : myModule.getExtensions(MODULE_CONFIGURABLES)) {
+      myEditors.add(new ModuleConfigurableWrapper(extension.createConfigurable()));
     }
   }
 
@@ -207,11 +210,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
         return getFacetsConfigurator();
       }
     };
-  }
-
-  private void processEditorsProvider(final ModuleConfigurationEditorProvider provider, final ModuleConfigurationState state) {
-    final ModuleConfigurationEditor[] editors = provider.createEditors(state);
-    ContainerUtil.addAll(myEditors, editors);
   }
 
   private JPanel createPanel() {

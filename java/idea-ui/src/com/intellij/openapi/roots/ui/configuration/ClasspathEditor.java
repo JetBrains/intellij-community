@@ -153,10 +153,8 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
   }
 
-  public Sdk setSdk(final Sdk newJDK) {
+  public void setSdk(final Sdk newJDK) {
     final ModifiableRootModel model = getModel();
-    final Sdk oldSdk = model.getSdk();
-
     if (newJDK != null) {
       model.setSdk(newJDK);
     }
@@ -169,8 +167,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
 
     flushChangesToModel();
-
-    return oldSdk;
   }
 
   private class ClasspathFormatPanel extends JPanel {

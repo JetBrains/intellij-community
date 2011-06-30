@@ -31,7 +31,6 @@
   <xi:include href="/componentSets/WindowManagement.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Configurables.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Toolwindows.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Misc.xml" xpointer="xpointer(/components/*)"/>
