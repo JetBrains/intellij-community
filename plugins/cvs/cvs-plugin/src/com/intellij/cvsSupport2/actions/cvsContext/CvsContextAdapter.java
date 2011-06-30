@@ -15,8 +15,6 @@
  */
 package com.intellij.cvsSupport2.actions.cvsContext;
 
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -24,7 +22,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -64,19 +61,11 @@ public class CvsContextAdapter implements CvsContext{
     return null;
   }
 
-  public String getFileToRestore() {
-    return null;
-  }
-
   public Editor getEditor() {
     return null;
   }
 
   public Collection<VirtualFile> getSelectedFilesCollection() {
-    return null;
-  }
-
-  public File getSomeSelectedFile() {
     return null;
   }
 
@@ -88,27 +77,11 @@ public class CvsContextAdapter implements CvsContext{
     return 0;
   }
 
-  public CvsLightweightFile getCvsLightweightFile() {
-    return null;
-  }
-
-  public CvsEnvironment getEnvironment() {
-    return null;
-  }
-
-  public Collection<AddedFileInfo> getAllFilesToAdd() {
-    return null;
-  }
-
   public CvsLightweightFile[] getSelectedLightweightFiles() {
     return new CvsLightweightFile[0];
   }
 
   public String getPlace() {
-    return null;
-  }
-
-  public PsiElement getPsiElement() {
     return null;
   }
 

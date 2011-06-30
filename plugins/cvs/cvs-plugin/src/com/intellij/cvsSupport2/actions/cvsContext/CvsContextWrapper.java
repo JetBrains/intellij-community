@@ -16,9 +16,6 @@
 package com.intellij.cvsSupport2.actions.cvsContext;
 
 import com.intellij.cvsSupport2.CvsVcs2;
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -72,47 +69,12 @@ public class CvsContextWrapper implements CvsContext {
     return CvsDataKeys.DELETED_FILE_NAMES.getData(myContext);
   }
 
-  public String getFileToRestore() {
-    return CvsDataKeys.FILE_TO_RESTORE.getData(myContext);
-  }
-
-  public File getSomeSelectedFile() {
-    File[] selectedIOFiles = getSelectedIOFiles();
-    VirtualFile[] selectedFiles = getSelectedFiles();
-
-    if (selectedFiles == null || selectedFiles.length == 0) {
-      return myVcsContext.getSelectedIOFile();
-    }
-
-    if (selectedIOFiles == null || selectedIOFiles.length == 0) {
-      return CvsVfsUtil.getFileFor(getSelectedFile());
-    }
-
-    return selectedIOFiles[0];
-  }
-
-  public CvsLightweightFile getCvsLightweightFile() {
-    return CvsDataKeys.CVS_LIGHT_FILE.getData(myContext);
-  }
-
   public CvsLightweightFile[] getSelectedLightweightFiles() {
     CvsLightweightFile[] files = CvsDataKeys.CVS_LIGHT_FILES.getData(myContext);
-    if (files != null && files.length > 0) return files;
-    CvsLightweightFile file = getCvsLightweightFile();
-    if (file != null) {
-      return new CvsLightweightFile[]{file};
-    }
-    else {
+    if (files == null || files.length <= 0) {
       return null;
     }
-  }
-
-  public CvsEnvironment getEnvironment() {
-    return CvsDataKeys.CVS_ENVIRONMENT.getData(myContext);
-  }
-
-  public Collection<AddedFileInfo> getAllFilesToAdd() {
-    return CvsDataKeys.FILES_TO_ADD.getData(myContext);
+    return files;
   }
 
   public Project getProject() {

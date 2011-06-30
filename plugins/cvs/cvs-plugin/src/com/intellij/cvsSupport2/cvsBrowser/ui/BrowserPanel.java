@@ -18,7 +18,6 @@ package com.intellij.cvsSupport2.cvsBrowser.ui;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
-import com.intellij.cvsSupport2.actions.cvsContext.CvsDataKeys;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
 import com.intellij.cvsSupport2.changeBrowser.CvsRepositoryLocation;
 import com.intellij.cvsSupport2.checkout.CheckoutAction;
@@ -212,12 +211,6 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
     else if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
-    }
-    else if (CvsDataKeys.CVS_ENVIRONMENT.is(dataId)) {
-      return myCvsRootConfiguration;
-    }
-    else if (CvsDataKeys.CVS_LIGHT_FILE.is(dataId)) {
-      return getCvsLightFile();
     }
     else {
       return null;
