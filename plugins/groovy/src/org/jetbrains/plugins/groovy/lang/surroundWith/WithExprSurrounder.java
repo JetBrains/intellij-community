@@ -16,20 +16,20 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.surroundWith.GroovyConditionSurrounder;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
 public class WithExprSurrounder extends GroovyConditionSurrounder {
-  protected TextRange surroundExpression(GrExpression expression) {
-    GrMethodCallExpression call = (GrMethodCallExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("with(a){4\n}");
+  protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
+    GrMethodCallExpression call = (GrMethodCallExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createStatementFromText("with(a){4\n}", context);
     replaceToOldExpression(call.getExpressionArguments()[0], expression);
     call = expression.replaceWithStatement(call);
     GrClosableBlock block = call.getClosureArguments()[0];

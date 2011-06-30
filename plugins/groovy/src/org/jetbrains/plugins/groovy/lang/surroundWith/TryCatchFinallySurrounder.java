@@ -31,9 +31,9 @@ public class TryCatchFinallySurrounder extends TryCatchSurrounder {
     return super.getTemplateDescription() + " / finally";
   }
 
-  protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
+  protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrTryCatchStatement tryStatement = (GrTryCatchStatement) factory.createTopElementFromText("try {\n} catch(exception e){\n} finally{\n}");
+    GrTryCatchStatement tryStatement = (GrTryCatchStatement) factory.createStatementFromText("try {\n} catch(exception e){\n} finally{\n}", context);
     addStatements(tryStatement.getTryBlock(), elements);
     return tryStatement;
   }

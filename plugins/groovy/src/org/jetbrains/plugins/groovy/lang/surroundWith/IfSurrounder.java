@@ -20,24 +20,25 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 23.05.2007
  */
 public class IfSurrounder extends GroovyManyStatementsSurrounder {
-  protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
+  protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {\n}");
+    GrIfStatement ifStatement = (GrIfStatement)factory.createStatementFromText("if (a) {\n}", context);
     addStatements(((GrBlockStatement)ifStatement.getThenBranch()).getBlock(), elements);
     return ifStatement;
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrIfStatement;
-    GrCondition condition = ((GrIfStatement) element).getCondition();
+    GrCondition condition = ((GrIfStatement)element).getCondition();
 
     int endOffset = element.getTextRange().getEndOffset();
     if (condition != null) {
@@ -53,5 +54,4 @@ public class IfSurrounder extends GroovyManyStatementsSurrounder {
   public String getTemplateDescription() {
     return "if";
   }
-
 }

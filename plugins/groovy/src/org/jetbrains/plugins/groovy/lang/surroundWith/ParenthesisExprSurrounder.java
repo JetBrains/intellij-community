@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
@@ -26,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
  * Date: 22.05.2007
  */
 public class ParenthesisExprSurrounder extends GroovyExpressionSurrounder {
-  protected TextRange surroundExpression(GrExpression expression) {
-    GrParenthesizedExpression result = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createExpressionFromText("(a)");
+  protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
+    GrParenthesizedExpression result = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createExpressionFromText("(a)", context);
     replaceToOldExpression(result.getOperand(), expression);
     result = (GrParenthesizedExpression) expression.replaceWithExpression(result, true);
     return new TextRange(result.getTextRange().getEndOffset(), result.getTextRange().getEndOffset());
