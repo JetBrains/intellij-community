@@ -477,4 +477,11 @@ public class PsiImplUtil {
   public static boolean isVarArgs(GrParameter[] parameters) {
     return parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
   }
+
+  @Nullable
+  public static PsiAnnotation getAnnotation(@NotNull PsiModifierListOwner field, @NotNull String annotationName) {
+    final PsiModifierList modifierList = field.getModifierList();
+    if (modifierList == null) return null;
+    return modifierList.findAnnotation(annotationName);
+  }
 }

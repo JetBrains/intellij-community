@@ -43,6 +43,8 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_TRANSFORM_CANONICAL = "groovy.transform.Canonical";
   @NonNls public static final String GROOVY_LANG_REFERENCE = "groovy.lang.Reference";
   @NonNls public static final String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
+  @NonNls public static final String GROOVY_TRANSFORM_AUTO_EXTERNALIZE = "groovy.transform.AutoExternalize";
+  @NonNls public static final String GROOVY_TRANSFORM_AUTO_CLONE = "groovy.transform.AutoClone";
 
 
   private GroovyCommonClassNames() {

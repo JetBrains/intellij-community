@@ -17,23 +17,20 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -107,7 +104,7 @@ public class GrClassImplUtil {
 
   @NotNull
   public static PsiClassType[] getImplementsListTypes(GrTypeDefinition grType) {
-    Set<PsiClass> visited = new com.intellij.util.containers.hash.HashSet<PsiClass>();
+    Set<PsiClass> visited = new HashSet<PsiClass>();
     List<PsiClassType> result = new ArrayList<PsiClassType>();
     getImplementListsInner(grType, result, visited);
     return result.toArray(new PsiClassType[result.size()]);
@@ -138,7 +135,7 @@ public class GrClassImplUtil {
         List<PsiClassType> result = new ArrayList<PsiClassType>();
         final GrField[] fields = grType.getFields();
         for (GrField field : fields) {
-          final PsiAnnotation delegate = getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
+          final PsiAnnotation delegate = PsiImplUtil.getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
           if (delegate == null) continue;
 
           final boolean shouldImplement = shouldImplementDelegatedInterfaces(delegate);
@@ -519,108 +516,6 @@ public class GrClassImplUtil {
 
   public static boolean isClassEquivalentTo(GrTypeDefinitionImpl definition, PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(definition, another);
-  }
-
-  private static final Key<CachedValue<Collection<PsiMethod>>> DELEGATE_METHOD_CACHE_KEY = Key.create("delegate method cache");
-
-  public static Collection<PsiMethod> getDelegatedMethods(final GrTypeDefinition clazz) {
-    CachedValue<Collection<PsiMethod>> cachedValue = clazz.getUserData(DELEGATE_METHOD_CACHE_KEY);
-    if (cachedValue == null) {
-      final CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(clazz.getProject());
-      cachedValue = cachedValuesManager.createCachedValue(new CachedValueProvider<Collection<PsiMethod>>() {
-        @Override
-        public Result<Collection<PsiMethod>> compute() {
-          List<PsiMethod> result = new ArrayList<PsiMethod>();
-          final GrField[] fields = clazz.getFields();
-          for (GrField field : fields) {
-            final PsiAnnotation delegate = getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
-            if (delegate == null) continue;
-
-            final PsiType type = field.getDeclaredType();
-            if (!(type instanceof PsiClassType)) continue;
-
-            final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-            final PsiClass psiClass = resolveResult.getElement();
-            if (psiClass == null) continue;
-
-            final boolean deprecated = shouldDelegateDeprecated(delegate);
-            final List<PsiMethod> methods;
-            if (psiClass instanceof GrTypeDefinition) {
-              methods = ((GrTypeDefinition)psiClass).getBody().getMethods();
-            }
-            else {
-              methods = Arrays.asList(psiClass.getMethods());
-            }
-            for (PsiMethod method : methods) {
-              if (method.isConstructor()) continue;
-              if (!deprecated && getAnnotation(method, "java.lang.Deprecated") != null) continue;
-              result.add(generateDelegateMethod(method, clazz, resolveResult.getSubstitutor()));
-            }
-          }
-          return new Result<Collection<PsiMethod>>(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        }
-      }, false);
-      clazz.putUserData(DELEGATE_METHOD_CACHE_KEY, cachedValue);
-    }
-    return cachedValue.getValue();
-  }
-
-  private static PsiMethod generateDelegateMethod(PsiMethod method, PsiClass clazz, PsiSubstitutor substitutor) {
-    final LightMethodBuilder builder = new LightMethodBuilder(clazz.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
-    builder.setContainingClass(clazz);
-    builder.setReturnType(substitutor.substitute(method.getReturnType()));
-    builder.setNavigationElement(method);
-    builder.addModifier(PsiModifier.PUBLIC);
-    final PsiParameter[] originalParameters = method.getParameterList().getParameters();
-
-    final PsiClass containingClass = method.getContainingClass();
-    boolean isRaw = containingClass != null && PsiUtil.isRawSubstitutor(containingClass, substitutor);
-    if (isRaw) {
-      PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
-      substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, methodTypeParameters);
-    }
-
-    for (int i = 0, originalParametersLength = originalParameters.length; i < originalParametersLength; i++) {
-      PsiParameter originalParameter = originalParameters[i];
-      PsiType type;
-      if (isRaw) {
-        type = TypeConversionUtil.erasure(substitutor.substitute(originalParameter.getType()));
-      }
-      else {
-        type = substitutor.substitute(originalParameter.getType());
-      }
-      if (type == null) {
-        type = PsiType.getJavaLangObject(clazz.getManager(), clazz.getResolveScope());
-      }
-      builder.addParameter(StringUtil.notNullize(originalParameter.getName(), "p" + i), type);
-    }
-    builder.setBaseIcon(GroovyIcons.METHOD);
-    return builder;
-  }
-
-  @Nullable
-  private static PsiAnnotation getAnnotation(@NotNull PsiModifierListOwner field, @NotNull String annotationName) {
-    final PsiModifierList modifierList = field.getModifierList();
-    if (modifierList == null) return null;
-    return modifierList.findAnnotation(annotationName);
-  }
-
-  private static boolean shouldDelegateDeprecated(PsiAnnotation delegate) {
-    final PsiAnnotationParameterList parameterList = delegate.getParameterList();
-    final PsiNameValuePair[] attributes = parameterList.getAttributes();
-    for (PsiNameValuePair attribute : attributes) {
-      final String name = attribute.getName();
-      if ("deprecated".equals(name)) {
-        final PsiAnnotationMemberValue value = attribute.getValue();
-        if (value instanceof GrLiteral) {
-          final Object innerValue = ((GrLiteral)value).getValue();
-          if (innerValue instanceof Boolean) {
-            return (Boolean)innerValue;
-          }
-        }
-      }
-    }
-    return false;
   }
 
   private static boolean shouldImplementDelegatedInterfaces(PsiAnnotation delegate) {

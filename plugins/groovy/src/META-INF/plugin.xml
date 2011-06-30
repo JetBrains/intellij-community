@@ -29,6 +29,7 @@
 
   <extensionPoints>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
+    <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.ASTTransformContributors"/>
     <extensionPoint name="closureMissingMethodContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer"/>
     <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrReferenceTypeEnhancer"/>
@@ -70,6 +71,9 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.LoggingContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
+
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethodsContributor"/>
+
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>
 
