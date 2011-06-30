@@ -1,13 +1,13 @@
-class Grvy1098 {
-  static final def TEST
+class Foo {
+  final log
+}
+class Bar extends Foo {
+  def log
 }
 
-class B extends Grvy1098 {
-  static final def TEST
-}
 -----
-public class Grvy1098 extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public static java.lang.Object getTEST() {
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public java.lang.Object getLog() {
 return null;
 }
 
@@ -31,10 +31,10 @@ public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 
-private static final java.lang.Object TEST = null;
+private final java.lang.Object log = null;
 }
 ---
-public class B extends Grvy1098 implements groovy.lang.GroovyObject {
+public class Bar extends Foo implements groovy.lang.GroovyObject {
 public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
@@ -55,6 +55,6 @@ public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 
-private static final java.lang.Object TEST = null;
+private java.lang.Object log = null;
 }
 ---

@@ -68,9 +68,6 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     if (myProperty.hasModifierProperty(PsiModifier.STATIC)) {
       addModifier(PsiModifier.STATIC);
     }
-    if (myProperty.hasModifierProperty(PsiModifier.FINAL)) {
-      addModifier(PsiModifier.FINAL);
-    }
 
     setNavigationElement(property);
     setBaseIcon(GroovyIcons.PROPERTY);

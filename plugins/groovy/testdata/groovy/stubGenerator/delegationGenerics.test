@@ -12,7 +12,7 @@ public V get(K k) ;
 }
 ---
 public class ConfigNode extends groovy.lang.GroovyObjectSupport implements DelegationGenerics<java.lang.String, java.lang.Object>, groovy.lang.GroovyObject {
-public final DelegationGenerics<java.lang.String, java.lang.Object> getDelegate() {
+public DelegationGenerics<java.lang.String, java.lang.Object> getDelegate() {
 return null;
 }
 
