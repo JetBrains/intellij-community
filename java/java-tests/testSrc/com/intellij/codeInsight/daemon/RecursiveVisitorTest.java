@@ -19,7 +19,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase{
     final PsiElement expression =
       JavaPsiFacade.getInstance(getProject()).getElementFactory().createStatementFromText(text.toString(), null);
     final int[] n = {0};
-    PlatformTestUtil.startPerformanceTest(20, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 20, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         n[0] = 0;
@@ -46,7 +46,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase{
     final PsiElement expression =
       JavaPsiFacade.getInstance(getProject()).getElementFactory().createStatementFromText(text.toString(), null);
     final int[] n = {0};
-    PlatformTestUtil.startPerformanceTest(100, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 100, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         n[0] = 0;
