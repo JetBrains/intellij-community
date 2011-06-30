@@ -913,6 +913,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     protected void actionPerformed() {
+      if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
       final VcsFileRevision revision = getFirstSelectedRevision();
       if (getVirtualFile() != null) {
         if (!new ReplaceFileConfirmationDialog(myVcs.getProject(), VcsBundle.message("acton.name.get.revision"))
