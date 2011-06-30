@@ -10,10 +10,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PySubscriptableType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeReference;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,12 +42,12 @@ public class PyStringFormatInspection extends PyInspection {
   public static class Visitor extends PyInspectionVisitor {
     private static class Inspection {
       private static final ImmutableMap<Character, String> FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
-        .put('d', "int")
-        .put('i', "int")
-        .put('o', "int")
-        .put('u', "int")
-        .put('x', "int")
-        .put('X', "int")
+        .put('d', "int or long")
+        .put('i', "int or long")
+        .put('o', "int or long")
+        .put('u', "int or long")
+        .put('x', "int or long")
+        .put('X', "int or long")
         .put('e', "float")
         .put('E', "float")
         .put('f', "float")
@@ -79,8 +77,8 @@ public class PyStringFormatInspection extends PyInspection {
         final Class[] SIMPLE_RHS_EXPRESSIONS = {
           PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class
         };
-
         final Class[] LIST_LIKE_EXPRESSIONS = {PyListLiteralExpression.class, PyListCompExpression.class};
+        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(problemTarget);
 
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
@@ -91,7 +89,8 @@ public class PyStringFormatInspection extends PyInspection {
               for (int i=0; i <= tuple_type.getElementCount(); i += 1) {
                 PyType a_type = tuple_type.getElementType(i);
                 if (a_type != null) {
-                  checkTypeCompatible(problemTarget, a_type.getName(), myFormatSpec.get(String.valueOf(i+1)));
+                  checkTypeCompatible(problemTarget, a_type, PyTypeParser.getTypeByName(problemTarget,
+                                                                                        myFormatSpec.get(String.valueOf(i+1))));
                 }
               }
               return tuple_type.getElementCount();
@@ -155,7 +154,8 @@ public class PyStringFormatInspection extends PyInspection {
         }
         else if (PyUtil.instanceOf(rightExpression, LIST_LIKE_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
-            checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
+            checkTypeCompatible(problemTarget, builtinCache.getStrType(),
+                                PyTypeParser.getTypeByName(problemTarget, myFormatSpec.get("1")));
             return 1;
           }
         }
@@ -164,7 +164,8 @@ public class PyStringFormatInspection extends PyInspection {
             PyType type = ((PySliceExpression)rightExpression).getOperand().getType(myTypeEvalContext);
             if (type != null) {
               if ("list".equals(type.getName()) || "str".equals(type.getName())) {
-                checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
+                checkTypeCompatible(problemTarget, builtinCache.getStrType(),
+                                    PyTypeParser.getTypeByName(problemTarget, myFormatSpec.get("1")));
                 return 1;
               }
             }
@@ -290,23 +291,22 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void checkExpressionType(@NotNull final PyExpression expression, @NotNull final String expectedTypeName, PsiElement problemTarget) {
-        final PyType type = myTypeEvalContext.getType(expression);
-        if (type != null && !(type instanceof PyTypeReference)) {
-          final String typeName = type.getName();
-          checkTypeCompatible(problemTarget, typeName, expectedTypeName);
+        final PyType actual = myTypeEvalContext.getType(expression);
+        final PyType expected = PyTypeParser.getTypeByName(problemTarget, expectedTypeName);
+        if (actual != null && !(actual instanceof PyTypeReference)) {
+          checkTypeCompatible(problemTarget, actual, expected);
         }
       }
 
       private void checkTypeCompatible(@NotNull final PsiElement problemTarget,
-                                       @Nullable final String typeName,
-                                       @NotNull final String expectedTypeName) {
-        if ("str".equals(expectedTypeName)) {
+                                       @Nullable final PyType actual,
+                                       @Nullable final PyType expected) {
+        if (expected != null && "str".equals(expected.getName())) {
           return;
         }
-        if ("int".equals(typeName) || "float".equals(typeName)) {
-          return;
+        if (actual != null && !PyTypeCheckerInspection.match(expected, actual, myTypeEvalContext)) {
+          registerProblem(problemTarget, PyBundle.message("INSP.unexpected.type.$0", actual.getName()));
         }
-        registerProblem(problemTarget, PyBundle.message("INSP.unexpected.type.$0", typeName));
       }
 
       private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {
