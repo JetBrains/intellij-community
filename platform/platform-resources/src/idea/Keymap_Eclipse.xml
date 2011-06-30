@@ -140,6 +140,7 @@
     </action>
     <action id="GotoDeclaration">
       <keyboard-shortcut first-keystroke="F3" />
+      <mouse-shortcut keystroke="ctrl button1"/>
     </action>
     <action id="GotoFile">
       <keyboard-shortcut first-keystroke="shift control R" />

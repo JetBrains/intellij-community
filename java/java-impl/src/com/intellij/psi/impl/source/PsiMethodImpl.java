@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,13 +211,13 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
         if (type != null) return type;
       }
 
-      try{
+      try {
         final PsiType type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
+      catch (IncorrectOperationException e) {
+        LOG.error("stub: " + stub + "; method: " + getText(), e);
         return null;
       }
     }
