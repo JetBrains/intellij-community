@@ -489,6 +489,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testInvalidReference() throws Exception {
+    doTest();
+  }
+
   private void doPrepareErrorTest(final String expectedMessage) throws Exception {
     String expectedError = null;
     try {

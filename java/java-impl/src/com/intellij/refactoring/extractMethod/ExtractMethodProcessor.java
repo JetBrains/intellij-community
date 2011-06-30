@@ -46,6 +46,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -1047,7 +1048,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       LOG.assertTrue(qualifierExpression != null);
       qualifierExpression.replace(instanceQualifier);
     }
-    return expr;
+    return (PsiMethodCallExpression)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(expr);
   }
 
   private void declareNecessaryVariablesInsideBody(PsiCodeBlock body) throws IncorrectOperationException {
