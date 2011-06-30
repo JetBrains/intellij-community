@@ -175,9 +175,14 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create field with type \"null\".");
     }
 
-    final PsiJavaFile aFile = createDummyJavaFile(join("class _Dummy_ { private ", type.getCanonicalText(), " ", name, "; }"));
+    final String text = join("class _Dummy_ { private ", type.getCanonicalText(), " ", name, "; }");
+    final PsiJavaFile aFile = createDummyJavaFile(text);
     final PsiClass psiClass = aFile.getClasses()[0];
-    final PsiField field = psiClass.getFields()[0];
+    final PsiField[] fields = psiClass.getFields();
+    if (fields.length < 1) {
+      throw new IncorrectOperationException("Field was not created " + text);
+    }
+    final PsiField field = fields[0];
     JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(field);
     return (PsiField)CodeStyleManager.getInstance(myManager.getProject()).reformat(field);
   }
