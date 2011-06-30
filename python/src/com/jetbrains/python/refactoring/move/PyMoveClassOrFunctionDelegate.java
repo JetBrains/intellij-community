@@ -109,15 +109,17 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
       doMove(project, new PsiElement[] {element}, null, null);
       return true;
     }
+    if (element instanceof PsiNamedElement) {
+      return true;
+    }
     return false;
   }
 
   @Nullable
   private static PsiNamedElement getElementToMove(@NotNull PsiElement element) {
-    final PsiNamedElement result = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false, PyClass.class, PyFunction.class);
-    if (result instanceof PyFunction && ((PyFunction)result).isTopLevel() ||
-        result instanceof PyClass && ((PyClass)result).isTopLevel()) {
-      return result;
+    if (element instanceof PyFunction && ((PyFunction)element).isTopLevel() ||
+        element instanceof PyClass && ((PyClass)element).isTopLevel()) {
+      return (PsiNamedElement)element;
     }
     return null;
   }

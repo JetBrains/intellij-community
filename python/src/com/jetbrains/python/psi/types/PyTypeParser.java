@@ -13,11 +13,15 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class PyTypeParser {
+  private static final Pattern PARAMETRIZED_CLASS = Pattern.compile("([a-zA-Z0-9._]+) of (.+)");
+
   private PyTypeParser() {
   }
 
@@ -65,20 +69,32 @@ public class PyTypeParser {
     if (type.equals("dictionary")) {
       return builtinCache.getObjectType("dict");
     }
-    if (type.startsWith("list of")) {
-      return parseListType(anchor, type.substring(7).trim());
-    }
     if (type.startsWith("dict from")) {
       return parseDictType(anchor, type.substring(9).trim());
     }
     if (type.equals("integer")) {
       return builtinCache.getIntType();
     }
+    final Matcher m = PARAMETRIZED_CLASS.matcher(type);
+    if (m.matches()) {
+      final PyType objType = parseObjectType(anchor, m.group(1), builtinCache);
+      final PyType elementType = getTypeByName(anchor, m.group(2));
+      if (objType != null) {
+        if (objType instanceof PyClassType && elementType != null) {
+          return new PyCollectionTypeImpl(((PyClassType)objType).getPyClass(), false, elementType);
+        }
+        return objType;
+      }
+    }
+    return parseObjectType(anchor, type, builtinCache);
+  }
+
+  @Nullable
+  private static PyType parseObjectType(PsiElement anchor, String type, PyBuiltinCache builtinCache) {
     final PyClassType classType = builtinCache.getObjectType(type);
     if (classType != null) {
       return classType;
     }
-
     final PsiFile anchorFile = anchor.getContainingFile();
     if (anchorFile instanceof PyFile) {
       final PyClass aClass = ((PyFile)anchorFile).findTopLevelClass(type);
@@ -86,7 +102,6 @@ public class PyTypeParser {
         return new PyClassType(aClass, false);
       }
     }
-
     if (StringUtil.isJavaIdentifier(type)) {
       final Collection<PyClass> classes = PyClassNameIndex.find(type, anchor.getProject(), true);
       if (classes.size() == 1) {
@@ -94,23 +109,21 @@ public class PyTypeParser {
       }
     }
     if (CharMatcher.JAVA_LETTER_OR_DIGIT.or(CharMatcher.is('.')).or(CharMatcher.is('_')).matchesAllOf(type)) {
-      int pos = type.lastIndexOf('.');
-      if (pos > 0) {
-        String shortName = type.substring(pos+1);
-        final Collection<PyClass> classes = PyClassNameIndex.find(shortName, anchor.getProject(), true);
-        for (PyClass aClass : classes) {
-          if (type.equals(aClass.getQualifiedName())) {
-            return new PyClassType(aClass, false);
-          }
+      final int pos = type.lastIndexOf('.');
+      final String shortName = pos > 0 ? type.substring(pos + 1) : type;
+      final Collection<PyClass> classes = PyClassNameIndex.find(shortName, anchor.getProject(), true);
+      for (PyClass aClass : classes) {
+        if (type.equals(aClass.getQualifiedName())) {
+          return new PyClassType(aClass, false);
         }
-        for (PyClass aClass : classes) {
-          if (shortName.equals(aClass.getName())) {
-            return new PyClassType(aClass, false);
-          }
+      }
+      // Workaround for stdlib modules _abcoll, _functools, etc.
+      for (PyClass aClass : classes) {
+        if (aClass.getQualifiedName().startsWith("_")) {
+          return new PyClassType(aClass, false);
         }
       }
     }
-
     return null;
   }
 

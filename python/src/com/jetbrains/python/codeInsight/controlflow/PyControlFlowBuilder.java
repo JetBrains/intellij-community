@@ -52,6 +52,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyClass(final PyClass node) {
     // Create node and stop here
     myBuilder.startNode(node);
+    final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(),
+                                                                                 ReadWriteInstruction.ACCESS.WRITE);
+    myBuilder.addNode(instruction);
+    myBuilder.checkPending(instruction);
   }
 
   @Override
@@ -64,7 +68,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyCallExpression(final PyCallExpression node) {
     final PyExpression callee = node.getCallee();
     // Flow abrupted
-    if (callee != null && "sys.exit".equals(PyUtil.getReadableRepr(callee, true))) {
+    if (callee != null && ("sys.exit".equals(PyUtil.getReadableRepr(callee, true)) ||
+                           "fail".equals(callee.getName()))) {
       callee.accept(this);
       for (PyExpression expression : node.getArguments()) {
         expression.accept(this);

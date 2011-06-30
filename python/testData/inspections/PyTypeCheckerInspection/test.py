@@ -66,7 +66,7 @@ def test_str_unicode():
     s1.decode(ENC)
     str_to_none(s1.encode(ENC))
     unicode_to_none(<warning descr="Expected type 'unicode', got 'str' instead">s1.encode(ENC)</warning>)
-    string_to_none(<warning descr="Expected type 'unicode', got 'str' instead">s1.encode(ENC)</warning>)
+    string_to_none(s1.encode(ENC))
     str_or_unicode_to_none(s1.encode(ENC))
     b2.decode(ENC)
     b2.encode(ENC)
@@ -77,13 +77,13 @@ def test_str_unicode():
 def f_list_tuple(spam, eggs):
     """
     :type spam: list of string
-    :type eggs: (bool, int, string)
+    :type eggs: (bool, int, unicode)
     """
     return spam, eggs
 
 
 def test_list_tuple():
-    f_list_tuple(<warning descr="Expected type 'list of unicode', got 'list of int' instead">[1, 2, 3]</warning>,
+    f_list_tuple(<warning descr="Expected type 'list of one of (str, unicode)', got 'list of int' instead">[1, 2, 3]</warning>,
                  (<warning descr="Expected type 'tuple(bool,int,unicode)', got 'tuple(bool,int,str)' instead">False, 2, ''</warning>))
 
 
@@ -105,12 +105,97 @@ def test_generator():
     def gen(n):
         for x in xrange(n):
             yield str(x)
-    def f(xs):
+    def f_1(xs):
         """
         :type xs: list of int
         """
         return xs
-    return (''.join(gen(10)),
-            f(<warning descr="Expected type 'list of int', got 'list of str' instead">gen(11)</warning>))
-
-
+    def f_2(xs):
+        """
+        :type xs: Sequence of int
+        """
+        return xs
+    def f_3(xs):
+        """
+        :type xs: Container of int
+        """
+        return xs
+    def f_4(xs):
+        """
+        :type xs: Iterator of int
+        """
+        return xs
+    def f_5(xs):
+        """
+        :type xs: Iterable of int
+        """
+        return xs
+    def f_6(xs):
+        """
+        :type xs: list
+        """
+        return xs
+    def f_7(xs):
+        """
+        :type xs: Sequence
+        """
+        return xs
+    def f_8(xs):
+        """
+        :type xs: Container
+        """
+        return xs
+    def f_9(xs):
+        """
+        :type xs: Iterator
+        """
+        return xs
+    def f_10(xs):
+        """
+        :type xs: Iterable
+        """
+        return xs
+    def f_11(xs):
+        """
+        :type xs: list of string
+        """
+        return xs
+    def f_12(xs):
+        """
+        :type xs: Sequence of string
+        """
+        return xs
+    def f_13(xs):
+        """
+        :type xs: Container of string
+        """
+        return xs
+    def f_14(xs):
+        """
+        :type xs: Iterator of string
+        """
+        return xs
+    def f_15(xs):
+        """
+        :type xs: Iterable of string
+        """
+        return xs
+    return [
+        ''.join(gen(10)),
+        f_1(<warning descr="Expected type 'list of int', got 'Iterator of str' instead">gen(11)</warning>),
+        f_2(<warning descr="Expected type 'Sequence of int', got 'Iterator of str' instead">gen(11)</warning>),
+        f_3(<warning descr="Expected type 'Container of int', got 'Iterator of str' instead">gen(11)</warning>),
+        f_4(<warning descr="Expected type 'Iterator of int', got 'Iterator of str' instead">gen(11)</warning>),
+        f_5(<warning descr="Expected type 'Iterable of int', got 'Iterator of str' instead">gen(11)</warning>),
+        f_6(<warning descr="Expected type 'list', got 'Iterator of str' instead">gen(11)</warning>),
+        f_7(<warning descr="Expected type 'Sequence', got 'Iterator of str' instead">gen(11)</warning>),
+        f_8(<warning descr="Expected type 'Container', got 'Iterator of str' instead">gen(11)</warning>),
+        f_9(gen(11)),
+        f_10(gen(11)),
+        f_11(<warning descr="Expected type 'list of one of (str, unicode)', got 'Iterator of str' instead">gen(11)</warning>),
+        f_12(<warning descr="Expected type 'Sequence of one of (str, unicode)', got 'Iterator of str' instead">gen(11)</warning>),
+        f_13(<warning descr="Expected type 'Container of one of (str, unicode)', got 'Iterator of str' instead">gen(11)</warning>),
+        f_14(gen(11)),
+        f_15(gen(11)),
+        f_15('foo'.split('o')),
+    ]

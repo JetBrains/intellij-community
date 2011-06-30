@@ -185,6 +185,12 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertEquals("int", type.getName());
   }
 
+  public void testRestClassType() {     //PY-3849
+    PyClassType type = (PyClassType) doTest("class Foo: pass\ndef foo(limit):\n" +
+                                            "  ''':param :class:`Foo` limit: maximum number of stack frames to show'''\n" +
+                                            "  expr = limit");
+    assertEquals("Foo", type.getName());
+  }
 
   private PyType doTest(final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

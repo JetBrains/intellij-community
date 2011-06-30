@@ -92,14 +92,6 @@ public class PyTypeCheckerInspection extends PyInspection {
     if (subType instanceof PyTypeReference) {
       return match(superType, ((PyTypeReference)subType).resolve(null, context), context);
     }
-    if (superType instanceof PyUnionType) {
-      for (PyType t : ((PyUnionType)superType).getMembers()) {
-        if (match(t, subType, context)) {
-          return true;
-        }
-      }
-      return false;
-    }
     if (subType instanceof PyUnionType) {
       for (PyType t : ((PyUnionType)subType).getMembers()) {
         if (!match(superType, t, context)) {
@@ -107,6 +99,14 @@ public class PyTypeCheckerInspection extends PyInspection {
         }
       }
       return true;
+    }
+    if (superType instanceof PyUnionType) {
+      for (PyType t : ((PyUnionType)superType).getMembers()) {
+        if (match(t, subType, context)) {
+          return true;
+        }
+      }
+      return false;
     }
     if (superType instanceof PyClassType && subType instanceof PyClassType) {
       final PyClass superClass = ((PyClassType)superType).getPyClass();

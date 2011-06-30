@@ -102,7 +102,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     final List<Sdk> allSdks = PythonSdkType.getAllSdks();
     Sdk selection = null;
     for (Sdk sdk : allSdks) {
-      if (FileUtil.pathsEqual(sdk.getHomePath(), sdkHome)) selection = sdk;
+      String homePath = sdk.getHomePath();
+      if (homePath != null && FileUtil.pathsEqual(homePath, sdkHome)) selection = sdk;
       sdkList.add(sdk);
     }
 

@@ -62,6 +62,14 @@ public class Parsing {
     return myBuilder.getTokenType() == tokenType;
   }
 
+  protected boolean atAnyOfTokens(final IElementType... tokenTypes) {
+    IElementType currentTokenType = myBuilder.getTokenType();
+    for (IElementType tokenType : tokenTypes) {
+      if (currentTokenType == tokenType) return true;
+    }
+    return false;
+  }
+
   protected boolean matchToken(final IElementType tokenType) {
     if (myBuilder.getTokenType() == tokenType) {
       myBuilder.advanceLexer();

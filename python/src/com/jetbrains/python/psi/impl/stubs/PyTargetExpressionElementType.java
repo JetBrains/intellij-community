@@ -8,6 +8,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
@@ -102,18 +103,21 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   }
 
   public boolean shouldCreateStub(final ASTNode node) {
+    if (PsiTreeUtil.getParentOfType(node.getPsi(), PyComprehensionElement.class, true, PyDocStringOwner.class) != null) {
+      return false;
+    }
     final ASTNode functionNode = TreeUtil.findParent(node, PyElementTypes.FUNCTION_DECLARATION);
     final ASTNode qualifierNode = node.findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
     if (functionNode != null && qualifierNode != null) {
       final ASTNode parameterList = functionNode.findChildByType(PyElementTypes.PARAMETER_LIST);
       assert parameterList != null;
       final ASTNode[] children = parameterList.getChildren(PyElementTypes.FORMAL_PARAMETER_SET);
-      if (children.length > 0 && children [0].getText().equals(qualifierNode.getText())) {
+      if (children.length > 0 && children[0].getText().equals(qualifierNode.getText())) {
         return true;
       }
     }
     return functionNode == null && qualifierNode == null;
- }
+  }
 
   @Override
   public void indexStub(PyTargetExpressionStub stub, IndexSink sink) {

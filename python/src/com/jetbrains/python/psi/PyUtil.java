@@ -506,6 +506,28 @@ public class PyUtil {
     return null;
   }
 
+  public static boolean isIfNameEqualsMain(PyIfStatement ifStatement) {
+    final PyExpression condition = ifStatement.getIfPart().getCondition();
+    return isNameEqualsMain(condition);
+  }
+
+  private static boolean isNameEqualsMain(PyExpression condition) {
+    if (condition instanceof PyParenthesizedExpression) {
+      return isNameEqualsMain(((PyParenthesizedExpression) condition).getContainedExpression());
+    }
+    if (condition instanceof PyBinaryExpression) {
+      PyBinaryExpression binaryExpression = (PyBinaryExpression)condition;
+      if (binaryExpression.getOperator() == PyTokenTypes.OR_KEYWORD) {
+        return isNameEqualsMain(binaryExpression.getLeftExpression()) || isNameEqualsMain(binaryExpression.getRightExpression());
+      }
+      final PyExpression rhs = binaryExpression.getRightExpression();
+      return binaryExpression.getOperator() == PyTokenTypes.EQEQ &&
+             binaryExpression.getLeftExpression().getText().equals(PyNames.NAME) &&
+             rhs != null && rhs.getText().contains("__main__");
+    }
+    return false;
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 

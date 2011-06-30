@@ -5,11 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyBinaryExpression;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.run.RunnableScriptFilter;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,14 +28,7 @@ public class PythonUnitTestRunnableScriptFilter implements RunnableScriptFilter 
     }
     if (element instanceof PyIfStatement) {
       PyIfStatement ifStatement = (PyIfStatement)element;
-      final PyExpression condition = ifStatement.getIfPart().getCondition();
-      if (condition instanceof PyBinaryExpression) {
-        PyBinaryExpression binaryExpression = (PyBinaryExpression)condition;
-        final PyExpression rhs = binaryExpression.getRightExpression();
-        return binaryExpression.getOperator() == PyTokenTypes.EQEQ &&
-               binaryExpression.getLeftExpression().getText().equals("__name__") &&
-               rhs != null && rhs.getText().contains("__main__");
-      }
+      return PyUtil.isIfNameEqualsMain(ifStatement);
     }
     return false;
   }

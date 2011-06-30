@@ -47,7 +47,7 @@ public class PyMissingConstructorInspection extends PyInspection {
       if (initMethod != null) {
         if (hasConstructorCall(node, initMethod))
           return;
-        if (superClasses.length == 1)
+        if (superClasses.length == 1 || node.isNewStyleClass())
           registerProblem(initMethod.getNameIdentifier(), "Call to constructor of super class is missed",
                           new AddCallSuperQuickFix(node.getSuperClasses()[0], superClasses[0].getText()));
         else
@@ -104,9 +104,21 @@ public class PyMissingConstructorInspection extends PyInspection {
                 if (ref != null)
                   callingClass = ref.resolve();
               }
+              if (PyNames.SUPER.equals(tmp) && (PyNames.INIT.equals(callee.getName()))) {
+                PyExpression[] args = ((PyCallExpression)qualifier).getArguments();
+                if (args.length > 0) {
+                  if (args[0].getText().equals(cl.getName()))
+                      return true;
+                  for (PyClass s : cl.iterateAncestorClasses()) {
+                    if (args[0].getText().equals(s.getName()))
+                      return true;
+                  }
+                }
+                else
+                  return true;
+              }
             }
             else {
-              tmp = qualifier.getText();
               PsiReference ref = qualifier.getReference();
               if (ref != null)
                 callingClass = ref.resolve();
@@ -118,8 +130,6 @@ public class PyMissingConstructorInspection extends PyInspection {
                 }
               }
             }
-            if (PyNames.SUPER.equals(tmp) && (PyNames.INIT.equals(callee.getName())))
-              return true;
           }
         }
         return false;

@@ -150,13 +150,20 @@ public class FunctionParsing extends Parsing {
         }
         if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
           if (!getExpressionParser().parseSingleExpression(false)) {
-            myBuilder.error(message("PARSE.expected.expression"));
+            PsiBuilder.Marker invalidElements = myBuilder.mark();
+            while(!atAnyOfTokens(endToken, PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
+              nextToken();
+            }
+            invalidElements.error(message("PARSE.expected.expression"));
           }
         }
         parameter.done(PyElementTypes.NAMED_PARAMETER);
       }
       else {
         parameter.rollbackTo();
+        if (atToken(endToken)) {
+          break;
+        }
         PsiBuilder.Marker invalidElements = myBuilder.mark();
         while (!atToken(endToken) && !atToken(PyTokenTypes.LINE_BREAK) && !atToken(PyTokenTypes.COMMA) && !atToken(null)) {
           nextToken();

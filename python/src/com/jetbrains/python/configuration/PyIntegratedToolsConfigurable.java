@@ -1,5 +1,6 @@
 package com.jetbrains.python.configuration;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
@@ -79,6 +80,7 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
       return true;
     }
     if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
+      DaemonCodeAnalyzer.getInstance(myProject).restart();
       return true;
     }
     if (!ReSTService.getInstance(myProject).getWorkdir().equals(myWorkDir.getText()))

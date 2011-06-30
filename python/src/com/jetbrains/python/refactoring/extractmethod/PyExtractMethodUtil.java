@@ -17,13 +17,16 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog;
 import com.intellij.refactoring.extractMethod.AbstractVariableData;
 import com.intellij.refactoring.extractMethod.ExtractMethodDecorator;
 import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
+import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -281,7 +284,16 @@ public class PyExtractMethodUtil {
       final String name = parameter.getName();
       final String newName = map.get(name);
       if (name != null && newName != null && !name.equals(newName)){
-        RefactoringFactory.getInstance(project).createRename(parameter, newName).run();        
+        Map<PsiElement, String> allRenames = new java.util.HashMap<PsiElement, String>();
+        allRenames.put(parameter, newName);
+        UsageInfo[] usages = RenameUtil.findUsages(parameter, newName, false, false, allRenames);
+        try {
+          RenameUtil.doRename(parameter, newName, usages, project, new RefactoringElementListenerComposite());
+        }
+        catch (IncorrectOperationException e) {
+          RenameUtil.showErrorMessage(e, parameter, project);
+          return;
+        }
       }
     }
     // Change signature according to pass settings and

@@ -419,29 +419,32 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   }
 
   private void addStatements() {
+    PsiElementPattern.Capture<PsiElement> inStatement = psiElement()
+      .withLanguage(PythonLanguage.getInstance())
+      .and(IN_BEGIN_STMT)
+      .andNot(IN_IMPORT_STMT)
+      .andNot(IN_PARAM_LIST)
+      .andNot(IN_ARG_LIST)
+      .andNot(IN_DEFINITION)
+      .andNot(BEFORE_COND)
+      .andNot(AFTER_QUALIFIER);
+
     extend(
       CompletionType.BASIC,
-      psiElement()
-        .withLanguage(PythonLanguage.getInstance())
-        .and(IN_BEGIN_STMT)
-        .andNot(IN_IMPORT_STMT)
-        .andNot(IN_PARAM_LIST)
-        .andNot(IN_ARG_LIST)
-        .andNot(IN_DEFINITION)
-        .andNot(BEFORE_COND)
-        .andNot(AFTER_QUALIFIER)
-      ,
+      inStatement,
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          final @NonNls String[] space_strings = {"assert", "del", "exec", "from", "import", "print", "raise"};
+          final @NonNls String[] space_strings = {"assert", "del", "exec", "from", "import", "raise"};
           final @NonNls String[] just_strings = {"pass"};
           putKeywords(space_strings, TailType.SPACE, result);
           putKeywords(just_strings, TailType.NONE, result);
         }
       }
     );
+
+    extend(CompletionType.BASIC, inStatement.andNot(PY3K), new PyKeywordCompletionProvider(TailType.SPACE, "print"));
   }
 
   private void addBreak() {

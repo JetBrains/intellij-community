@@ -80,6 +80,6 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return executionResult;
   }
 
-  protected abstract void addTestRunnerParameters(GeneralCommandLine cmd);
+  protected abstract void addTestRunnerParameters(GeneralCommandLine cmd) throws ExecutionException;
   protected abstract List<String> getTestSpecs();
 }

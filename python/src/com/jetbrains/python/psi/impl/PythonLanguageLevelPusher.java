@@ -170,7 +170,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   private static void setNoSizeLimitRecursive(VirtualFile file) {
-    file.putUserData(SingleRootFileViewProvider.ourNoSizeLimitKey, Boolean.TRUE);
+    SingleRootFileViewProvider.doNotCheckFileSizeLimit(file);
     for (VirtualFile child : file.getChildren()) {
       setNoSizeLimitRecursive(child);
     }

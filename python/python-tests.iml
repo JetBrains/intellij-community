@@ -7,20 +7,20 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="python-ide" scope="RUNTIME" />
-    <orderEntry type="module" module-name="python" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="platform-ultimate" scope="RUNTIME" />
-    <orderEntry type="module" module-name="ultimate-verifier" scope="RUNTIME" />
-    <orderEntry type="module" module-name="resources-en" scope="RUNTIME" />
-    <orderEntry type="module" module-name="xdebugger-impl" />
-    <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="CSS" scope="RUNTIME" />
-    <orderEntry type="library" name="commons-collections" level="project" />
-    <orderEntry type="library" name="commons-lang" level="project" />
-    <orderEntry type="module" module-name="xdebugger-api" />
-    <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="module" module-name="python-ide" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="python" exported="" />
+    <orderEntry type="module" module-name="testFramework" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="platform-ultimate" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="ultimate-verifier" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="resources-en" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="xdebugger-impl" exported="" />
+    <orderEntry type="module" module-name="dom-impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="CSS" exported="" scope="RUNTIME" />
+    <orderEntry type="library" exported="" name="commons-collections" level="project" />
+    <orderEntry type="library" exported="" name="commons-lang" level="project" />
+    <orderEntry type="module" module-name="xdebugger-api" exported="" />
+    <orderEntry type="library" exported="" name="Guava" level="project" />
+    <orderEntry type="module" module-name="smRunner" exported="" />
   </component>
 </module>
 

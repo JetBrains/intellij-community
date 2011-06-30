@@ -1,8 +1,10 @@
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyIcons;
@@ -53,12 +55,12 @@ public class PySpecialMethodNamesCompletionContributor extends PySeeingOriginalC
           for (Map.Entry<String, PyNames.BuiltinDescription> entry: PyNames.BuiltinMethods.entrySet()) {
             LookupElementBuilder item;
             item = LookupElementBuilder
-              .create(entry.getKey() + entry.getValue().getSignature() + ":")
+              .create(entry.getKey() + entry.getValue().getSignature())
               .setBold()
               .setTypeText("predefined")
               .setIcon(PyIcons.PREDEFINED)
             ;
-            result.addElement(item);
+            result.addElement(TailTypeDecorator.withTail(item, TailType.CASE_COLON));
           }
         }
       }

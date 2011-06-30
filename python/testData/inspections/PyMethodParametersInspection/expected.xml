@@ -52,11 +52,6 @@
   </problem>
   <problem>
     <file>first_arg.py</file>
-    <line>71</line>
-    <description>Usually first parameter of such methods is named 'self'</description>
-  </problem>
-  <problem>
-    <file>first_arg.py</file>
     <line>75</line>
     <description>Usually first parameter of such methods is named 'mcs'</description>
   </problem>

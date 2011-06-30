@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="module" module-name="python-tests" />
+    <orderEntry type="module" module-name="sass" />
+    <orderEntry type="module" module-name="yaml" />
+    <orderEntry type="module" module-name="less" />
+    <orderEntry type="module" module-name="colorSchemes" />
+    <orderEntry type="module" module-name="cvs-plugin" />
+    <orderEntry type="module" module-name="hg4idea" />
+    <orderEntry type="module" module-name="svn4idea" />
+    <orderEntry type="module" module-name="git4idea" />
+    <orderEntry type="module" module-name="database-impl" />
+    <orderEntry type="module" module-name="jdbc-console" />
+    <orderEntry type="module" module-name="django-db-config" />
+    <orderEntry type="module" module-name="JSInspections" />
+  </component>
+</module>
+

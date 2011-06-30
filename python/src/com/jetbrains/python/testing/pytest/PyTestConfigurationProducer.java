@@ -21,7 +21,6 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,9 +51,8 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     myPsiElement = file;
     String path = file.getVirtualFile().getPath();
 
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
-      final List<PyStatement> testCases = PyTestUtil.getPyTestCasesFromFile(pyFile);
+    if (file instanceof PyFile || file instanceof PsiDirectory) {
+      final List<PyStatement> testCases = PyTestUtil.getPyTestCasesFromFile(file);
       if (testCases.isEmpty()) return null;
     } else return null;
     
