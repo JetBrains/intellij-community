@@ -1308,4 +1308,11 @@ public class PsiUtil {
     return GroovyResolveResult.EMPTY_RESULT;
   }
 
+  public static boolean isReferenceWithoutQualifier(@Nullable PsiElement element, @NotNull String name) {
+    if (!(element instanceof GrReferenceExpression)) return false;
+
+    GrReferenceExpression ref = (GrReferenceExpression)element;
+
+    return !ref.isQualified() && name.equals(ref.getName());
+  }
 }
