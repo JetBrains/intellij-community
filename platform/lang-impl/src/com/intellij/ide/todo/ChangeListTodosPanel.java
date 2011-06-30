@@ -73,7 +73,12 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
               myTodoTreeBuilder.rebuildCache();
             }
           });
-          updateTree();
+          final Runnable runnable = new Runnable() {
+            public void run() {
+              updateTree();
+            }
+          };
+          ApplicationManager.getApplication().invokeLater(runnable);
         }
       }, 300);
     }
