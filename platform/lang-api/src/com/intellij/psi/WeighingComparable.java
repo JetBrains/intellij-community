@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,7 +28,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
       throw new UnsupportedOperationException("Method compareTo is not yet implemented in " + getClass().getName());
     }
   };
-  private Comparable[] myComputedWeighs;
+  @NotNull private Comparable[] myComputedWeighs;
   private final Computable<T> myElement;
   private final Loc myLocation;
   private final Weigher<T,Loc>[] myWeighers;
@@ -50,7 +51,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     }
   }
 
-  public int compareTo(final WeighingComparable<T,Loc> comparable) {
+  public int compareTo(@NotNull final WeighingComparable<T,Loc> comparable) {
     if (myComputedWeighs == comparable.myComputedWeighs) return 0;
 
     for (int i = 0; i < myComputedWeighs.length; i++) {
