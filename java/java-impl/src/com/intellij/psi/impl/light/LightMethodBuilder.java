@@ -33,6 +33,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -45,6 +46,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   private Computable<PsiType> myReturnType;
   private final PsiModifierList myModifierList;
   private PsiParameterList myParameterList;
+  private PsiReferenceList myThrowsList;
   private Icon myBaseIcon;
   private PsiClass myContainingClass;
   private boolean myConstructor;
@@ -68,10 +70,20 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
                             String name,
                             PsiParameterList parameterList,
                             PsiModifierList modifierList) {
+    this(manager, language, name, parameterList, modifierList, new LightReferenceListBuilder(manager, language, PsiReferenceList.Role.THROWS_LIST));
+  }
+
+  public LightMethodBuilder(PsiManager manager,
+                            Language language,
+                            String name,
+                            PsiParameterList parameterList,
+                            PsiModifierList modifierList,
+                            PsiReferenceList throwsList) {
     super(manager, language);
     myName = name;
     myParameterList = parameterList;
     myModifierList = modifierList;
+    myThrowsList = throwsList;
   }
 
   @Override
@@ -178,10 +190,20 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return addParameter(new LightParameter(name, type, this, StdLanguages.JAVA));
   }
 
+  public LightMethodBuilder addException(PsiClassType type) {
+    ((LightReferenceListBuilder)myThrowsList).addReference(type);
+    return this;
+  }
+
+  public LightMethodBuilder addException(String fqName) {
+    ((LightReferenceListBuilder)myThrowsList).addReference(fqName);
+    return this;
+  }
+
+
   @NotNull
   public PsiReferenceList getThrowsList() {
-    //todo
-    return new LightEmptyImplementsList(getManager());
+    return myThrowsList;
   }
 
   public PsiCodeBlock getBody() {
@@ -265,10 +287,6 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return this;
   }
 
-  public static boolean isLightMethod(PsiMethod method, String kind) {
-    return method instanceof LightMethodBuilder && ((LightMethodBuilder)method).myMethodKind.equals(kind);
-  }
-
   public String toString() {
     return myMethodKind + ":" + getName();
   }
@@ -300,6 +318,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return PsiImplUtil.getMemberUseScope(this);
   }
 
+  @Nullable
   @Override
   public PsiFile getContainingFile() {
     final PsiClass containingClass = getContainingClass();
@@ -324,6 +343,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   public PsiMethodReceiver getMethodReceiver() {
     return null;
   }
+  @Nullable
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
   }
