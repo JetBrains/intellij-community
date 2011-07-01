@@ -177,7 +177,7 @@ public class AddImportHelper {
     }
   }
 
-  public static void addImportFrom(PsiFile file, String path, final String name, ImportPriority priority) {
+  public static void addImportFrom(PsiFile file, String path, final String name, @Nullable String asName, ImportPriority priority) {
     final List<PyFromImportStatement> existingImports = ((PyFile)file).getFromImports();
     for (PyFromImportStatement existingImport : existingImports) {
       final PyQualifiedName qName = existingImport.getImportSourceQName();
@@ -192,7 +192,7 @@ public class AddImportHelper {
         return;
       }
     }
-    addImportFromStatement(file, path, name, null, priority);
+    addImportFromStatement(file, path, name, asName, priority);
   }
 
   public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
@@ -211,7 +211,7 @@ public class AddImportHelper {
       element.replace(elementGenerator.createExpressionFromText(qName + "." + target.getName()));
     }
     else {
-      addImportFrom(file, path, target.getName(), priority);
+      addImportFrom(file, path, target.getName(), null, priority);
     }
   }
 
