@@ -460,6 +460,7 @@ public class ExpressionParsing extends Parsing {
         }
         if (!parseSingleExpression(false)) {
           myBuilder.error(message("PARSE.expected.expression"));
+          break;
         }
       }
     }

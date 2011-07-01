@@ -36,13 +36,13 @@ public class Parsing {
     return getParsingContext().getFunctionParser();
   }
 
-  protected void checkMatches(final IElementType token, final String message) {
+  protected boolean checkMatches(final IElementType token, final String message) {
     if (myBuilder.getTokenType() == token) {
       myBuilder.advanceLexer();
+      return true;
     }
-    else {
-      myBuilder.error(message);
-    }
+    myBuilder.error(message);
+    return false;
   }
 
   protected boolean checkMatches(final TokenSet tokenSet, final String message) {

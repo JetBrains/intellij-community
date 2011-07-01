@@ -532,8 +532,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker ifPart = myBuilder.mark();
     myBuilder.advanceLexer();
     getExpressionParser().parseExpression();
-    checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite();
+    if (checkMatches(PyTokenTypes.COLON, "colon expected")) {
+      parseSuite();
+    }
     ifPart.done(PyElementTypes.IF_PART_IF);
     PsiBuilder.Marker elifPart = myBuilder.mark();
     while (myBuilder.getTokenType() == PyTokenTypes.ELIF_KEYWORD) {
