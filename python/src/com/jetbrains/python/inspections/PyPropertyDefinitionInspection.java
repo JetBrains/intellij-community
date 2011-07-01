@@ -261,6 +261,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     }
 
     private void checkReturnValueAllowed(Callable callable, PsiElement being_checked, boolean allowed, String message) {
+      // TODO: use a real flow analysis to check all exit points
       boolean hasReturns;
       if (callable instanceof PyFunction) {
         final PsiElement[] returnStatements = PsiTreeUtil.collectElements(callable, new PsiElementFilter() {
@@ -276,6 +277,14 @@ public class PyPropertyDefinitionInspection extends PyInspection {
         hasReturns = !(callable.getReturnType(myTypeEvalContext, callSite) instanceof PyNoneType);
       }
       if (allowed ^ hasReturns) {
+        if (allowed && callable instanceof PyFunction) {
+          // one last chance: maybe there's no return but a single 'raise', see PY-4043
+          PyStatementList stmt_list = ((PyFunction)callable).getStatementList();
+          if (stmt_list != null) {
+            PyStatement[] stmts = stmt_list.getStatements();
+            if (stmts.length == 1 && stmts[0] instanceof PyRaiseStatement) return;
+          }
+        }
         registerProblem(being_checked, message);
       }
     }

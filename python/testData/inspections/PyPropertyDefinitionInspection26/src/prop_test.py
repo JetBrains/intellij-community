@@ -42,4 +42,8 @@ class A(object):
   def qoo(self, v):
     self._x = v 
 
+  @property
+  def futuroo(self):
+    raise NotImplementedError("Override!") # ok though no return
+
 
