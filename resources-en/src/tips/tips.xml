@@ -142,5 +142,8 @@
   <tip file="AnnotationsAndDiffs.html"/>
   <tip file="DirDiff.html"/>
   <tip file="JarDiff.html"/>
+  <tip file="ShowHideSideBars.html"/>
+  <tip file="ExcludeFromProject.html"/>
+  <tip file="CodeCompletionNoShift.html"/>
   <tip file="CommitCtrlK.html"/>
 </tips>
