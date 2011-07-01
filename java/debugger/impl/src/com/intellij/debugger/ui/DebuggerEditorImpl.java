@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -96,6 +97,8 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     setFactory(factory);
     myInitialFactory = true;
 
+    setFocusable(false);
+
     myChooseFactory.setToolTipText("Click to change the language");
     myChooseFactory.setBorder(new EmptyBorder(0, 3, 0, 3));
     myChooseFactory.addMouseListener(new MouseAdapter() {
@@ -119,6 +122,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
             public void actionPerformed(AnActionEvent e) {
               setFactory(fragmentFactory);
               setText(getText());
+              IdeFocusManager.getInstance(getProject()).requestFocus(DebuggerEditorImpl.this, true);
             }
           });
         }
