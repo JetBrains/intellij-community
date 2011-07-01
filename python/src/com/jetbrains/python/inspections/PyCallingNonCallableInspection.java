@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
@@ -57,7 +58,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
           if (isMethodType(node, classType)) {
             return;
           }
-          if (cls != null && !cls.isSubclass(PyNames.CALLABLE)) {
+          if (cls != null && !PyABCUtil.isSubclass(cls, PyNames.CALLABLE)) {
             registerProblem(node, String.format("'%s' object is not callable", cls.getName()));
           }
         }

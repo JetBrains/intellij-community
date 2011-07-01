@@ -178,7 +178,7 @@ public class PyTypeCheckerInspection extends PyInspection {
   }
 
   private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass) {
-    if (superClass == null || subClass == null || subClass.isSubclass(superClass)) {
+    if (superClass == null || subClass == null || subClass.isSubclass(superClass) || PyABCUtil.isSubclass(subClass, superClass)) {
       return true;
     }
     else {
