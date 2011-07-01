@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibrary
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -82,7 +83,8 @@ public class LibrariesContainerFactory {
   @NotNull
   private static Library createLibraryInTable(final @NotNull NewLibraryEditor editor, final LibraryTable table) {
     LibraryTableBase.ModifiableModelEx modifiableModel = (LibraryTableBase.ModifiableModelEx) table.getModifiableModel();
-    Library library = modifiableModel.createLibrary(getUniqueLibraryName(editor.getName(), modifiableModel), editor.getType());
+    final String name = StringUtil.isEmpty(editor.getName()) ? null : getUniqueLibraryName(editor.getName(), modifiableModel);
+    Library library = modifiableModel.createLibrary(name, editor.getType());
     final Library.ModifiableModel model = library.getModifiableModel();
     editor.applyRoots(model);
     ((LibraryEx.ModifiableModelEx)model).setProperties(editor.getProperties());
@@ -132,6 +134,18 @@ public class LibrariesContainerFactory {
         libraries = ArrayUtil.mergeArrays(libraries, moduleLibraries, Library.class);
       }
       return libraries;
+    }
+
+    @NotNull
+    @Override
+    public List<LibraryLevel> getAvailableLevels() {
+      final List<LibraryLevel> levels = new ArrayList<LibraryLevel>();
+      for (LibraryLevel level : LibraryLevel.values()) {
+        if (canCreateLibrary(level)) {
+          levels.add(level);
+        }
+      }
+      return levels;
     }
 
     @NotNull

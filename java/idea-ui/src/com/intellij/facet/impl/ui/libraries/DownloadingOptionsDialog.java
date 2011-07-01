@@ -22,6 +22,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryNameAndLevelPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -131,7 +132,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
           }
         })));
       if (myNameAndLevelPanel != null) {
-        myNameAndLevelPanel.updateDefaultName(version.getDefaultLibraryName());
+        myNameAndLevelPanel.setDefaultName(version.getDefaultLibraryName());
       }
     }
     myLastSelectedVersion = version;

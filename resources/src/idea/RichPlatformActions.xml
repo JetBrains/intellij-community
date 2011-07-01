@@ -415,17 +415,16 @@
       <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
     </group>
 
-    <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction">
+    <group>
+      <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction"/>
+      <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
       <add-to-group group-id="MarkRootGroup"/>
-    </action>
-    <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction">
-      <add-to-group group-id="MarkRootGroup"/>
-    </action>
-    <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction">
-      <add-to-group group-id="MarkRootGroup"/>
-    </action>
-    <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction">
-      <add-to-group group-id="MarkRootGroup"/>
+    </group>
+
+    <action id="CreateLibraryFromFile" class="com.intellij.ide.projectView.actions.MarkLibraryRootAction">
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </action>
 
   </actions>

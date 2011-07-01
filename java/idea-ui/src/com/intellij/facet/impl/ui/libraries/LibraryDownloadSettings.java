@@ -89,6 +89,7 @@ public class LibraryDownloadSettings {
     return mySelectedDownloads;
   }
 
+  @NotNull
   public LibrariesContainer.LibraryLevel getLibraryLevel() {
     return myLibraryLevel;
   }

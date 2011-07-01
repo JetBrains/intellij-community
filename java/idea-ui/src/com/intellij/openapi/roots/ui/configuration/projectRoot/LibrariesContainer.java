@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -35,7 +37,6 @@ public interface LibrariesContainer {
   Project getProject();
 
   enum LibraryLevel {GLOBAL, PROJECT, MODULE;
-
     public String toString() {
       return StringUtil.capitalize(name().toLowerCase());
     }
@@ -51,6 +52,9 @@ public interface LibrariesContainer {
   VirtualFile[] getLibraryFiles(@NotNull Library library, @NotNull OrderRootType rootType);
 
   boolean canCreateLibrary(@NotNull LibraryLevel level);
+
+  @NotNull
+  List<LibraryLevel> getAvailableLevels();
 
   Library createLibrary(@NotNull @NonNls String name, @NotNull LibraryLevel level,
                         @NotNull VirtualFile[] classRoots, @NotNull VirtualFile[] sourceRoots);
