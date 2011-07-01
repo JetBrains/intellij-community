@@ -19,10 +19,13 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.SystemInfo;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class FormBuilder {
+  private static final boolean ALIGN_LABELS_TO_RIGHT = SystemInfo.isMac;
 
   private int line = 0;
   private int indent;
@@ -84,7 +87,7 @@ public class FormBuilder {
       c.gridx = 0;
       c.gridy = line;
       c.weightx = 0;
-      c.anchor = GridBagConstraints.EAST;
+      c.anchor = ALIGN_LABELS_TO_RIGHT ? GridBagConstraints.EAST : GridBagConstraints.WEST;
       c.insets = new Insets(verticalInset, 0, 0, this.indent);
 
       if (label != null) panel.add(label, c);
