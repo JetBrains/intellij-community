@@ -21,7 +21,6 @@ import com.intellij.debugger.HelpID;
 import com.intellij.debugger.actions.EvaluateActionHandler;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -53,7 +52,6 @@ public class StatementEvaluationDialog extends EvaluationDialog{
   private final Action mySwitchAction = new SwitchAction();
   private static final @NonNls String STATEMENT_EDITOR_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.StatementEditor";
   private static final @NonNls String EVALUATION_PANEL_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.EvaluationPanel";
-  private final JLabel myLanguageLabel;
 
   public StatementEvaluationDialog(final Project project, TextWithImports text) {
     super(project, text);
@@ -64,10 +62,6 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     splitter.setHonorComponentsMinimumSize(true);
 
     final JPanel editorPanel = new JPanel(new GridBagLayout());
-    myLanguageLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.language"));
-    myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
-    editorPanel.add(myLanguageLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
-    editorPanel.add(getCodeFragmentFactoryChooserComponent(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
 
     final JLabel statementsLabel = new JLabel(DebuggerBundle.message("label.evaluation.dialog.statements"));
     editorPanel.add(statementsLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
@@ -150,13 +144,6 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     });
 
     init();
-  }
-
-  protected void setDebuggerContext(DebuggerContextImpl context) {
-    super.setDebuggerContext(context);
-    if (myLanguageLabel != null) {
-      myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
-    }
   }
 
   private void updateSwitchButton(Document document) {

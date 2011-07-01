@@ -22,7 +22,10 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.WatchPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
@@ -30,34 +33,24 @@ import com.intellij.debugger.ui.impl.watch.EvaluationDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.EventDispatcher;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import javax.swing.tree.TreeModel;
-import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class EvaluationDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.EvaluationDialog");
   private final MyEvaluationPanel myEvaluationPanel;
-  private final ComboBox myCbFactories;
   private final Project myProject;
   private final DebuggerContextListener myContextListener;
   private final DebuggerEditorImpl myEditor;
   private final List<Runnable> myDisposeRunnables = new ArrayList<Runnable>();
-  private final List<CodeFragmentFactory> myFactories = new ArrayList<CodeFragmentFactory>();
 
   public EvaluationDialog(Project project, TextWithImports text) {
     super(project, true);
@@ -67,25 +60,8 @@ public abstract class EvaluationDialog extends DialogWrapper {
     setOKButtonText(DebuggerBundle.message("button.evaluate"));
 
     myEvaluationPanel = new MyEvaluationPanel(myProject);
-    myCbFactories = new ComboBox(new MyComboBoxModel(), 150);
-    myCbFactories.setRenderer(new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        component.setText(((CodeFragmentFactory)value).getFileType().getLanguage().getID());
-        return component;
-      }
-    });
 
-    myCbFactories.addItemListener(new ItemListener() {
-      public void itemStateChanged(final ItemEvent e) {
-        myEditor.setFactory((CodeFragmentFactory)myCbFactories.getSelectedItem());
-        myEditor.revalidate();
-      }
-    });
-
-    CodeFragmentFactory factory = (CodeFragmentFactory)myCbFactories.getSelectedItem();
-    if (factory == null) factory = DefaultCodeFragmentFactory.getInstance();
-    myEditor = createEditor(factory);
+    myEditor = createEditor(DefaultCodeFragmentFactory.getInstance());
 
     setDebuggerContext(getDebuggerContext());
     initDialogData(text);
@@ -134,9 +110,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
       setOKActionEnabled(false);
       NodeDescriptorImpl descriptor = myEvaluationPanel.getWatchTree().addWatch(codeToEvaluate).getDescriptor();
       if (descriptor instanceof EvaluationDescriptor) {
-        final CodeFragmentFactory factory = ((MyComboBoxModel)myCbFactories.getModel()).getSelectedItem();
-        LOG.assertTrue(factory != null); // there is always at least a default factory
-        ((EvaluationDescriptor)descriptor).setCodeFragmentFactory(factory);
+        ((EvaluationDescriptor)descriptor).setCodeFragmentFactory(myEditor.getCurrentFactory());
       }
       myEvaluationPanel.getWatchTree().rebuild(getDebuggerContext());
       descriptor.myIsExpanded = true;
@@ -149,6 +123,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
     myEvaluationPanel.getContextManager().getContext().getDebuggerSession().refresh(true);
   }
 
+  @Nullable
   protected TextWithImports getCodeToEvaluate() {
     TextWithImports text = getEditor().getText();
     String s = text.getText();
@@ -229,10 +204,6 @@ public abstract class EvaluationDialog extends DialogWrapper {
 
   protected void setDebuggerContext(DebuggerContextImpl context) {
     final PsiElement contextElement = PositionUtil.getContextElement(context);
-    myFactories.clear();
-    myFactories.addAll(DebuggerUtilsEx.getCodeFragmentFactories(contextElement));
-    ((MyComboBoxModel)myCbFactories.getModel()).update();
-    myCbFactories.setVisible(myCbFactories.getItemCount() > 1);
     myEditor.setContext(contextElement);
   }
 
@@ -253,10 +224,6 @@ public abstract class EvaluationDialog extends DialogWrapper {
     return myEditor;
   }
 
-  protected Component getCodeFragmentFactoryChooserComponent() {
-    return myCbFactories;
-  }
-
   protected abstract DebuggerEditorImpl createEditor(final CodeFragmentFactory factory);
 
   protected MyEvaluationPanel getEvaluationPanel() {
@@ -267,45 +234,4 @@ public abstract class EvaluationDialog extends DialogWrapper {
     return myProject;
   }
 
-  private class MyComboBoxModel implements ComboBoxModel {
-    private CodeFragmentFactory mySelectedItem = null;
-    private final EventDispatcher<ListDataListener> myDispatcher = EventDispatcher.create(ListDataListener.class);
-
-    public void setSelectedItem(Object anItem) {
-      if ((anItem instanceof CodeFragmentFactory && myFactories.contains(anItem))) {
-        mySelectedItem = (CodeFragmentFactory)anItem;
-      }
-      else if (myFactories.size() > 0){
-        mySelectedItem = myFactories.get(0);
-      }
-      else {
-        mySelectedItem = null;
-      }
-    }
-
-    public CodeFragmentFactory getSelectedItem() {
-      return mySelectedItem;
-    }
-
-    public int getSize() {
-      return myFactories.size();
-    }
-
-    public CodeFragmentFactory getElementAt(int index) {
-      return myFactories.get(index);
-    }
-
-    public void addListDataListener(ListDataListener l) {
-      myDispatcher.addListener(l);
-    }
-
-    public void removeListDataListener(ListDataListener l) {
-      myDispatcher.removeListener(l);
-    }
-
-    void update() {
-      setSelectedItem(mySelectedItem);
-      myDispatcher.getMulticaster().contentsChanged(new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, -1, -1));
-    }
-  }
 }
