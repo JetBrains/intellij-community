@@ -15,7 +15,7 @@ import java.io.BufferedWriter;
 public abstract class ProtoMember extends Proto {
     public final TypeRepr.AbstractType type;
 
-    protected ProtoMember (final int access, final StringCache.S signature, final StringCache.S name, final TypeRepr.AbstractType t) {
+    protected ProtoMember (final int access, final String signature, final StringCache.S name, final TypeRepr.AbstractType t) {
         super (access, signature, name);
         this.type = t;
     }
@@ -33,7 +33,7 @@ public abstract class ProtoMember extends Proto {
     public Difference difference (final Proto past) {
         int diff = super.difference(past).base();
 
-        if (((ProtoMember) past).type.equals(type)) {
+        if (!((ProtoMember) past).type.equals(type)) {
             diff |= Difference.TYPE;
         }
 

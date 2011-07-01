@@ -92,7 +92,7 @@ public class ClassRepr extends Proto {
         }
     }
 
-    public ClassRepr(final int a, final StringCache.S sn, final StringCache.S fn, final StringCache.S n, final StringCache.S sig, final String sup, final String[] i, final Collection<String> ns, final Set<FieldRepr> f, final Set<MethodRepr> m) {
+    public ClassRepr(final int a, final StringCache.S sn, final StringCache.S fn, final StringCache.S n, final String sig, final String sup, final String[] i, final Collection<String> ns, final Set<FieldRepr> f, final Set<MethodRepr> m) {
         super(a, sig, n);
         fileName = fn;
         sourceFileName = sn;

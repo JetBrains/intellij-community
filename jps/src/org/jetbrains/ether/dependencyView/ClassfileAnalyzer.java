@@ -113,7 +113,7 @@ public class ClassfileAnalyzer {
 
         public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
             final ClassRepr repr = takeIntoAccount ?
-                    new ClassRepr(access, sourceFile, fileName, name, StringCache.get(signature), superClass, interfaces, nestedClasses, fields, methods) : null;
+                    new ClassRepr(access, sourceFile, fileName, name, signature, superClass, interfaces, nestedClasses, fields, methods) : null;
 
             if (repr != null) {
                 repr.updateClassUsages(usages);

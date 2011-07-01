@@ -85,7 +85,9 @@ public class Mappings {
                 }
 
                 for (Pair<MethodRepr, Difference> m : diff.methods().changed()) {
-                    affectedUsages.add(m.fst.createUsage(it.name));
+                    if (m.snd.base() != Difference.NONE) {
+                        affectedUsages.add(m.fst.createUsage(it.name));
+                    }
                 }
 
                 for (FieldRepr f : diff.fields().removed()) {
@@ -104,7 +106,9 @@ public class Mappings {
                         }
                     }
 
-                    affectedUsages.add(field.createUsage(it.name));
+                    if (d.base() != Difference.NONE) {
+                        affectedUsages.add(field.createUsage(it.name));
+                    }
                 }
             }
 

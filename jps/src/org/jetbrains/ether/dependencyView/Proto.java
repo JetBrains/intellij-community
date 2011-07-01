@@ -17,9 +17,9 @@ public abstract class Proto implements RW.Writable {
     public final StringCache.S signature;
     public final StringCache.S name;
 
-    protected Proto(final int access, final StringCache.S signature, final StringCache.S name) {
+    protected Proto(final int access, final String signature, final StringCache.S name) {
         this.access = access;
-        this.signature = signature;
+        this.signature = StringCache.get(signature != null ? signature : "");
         this.name = name;
     }
 

@@ -47,7 +47,7 @@ public class FieldRepr extends ProtoMember {
     }
 
     public FieldRepr(final int a, final String n, final String d, final String s, final Object v) {
-        super(a, StringCache.get(s), StringCache.get(n), TypeRepr.getType(d));
+        super(a, s, StringCache.get(n), TypeRepr.getType(d));
         value = v;
     }
 

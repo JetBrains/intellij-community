@@ -59,7 +59,7 @@ public class MethodRepr extends ProtoMember {
     }
 
     public MethodRepr(final int a, final String n, final String s, final String d, final String[] e) {
-        super(a, StringCache.get(s), StringCache.get(n), TypeRepr.getType(Type.getReturnType(d)));
+        super(a, s, StringCache.get(n), TypeRepr.getType(Type.getReturnType(d)));
         exceptions = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(e, new HashSet<TypeRepr.AbstractType>());
         argumentTypes = TypeRepr.getType(Type.getArgumentTypes(d));
     }
