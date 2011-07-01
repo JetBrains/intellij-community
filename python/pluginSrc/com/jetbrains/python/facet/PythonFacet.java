@@ -53,14 +53,16 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> implements Libr
             }
           }
         }
-        if (!librarySeen && name != null) {
+        if (name != null) {
           Library library = LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(name);
           if (library == null) {
             // we just create new project library
             library = PythonSdkTableListener.addLibrary(sdk);
           }
-          model.addLibraryEntry(library);
-          modelChanged = true;
+          if (!librarySeen) {
+            model.addLibraryEntry(library);
+            modelChanged = true;
+          }
         }
 
         // !!!!!!!!!! WARNING !!!!!!!!!
