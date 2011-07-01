@@ -316,7 +316,7 @@ public class GriffonFramework extends MvcFramework {
     }
 
     public String[] getSourceFolders() {
-      return new String[]{"griffon-app/controllers", "griffon-app/models", "griffon-app/views", "src/main"};
+      return new String[]{"griffon-app/controllers", "griffon-app/models", "griffon-app/views", "src/main", "griffon-app/services"};
     }
 
     public String[] getTestFolders() {
