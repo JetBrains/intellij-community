@@ -445,8 +445,10 @@ public class TypesUtil {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()),
-                             tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+      return new GrTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+    }
+    else if (type1 instanceof GrMapType && type2 instanceof GrMapType) {
+      return GrMapType.merge(((GrMapType)type1), ((GrMapType)type2));
     }
     else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
       GrClosureType clType1 = (GrClosureType)type1;

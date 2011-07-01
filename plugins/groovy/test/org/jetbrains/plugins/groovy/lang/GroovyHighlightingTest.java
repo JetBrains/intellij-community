@@ -432,4 +432,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testEnumImplementsAllGroovyObjectMethods() {
     doTest();
   }
+
+  public void testTwoLevelGrMap() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }

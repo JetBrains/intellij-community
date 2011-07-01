@@ -193,4 +193,17 @@ public class GrMapType extends GrLiteralClassType {
     return type instanceof GrMapType || myFacade.getElementFactory().createTypeFromText(getJavaClassName(), null).isAssignableFrom(type);
   }
 
+  public static GrMapType merge(GrMapType l, GrMapType r) {
+    final GlobalSearchScope scope = l.getScope().intersectWith(r.getResolveScope());
+
+    final Map<String, PsiType> strings = new HashMap<String, PsiType>();
+    strings.putAll(l.myStringEntries);
+    strings.putAll(r.myStringEntries);
+
+    List<Pair<PsiType, PsiType>> other = new ArrayList<Pair<PsiType, PsiType>>();
+    other.addAll(l.myOtherEntries);
+    other.addAll(r.myOtherEntries);
+
+    return new GrMapType(l.myFacade, scope, strings, other);
+  }
 }
