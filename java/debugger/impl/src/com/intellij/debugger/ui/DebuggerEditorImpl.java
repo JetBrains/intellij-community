@@ -43,6 +43,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +63,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private Document myCurrentDocument;
   private final JLabel myChooseFactory = new JLabel();
+  private WeakReference<ListPopup> myPopup;
 
   private final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
     public void childRemoved(PsiTreeChangeEvent event) {
@@ -98,6 +100,13 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     myChooseFactory.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
+        ListPopup oldPopup = myPopup != null ? myPopup.get() : null;
+        if (oldPopup != null) {
+          oldPopup.cancel();
+          myPopup = null;
+          return;
+        }
+
         DefaultActionGroup actions = new DefaultActionGroup();
         for (final CodeFragmentFactory fragmentFactory : getAllFactories()) {
           actions.add(new AnAction(fragmentFactory.getFileType().getLanguage().getDisplayName(), null, fragmentFactory.getFileType().getIcon()) {
@@ -114,6 +123,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
                                                                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                                               false);
         popup.showUnderneathOf(myChooseFactory);
+        myPopup = new WeakReference<ListPopup>(popup);
       }
     });
   }
