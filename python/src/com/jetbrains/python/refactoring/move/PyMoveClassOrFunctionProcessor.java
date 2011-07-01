@@ -15,7 +15,10 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +96,16 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
               PyClassRefactoringUtil.rememberNamedReferences(oldElement);
               final PsiNamedElement newElement = (PsiNamedElement)(myDestination.add(oldElement));
               for (UsageInfo usage : usages) {
+                final PsiElement oldExpr = usage.getElement();
+                // TODO: Respect the qualified import style
+                if (oldExpr instanceof PyQualifiedExpression) {
+                  final PyQualifiedExpression qexpr = (PyQualifiedExpression)oldExpr;
+                  if (qexpr.getQualifier() != null) {
+                    final PsiElement newExpr = qexpr.getParent().addBefore(new PyReferenceExpressionImpl(qexpr.getNameElement()), qexpr);
+                    qexpr.delete();
+                    PyClassRefactoringUtil.insertImport(newExpr, newElement, null);
+                  }
+                }
                 PyImportStatementBase importStatement = getUsageImportStatement(usage);
                 if (importStatement != null) {
                   PyClassRefactoringUtil.updateImportOfElement(importStatement, newElement);
