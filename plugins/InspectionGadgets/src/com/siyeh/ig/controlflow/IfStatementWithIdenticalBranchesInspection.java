@@ -54,18 +54,12 @@ public class IfStatementWithIdenticalBranchesInspection
 
     @Override
     public InspectionGadgetsFix buildFix(Object... infos){
-        if (infos.length > 0) {
-            final PsiIfStatement elseIfStatement = (PsiIfStatement) infos[0];
-            return new CollapseIfFix();
-        }
         return new CollapseIfFix();
     }
 
     private static class CollapseIfFix extends InspectionGadgetsFix{
 
-      public CollapseIfFix() {
-      }
-
+        public CollapseIfFix() {}
 
         @NotNull
         public String getName(){
@@ -91,28 +85,9 @@ public class IfStatementWithIdenticalBranchesInspection
                 statement.delete();
                 return;
             }
-          PsiIfStatement elseIfStatement = elseBranch instanceof PsiIfStatement ? (PsiIfStatement)elseBranch : null;
-            if (elseIfStatement == null) {
-                final PsiElement parent = statement.getParent();
-                if (thenBranch instanceof PsiBlockStatement) {
-                    final PsiBlockStatement blockStatement =
-                            (PsiBlockStatement) thenBranch;
-                    if (parent instanceof PsiCodeBlock) {
-                        final PsiCodeBlock codeBlock =
-                                blockStatement.getCodeBlock();
-                        final PsiStatement[] statements = codeBlock.getStatements();
-                        if (statements.length > 0) {
-                            parent.addRangeBefore(statements[0],
-                                    statements[statements.length -1], statement);
-                        }
-                        statement.delete();
-                    } else {
-                        statement.replace(blockStatement);
-                    }
-                } else {
-                    statement.replace(thenBranch);
-                }
-            } else {
+            if (elseBranch instanceof PsiIfStatement) {
+                final PsiIfStatement elseIfStatement =
+                        (PsiIfStatement) elseBranch;
                 final PsiExpression condition1 = statement.getCondition();
                 final PsiExpression condition2 = elseIfStatement.getCondition();
                 if (condition1 == null) {
@@ -126,6 +101,27 @@ public class IfStatementWithIdenticalBranchesInspection
                     elseIfStatement.delete();
                 } else {
                     elseIfStatement.replace(elseElseBranch);
+                }
+            } else {
+                final PsiElement parent = statement.getParent();
+                if (thenBranch instanceof PsiBlockStatement) {
+                    final PsiBlockStatement blockStatement =
+                            (PsiBlockStatement) thenBranch;
+                    if (parent instanceof PsiCodeBlock) {
+                        final PsiCodeBlock codeBlock =
+                                blockStatement.getCodeBlock();
+                        final PsiStatement[] statements =
+                                codeBlock.getStatements();
+                        if (statements.length > 0) {
+                            parent.addRangeBefore(statements[0],
+                                    statements[statements.length -1], statement);
+                        }
+                        statement.delete();
+                    } else {
+                        statement.replace(blockStatement);
+                    }
+                } else {
+                    statement.replace(thenBranch);
                 }
             }
         }
