@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="dcbe" binding="myContainerPanel" layout-manager="CardLayout" hgap="0" vgap="0">
+      <grid id="dcbe" binding="myRootPanel" layout-manager="CardLayout" hgap="0" vgap="0">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

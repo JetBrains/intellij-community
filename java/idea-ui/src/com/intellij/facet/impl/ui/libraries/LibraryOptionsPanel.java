@@ -20,8 +20,6 @@ import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -77,7 +75,7 @@ public class LibraryOptionsPanel implements Disposable {
   private JRadioButton myUseLibraryRadioButton;
   private JLabel myUseLibraryLabel;
   private JLabel myHiddenLabel;
-  private JPanel myContainerPanel;
+  private JPanel myRootPanel;
   private ButtonGroup myButtonGroup;
 
   private LibraryCompositionSettings mySettings;
@@ -102,18 +100,18 @@ public class LibraryOptionsPanel implements Disposable {
     final DownloadableLibraryDescription description = libraryDescription.getDownloadableDescription();
     if (description != null) {
       showCard("loading");
-      final ModalityState modalityState = ModalityState.current();
       description.fetchLibraryVersions(new DownloadableLibraryDescription.LibraryVersionsCallback() {
         @Override
         public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
               if (!myDisposed) {
                 showSettingsPanel(libraryDescription, baseDirectoryPath, currentFrameworkVersion, showDoNotCreateOption, versions);
               }
             }
-          }, modalityState);
+          });
         }
       });
     }
@@ -124,7 +122,7 @@ public class LibraryOptionsPanel implements Disposable {
   }
 
   private void showCard(final String editing) {
-    ((CardLayout)myContainerPanel.getLayout()).show(myContainerPanel, editing);
+    ((CardLayout)myRootPanel.getLayout()).show(myRootPanel, editing);
   }
 
   private void showSettingsPanel(CustomLibraryDescription libraryDescription,
@@ -380,7 +378,7 @@ public class LibraryOptionsPanel implements Disposable {
   }
 
   public JComponent getMainPanel() {
-    return myContainerPanel;
+    return myRootPanel;
   }
 
   @Override
