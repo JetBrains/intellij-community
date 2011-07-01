@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeReference;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +63,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
             registerProblem(node, String.format("'%s' object is not callable", cls.getName()));
           }
         }
-        else if (calleeType != null) {
+        else if (calleeType != null && !(calleeType instanceof PyTypeReference)) {
           registerProblem(node, String.format("'%s' is not callable", callee.getName()));
         }
       }
