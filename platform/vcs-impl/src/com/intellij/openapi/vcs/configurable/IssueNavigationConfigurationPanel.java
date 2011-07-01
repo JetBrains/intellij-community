@@ -68,8 +68,8 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     super(new BorderLayout());
     myProject = project;
     add(myPanel, BorderLayout.CENTER);
-    myDescriptionLabel.setText(ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
-                               "checkin comments and link them to issues in your issue tracker:");
+    myDescriptionLabel.setText("<html>" + ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
+                               "checkin comments <br/>and link them to issues in your issue tracker:</html>");
     reset();
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
