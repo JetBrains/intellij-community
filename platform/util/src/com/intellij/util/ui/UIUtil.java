@@ -487,7 +487,7 @@ public class UIUtil {
   public static Color getTableCellBackground(JTable table, int row) {
     final Color bg = table.getBackground();
     if (isTableDecorationEnabled(table) && getTableBackground().getRGB() == bg.getRGB()) {
-      return row % 2 == 0 ? bg : DECORATED_ROW_BG_COLOR;
+      return row % 2 == 1 ? bg : DECORATED_ROW_BG_COLOR;
     }
     return bg;
   }
