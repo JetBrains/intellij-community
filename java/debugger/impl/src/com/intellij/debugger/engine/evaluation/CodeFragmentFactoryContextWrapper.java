@@ -77,7 +77,7 @@ public class CodeFragmentFactoryContextWrapper implements CodeFragmentFactory{
       if (markupMap != null && markupMap.size() > 0) {
         final Pair<String, Map<String, ObjectReference>> markupVariables = createMarkupVariablesText(markupMap);
         int offset = markupVariables.getFirst().length() - 1;
-        final TextWithImportsImpl textWithImports = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, markupVariables.getFirst(), "");
+        final TextWithImportsImpl textWithImports = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, markupVariables.getFirst(), "", myDelegate.getFileType());
         final JavaCodeFragment codeFragment = myDelegate.createCodeFragment(textWithImports, context, project);
         codeFragment.accept(new JavaRecursiveElementVisitor() {
           public void visitLocalVariable(PsiLocalVariable variable) {

@@ -21,7 +21,6 @@ import com.intellij.debugger.HelpID;
 import com.intellij.debugger.actions.EvaluateActionHandler;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -36,7 +35,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 public class ExpressionEvaluationDialog extends EvaluationDialog {
-  private JLabel myLanguageLabel;
 
   public ExpressionEvaluationDialog(Project project, TextWithImports defaultExpression) {
     super(project, defaultExpression);
@@ -81,11 +79,6 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
-    myLanguageLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.language"));
-    myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
-    panel.add(myLanguageLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
-    panel.add(getCodeFragmentFactoryChooserComponent(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
-
     final JLabel expressionLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.expression"));
     panel.add(expressionLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     panel.add(getExpressionCombo(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
@@ -95,13 +88,6 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     panel.add(getEvaluationPanel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(5, 0, 0, 0), 0, 0));
 
     return panel;
-  }
-
-  protected void setDebuggerContext(DebuggerContextImpl context) {
-    super.setDebuggerContext(context);
-    if (myLanguageLabel != null) {
-      myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
-    }
   }
 
   protected void initDialogData(TextWithImports text) {

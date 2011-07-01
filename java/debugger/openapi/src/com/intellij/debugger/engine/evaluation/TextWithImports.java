@@ -15,7 +15,9 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
+import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface TextWithImports {
   String getText();
@@ -30,4 +32,8 @@ public interface TextWithImports {
   boolean isEmpty();
 
   String toExternalForm();
+
+  @Nullable
+  FileType getFileType();
+
 }

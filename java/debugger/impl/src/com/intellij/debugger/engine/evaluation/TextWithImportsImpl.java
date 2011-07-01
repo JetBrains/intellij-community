@@ -16,7 +16,12 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.ui.DebuggerEditorImpl;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
@@ -27,6 +32,7 @@ public final class TextWithImportsImpl implements TextWithImports{
 
   private final CodeFragmentKind myKind;
   private String myText;
+  private final FileType myFileType;
   private final String myImports;
 
   public TextWithImportsImpl (PsiExpression expression) {
@@ -36,38 +42,34 @@ public final class TextWithImportsImpl implements TextWithImports{
     if(containingFile instanceof PsiExpressionCodeFragment) {
       myText = text;
       myImports = ((JavaCodeFragment)containingFile).importsToString();
+      myFileType = StdFileTypes.JAVA;
     }
     else {
-      final int separatorIndex = text.indexOf(DebuggerEditorImpl.SEPARATOR);
-      if(separatorIndex >= 0){
-        myText = text.substring(0, separatorIndex);
-        myImports = text.substring(separatorIndex + 1);
-      }
-      else {
-        myText = text;
-        myImports = "";
-      }
+      Trinity<String, String, FileType> trinity = parseExternalForm(text);
+      myText = trinity.first;
+      myImports = trinity.second;
+      myFileType = trinity.third;
     }
   }
 
-  public TextWithImportsImpl (CodeFragmentKind kind, @NotNull String text, @NotNull String imports) {
+  public TextWithImportsImpl (CodeFragmentKind kind, @NotNull String text, @NotNull String imports, @NotNull FileType fileType) {
     myKind = kind;
     myText = text;
     myImports = imports;
+    myFileType = fileType;
   }
 
   public TextWithImportsImpl(CodeFragmentKind kind, @NotNull String text) {
     myKind = kind;
-    text = text.trim();
-    final int separatorIndex = text.indexOf(DebuggerEditorImpl.SEPARATOR);
-    if(separatorIndex >= 0){
-      myText = text.substring(0, separatorIndex);
-      myImports = text.substring(separatorIndex + 1);
-    }
-    else {
-      myText = text;
-      myImports = "";
-    }
+    Trinity<String, String, FileType> trinity = parseExternalForm(text);
+    myText = trinity.first;
+    myImports = trinity.second;
+    myFileType = trinity.third;
+  }
+
+  private static Trinity<String, String, FileType> parseExternalForm(String s) {
+    String[] split = s.trim().split(String.valueOf(DebuggerEditorImpl.SEPARATOR));
+    return Trinity.create(split[0], split.length > 1 ? split[1] : "", split.length > 2 ? FileTypeManager.getInstance().getStdFileType(split[2]) : null);
   }
 
   public CodeFragmentKind getKind() {
@@ -87,7 +89,7 @@ public final class TextWithImportsImpl implements TextWithImports{
       return false;
     }
     TextWithImportsImpl item = ((TextWithImportsImpl)object);
-    return Comparing.equal(item.myText, myText) && Comparing.equal(item.myImports, myImports);
+    return Comparing.equal(item.myText, myText) && Comparing.equal(item.myImports, myImports) && Comparing.equal(item.myFileType, myFileType);
   }
 
   public String toString() {
@@ -95,7 +97,14 @@ public final class TextWithImportsImpl implements TextWithImports{
   }
 
   public String toExternalForm() {
-    return "".equals(myImports) ? myText : myText + DebuggerEditorImpl.SEPARATOR + myImports;
+    String result = myText;
+    if (StringUtil.isNotEmpty(myImports) || myFileType != null) {
+      result += DebuggerEditorImpl.SEPARATOR + myImports;
+    }
+    if (myFileType != null) {
+      result += DebuggerEditorImpl.SEPARATOR + myFileType.getName();
+    }
+    return result;
   }
 
   public int hashCode() {
@@ -111,4 +120,7 @@ public final class TextWithImportsImpl implements TextWithImports{
     myText = newText;
   }
 
+  public FileType getFileType() {
+    return myFileType;
+  }
 }

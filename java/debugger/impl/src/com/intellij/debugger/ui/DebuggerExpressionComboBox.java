@@ -57,7 +57,11 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
 
     public void setItem(Object item) {
-      super.setItem(createDocument((TextWithImports)item));
+      TextWithImports twi = (TextWithImports)item;
+      if (twi != null) {
+        restoreFactory(twi);
+      }
+      super.setItem(createDocument(twi));
       /* Causes PSI being modified from PSI events. See IDEADEV-22102
       final Editor editor = getEditor();
       if (editor != null) {
@@ -82,12 +86,12 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     // See comment to SynthComboBoxUI.FocusHandler.focusLost()
     myComboBox.setLightWeightPopupEnabled(false);
 
-    myEditor = new MyEditorComboBoxEditor(getProject(), myFactory.getFileType());
+    myEditor = new MyEditorComboBoxEditor(getProject(), getCurrentFactory().getFileType());
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
 
     myComboBox.setEditable(true);
     myComboBox.setEditor(myEditor);
-    add(myComboBox);
+    add(addChooseFactoryLabel(myComboBox, false));
   }
 
   public void selectPopupValue() {
@@ -123,9 +127,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
 
   public void setText(TextWithImports item) {
     final String itemText = item.getText().replace('\n', ' ');
+    restoreFactory(item);
     item.setText(itemText);
     if (!"".equals(itemText)) {
-      if (myComboBox.getItemCount() == 0 || !item.equals(myComboBox.getItemAt(0))) {
+      if (myComboBox.getItemCount() == 0 || !equalLight(item, (TextWithImports)myComboBox.getItemAt(0))) {
         myComboBox.insertItemAt(item, 0);
       }
     }
@@ -134,6 +139,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
 
     myComboBox.getEditor().setItem(item);
+  }
+
+  private static boolean equalLight(TextWithImports item, TextWithImports second) {
+    return item.getText().equals(second.getText()) && item.getImports().equals(second.getImports());
   }
 
   public TextWithImports getText() {
@@ -165,7 +174,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   public TextWithImports createText(String text, String importsString) {
-    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text, importsString);
+    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text, importsString, getCurrentFactory().getFileType());
   }
 
   @Override
