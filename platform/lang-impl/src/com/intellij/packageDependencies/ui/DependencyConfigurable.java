@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.EditableRowTable;
 import com.intellij.ui.RowEditableTableModel;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
@@ -96,18 +96,12 @@ public class DependencyConfigurable extends BaseConfigurable {
   }
 
   private JPanel createRulesPanel(MyTableModel model, TableView<DependencyRule> table) {
-    JPanel panel = new JPanel(new BorderLayout());
     table.setSurrendersFocusOnKeystroke(true);
-
-    JPanel buttonsPanel = EditableRowTable.createButtonsTable(table, model, true);
-    panel.add(buttonsPanel, BorderLayout.EAST);
-
+    table.setPreferredScrollableViewportSize(new Dimension(300, 150));
     table.setShowGrid(true);
     table.setRowHeight(new PackageSetChooserCombo(myProject, null).getPreferredSize().height);
 
-    panel.add(ScrollPaneFactory.createScrollPane(table), BorderLayout.CENTER);
-    table.setPreferredScrollableViewportSize(new Dimension(300, 150));
-    return panel;
+    return EditableRowTable.wrapToTableWithButtons(table, model , new CustomLineBorder(0, 1, 1, 1));
   }
 
   public JComponent getPreferredFocusedComponent() {
