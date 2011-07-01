@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.execution;
 
+import com.intellij.lang.ant.AntIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.MultilineTreeCellRenderer;
@@ -58,7 +59,7 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
         icon = myBuildIcon;
       }
       else if (type == AntBuildMessageView.MessageType.TARGET) {
-        icon = PlatformIcons.ANT_TARGET_ICON;
+        icon = AntIcons.ANT_TARGET_ICON;
       }
       else if (type == AntBuildMessageView.MessageType.TASK) {
         icon = PlatformIcons.TASK_ICON;

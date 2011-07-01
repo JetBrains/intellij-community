@@ -40,7 +40,6 @@ public interface PlatformIcons {
   Icon NEW_EXCEPTION = IconLoader.getIcon("/nodes/newException.png");
   Icon ANONYMOUS_CLASS_ICON = IconLoader.getIcon("/nodes/anonymousClass.png");
   Icon ABSTRACT_CLASS_ICON = IconLoader.getIcon("/nodes/abstractClass.png");
-  Icon JUNIT_TEST_CLASS_ICON = IconLoader.getIcon("/nodes/junitTestClass.png");
   Icon ANNOTATION_TYPE_ICON = IconLoader.getIcon("/nodes/annotationtype.png");
   Icon ENUM_ICON = IconLoader.getIcon("/nodes/enum.png");
   Icon INTERFACE_ICON = IconLoader.getIcon("/nodes/interface.png");
@@ -51,40 +50,11 @@ public interface PlatformIcons {
   Icon PARAMETER_ICON = IconLoader.getIcon("/nodes/parameter.png");
   Icon VARIABLE_ICON = IconLoader.getIcon("/nodes/variable.png");
   Icon XML_TAG_ICON = IconLoader.getIcon("/nodes/tag.png");
-  Icon ANT_TARGET_ICON = IconLoader.getIcon("/ant/target.png");
-  Icon ANT_META_TARGET_ICON = IconLoader.getIcon("/ant/metaTarget.png");
   Icon LIBRARY_ICON = IconLoader.getIcon("/nodes/ppLib.png");
   Icon WEB_ICON = IconLoader.getIcon("/nodes/ppWeb.png");
   Icon JAR_ICON = IconLoader.getIcon("/nodes/ppJar.png");
-  Icon WEB_FOLDER_OPEN = IconLoader.getIcon("/nodes/webFolderOpen.png");
-  Icon WEB_FOLDER_CLOSED = IconLoader.getIcon("/nodes/webFolderClosed.png");
   Icon FILE_ICON = IconLoader.getIcon("/nodes/ppFile.png");
-  Icon EJB_CLASS_ICON = IconLoader.getIcon("/javaee/ejbClass.png");
-  Icon EJB_INTERCEPTOR_CLASS_ICON = IconLoader.getIcon("/javaee/interceptorClass.png");
-  Icon EJB_HOME_INTERFACE_ICON = IconLoader.getIcon("/javaee/home.png");
-  Icon EJB_LOCAL_HOME_INTERFACE_ICON = IconLoader.getIcon("/javaee/localHome.png");
-  Icon EJB_LOCAL_INTERFACE_ICON = IconLoader.getIcon("/javaee/local.png");
-  Icon EJB_REMOTE_INTERFACE_ICON = IconLoader.getIcon("/javaee/remote.png");
-  Icon EJB_ICON = IconLoader.getIcon("/nodes/ejb.png");
-  Icon EJB_CREATE_METHOD_ICON = IconLoader.getIcon("/nodes/ejbCreateMethod.png");
-  Icon EJB_FINDER_METHOD_ICON = IconLoader.getIcon("/nodes/ejbFinderMethod.png");
-  Icon EJB_BUSINESS_METHOD_ICON = IconLoader.getIcon("/nodes/ejbBusinessMethod.png");
-  Icon EJB_CMP_FIELD_ICON = IconLoader.getIcon("/nodes/ejbCmpField.png");
-  Icon EJB_CMR_FIELD_ICON = IconLoader.getIcon("/nodes/ejbCmrField.png");
-  Icon EJB_PRIMARY_KEY_CLASS = IconLoader.getIcon("/nodes/ejbPrimaryKeyClass.png");
-  Icon EJB_REFERENCE = IconLoader.getIcon("/nodes/ejbReference.png");
 
-  Icon DATASOURCE_ICON = IconLoader.getIcon("/nodes/DataSource.png");
-  Icon DATASOURCE_DISABLED_ICON = IconLoader.getIcon("/nodes/DataSourceDisabled.png");
-  Icon DATASOURCE_TABLE_ICON = IconLoader.getIcon("/nodes/DataTables.png");
-  Icon DATASOURCE_VIEW_ICON = IconLoader.getIcon("/nodes/dataView.png");
-  Icon DATASOURCE_SEQUENCE_ICON = IconLoader.getIcon("/nodes/dataSequence.png");
-  Icon DATASOURCE_COLUMN_ICON = IconLoader.getIcon("/nodes/dataColumn.png");
-  Icon DATASOURCE_FK_COLUMN_ICON = IconLoader.getIcon("/nodes/dataFkColumn.png");
-  Icon DATASOURCE_PK_COLUMN_ICON = IconLoader.getIcon("/nodes/dataPkColumn.png");
-
-  Icon DATASOURCE_REMOTE_INSTANCE = IconLoader.getIcon("/nodes/addRemoteWeblogicInstance.png");
-  Icon EJB_FIELD_PK = IconLoader.getIcon("/nodes/fieldPK.png");
   Icon VARIABLE_READ_ACCESS = IconLoader.getIcon("/nodes/read-access.png");
   Icon VARIABLE_WRITE_ACCESS = IconLoader.getIcon("/nodes/write-access.png");
   Icon VARIABLE_RW_ACCESS = IconLoader.getIcon("/nodes/rw-access.png");
@@ -96,8 +66,6 @@ public interface PlatformIcons {
   Icon ADVICE_ICON = IconLoader.getIcon("/nodes/advice.png");
   Icon ERROR_INTRODUCTION_ICON = IconLoader.getIcon("/nodes/errorIntroduction.png");
   Icon WARNING_INTRODUCTION_ICON = IconLoader.getIcon("/nodes/warningIntroduction.png");
-  Icon PARENTS_INTRODUCTION_ICON = IconLoader.getIcon("/nodes/parentsIntroduction.png");
-  Icon SOFTENING_INTRODUCTION_ICON = IconLoader.getIcon("/nodes/softeningIntroduction.png");
   Icon JAVA_OUTSIDE_SOURCE_ICON = IconLoader.getIcon("/fileTypes/javaOutsideSource.png");
   Icon EXCLUDED_FROM_COMPILE_ICON = IconLoader.getIcon("/nodes/excludedFromCompile.png");
   Icon PROJECT_ICON = IconLoader.getIcon("/icon_small.png");

@@ -17,6 +17,7 @@ package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.AntIcons;
 import com.intellij.lang.ant.config.impl.AntClasspathEntry;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.AntReference;
@@ -34,7 +35,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
@@ -217,7 +217,7 @@ public class AntUIUtil {
         appearance.getEnding().addComment(projectName);
       }
       appearance.customize(this);
-      setIcon(PlatformIcons.ANT_TARGET_ICON);
+      setIcon(AntIcons.ANT_TARGET_ICON);
     }
   }
 }
