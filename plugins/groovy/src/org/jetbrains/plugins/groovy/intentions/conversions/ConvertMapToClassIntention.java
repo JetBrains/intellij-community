@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -105,7 +106,7 @@ public class ConvertMapToClassIntention extends Intention {
                                          boolean replaceReturnType,
                                          boolean variableDeclaration,
                                          GrParameter parameter) {
-    PsiUtil.shortenReferences((GroovyPsiElement)generatedClass);
+    GrReferenceAdjuster.shortenReferences(generatedClass);
 
     final String text = map.getText();
     int begin = 0;
@@ -131,7 +132,7 @@ public class ConvertMapToClassIntention extends Intention {
       parameter.setType(newExpression.getType());
     }
 
-    PsiUtil.shortenReferences(replacedNewExpression);
+    GrReferenceAdjuster.shortenReferences(replacedNewExpression);
 
     CreateClassActionBase.putCursor(project, generatedClass.getContainingFile(), generatedClass);
   }

@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,6 +40,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -56,7 +56,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVaria
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -247,7 +246,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
           PsiElement anchor = ExtractMethodUtil.calculateAnchorToInsertBefore(owner, startElement);
           GrMethod newMethod = owner.addMemberDeclaration(method, anchor);
           ExtractMethodUtil.renameParameterOccurrences(newMethod, helper);
-          PsiUtil.shortenReferences(newMethod);
+          GrReferenceAdjuster.shortenReferences(newMethod);
           GrStatement realStatement;
 
           if (declarationOwner != null && !ExtractMethodUtil.isSingleExpression(helper.getStatements())) {
@@ -270,7 +269,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
             GrExpression oldExpr = (GrExpression) helper.getStatements()[0];
             realStatement = oldExpr.replaceWithExpression(methodCall, true);
           }
-          PsiUtil.shortenReferences(realStatement);
+          GrReferenceAdjuster.shortenReferences(realStatement);
 
           PsiElement prev = newMethod.getPrevSibling();
           IElementType elementType = prev.getNode().getElementType();

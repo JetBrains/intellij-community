@@ -28,11 +28,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -62,7 +60,7 @@ public class ImportOnDemandIntention extends Intention {
       if (refElement == null) continue;
       final PsiElement parent = refElement.getParent();
       if (parent instanceof GrQualifiedReference) {
-        PsiUtil.shortenReference((GrQualifiedReference<PsiElement>)parent);
+        GrReferenceAdjuster.shortenReference((GrQualifiedReference)parent);
       }
     }
   }

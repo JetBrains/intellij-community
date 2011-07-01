@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -227,7 +228,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
       newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
     }
 
-    PsiUtil.shortenReferences(newTypeElement);
+    GrReferenceAdjuster.shortenReferences(newTypeElement);
   }
 
   @NotNull

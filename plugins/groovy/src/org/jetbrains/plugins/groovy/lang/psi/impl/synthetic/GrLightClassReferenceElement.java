@@ -98,6 +98,11 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   }
 
   @Override
+  public String getClassNameText() {
+    return myClassName;
+  }
+
+  @Override
   public GrCodeReferenceElement getQualifier() {
     return null;
   }

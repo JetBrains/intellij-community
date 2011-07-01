@@ -12,8 +12,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -32,7 +32,7 @@ public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor 
       PsiDocumentManager.getInstance(project).commitDocument(document);
       final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
       if (file instanceof GroovyFile) {
-        PsiUtil.shortenReferences(((GroovyFile)file), templateRange.getStartOffset(), templateRange.getEndOffset());
+        GrReferenceAdjuster.shortenReferences(file, templateRange.getStartOffset(), templateRange.getEndOffset(), true, false);
       }
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     }

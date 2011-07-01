@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -224,7 +225,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
         replaced = refExpr.replace(newRefExpr);
       }
     }
-    PsiUtil.shortenReferences((GroovyPsiElement)replaced);
+    GrReferenceAdjuster.shortenReferences(replaced);
   }
 
   @Override

@@ -22,24 +22,34 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
  */
 public abstract class GrReferenceElementImpl<Q extends PsiElement> extends GroovyPsiElementImpl implements GrReferenceElement<Q> {
+  private volatile String myCachedQName = null;
+  private volatile String myCachedTextSkipWhiteSpaceAndComments;
+
   public GrReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public PsiReference getReference() {
     return this;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    myCachedQName = null;
+    myCachedTextSkipWhiteSpaceAndComments = null;
+    super.subtreeChanged();
   }
 
   public String getReferenceName() {
@@ -103,7 +113,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
 
       final GrReferenceElement<Q> qualifiedRef = bindWithQualifiedRef(qualifiedName);
       if (!preserveQualification) {
-        PsiUtil.shortenReference(qualifiedRef);
+        GrReferenceAdjuster.shortenReferences(qualifiedRef);
       }
       return qualifiedRef;
     }
@@ -119,7 +129,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
       String qName = psiClass.getQualifiedName() + "." + member.getName();
       final GrReferenceElement<Q> qualifiedRef = bindWithQualifiedRef(qName);
       if (!preserveQualification) {
-        PsiUtil.shortenReference(qualifiedRef);
+        GrReferenceAdjuster.shortenReferences(qualifiedRef);
       }
       return qualifiedRef;
     }
@@ -137,7 +147,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return isReferenceTo(element);
   }
 
-  protected abstract boolean isFullyQualified();
+  public abstract boolean isFullyQualified();
 
   @NotNull
   public PsiType[] getTypeArguments() {
@@ -162,4 +172,21 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   public void setQualifier(@Nullable Q newQualifier) {
     PsiImplUtil.setQualifier(this, newQualifier);
   }
+
+  public String getClassNameText() {
+    String cachedQName = myCachedQName;
+    if (cachedQName == null) {
+      myCachedQName = cachedQName = PsiNameHelper.getQualifiedClassName(getTextSkipWhiteSpaceAndComments(), false);
+    }
+    return cachedQName;
+  }
+
+  protected String getTextSkipWhiteSpaceAndComments() {
+    String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
+    if (whiteSpaceAndComments == null) {
+      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = PsiImplUtil.getTextSkipWhiteSpaceAndComments(getNode());
+    }
+    return whiteSpaceAndComments;
+  }
+
 }

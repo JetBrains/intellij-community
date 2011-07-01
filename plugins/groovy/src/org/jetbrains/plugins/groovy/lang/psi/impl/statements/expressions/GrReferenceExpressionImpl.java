@@ -392,7 +392,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Override
-  protected boolean isFullyQualified() {
+  public boolean isFullyQualified() {
     final Kind kind = getKind();
     switch (kind) {
       case TYPE_OR_PROPERTY:

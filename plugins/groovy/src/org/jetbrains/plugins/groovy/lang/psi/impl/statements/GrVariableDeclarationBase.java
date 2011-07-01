@@ -13,6 +13,7 @@ import com.intellij.psi.stubs.EmptyStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -107,7 +108,7 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
       newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
     }
 
-    PsiUtil.shortenReferences(newTypeElement);
+    GrReferenceAdjuster.shortenReferences(newTypeElement);
   }
 
   @Override

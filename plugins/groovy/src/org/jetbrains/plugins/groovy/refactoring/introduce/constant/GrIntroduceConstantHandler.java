@@ -19,10 +19,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -121,7 +119,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     } else {
       added = ((GrVariableDeclaration)targetClass.add(declaration));
     }
-    PsiUtil.shortenReferences(added);
+    GrReferenceAdjuster.shortenReferences(added);
     if (context.var != null) {
       deleteLocalVar(context);
     }
@@ -151,12 +149,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
       PsiUtil.escalateVisibility(field, replaced);
     }
     if (replaced instanceof GrReferenceExpression) {
-      if (PsiUtil.shortenReference((GrReferenceExpression)replaced)) return;
-
-      final PsiElement qualifier = ((GrReferenceElement)replaced).getQualifier();
-      if (qualifier instanceof GrReferenceExpression) {
-        PsiUtil.shortenReference((GrReferenceExpression)qualifier);
-      }
+      GrReferenceAdjuster.shortenReference((GrQualifiedReference)replaced);
     }
   }
 

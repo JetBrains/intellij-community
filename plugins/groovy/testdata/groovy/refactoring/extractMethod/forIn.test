@@ -5,15 +5,13 @@ void aaa(Map map) {
     }
 }
 -----
-import java.util.Map.Entry
-
 void aaa(Map map) {
     for (Map.Entry<String, String> versionEntry in map.entrySet()) {
         testMethod(versionEntry);
     }
 }
 
-private def testMethod(Entry<String, String> versionEntry) {
+private def testMethod(Map.Entry<String, String> versionEntry) {
     String name = versionEntry.getKey();
     System.out.println(name)
 }

@@ -38,6 +38,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -228,7 +229,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         PsiType type = methodType != null && methodType.equalsToText("java.lang.Object") ? null : methodType;
         GrVariableDeclaration resultDecl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, null, type, resultName);
         GrStatement statement = ((GrStatementOwner) owner).addStatementBefore(resultDecl, anchor);
-        PsiUtil.shortenReferences(statement);
+        GrReferenceAdjuster.shortenReferences(statement);
 
         // Replace all return statements with assignments to 'result' variable
         for (GrStatement returnStatement : returnStatements) {

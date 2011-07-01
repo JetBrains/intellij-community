@@ -1,9 +1,7 @@
-package pack1
-
-import pack1.A.Inner;
+package pack1;
 
 public class B {
     static void method() {
-        Inner i = new Inner();
+        A.Inner i = new A.Inner();
     }
 }
