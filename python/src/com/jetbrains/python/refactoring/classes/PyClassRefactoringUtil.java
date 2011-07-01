@@ -184,7 +184,7 @@ public class PyClassRefactoringUtil {
 
   public static void insertImport(PsiElement anchor, Collection<PsiNamedElement> elements) {
     for (PsiNamedElement newClass : elements) {
-      insertImport(anchor, newClass);
+      insertImport(anchor, newClass, null);
     }
   }
 
@@ -204,7 +204,7 @@ public class PyClassRefactoringUtil {
     return true;
   }
 
-  public static void insertImport(PsiElement anchor, PsiNamedElement element) {
+  public static void insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName) {
     if (PyBuiltinCache.getInstance(element).hasInBuiltins(element)) return;
     final PsiFile newFile = element.getContainingFile();
     final VirtualFile vFile = newFile.getVirtualFile();
@@ -217,13 +217,13 @@ public class PyClassRefactoringUtil {
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, newFile);
     if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT || element instanceof PyFile) {
       if (element instanceof PyFile) {
-        AddImportHelper.addImportStatement(file, importableName, null, priority);
+        AddImportHelper.addImportStatement(file, importableName, asName, priority);
       } else {
         final String name = element.getName();
-        AddImportHelper.addImportStatement(file, importableName + "." + name, null, priority);
+        AddImportHelper.addImportStatement(file, importableName + "." + name, asName, priority);
       }
     } else {
-      AddImportHelper.addImportFrom(file, importableName, element.getName(), priority);
+      AddImportHelper.addImportFrom(file, importableName, element.getName(), asName, priority);
     }
   }
 
@@ -253,12 +253,12 @@ public class PyClassRefactoringUtil {
     if (name != null) {
       PyImportElement importElement = null;
       for (PyImportElement e: importStatement.getImportElements()) {
-        if (name.equals(e.getVisibleName())) {
+        if (name.equals(getOriginalName(e))) {
           importElement = e;
         }
       }
       if (importElement != null) {
-        insertImport(importStatement, element);
+        insertImport(importStatement, element, importElement.getAsName());
         if (importStatement.getImportElements().length == 1) {
           importStatement.delete();
         }
@@ -267,5 +267,14 @@ public class PyClassRefactoringUtil {
         }
       }
     }
+  }
+
+  @Nullable
+  private static String getOriginalName(PyImportElement e) {
+    final PyQualifiedName qname = e.getImportedQName();
+    if (qname != null && qname.getComponentCount() > 0) {
+      return qname.getComponents().get(0);
+    }
+    return null;
   }
 }

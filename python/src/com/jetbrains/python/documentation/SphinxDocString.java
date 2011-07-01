@@ -110,7 +110,7 @@ public class SphinxDocString extends StructuredDocString {
             }
             CharMatcher identifierMatcher = new CharMatcher() {
                                         @Override public boolean matches(char c) {
-                                          return Character.isLetterOrDigit(c) || c == '_';
+                                          return Character.isLetterOrDigit(c) || c == '_' || c == '.';
                                         }}.negate();
             int endType = identifierMatcher.indexIn(tagValue, 0);
             int endArg = tagValue.indexOf(':');

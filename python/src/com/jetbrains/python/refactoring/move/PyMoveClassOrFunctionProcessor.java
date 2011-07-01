@@ -98,7 +98,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
                   PyClassRefactoringUtil.updateImportOfElement(importStatement, newElement);
                 }
                 if (usage.getFile() == oldElement.getContainingFile()) {
-                  PyClassRefactoringUtil.insertImport(oldElement, newElement);
+                  PyClassRefactoringUtil.insertImport(oldElement, newElement, null);
                 }
               }
               PyClassRefactoringUtil.restoreNamedReferences(newElement);
