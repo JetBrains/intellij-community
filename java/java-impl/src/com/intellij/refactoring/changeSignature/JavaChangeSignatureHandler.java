@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -86,9 +85,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     final PsiClass containingClass = method.getContainingClass();
     final PsiReferenceExpression refExpr = editor != null ? TargetElementUtil.findReferenceExpression(editor) : null;
     final boolean allowDelegation = containingClass != null && !containingClass.isInterface();
-    final DialogWrapper dialog = Registry.is("new.change.signature.dialog")
-                                 ? new NewJavaChangeSignatureDialog(project, method, allowDelegation, refExpr)
-                                 : new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr);
+    final DialogWrapper dialog = new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr);
     dialog.show();
   }
 
