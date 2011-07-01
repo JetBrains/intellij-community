@@ -6,10 +6,10 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public class PythonSdkTableListener implements ApplicationComponent {
   }
 
   static Library addLibrary(Sdk sdk) {
-    final LibraryTable.ModifiableModel libraryTableModel = LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
+    final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
     final Library library = libraryTableModel.createLibrary(PythonFacet.getFacetLibraryName(sdk.getName()));
     final Library.ModifiableModel model = library.getModifiableModel();
     for (String url : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
@@ -67,7 +67,7 @@ public class PythonSdkTableListener implements ApplicationComponent {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run()  {
-            final LibraryTable.ModifiableModel libraryTableModel = LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
+            final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
             final Library library = libraryTableModel.getLibraryByName(PythonFacet.getFacetLibraryName(sdk.getName()));
             if (library!=null) {
               libraryTableModel.removeLibrary(library);
@@ -84,7 +84,7 @@ public class PythonSdkTableListener implements ApplicationComponent {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final LibraryTable.ModifiableModel libraryTableModel = LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
+            final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
             final Library library = libraryTableModel.getLibraryByName(PythonFacet.getFacetLibraryName(previousName));
             if (library!=null){
               final Library.ModifiableModel model = library.getModifiableModel();

@@ -279,6 +279,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testMissingParenInCall() {  // PY-4053
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }

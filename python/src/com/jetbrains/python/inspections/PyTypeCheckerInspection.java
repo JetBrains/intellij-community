@@ -6,16 +6,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author vlan
@@ -36,23 +36,18 @@ public class PyTypeCheckerInspection extends PyInspection {
       // TODO: Visit operators (requires resolve() for operators)
       @Override
       public void visitPyCallExpression(PyCallExpression node) {
+        final TypeEvalContext fastContext = TypeEvalContext.fast();
+        final TypeEvalContext slowContext = TypeEvalContext.slow();
         List<PyFunction> functions = new ArrayList<PyFunction>();
         final PyExpression callee = node.getCallee();
         if (callee instanceof PyReferenceExpression) {
-          ResolveResult[] results = ((PyReferenceExpression)callee).getReference().multiResolve(false);
-          for (ResolveResult result : results) {
-            if (!(result instanceof ImplicitResolveResult)) {
-              PsiElement e = result.getElement();
-              if (e instanceof PyFunction) {
-                functions.add((PyFunction)e);
-              }
-            }
+          PsiElement e = ((PyReferenceExpression)callee).followAssignmentsChain(slowContext).getElement();
+          if (e instanceof PyFunction) {
+            functions.add((PyFunction)e);
           }
         }
         if (!functions.isEmpty()) {
           PyFunction fun = functions.get(0);
-          final TypeEvalContext fastContext = TypeEvalContext.fast();
-          final TypeEvalContext slowContext = TypeEvalContext.slow();
           final TypeEvalContext context = fun.getContainingFile() == node.getContainingFile() ?
                                           slowContext : fastContext;
           final PyArgumentList args = node.getArgumentList();
@@ -178,7 +173,7 @@ public class PyTypeCheckerInspection extends PyInspection {
   }
 
   private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass) {
-    if (superClass == null || subClass == null || subClass.isSubclass(superClass)) {
+    if (superClass == null || subClass == null || subClass.isSubclass(superClass) || PyABCUtil.isSubclass(subClass, superClass)) {
       return true;
     }
     else {
