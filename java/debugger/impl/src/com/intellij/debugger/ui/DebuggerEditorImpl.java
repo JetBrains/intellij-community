@@ -32,6 +32,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -101,9 +102,13 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
       @Override
       public void mouseClicked(MouseEvent e) {
         ListPopup oldPopup = myPopup != null ? myPopup.get() : null;
-        if (oldPopup != null) {
+        if (oldPopup != null && !oldPopup.isDisposed()) {
           oldPopup.cancel();
           myPopup = null;
+          return;
+        }
+
+        if (!myChooseFactory.isEnabled()) {
           return;
         }
 
@@ -126,6 +131,12 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
         myPopup = new WeakReference<ListPopup>(popup);
       }
     });
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    myChooseFactory.setEnabled(enabled);
+    super.setEnabled(enabled);
   }
 
   protected TextWithImports createItem(Document document, Project project) {
@@ -260,7 +271,9 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   private void setFactory(@NotNull final CodeFragmentFactory factory) {
     myFactory = factory;
-    myChooseFactory.setIcon(getCurrentFactory().getFileType().getIcon());
+    Icon icon = getCurrentFactory().getFileType().getIcon();
+    myChooseFactory.setIcon(icon);
+    myChooseFactory.setDisabledIcon(IconLoader.getDisabledIcon(icon));
   }
 
   protected CodeFragmentFactory getCurrentFactory() {
