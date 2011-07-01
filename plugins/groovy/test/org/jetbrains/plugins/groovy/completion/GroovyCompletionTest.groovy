@@ -412,6 +412,42 @@ class A {
 """
   }
 
+  public void testCompletionNamedArgumentWithDD() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg<caret>)}
+}
+""")
+    myFixture.completeBasic()
+    myFixture.type(':')
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: <caret>)}
+}
+"""
+  }
+
+  public void testCompletionNamedArgumentWithSpace() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg<caret>)}
+}
+""")
+    myFixture.completeBasic()
+    myFixture.type(' ')
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: <caret>)}
+}
+"""
+  }
+
   public void testSpreadOperator() {
     doVariantableTest("foo1", "foo2")
   }

@@ -76,5 +76,9 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
+
+    if (context.getCompletionChar() == ':' || context.getCompletionChar() == ' ') {
+      context.setAddCompletionChar(false);
+    }
   }
 }
