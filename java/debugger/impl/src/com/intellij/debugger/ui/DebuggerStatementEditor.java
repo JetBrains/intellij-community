@@ -62,8 +62,9 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
       }
     };
     myEditor.setCenterByHeight(false);
+
     setLayout(new BorderLayout());
-    add(myEditor, BorderLayout.CENTER);
+    add(addChooseFactoryLabel(myEditor, true));
 
     DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.add(new ItemAction(IdeActions.ACTION_PREVIOUS_OCCURENCE, this){
@@ -128,6 +129,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
   }
 
   public void setText(TextWithImports text) {
+    restoreFactory(text);
     myEditor.setDocument(createDocument(text));
     final Editor editor = myEditor.getEditor();
     if (editor != null) {
@@ -136,7 +138,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
   }
 
   public TextWithImports createText(String text, String importsString) {
-    return new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, text, importsString);
+    return new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, text, importsString, getCurrentFactory().getFileType());
   }
 
   private static abstract class ItemAction extends AnAction {

@@ -82,12 +82,12 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     // See comment to SynthComboBoxUI.FocusHandler.focusLost()
     myComboBox.setLightWeightPopupEnabled(false);
 
-    myEditor = new MyEditorComboBoxEditor(getProject(), myFactory.getFileType());
+    myEditor = new MyEditorComboBoxEditor(getProject(), getCurrentFactory().getFileType());
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
 
     myComboBox.setEditable(true);
     myComboBox.setEditor(myEditor);
-    add(myComboBox);
+    add(addChooseFactoryLabel(myComboBox, false));
   }
 
   public void selectPopupValue() {
@@ -123,6 +123,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
 
   public void setText(TextWithImports item) {
     final String itemText = item.getText().replace('\n', ' ');
+    restoreFactory(item);
     item.setText(itemText);
     if (!"".equals(itemText)) {
       if (myComboBox.getItemCount() == 0 || !item.equals(myComboBox.getItemAt(0))) {
@@ -165,7 +166,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   public TextWithImports createText(String text, String importsString) {
-    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text, importsString);
+    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text, importsString, getCurrentFactory().getFileType());
   }
 
   @Override

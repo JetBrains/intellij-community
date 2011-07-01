@@ -43,7 +43,7 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
     myEditor = new EditorTextField("", project, StdFileTypes.JAVA);
     setLayout(new BorderLayout());
     myMainPanel.add(myStubField, STUB);
-    myMainPanel.add(myEditor, EDITOR);
+    myMainPanel.add(addChooseFactoryLabel(myEditor, false), EDITOR);
     add(myMainPanel, BorderLayout.CENTER);
     ((CardLayout)myMainPanel.getLayout()).show(myMainPanel, isEnabled()? EDITOR : STUB);
     setText(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
@@ -62,6 +62,7 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
   }
 
   public void setText(TextWithImports text) {
+    restoreFactory(text);
     myEditor.setDocument(createDocument(text));
     final Editor editor = myEditor.getEditor();
     if (editor != null) {
@@ -70,7 +71,7 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
   }
 
   public TextWithImports createText(String text, String importsString) {
-    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text, importsString);
+    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text, importsString, getCurrentFactory().getFileType());
   }
 
   public void setEnabled(boolean enabled) {
