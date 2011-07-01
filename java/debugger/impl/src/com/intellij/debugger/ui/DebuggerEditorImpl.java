@@ -16,10 +16,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
-import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
-import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
@@ -152,7 +149,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     myChooseFactory.setVisible(factories.size() > 1);
     myInitialFactory = false;
 
-    setText(text);
+    setText(new TextWithImportsImpl(text.getKind(), text.getText(), text.getImports(), myFactory.getFileType()));
   }
 
   private List<CodeFragmentFactory> getAllFactories() {
@@ -233,17 +230,22 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiListener);
   }
 
+  @NotNull
+  public static CodeFragmentFactory findAppropriateFactory(@NotNull TextWithImports text, @NotNull PsiElement context) {
+    for (CodeFragmentFactory factory : DebuggerUtilsEx.getCodeFragmentFactories(context)) {
+      if (factory.getFileType().equals(text.getFileType())) {
+        return factory;
+      }
+    }
+    return DefaultCodeFragmentFactory.getInstance();
+  }
+
   protected void restoreFactory(TextWithImports text) {
     FileType fileType = text.getFileType();
     if (fileType == null) return;
+    if (myContext == null) return;
 
-    for (CodeFragmentFactory factory : getAllFactories()) {
-      if (factory.getFileType().equals(fileType)) {
-        setFactory(factory);
-        return;
-      }
-    }
-    setFactory(DefaultCodeFragmentFactory.getInstance());
+    setFactory(findAppropriateFactory(text, myContext));
   }
 
   private void setFactory(@NotNull final CodeFragmentFactory factory) {
