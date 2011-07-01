@@ -33,8 +33,6 @@ import java.util.Map;
 class LibraryNameAndLevelPanel {
   private JTextField myLibraryNameField;
   private JComboBox myLevelComboBox;
-  private JPanel myPanel;
-  private JLabel myLevelLabel;
   private String myDefaultLibraryName;
 
   LibraryNameAndLevelPanel(FormBuilder formBuilder, String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
@@ -75,5 +73,9 @@ class LibraryNameAndLevelPanel {
       myLibraryNameField.setText(defaultLibraryName);
     }
     myDefaultLibraryName = defaultLibraryName;
+  }
+
+  public static FormBuilder createFormBuilder() {
+    return new FormBuilder(false, 5);
   }
 }

@@ -51,7 +51,7 @@ public class EditLibraryDialog extends DialogWrapper {
     final boolean newLibrary = libraryEditor instanceof NewLibraryEditor;
     setTitle((newLibrary ? "Create" : "Edit") + " Library");
 
-    myBuilder = new FormBuilder();
+    myBuilder = LibraryNameAndLevelPanel.createFormBuilder();
     myNameAndLevelPanel = new LibraryNameAndLevelPanel(myBuilder, libraryEditor.getName(), newLibrary ? settings.getNewLibraryLevel() : null);
     init();
   }

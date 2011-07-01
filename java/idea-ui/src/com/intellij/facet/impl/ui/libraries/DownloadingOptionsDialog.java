@@ -67,7 +67,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     myLibraryType = settings.getLibraryType();
     LOG.assertTrue(!versions.isEmpty());
 
-    final FormBuilder builder = new FormBuilder(false, 5);
+    final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
 
     myVersionComboBox = new JComboBox();
     for (FrameworkLibraryVersion version : versions) {
