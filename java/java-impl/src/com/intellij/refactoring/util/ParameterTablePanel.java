@@ -23,11 +23,10 @@ import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -169,21 +168,18 @@ public abstract class ParameterTablePanel extends JPanel {
 
 
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
-      private JLabel myLabel;
-      private JPanel myPanel;
-      {
-        myLabel = new JLabel();
-        myPanel = new JPanel(new BorderLayout());
-        //myPanel.setOpaque(false);
-        myPanel.add(myLabel, BorderLayout.CENTER);
-        myPanel.add(new JBLabel(PlatformIcons.COMBOBOX_ARROW_ICON), BorderLayout.EAST);
+      private JBComboBoxLabel myLabel = new JBComboBoxLabel();
 
-      }
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         myLabel.setText(String.valueOf(value));
-        myPanel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+        myLabel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
         myLabel.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
-        return myPanel;
+        if (isSelected) {
+          myLabel.setSelectionIcon();
+        } else {
+          myLabel.setRegularIcon();
+        }
+        return myLabel;
       }
     });
 
