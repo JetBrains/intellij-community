@@ -52,8 +52,7 @@ public class ReferenceAdjuster {
   public TreeElement process(TreeElement element, boolean addImports, boolean uncompleteCode) {
     IElementType elementType = element.getElementType();
     if (elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) {
-      if (elementType == JavaElementType.JAVA_CODE_REFERENCE || element.getTreeParent().getElementType() ==
-                                                                JavaElementType.REFERENCE_EXPRESSION || uncompleteCode) {
+      if (elementType == JavaElementType.JAVA_CODE_REFERENCE || element.getTreeParent().getElementType() == JavaElementType.REFERENCE_EXPRESSION || uncompleteCode) {
         final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
         final PsiReferenceParameterList parameterList = ref.getParameterList();
         if (parameterList != null) {
@@ -66,8 +65,7 @@ public class ReferenceAdjuster {
         boolean rightKind = true;
         if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
           int kind = ((PsiJavaCodeReferenceElementImpl)element).getKind();
-          rightKind = kind == PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND ||
-            kind == PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND;
+          rightKind = kind == PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND || kind == PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND;
         }
 
         if (rightKind) {
@@ -82,9 +80,7 @@ public class ReferenceAdjuster {
           }
           else {
             PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getManager().getProject()).getResolveHelper();
-            refElement = helper.resolveReferencedClass(
-                ((SourceJavaCodeReference)element).getClassNameText(),
-              SourceTreeToPsiMap.treeElementToPsi(element)
+            refElement = helper.resolveReferencedClass(((SourceJavaCodeReference)element).getClassNameText(), SourceTreeToPsiMap.treeElementToPsi(element)
             );
           }
           if (refElement instanceof PsiClass) {
@@ -100,10 +96,7 @@ public class ReferenceAdjuster {
                 String thisPackageName = ((PsiJavaFile)file).getPackageName();
                 if (ImportHelper.hasPackage(qName, thisPackageName)) {
                   if (!isShort) {
-                    return (TreeElement)makeShortReference(
-                      (CompositeElement)element,
-                      (PsiClass)refElement,
-                      addImports);
+                    return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports);
                   }
                 }
               }
@@ -195,8 +188,7 @@ public class ReferenceAdjuster {
     if (parentClass != null) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(parentClass.getProject());
       final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-      if (resolveHelper.isAccessible(refClass, reference, null) &&
-          isSafeToShortenReference(reference.getReferenceName(), reference, refClass)) {
+      if (resolveHelper.isAccessible(refClass, reference, null) && isSafeToShortenReference(reference.getReferenceName(), reference, refClass)) {
         return reference;
       }
 

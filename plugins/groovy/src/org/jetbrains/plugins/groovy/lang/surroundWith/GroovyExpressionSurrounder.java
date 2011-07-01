@@ -40,10 +40,10 @@ public abstract class GroovyExpressionSurrounder implements Surrounder {
 
     PsiElement element = elements[0];
 
-    return surroundExpression((GrExpression) element);
+    return surroundExpression((GrExpression) element, element.getParent());
   }
 
-  protected abstract TextRange surroundExpression(GrExpression expression);
+  protected abstract TextRange surroundExpression(GrExpression expression, PsiElement context);
 
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     return elements.length == 1 &&  isApplicable(elements[0]);

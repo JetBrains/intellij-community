@@ -116,6 +116,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     myHaveNamespaceDeclarations = false;
     myValue = null;
     myNSDescriptorsMap = null;
+    myTags = null;
     super.clearCaches();
   }
 

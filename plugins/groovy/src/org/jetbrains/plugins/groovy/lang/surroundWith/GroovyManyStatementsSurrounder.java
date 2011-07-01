@@ -66,7 +66,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     if (elements.length == 0) return null;
 
     PsiElement element1 = elements[0];
-    final GroovyPsiElement newStmt = doSurroundElements(elements);
+    final GroovyPsiElement newStmt = doSurroundElements(elements, element1.getParent());
     assert newStmt != null;
 
     ASTNode parentNode = element1.getParent().getNode();
@@ -85,7 +85,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     }
   }
 
-  protected abstract GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException;
+  protected abstract GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException;
 
   protected abstract TextRange getSurroundSelectionRange(GroovyPsiElement element);
 }

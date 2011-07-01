@@ -101,7 +101,7 @@ public class CvsOperationExecutor {
         try {
           myResult.addAllErrors(handler.getErrorsExceptAborted());
           myResult.addAllWarnings(handler.getWarnings());
-          handler.runComplitingActivities();
+          handler.finish();
           if (myProject == null || myProject != null && !myProject.isDisposed()) {
             showErrors(handler.getErrorsExceptAborted(), handler.getWarnings(), tabbedWindow);
           }

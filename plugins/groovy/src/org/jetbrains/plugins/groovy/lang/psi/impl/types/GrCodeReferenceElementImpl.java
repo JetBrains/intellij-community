@@ -44,7 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -64,16 +63,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceEl
  */
 public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeReferenceElement> implements GrCodeReferenceElement {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl");
-  private volatile String myCachedTextSkipWhiteSpaceAndComments;
 
   public GrCodeReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
-  }
-
-  @Override
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    myCachedTextSkipWhiteSpaceAndComments = null;
   }
 
   @Override
@@ -198,14 +190,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
   }
 
-  private String getTextSkipWhiteSpaceAndComments() {
-    String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
-    if (whiteSpaceAndComments == null) {
-      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = PsiImplUtil.getTextSkipWhiteSpaceAndComments(getNode());
-    }
-    return whiteSpaceAndComments;
-  }
-
   protected boolean bindsCorrectly(PsiElement element) {
     if (super.bindsCorrectly(element)) return true;
     if (element instanceof PsiClass) {
@@ -222,7 +206,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  protected boolean isFullyQualified() {
+  public boolean isFullyQualified() {
     switch (getKind(false)) {
       case PACKAGE_FQ:
       case CLASS_FQ:

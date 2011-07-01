@@ -36,6 +36,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -51,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
@@ -236,7 +236,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     final PsiParameter anchorParameter = getAnchorParameter(method);
     final GrParameterList parameterList = method.getParameterList();
     parameter = (GrParameter)parameterList.addAfter(parameter, anchorParameter);
-    PsiUtil.shortenReferences(parameter);
+    GrReferenceAdjuster.shortenReferences(parameter);
     final PsiDocTag tagForAnchorParameter = javaDocHelper.getTagForParameter(anchorParameter);
     javaDocHelper.addParameterAfter(data.getParameterName(), tagForAnchorParameter);
 

@@ -28,9 +28,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
  */
 public class IfElseSurrounder extends IfSurrounder {
   @Override
-  protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
+  protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {\n} else {\n}");
+    GrIfStatement ifStatement = (GrIfStatement) factory.createStatementFromText("if (a) {\n} else {\n}", context);
     addStatements(((GrBlockStatement)ifStatement.getThenBranch()).getBlock(), elements);
     return ifStatement;
   }

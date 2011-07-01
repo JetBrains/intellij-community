@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
@@ -26,10 +27,10 @@ import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.ui.CheckoutFileDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.util.ui.OptionsDialog;
-import com.intellij.CvsBundle;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -79,15 +80,14 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     Project project = context.getProject();
     FilePath[] filesArray = context.getSelectedFilePaths();
     List<FilePath> files = Arrays.asList(filesArray);
-    if (CvsVcs2.getInstance(project).getCheckoutOptions().getValue()
-        || OptionsDialog.shiftIsPressed(context.getModifiers())){
-      CheckoutFileDialog checkoutFileDialog = new CheckoutFileDialog(project,
-                                                                     files);
+    if (CvsVcs2.getInstance(project).getCheckoutOptions().getValue() || OptionsDialog.shiftIsPressed(context.getModifiers())) {
+      CheckoutFileDialog checkoutFileDialog = new CheckoutFileDialog(project, files);
       checkoutFileDialog.show();
       if (!checkoutFileDialog.isOK()) return CvsHandler.NULL;
     }
 
-    return CommandCvsHandler.createCheckoutFileHandler(filesArray, CvsConfiguration.getInstance(project));
+    return CommandCvsHandler.createCheckoutFileHandler(filesArray, CvsConfiguration.getInstance(project),
+                                                       VcsConfiguration.getInstance(project).getCheckoutOption());
   }
 
   protected void beforeActionPerformed(VcsContext context) {

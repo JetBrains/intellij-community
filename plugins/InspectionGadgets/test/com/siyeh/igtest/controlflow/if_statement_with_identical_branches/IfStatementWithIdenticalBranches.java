@@ -106,14 +106,14 @@ public class IfStatementWithIdenticalBranches {
 }
 
 class NotADup {
-    public String getElementDescription(Object element, Collection location, Dup d, Dup d1) {
+    public String getElementDescription(Object element, Collection location) {
         if (location instanceof List) {
             if (element instanceof String) {
                 return notNullize(element);
             }
         } else if (location instanceof Set) {
             if (element instanceof String) {
-                return message(element);
+                return message((String)element);
             }
         }
         return null;

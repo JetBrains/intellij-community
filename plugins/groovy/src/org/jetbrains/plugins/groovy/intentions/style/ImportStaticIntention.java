@@ -26,13 +26,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -77,7 +77,7 @@ public class ImportStaticIntention extends Intention {
     for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile))) {
       final PsiElement refElement = reference.getElement();
       if (refElement instanceof GrQualifiedReference) {
-        PsiUtil.shortenReference((GrQualifiedReference<PsiElement>)refElement);
+        GrReferenceAdjuster.shortenReference((GrQualifiedReference)refElement);
       }
     }
 
@@ -99,7 +99,7 @@ public class ImportStaticIntention extends Intention {
             if (expression.getQualifierExpression() instanceof GrReferenceExpression) {
               PsiElement aClass = ((GrReferenceExpression)expression.getQualifierExpression()).resolve();
               if (aClass == ((PsiMember)resolved).getContainingClass()) {
-                PsiUtil.shortenReference(expression);
+                GrReferenceAdjuster.shortenReference(expression);
               }
             }
           }

@@ -17,6 +17,7 @@ package com.intellij.ui.components.editors;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
@@ -25,7 +26,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,10 +34,18 @@ import java.util.ArrayList;
 /**
  * Solves rendering problems in JTable components when JComboBox objects are used as cell
  * editors components. Known issues of using JComboBox component are the following:
- *   1. Ugly view if row height is small enough
- *   2. Truncated strings in the combobox popup if column width is less than text value width
+ *   <p>1. Ugly view if row height is small enough
+ *   <p>2. Truncated strings in the combobox popup if column width is less than text value width
+ *   <p>
+ *   <b>How to use:</b>
+ *   <p>1. In get <code>getTableCellEditorComponent</code> method create or use existent
+ *   <code>JBComboBoxTableCellEditorComponent</code> instance<br/>
+ *   <p>2. Init component by calling <code>setCell</code>, <code>setOptions</code>,
+ *   <code>setDefaultValue</code> methods
+ *   <p>3. Return the instance
  *
  * @author Konstantin Bulenkov
+ * @see com.intellij.ui.components.JBComboBoxLabel
  */
 public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private JTable myTable;
@@ -137,7 +145,8 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
           }
           //myValue = myList.getSelectedValue();
           //myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
-          myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));  // force repaint
+          //myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));  // force repaint
+          TableUtil.stopEditing(myTable);
         }
       })
       .createPopup()

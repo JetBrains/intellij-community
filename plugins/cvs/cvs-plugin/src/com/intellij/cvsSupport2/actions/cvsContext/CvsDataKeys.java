@@ -15,17 +15,11 @@
  */
 package com.intellij.cvsSupport2.actions.cvsContext;
 
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.openapi.actionSystem.DataKey;
 
 import java.util.Collection;
 
 public interface CvsDataKeys {
   DataKey<Collection<String>> DELETED_FILE_NAMES = DataKey.create("DeletedFileNames");
-  DataKey<String> FILE_TO_RESTORE = DataKey.create("FileToRestore");
-  DataKey<CvsLightweightFile> CVS_LIGHT_FILE = DataKey.create("CVS_LIGHT_FILE");
   DataKey<CvsLightweightFile[]> CVS_LIGHT_FILES = DataKey.create("CVS_LIGHT_FILES");
-  DataKey<CvsEnvironment> CVS_ENVIRONMENT = DataKey.create("CVS_ENVIRONMENT");
-  DataKey<Collection<AddedFileInfo>> FILES_TO_ADD = DataKey.create("FilesToAdd");
 }

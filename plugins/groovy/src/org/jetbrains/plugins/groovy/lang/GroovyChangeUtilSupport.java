@@ -28,7 +28,6 @@ import com.intellij.psi.impl.source.tree.TreeCopyHandler;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -42,8 +41,7 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
 
   public TreeElement decodeInformation(TreeElement element, final Map<Object, Object> decodingState) {
     if (element instanceof CompositeElement) {
-      if (element.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT ||
-          element.getElementType() == GroovyElementTypes.REFERENCE_EXPRESSION) {
+      if (element.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT || element.getElementType() == GroovyElementTypes.REFERENCE_EXPRESSION) {
         GrReferenceElement ref = (GrReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
         final PsiMember refMember = element.getCopyableUserData(REFERENCED_MEMBER_KEY);
         if (refMember != null) {
@@ -59,9 +57,6 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
             catch (IncorrectOperationException ignored) {
             }
             return (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
-          } else {
-            // shorten references to the same package and to inner classes that can be accessed by short name
-            GroovyReferenceAdjuster.INSTANCE.process(element, false, false);
           }
         }
         return element;

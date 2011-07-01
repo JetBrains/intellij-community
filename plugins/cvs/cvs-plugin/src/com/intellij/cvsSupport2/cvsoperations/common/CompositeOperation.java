@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class CompositeOperaton extends CvsOperation {
+public class CompositeOperation extends CvsOperation {
   private final List<CvsOperation> mySubOperations = new ArrayList<CvsOperation>();
   private CvsOperation myCurrentOperation;
 
@@ -63,7 +63,6 @@ public class CompositeOperaton extends CvsOperation {
     for (final CvsOperation cvsOperation : getSubOperations()) {
       cvsOperation.executeFinishActions();
     }
-
   }
 
   public String getLastProcessedCvsRoot() {
@@ -74,8 +73,6 @@ public class CompositeOperaton extends CvsOperation {
   protected boolean containsSubOperation(AddFileOperation op) {
     return mySubOperations.contains(op);
   }
-
-
 
   protected List<CvsOperation> getSubOperations() { return mySubOperations; }
 

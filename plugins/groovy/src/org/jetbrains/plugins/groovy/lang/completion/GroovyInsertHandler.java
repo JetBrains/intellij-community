@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -84,14 +85,10 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       if (PsiTreeUtil.getParentOfType(elementAt, GrImportStatement.class) != null) return;
 
       if (parameters.length == 1) {
-        final PsiType type = parameters[0].getType();
-        if (type instanceof PsiClassType) {
-          final PsiClass psiClass = ((PsiClassType)type).resolve();
-          if (psiClass != null && GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName())) {
-            document.insertString(offset, " {}");
-            caretModel.moveToOffset(offset + 2);
-            return;
-          }
+        if (context.getCompletionChar() != '(' && TypesUtil.isClassType(parameters[0].getType(), GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+          document.insertString(offset, " {}");
+          caretModel.moveToOffset(offset + 2);
+          return;
         }
       }
 

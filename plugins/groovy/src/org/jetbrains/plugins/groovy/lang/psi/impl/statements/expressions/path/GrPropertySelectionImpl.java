@@ -49,6 +49,11 @@ public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implement
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
+  @Override
+  public String getClassNameText() {
+    return null;
+  }
+
   @NotNull
   @Override
   public PsiElement getDotToken() {
@@ -70,7 +75,7 @@ public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implement
   }
 
   @Override
-  protected boolean isFullyQualified() {
+  public boolean isFullyQualified() {
     return false;
   }
 }

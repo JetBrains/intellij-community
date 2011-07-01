@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -351,30 +352,30 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
 
-    private boolean checkCallApplicability(PsiType type, GroovyPsiElement place) {
+    private boolean checkCallApplicability(PsiType type, GroovyPsiElement invokedExpr) {
 
-      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
+      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invokedExpr, true);
       if (type instanceof GrClosureType) {
         if (argumentTypes == null) return true;
 
-        if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) return true;
+        if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, invokedExpr)) return true;
 
-        registerCannotApplyError(place, argumentTypes, place.getText());
+        registerCannotApplyError(invokedExpr, argumentTypes, invokedExpr.getText());
         return false;
       }
       else if (type != null) {
-        final GroovyResolveResult[] calls = ResolveUtil.getMethodCandidates(type, "call", place, argumentTypes);
+        final GroovyResolveResult[] calls = ResolveUtil.getMethodCandidates(type, "call", invokedExpr, argumentTypes);
         for (GroovyResolveResult result : calls) {
           PsiElement resolved = result.getElement();
           if (resolved instanceof PsiMethod) {
-            if (!checkMethodApplicability(result, place)) return false;
+            if (!checkMethodApplicability(result, invokedExpr)) return false;
           }
           else if (resolved instanceof PsiField) {
-            if (!checkCallApplicability(((PsiField)resolved).getType(), place)) return false;
+            if (!checkCallApplicability(((PsiField)resolved).getType(), invokedExpr)) return false;
           }
         }
-        if (calls.length == 0) {
-          registerCannotApplyError(place, argumentTypes, place.getText());
+        if (calls.length == 0 && !(invokedExpr instanceof GrString)) {
+          registerCannotApplyError(invokedExpr, argumentTypes, invokedExpr.getText());
         }
         return true;
       }

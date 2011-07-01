@@ -38,7 +38,7 @@ public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
     return "{ -> ... }.call()";
   }
 
-  protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
+  protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     for (PsiElement element : elements) {
       if (element instanceof GroovyPsiElement) {
         ((GroovyPsiElement) element).accept(new MyMemoizingVisitor());
@@ -46,7 +46,7 @@ public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
     }
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    final GrMethodCallExpression call = (GrMethodCallExpression) factory.createTopElementFromText("{ -> }.call()");
+    final GrMethodCallExpression call = (GrMethodCallExpression) factory.createExpressionFromText("{ -> }.call()", context);
     final GrClosableBlock closure = (GrClosableBlock) ((GrReferenceExpression) call.getInvokedExpression()).getQualifierExpression();
     addStatements(closure, elements);
     return call;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.common.*;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
-import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.CheckoutFileByRevisionOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.CheckoutFileOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.CheckoutFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.CheckoutProjectOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsCommit.CommitFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditOperation;
@@ -40,6 +40,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.cvsSupport2.errorHandling.CvsProcessException;
@@ -124,8 +125,11 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createCheckoutFileHandler(FilePath[] files,
-                                                     CvsConfiguration configuration) {
-    return new CheckoutHandler(files, configuration);
+                                                     CvsConfiguration configuration,
+                                                     PerformInBackgroundOption option) {
+    return new CommandCvsHandler(CvsBundle.message("operation.name.check.out.files"), new CheckoutFilesOperation(files, configuration),
+                                 FileSetToBeUpdated.selectedFiles(files),
+                                 (option == null) ? PerformInBackgroundOption.DEAF : option);
   }
 
   public static CvsHandler createCheckoutHandler(CvsEnvironment environment,
@@ -133,13 +137,11 @@ public class CommandCvsHandler extends AbstractCvsHandler {
                                                  final File target,
                                                  boolean useAltCheckoutDir,
                                                  boolean makeNewFilesReadOnly, final PerformInBackgroundOption option) {
-    CheckoutProjectOperation checkoutOperation
-      = CheckoutProjectOperation.create(environment, checkoutPath, target,
+    CheckoutProjectOperation checkoutOperation = CheckoutProjectOperation.create(environment, checkoutPath, target,
                                         useAltCheckoutDir, makeNewFilesReadOnly);
-
     return new CommandCvsHandler(CvsBundle.message("operation.name.check.out.project"), checkoutOperation, FileSetToBeUpdated.allFiles(),
                                  (option == null) ? PerformInBackgroundOption.DEAF : option) {
-      public void runComplitingActivities() {
+      public void finish() {
         CvsEntriesManager.getInstance().clearAll();
       }
     };
@@ -159,14 +161,14 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   public static CvsHandler createBranchOrTagHandler(FilePath[] selectedFiles, String branchName,
                                                     boolean switchToThisAction, boolean overrideExisting,
                                                     boolean isTag, boolean makeNewFilesReadOnly, Project project) {
-    CompositeOperaton operation = new CompositeOperaton();
+    CompositeOperation operation = new CompositeOperation();
     operation.addOperation(new BranchOperation(selectedFiles, branchName, overrideExisting, isTag));
     if (switchToThisAction) {
       operation.addOperation(new UpdateOperation(selectedFiles, branchName, makeNewFilesReadOnly, project));
     }
     return new CommandCvsHandler(isTag ? CvsBundle.message("operation.name.create.tag")
-                                 : CvsBundle.message("operation.name.create.branch"), operation,
-                                                                                                   FileSetToBeUpdated.selectedFiles(selectedFiles));
+                                       : CvsBundle.message("operation.name.create.branch"), operation,
+                                 FileSetToBeUpdated.selectedFiles(selectedFiles));
   }
 
   public static CvsHandler createCommitHandler(FilePath[] selectedFiles,
@@ -252,7 +254,8 @@ public class CommandCvsHandler extends AbstractCvsHandler {
 
     final String revision = getRevision(entry);
 
-    final CheckoutFileByRevisionOperation operation = new CheckoutFileByRevisionOperation(parent, name, revision, makeNewFilesReadOnly);
+    final CheckoutFileOperation operation =
+      new CheckoutFileOperation(parent, new SimpleRevision(revision), name, makeNewFilesReadOnly);
     final CommandCvsHandler cvsHandler =
       new CommandCvsHandler(CvsBundle.message("operation.name.restore"), operation, FileSetToBeUpdated.EMPTY);
 
@@ -383,10 +386,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     return false;
   }
 
-  protected void onOperationFinished(ModalityContext modalityContext) {
-
-  }
-
+  protected void onOperationFinished(ModalityContext modalityContext) {}
 
   protected void addFileToCheckout(VirtualFile file) {
     addOperation(new CheckoutFileOperation(file.getParent(), RevisionOrDateImpl.createOn(file), file.getName(), false));
@@ -405,7 +405,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createGetFileFromRepositoryHandler(CvsLightweightFile[] cvsLightweightFiles, boolean makeNewFilesReadOnly) {
-    CompositeOperaton compositeOperaton = new CompositeOperaton();
+    CompositeOperation compositeOperaton = new CompositeOperation();
     final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
     for (CvsLightweightFile cvsLightweightFile : cvsLightweightFiles) {
       File root = cvsLightweightFile.getRoot();
@@ -416,8 +416,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       }
       String alternativeCheckoutPath = getAlternativeCheckoutPath(cvsLightweightFile, workingDirectory);
       CheckoutProjectOperation checkoutFileOperation = new CheckoutProjectOperation(new String[]{cvsLightweightFile.getModuleName()},
-                                                                                    entriesManager
-                                                                                      .getCvsConnectionSettingsFor(root),
+                                                                                    entriesManager.getCvsConnectionSettingsFor(root),
                                                                                     makeNewFilesReadOnly,
                                                                                     workingDirectory,
                                                                                     alternativeCheckoutPath,

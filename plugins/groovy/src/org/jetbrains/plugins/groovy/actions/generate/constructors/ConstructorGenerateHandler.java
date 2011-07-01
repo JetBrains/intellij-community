@@ -23,11 +23,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator;
 
 import java.util.ArrayList;
@@ -109,7 +109,7 @@ public class ConstructorGenerateHandler extends GenerateConstructorHandler {
       GrMethod grConstructor =
         GroovyPsiElementFactory.getInstance(aClass.getProject()).createConstructorFromText(constructorName, paramTypes, paramNames, body);
 
-      PsiUtil.shortenReferences(grConstructor);
+      GrReferenceAdjuster.shortenReferences(grConstructor);
 
       grConstructors.add(new GroovyGenerationInfo<GrMethod>(grConstructor));
     }

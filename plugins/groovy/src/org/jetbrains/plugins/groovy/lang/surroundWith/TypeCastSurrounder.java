@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
@@ -27,8 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * Date: 25.05.2007
  */
 public class TypeCastSurrounder extends GroovyExpressionSurrounder {
-  protected TextRange surroundExpression(GrExpression expression) {
-    GrParenthesizedExpression parenthesized = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("((Type)a)");
+  protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
+    GrParenthesizedExpression parenthesized = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createExpressionFromText("((Type)a)", context);
     GrTypeCastExpression typeCast = (GrTypeCastExpression) parenthesized.getOperand();
     replaceToOldExpression(typeCast.getOperand(), expression);
     GrTypeElement typeElement = typeCast.getCastTypeElement();

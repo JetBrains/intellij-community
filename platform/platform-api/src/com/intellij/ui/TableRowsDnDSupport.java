@@ -51,9 +51,24 @@ public class TableRowsDnDSupport {
           final Object o = event.getAttachedObject();
           final Point p = event.getPoint();
           if (o instanceof Integer) {
-            final int oldIndex = ((Integer)o).intValue();
-            final int newIndex = table.rowAtPoint(p);
-            model.exchangeRows(oldIndex, newIndex);
+            int oldIndex = ((Integer)o).intValue();
+            int newIndex = table.rowAtPoint(p);
+            if (newIndex == -1) {
+              newIndex = table.getRowCount() - 1;
+            }
+            int min = Math.min(oldIndex, newIndex);
+            int max = Math.max(oldIndex, newIndex);
+            if (newIndex > oldIndex) {
+              while (min < max) {
+                model.exchangeRows(min, min + 1);
+                min++;
+              }
+            } else {
+              while (max > min) {
+                model.exchangeRows(max, max - 1);
+                max--;
+              }
+            }
           }
         }
       }).install();

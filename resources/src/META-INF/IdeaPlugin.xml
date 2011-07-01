@@ -340,7 +340,7 @@
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.DeannotateIntentionAction</className>
+      <className>com.intellij.codeInsight.intention.impl.DeannotateIntentionAction</className>                                ¡
       <category>Control Flow</category>
     </intentionAction>
 
@@ -358,6 +358,10 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateCastExpressionFromInstanceofAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.testIntegration.createTest.CreateTestAction</className>
       <category>Declaration</category>
     </intentionAction>
     <intentionAction>
@@ -449,10 +453,6 @@
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertRelativePathToAbsoluteIntentionAction</className>
       <category>Other</category>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.intellij.testIntegration.createTest.CreateTestAction</className>
     </intentionAction>
 
     <intentionAction>

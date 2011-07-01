@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,8 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
                                Entry entry,
                                boolean makeNewFilesReadOnly,
                                final boolean isDirectory) {
-    this(parent, RevisionOrDateImpl.createOn(parent, entry, config.CHECKOUT_DATE_OR_REVISION_SETTINGS), fileName, makeNewFilesReadOnly, isDirectory);
+    this(parent, RevisionOrDateImpl.createOn(parent, entry, config.CHECKOUT_DATE_OR_REVISION_SETTINGS), fileName, makeNewFilesReadOnly,
+         isDirectory);
   }
 
   public CheckoutFileOperation(final VirtualFile parent,
@@ -58,7 +59,19 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
                                final String fileName,
                                boolean makeNewFilesReadOnly) {
     this(parent, revisionOrDate, fileName, makeNewFilesReadOnly, null);
+  }
 
+  private CheckoutFileOperation(final VirtualFile parent,
+                                RevisionOrDate revisionOrDate,
+                                final String fileName,
+                                boolean makeNewFilesReadOnly,
+                                Boolean isDirectory/*null means detect*/) {
+    super(new CheckoutAdminReader());
+    myMakeNewFilesReadOnly = makeNewFilesReadOnly;
+    myRevisionOrDate = revisionOrDate;
+    myFile = CvsVfsUtil.getFileFor(parent, fileName);
+    myIsDirectory = isDirectory == null ? myFile.isDirectory() : isDirectory;
+    myModuleName = getModuleName(parent, fileName);
     addFile(myFile.getAbsolutePath());
   }
 
@@ -75,19 +88,6 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
         }
       }
     }.execute().getResultObject();
-  }
-
-  private CheckoutFileOperation(final VirtualFile parent,
-                                RevisionOrDate revisionOrDate,
-                                final String fileName,
-                                boolean makeNewFilesReadOnly,
-                                Boolean isDirectory/*null means detect*/) {
-    super(new CheckoutAdminReader());
-    myMakeNewFilesReadOnly = makeNewFilesReadOnly;
-    myRevisionOrDate = revisionOrDate;
-    myFile = CvsVfsUtil.getFileFor(parent, fileName);
-    myIsDirectory = isDirectory == null ? myFile.isDirectory() : isDirectory;
-    myModuleName = getModuleName(parent, fileName);
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {

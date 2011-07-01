@@ -43,9 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -69,7 +67,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -274,113 +271,6 @@ public class PsiUtil {
     final GroovyLexer lexer = new GroovyLexer();
     lexer.start(text);
     return TokenSets.REFERENCE_NAMES_WITHOUT_NUMBERS.contains(lexer.getTokenType()) && lexer.getTokenEnd() == text.length();
-  }
-
-  public static void shortenReferences(GroovyPsiElement element) {
-    final TextRange textRange = element.getTextRange();
-    doShorten(element, textRange.getStartOffset(), textRange.getEndOffset());
-  }
-
-  public static void shortenReferences(GroovyPsiElement element, int start, int end) {
-    doShorten(element, start, end);
-  }
-
-  private static void doShorten(PsiElement element, int start, int end) {
-    PsiElement child = element.getFirstChild();
-    while (child != null) {
-      final TextRange range = child.getTextRange();
-
-      if (start < range.getEndOffset() && range.getStartOffset() < end) {
-        if (child instanceof GrQualifiedReference) {
-          shortenReference((GrQualifiedReference)child);
-        }
-
-        doShorten(child, start, end);
-      }
-      child = child.getNextSibling();
-    }
-  }
-
-
-  public static <Qualifier extends PsiElement> boolean shortenReference(GrQualifiedReference<Qualifier> ref) {
-    final Qualifier qualifier = ref.getQualifier();
-    if (qualifier == null || qualifier instanceof GrSuperReferenceExpression || cannotShortenInContext(ref)) {
-      return false;
-    }
-    if (!canShorten(qualifier)) return false;
-
-    final PsiElement resolved = ref.resolve();
-    if (resolved == null) return false;
-
-    final GrQualifiedReference<Qualifier> copy = getCopy(ref);
-
-    copy.setQualifier(null);
-    if (!copy.isReferenceTo(resolved)) {
-      if (resolved instanceof PsiClass) {
-        final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
-        final PsiClass clazz = (PsiClass)resolved;
-        final String qName = clazz.getQualifiedName();
-        if (qName != null) {
-          if (mayInsertImport(ref)) {
-            final GrImportStatement added = file.addImportForClass(clazz);
-            if (!copy.isReferenceTo(resolved)) {
-              file.removeImport(added);
-              return false;
-            }
-          }
-        }
-      }
-      else {
-        return false;
-      }
-    }
-    ref.setQualifier(null);
-    return true;
-  }
-
-  private static <Qualifier extends PsiElement> GrQualifiedReference<Qualifier> getCopy(GrQualifiedReference<Qualifier> ref) {
-    if (ref.getParent() instanceof GrMethodCall) {
-      final GrMethodCall copy = ((GrMethodCall)ref.getParent().copy());
-      return (GrQualifiedReference<Qualifier>)copy.getInvokedExpression();
-    }
-    return (GrQualifiedReference<Qualifier>)ref.copy();
-  }
-
-  private static <Qualifier extends PsiElement> boolean canShorten(Qualifier qualifier) {
-    if (qualifier instanceof GrCodeReferenceElement) return true;
-    if (qualifier instanceof GrExpression) {
-      if (qualifier instanceof GrThisReferenceExpression) return true;
-      if (seemsToBeQualifiedClassName((GrExpression)qualifier)) {
-        final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-        if (resolved instanceof PsiClass || resolved instanceof PsiPackage) return true;
-      }
-    }
-    return false;
-  }
-
-  private static <Qualifier extends PsiElement> boolean cannotShortenInContext(GrQualifiedReference<Qualifier> ref) {
-    return (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) == null &&
-            PsiTreeUtil.getParentOfType(ref, GrDocComment.class) != null) ||
-           PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) != null ||
-           PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) != null;
-  }
-
-  private static <Qualifier extends PsiElement> boolean mayInsertImport(GrQualifiedReference<Qualifier> ref) {
-    return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null &&
-           !(ref.getContainingFile() instanceof GroovyCodeFragment) &&
-           PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null;
-  }
-
-  @Nullable
-  public static GrTopLevelDefinition findPreviousTopLevelElementByThisElement(PsiElement element) {
-    PsiElement parent = element.getParent();
-
-    while (parent != null && !(parent instanceof GrTopLevelDefinition)) {
-      parent = parent.getParent();
-    }
-
-    if (parent == null) return null;
-    return ((GrTopLevelDefinition)parent);
   }
 
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
@@ -1151,19 +1041,6 @@ public class PsiUtil {
     if (!(firstArg instanceof GrListOrMap)) return GrNamedArgument.EMPTY_ARRAY;
 
     return ((GrListOrMap)firstArg).getNamedArguments();
-  }
-
-  private static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
-    if (qualifier == null) return false;
-    while (qualifier instanceof GrReferenceExpression) {
-      final PsiElement nameElement = ((GrReferenceExpression)qualifier).getReferenceNameElement();
-      if (((GrReferenceExpression)qualifier).getTypeArguments().length > 0) return false;
-      if (nameElement == null || nameElement.getNode().getElementType() != GroovyTokenTypes.mIDENT) return false;
-      IElementType dotType = ((GrReferenceExpression)qualifier).getDotTokenType();
-      if (dotType != null && dotType != GroovyTokenTypes.mDOT) return false;
-      qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
-    }
-    return qualifier == null;
   }
 
   public static boolean isExpressionStatement(PsiElement expr) {

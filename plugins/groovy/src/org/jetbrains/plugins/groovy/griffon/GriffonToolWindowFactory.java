@@ -62,6 +62,11 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
       result.add(new TopLevelDirectoryNode(module, controllers, viewSettings, "Controllers", MvcIcons.CONTROLLERS_FOLDER, AbstractMvcPsiNodeDescriptor.CONTROLLERS_FOLDER));
     }
 
+    final PsiDirectory services = findDirectory(project, root, "griffon-app/services");
+    if (services != null) {
+      result.add(new TopLevelDirectoryNode(module, services, viewSettings, "Services", MvcIcons.SERVICE, AbstractMvcPsiNodeDescriptor.SERVICES_FOLDER));
+    }
+
     final PsiDirectory views = findDirectory(project, root, "griffon-app/views");
     if (views != null) {
       result.add(new TopLevelDirectoryNode(module, views, viewSettings, "Views", GroovyIcons.GROOVY_ICON_16x16, AbstractMvcPsiNodeDescriptor.VIEWS_FOLDER));

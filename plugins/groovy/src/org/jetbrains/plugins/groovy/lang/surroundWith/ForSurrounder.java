@@ -29,9 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
  * Date: 25.05.2007
  */
 public class ForSurrounder extends GroovyManyStatementsSurrounder {
-  protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
+  protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrForStatement whileStatement = (GrForStatement) factory.createTopElementFromText("for(a in b){\n}");
+    GrForStatement whileStatement = (GrForStatement) factory.createStatementFromText("for(a in b){\n}", context);
     addStatements(((GrBlockStatement) whileStatement.getBody()).getBlock(), elements);
     return whileStatement;
   }

@@ -29,9 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
  * Date: 25.05.2007
  */
 public class WhileSurrounder extends GroovyManyStatementsSurrounder {
-  protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
+  protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrWhileStatement whileStatement = (GrWhileStatement) factory.createTopElementFromText("while(a){\n}");
+    GrWhileStatement whileStatement = (GrWhileStatement) factory.createStatementFromText("while(a){\n}", context);
     addStatements(((GrBlockStatement) whileStatement.getBody()).getBlock(), elements);
     return whileStatement;
   }

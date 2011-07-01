@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
@@ -27,8 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * Date: 25.05.2007
  */
 public class IfElseExprSurrounder extends GroovyConditionSurrounder {
-  protected TextRange surroundExpression(GrExpression expression) {
-    GrIfStatement ifStatement = (GrIfStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("if(a){4\n} else{\n}");
+  protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
+    GrIfStatement ifStatement = (GrIfStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createStatementFromText("if(a){4\n} else{\n}", context);
     replaceToOldExpression(ifStatement.getCondition(), expression);
     ifStatement = expression.replaceWithStatement(ifStatement);
     GrStatement psiElement = ifStatement.getThenBranch();

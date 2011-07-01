@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.SmartTypePointerManager;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ItemListener;
@@ -72,6 +72,14 @@ public class TypeSelector {
     if (types.length > 0) {
       ((JComboBox) myComponent).setSelectedIndex(0);
     }
+  }
+
+  public PsiType[] getTypes() {
+    final PsiType[] types = new PsiType[myComboBoxModel.mySuggestions.length];
+    for (int i = 0; i < types.length; i++) {
+      types[i] = myComboBoxModel.mySuggestions[i].getType();
+    }
+    return types;
   }
 
   private static PsiTypeItem[] wrapToItems(final PsiType[] types, Project project) {

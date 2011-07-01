@@ -26,9 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
  * Date: 22.05.2007
  */
 public class TryFinallySurrounder extends TrySurrounder {
-  protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
+  protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrTryCatchStatement tryStatement = (GrTryCatchStatement) factory.createTopElementFromText("try {\n} finally{\n}");
+    GrTryCatchStatement tryStatement = (GrTryCatchStatement) factory.createStatementFromText("try {\n} finally{\n}", context);
     addStatements(tryStatement.getTryBlock(), elements);
     return tryStatement;
   }

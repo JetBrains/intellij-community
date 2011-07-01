@@ -24,12 +24,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -97,7 +97,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
       GrDocMethodReference methodReference = (GrDocMethodReference) ref;
       GrDocMethodParams list = methodReference.getParameterList();
       for (GrDocMethodParameter parameter : list.getParameters()) {
-        PsiUtil.shortenReferences(parameter);
+        GrReferenceAdjuster.shortenReferences(parameter);
       }
       endOffset = methodReference.getTextRange().getEndOffset() + 1;
     }

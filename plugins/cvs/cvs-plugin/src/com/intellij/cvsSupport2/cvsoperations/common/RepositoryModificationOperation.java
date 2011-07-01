@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RepositoryModificationOperation extends CompositeOperaton {
+public class RepositoryModificationOperation extends CompositeOperation {
   private final CvsOperationOnFiles myRemoveRequests;
   private final CommitFilesOperation myCommitRequests;
   private int myAddedFilesCount = 0;
@@ -79,11 +79,6 @@ public class RepositoryModificationOperation extends CompositeOperaton {
     myCommitRequests.setMessage(parameters);
   }
 
-  //public void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException, CommandAbortedException {
-  //  addOperation(myCommitRequests);
-  //  super.execute(executionEnvironment);
-  //}
-  //
   protected List<CvsOperation> getSubOperations() {
     ArrayList<CvsOperation> result = new ArrayList<CvsOperation>(super.getSubOperations());
     result.add(myCommitRequests);

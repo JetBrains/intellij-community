@@ -13,31 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.facet.impl.ui.libraries;
+package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  */
-class LibraryNameAndLevelPanel {
+public class LibraryNameAndLevelPanel {
   private JTextField myLibraryNameField;
   private JComboBox myLevelComboBox;
-  private JPanel myPanel;
-  private JLabel myLevelLabel;
   private String myDefaultLibraryName;
 
-  LibraryNameAndLevelPanel(String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
-    if (level != null) {
+  public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
+    this(formBuilder, libraryName, Arrays.asList(LibrariesContainer.LibraryLevel.values()), level);
+  }
+
+  public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @NotNull List<LibrariesContainer.LibraryLevel> availableLevels,
+                                  @Nullable LibrariesContainer.LibraryLevel level) {
+    myLibraryNameField = new JTextField(25);
+    formBuilder.addLabeledComponent("&Name:", myLibraryNameField);
+    myLibraryNameField.setText(libraryName);
+    myLevelComboBox = new JComboBox();
+    if (level != null && !availableLevels.isEmpty()) {
+      formBuilder.addLabeledComponent("&Level:", myLevelComboBox);
       final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<LibrariesContainer.LibraryLevel, String>();
       levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
       levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
@@ -51,14 +59,8 @@ class LibraryNameAndLevelPanel {
           }
         }
       });
-      myLevelComboBox.setModel(new EnumComboBoxModel<LibrariesContainer.LibraryLevel>(LibrariesContainer.LibraryLevel.class));
-      myLevelComboBox.setSelectedItem(level);
+      myLevelComboBox.setModel(new CollectionComboBoxModel(availableLevels, level));
     }
-    else {
-      myLevelLabel.setVisible(false);
-      myLevelComboBox.setVisible(false);
-    }
-    myLibraryNameField.setText(libraryName);
   }
 
   public String getLibraryName() {
@@ -69,14 +71,22 @@ class LibraryNameAndLevelPanel {
     return (LibrariesContainer.LibraryLevel)myLevelComboBox.getSelectedItem();
   }
 
-  public JPanel getPanel() {
-    return myPanel;
+  public JTextField getLibraryNameField() {
+    return myLibraryNameField;
   }
 
-  public void updateDefaultName(@NotNull String defaultLibraryName) {
+  public JComboBox getLevelComboBox() {
+    return myLevelComboBox;
+  }
+
+  public void setDefaultName(@NotNull String defaultLibraryName) {
     if (myDefaultLibraryName != null && myDefaultLibraryName.equals(getLibraryName())) {
       myLibraryNameField.setText(defaultLibraryName);
     }
     myDefaultLibraryName = defaultLibraryName;
+  }
+
+  public static FormBuilder createFormBuilder() {
+    return new FormBuilder(false, 5);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
   public void rollbackMissingFileDeletion(List<FilePath> filePaths, final List<VcsException> exceptions,
                                                         final RollbackProgressListener listener) {
     final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths.toArray(new FilePath[filePaths.size()]),
-                                                                              CvsConfiguration.getInstance(myProject));
+                                                                              CvsConfiguration.getInstance(myProject), null);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(cvsHandler, CvsOperationExecutorCallback.EMPTY);
   }

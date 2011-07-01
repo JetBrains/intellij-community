@@ -15,8 +15,6 @@
  */
 package com.intellij.cvsSupport2.actions.cvsContext;
 
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -36,23 +34,13 @@ import java.util.Collection;
 public class CachedCvsContext implements CvsContext{
   private final boolean myIsActive;
   private final Collection<String> myDeletedFileNames;
-  private final String myFileToRestore;
-  private final File mySomeSelectedFile;
-  private final CvsLightweightFile myCvsLightweightFile;
   private final CvsLightweightFile[] myCvsLightweightFiles;
-  private final CvsEnvironment myEnvironment;
-  private final Collection<AddedFileInfo> myFilesToAdd;
 
   private final VcsContext myVcsContext;
 
   public CachedCvsContext(CvsContext baseContext){
     myIsActive = baseContext.cvsIsActive();
     myDeletedFileNames = baseContext.getDeletedFileNames();
-    myFileToRestore = baseContext.getFileToRestore();
-    mySomeSelectedFile = baseContext.getSomeSelectedFile();
-    myCvsLightweightFile = baseContext.getCvsLightweightFile();
-    myEnvironment = baseContext.getEnvironment();
-    myFilesToAdd = baseContext.getAllFilesToAdd();
     myCvsLightweightFiles = baseContext.getSelectedLightweightFiles();
     myVcsContext = baseContext;
   }
@@ -108,26 +96,6 @@ public class CachedCvsContext implements CvsContext{
 
   public Collection<String> getDeletedFileNames() {
     return myDeletedFileNames;
-  }
-
-  public String getFileToRestore() {
-    return myFileToRestore;
-  }
-
-  public File getSomeSelectedFile() {
-    return mySomeSelectedFile;
-  }
-
-  public CvsLightweightFile getCvsLightweightFile() {
-    return myCvsLightweightFile;
-  }
-
-  public CvsEnvironment getEnvironment() {
-    return myEnvironment;
-  }
-
-  public Collection<AddedFileInfo> getAllFilesToAdd() {
-    return myFilesToAdd;
   }
 
   public CvsLightweightFile[] getSelectedLightweightFiles() {

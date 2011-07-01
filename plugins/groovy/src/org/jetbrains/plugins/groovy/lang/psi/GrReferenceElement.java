@@ -46,4 +46,7 @@ public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiEleme
   GrTypeArgumentList getTypeArgumentList();
 
   void processVariants(PrefixMatcher matcher, Consumer<Object> consumer);
+
+  @Nullable
+  String getClassNameText();
 }

@@ -36,14 +36,10 @@ import java.util.List;
 public abstract class CvsHandler extends CvsMessagesAdapter{
 
   @NonNls private static final String NULL_HANDLER_NAME = "Null";
-  public static CvsHandler NULL = new CvsHandler(NULL_HANDLER_NAME, FileSetToBeUpdated.EMPTY) {
-    protected void addCvsListener(CvsMessagesListener listener) {
+  public static final CvsHandler NULL = new CvsHandler(NULL_HANDLER_NAME, FileSetToBeUpdated.EMPTY) {
+    protected void addCvsListener(CvsMessagesListener listener) {}
 
-    }
-
-    protected void removeCvsListener(CvsMessagesListener listener) {
-
-    }
+    protected void removeCvsListener(CvsMessagesListener listener) {}
 
     protected int getFilesToProcessCount() {
       return 0;
@@ -145,7 +141,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     try {
       internalRun(executor, runInReadThread());
     } finally {
-      deinitializeListeners();
+      cleanupListeners();
     }
     if (isCanceled())  throw new ProcessCanceledException();
     ProgressIndicator progress = getProgress();
@@ -154,7 +150,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     }
   }
 
-  private void deinitializeListeners() {
+  private void cleanupListeners() {
     removeCvsListener(getProgressListener());
     removeCvsListener(myMessagesConsole);
     removeCvsListener(this);
@@ -179,12 +175,9 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     return getProgressListener().getProgressIndicator();
   }
 
-  public void runComplitingActivities() {
-  }
+  public void finish() {}
 
-  public void beforeLogin(){
-
-  }
+  public void beforeLogin() {}
 
   public abstract boolean login(ModalityContext executor) throws Exception;
 

@@ -53,7 +53,7 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase {
       }
     });
 
-    myComboBox.addFocusListener(new FocusAdapter() {
+    myLabel.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
         myComboBox.showPopup();

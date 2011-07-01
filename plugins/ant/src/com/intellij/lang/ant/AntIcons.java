@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.cvsSupport2.cvsoperations.cvsCheckOut;
+package com.intellij.lang.ant;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
+import com.intellij.openapi.util.IconLoader;
+
+import javax.swing.*;
 
 /**
- * author: lesya
+ * @author nik
  */
-public class CheckoutFileByRevisionOperation extends CheckoutFileOperation{
-  public CheckoutFileByRevisionOperation(VirtualFile parent, String fileName, String revision, boolean makeNewFilesReadOnly) {
-    super(parent, new SimpleRevision(revision), fileName, makeNewFilesReadOnly);
-  }
+public interface AntIcons {
+  Icon ANT_TARGET_ICON = IconLoader.getIcon("/ant/target.png");
+  Icon ANT_META_TARGET_ICON = IconLoader.getIcon("/ant/metaTarget.png");
 }
