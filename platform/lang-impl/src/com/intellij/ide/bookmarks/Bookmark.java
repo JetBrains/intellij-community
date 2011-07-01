@@ -206,9 +206,11 @@ public class Bookmark {
       g.drawRect(x, y, getIconWidth(), getIconHeight());
 
       g.setColor(Color.black);
+      final Font oldFont = g.getFont();
       g.setFont(MNEMONIC_FONT);
 
       g.drawString(Character.toString(myMnemonic), x + 2, y + getIconHeight() - 2);
+      g.setFont(oldFont);
     }
 
     public int getIconWidth() {
