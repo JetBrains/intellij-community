@@ -102,6 +102,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     myVariableData = inputVariables;
     myHelpId = helpId;
     mySignature = new MethodSignatureComponent("", project, JavaFileType.INSTANCE);
+    mySignature.setPreferredSize(new Dimension(-1, 130));
     setTitle(title);
 
     // Create UI components
