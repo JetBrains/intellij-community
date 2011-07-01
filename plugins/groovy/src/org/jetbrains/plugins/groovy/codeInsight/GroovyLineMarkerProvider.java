@@ -319,20 +319,24 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     }
 
     for (final PsiClass aClass : classes) {
-      AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
-        public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-          ProgressManager.checkCanceled();
+      try {
+        AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
+          public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
+            ProgressManager.checkCanceled();
 
-          final PsiMethod superMethod = pair.getFirst();
-          if (isCorrectTarget(superMethod) && isCorrectTarget(pair.getSecond())) {
-            if (accessors.remove(superMethod)) {
-              LOG.assertTrue(superMethod instanceof GrAccessorMethod);
-              overridden.add(((GrAccessorMethod)superMethod).getProperty());
+            final PsiMethod superMethod = pair.getFirst();
+            if (isCorrectTarget(superMethod) && isCorrectTarget(pair.getSecond())) {
+              if (accessors.remove(superMethod)) {
+                LOG.assertTrue(superMethod instanceof GrAccessorMethod);
+                overridden.add(((GrAccessorMethod)superMethod).getProperty());
+              }
             }
+            return !fields.isEmpty();
           }
-          return !fields.isEmpty();
-        }
-      });
+        });
+      }
+      catch (IndexNotReadyException ignored) {
+      }
     }
 
     for (GrField field : overridden) {
