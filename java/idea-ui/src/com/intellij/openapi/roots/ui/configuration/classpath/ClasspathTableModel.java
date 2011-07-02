@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,13 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.ui.RowEditableTableModel;
 import com.intellij.util.ui.ItemRemovable;
 
 import javax.swing.table.AbstractTableModel;
@@ -29,7 +33,7 @@ import java.util.List;
 /**
 * @author nik
 */
-class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
+class ClasspathTableModel extends AbstractTableModel implements ItemRemovable, RowEditableTableModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathTableModel");
   public static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
   private static final String SCOPE_COLUMN_NAME = ProjectBundle.message("modules.order.export.scope.column");
@@ -80,8 +84,16 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
     return myItems.remove(row);
   }
 
+  @Override
+  public void addRow() {
+  }
+
   public void removeRow(int row) {
     removeDataRow(row);
+  }
+
+  @Override
+  public void exchangeRows(int index1, int index2) {
   }
 
   public void clear() {

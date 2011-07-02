@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
-import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -48,13 +47,16 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
@@ -71,7 +73,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private List<AddItemPopupAction<?>> myPopupActions = null;
-  private JButton myEditButton;
+  private AnActionButton myEditButton;
   private final ModuleConfigurationState myState;
 
   public ClasspathPanelImpl(ModuleConfigurationState state) {
@@ -163,8 +165,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       WHEN_FOCUSED
     );
 
-    add(ScrollPaneFactory.createScrollPane(myEntryTable), BorderLayout.CENTER);
-    add(createButtonsBlock(), BorderLayout.EAST);
+    add(createTableWithButtons(), BorderLayout.CENTER);
+    //add(createButtonsBlock(), BorderLayout.EAST);
 
     if (myEntryTable.getRowCount() > 0) {
       myEntryTable.getSelectionModel().setSelectionInterval(0,0);
@@ -228,7 +230,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         rootConfigurable.select((LibraryOrderEntry)entry, true);
       }
       else {
-        myEditButton.doClick();
+        myEditButton.actionPerformed(null);
       }
     }
     else if (entry instanceof JdkOrderEntry) {
@@ -240,81 +242,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
 
-  private JComponent createButtonsBlock() {
+  private JComponent createTableWithButtons() {
     final boolean isAnalyzeShown = ((ApplicationEx)ApplicationManager.getApplication()).isInternal();
 
-    final JButton addButton = new JButton(ProjectBundle.message("button.add"));
-    final JButton removeButton = new JButton(ProjectBundle.message("button.remove"));
-    myEditButton = new JButton(ProjectBundle.message("module.classpath.button.edit"));
-    final JButton upButton = new JButton(ProjectBundle.message("module.classpath.button.move.up"));
-    final JButton downButton = new JButton(ProjectBundle.message("module.classpath.button.move.down"));
-    final JButton analyzeButton = isAnalyzeShown ? new JButton(ProjectBundle.message("classpath.panel.analyze")) : null;
-
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(addButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    panel.add(removeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    panel.add(myEditButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    panel.add(upButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    panel.add(downButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, isAnalyzeShown ? 0.0 : 0.1, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    if( isAnalyzeShown) {
-      panel.add(analyzeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    }
-
-    myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting()) {
-          return;
-        }
-        final int[] selectedRows = myEntryTable.getSelectedRows();
-        boolean removeButtonEnabled = true;
-        int minRow = myEntryTable.getRowCount() + 1;
-        int maxRow = -1;
-        for (final int selectedRow : selectedRows) {
-          minRow = Math.min(minRow, selectedRow);
-          maxRow = Math.max(maxRow, selectedRow);
-          final ClasspathTableItem<?> item = myModel.getItemAt(selectedRow);
-          if (!item.isRemovable()) {
-            removeButtonEnabled = false;
-          }
-        }
-        upButton.setEnabled(minRow > 0 && minRow < myEntryTable.getRowCount());
-        downButton.setEnabled(maxRow >= 0 && maxRow < myEntryTable.getRowCount() - 1);
-        removeButton.setEnabled(removeButtonEnabled);
-        ClasspathTableItem<?> selectedItem = selectedRows.length == 1 ? myModel.getItemAt(selectedRows[0]) : null;
-        myEditButton.setEnabled(selectedItem != null && selectedItem.isEditable());
-      }
-    });
-
-    upButton.addActionListener(new ClasspathPanelAction(this) {
+    final AnActionButton addButton = new AnActionButton(ProjectBundle.message("button.add"), null, PlatformIcons.TABLE_ADD_ROW) {
       @Override
-      public void run() {
-        moveSelectedRows(-1);
-      }
-    });
-    downButton.addActionListener(new ClasspathPanelAction(this) {
-      @Override
-      public void run() {
-        moveSelectedRows(+1);
-      }
-    });
-
-    if(isAnalyzeShown) {
-      analyzeButton.addActionListener(new ClasspathPanelAction(this) {
-        @Override
-        public void run() {
-          AnalyzeDependenciesDialog.show(getRootModel().getModule());
-        }
-      });
-    }
-
-    UIUtil.addKeyboardShortcut(myEntryTable, removeButton, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-    UIUtil.addKeyboardShortcut(myEntryTable, addButton, CommonShortcuts.getInsertKeystroke());
-    UIUtil.addKeyboardShortcut(myEntryTable, upButton, KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK));
-    UIUtil.addKeyboardShortcut(myEntryTable, downButton, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK));
-
-    addButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(AnActionEvent e) {
         initPopupActions();
         final JBPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<AddItemPopupAction<?>>(null, myPopupActions) {
           @Override
@@ -345,11 +278,11 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             return "&" + value.getIndex() + "  " + value.getTitle();
           }
         });
-        popup.showUnderneathOf(addButton);
+        popup.showUnderneathOf(getComponent());
       }
-    });
+    };
 
-    removeButton.addActionListener(new ClasspathPanelAction(this) {
+    final ClasspathPanelAction removeAction = new ClasspathPanelAction(this) {
       @Override
       public void run() {
         final List removedRows = TableUtil.removeSelectedItems(myEntryTable);
@@ -371,10 +304,18 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myState.getProject()).getContext();
         context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, getRootModel().getModule()));
       }
-    });
+    };
 
-    myEditButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
+    final AnActionButton removeButton = new AnActionButton(ProjectBundle.message("button.remove"), null, PlatformIcons.TABLE_REMOVE_ROW) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        removeAction.actionPerformed(null);
+      }
+    };
+
+    myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, PlatformIcons.TABLE_EDIT_ROW) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
         final int row = myEntryTable.getSelectedRow();
         final ClasspathTableItem<?> item = myModel.getItemAt(row);
         final OrderEntry entry = item.getEntry();
@@ -404,8 +345,71 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         myEntryTable.repaint();
         ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();
       }
+    };
+
+    final AnActionButton upButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.up"), null, PlatformIcons.TABLE_MOVE_ROW_UP) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveSelectedRows(-1);
+      }
+    };
+
+    final AnActionButton downButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.down"), null, PlatformIcons.TABLE_MOVE_ROW_DOWN) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveSelectedRows(+1);
+      }
+    };
+
+    final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, PlatformIcons.TABLE_ANALYZE) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        AnalyzeDependenciesDialog.show(getRootModel().getModule());
+      }
+    };
+
+    List<AnActionButton> actions = new ArrayList<AnActionButton>();
+    actions.add(addButton);
+    actions.add(removeButton);
+    actions.add(upButton);
+    actions.add(downButton);
+    actions.add(myEditButton);
+    if (isAnalyzeShown) {
+      actions.add(analyzeButton);
+    }
+
+    myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) {
+          return;
+        }
+        final int[] selectedRows = myEntryTable.getSelectedRows();
+        boolean removeButtonEnabled = true;
+        int minRow = myEntryTable.getRowCount() + 1;
+        int maxRow = -1;
+        for (final int selectedRow : selectedRows) {
+          minRow = Math.min(minRow, selectedRow);
+          maxRow = Math.max(maxRow, selectedRow);
+          final ClasspathTableItem<?> item = myModel.getItemAt(selectedRow);
+          if (!item.isRemovable()) {
+            removeButtonEnabled = false;
+          }
+        }
+        upButton.setEnabled(minRow > 0 && minRow < myEntryTable.getRowCount());
+        downButton.setEnabled(maxRow >= 0 && maxRow < myEntryTable.getRowCount() - 1);
+        removeButton.setEnabled(removeButtonEnabled);
+        ClasspathTableItem<?> selectedItem = selectedRows.length == 1 ? myModel.getItemAt(selectedRows[0]) : null;
+        myEditButton.setEnabled(selectedItem != null && selectedItem.isEditable());
+      }
     });
-    return panel;
+
+    addButton.setShortcut(KeyboardShortcut.fromString("alt A"));
+    removeButton.setShortcut(KeyboardShortcut.fromString("alt DELETE"));
+    upButton.setShortcut(KeyboardShortcut.fromString("alt UP"));
+    downButton.setShortcut(KeyboardShortcut.fromString("alt DOWN"));
+    myEntryTable.setBorder(new LineBorder(UIUtil.getBorderColor()));
+
+    return EditableRowTable.wrapToTableWithButtons(myEntryTable, myModel, new CustomLineBorder(0, 1, 1, 1), new AddRemoveUpDownPanel.Buttons[0], actions.toArray(new AnActionButton[actions.size()]));
   }
 
   @Override
