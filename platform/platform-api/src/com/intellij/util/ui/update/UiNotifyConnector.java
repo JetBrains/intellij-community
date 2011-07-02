@@ -27,13 +27,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.lang.ref.WeakReference;
 
 public class UiNotifyConnector implements Disposable, HierarchyListener{
-  private Component myComponent;
+
+  @NotNull
+  private final WeakReference<Component> myComponent;
   private Activatable myTarget;
 
   public UiNotifyConnector(final Component component, final Activatable target) {
-    myComponent = component;
+    myComponent = new WeakReference<Component>(component);
     myTarget = target;
     if (component.isShowing()) {
       showNotify();
@@ -49,9 +52,10 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
       final Runnable runnable = new DumbAwareRunnable() {
         public void run() {
-          if (isDisposed() || myComponent == null) return;
+          final Component c = myComponent.get();
+          if (isDisposed() || c == null) return;
 
-          if (myComponent.isShowing()) {
+          if (c.isShowing()) {
             showNotify();
           }
           else {
@@ -81,10 +85,13 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     if (isDisposed()) return;
 
     myTarget.hideNotify();
-    myComponent.removeHierarchyListener(this);
+    final Component c = myComponent.get();
+    if (c != null) {
+      c.removeHierarchyListener(this);
+    }
 
     myTarget = null;
-    myComponent = null;
+    myComponent.clear();
   }
 
   private boolean isDisposed() {
