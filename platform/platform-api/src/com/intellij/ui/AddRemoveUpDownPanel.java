@@ -76,6 +76,13 @@ public class AddRemoveUpDownPanel extends JPanel {
     void doRemove();
     void doUp();
     void doDown();
+
+    class Adapter implements Listener {
+      public void doAdd() {}
+      public void doRemove() {}
+      public void doUp() {}
+      public void doDown() {}
+    }
   }
 
   private Map<Buttons, TableActionButton> myButtons = new HashMap<Buttons, TableActionButton>();
