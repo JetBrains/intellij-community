@@ -119,8 +119,18 @@ public final class IconLoader {
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String, java.lang.Class)}
    */
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass) {
-    URL url = aClass.getResource(path);
-    return findIcon(url);
+    return findIcon(path, aClass, false);
+  }
+
+  public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass, boolean computeNow) {
+    final LazyIcon icon = new LazyIcon(aClass, path);
+
+    if (computeNow) {
+      return icon.getOrComputeIcon();
+    }
+
+    return icon;
+
   }
 
   @Nullable
@@ -266,6 +276,54 @@ public final class IconLoader {
 
     public final synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
       super.paintIcon(null, g, x, y);
+    }
+  }
+
+  private static class LazyIcon implements Icon {
+    boolean myWasComputed;
+    Icon myIcon;
+    private final Class myCallerClass;
+    private final String myPath;
+
+    public LazyIcon(Class aClass, String path) {
+      myCallerClass = aClass;
+      myPath = path;
+      myWasComputed = false;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      final Icon icon = getOrComputeIcon();
+      if (icon != null) {
+        icon.paintIcon(c, g, x, y);
+      }
+    }
+
+    @Override
+    public int getIconWidth() {
+      final Icon icon = getOrComputeIcon();
+      return icon != null ? icon.getIconWidth() : 0;
+    }
+
+    @Override
+    public int getIconHeight() {
+      final Icon icon = getOrComputeIcon();
+      return icon != null ? icon.getIconHeight() : 0;
+    }
+
+    synchronized Icon getOrComputeIcon() {
+      if (!myWasComputed) {
+        myWasComputed = true;
+        URL url = myCallerClass.getResource(myPath);
+        myIcon = findIcon(url);
+      }
+
+      return myIcon;
+    }
+
+    @Override
+    public String toString() {
+      return "icon path=" + myPath + " class=" + myCallerClass + " wasComputed=" + myWasComputed + " icon=" + myIcon;
     }
   }
 }
