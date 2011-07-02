@@ -130,12 +130,6 @@ public class GroovyPositionManager implements PositionManager {
         if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
           requestor.processClassPrepare(debuggerProcess, referenceType);
         }
-        else {
-          final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
-          if (positionClasses.contains(referenceType)) {
-            requestor.processClassPrepare(debuggerProcess, referenceType);
-          }
-        }
       }
     };
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, qName + "$*");
