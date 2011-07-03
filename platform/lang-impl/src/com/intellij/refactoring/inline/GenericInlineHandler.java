@@ -20,6 +20,8 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
+import com.intellij.lang.refactoring.ReferencesToInlineSearcher;
+import com.intellij.lang.refactoring.ReferencesToInlineSearchers;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -64,7 +66,13 @@ public class GenericInlineHandler {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
-          usagesRef.set(ReferencesSearch.search(element).findAll());
+          final ReferencesToInlineSearcher searcher = ReferencesToInlineSearchers.getSearcher(element.getLanguage());
+          if (searcher != null) {
+            usagesRef.set(searcher.findReferences(element));
+          }
+          else {
+            usagesRef.set(ReferencesSearch.search(element).findAll());
+          }
         }
       }, "Find Usages", false, element.getProject());
       allReferences = usagesRef.get();

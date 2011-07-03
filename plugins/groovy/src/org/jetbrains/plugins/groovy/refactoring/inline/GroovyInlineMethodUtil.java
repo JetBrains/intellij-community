@@ -75,12 +75,12 @@ public class GroovyInlineMethodUtil {
     if (method.isConstructor()) {
       String message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.constructors", REFACTORING_NAME);
       showErrorMessage(message, project, editor);
-      return null;
+      return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
 
     if (invokedOnReference) {
       PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
-      if (reference == null) return null;
+      if (reference == null) return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
 
       PsiElement element = reference.getElement();
 
@@ -94,7 +94,7 @@ public class GroovyInlineMethodUtil {
       if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
         String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", REFACTORING_NAME);
         showErrorMessage(message, project, editor);
-        return null;
+        return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
 
       GrCallExpression call = (GrCallExpression)element.getParent();
@@ -102,7 +102,7 @@ public class GroovyInlineMethodUtil {
       if (PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
         String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", REFACTORING_NAME);
         showErrorMessage(message, project, editor);
-        return null;
+        return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
 
 
@@ -111,7 +111,7 @@ public class GroovyInlineMethodUtil {
         String message = GroovyRefactoringBundle
           .message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
         showErrorMessage(message, project, editor);
-        return null;
+        return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
     }
     if (method.getBlock() == null) {
@@ -122,7 +122,7 @@ public class GroovyInlineMethodUtil {
         message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
       }
       showErrorMessage(message, project, editor);
-      return null;
+      return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
 
     return inlineMethodDialogResult(method, project, invokedOnReference);
@@ -182,8 +182,9 @@ public class GroovyInlineMethodUtil {
       dialog.show();
       if (!dialog.isOK()) {
         WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        return null;
-      } else {
+        return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
+      }
+      else {
         return new InlineHandler.Settings() {
           public boolean isOnlyOneReferenceToInline() {
             return dialog.isInlineThisOnly();
@@ -484,7 +485,7 @@ public class GroovyInlineMethodUtil {
     * @param nameFilter specified parameter names (which ma have default initializers)
     * @param call
     */
-  private static void setDefaultValuesToParameters(GrMethod method, Collection<String> nameFilter, GrCallExpression call) throws IncorrectOperationException {
+  private static void setDefaultValuesToParameters(GrMethod method, @Nullable Collection<String> nameFilter, GrCallExpression call) throws IncorrectOperationException {
     if (nameFilter == null) {
       nameFilter = new ArrayList<String>();
       for (GrParameter parameter : method.getParameters()) {
@@ -565,12 +566,7 @@ public class GroovyInlineMethodUtil {
   private static String createVariableDefinitionText(GrParameter parameter, GrExpression expression, String varName) {
     final PsiModifierList modifierList = parameter.getModifierList();
     String modifiers;
-    if (modifierList != null) {
-      modifiers = modifierList.getText().trim();
-    }
-    else {
-      modifiers = "";
-    }
+    modifiers = modifierList.getText().trim();
 
     String type;
     final GrTypeElement typeElement = parameter.getTypeElementGroovy();

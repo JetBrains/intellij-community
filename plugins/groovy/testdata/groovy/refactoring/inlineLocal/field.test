@@ -3,11 +3,22 @@ class Foo {
 
     def a() {
         print foo.intValue()
+
+        print getFoo()
     }
 }
+
+print new Foo().foo
+print new Foo().getFoo()
+
 -----
 class Foo {
-    <caret>def a() {
+    def a() {
         print((2+2).intValue())
+
+        print 2+2
     }
 }
+
+print 2+2
+print 2+2

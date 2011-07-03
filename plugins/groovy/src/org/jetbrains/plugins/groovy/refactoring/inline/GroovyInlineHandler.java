@@ -17,46 +17,51 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.refactoring.ReferencesToInlineSearcher;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitution;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author ilyas
  */
-public class GroovyInlineHandler implements InlineHandler {
+public class GroovyInlineHandler implements InlineHandler, ReferencesToInlineSearcher {
 
-  private static final String INLINE_REFACTORING = GroovyRefactoringBundle.message("inline.refactoring.title");
+  private static final Logger LOG = Logger.getInstance(GroovyInlineHandler.class);
 
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
     if (element instanceof GrVariable) {
       if (GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
         return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable)element, editor);
-      } else if (element instanceof GrField) {
-        return GroovyInlineVariableUtil.inlineFieldSettings((GrField)element, editor);
       }
-    } else if (element instanceof GrMethod) {
-      return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod) element, editor, invokedOnReference);
-    } else {
-      Application application = ApplicationManager.getApplication();
-      if (!application.isUnitTestMode()) {
-        String message = GroovyRefactoringBundle.message("wrong.element.to.inline");
-        CommonRefactoringUtil.showErrorHint(element.getProject(), editor, message, INLINE_REFACTORING, HelpID.INLINE_VARIABLE);
+      else if (element instanceof GrField) {
+        return GroovyInlineVariableUtil.inlineFieldSettings((GrField)element, editor, invokedOnReference);
       }
+    }
+    else if (element instanceof GrAccessorMethod) {
+      return GroovyInlineVariableUtil.inlineFieldSettings(((GrAccessorMethod)element).getProperty(), editor, invokedOnReference);
+    }
+    else if (element instanceof GrMethod) {
+      return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod)element, editor, invokedOnReference);
+    }
+    else {
       if (element instanceof GrTypeDefinition || element instanceof GrClassSubstitution) {
         return null;      //todo inline to anonymous class, push members from super class
       }
@@ -73,11 +78,13 @@ public class GroovyInlineHandler implements InlineHandler {
     return null;
   }
 
-  public void removeDefinition(final PsiElement element, Settings settings) {
+  public void removeDefinition(PsiElement element, Settings settings) {
+    if (element instanceof GrAccessorMethod) {
+      element = ((GrAccessorMethod)element).getProperty();
+    }
     final PsiElement owner = element.getParent().getParent();
-    if (element instanceof GrVariable &&
-        owner instanceof GrVariableDeclarationOwner) {
-      ((GrVariableDeclarationOwner) owner).removeVariable(((GrVariable) element));
+    if (element instanceof GrVariable && owner instanceof GrVariableDeclarationOwner) {
+      ((GrVariableDeclarationOwner)owner).removeVariable(((GrVariable)element));
     }
     if (element instanceof GrMethod) {
       element.delete();
@@ -87,18 +94,35 @@ public class GroovyInlineHandler implements InlineHandler {
   @Nullable
   public Inliner createInliner(PsiElement element, Settings settings) {
     if (element instanceof GrVariable) {
-      if (GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
-        return GroovyInlineVariableUtil.createInlinerForVariable(((GrVariable)element));
-      }
-      else if (element instanceof GrField) {
-        return GroovyInlineVariableUtil.createInlinerForVariable(((GrVariable)element));
-      }
+      return GroovyInlineVariableUtil.createInlinerForVariable(((GrVariable)element));
+    }
+    if (element instanceof GrAccessorMethod) {
+      return GroovyInlineVariableUtil.createInlinerForVariable(((GrAccessorMethod)element).getProperty());
     }
     if (element instanceof GrMethod) {
-      return new GroovyMethodInliner((GrMethod) element);
+      return new GroovyMethodInliner((GrMethod)element);
     }
     return null;
   }
 
+  @Override
+  public Collection<PsiReference> findReferences(PsiElement element) {
+    if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod)element).getProperty();
+
+    if (!(element instanceof GrField)) {
+      return ReferencesSearch.search(element).findAll();
+    }
+
+    LOG.assertTrue(((GrField)element).getSetter() == null);
+
+    Collection<PsiReference> result = new ArrayList<PsiReference>();
+    result.addAll(ReferencesSearch.search(element).findAll());
+
+    for (GrAccessorMethod getter : ((GrField)element).getGetters()) {
+      result.addAll(MethodReferencesSearch.search(getter).findAll());
+    }
+
+    return result;
+  }
 }
 
