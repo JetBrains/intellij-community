@@ -429,8 +429,8 @@ public class PsiImplUtil {
     } else {
       if (oldQualifier == null) {
         if (refNameElement != null) {
-          ref.addBefore(newQualifier, refNameElement);
           node.addLeaf(GroovyTokenTypes.mDOT, ".", refNameElement.getNode());
+          ref.addBefore(newQualifier, refNameElement.getPrevSibling());
         }
       }
       else {
