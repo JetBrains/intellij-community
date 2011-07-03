@@ -173,9 +173,15 @@ public class GroovyStatementMover extends StatementUpDownMover {
       }
 
       private void addChildRanges(GrTopStatement[] statements) {
-        for (GrTopStatement statement : statements) {
+        for (int i = 0; i < statements.length; i++) {
+          GrTopStatement statement = statements[i];
           if (nlsAfter(statement)) {
             final LineRange range = getLineRange(statement);
+            if ((i == 0 || isStatement(statements[i-1])) && isStatement(statement)) {
+              for (int j = lastStart; j < range.startLine; j++) {
+                addRange(j + 1);
+              }
+            }
             lastStart = range.startLine;
             if (shouldDigInside(statement)) {
               statement.accept(this);
