@@ -92,13 +92,16 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (!PsiUtil.isAccessible(call, info.declaration)) {
         if (info.declaration instanceof PsiMethod) {
           String className = info.containingClass.getName();
-          String signature = GroovyRefactoringUtil.getMethodSignature((PsiMethod) info.declaration);
+          String signature = GroovyRefactoringUtil.getMethodSignature((PsiMethod)info.declaration);
           String name = CommonRefactoringUtil.htmlEmphasize(className + "." + signature);
           conflicts.putValue(info.declaration, GroovyRefactoringBundle.message("method.is.not.accessible.form.context.0", name));
-        } else if (info.declaration instanceof PsiField) {
-          String className = info.containingClass.getName();
-          String name = CommonRefactoringUtil.htmlEmphasize(className + "." + info.getPresentation());
-          conflicts.putValue(info.declaration, GroovyRefactoringBundle.message("field.is.not.accessible.form.context.0", name));
+        }
+        else if (info.declaration instanceof PsiField) {
+          if (!(info.declaration instanceof GrField && ((GrField)info.declaration).getGetters().length > 0)) { // conflict if field doesn't have implicit getters
+            String className = info.containingClass.getName();
+            String name = CommonRefactoringUtil.htmlEmphasize(className + "." + info.getPresentation());
+            conflicts.putValue(info.declaration, GroovyRefactoringBundle.message("field.is.not.accessible.form.context.0", name));
+          }
         }
       }
       final Ref<Boolean> hasSuper = new Ref<Boolean>(false);
