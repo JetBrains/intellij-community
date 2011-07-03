@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@ public interface ColorSettingsPage {
   /**
    * Returns the list of descriptors specifying the {@link TextAttributesKey} instances
    * for which colors are specified in the page. For such attribute keys, the user can choose
-   * all highlighting attributes (background color, foreground color, error stripe color and
-   * underline).
+   * all highlighting attributes (font type, background color, foreground color, error stripe color and
+   * effects).
    *
    * @return the list of attribute descriptors.
    */
