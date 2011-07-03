@@ -208,12 +208,6 @@ public class ImportDependenciesUtil {
   }
 
   @Nullable
-  private static VirtualFile findFileByAbsoluteOrRelativePath(@NotNull VirtualFile baseDir, @NotNull String path) {
-    VirtualFile libDir = LocalFileSystem.getInstance().findFileByPath(path);
-    return libDir != null ? libDir : LocalFileSystem.getInstance().findFileByPath(baseDir.getPath() + '/' + path);
-  }
-
-  @Nullable
   private static VirtualFile findModuleFileChild(@NotNull VirtualFile dir) {
     for (VirtualFile child : dir.getChildren()) {
       if (child.getFileType() instanceof ModuleFileType) {
@@ -269,9 +263,9 @@ public class ImportDependenciesUtil {
     String libDirPath;
     int i = 1;
     do {
-      libDirPath = defaultProperties.first.getProperty("android.library.reference." + i);
+      libDirPath = defaultProperties.first.getProperty(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + i);
       if (libDirPath != null) {
-        final VirtualFile libDir = findFileByAbsoluteOrRelativePath(baseDir, FileUtil.toSystemIndependentName(libDirPath));
+        final VirtualFile libDir = AndroidUtils.findFileByAbsoluteOrRelativePath(baseDir, FileUtil.toSystemIndependentName(libDirPath));
         if (libDir != null) {
           final Module depModule = ModuleUtil.findModuleForFile(libDir, project);
 

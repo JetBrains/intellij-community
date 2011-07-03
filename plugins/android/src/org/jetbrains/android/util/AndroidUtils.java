@@ -34,6 +34,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -49,6 +50,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -78,7 +80,10 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.run.AndroidRunConfiguration;
 import org.jetbrains.android.run.AndroidRunConfigurationType;
-import org.jetbrains.android.sdk.*;
+import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkType;
+import org.jetbrains.android.sdk.EmptySdkLog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,6 +135,10 @@ public class AndroidUtils {
   public static final int TIMEOUT = 3000000;
 
   private static final Key<ConsoleView> CONSOLE_VIEW_KEY = new Key<ConsoleView>("AndroidConsoleView");
+
+  @NonNls public static final String ANDROID_LIBRARY_PROPERTY = "android.library";
+  @NonNls public static final String ANDROID_TARGET_PROPERTY = "target";
+  @NonNls public static final String ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX = "android.library.reference.";
 
   private AndroidUtils() {
   }
@@ -746,6 +755,25 @@ public class AndroidUtils {
     return facet;
   }
 
+  @Nullable
+  public static PropertiesFile findPropertyFile(@NotNull final Module module, @NotNull String propertyFileName) {
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      final VirtualFile vFile = contentRoot.findChild(propertyFileName);
+      if (vFile != null) {
+        final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Override
+          public PsiFile compute() {
+            return PsiManager.getInstance(module.getProject()).findFile(vFile);
+          }
+        });
+        if (psiFile instanceof PropertiesFile) {
+          return (PropertiesFile)psiFile;
+        }
+      }
+    }
+    return null;
+  }
+
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
   public static Pair<Properties, VirtualFile> readPropertyFile(@NotNull Module module, @NotNull String propertyFileName) {
@@ -784,6 +812,18 @@ public class AndroidUtils {
       if (value != null) {
         return value;
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static VirtualFile findFileByAbsoluteOrRelativePath(@Nullable VirtualFile baseDir, @NotNull String path) {
+    VirtualFile libDir = LocalFileSystem.getInstance().findFileByPath(path);
+    if (libDir != null) {
+      return libDir;
+    }
+    else if (baseDir != null) {
+      return LocalFileSystem.getInstance().findFileByPath(baseDir.getPath() + '/' + path);
     }
     return null;
   }

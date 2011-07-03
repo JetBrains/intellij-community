@@ -93,7 +93,7 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
               final AndroidFacet androidFacet = (AndroidFacet)facet;
 
               final String androidLibraryPropValue = AndroidUtils
-                .getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, "android.library");
+                .getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
               if (androidLibraryPropValue != null && androidLibraryPropValue.equals("true")) {
                 androidFacet.getConfiguration().LIBRARY_PROJECT = true;
               }
