@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ui.table;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -66,7 +65,8 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       final Runnable r = new Runnable() {
         @Override
         public void run() {
-          if (getEditingColumn() != row && getEditingColumn() != column) return;
+          if (getEditingRow() != row && getEditingColumn() != column) return;
+
           Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
           if (focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, TableView.this)) return;
 
