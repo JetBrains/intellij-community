@@ -69,7 +69,6 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     String doubleStarName = null;
     for (int i = 1; i != parameters.length; i++) {
       PyParameter p = parameters[i];
-      if (p.getDefaultValue() != null) continue;
       functionParams.add(p.getName());
       if (p.getText().startsWith("**")) {
         doubleStarName = p.getText();
@@ -93,23 +92,18 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       PyParameter p = parameters[i];
       if (p.getDefaultValue() != null) continue;
       String param;
-      if (p.getDefaultValue() != null) {
-        param = p.getName();
+      param = p.getText();
+      if (param.startsWith("**")) {
+        addDouble = true;
+        if (doubleStarName == null)
+          doubleStarName = p.getText();
+        continue;
       }
-      else {
-        param = p.getText();
-        if (param.startsWith("**")) {
-          addDouble = true;
-          if (doubleStarName == null)
-            doubleStarName = p.getText();
-          continue;
-        }
-        if (param.startsWith("*")) {
-          addStar = true;
-          if (starName == null)
-            starName = p.getText();
-          continue;
-        }
+      if (param.startsWith("*")) {
+        addStar = true;
+        if (starName == null)
+          starName = p.getText();
+        continue;
       }
       if (addComma)
         superCall.append(",");
