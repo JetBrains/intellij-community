@@ -39,8 +39,10 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.EditableRowTable;
+import com.intellij.ui.TableColumnAnimator;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.JBTable;
+import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -53,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumn;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -184,6 +187,34 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   protected ParameterTableModelBase<ParameterInfoImpl> createParametersInfoModel(MethodDescriptor<ParameterInfoImpl> descriptor) {
     final PsiParameterList parameterList = ((JavaMethodDescriptor)descriptor).getMethod().getParameterList();
     return new JavaParameterTableModel(parameterList, myDefaultValueContext, this);
+  }
+
+  @Override
+  protected void customizeParametersTable(TableView<ParameterTableModelItemBase<ParameterInfoImpl>> table) {
+    final JTable t = table.getComponent();
+    final TableColumn defaultValue = t.getColumnModel().getColumn(2);
+    final TableColumn varArg = t.getColumnModel().getColumn(3);
+    t.removeColumn(defaultValue);
+    t.removeColumn(varArg);
+    t.getModel().addTableModelListener(new TableModelListener() {
+      @Override
+      public void tableChanged(TableModelEvent e) {
+        if (e.getType() == TableModelEvent.INSERT) {
+          t.getModel().removeTableModelListener(this);
+          final TableColumnAnimator animator = new TableColumnAnimator(t);
+          animator.setStep(48);
+          animator.addColumn(defaultValue, (t.getWidth() - 48) / 3);
+          animator.addColumn(varArg, 48);
+          animator.startAndDoWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              t.editCellAt(t.getRowCount() - 1, 0);
+            }
+          });
+          animator.start();
+        }
+      }
+    });
   }
 
   @Override
