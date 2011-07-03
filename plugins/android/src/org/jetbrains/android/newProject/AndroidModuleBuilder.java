@@ -23,8 +23,6 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,8 +52,8 @@ import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.importDependencies.ImportDependenciesUtil;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
@@ -95,9 +93,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
       final VirtualFile contentRoot = files[0];
-      final AndroidFacet facet = addAndroidFacet(rootModel, contentRoot);
+      final AndroidFacet facet = AndroidUtils.addAndroidFacet(rootModel, contentRoot, myProjectType == ProjectType.LIBRARY);
 
       if (myProjectType == null) {
+        ImportDependenciesUtil.importDependencies(rootModel.getModule(), true);
         return;
       }
 
@@ -434,22 +433,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
         }
       }, AndroidBundle.message("build.android.module.process.title"), null);
     }
-  }
-
-  @NotNull
-  private AndroidFacet addAndroidFacet(ModifiableRootModel rootModel, VirtualFile contentRoot) {
-    Module module = rootModel.getModule();
-    final FacetManager facetManager = FacetManager.getInstance(module);
-    ModifiableFacetModel model = facetManager.createModifiableModel();
-    AndroidFacet facet = facetManager.createFacet(AndroidFacet.getFacetType(), "Android", null);
-    AndroidFacetConfiguration configuration = facet.getConfiguration();
-    configuration.init(module, contentRoot);
-    if (myProjectType == ProjectType.LIBRARY) {
-      configuration.LIBRARY_PROJECT = true;
-    }
-    model.addFacet(facet);
-    model.commit();
-    return facet;
   }
 
   private void createResourcesAndLibs(final Project project, final VirtualFile rootDir) {

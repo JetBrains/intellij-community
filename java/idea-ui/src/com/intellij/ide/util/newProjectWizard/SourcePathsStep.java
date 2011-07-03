@@ -328,11 +328,15 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Trinity<Strin
   }
 
   protected List<Trinity<String, String, Collection<String>>> calculate() {
-    String contentEntryPath = getContentRootPath();
-    if (contentEntryPath == null) {
+    return calculateSourceRoots(getContentRootPath());
+  }
+
+  @NotNull
+  public static List<Trinity<String, String, Collection<String>>> calculateSourceRoots(final String contentRootPath) {
+    if (contentRootPath == null) {
       return EMPTY_STRING_STRING_ARRAY;
     }
-    final File entryFile = new File(contentEntryPath);
+    final File entryFile = new File(contentRootPath);
     if (!entryFile.exists()) {
       return EMPTY_STRING_STRING_ARRAY;
     }

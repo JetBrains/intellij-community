@@ -15,50 +15,35 @@
  */
 package org.jetbrains.android.facet;
 
-import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.dom.manifest.Manifest;
+import org.jetbrains.android.importDependencies.ImportDependenciesUtil;
 import org.jetbrains.android.newProject.AndroidModuleType;
-import org.jetbrains.android.sdk.*;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
 
 /**
  * @author yole
  */
 public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfiguration> {
-
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.facet.AndroidFacetType");
 
   public AndroidFacetType() {
     super(AndroidFacet.ID, "android", "Android");
@@ -67,26 +52,6 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
 
   public AndroidFacetConfiguration createDefaultConfiguration() {
     return new AndroidFacetConfiguration();
-  }
-
-  private static boolean tryToSetAndroidPlatform(Module module, Sdk sdk) {
-    AndroidPlatform platform = AndroidPlatform.parse(sdk);
-    if (platform != null) {
-      setSdk(module, sdk);
-      return true;
-    }
-    return false;
-  }
-
-  private static void setSdk(Module module, Sdk sdk) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    model.setSdk(sdk);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-      }
-    });
   }
 
   public AndroidFacet createFacet(@NotNull Module module,
@@ -99,186 +64,8 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
     return new AndroidFacet(module, name, configuration);
   }
 
-  private static void setupAndroidPlatformInNeccessary(Module module) {
-    Sdk currentSdk = ModuleRootManager.getInstance(module).getSdk();
-    if (currentSdk == null || !(currentSdk.getSdkType().equals(AndroidSdkType.getInstance()))) {
-      setupPlatform(module);
-    }
-  }
-
-  private static void setupPlatform(@NotNull Module module) {
-    if (tryToImportFromPropertyFiles(module)) {
-      return;
-    }
-
-    PropertiesComponent component = PropertiesComponent.getInstance();
-    if (component.isValueSet(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY)) {
-      String defaultPlatformName = component.getValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY);
-      Sdk defaultLib = ProjectJdkTable.getInstance().findJdk(defaultPlatformName, AndroidSdkType.getInstance().getName());
-      if (defaultLib != null && tryToSetAndroidPlatform(module, defaultLib)) {
-        return;
-      }
-    }
-    for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance())) {
-      if (tryToSetAndroidPlatform(module, sdk)) {
-        component.setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, sdk.getName());
-        return;
-      }
-    }
-  }
-
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  @Nullable
-  private static Pair<Properties, VirtualFile> readPropertyFile(@NotNull Module module, @NotNull String propertyFileName) {
-    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
-      final VirtualFile vFile = contentRoot.findChild(propertyFileName);
-      if (vFile != null) {
-        final Properties properties = new Properties();
-        try {
-          properties.load(new FileInputStream(new File(vFile.getPath())));
-          return new Pair<Properties, VirtualFile>(properties, vFile);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-      }
-    }
-    return null;
-  }
-
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  @Nullable
-  private static String getPropertyValue(@NotNull Module module, @NotNull String propertyFileName, @NotNull String propertyKey) {
-    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, propertyFileName);
-    if (pair != null) {
-      final String value = pair.first.getProperty(propertyKey);
-      if (value != null) {
-        return value;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Sdk findSuitableAndroidSdk(@NotNull String targetHashString, @Nullable String sdkDir) {
-    final List<Sdk> androidSdks = ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance());
-    for (Sdk sdk : androidSdks) {
-      final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
-      if (data != null) {
-        final AndroidPlatform androidPlatform = data.getAndroidPlatform();
-        if (androidPlatform != null) {
-          final String baseDir = FileUtil.toSystemIndependentName(androidPlatform.getSdk().getLocation());
-          if ((sdkDir == null || FileUtil.pathsEqual(baseDir, sdkDir)) &&
-              targetHashString.equals(androidPlatform.getTarget().hashString())) {
-            return sdk;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static boolean tryToImportFromPropertyFiles(@NotNull Module module) {
-    final String targetHashString = getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, "target");
-    if (targetHashString == null) {
-      return false;
-    }
-
-    String sdkDir = getPropertyValue(module, SdkConstants.FN_LOCAL_PROPERTIES, "sdk.dir");
-    if (sdkDir != null) {
-      sdkDir = FileUtil.toSystemIndependentName(sdkDir);
-    }
-
-    final Sdk sdk = findSuitableAndroidSdk(targetHashString, sdkDir);
-    if (sdk != null) {
-      setSdk(module, sdk);
-      return true;
-    }
-
-    if (sdkDir != null && tryToCreateAndSetAndroidSdk(module, sdkDir, targetHashString)) {
-      return true;
-    }
-
-    final String androidHomeValue = System.getenv(AndroidSdkUtils.ANDROID_HOME_ENV);
-    if (androidHomeValue != null &&
-        tryToCreateAndSetAndroidSdk(module, FileUtil.toSystemIndependentName(androidHomeValue), targetHashString)) {
-      return true;
-    }
-
-    for (String dir : AndroidSdkUtils.getAndroidSdkPathsFromExistingPlatforms()) {
-      if (tryToCreateAndSetAndroidSdk(module, dir, targetHashString)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean tryToCreateAndSetAndroidSdk(@NotNull Module module, @NotNull String baseDir, @NotNull String targetHashString) {
-    final AndroidSdk sdkObject = AndroidSdk.parse(baseDir, new EmptySdkLog());
-    if (sdkObject != null) {
-      final IAndroidTarget target = sdkObject.findTargetByHashString(targetHashString);
-      if (target != null) {
-        final Sdk androidSdk = AndroidSdkUtils.createNewAndroidPlatform(target, sdkObject.getLocation(), true);
-        if (androidSdk != null) {
-          setSdk(module, androidSdk);
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   public boolean isSuitableModuleType(ModuleType moduleType) {
     return moduleType instanceof JavaModuleType || moduleType instanceof AndroidModuleType;
-  }
-
-  @Nullable
-  private static VirtualFile findFileByAbsoluteOrRelativePath(@NotNull VirtualFile baseDir, @NotNull String path) {
-    VirtualFile libDir = LocalFileSystem.getInstance().findFileByPath(path);
-    return libDir != null ? libDir : LocalFileSystem.getInstance().findFileByPath(baseDir.getPath() + '/' + path);
-  }
-
-  private static void updateBackwardDependencies(@NotNull Module module) {
-    for (Module module1 : ModuleManager.getInstance(module.getProject()).getModules()) {
-      if (module1 != module) {
-        updateDependencies(module1, module);
-      }
-    }
-  }
-
-  private static void updateDependencies(@NotNull Module module, @Nullable Module allowedDepModule) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, SdkConstants.FN_DEFAULT_PROPERTIES);
-    if (pair != null) {
-      final VirtualFile baseDir = pair.second.getParent();
-      String libDirPath;
-      int i = 1;
-      do {
-        libDirPath = pair.first.getProperty("android.library.reference." + i);
-        if (libDirPath != null) {
-          final VirtualFile libDir = findFileByAbsoluteOrRelativePath(baseDir, FileUtil.toSystemIndependentName(libDirPath));
-          if (libDir != null) {
-            final Module depModule = ModuleUtil.findModuleForFile(libDir, module.getProject());
-
-            if (depModule != null &&
-                (allowedDepModule == null || allowedDepModule == depModule) &&
-                ArrayUtil.find(ModuleRootManager.getInstance(depModule).getContentRoots(), libDir) >= 0 &&
-                !ModuleRootManager.getInstance(module).isDependsOn(depModule)) {
-              model.addModuleOrderEntry(depModule);
-            }
-          }
-        }
-        i++;
-      }
-      while (libDirPath != null);
-    }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-      }
-    });
   }
 
   public void registerDetectors(FacetDetectorRegistry<AndroidFacetConfiguration> detectorRegistry) {
@@ -293,21 +80,23 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
       @Override
       public void afterFacetAdded(@NotNull final Facet facet) {
         if (facet instanceof AndroidFacet) {
-          final Project project = facet.getModule().getProject();
+          final Module module = facet.getModule();
+          final Project project = module.getProject();
+
+          ImportDependenciesUtil.importDependencies(module, true);
+
           StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
             public void run() {
               final Module module = facet.getModule();
-              setupAndroidPlatformInNeccessary(module);
+              AndroidSdkUtils.setupAndroidPlatformInNeccessary(module);
 
               final AndroidFacet androidFacet = (AndroidFacet)facet;
 
-              final String androidLibraryPropValue = getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, "android.library");
+              final String androidLibraryPropValue = AndroidUtils
+                .getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, "android.library");
               if (androidLibraryPropValue != null && androidLibraryPropValue.equals("true")) {
                 androidFacet.getConfiguration().LIBRARY_PROJECT = true;
-                updateBackwardDependencies(module);
               }
-
-              updateDependencies(module, null);
 
               Manifest manifest = androidFacet.getManifest();
               if (manifest != null) {
