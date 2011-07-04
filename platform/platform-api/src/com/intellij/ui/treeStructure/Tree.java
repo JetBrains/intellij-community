@@ -277,6 +277,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     myEmptyText.paint(this, g);
   }
 
+  @Override
+  protected void processKeyEvent(KeyEvent e) {
+    super.processKeyEvent(e);
+  }
+
   /**
    * Hack to prevent loosing multiple selection on Mac when clicking Ctrl+Left Mouse Button.
    * See faulty code at BasicTreeUI.selectPathForEvent():2245

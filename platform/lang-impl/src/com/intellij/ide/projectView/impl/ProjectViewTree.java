@@ -41,28 +41,6 @@ public abstract class ProjectViewTree extends DnDAwareTree {
     setCellRenderer(renderer);
   }
 
-  @Override
-  public void processKeyEvent(final KeyEvent e) {
-    if (!(getUI() instanceof UIUtil.MacTreeUI)) {
-      TreePath path = getSelectionPath();
-      if (path != null) {
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-          if (isExpanded(path)) {
-            collapsePath(path);
-            return;
-          }
-        } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-          if (isCollapsed(path)) {
-            expandPath(path);
-            return;
-          }
-        }
-      }
-    }
-
-    super.processKeyEvent(e);
-  }
-
   public final int getToggleClickCount() {
     DefaultMutableTreeNode node = getSelectedNode();
     if (node != null) {

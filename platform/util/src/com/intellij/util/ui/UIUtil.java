@@ -1789,6 +1789,35 @@ public class UIUtil {
         actionMap.put("expand", new TreeUIAction() {
           @Override
           public void actionPerformed(ActionEvent e) {
+            final Object source = e.getSource();
+            if (source instanceof JTree) {
+              int toSelect = -1;
+              int toScroll = -1;
+              JTree tree = (JTree)source;
+              int selectionRow = tree.getLeadSelectionRow();
+              if (selectionRow == -1) return;
+
+              if (!isLeaf(selectionRow) && tree.isExpanded(selectionRow)) {
+                if (selectionRow + 1 < tree.getRowCount()) {
+                  toSelect = selectionRow + 1;
+                  toScroll = toSelect;
+                }
+              } else if (isLeaf(selectionRow)) {
+                toScroll = selectionRow;
+              }
+
+              if (toSelect != -1) {
+                tree.setSelectionInterval(toSelect, toSelect);
+              }
+
+              if (toScroll != -1) {
+                tree.scrollRowToVisible(toScroll);
+              }
+
+              if (toSelect != -1 || toScroll != -1) return;
+            }
+
+
             expandAction.actionPerformed(e);
           }
         });
