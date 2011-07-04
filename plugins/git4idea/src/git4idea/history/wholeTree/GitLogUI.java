@@ -28,22 +28,23 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractFilterChildren;
-import com.intellij.openapi.vcs.CheckSamePattern;
-import com.intellij.openapi.vcs.ComparableComparator;
-import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
-import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.ui.SearchFieldAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -86,19 +87,19 @@ public class GitLogUI implements Disposable {
   private JBTable myJBTable;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   private boolean myDataBeingAdded;
-  private boolean myMissingSelectionData;
   private CardLayout myRepoLayout;
   private JPanel myRepoPanel;
   private boolean myStarted;
-//  private JTextField myFilterField;
   private String myPreviousFilter;
-  private List<String> mySearchContext;
+  private final CommentSearchContext myCommentSearchContext;
   private List<String> myUsersSearchContext;
   private String mySelectedBranch;
   private BranchSelectorAction myBranchSelectorAction;
-  private MySpecificDetails myDetails;
   private final DescriptionRenderer myDescriptionRenderer;
-  private final Speedometer mySelectionSpeedometer;
+
+  private GenericDetailsLoader<CommitI, GitCommit> myDetailsLoader;
+  private GenericDetailsLoader<CommitI, List<String>> myBranchesLoader;
+  private GitLogDetailsPanel myDetailsPanel;
 
   private StepType myState;
   private MoreAction myMoreAction;
@@ -107,24 +108,47 @@ public class GitLogUI implements Disposable {
   private MyCherryPick myCherryPickAction;
   private MyRefreshAction myRefreshAction;
   private AnAction myCopyHashAction;
+  // todo group somewhere??
+  private Consumer<CommitI> myDetailsLoaderImpl;
+  private Consumer<CommitI> myBranchesLoaderImpl;
+  private final RequestsMerger mySelectionRequestsMerger;
+
+  private final TableCellRenderer myAuthorRenderer;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
     myMediator = mediator;
-    mySearchContext = new ArrayList<String>();
+    myCommentSearchContext = new CommentSearchContext();
     myUsersSearchContext = new ArrayList<String>();
     myRefs = new HashMap<VirtualFile, SymbolicRefs>();
     myRecalculatedCommon = new SymbolicRefs();
     myPreviousFilter = "";
-    myDetails = new MySpecificDetails(myProject);
     myDescriptionRenderer = new DescriptionRenderer();
-    mySelectionSpeedometer = new Speedometer(20, 400);
+    myCommentSearchContext.addHighlighter(myDescriptionRenderer.myInner.myWorker);
+
+    mySelectionRequestsMerger = new RequestsMerger(new Runnable() {
+      @Override
+      public void run() {
+        selectionChanged();
+      }
+    }, new Consumer<Runnable>() {
+      @Override
+      public void consume(Runnable runnable) {
+        SwingUtilities.invokeLater(runnable);
+      }
+    });
     createTableModel();
     myState = StepType.CONTINUE;
 
+    initUiRefresh();
+    myAuthorRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES,                                                                          SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  private void initUiRefresh() {
     myUIRefresh = new UIRefresh() {
       @Override
       public void detailsLoaded() {
+        tryRefreshDetails();
         fireTableRepaint();
       }
 
@@ -273,31 +297,70 @@ public class GitLogUI implements Disposable {
       }
     });
 
-    /*final JComponent specificDetails = myDetails.create();
-    final Content specificDetailsContent = myUi.createContent("Specific0", specificDetails, "Details", PlatformIcons.UNSELECT_ALL_ICON, null);
-    myUi.addContent(specificDetailsContent, 0, PlaceInGrid.bottom, false);
-    repoContent.setCloseable(false);
-    repoContent.setPinned(true);
+    createDetailLoaders();
+  }
 
-    myUi.getDefaults().initTabDefaults(0, "Git log", null);*/
-
-    // todo should look like it, but the behaviour of search differs
-    /*new TableSpeedSearch(myJBTable, new Convertor<Object, String>() {
+  private void createDetailLoaders() {
+    myDetailsLoaderImpl = new Consumer<CommitI>() {
       @Override
-      public String convert(Object o) {
-        if (o instanceof CommitI) {
-          return ((CommitI) o).getDecorationString();
+      public void consume(final CommitI commitI) {
+        if (commitI == null) return;
+        final GitCommit gitCommit = fullCommitPresentation(commitI);
+
+        if (gitCommit == null) {
+          final MultiMap<VirtualFile, AbstractHash> question = new MultiMap<VirtualFile, AbstractHash>();
+          question.putValue(commitI.selectRepository(myRootsUnderVcs), commitI.getHash());
+          myDetailsCache.acceptQuestion(question);
+        } else {
+          myDetailsLoader.consume(commitI, gitCommit);
         }
-        return o == null ? null : o.toString();
       }
-    });*/
+    };
+    myDetailsLoader = new GenericDetailsLoader<CommitI, GitCommit>(myDetailsLoaderImpl, new PairConsumer<CommitI, GitCommit>() {
+      @Override
+      public void consume(CommitI commitI, GitCommit commit) {
+        myDetailsPanel.setData(commitI.selectRepository(myRootsUnderVcs), commit);
+      }
+    });
 
-    //myUi.getDefaults().initTabDefaults(0, "Git log", );
-    /*    myUi = RunnerLayoutUi.Factory.getInstance(project).create("Debug", "unknown!", sessionName, this);
-    myUi.getDefaults().initTabDefaults(0, "Debug", null);
+    myBranchesLoaderImpl = new Consumer<CommitI>() {
+      private Processor<AbstractHash> myRecheck;
 
-    myUi.getOptions().setTopToolbar(createTopToolbar(), ActionPlaces.DEBUGGER_TOOLBAR);
-*/
+      {
+        myRecheck = new Processor<AbstractHash>() {
+          @Override
+          public boolean process(AbstractHash abstractHash) {
+            if (myBranchesLoader.getCurrentlySelected() == null) return false;
+            return Comparing.equal(myBranchesLoader.getCurrentlySelected().getHash(), abstractHash);
+          }
+        };
+      }
+
+      @Override
+      public void consume(final CommitI commitI) {
+        if (commitI == null) return;
+        final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
+        final List<String> branches = myDetailsCache.getBranches(root, commitI.getHash());
+        if (branches != null) {
+          myBranchesLoader.consume(commitI, branches);
+          return;
+        }
+
+        myDetailsCache.loadAndPutBranches(root, commitI.getHash(), new Consumer<List<String>>() {
+          @Override
+          public void consume(List<String> strings) {
+            if (myProject.isDisposed() || strings == null) return;
+            myBranchesLoader.consume(commitI, strings);
+          }
+        }, myRecheck);
+      }
+    };
+    myBranchesLoader = new GenericDetailsLoader<CommitI, List<String>>(myBranchesLoaderImpl, new PairConsumer<CommitI, List<String>>() {
+      @Override
+      public void consume(CommitI commitI, List<String> strings) {
+        myDetailsPanel.setBranches(strings);
+      }
+    });
   }
 
   private JComponent createRepositoryBrowserDetails() {
@@ -308,9 +371,7 @@ public class GitLogUI implements Disposable {
     myJBTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        if (! myDataBeingAdded && (! e.getValueIsAdjusting())) {
-          selectionChanged();
-        }
+        mySelectionRequestsMerger.request();
       }
     });
     myRepoPanel.add("main", myRepositoryChangesBrowser);
@@ -323,24 +384,87 @@ public class GitLogUI implements Disposable {
   }
 
   private void selectionChanged() {
-    mySelectionSpeedometer.event();
-
+    if (myDataBeingAdded) {
+      mySelectionRequestsMerger.request();
+      return;
+    }
     final int[] rows = myJBTable.getSelectedRows();
-    myDetails.refresh(null, null);
+    selectionChangedForDetails(rows);
+
     if (rows.length == 0) {
       myRepoLayout.show(myRepoPanel, "empty");
       myRepoPanel.repaint();
-      myMissingSelectionData = false;
       return;
     } else if (rows.length >= 10) {
       myRepoLayout.show(myRepoPanel, "tooMuch");
       myRepoPanel.repaint();
-      myMissingSelectionData = false;
       return;
     }
     myRepoLayout.show(myRepoPanel, "loading");
     myRepoPanel.repaint();
-    updateDetailsFromSelection();
+
+    gatherNotLoadedData();
+  }
+
+  private static class MeaningfulSelection {
+    private CommitI myCommitI;
+    private int myMeaningfulRows;
+
+    private MeaningfulSelection(int[] rows, final BigTableTableModel tableModel) {
+      myMeaningfulRows = 0;
+      for (int row : rows) {
+        myCommitI = tableModel.getCommitAt(row);
+        if (!myCommitI.holdsDecoration()) {
+          ++myMeaningfulRows;
+          if (myMeaningfulRows > 1) break;
+        }
+      }
+    }
+
+    public CommitI getCommit() {
+      return myCommitI;
+    }
+
+    public int getMeaningfulRows() {
+      return myMeaningfulRows;
+    }
+  }
+
+  private void tryRefreshDetails() {
+    MeaningfulSelection meaningfulSelection = new MeaningfulSelection(myJBTable.getSelectedRows(), myTableModel);
+    if (meaningfulSelection.getMeaningfulRows() == 1) {
+      // still have one item selected which probably was not loaded
+      final CommitI commit = meaningfulSelection.getCommit();
+      myDetailsLoaderImpl.consume(commit);
+      myBranchesLoaderImpl.consume(commit);
+    }
+  }
+
+  private void selectionChangedForDetails(int[] rows) {
+    MeaningfulSelection meaningfulSelection = new MeaningfulSelection(rows, myTableModel);
+    int meaningfulRows = meaningfulSelection.getMeaningfulRows();
+    CommitI commitAt = meaningfulSelection.getCommit();
+
+    if (meaningfulRows == 0) {
+      myDetailsPanel.nothingSelected();
+      myDetailsLoader.updateSelection(null);
+      myBranchesLoader.updateSelection(null);
+    } else if (meaningfulRows == 1) {
+      final GitCommit commit = fullCommitPresentation(commitAt);
+      if (commit == null) {
+        myDetailsPanel.loading(commitAt.selectRepository(myRootsUnderVcs));
+      }
+      myDetailsLoader.updateSelection(commitAt);
+      myBranchesLoader.updateSelection(commitAt);
+    } else {
+      myDetailsPanel.severalSelected();
+      myDetailsLoader.updateSelection(null);
+      myBranchesLoader.updateSelection(null);
+    }
+  }
+
+  private GitCommit fullCommitPresentation(CommitI commitAt) {
+    return myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
   }
 
   private static JPanel panelWithCenteredText(final String text) {
@@ -353,71 +477,27 @@ public class GitLogUI implements Disposable {
     return jPanel;
   }
 
-  public void updateSelection() {
-    updateBranchesFor();
-    if (! myMissingSelectionData) return;
-    updateDetailsFromSelection();
+  public void updateByScroll() {
+    gatherNotLoadedData();
   }
 
-  private void updateBranchesFor() {
-    final int[] rows = myJBTable.getSelectedRows();
-    if (rows.length == 1 && myDetails.isMissingBranchesInfo() && mySelectionSpeedometer.getSpeed() < 0.1) {
-      final CommitI commit = myTableModel.getCommitAt(rows[0]);
-      final VirtualFile root = commit.selectRepository(myRootsUnderVcs);
-      if (commit.holdsDecoration()) return;
-      final GitCommit gitCommit = myDetailsCache.convert(root, commit.getHash());
-      if (gitCommit == null) return;
-      final List<String> branches = myDetailsCache.getBranches(root, commit.getHash());
-      if (branches != null) {
-        myDetails.putBranches(root, gitCommit, branches);
-      }
-
-      final CommitI commitI = myTableModel.getCommitAt(rows[0]);
-      if (! commit.equals(commitI)) return;
-      myDetailsCache.loadAndPutBranches(root, gitCommit.getHash(), commit.getHash(), new Consumer<List<String>>() {
-        @Override
-        public void consume(List<String> strings) {
-          if (myProject.isDisposed()) return;
-
-          final int[] afterRows = myJBTable.getSelectedRows();
-          if (myDetails.isMissingBranchesInfo() && afterRows.length == 1 && afterRows[0] == rows[0]) {
-            final CommitI afterCommit = myTableModel.getCommitAt(rows[0]);
-            if (afterCommit.holdsDecoration() || (! afterCommit.equals(commit))) return;
-            myDetails.putBranches(root, gitCommit, strings);
-          }
-        }
-      });
-    }
-  }
-
-  private void updateDetailsFromSelection() {
+  private void gatherNotLoadedData() {
     if (myDataBeingAdded) return;
-    myMissingSelectionData = false;
     final int[] rows = myJBTable.getSelectedRows();
-    if (rows.length == 1) {
-      final CommitI commitI = myTableModel.getCommitAt(rows[0]);
-      if (commitI != null && (! commitI.holdsDecoration())) {
-        final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
-        final GitCommit convert = myDetailsCache.convert(root, commitI.getHash());
-        if (convert != null) {
-          myDetails.refresh(root, convert);
-        }
-      }
-    }
     final List<GitCommit> commits = new ArrayList<GitCommit>();
     final MultiMap<VirtualFile,AbstractHash> missingHashes = new MultiMap<VirtualFile, AbstractHash>();
     for (int i = rows.length - 1; i >= 0; --i) {
       final int row = rows[i];
       final CommitI commitI = myTableModel.getCommitAt(row);
       if (commitI == null || commitI.holdsDecoration()) continue;
-      VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
-      AbstractHash hash = commitI.getHash();
-      final GitCommit details = myDetailsCache.convert(root, hash);
-      commits.add(details);
-      myMissingSelectionData |= details == null;
-      missingHashes.putValue(root, hash);
+      final GitCommit details = fullCommitPresentation(commitI);
+      if (details == null) {
+        missingHashes.putValue(commitI.selectRepository(myRootsUnderVcs), commitI.getHash());
+      } else if (missingHashes.isEmpty()) {   // no sense in collecting commits when s
+        commits.add(details);
+      }
     }
-    if (myMissingSelectionData) {
+    if (! missingHashes.isEmpty()) {
       myDetailsCache.acceptQuestion(missingHashes);
       return;
     }
@@ -481,7 +561,7 @@ public class GitLogUI implements Disposable {
     myMyChangeListener = new GitTableScrollChangeListener(myJBTable, myDetailsCache, myTableModel, new Runnable() {
       @Override
       public void run() {
-        updateSelection();
+        updateByScroll();
       }
     });
     scrollPane.getViewport().addChangeListener(myMyChangeListener);
@@ -492,10 +572,15 @@ public class GitLogUI implements Disposable {
     mainBorderWrapper.add(scrollPane, BorderLayout.CENTER);
     mainBorderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
     wrapper.add(mainBorderWrapper, BorderLayout.CENTER);
-    final JComponent specificDetails = myDetails.create();
+    myDetailsPanel = new GitLogDetailsPanel(myProject, myDetailsCache, new Convertor<VirtualFile, SymbolicRefs>() {
+      @Override
+      public SymbolicRefs convert(VirtualFile o) {
+        return myRefs.get(o);
+      }
+    });
     final JPanel borderWrapper = new JPanel(new BorderLayout());
     borderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
-    borderWrapper.add(specificDetails, BorderLayout.CENTER);
+    borderWrapper.add(myDetailsPanel.getComponent(), BorderLayout.CENTER);
 
     final Splitter splitter = new Splitter(true, 0.6f);
     splitter.setFirstComponent(wrapper);
@@ -604,7 +689,7 @@ public class GitLogUI implements Disposable {
         if (rows.length != 1) return;
         final CommitI commitAt = myTableModel.getCommitAt(rows[0]);
         if (commitAt == null) return;
-        final GitCommit gitCommit = myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
+        final GitCommit gitCommit = fullCommitPresentation(commitAt);
         if (gitCommit == null) return;
         sink.put(key, gitCommit.getDescription());
       }
@@ -615,7 +700,7 @@ public class GitLogUI implements Disposable {
   private GitCommit getCommitAtRow(int row) {
     final CommitI commitAt = myTableModel.getCommitAt(row);
     if (commitAt == null) return null;
-    final GitCommit gitCommit = myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
+    final GitCommit gitCommit = fullCommitPresentation(commitAt);
     if (gitCommit == null) return null;
     return gitCommit;
   }
@@ -647,20 +732,42 @@ public class GitLogUI implements Disposable {
     return true;
   }
 
-  private Pair<String, List<String>> preparse(String previousFilter) {
-    final String[] strings = previousFilter.split("[\\s]");
-    StringBuilder sb = new StringBuilder();
-    mySearchContext.clear();
-    final List<String> words = new ArrayList<String>();
-    for (String string : strings) {
-      if (string.trim().length() == 0) continue;
-      mySearchContext.add(string.toLowerCase());
-      final String word = StringUtil.escapeToRegexp(string);
-      sb.append(word).append(".*");
-      words.add(word);
+  private static class CommentSearchContext {
+    private final List<HighlightingRendererBase> myListeners;
+    private final List<String> mySearchContext;
+
+    private CommentSearchContext() {
+      mySearchContext = new ArrayList<String>();
+      myListeners = new ArrayList<HighlightingRendererBase>();
     }
-    new SubstringsFilter().doFilter(mySearchContext);
-    return new Pair<String, List<String>>(sb.toString(), words);
+
+    public void addHighlighter(final HighlightingRendererBase renderer) {
+      myListeners.add(renderer);
+    }
+
+    public void clear() {
+      mySearchContext.clear();
+      for (HighlightingRendererBase listener : myListeners) {
+        listener.setSearchContext(Collections.<String>emptyList());
+      }
+    }
+
+    public String preparse(String previousFilter) {
+      final String[] strings = previousFilter.split("[\\s]");
+      StringBuilder sb = new StringBuilder();
+      mySearchContext.clear();
+      for (String string : strings) {
+        if (string.trim().length() == 0) continue;
+        mySearchContext.add(string.toLowerCase());
+        final String word = StringUtil.escapeToRegexp(string);
+        sb.append(word).append(".*");
+      }
+      new SubstringsFilter().doFilter(mySearchContext);
+      for (HighlightingRendererBase listener : myListeners) {
+        listener.setSearchContext(mySearchContext);
+      }
+      return sb.toString();
+    }
   }
 
   public static class SubstringsFilter extends AbstractFilterChildren<String> {
@@ -729,103 +836,17 @@ public class GitLogUI implements Disposable {
     }
   };
 
-  private static abstract class HighlightingRendererBase {
-    private final List<String> mySearchContext;
-
-    protected HighlightingRendererBase(List<String> searchContext) {
-      mySearchContext = searchContext;
-    }
-
-    protected abstract void usual(final String s);
-    protected abstract void highlight(final String s);
-
-    void tryHighlight(String text) {
-      final String lower = text.toLowerCase();
-      int idxFrom = 0;
-      while (idxFrom < text.length()) {
-        boolean adjusted = false;
-        int adjustedIdx = text.length() + 1;
-        int adjLen = 0;
-        for (String word : mySearchContext) {
-          final int next = lower.indexOf(word, idxFrom);
-          if ((next != -1) && (adjustedIdx > next)) {
-            adjustedIdx = next;
-            adjLen = word.length();
-            adjusted = true;
-          }
-        }
-        if (adjusted) {
-          if (idxFrom != adjustedIdx) {
-            usual(text.substring(idxFrom, adjustedIdx));
-          }
-          idxFrom = adjustedIdx + adjLen;
-          highlight(text.substring(adjustedIdx, idxFrom));
-          continue;
-        }
-        usual(text.substring(idxFrom));
-        return;
-      }
-    }
-  }
-
-  private class AuthorRenderer extends ColoredTableCellRenderer {
-    private final SimpleTextAttributes myCurrentUserAttributes;
-    private final SimpleTextAttributes myHighlightAttributes;
-    private final List<String> mySearchContext;
-    private final SimpleTextAttributes myUsualAttributes;
-    protected final HighlightingRendererBase myWorker;
-
-    private AuthorRenderer(SimpleTextAttributes currentUserAttributes,
-                           SimpleTextAttributes highlightAttributes,
-                           List<String> searchContext,
-                           SimpleTextAttributes usualAttributes) {
-      myCurrentUserAttributes = currentUserAttributes;
-      myHighlightAttributes = highlightAttributes;
-      mySearchContext = searchContext;
-      myUsualAttributes = usualAttributes;
-      myWorker = new HighlightingRendererBase(searchContext) {
-        @Override
-        protected void usual(String s) {
-          append(s, myUsualAttributes);
-        }
-
-        @Override
-        protected void highlight(String s) {
-          append(s, myHighlightAttributes);
-        }
-      };
-    }
-
-    @Override
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      setBackground(getLogicBackground(selected, row));
-      if (BigTableTableModel.LOADING == value) {
-        return;
-      }
-      final String text = value.toString();
-
-      if (mySearchContext.isEmpty()) {
-        append(text, myUsualAttributes);
-        return;
-      }
-      myWorker.tryHighlight(text);
-    }
-  }
-
   private class HighLightingRenderer extends ColoredTableCellRenderer {
     private final SimpleTextAttributes myHighlightAttributes;
-    private final List<String> mySearchContext;
     private final SimpleTextAttributes myUsualAttributes;
     private SimpleTextAttributes myUsualAttributesForRun;
     protected final HighlightingRendererBase myWorker;
 
-    public HighLightingRenderer(SimpleTextAttributes highlightAttributes, SimpleTextAttributes usualAttributes,
-                                final List<String> searchContext) {
+    public HighLightingRenderer(SimpleTextAttributes highlightAttributes, SimpleTextAttributes usualAttributes) {
       myHighlightAttributes = highlightAttributes;
-      mySearchContext = searchContext;
       myUsualAttributes = usualAttributes == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : usualAttributes;
       myUsualAttributesForRun = myUsualAttributes;
-      myWorker = new HighlightingRendererBase(searchContext) {
+      myWorker = new HighlightingRendererBase() {
         @Override
         protected void usual(String s) {
           append(s, myUsualAttributesForRun);
@@ -838,6 +859,10 @@ public class GitLogUI implements Disposable {
       };
     }
 
+    public HighlightingRendererBase getWorker() {
+      return myWorker;
+    }
+
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       setBackground(getLogicBackground(selected, row));
@@ -847,7 +872,7 @@ public class GitLogUI implements Disposable {
       final String text = value.toString();
       myUsualAttributesForRun = isCurrentUser(row, text) ?
                                 SimpleTextAttributes.merge(myUsualAttributes, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) : myUsualAttributes;
-      if (mySearchContext.isEmpty()) {
+      if (myWorker.isEmpty()) {
         append(text, myUsualAttributesForRun);
         return;
       }
@@ -931,12 +956,7 @@ public class GitLogUI implements Disposable {
                                    CaptionIcon.Form.SQUARE, plus, branch.equals(commit.getCurrentBranch()));
             myBranchMap.put(branch, icon);
           }
-          myCurrentWidth = icon.getIconWidth();
-          myPanel.removeAll();
-          myPanel.setBackground(getLogicBackground(isSelected, row));
-          myPanel.add(new JLabel(icon));
-          myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          myPanel.add(myInner);
+          addOneIcon(table, value, isSelected, hasFocus, row, column, icon);
           return myPanel;
         }
         if ((localSize + remoteSize == 0) && (tagsSize > 0)) {
@@ -947,12 +967,7 @@ public class GitLogUI implements Disposable {
                                    tag, table, CaptionIcon.Form.ROUNDED, tagsSize > 1, false);
             myTagMap.put(tag, icon);
           }
-          myCurrentWidth = icon.getIconWidth();
-          myPanel.removeAll();
-          myPanel.setBackground(getLogicBackground(isSelected, row));
-          myPanel.add(new JLabel(icon));
-          myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          myPanel.add(myInner);
+          addOneIcon(table, value, isSelected, hasFocus, row, column, icon);
           return myPanel;
         }
       }
@@ -960,12 +975,21 @@ public class GitLogUI implements Disposable {
       return myInner;
     }
 
+    private void addOneIcon(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column, Icon icon) {
+      myCurrentWidth = icon.getIconWidth();
+      myPanel.removeAll();
+      myPanel.setBackground(getLogicBackground(isSelected, row));
+      myPanel.add(new JLabel(icon));
+      myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      myPanel.add(myInner);
+    }
+
     private class Inner extends HighLightingRenderer {
       private final IssueLinkRenderer myIssueLinkRenderer;
       private final Consumer<String> myConsumer;
 
       private Inner() {
-        super(HIGHLIGHT_TEXT_ATTRIBUTES, null, mySearchContext);
+        super(HIGHLIGHT_TEXT_ATTRIBUTES, null);
         myIssueLinkRenderer = new IssueLinkRenderer(myProject, this);
         myConsumer = new Consumer<String>() {
           @Override
@@ -992,10 +1016,8 @@ public class GitLogUI implements Disposable {
     Color bkgColor;
     final CommitI commitAt = myTableModel.getCommitAt(row);
     GitCommit gitCommit = null;
-    VirtualFile root = null;
-    if (commitAt != null & (! commitAt.holdsDecoration())) {
-      root = commitAt.selectRepository(myRootsUnderVcs);
-      gitCommit = myDetailsCache.convert(root, commitAt.getHash());
+    if (commitAt != null && (! commitAt.holdsDecoration())) {
+      gitCommit = fullCommitPresentation(commitAt);
     }
 
     if (isSelected) {
@@ -1003,7 +1025,7 @@ public class GitLogUI implements Disposable {
     } else {
       bkgColor = UIUtil.getTableBackground();
       if (gitCommit != null) {
-        if (myDetailsCache.getStashName(root, gitCommit.getShortHash()) != null) {
+        if (myDetailsCache.getStashName(commitAt.selectRepository(myRootsUnderVcs), gitCommit.getShortHash()) != null) {
           bkgColor = Colors.stashed;
         } else if (gitCommit.isOnLocal() && gitCommit.isOnTracked()) {
           bkgColor = Colors.commonThisBranch;
@@ -1019,9 +1041,6 @@ public class GitLogUI implements Disposable {
 
   private void initAuthor() {
     AUTHOR = new ColumnInfo<Object, String>("Author") {
-      private final TableCellRenderer myRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES,
-                                                                            SimpleTextAttributes.REGULAR_ATTRIBUTES, myUsersSearchContext);
-
       @Override
       public String valueOf(Object o) {
         if (o instanceof GitCommit) {
@@ -1032,7 +1051,7 @@ public class GitLogUI implements Disposable {
 
       @Override
       public TableCellRenderer getRenderer(Object o) {
-        return myRenderer;
+        return myAuthorRenderer;
       }
     };
   }
@@ -1096,7 +1115,7 @@ public class GitLogUI implements Disposable {
     final Collection<String> startingPoints = mySelectedBranch == null ? Collections.<String>emptyList() : Collections.singletonList(mySelectedBranch);
     myDescriptionRenderer.resetIcons();
     final boolean commentFilterEmpty = StringUtil.isEmptyOrSpaces(myPreviousFilter);
-    mySearchContext.clear();
+    myCommentSearchContext.clear();
     myUsersSearchContext.clear();
 
     if (commentFilterEmpty && (myUserFilterI.myFilter == null)) {
@@ -1105,9 +1124,8 @@ public class GitLogUI implements Disposable {
     } else {
       ChangesFilter.Comment comment = null;
       if (! commentFilterEmpty) {
-        final Pair<String, List<String>> preparse = preparse(myPreviousFilter);
-        final String first = preparse.getFirst();
-        comment = new ChangesFilter.Comment(first);
+        final String commentFilter = myCommentSearchContext.preparse(myPreviousFilter);
+        comment = new ChangesFilter.Comment(commentFilter);
       }
       Set<ChangesFilter.Filter> userFilters = null;
       if (myUserFilterI.myFilter != null) {
@@ -1127,160 +1145,20 @@ public class GitLogUI implements Disposable {
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(comment, userFilters, null,
                                                                                             possibleReferencies));
     }
+    myCommentSearchContext.addHighlighter(myDetailsPanel.getHtmlHighlighter());
     updateMoreVisibility();
-    selectionChanged();
+    mySelectionRequestsMerger.request();
     fireTableRepaint();
     myTableModel.fireTableRowsDeleted(0, was);
   }
 
-  private interface Colors {
+  interface Colors {
     Color tag = new Color(241, 239, 158);
     Color remote = new Color(188,188,252);
     Color local = new Color(117,238,199);
     Color ownThisBranch = new Color(198,255,226);
     Color commonThisBranch = new Color(223,223,255);
     Color stashed = new Color(225,225,225);
-  }
-
-  private class MySpecificDetails {
-    private JEditorPane myJEditorPane;
-    private JPanel myMarksPanel;
-    private BoxLayout myBoxLayout;
-    private final Project myProject;
-    private boolean myMissingBranchesInfo;
-
-    private MySpecificDetails(final Project project) {
-      myProject = project;
-    }
-
-    public JComponent create() {
-      myJEditorPane = new JEditorPane(UIUtil.HTML_MIME, "");
-      myJEditorPane.setPreferredSize(new Dimension(150, 100));
-      myJEditorPane.setEditable(false);
-      myJEditorPane.setBackground(UIUtil.getComboBoxDisabledBackground());
-      myJEditorPane.addHyperlinkListener(new BrowserHyperlinkListener());
-      myMarksPanel = new JPanel();
-      myBoxLayout = new BoxLayout(myMarksPanel, BoxLayout.X_AXIS);
-      myMarksPanel.setLayout(myBoxLayout);
-      final JPanel wrapper = new JPanel(new BorderLayout());
-      wrapper.add(myMarksPanel, BorderLayout.NORTH);
-      wrapper.add(myJEditorPane, BorderLayout.CENTER);
-      final Color color = UIUtil.getTableBackground();
-      myJEditorPane.setBackground(color);
-      wrapper.setBackground(color);
-      myMarksPanel.setBackground(color);
-      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(wrapper);
-      return scrollPane;
-    }
-
-    public void putBranches(VirtualFile root, final GitCommit commit, final List<String> branches) {
-      myMissingBranchesInfo = branches == null;
-      myJEditorPane.setText(parseDetails(root, commit, branches));
-    }
-
-    public boolean isMissingBranchesInfo() {
-      return myMissingBranchesInfo;
-    }
-
-    public void refresh(VirtualFile root, final GitCommit commit) {
-      if (commit == null) {
-        myJEditorPane.setText("");
-        myMarksPanel.removeAll();
-        myMissingBranchesInfo = false;
-      } else {
-        final List<String> branches = myDetailsCache.getBranches(root, commit.getShortHash());
-        myMissingBranchesInfo = branches == null;
-        final Font font = myJEditorPane.getFont().deriveFont((float) (myJEditorPane.getFont().getSize() - 1));
-        final String currentBranch = commit.getCurrentBranch();
-        myMarksPanel.removeAll();
-        for (String s : commit.getLocalBranches()) {
-          myMarksPanel.add(new JLabel(new CaptionIcon(Colors.local, font, s, myMarksPanel, CaptionIcon.Form.SQUARE, false,
-                                           s.equals(currentBranch))));
-        }
-        for (String s : commit.getRemoteBranches()) {
-          myMarksPanel.add(new JLabel(new CaptionIcon(Colors.remote, font, s, myMarksPanel, CaptionIcon.Form.SQUARE, false,
-                                           s.equals(currentBranch))));
-        }
-        for (String s : commit.getTags()) {
-          myMarksPanel.add(new JLabel(new CaptionIcon(Colors.tag, font, s, myMarksPanel, CaptionIcon.Form.ROUNDED, false,
-                                           s.equals(currentBranch))));
-        }
-        myMarksPanel.repaint();
-        myJEditorPane.setText(parseDetails(root, commit, branches));
-      }
-    }
-
-    private String parseDetails(VirtualFile root, final GitCommit c, final List<String> branches) {
-      final String hash = new HtmlHighlighter(c.getHash().getValue()).getResult();
-      final String author = new HtmlHighlighter(c.getAuthor()).getResult();
-      final String committer = new HtmlHighlighter(c.getCommitter()).getResult();
-      final String comment = IssueLinkHtmlRenderer.formatTextWithLinks(myProject, c.getDescription(),
-                                                                       new Convertor<String, String>() {
-                                                                         @Override
-                                                                         public String convert(String o) {
-                                                                           return new HtmlHighlighter(o).getResult();
-                                                                         }
-                                                                       });
-
-      final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
-        .append("</head><body><table>");
-      final String stashName = myDetailsCache.getStashName(root, c.getShortHash());
-      if (! StringUtil.isEmptyOrSpaces(stashName)) {
-        sb.append("<tr valign=\"top\"><td><b>").append(stashName).append("</b></td><td></td></tr>");
-      }
-      sb.append("<tr valign=\"top\"><td><i>Hash:</i></td><td>").append(
-        hash).append("</td></tr>" + "<tr valign=\"top\"><td><i>Author:</i></td><td>")
-        .append(author).append(" (").append(c.getAuthorEmail()).append(") <i>at</i> ")
-        .append(DateFormatUtil.formatPrettyDateTime(c.getAuthorTime()))
-        .append("</td></tr>" + "<tr valign=\"top\"><td><i>Commiter:</i></td><td>")
-        .append(committer).append(" (").append(c.getComitterEmail()).append(") <i>at</i> ")
-        .append(DateFormatUtil.formatPrettyDateTime(c.getDate())).append(
-        "</td></tr>" + "<tr valign=\"top\"><td><i>Description:</i></td><td><b>")
-        .append(comment).append("</b></td></tr>");
-      sb.append("<tr valign=\"top\"><td><i>Contained in branches:<i></td><td>");
-      if (branches != null && (! branches.isEmpty())) {
-        for (int i = 0; i < branches.size(); i++) {
-          String s = branches.get(i);
-          sb.append(s);
-          if (i + 1 < branches.size()) {
-            sb.append(", ");
-          }
-        }
-      } else if (branches != null && branches.isEmpty()) {
-        sb.append("<font color=gray>&lt;no branches&gt;</font>");
-      } else {
-        sb.append("<font color=gray>Loading...</font>");
-      }
-      sb.append("</td></tr>");
-      sb.append("</table></body></html>");
-      return sb.toString();
-    }
-  }
-
-  private class HtmlHighlighter extends HighlightingRendererBase {
-    private final String myText;
-    private final StringBuilder mySb;
-
-    private HtmlHighlighter(String text) {
-      super(mySearchContext);
-      myText = text;
-      mySb = new StringBuilder();
-    }
-
-    @Override
-    protected void highlight(String s) {
-      mySb.append("<font color=rgb(255,128,0)>").append(s).append("</font>");
-    }
-
-    @Override
-    protected void usual(String s) {
-      mySb.append(s);
-    }
-
-    public String getResult() {
-      tryHighlight(myText);
-      return mySb.toString();
-    }
   }
 
   private class MyCherryPick extends DumbAwareAction {

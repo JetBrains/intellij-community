@@ -27,12 +27,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestFromChange;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.UIVcsUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -104,7 +103,7 @@ public class VcsChangeDetailsManager {
         contents = myRequestFromChange.createRequestForChange(o, 0);
       }
       catch (VcsException e) {
-        return new Pair<JPanel, Disposable>(errorPanel(e.getMessage(), true), null);
+        return new Pair<JPanel, Disposable>(UIVcsUtil.errorPanel(e.getMessage(), true), null);
       }
       if (contents == null || contents.isEmpty()) return null;
       assert contents.size() == 1;
@@ -155,11 +154,11 @@ public class VcsChangeDetailsManager {
         if (requestForChange == null) return null;
         if (requestForChange.isEmpty()) {
           return new Pair<JPanel, Disposable>(
-            errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false), null);
+            UIVcsUtil.errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false), null);
         }
       }
       catch (VcsException e) {
-        return new Pair<JPanel, Disposable>(errorPanel(e.getMessage(), true), null);
+        return new Pair<JPanel, Disposable>(UIVcsUtil.errorPanel(e.getMessage(), true), null);
       }
 
       final ChangesFragmentedDiffPanel panel =
@@ -174,14 +173,5 @@ public class VcsChangeDetailsManager {
     return new StringBuilder().append(ChangesUtil.getFilePath(o).getName()).append(" (").append(
       o.getBeforeRevision() == null
       ? "New" : o.getBeforeRevision().getRevisionNumber().asString()).append(")").toString();
-  }
-
-  public static JPanel errorPanel(final String text, boolean isError) {
-    final JLabel label = new JLabel(text);
-    label.setForeground(isError ? SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor() : UIUtil.getInactiveTextColor());
-    final JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(label, new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                         new Insets(1,1,1,1), 0,0));
-    return wrapper;
   }
 }

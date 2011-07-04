@@ -21,14 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SLRUMap;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.LowLevelAccessImpl;
-import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,7 @@ public class DetailsCache {
   private final DetailsLoaderImpl myDetailsLoader;
   private final ModalityState myModalityState;
   private final BackgroundTaskQueue myQueue;
-  private AbstractCalledLater myRefresh;
+  private UIRefresh myRefresh;
   private final Map<VirtualFile, Map<AbstractHash, String>> myStash;
   private final Object myLock;
   private final static Logger LOG = Logger.getInstance("git4idea.history.wholeTree.DetailsCache");
@@ -64,12 +63,7 @@ public class DetailsCache {
     myModalityState = modalityState;
     myQueue = queue;
     myStash = new HashMap<VirtualFile, Map<AbstractHash,String>>();
-    myRefresh = new AbstractCalledLater(project, myModalityState) {
-      @Override
-      public void run() {
-        uiRefresh.detailsLoaded();
-      }
-    };
+    myRefresh = uiRefresh;
     myLock = new Object();
     myCache = new SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit>(ourSize, 50);
     myBranches = new SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>>(10, 10);
@@ -92,7 +86,12 @@ public class DetailsCache {
         myCache.put(new Pair<VirtualFile, AbstractHash>(root, commit.getShortHash()), commit);
       }
     }
-    myRefresh.callMe();
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myRefresh.detailsLoaded();
+      }
+    });
   }
 
   public void rootsChanged(final Collection<VirtualFile> roots) {
@@ -133,17 +132,23 @@ public class DetailsCache {
     }
   }
 
+  public void clearBranches() {
+    synchronized (myLock) {
+      myBranches.clear();
+    }
+  }
+
   public void loadAndPutBranches(final VirtualFile root,
-                                 final SHAHash hash,
                                  final AbstractHash abstractHash,
-                                 final Consumer<List<String>> continuation) {
+                                 final Consumer<List<String>> continuation, final Processor<AbstractHash> recheck) {
     myQueue.run(new Task.Backgroundable(myProject, "Load contained in branches", true, BackgroundFromStartOption.getInstance()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        if (! recheck.process(abstractHash)) return;
         if (getBranches(root, abstractHash) != null) return;
         final List<String> branches;
         try {
-          branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(hash);
+          branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(abstractHash.getString());
         }
         catch (VcsException e) {
           LOG.info(e);

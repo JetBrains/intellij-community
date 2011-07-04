@@ -64,4 +64,24 @@ public class WireNumberCommitDecoration implements CommitI {
   public void setWireNumber(int wireNumber) {
     myWireNumber = wireNumber;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    WireNumberCommitDecoration that = (WireNumberCommitDecoration)o;
+
+    if (myWireNumber != that.myWireNumber) return false;
+    if (!myDelegate.equals(that.myDelegate)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myDelegate.hashCode();
+    result = 31 * result + myWireNumber;
+    return result;
+  }
 }
