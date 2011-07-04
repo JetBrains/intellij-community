@@ -159,6 +159,9 @@
       </fileset>
     </copy>
 
+    <mkdir dir="${plugindir}/help"/>
+    <copy file="${project.home}/out/python/help/pytonpluginhelp.jar" tofile="${plugindir}/help/pythonpluginhelp.jar"/>
+
     <zip basedir="${zipdir}" destfile="${output}/${zipname}"/>
   </target>
 
