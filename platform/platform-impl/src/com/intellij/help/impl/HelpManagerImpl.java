@@ -49,6 +49,7 @@ public class HelpManagerImpl extends HelpManager {
         myHelpSet = createHelpSet();
       }
       catch (Exception ex) {
+        LOG.info("Failed to create help set", ex);
         // Ignore, will fallback to use web help
       }
     }
