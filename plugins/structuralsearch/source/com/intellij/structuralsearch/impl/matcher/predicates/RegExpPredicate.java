@@ -167,8 +167,8 @@ public final class RegExpPredicate extends MatchPredicate {
   }
 
   boolean doMatch(String text, int from, int end, MatchContext context,PsiElement matchedElement) {
-    if (from!=0 || end!=-1) {
-      text = text.substring(from,end == -1 ? text.length():end);
+    if (from > 0 || end != -1) {
+      text = text.substring(from, end == -1 || end >= text.length() ? text.length():end);
     }
 
     if (simpleString) {
