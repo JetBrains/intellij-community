@@ -116,7 +116,7 @@ public class ImplementationViewComponent extends JPanel {
   public ImplementationViewComponent(PsiElement[] elements, final int index) {
     super(new BorderLayout());
 
-    final Project project = elements[0].getProject();
+    final Project project = elements.length > 0 ? elements[0].getProject() : null;
     EditorFactory factory = EditorFactory.getInstance();
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
