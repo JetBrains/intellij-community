@@ -386,10 +386,8 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     else {
       final PsiElement nextSibling = el.getNextSibling();
       el.delete();
-      if (nextSibling.isValid()) {
-        if (nextSibling instanceof PsiWhiteSpace) {
-          nextSibling.delete();
-        }
+      if (nextSibling instanceof PsiWhiteSpace && nextSibling.isValid()) {
+        nextSibling.delete();
       }
     }
 
