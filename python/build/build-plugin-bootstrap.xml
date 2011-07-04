@@ -39,6 +39,7 @@
       <arg value="-f"/>
       <arg value="build-plugin.xml"/>
       <arg value="-Didea.home=${idea.dir}/jdk16"/>
+      <arg value="-Dplugin.help=${out.dir}/help"/>
       <arg value="-verbose"/>
     </java>
   </target>
