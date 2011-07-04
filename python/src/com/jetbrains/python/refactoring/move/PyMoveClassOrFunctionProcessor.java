@@ -103,7 +103,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
                   if (qexpr.getQualifier() != null) {
                     final PsiElement newExpr = qexpr.getParent().addBefore(new PyReferenceExpressionImpl(qexpr.getNameElement()), qexpr);
                     qexpr.delete();
-                    PyClassRefactoringUtil.insertImport(newExpr, newElement, null);
+                    PyClassRefactoringUtil.insertImport(newExpr, newElement, null, true);
                   }
                 }
                 PyImportStatementBase importStatement = getUsageImportStatement(usage);
@@ -111,7 +111,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
                   PyClassRefactoringUtil.updateImportOfElement(importStatement, newElement);
                 }
                 if (usage.getFile() == oldElement.getContainingFile()) {
-                  PyClassRefactoringUtil.insertImport(oldElement, newElement, null);
+                  PyClassRefactoringUtil.insertImport(oldElement, newElement);
                 }
               }
               PyClassRefactoringUtil.restoreNamedReferences(newElement);
