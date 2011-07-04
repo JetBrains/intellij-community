@@ -28,8 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
  */
 public interface GrAssignmentExpression extends GrExpression, PsiPolyVariantReference {
 
-  boolean isTupleAssignment();
-
   @NotNull
   GrExpression getLValue();
 

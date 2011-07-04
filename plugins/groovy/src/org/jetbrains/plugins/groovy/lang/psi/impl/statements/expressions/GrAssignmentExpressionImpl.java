@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -75,10 +74,6 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
 
   public String toString() {
     return "Assignment expression";
-  }
-
-  public boolean isTupleAssignment() {
-    return getFirstChild() instanceof GrTupleDeclaration;
   }
 
   @NotNull
