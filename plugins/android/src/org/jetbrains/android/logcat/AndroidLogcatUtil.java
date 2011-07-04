@@ -124,7 +124,7 @@ public class AndroidLogcatUtil {
             return super.ready();
           }
           catch (IOException e) {
-            LOG.info(e);
+            LOG.debug(e);
             return false;
           }
         }

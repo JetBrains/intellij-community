@@ -24,6 +24,7 @@ import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
+import com.intellij.ProjectTopics;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
@@ -32,6 +33,9 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.lang.properties.psi.PropertiesElementFactory;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -39,16 +43,21 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -76,10 +85,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.jetbrains.android.util.AndroidUtils.EMULATOR;
 import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
@@ -368,6 +374,141 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
             }
           }
         });
+      }
+    });
+
+    getModule().getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+
+      private String[] myDependencies;
+
+      public void beforeRootsChange(final ModuleRootEvent event) {
+      }
+
+      public void rootsChanged(final ModuleRootEvent event) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (!isDisposed()) {
+              PsiDocumentManager.getInstance(getModule().getProject()).commitAllDocuments();
+
+              final PropertiesFile propertiesFile = AndroidUtils.findPropertyFile(getModule(), SdkConstants.FN_DEFAULT_PROPERTIES);
+              if (propertiesFile == null) {
+                return;
+              }
+
+              updateTargetProperty(propertiesFile);
+              updateLibraryProperty(propertiesFile);
+
+              final String[] dependencies = collectDependencies();
+              if (myDependencies == null || !Comparing.equal(myDependencies, dependencies)) {
+                updateDependenciesInPropertyFile(propertiesFile, dependencies);
+                myDependencies = dependencies;
+              }
+            }
+          }
+        });
+      }
+    });
+  }
+
+  private void updateDependenciesInPropertyFile(@NotNull final PropertiesFile propertiesFile, @NotNull final String[] dependencies) {
+    final VirtualFile vFile = propertiesFile.getVirtualFile();
+    if (vFile == null) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        for (Property property : propertiesFile.getProperties()) {
+          final String name = property.getName();
+          if (name != null && name.startsWith(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX)) {
+            property.delete();
+          }
+        }
+
+        final VirtualFile baseDir = vFile.getParent();
+        final String baseDirPath = baseDir.getPath();
+        final Project project = getModule().getProject();
+
+        int index = 1;
+        for (String dependency : dependencies) {
+          final String relPath = FileUtil.getRelativePath(baseDirPath, dependency, '/');
+          final String value = relPath != null ? relPath : dependency;
+          propertiesFile.addProperty(
+            PropertiesElementFactory.createProperty(project, AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + index, value));
+          index++;
+        }
+      }
+    });
+  }
+
+  private String[] collectDependencies() {
+    final List<String> dependenciesList = new ArrayList<String>();
+
+    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(getModule(), true)) {
+      final Module depModule = depFacet.getModule();
+      final VirtualFile libDir = getBaseAndroidContentRoot(depModule);
+      if (libDir != null) {
+        dependenciesList.add(libDir.getPath());
+      }
+    }
+
+    final String[] dependencies = ArrayUtil.toStringArray(dependenciesList);
+    Arrays.sort(dependencies);
+    return dependencies;
+  }
+
+  @Nullable
+  private static VirtualFile getBaseAndroidContentRoot(@NotNull Module module) {
+    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    if (manifestFile != null) {
+      for (VirtualFile contentRoot : contentRoots) {
+        if (VfsUtil.isAncestor(contentRoot, manifestFile, true)) {
+          return contentRoot;
+        }
+      }
+    }
+    return contentRoots.length > 0 ? contentRoots[0] : null;
+  }
+
+  private void updateTargetProperty(@NotNull final PropertiesFile propertiesFile) {
+    final IAndroidTarget androidTarget = getConfiguration().getAndroidTarget();
+    if (androidTarget != null) {
+      final String targetPropertyValue = androidTarget.hashString();
+      final Property property = propertiesFile.findPropertyByKey(AndroidUtils.ANDROID_TARGET_PROPERTY);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          if (property == null) {
+            final Property newProperty = PropertiesElementFactory.createProperty(propertiesFile.getProject(),
+                                                                                 AndroidUtils.ANDROID_TARGET_PROPERTY, targetPropertyValue);
+            propertiesFile.addProperty(newProperty);
+          }
+          else {
+            property.setValue(targetPropertyValue);
+          }
+        }
+      });
+    }
+  }
+
+  public void updateLibraryProperty(@NotNull final PropertiesFile propertiesFile) {
+    final Property property = propertiesFile.findPropertyByKey(AndroidUtils.ANDROID_LIBRARY_PROPERTY);
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        if (property != null) {
+          property.setValue(Boolean.toString(getConfiguration().LIBRARY_PROJECT));
+        }
+        else if (getConfiguration().LIBRARY_PROJECT) {
+          final Property newProperty = PropertiesElementFactory.createProperty(propertiesFile.getProject(),
+                                                                               AndroidUtils.ANDROID_LIBRARY_PROPERTY,
+                                                                               Boolean.TRUE.toString());
+          propertiesFile.addProperty(newProperty);
+        }
       }
     });
   }

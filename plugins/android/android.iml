@@ -44,6 +44,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="maven" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="properties" />
   </component>
 </module>
 

@@ -19,18 +19,23 @@ package org.jetbrains.android.sdk;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.OrderRoot;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,15 +84,6 @@ public class AndroidSdkUtils {
     VirtualFile platformDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(platformPath);
     if (platformDir == null) return null;
     return platformDir;
-  }
-
-  public static VirtualFile[] chooseAndroidSdkPath(@NotNull Component parent) {
-    return FileChooser.chooseFiles(parent, new FileChooserDescriptor(false, true, false, false, false, false) {
-      @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return super.isFileSelectable(file) && isAndroidSdk(file.getPath()) || isAndroidPlatform(file);
-      }
-    });
   }
 
   public static List<OrderRoot> getLibraryRootsForTarget(@NotNull IAndroidTarget target, @Nullable String sdkPath) {
@@ -258,5 +254,122 @@ public class AndroidSdkUtils {
     }
 
     return result;
+  }
+
+  private static boolean tryToSetAndroidPlatform(Module module, Sdk sdk) {
+    AndroidPlatform platform = AndroidPlatform.parse(sdk);
+    if (platform != null) {
+      setSdk(module, sdk);
+      return true;
+    }
+    return false;
+  }
+
+  private static void setSdk(Module module, Sdk sdk) {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    model.setSdk(sdk);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model.commit();
+      }
+    });
+  }
+
+  private static void setupPlatform(@NotNull Module module) {
+    if (tryToImportFromPropertyFiles(module)) {
+      return;
+    }
+
+    PropertiesComponent component = PropertiesComponent.getInstance();
+    if (component.isValueSet(DEFAULT_PLATFORM_NAME_PROPERTY)) {
+      String defaultPlatformName = component.getValue(DEFAULT_PLATFORM_NAME_PROPERTY);
+      Sdk defaultLib = ProjectJdkTable.getInstance().findJdk(defaultPlatformName, AndroidSdkType.getInstance().getName());
+      if (defaultLib != null && tryToSetAndroidPlatform(module, defaultLib)) {
+        return;
+      }
+    }
+    for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance())) {
+      if (tryToSetAndroidPlatform(module, sdk)) {
+        component.setValue(DEFAULT_PLATFORM_NAME_PROPERTY, sdk.getName());
+        return;
+      }
+    }
+  }
+
+  @Nullable
+  private static Sdk findSuitableAndroidSdk(@NotNull String targetHashString, @Nullable String sdkDir) {
+    final List<Sdk> androidSdks = ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance());
+    for (Sdk sdk : androidSdks) {
+      final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+      if (data != null) {
+        final AndroidPlatform androidPlatform = data.getAndroidPlatform();
+        if (androidPlatform != null) {
+          final String baseDir = FileUtil.toSystemIndependentName(androidPlatform.getSdk().getLocation());
+          if ((sdkDir == null || FileUtil.pathsEqual(baseDir, sdkDir)) &&
+              targetHashString.equals(androidPlatform.getTarget().hashString())) {
+            return sdk;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean tryToImportFromPropertyFiles(@NotNull Module module) {
+    final String targetHashString = AndroidUtils.getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, "target");
+    if (targetHashString == null) {
+      return false;
+    }
+
+    String sdkDir = AndroidUtils.getPropertyValue(module, SdkConstants.FN_LOCAL_PROPERTIES, "sdk.dir");
+    if (sdkDir != null) {
+      sdkDir = FileUtil.toSystemIndependentName(sdkDir);
+    }
+
+    final Sdk sdk = findSuitableAndroidSdk(targetHashString, sdkDir);
+    if (sdk != null) {
+      setSdk(module, sdk);
+      return true;
+    }
+
+    if (sdkDir != null && tryToCreateAndSetAndroidSdk(module, sdkDir, targetHashString)) {
+      return true;
+    }
+
+    final String androidHomeValue = System.getenv(ANDROID_HOME_ENV);
+    if (androidHomeValue != null &&
+        tryToCreateAndSetAndroidSdk(module, FileUtil.toSystemIndependentName(androidHomeValue), targetHashString)) {
+      return true;
+    }
+
+    for (String dir : getAndroidSdkPathsFromExistingPlatforms()) {
+      if (tryToCreateAndSetAndroidSdk(module, dir, targetHashString)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean tryToCreateAndSetAndroidSdk(@NotNull Module module, @NotNull String baseDir, @NotNull String targetHashString) {
+    final AndroidSdk sdkObject = AndroidSdk.parse(baseDir, new EmptySdkLog());
+    if (sdkObject != null) {
+      final IAndroidTarget target = sdkObject.findTargetByHashString(targetHashString);
+      if (target != null) {
+        final Sdk androidSdk = createNewAndroidPlatform(target, sdkObject.getLocation(), true);
+        if (androidSdk != null) {
+          setSdk(module, androidSdk);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static void setupAndroidPlatformInNeccessary(Module module) {
+    Sdk currentSdk = ModuleRootManager.getInstance(module).getSdk();
+    if (currentSdk == null || !(currentSdk.getSdkType().equals(AndroidSdkType.getInstance()))) {
+      setupPlatform(module);
+    }
   }
 }

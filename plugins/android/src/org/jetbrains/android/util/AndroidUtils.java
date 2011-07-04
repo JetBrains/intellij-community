@@ -30,8 +30,11 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -40,19 +43,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -79,6 +77,7 @@ import org.jetbrains.android.dom.manifest.Application;
 import org.jetbrains.android.dom.manifest.IntentFilter;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.run.AndroidRunConfiguration;
 import org.jetbrains.android.run.AndroidRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidSdk;
@@ -91,6 +90,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -134,6 +135,10 @@ public class AndroidUtils {
   public static final int TIMEOUT = 3000000;
 
   private static final Key<ConsoleView> CONSOLE_VIEW_KEY = new Key<ConsoleView>("AndroidConsoleView");
+
+  @NonNls public static final String ANDROID_LIBRARY_PROPERTY = "android.library";
+  @NonNls public static final String ANDROID_TARGET_PROPERTY = "target";
+  @NonNls public static final String ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX = "android.library.reference.";
 
   private AndroidUtils() {
   }
@@ -711,5 +716,115 @@ public class AndroidUtils {
       }
     }
     return false;
+  }
+
+  public static void addAndroidFacetIfNecessary(@NotNull final Module module,
+                                                        @NotNull final VirtualFile contentRoot,
+                                                        final boolean library) {
+    if (AndroidFacet.getInstance(module) == null) {
+      addAndroidFacet(module, contentRoot, library);
+    }
+  }
+
+  @NotNull
+  public static AndroidFacet addAndroidFacet(@NotNull final Module module, @NotNull final VirtualFile contentRoot, final boolean library) {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<AndroidFacet>() {
+      @Override
+      public AndroidFacet compute() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final AndroidFacet facet = addAndroidFacet(model, contentRoot, library);
+        model.commit();
+        return facet;
+      }
+    });
+  }
+
+  @NotNull
+  public static AndroidFacet addAndroidFacet(ModifiableRootModel rootModel, VirtualFile contentRoot, boolean library) {
+    Module module = rootModel.getModule();
+    final FacetManager facetManager = FacetManager.getInstance(module);
+    ModifiableFacetModel model = facetManager.createModifiableModel();
+    AndroidFacet facet = facetManager.createFacet(AndroidFacet.getFacetType(), "Android", null);
+    AndroidFacetConfiguration configuration = facet.getConfiguration();
+    configuration.init(module, contentRoot);
+    if (library) {
+      configuration.LIBRARY_PROJECT = true;
+    }
+    model.addFacet(facet);
+    model.commit();
+    return facet;
+  }
+
+  @Nullable
+  public static PropertiesFile findPropertyFile(@NotNull final Module module, @NotNull String propertyFileName) {
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      final VirtualFile vFile = contentRoot.findChild(propertyFileName);
+      if (vFile != null) {
+        final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Override
+          public PsiFile compute() {
+            return PsiManager.getInstance(module.getProject()).findFile(vFile);
+          }
+        });
+        if (psiFile instanceof PropertiesFile) {
+          return (PropertiesFile)psiFile;
+        }
+      }
+    }
+    return null;
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  public static Pair<Properties, VirtualFile> readPropertyFile(@NotNull Module module, @NotNull String propertyFileName) {
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      final Pair<Properties, VirtualFile> result = readPropertyFile(contentRoot, propertyFileName);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  public static Pair<Properties, VirtualFile> readPropertyFile(@NotNull VirtualFile contentRoot, @NotNull String propertyFileName) {
+    final VirtualFile vFile = contentRoot.findChild(propertyFileName);
+    if (vFile != null) {
+      final Properties properties = new Properties();
+      try {
+        properties.load(new FileInputStream(new File(vFile.getPath())));
+        return new Pair<Properties, VirtualFile>(properties, vFile);
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+    return null;
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  public static String getPropertyValue(@NotNull Module module, @NotNull String propertyFileName, @NotNull String propertyKey) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, propertyFileName);
+    if (pair != null) {
+      final String value = pair.first.getProperty(propertyKey);
+      if (value != null) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static VirtualFile findFileByAbsoluteOrRelativePath(@Nullable VirtualFile baseDir, @NotNull String path) {
+    VirtualFile libDir = LocalFileSystem.getInstance().findFileByPath(path);
+    if (libDir != null) {
+      return libDir;
+    }
+    else if (baseDir != null) {
+      return LocalFileSystem.getInstance().findFileByPath(baseDir.getPath() + '/' + path);
+    }
+    return null;
   }
 }

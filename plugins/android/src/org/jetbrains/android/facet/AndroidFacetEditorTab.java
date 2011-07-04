@@ -16,29 +16,19 @@
 package org.jetbrains.android.facet;
 
 import com.android.sdklib.SdkConstants;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -63,7 +53,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -106,7 +99,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
-    LibraryTable.ModifiableModel model = GlobalLibrariesConfigurable.getInstance(project).getModelProvider().getModifiableModel();
     myConfiguration = androidFacetConfiguration;
     myContext = context;
 
@@ -251,16 +243,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     return ArrayUtil.toStringArray(result);
   }
 
-  private boolean isUnderModuleDir(VirtualFile vFile) {
-    if (vFile == null) return false;
-    File file = new File(vFile.getPath());
-    String moduleDirPath = new File(myContext.getModule().getModuleFilePath()).getParent();
-    if (moduleDirPath != null) {
-      moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
-    }
-    return moduleDirPath != null && VfsUtil.isAncestor(new File(moduleDirPath), file, true);
-  }
-
   @Nls
   public String getDisplayName() {
     return "Android SDK Settings";
@@ -353,29 +335,13 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     return !FileUtil.pathsEqual(pathFromConfig, pathFromTextField);
   }
 
-  // if library was removed in the same project-structure dialog
-
-  @Nullable
-  private static LibraryOrderEntry findLibraryOrderEntryByName(@NotNull ModifiableRootModel model, @NotNull String name) {
-    for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        if (name.equals(((LibraryOrderEntry)entry).getLibraryName())) {
-          return (LibraryOrderEntry)entry;
-        }
-      }
-    }
-    return null;
-  }
-
   @Nullable
   private String toRelativePath(String absPath) {
     absPath = FileUtil.toSystemIndependentName(absPath);
     String moduleDirPath = AndroidRootUtil.getModuleDirPath(myContext.getModule());
     if (moduleDirPath != null) {
       moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
-      //if (VfsUtil.isAncestor(new File(moduleDirPath), new File(absPath), true)) {
-        return FileUtil.getRelativePath(moduleDirPath, absPath, '/');
-      //}
+      return FileUtil.getRelativePath(moduleDirPath, absPath, '/');
     }
     return null;
   }
@@ -448,16 +414,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
     myConfiguration.LIBS_FOLDER_RELATIVE_PATH = '/' + getAndCheckRelativePath(absLibsPath, false);
 
-    //myConfiguration.ADD_ANDROID_LIBRARY = myAddAndroidLibrary.isSelected();
-
     if (myConfiguration.LIBRARY_PROJECT != myIsLibraryProjectCheckbox.isSelected()) {
-      // todo: after X release
-      /*if (myIsLibraryProjectCheckbox.isSelected()) {
-        excludeAllContentRootsFromCompilation(myContext.getModule());
-      }
-      else {
-        includeAllContentRootsToCompilation(myContext.getModule());
-      }*/
       runApt = true;
     }
 
@@ -529,44 +486,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
   }
 
-  private static void excludeAllContentRootsFromCompilation(@NotNull Module module) {
-    Project project = module.getProject();
-    ExcludedEntriesConfiguration configuration =
-      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
-    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
-      configuration.addExcludeEntryDescription(new ExcludeEntryDescription(contentRoot, true, false, project));
-    }
-  }
-
-  private static void includeAllContentRootsToCompilation(@NotNull Module module) {
-    Project project = module.getProject();
-
-    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-    Set<VirtualFile> contentRootSet = new HashSet<VirtualFile>(Arrays.asList(contentRoots));
-
-    ExcludedEntriesConfiguration configuration =
-      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
-    ExcludeEntryDescription[] descriptions = configuration.getExcludeEntryDescriptions();
-    configuration.removeAllExcludeEntryDescriptions();
-    for (ExcludeEntryDescription description : descriptions) {
-      VirtualFile file = description.getVirtualFile();
-      if (file != null && !contentRootSet.contains(file)) {
-        configuration.addExcludeEntryDescription(description);
-      }
-    }
-  }
-
-  @NotNull
-  private String[] getNewResOverlayValue() throws ConfigurationException {
-    ListModel model = myResOverlayList.getModel();
-    String[] newResOverlayValue = new String[model.getSize()];
-    for (int i = 0; i < model.getSize(); i++) {
-      String element = (String)model.getElementAt(i);
-      newResOverlayValue[i] = '/' + getAndCheckRelativePath(element, false);
-    }
-    return newResOverlayValue;
-  }
-
   private String getAndCheckRelativePath(String absPath, boolean checkExists) throws ConfigurationException {
     if (absPath.indexOf('/') < 0 && absPath.indexOf(File.separatorChar) < 0) {
       throw new ConfigurationException(AndroidBundle.message("file.must.be.under.module.error", FileUtil.toSystemDependentName(absPath)));
@@ -583,8 +502,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
   public void reset() {
     resetOptions(myConfiguration);
-
-    //myAddAndroidLibrary.setSelected(myConfiguration.ADD_ANDROID_LIBRARY);
     myIsLibraryProjectCheckbox.setSelected(myConfiguration.LIBRARY_PROJECT);
   }
 
@@ -712,16 +629,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
           }
         }
       }
-      VirtualFile[] files = FileChooser.chooseFiles(myContentPanel, new FileChooserDescriptor(false, true, false, false, false, false) /*{
-        @Override
-        public void validateSelectedFiles(VirtualFile[] files) throws Exception {
-          assert files.length == 1;
-          VirtualFile file = files[0];
-          if (!isUnderModuleDir(file)) {
-            throw new Exception(AndroidBundle.message("file.must.be.under.module.error", FileUtil.toSystemDependentName(file.getPath())));
-          }
-        }
-      }*/, initialFile);
+      VirtualFile[] files =
+        FileChooser.chooseFiles(myContentPanel, new FileChooserDescriptor(false, true, false, false, false, false), initialFile);
       if (files.length > 0) {
         assert files.length == 1;
         myTextField.setText(FileUtil.toSystemDependentName(files[0].getPath()));
@@ -778,15 +687,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
           }
           return file.isDirectory() || !chooseManifest || SdkConstants.FN_ANDROID_MANIFEST_XML.equals(file.getName());
         }
-
-        /*@Override
-        public void validateSelectedFiles(VirtualFile[] files) throws Exception {
-          for (VirtualFile file : files) {
-            if (!isUnderModuleDir(file)) {
-              throw new Exception(AndroidBundle.message("file.must.be.under.module.error", FileUtil.toSystemDependentName(file.getPath())));
-            }
-          }
-        }*/
       }, initialFile);
   }
 }

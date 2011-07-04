@@ -552,6 +552,13 @@ public class ArrayUtil {
     return -1;
   }
 
+  public static int indexOf(@NotNull Object[] objects, Object object, int start, int end) {
+    for (int i = start; i < end; i++) {
+      if (Comparing.equal(objects[i], object)) return i;
+    }
+    return -1;
+  }
+
   public static <T> int indexOf(@NotNull List<T> objects, T object, @NotNull Equality<T> comparator) {
     for (int i = 0; i < objects.size(); i++) {
       if (comparator.equals(objects.get(i), object)) return i;

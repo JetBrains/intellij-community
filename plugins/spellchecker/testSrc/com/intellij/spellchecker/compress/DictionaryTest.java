@@ -63,7 +63,7 @@ public class DictionaryTest extends TestCase {
 
   public void loadDictionaryTest(@NotNull final String name, int wordCount) throws IOException {
     final Transformation transform = new Transformation();
-    PlatformTestUtil.startPerformanceTest(times.get(name), new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("load dictionary", times.get(name), new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         dictionary = CompressedDictionary
@@ -72,7 +72,7 @@ public class DictionaryTest extends TestCase {
     }).cpuBound().assertTiming();
 
     final Set<String> wordsToStoreAndCheck = createWordSets(name, 50000, 1).getFirst();
-    PlatformTestUtil.startPerformanceTest(2000, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("words contain",2000, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         for (String s : wordsToStoreAndCheck) {

@@ -385,7 +385,7 @@ public class VirtualFilePointerTest extends IdeaTestCase {
   }
 
   public void testContainerDeletePerformance() throws Exception {
-    PlatformTestUtil.startPerformanceTest(3000, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("VF Pointer create/delete",3000, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         Disposable parent = Disposer.newDisposable();

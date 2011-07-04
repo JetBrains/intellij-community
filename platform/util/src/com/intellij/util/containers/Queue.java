@@ -22,7 +22,10 @@ public class Queue<T> {
   private Object[] myArray;
   private int myFirst;
   private int myLast;
-  private boolean isInverted;
+
+  // if true, elements are located at myFirst..myArray.length and 0..myLast
+  // otherwise, they are at myFirst..myLast
+  private boolean isWrapped;
 
   public Queue(int initialCapacity) {
     myArray = new Object[initialCapacity];
@@ -34,12 +37,12 @@ public class Queue<T> {
       myArray = normalize(currentSize * 2);
       myFirst = 0;
       myLast = currentSize;
-      isInverted = false;
+      isWrapped = false;
     }
     myArray[myLast] = object;
     myLast++;
     if (myLast == myArray.length) {
-      isInverted = !isInverted;
+      isWrapped = !isWrapped;
       myLast = 0;
     }
   }
@@ -49,11 +52,15 @@ public class Queue<T> {
   }
 
   public int size() {
-    return isInverted ? myArray.length - myFirst + myLast : myLast - myFirst;
+    return isWrapped ? myArray.length - myFirst + myLast : myLast - myFirst;
   }
 
   public List<T> toList() {
     return Arrays.asList(normalize(size()));
+  }
+
+  public Object[] toArray() {
+    return normalize(size());
   }
 
   public T pullFirst() {
@@ -62,7 +69,7 @@ public class Queue<T> {
     myFirst++;
     if (myFirst == myArray.length) {
       myFirst = 0;
-      isInverted = !isInverted;
+      isWrapped = !isWrapped;
     }
     return result;
   }
@@ -79,14 +86,13 @@ public class Queue<T> {
 
   private T[] normalize(int capacity) {
     T[] result = (T[])new Object[capacity];
-    int tailLength;
-    if (isInverted) {
-      tailLength = copyFromTo(myFirst, myArray.length, result, 0);
+    if (isWrapped) {
+      int tailLength = copyFromTo(myFirst, myArray.length, result, 0);
+      copyFromTo(0, myLast, result, tailLength);
     }
     else {
-      tailLength = 0;
+      copyFromTo(myFirst, myLast, result, 0);
     }
-    copyFromTo(0, myLast, result, tailLength);
     return result;
   }
 
@@ -94,7 +100,7 @@ public class Queue<T> {
     for (int i = 0; i < myArray.length; i++) {
       myArray[i] = null;
     }
-
+    isWrapped = false;
     myFirst = myLast = 0;
   }
 }

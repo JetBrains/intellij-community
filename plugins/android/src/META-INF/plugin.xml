@@ -63,6 +63,7 @@
   </actions>
 
   <depends>JUnit</depends>
+  <depends>com.intellij.properties</depends>
   <depends optional="true" config-file="maven-support.xml">org.jetbrains.idea.maven</depends>
 
   <extensions defaultExtensionNs="com.intellij">
