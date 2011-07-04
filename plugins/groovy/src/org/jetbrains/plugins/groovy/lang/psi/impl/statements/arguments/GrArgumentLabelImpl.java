@@ -134,7 +134,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   public PsiReference getReference() {
-    return this;
+    final PsiElement name = getNameElement();
+    return name instanceof GrLiteral || name instanceof LeafPsiElement ? this : null;
   }
 
   @Nullable

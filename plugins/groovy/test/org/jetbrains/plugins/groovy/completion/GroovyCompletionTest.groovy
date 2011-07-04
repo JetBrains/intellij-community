@@ -516,6 +516,18 @@ in<caret>"""
     myFixture.checkResult "def x = []; x.add(<caret>) this"
   }
 
+  public void testEatingClosingParenthesis() {
+    checkCompletion """
+def xxxx = []
+def xxxy = []
+foo((xx<caret>):2)
+""", '\t', """
+def xxxx = []
+def xxxy = []
+foo((xxxx<caret>):2)
+"""
+  }
+
   public void testDontAddStaticImportSecondTime() {
     configure """import static java.lang.String.format
 form<caret>"""
