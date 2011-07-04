@@ -73,15 +73,13 @@ public class LibraryCompositionSettings implements Disposable {
 
   public void updateDownloadableVersions(@Nullable FrameworkVersion version) {
     myCurrentFrameworkVersion = version;
-    if (version != null && myDownloadSettings != null) {
-      if (!myDownloadSettings.getVersion().isCompatibleWith(version)) {
-        final FrameworkLibraryVersion newLibraryVersion = ContainerUtil.getFirstItem(getCompatibleVersions());
-        if (newLibraryVersion != null) {
-          myDownloadSettings = createDownloadSettings(newLibraryVersion);
-        }
-        else {
-          myDownloadSettings = null;
-        }
+    if (version != null && (myDownloadSettings == null || !myDownloadSettings.getVersion().isCompatibleWith(version))) {
+      final FrameworkLibraryVersion newLibraryVersion = ContainerUtil.getFirstItem(getCompatibleVersions());
+      if (newLibraryVersion != null) {
+        myDownloadSettings = createDownloadSettings(newLibraryVersion);
+      }
+      else {
+        myDownloadSettings = null;
       }
     }
   }
