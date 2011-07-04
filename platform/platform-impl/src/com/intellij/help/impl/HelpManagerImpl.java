@@ -107,6 +107,7 @@ public class HelpManagerImpl extends HelpManager {
       return helpSet;
     }
     catch (Exception ee) {
+      LOG.info("Failed to create help set", ee);
       return null;
     }
   }
