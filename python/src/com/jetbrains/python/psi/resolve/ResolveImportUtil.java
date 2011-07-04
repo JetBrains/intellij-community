@@ -888,7 +888,31 @@ public class ResolveImportUtil {
         dir = dir.getParentDirectory();
       }
     }
-    return findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
+    final PyQualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
+    if (qname != null) {
+      final PyQualifiedName restored = restoreStdlibCanonicalPath(qname);
+      if (restored != null) {
+        return restored;
+      }
+    }
+    return qname;
+  }
+
+  @Nullable
+  private static PyQualifiedName restoreStdlibCanonicalPath(PyQualifiedName qname) {
+    if (qname.getComponentCount() > 0) {
+      final List<String> components = qname.getComponents();
+      final String head = components.get(0);
+      if (head.equals("_abcoll")) {
+        components.set(0, "collections");
+        return  PyQualifiedName.fromComponents(components);
+      }
+      else if (head.equals("_functools")) {
+        components.set(0, "functools");
+        return PyQualifiedName.fromComponents(components);
+      }
+    }
+    return null;
   }
 
   public static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {

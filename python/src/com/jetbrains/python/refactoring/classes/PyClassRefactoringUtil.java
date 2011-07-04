@@ -211,7 +211,7 @@ public class PyClassRefactoringUtil {
     assert vFile != null;
     final PsiFile file = anchor.getContainingFile();
     if (newFile == file) return;
-    final PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(anchor, vFile);
+    final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, anchor);
     assert isValidQualifiedName(qName);
     final String importableName = (qName != null) ? qName.toString() : null;
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, newFile);
