@@ -84,6 +84,7 @@
 
   <target name="clean" description="Cleanup output">
     <delete dir="${output}"/>
+    <delete dir="${classes.dir}"/>
   </target>
 
   <target name="compile" description="Compile module python">
