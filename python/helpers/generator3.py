@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.94" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.95" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -801,6 +801,7 @@ class ModuleRedeclarator(object):
         PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, **kwargs)" # too permissive, but py2.x won't allow a better sig
         PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, **kwargs)"
         PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, string='')" # overrides a fake
+        PREDEFINED_BUILTIN_SIGS[(None, "print")] = "(*args, **kwargs)" # can't do better in 2.x
     else:
         PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1=None, type2=None)"
         PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, key=None)"
@@ -808,6 +809,7 @@ class ModuleRedeclarator(object):
         PREDEFINED_BUILTIN_SIGS[(None, "open")] = "(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True)"
         PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, value='', encoding=None, errors='strict')" # overrides a fake
         PREDEFINED_BUILTIN_SIGS[("bytes", "__init__")] = "(self, value=b'', encoding=None, errors='strict')" # overrides a fake
+        PREDEFINED_BUILTIN_SIGS[(None, "print")] = "(*args, sep=' ', end='\\n', file=None)" # proper signature
 
     if version == (2, 5):
         PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there
