@@ -35,6 +35,8 @@ public interface PopupComponent {
 
   void setRequestFocus(boolean requestFocus);
 
+  boolean isPopupWindow(Window window);
+
   interface Factory {
     PopupComponent getPopup(Component owner, Component content, int x, int y);
 
@@ -86,6 +88,11 @@ public interface PopupComponent {
 
     public void setRequestFocus(boolean requestFocus) {
       myRequestFocus = requestFocus;
+    }
+
+    @Override
+    public boolean isPopupWindow(Window window) {
+      return myDialog != null && myDialog == window;
     }
 
     public DialogPopupWrapper(Component owner, Component content, int x, int y) {
@@ -143,6 +150,12 @@ public interface PopupComponent {
         final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
         c.setBackground(UIUtil.getPanelBackground());
       }
+    }
+
+    @Override
+    public boolean isPopupWindow(Window window) {
+      final Window wnd = getWindow();
+      return wnd != null && wnd == window;
     }
 
     public void hide(boolean dispose) {

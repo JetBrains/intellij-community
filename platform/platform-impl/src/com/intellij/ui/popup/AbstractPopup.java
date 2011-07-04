@@ -1104,7 +1104,7 @@ public class AbstractPopup implements JBPopup {
 
     public void eventDispatched(final AWTEvent event) {
       if (event.getID() == WindowEvent.WINDOW_ACTIVATED) {
-        if (myCancelOnWindow) {
+        if (myCancelOnWindow && myPopup != null && !myPopup.isPopupWindow(((WindowEvent)event).getWindow())) {
           cancel();
         }
       }
