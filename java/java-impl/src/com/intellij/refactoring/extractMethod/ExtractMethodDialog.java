@@ -40,6 +40,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -102,7 +103,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     myVariableData = inputVariables;
     myHelpId = helpId;
     mySignature = new MethodSignatureComponent("", project, JavaFileType.INSTANCE);
-    mySignature.setPreferredSize(new Dimension(-1, 130));
+    mySignature.setPreferredSize(new Dimension(450, 100));
     setTitle(title);
 
     // Create UI components
@@ -220,7 +221,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   protected JPanel createOptionsPanel() {
     final JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
 
-    optionsPanel.add(new JLabel("Options: "));
+    //optionsPanel.add(new JLabel("Options: "));
 
     if (myStaticFlag || myCanBeStatic) {
       myMakeStatic.setEnabled(!myStaticFlag);
@@ -235,6 +236,8 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       myMakeStatic.setSelected(false);
       myMakeStatic.setEnabled(false);
     }
+    final Border emptyBorder = IdeBorderFactory.createEmptyBorder(5, 0, 5, 4);
+    myMakeStatic.setBorder(emptyBorder);
 
     myFoldParameters.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldParameters.setVisible(myVariableData.isFoldable());
@@ -251,6 +254,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       }
     });
     optionsPanel.add(myFoldParameters);
+    myFoldParameters.setBorder(emptyBorder);
 
     boolean canBeVarargs = false;
     for (ParameterTablePanel.VariableData data : myInputVariables) {
@@ -262,6 +266,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
 
     if (canBeVarargs) {
       myMakeVarargs = new NonFocusableCheckBox(RefactoringBundle.message("declare.varargs.checkbox"));
+      myMakeVarargs.setBorder(emptyBorder);
       updateVarargsEnabled();
       myMakeVarargs.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
@@ -274,6 +279,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
 
     if (myCbChainedConstructor != null) {
       optionsPanel.add(myCbChainedConstructor);
+      myCbChainedConstructor.setBorder(emptyBorder);
       myCbChainedConstructor.addItemListener(new ItemListener() {
         public void itemStateChanged(final ItemEvent e) {
           if (myDefaultVisibility) {
