@@ -161,12 +161,6 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
   }
 
   @Override
-  protected void dispose() {
-    super.dispose();
-    AndroidDebugBridge.removeDeviceChangeListener(this);
-  }
-
-  @Override
   protected void doOKAction() {
     mySelectedRows = myDeviceTable.getSelectedRows();
     super.doOKAction();
