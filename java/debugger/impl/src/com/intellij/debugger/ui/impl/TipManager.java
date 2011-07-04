@@ -333,6 +333,10 @@ public class TipManager implements Disposable, PopupMenuListener {
     private void tryToShowTooltipIfRequested(KeyEvent event) {
       if (KeymapUtil.isTooltipRequest(event)) {
         tryTooltip(event, false);
+      } else {
+        if (event.getID() == KeyEvent.KEY_PRESSED) {
+          myLastMouseEvent = null;
+        }
       }
     }
 
