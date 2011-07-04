@@ -149,7 +149,8 @@ public class BaseSpellChecker implements SpellCheckerEngine {
                     UIUtil.invokeLaterIfNeeded(new Runnable() {
                       @Override
                       public void run() {
-                        DaemonCodeAnalyzer.getInstance(project).restart();
+                        final DaemonCodeAnalyzer instance = DaemonCodeAnalyzer.getInstance(project);
+                        if (instance != null) instance.restart();
                       }
                     });
                   }
