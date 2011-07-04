@@ -100,6 +100,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
 
+  private BusyObject.Impl.Simple myBusyObject = new BusyObject.Impl.Simple();
+
   /**
    * Removes invalid myEditor and updates "modified" status.
    */
@@ -768,9 +770,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
     if (newEditorCreated) {
-      focusManager.doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
+      window.setPaintBlocked(true);
+      notifyPublisher(new Runnable() {
         @Override
         public void run() {
+          window.setPaintBlocked(false);
           if (isFileOpen(file)) {
             getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
               .fileOpened(FileEditorManagerImpl.this, file);
@@ -807,6 +811,25 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
 
     return Pair.create(editors, providers);
+  }
+
+  @Override
+  public ActionCallback notifyPublisher(final Runnable runnable) {
+    final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+    final ActionCallback done = new ActionCallback();
+    return myBusyObject.execute(new ActiveRunnable() {
+      @Override
+      public ActionCallback run() {
+        focusManager.doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
+          @Override
+          public void run() {
+            runnable.run();
+            done.setDone();
+          }
+        });
+        return done;
+      }
+    });
   }
 
   private void setSelectedEditor(VirtualFile file, String fileEditorProviderId) {
@@ -1304,7 +1327,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           addSelectionRecord(newSelectedFile, holder.getEditorWindow());
         }
       }
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
+      notifyPublisher(new Runnable() {
         @Override
         public void run() {
           publisher.selectionChanged(event);
@@ -1686,5 +1709,10 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
 
   public void removeSelectionRecord(VirtualFile file, EditorWindow window) {
     mySelectionHistory.remove(Pair.create(file, window));
+  }
+
+  @Override
+  public ActionCallback getReady(@NotNull Object requestor) {
+    return myBusyObject.getReady(requestor);
   }
 }

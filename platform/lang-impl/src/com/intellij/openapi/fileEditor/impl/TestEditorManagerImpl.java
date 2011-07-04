@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -92,6 +93,12 @@ import java.util.Map;
   @Override
   public boolean isInsideChange() {
     return false;
+  }
+
+  @Override
+  public ActionCallback notifyPublisher(Runnable runnable) {
+    runnable.run();
+    return new ActionCallback.Done();
   }
 
   @Override
@@ -465,5 +472,10 @@ import java.util.Map;
   @Override
   public EditorsSplitters getSplitters() {
     return null;
+  }
+
+  @Override
+  public ActionCallback getReady(@NotNull Object requestor) {
+    return new ActionCallback.Done();
   }
 }

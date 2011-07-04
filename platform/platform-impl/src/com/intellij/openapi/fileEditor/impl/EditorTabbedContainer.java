@@ -316,6 +316,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     }
   }
 
+  public void setPaintBlocked(boolean blocked) {
+    ((JBTabsImpl)myTabs).setPaintBlocked(blocked, false);
+  }
+
   private class MyQueryable implements Queryable {
 
     private final TabInfo myTab;

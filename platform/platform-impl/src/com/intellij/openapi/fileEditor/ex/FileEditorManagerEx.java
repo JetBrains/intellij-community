@@ -23,9 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public abstract class FileEditorManagerEx extends FileEditorManager {
+public abstract class FileEditorManagerEx extends FileEditorManager implements BusyObject {
   protected final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
 
   public static FileEditorManagerEx getInstanceEx(Project project) {
@@ -182,5 +180,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
   }
 
   public abstract EditorsSplitters getSplittersFor(Component c);
+
+
+  public abstract ActionCallback notifyPublisher(Runnable runnable);
 
 }

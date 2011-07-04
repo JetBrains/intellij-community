@@ -229,11 +229,11 @@ public abstract class EditorComposite implements Disposable {
 
   private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){
     if (!myFileEditorManager.isInsideChange() && !Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
-      final FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, myFile, oldSelectedEditor, myFile, newSelectedEditor);
-      final FileEditorManagerListener publisher = myFileEditorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
-      IdeFocusManager.getInstance(myFileEditorManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
+      myFileEditorManager.notifyPublisher(new Runnable() {
         @Override
         public void run() {
+          final FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, myFile, oldSelectedEditor, myFile, newSelectedEditor);
+          final FileEditorManagerListener publisher = myFileEditorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
           publisher.selectionChanged(event);
         }
       });

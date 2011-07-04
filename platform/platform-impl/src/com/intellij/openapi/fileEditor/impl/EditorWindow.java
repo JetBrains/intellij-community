@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
@@ -173,13 +174,13 @@ public class EditorWindow {
         }
         finally {
           editorManager.removeSelectionRecord(file, EditorWindow.this);
-          final FileEditorManagerListener afterPublisher =
-            editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-          IdeFocusManager.getInstance(editorManager.getProject()).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(editorManager.getProject()) {
+          editorManager.notifyPublisher(new Runnable() {
             @Override
             public void run() {
-              afterPublisher.fileClosed(editorManager, file);
+              final FileEditorManagerListener afterPublisher =
+                editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
+                afterPublisher.fileClosed(editorManager, file);
             }
           });
 
@@ -339,6 +340,10 @@ public class EditorWindow {
 
   public boolean isValid() {
     return myPanel.isShowing();
+  }
+
+  public void setPaintBlocked(boolean blocked) {
+    myTabbedPane.setPaintBlocked(blocked);
   }
 
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
@@ -809,18 +814,24 @@ public class EditorWindow {
     updateFileIcon(file);
   }
 
-  void trimToSize(final int limit, final VirtualFile fileToIgnore, boolean transferFocus) {
+  void trimToSize(final int limit, final VirtualFile fileToIgnore, final boolean transferFocus) {
     if (myTabbedPane == null) {
       return;
     }
-    final boolean closeNonModifiedFilesFirst = UISettings.getInstance().CLOSE_NON_MODIFIED_FILES_FIRST;
-    final EditorComposite selectedComposite = getSelectedEditor();
-    try {
-      doTrimSize(limit, fileToIgnore, closeNonModifiedFilesFirst, transferFocus);
-    }
-    finally {
-      setSelectedEditor(selectedComposite, false);
-    }
+
+    FileEditorManagerEx.getInstanceEx(getManager().getProject()).getReady(this).doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        final boolean closeNonModifiedFilesFirst = UISettings.getInstance().CLOSE_NON_MODIFIED_FILES_FIRST;
+        final EditorComposite selectedComposite = getSelectedEditor();
+        try {
+          doTrimSize(limit, fileToIgnore, closeNonModifiedFilesFirst, transferFocus);
+        }
+        finally {
+          setSelectedEditor(selectedComposite, false);
+        }
+      }
+    });
   }
 
   private void doTrimSize(int limit, VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
