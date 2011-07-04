@@ -1778,6 +1778,10 @@ public class UIUtil {
     protected void installKeyboardActions() {
       super.installKeyboardActions();
 
+      if (Boolean.TRUE.equals(tree.getClientProperty("MacTreeUi.actionsInstalled"))) return;
+
+      tree.putClientProperty("MacTreeUi.actionsInstalled", Boolean.TRUE);
+
       final InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
       inputMap.put(KeyStroke.getKeyStroke("pressed LEFT"), "collapse_or_move_up");
       inputMap.put(KeyStroke.getKeyStroke("pressed RIGHT"), "expand");
@@ -1795,26 +1799,30 @@ public class UIUtil {
               int toScroll = -1;
               JTree tree = (JTree)source;
               int selectionRow = tree.getLeadSelectionRow();
-              if (selectionRow == -1) return;
+              if (selectionRow != -1) {
+                TreePath selectionPath = tree.getPathForRow(selectionRow);
+                if (selectionPath != null) {
+                  boolean leaf = tree.getModel().isLeaf(selectionPath.getLastPathComponent());
+                  if (!leaf && tree.isExpanded(selectionRow)) {
+                    if (selectionRow + 1 < tree.getRowCount()) {
+                      toSelect = selectionRow + 1;
+                      toScroll = toSelect;
+                    }
+                  } else if (leaf) {
+                    toScroll = selectionRow;
+                  }
 
-              if (!isLeaf(selectionRow) && tree.isExpanded(selectionRow)) {
-                if (selectionRow + 1 < tree.getRowCount()) {
-                  toSelect = selectionRow + 1;
-                  toScroll = toSelect;
+                  if (toSelect != -1) {
+                    tree.setSelectionInterval(toSelect, toSelect);
+                  }
+
+                  if (toScroll != -1) {
+                    tree.scrollRowToVisible(toScroll);
+                  }
+
+                  if (toSelect != -1 || toScroll != -1) return;
                 }
-              } else if (isLeaf(selectionRow)) {
-                toScroll = selectionRow;
               }
-
-              if (toSelect != -1) {
-                tree.setSelectionInterval(toSelect, toSelect);
-              }
-
-              if (toScroll != -1) {
-                tree.scrollRowToVisible(toScroll);
-              }
-
-              if (toSelect != -1 || toScroll != -1) return;
             }
 
 
@@ -1831,7 +1839,10 @@ public class UIUtil {
             int selectionRow = tree.getLeadSelectionRow();
             if (selectionRow == -1) return;
 
-            if (isLeaf(selectionRow) || tree.isCollapsed(selectionRow)) {
+            TreePath selectionPath = tree.getPathForRow(selectionRow);
+            if (selectionPath == null) return;
+
+            if (tree.getModel().isLeaf(selectionPath.getLastPathComponent()) || tree.isCollapsed(selectionRow)) {
               final TreePath parentPath = tree.getPathForRow(selectionRow).getParentPath();
               if (parentPath != null) {
                 if (parentPath.getParentPath() != null || tree.isRootVisible()) {
