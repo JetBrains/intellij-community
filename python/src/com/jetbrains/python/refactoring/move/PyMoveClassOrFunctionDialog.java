@@ -5,32 +5,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 
 /**
  * @author vlan
  */
 public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
   private PyMoveClassOrFunctionPanel myPanel;
-  private Project myProject;
 
   public PyMoveClassOrFunctionDialog(@NotNull Project project, PsiNamedElement[] elements) {
     super(project, true);
     assert elements.length > 0;
-    myProject = project;
     final String moveText;
     if (elements.length == 1) {
       PsiNamedElement e = elements[0];
@@ -60,14 +53,8 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
     init();
   }
 
-  @Nullable
-  public PsiFile getTargetFile() {
-    final String path = myPanel.getBrowseTargetFileButton().getText();
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
-    if (file != null) {
-      return PsiManager.getInstance(myProject).findFile(file);
-    }
-    return null;
+  public String getTargetPath() {
+    return myPanel.getBrowseTargetFileButton().getText();
   }
 
   @Override

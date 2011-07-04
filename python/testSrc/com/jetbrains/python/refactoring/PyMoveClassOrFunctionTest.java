@@ -3,13 +3,11 @@ package com.jetbrains.python.refactoring;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
@@ -42,6 +40,11 @@ public class PyMoveClassOrFunctionTest extends PyLightFixtureTestCase {
     doTest("f", "b.py");
   }
 
+  // PY-4074
+  public void testNewModule() {
+    doTest("f", "b.py");
+  }
+
   private void doTest(final String symbolName, final String toFileName) {
     String root = "/refactoring/moveClassOrFunction/" + getTestName(true);
     String rootBefore = root + "/before/src";
@@ -53,10 +56,11 @@ public class PyMoveClassOrFunctionTest extends PyLightFixtureTestCase {
     assertNotNull(element);
 
     VirtualFile toVirtualFile = dir1.findFileByRelativePath(toFileName);
-    assertNotNull(toVirtualFile);
-    PyFile toFile = (PyFile)PsiManager.getInstance(myFixture.getProject()).findFile(toVirtualFile);
-
-    new PyMoveClassOrFunctionProcessor(myFixture.getProject(), new PsiNamedElement[] {element}, toFile, false).run();
+    String path = toVirtualFile != null ? toVirtualFile.getPath() : (dir1.getPath() + "/" + toFileName);
+    new PyMoveClassOrFunctionProcessor(myFixture.getProject(),
+                                       new PsiNamedElement[] {element},
+                                       path,
+                                       false).run();
 
     VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
     try {
