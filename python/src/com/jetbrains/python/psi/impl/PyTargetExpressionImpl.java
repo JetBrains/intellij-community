@@ -194,6 +194,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       StructuredDocString structuredDocString = StructuredDocString.parse(docString);
       if (structuredDocString != null) {
         String typeName = structuredDocString.getParamType(null);
+        if (typeName == null) {
+          typeName = structuredDocString.getParamType(targetExpression.getName());
+        }
         if (typeName != null) {
           return PyTypeParser.getTypeByName(targetExpression, typeName);
         }
