@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
@@ -115,12 +116,13 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   private void _doLoadDictionaryAsync(final Loader loader, final Consumer<Dictionary> consumer) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    final Runnable runnable = new Runnable() {
       @Override
       public void run() {
+        if (myProject.isDisposed()) return;
         LOG.debug("Loading " + loader.getName());
         ProgressManager.getInstance()
-          .run(new Task.Backgroundable(myProject,"Loading spellchecker dictionary...", false,
+          .run(new Task.Backgroundable(myProject, "Loading spellchecker dictionary...", false,
                                        new PerformInBackgroundOption() {
                                          @Override
                                          public boolean shouldStartInBackground() {
@@ -163,7 +165,22 @@ public class BaseSpellChecker implements SpellCheckerEngine {
             }
           });
       }
-    });
+    };
+    
+
+    if (!myProject.isInitialized()) {
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+        new Runnable() {
+          @Override
+          public void run() {
+            UIUtil.invokeLaterIfNeeded(runnable);
+          }
+        }
+      );
+      
+    } else {
+      UIUtil.invokeLaterIfNeeded(runnable);
+    }
   }
 
   private void queueDictionaryLoad(final Loader loader, final Consumer<Dictionary> consumer) {
