@@ -19,6 +19,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -109,7 +110,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
       doMove(project, new PsiElement[] {element}, null, null);
       return true;
     }
-    if (element instanceof PsiNamedElement) {
+    if (element instanceof PsiNamedElement && !(element instanceof PyParameter)) {
       return true;
     }
     return false;
