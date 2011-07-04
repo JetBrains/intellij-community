@@ -3,7 +3,6 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,17 +35,8 @@ public class Parsing {
     return getParsingContext().getFunctionParser();
   }
 
-  protected void checkMatches(final IElementType token, final String message) {
+  protected boolean checkMatches(final IElementType token, final String message) {
     if (myBuilder.getTokenType() == token) {
-      myBuilder.advanceLexer();
-    }
-    else {
-      myBuilder.error(message);
-    }
-  }
-
-  protected boolean checkMatches(final TokenSet tokenSet, final String message) {
-    if (tokenSet.contains(myBuilder.getTokenType())) {
       myBuilder.advanceLexer();
       return true;
     }

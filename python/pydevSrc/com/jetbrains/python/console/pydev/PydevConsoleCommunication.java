@@ -11,7 +11,6 @@ import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.net.MalformedURLException;
 import java.util.Collections;
@@ -134,7 +133,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       return execRequestInput();
     }
     else {
-      throw new NotImplementedException();
+      throw new UnsupportedOperationException();
     }
   }
 

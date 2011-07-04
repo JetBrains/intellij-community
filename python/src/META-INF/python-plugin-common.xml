@@ -297,6 +297,7 @@
     <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
     <applicationConfigurable implementation="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
+    <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsConfigurable"/>
     <projectService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                     serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.DocStringReferenceContributor"/>

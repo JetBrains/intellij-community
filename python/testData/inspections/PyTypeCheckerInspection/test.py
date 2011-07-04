@@ -199,3 +199,15 @@ def test_generator():
         f_15(gen(11)),
         f_15('foo'.split('o')),
     ]
+
+# PY-4025
+def test_function_assignments():
+    def g(x):
+        """
+        :type x: int
+        """
+        return x
+    g(<warning descr="Expected type 'int', got 'str' instead">"str"</warning>) #fail
+    h = g
+    h(<warning descr="Expected type 'int', got 'str' instead">"str"</warning>) #fail
+

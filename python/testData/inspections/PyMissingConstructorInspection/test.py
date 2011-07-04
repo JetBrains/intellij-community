@@ -68,3 +68,8 @@ class C(B):
 class Over(Over):
   def __init__(self):
     pass
+
+#PY-4038
+class Child(Base):
+    def __init__(self):
+        super(self.__class__, self).__init__()

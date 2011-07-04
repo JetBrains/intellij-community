@@ -1,4 +1,4 @@
-while foo
-    if condition
+while foo:
+    if condition:
       continue
-    puts "Hello"
+    print "Hello"

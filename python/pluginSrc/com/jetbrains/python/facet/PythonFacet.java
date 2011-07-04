@@ -6,12 +6,9 @@ import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,14 +50,18 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> implements Libr
             }
           }
         }
-        if (!librarySeen && name != null) {
-          Library library = LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(name);
+        if (name != null) {
+          final ModifiableModelsProvider provider = ModifiableModelsProvider.SERVICE.getInstance();
+          final LibraryTable.ModifiableModel libraryTableModifiableModel = provider.getLibraryTableModifiableModel();
+          Library library = libraryTableModifiableModel.getLibraryByName(name);
           if (library == null) {
             // we just create new project library
             library = PythonSdkTableListener.addLibrary(sdk);
           }
-          model.addLibraryEntry(library);
-          modelChanged = true;
+          if (!librarySeen) {
+            model.addLibraryEntry(library);
+            modelChanged = true;
+          }
         }
 
         // !!!!!!!!!! WARNING !!!!!!!!!

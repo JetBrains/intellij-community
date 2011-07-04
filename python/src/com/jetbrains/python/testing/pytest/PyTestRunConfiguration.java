@@ -15,7 +15,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * @author yole
@@ -23,6 +26,8 @@ import java.io.*;
 public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
   private String myTestToRun = "";
   private String myKeywords = "";
+  static String ourRunnerVersion = "";
+  static long ourRunnerLastModified = 0;
 
   private static final String TEST_TO_RUN_FIELD = "testToRun";
   private static final String KEYWORDS_FIELD = "keywords";
@@ -118,22 +123,27 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
   }
 
   private static boolean checkVersion(File runner, final String sdkHome) {
-    try {
-      BufferedReader br = new BufferedReader(new FileReader(runner));
-      String interpreterPath = br.readLine().substring(2);    // as it presented as #!/usr/local/bin/python2.6
-      String realPath = new File(interpreterPath).getCanonicalPath().toLowerCase();
-      int ind = realPath.indexOf("python");
-      if (ind != -1) {
-        String version = realPath.substring(ind + "python".length());
-        final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
-        String sdkVersion = flavor != null ? flavor.getVersionString(sdkHome) : null;
-        if (sdkVersion != null && sdkVersion.contains(version))
-          return true;
+    long lastModified = runner.lastModified();
+    if (ourRunnerLastModified != lastModified) {
+      ourRunnerLastModified = lastModified;
+      try {
+        BufferedReader br = new BufferedReader(new FileReader(runner));
+        String interpreterPath = br.readLine().substring(2);    // as it presented as #!/usr/local/bin/python2.6
+        String realPath = new File(interpreterPath).getCanonicalPath().toLowerCase();
+        int ind = realPath.indexOf("python");
+        if (ind != -1)
+          ourRunnerVersion = realPath.substring(ind + "python".length());
+        else return false;
+        br.close();
+      }
+      catch (IOException e) {
+        return false;
       }
     }
-    catch (IOException e) {
-      return false;
-    }
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
+    String sdkVersion = flavor != null ? flavor.getVersionString(sdkHome) : null;
+    if (sdkVersion != null && sdkVersion.contains(ourRunnerVersion))
+      return true;
     return false;
   }
 

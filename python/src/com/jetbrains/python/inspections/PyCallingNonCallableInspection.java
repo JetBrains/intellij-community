@@ -3,14 +3,17 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeReference;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,9 +46,11 @@ public class PyCallingNonCallableInspection extends PyInspection {
       if (callee != null && !PyNames.CLASS.equals(callee.getName())) {
         // All classes are callable, but getType() for a class is special-cased to return the class itself instead of a metaclass, so we
         // cannot rely on types here
-        final PsiReference ref = callee.getReference();
-        if (ref != null && ref.resolve() instanceof PyClass) {
-          return;
+        if (callee instanceof PyReferenceExpression) {
+          final QualifiedResolveResult result = ((PyReferenceExpression)callee).followAssignmentsChain(myTypeEvalContext);
+          if (result.isValidResult() && result.getElement() instanceof PyClass) {
+            return;
+          }
         }
         PyType calleeType = myTypeEvalContext.getType(callee);
         if (calleeType instanceof PyClassType) {
@@ -54,11 +59,11 @@ public class PyCallingNonCallableInspection extends PyInspection {
           if (isMethodType(node, classType)) {
             return;
           }
-          if (cls != null && !cls.isSubclass(PyNames.CALLABLE)) {
+          if (cls != null && !PyABCUtil.isSubclass(cls, PyNames.CALLABLE)) {
             registerProblem(node, String.format("'%s' object is not callable", cls.getName()));
           }
         }
-        else if (calleeType != null) {
+        else if (calleeType != null && !(calleeType instanceof PyTypeReference)) {
           registerProblem(node, String.format("'%s' is not callable", callee.getName()));
         }
       }

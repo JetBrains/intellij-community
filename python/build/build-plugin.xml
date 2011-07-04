@@ -84,6 +84,7 @@
 
   <target name="clean" description="Cleanup output">
     <delete dir="${output}"/>
+    <delete dir="${classes.dir}"/>
   </target>
 
   <target name="compile" description="Compile module python">
@@ -158,6 +159,9 @@
         <include name="**/*.xml"/>
       </fileset>
     </copy>
+
+    <mkdir dir="${plugindir}/help"/>
+    <copy file="${plugin.help}/pytonpluginhelp.jar" tofile="${plugindir}/help/pythonpluginhelp.jar"/>
 
     <zip basedir="${zipdir}" destfile="${output}/${zipname}"/>
   </target>

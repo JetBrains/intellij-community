@@ -184,7 +184,7 @@ public class PyClassRefactoringUtil {
 
   public static void insertImport(PsiElement anchor, Collection<PsiNamedElement> elements) {
     for (PsiNamedElement newClass : elements) {
-      insertImport(anchor, newClass, null);
+      insertImport(anchor, newClass);
     }
   }
 
@@ -204,18 +204,26 @@ public class PyClassRefactoringUtil {
     return true;
   }
 
+  public static void insertImport(PsiElement anchor, PsiNamedElement element) {
+    insertImport(anchor, element, null);
+  }
+
   public static void insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName) {
+    insertImport(anchor, element, asName, PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+  }
+
+  public static void insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName, boolean preferFromImport) {
     if (PyBuiltinCache.getInstance(element).hasInBuiltins(element)) return;
     final PsiFile newFile = element.getContainingFile();
     final VirtualFile vFile = newFile.getVirtualFile();
     assert vFile != null;
     final PsiFile file = anchor.getContainingFile();
     if (newFile == file) return;
-    final PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(anchor, vFile);
+    final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, anchor);
     assert isValidQualifiedName(qName);
     final String importableName = (qName != null) ? qName.toString() : null;
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, newFile);
-    if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT || element instanceof PyFile) {
+    if (!preferFromImport || element instanceof PyFile) {
       if (element instanceof PyFile) {
         AddImportHelper.addImportStatement(file, importableName, asName, priority);
       } else {

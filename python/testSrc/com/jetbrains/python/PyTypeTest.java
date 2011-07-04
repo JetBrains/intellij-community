@@ -178,7 +178,7 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertEquals("int", type.getName());
   }
 
-  public void testRestIvarType() {
+  public void testRestParamType() {
     PyClassType type = (PyClassType) doTest("def foo(limit):\n" +
                                             "  ''':param integer limit: maximum number of stack frames to show'''\n" +
                                             "  expr = limit");
@@ -190,6 +190,14 @@ public class PyTypeTest extends PyLightFixtureTestCase {
                                             "  ''':param :class:`Foo` limit: maximum number of stack frames to show'''\n" +
                                             "  expr = limit");
     assertEquals("Foo", type.getName());
+  }
+
+  public void testRestIvarType() {
+    PyClassType type = (PyClassType) doTest("def foo(p):\n" +
+                                            "    var = p.bar\n" +
+                                            "    ''':type var: str'''\n" +
+                                            "    expr = var");
+    assertEquals("str", type.getName());
   }
 
   private PyType doTest(final String text) {

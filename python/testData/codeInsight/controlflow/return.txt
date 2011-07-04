@@ -1,12 +1,10 @@
 0(1) element: null
 1(2) element: PyWhileStatement
-2(3,11) READ ACCESS: foo
+2(3,9) READ ACCESS: foo
 3(4) element: PyStatementList. Condition: foo:true
 4(5) element: PyIfStatement
 5(6,8) READ ACCESS: condition
 6(7) element: PyStatementList. Condition: condition:true
-7(11) element: PyReturnStatement
-8(9) element: PyExpressionStatement
-9(10) READ ACCESS: puts
-10(1) element: PyExpressionStatement
-11() element: null
+7(9) element: PyReturnStatement
+8(1) element: PyPrintStatement
+9() element: null

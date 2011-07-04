@@ -11,6 +11,7 @@
   <depends>com.intellij.modules.java</depends>
   <depends>org.jetbrains.plugins.yaml</depends>
   <vendor url="http://www.jetbrains.com/pycharm/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
+  <helpset file="pythonpluginhelp.jar" path="/pycharm/Help.hs"/>
 
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
 

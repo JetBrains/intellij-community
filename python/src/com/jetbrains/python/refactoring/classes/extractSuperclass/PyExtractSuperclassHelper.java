@@ -136,7 +136,7 @@ public class PyExtractSuperclassHelper {
    * @return the placed file
    * @throws IOException
    */
-  private static PsiFile placeFile(Project project, String path, String filename) throws IOException {
+  public static PsiFile placeFile(Project project, String path, String filename) throws IOException {
     PsiDirectory psiDir = createDirectories(project, path);
     LOG.assertTrue(psiDir != null);
     PsiFile psiFile = psiDir.findFile(filename);
@@ -167,8 +167,7 @@ public class PyExtractSuperclassHelper {
       }
     }
     if (the_root == null) {
-      LOG.error("Can't find '"+ target +"' among roots");
-      return null;
+      throw new IOException("Can't find '"+ target +"' among roots");
     }
     if (the_rest != null) {
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -180,8 +179,7 @@ public class PyExtractSuperclassHelper {
         VirtualFile subdir = the_root.findChild(dirs[i]);
         if (subdir != null) {
           if (!subdir.isDirectory()) {
-            LOG.error("Expected dir, but got non-dir: " + subdir.getPath());
-            return null;
+            throw new IOException("Expected dir, but got non-dir: " + subdir.getPath());
           }
         }
         else subdir = the_root.createChildDirectory(lfs, dirs[i]);
