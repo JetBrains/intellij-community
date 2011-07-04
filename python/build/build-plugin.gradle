@@ -1,0 +1,37 @@
+apply plugin: 'java'
+
+projectHome = "../.."
+ideaHome = "$projectHome/out/python/idea/jdk16"
+
+task unzipIdea(type: Copy) {
+  from {
+    file("$projectHome/out/python/idea/").listFiles().findAll {it.name.endsWith('.zip')}.collect { zipTree(it) }
+  }
+  into(ideaHome)
+}
+
+sourceSets {
+  main {
+    java {
+      srcDir '../src'
+      srcDir '../pluginSrc'
+      srcDir '../pydevSrc'
+      srcDir "$projectHome/ultimate/ultimate-verifier"
+    }
+    resources {
+      srcDir '../resources'
+      srcDir '../pluginResources'
+      srcDir "$projectHome/community/colorSchemes/src"
+    }
+    compileClasspath = fileTree(dir: "$ideaHome/lib", include: "*.jar") +
+                       files("$ideaHome/plugins/yaml/lib/yaml.jar")
+  }
+}
+
+jar {
+  archiveName = 'python.jar'
+}
+
+metaInf << fileTree(dir: "../pluginSrc/META-INF") + fileTree(dir: "../src/META-INF")
+
+compileJava.dependsOn unzipIdea
