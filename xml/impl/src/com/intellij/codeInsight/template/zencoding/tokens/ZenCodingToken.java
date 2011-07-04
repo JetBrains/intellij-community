@@ -18,5 +18,5 @@ package com.intellij.codeInsight.template.zencoding.tokens;
 /**
  * @author Eugene.Kudelevsky
  */
-public class ZenCodingToken {
+public abstract class ZenCodingToken {
 }
