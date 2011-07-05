@@ -131,18 +131,15 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (myRowHeight < 0) {
       try {
         myRowHeightIsComputing = true;
-        final TableModel model = getModel();
-        if (model != null) {
-          for (int row = 0; row < model.getRowCount(); row++) {
-            for (int column = 0; column < model.getColumnCount(); column++) {
-              final TableCellRenderer renderer = getCellRenderer(row, column);
-              if (renderer != null) {
-                final Object value = model.getValueAt(row, column);
-                final Component component = renderer.getTableCellRendererComponent(this, value, true, true, row, column);
-                if (component != null) {
-                  final Dimension size = component.getPreferredSize();
-                  myRowHeight = Math.max(size.height, myRowHeight);
-                }
+        for (int row = 0; row < getRowCount(); row++) {
+          for (int column = 0; column < getColumnCount(); column++) {
+            final TableCellRenderer renderer = getCellRenderer(row, column);
+            if (renderer != null) {
+              final Object value = getValueAt(row, column);
+              final Component component = renderer.getTableCellRendererComponent(this, value, true, true, row, column);
+              if (component != null) {
+                final Dimension size = component.getPreferredSize();
+                myRowHeight = Math.max(size.height, myRowHeight);
               }
             }
           }
