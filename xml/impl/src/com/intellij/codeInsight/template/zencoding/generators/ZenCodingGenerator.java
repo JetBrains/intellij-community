@@ -98,6 +98,8 @@ public abstract class ZenCodingGenerator {
     int lastQuoteIndex = -1;
     int lastApostropheIndex = -1;
     boolean inBrackets = false;
+    int bracesStack = 0;
+
     for (int i = 0; i < key.length(); i++) {
       char c = key.charAt(i);
       if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {
@@ -121,6 +123,15 @@ public abstract class ZenCodingGenerator {
       else if (c == ']' && inBrackets) {
         lastWhitespaceIndex = -1;
         inBrackets = false;
+      }
+      else if (c == '{') {
+        bracesStack++;
+      }
+      else if (c == '}' && bracesStack > 0) {
+        bracesStack--;
+        if (bracesStack == 0) {
+          lastWhitespaceIndex = -1;
+        }
       }
     }
     if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.zencoding.nodes;
 
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,11 +43,11 @@ public class AddOperationNode extends ZenCodingNode {
 
   @NotNull
   @Override
-  public List<GenerationNode> expand(int numberInIteration, String surroundedText) {
+  public List<GenerationNode> expand(int numberInIteration, String surroundedText, CustomTemplateCallback callback) {
     List<GenerationNode> result = new ArrayList<GenerationNode>();
-    List<GenerationNode> leftNodes = myLeftOperand.expand(numberInIteration, null);
+    List<GenerationNode> leftNodes = myLeftOperand.expand(numberInIteration, null, callback);
     result.addAll(leftNodes);
-    result.addAll(myRightOperand.expand(numberInIteration, surroundedText));
+    result.addAll(myRightOperand.expand(numberInIteration, surroundedText, callback));
     return result;
   }
 }

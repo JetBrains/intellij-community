@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.zencoding.nodes;
 
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ public class TemplateNode extends ZenCodingNode {
 
   @NotNull
   @Override
-  public List<GenerationNode> expand(int numberInIteration, String surroundedText) {
+  public List<GenerationNode> expand(int numberInIteration, String surroundedText, CustomTemplateCallback callback) {
     GenerationNode node = new GenerationNode(myTemplateToken, new ArrayList<GenerationNode>(), numberInIteration, surroundedText);
     return Arrays.asList(node);
   }

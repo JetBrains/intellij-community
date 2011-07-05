@@ -59,7 +59,7 @@ import java.util.List;
  */
 public class ZenCodingTemplate implements CustomLiveTemplate {
   public static final char MARKER = '\0';
-  private static final String DELIMS = ">+*|()[].#,='\" \0";
+  private static final String DELIMS = ">+*|()[]{}.#,='\" \0";
   public static final String ATTRS = "ATTRS";
   private static final String ID = "id";
   private static final String CLASS = "class";
@@ -158,6 +158,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
 
     boolean inQuotes = false;
     boolean inApostrophes = false;
+    int bracesStack = 0;
 
     StringBuilder builder = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
@@ -179,6 +180,21 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
           inApostrophes = false;
           result.add(new StringLiteralToken(builder.toString()));
           builder = new StringBuilder();
+        }
+        continue;
+      }
+
+      if (bracesStack > 0) {
+        builder.append(c);
+        if (c == '}') {
+          bracesStack--;
+          if (bracesStack == 0) {
+            result.add(new TextToken(builder.toString()));
+            builder = new StringBuilder();
+          }
+        }
+        else if (c == '{') {
+          bracesStack++;
         }
         continue;
       }
@@ -212,11 +228,15 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
           inApostrophes = true;
           builder.append(c);
         }
+        else if (c == '{') {
+          bracesStack = 1;
+          builder.append(c);
+        }
         else if (c == '(') {
-          result.add(ZenCodingTokens.OPENING_BRACE);
+          result.add(ZenCodingTokens.OPENING_R_BRACKET);
         }
         else if (c == ')') {
-          result.add(ZenCodingTokens.CLOSING_BRACE);
+          result.add(ZenCodingTokens.CLOSING_R_BRACKET);
         }
         else if (c == '[') {
           result.add(ZenCodingTokens.OPENING_SQ_BRACKET);
@@ -345,7 +365,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     if (surroundedText != null) {
       surroundedText = surroundedText.trim();
     }
-    List<GenerationNode> genNodes = node.expand(-1, surroundedText);
+    List<GenerationNode> genNodes = node.expand(-1, surroundedText, callback);
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
     for (int i = 0, genNodesSize = genNodes.size(); i < genNodesSize; i++) {
@@ -502,6 +522,27 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     return false;
   }
 
+  public static boolean doSetTemplate(final TemplateToken token, TemplateImpl template, CustomTemplateCallback callback) {
+    token.setTemplate(template);
+    final XmlFile xmlFile = parseXmlFileInTemplate(template.getString(), callback, true);
+    token.setFile(xmlFile);
+    XmlDocument document = xmlFile.getDocument();
+    final XmlTag tag = document != null ? document.getRootTag() : null;
+    if (token.getAttribute2Value().size() > 0 && tag == null) {
+      return false;
+    }
+    if (tag != null) {
+      if (!containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            addMissingAttributes(tag, token.getAttribute2Value());
+          }
+        });
+      }
+    }
+    return true;
+  }
+
   private static class MyParser {
     private final List<ZenCodingToken> myTokens;
     private final CustomTemplateCallback myCallback;
@@ -599,21 +640,37 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
 
     @Nullable
     private ZenCodingNode parseExpressionInBraces() {
-      ZenCodingToken openingBrace = nextToken();
-      if (openingBrace == ZenCodingTokens.OPENING_BRACE) {
+      ZenCodingToken token = nextToken();
+      if (token == ZenCodingTokens.OPENING_R_BRACKET) {
         myIndex++;
         ZenCodingNode add = parseAddOrMore();
         if (add == null) {
           return null;
         }
         ZenCodingToken closingBrace = nextToken();
-        if (closingBrace != ZenCodingTokens.CLOSING_BRACE) {
+        if (closingBrace != ZenCodingTokens.CLOSING_R_BRACKET) {
           return null;
         }
         myIndex++;
         return add;
       }
-      return parseTemplate();
+      else if (token instanceof TextToken) {
+        myIndex++;
+        return new TextNode((TextToken)token);
+
+      }
+
+      final ZenCodingNode templateNode = parseTemplate();
+      if (templateNode == null) {
+        return null;
+      }
+
+      token = nextToken();
+      if (token instanceof TextToken) {
+        myIndex++;
+        return new MoreOperationNode(templateNode, new TextNode((TextToken)token));
+      }
+      return templateNode;
     }
 
     @Nullable
@@ -733,24 +790,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       if (template == null) {
         return false;
       }
-      token.setTemplate(template);
-      final XmlFile xmlFile = parseXmlFileInTemplate(template.getString(), myCallback, true);
-      token.setFile(xmlFile);
-      XmlDocument document = xmlFile.getDocument();
-      final XmlTag tag = document != null ? document.getRootTag() : null;
-      if (token.getAttribute2Value().size() > 0 && tag == null) {
-        return false;
-      }
-      if (tag != null) {
-        if (!containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              addMissingAttributes(tag, token.getAttribute2Value());
-            }
-          });
-        }
-      }
-      return true;
+      return doSetTemplate(token, template, myCallback);
     }
 
     @Nullable

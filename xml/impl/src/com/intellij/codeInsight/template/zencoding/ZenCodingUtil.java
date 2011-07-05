@@ -26,7 +26,7 @@ public class ZenCodingUtil {
   private ZenCodingUtil() {
   }
 
-  private static String replaceNumberMarkersBy(String s, String by) {
+  public static String replaceNumberMarkersBy(String s, String by) {
     StringBuilder builder = new StringBuilder(s.length());
     int j = -1;
     for (int i = 0, n = s.length(); i <= n; i++) {
