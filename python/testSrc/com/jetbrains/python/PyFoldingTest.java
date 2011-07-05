@@ -13,4 +13,8 @@ public class PyFoldingTest extends PyLightFixtureTestCase {
   public void testClassTrailingSpace() {  // PY-2544
     doTest();
   }
+
+  public void testDocString() {
+    doTest();
+  }
 }
