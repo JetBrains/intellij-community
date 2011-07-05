@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
@@ -197,4 +198,25 @@ public class IconUtil {
       return image;
     }
   }
+
+  public static Icon getAddRowIcon() {
+    return SystemInfo.isMac ? PlatformIcons.TABLE_ADD_ROW : PlatformIcons.ADD_ICON;
+  }
+
+  public static Icon getRemoveRowIcon() {
+    return SystemInfo.isMac ? PlatformIcons.TABLE_REMOVE_ROW : PlatformIcons.DELETE_ICON;
+  }
+
+  public static Icon getMoveRowUpIcon() {
+    return SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_UP : PlatformIcons.MOVE_UP_ICON;
+  }
+
+  public static Icon getMoveRowDownIcon() {
+    return SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_DOWN : PlatformIcons.MOVE_DOWN_ICON;
+  }
+
+  public static Icon getEditIcon() {
+    return SystemInfo.isMac ? PlatformIcons.TABLE_EDIT_ROW : PlatformIcons.EDIT;
+  }
+
 }

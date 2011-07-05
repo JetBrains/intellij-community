@@ -49,12 +49,12 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -265,7 +265,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private JComponent createTableWithButtons() {
     final boolean isAnalyzeShown = ((ApplicationEx)ApplicationManager.getApplication()).isInternal();
 
-    final AnActionButton addButton = new AnActionButton(ProjectBundle.message("button.add"), null, SystemInfo.isMac ? PlatformIcons.TABLE_ADD_ROW : PlatformIcons.ADD_ICON) {
+    final AnActionButton addButton = new AnActionButton(ProjectBundle.message("button.add"), null, IconUtil.getAddRowIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         initPopupActions();
@@ -335,14 +335,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    final AnActionButton removeButton = new AnActionButton(ProjectBundle.message("button.remove"), null, SystemInfo.isMac ? PlatformIcons.TABLE_REMOVE_ROW : PlatformIcons.DELETE_ICON) {
+    final AnActionButton removeButton = new AnActionButton(ProjectBundle.message("button.remove"), null, IconUtil.getRemoveRowIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         removeAction.actionPerformed(null);
       }
     };
 
-    myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, SystemInfo.isMac ? PlatformIcons.TABLE_EDIT_ROW : PlatformIcons.EDIT) {
+    myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final OrderEntry entry = getSelectedEntry();
@@ -362,14 +362,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    final AnActionButton upButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.up"), null, SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_UP : PlatformIcons.MOVE_UP_ICON) {
+    final AnActionButton upButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.up"), null, IconUtil.getMoveRowUpIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveSelectedRows(-1);
       }
     };
 
-    final AnActionButton downButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.down"), null, SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_DOWN : PlatformIcons.MOVE_DOWN_ICON) {
+    final AnActionButton downButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.down"), null, IconUtil.getMoveRowDownIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveSelectedRows(+1);
