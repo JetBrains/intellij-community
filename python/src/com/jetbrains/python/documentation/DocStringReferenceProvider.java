@@ -53,7 +53,8 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                         @Override public boolean matches(char c) {
                                           return Character.isLetterOrDigit(c) || c == '_';
                                         }}.negate();
-        if (docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).startsWith(":")) {
+        final String tagName = docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset());
+        if (tagName.startsWith(":")) {
           int ws = CharMatcher.anyOf(" \t*").indexIn(docString, pos+1);
           if (ws != -1) {
             int next = CharMatcher.anyOf(" \t*").negate().indexIn(docString, ws);
@@ -69,10 +70,9 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         if (endPos < 0) {
           endPos = docString.length();
         }
-        result.add(new DocStringParameterReference(element, new TextRange(pos, endPos)));
 
-        if (docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).equals(":type") ||
-            docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset()).equals(":rtype")) {
+        result.add(new DocStringParameterReference(element, new TextRange(pos, endPos)));
+        if (tagName.equals(":type") || tagName.equals(":rtype") || tagName.equals("@type") || tagName.equals("@rtype")) {
           pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, endPos+1);
           endPos = CharMatcher.anyOf("\n\r").indexIn(docString, pos+1);
           if (endPos == -1)
