@@ -55,7 +55,7 @@ public class LineTokenizer {
       tokenizer.advance();
     }
 
-    if (!skipLastEmptyLine && stringEdnsWithSeparator(tokenizer)) lines.add("");
+    if (!skipLastEmptyLine && stringEndsWithSeparator(tokenizer)) lines.add("");
 
     return ArrayUtil.toStringArray(lines);
   }
@@ -68,7 +68,7 @@ public class LineTokenizer {
         lineCount += 1;
         tokenizer.advance();
       }
-      if (!skipLastEmptyLine && stringEdnsWithSeparator(tokenizer)) {
+      if (!skipLastEmptyLine && stringEndsWithSeparator(tokenizer)) {
         lineCount += 1;
       }
     }
@@ -88,7 +88,7 @@ public class LineTokenizer {
     return tokenize(new CharArrayCharSequence(chars, startOffset, endOffset), includeSeparators, skipLastEmptyLine);
   }
 
-  private static boolean stringEdnsWithSeparator(LineTokenizer tokenizer) {
+  private static boolean stringEndsWithSeparator(LineTokenizer tokenizer) {
     return tokenizer.getLineSeparatorLength() > 0;
   }
 
