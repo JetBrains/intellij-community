@@ -4,10 +4,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author yole
@@ -20,7 +20,7 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    List<String> result = new ArrayList<String>();
+    Set<String> result = new TreeSet<String>();
     String root = System.getenv("ProgramFiles(x86)");
     if (root == null) {
       root = System.getenv("ProgramFiles");
@@ -36,6 +36,8 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
         }
       }
     }
+    WinPythonSdkFlavor.findInPath(result, "ipy.exe");
+    WinPythonSdkFlavor.findInPath(result, "ipy64.exe");
     return result;
   }
 
