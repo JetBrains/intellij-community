@@ -144,6 +144,9 @@
   <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryAssistant"
                       serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryAssistantImpl"/>
 
+  <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitThread"
+      serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
