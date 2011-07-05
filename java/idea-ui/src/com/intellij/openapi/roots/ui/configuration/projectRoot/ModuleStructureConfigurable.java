@@ -123,8 +123,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return result;
   }
 
-  protected AnAction createCopyAction() {
-    return new MyCopyAction();
+  @NotNull
+  protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
+    return Collections.singletonList(new MyCopyAction());
   }
 
   protected void loadTree() {

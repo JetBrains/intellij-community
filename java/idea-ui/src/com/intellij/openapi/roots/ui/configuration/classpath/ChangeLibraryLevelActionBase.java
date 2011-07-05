@@ -25,14 +25,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChangeLibraryLevelDialog;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -43,43 +42,46 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author nik
  */
-class ChangeLibraryLevelAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ChangeLibraryLevelAction");
-  private final ClasspathPanel myPanel;
-  private final String myTargetTableLevel;
+public abstract class ChangeLibraryLevelActionBase extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ChangeLibraryLevelActionBase");
+  protected final Project myProject;
+  protected final String myTargetTableLevel;
 
-  public ChangeLibraryLevelAction(ClasspathPanel panel, final String targetTableName, String targetTableLevel) {
-    myPanel = panel;
+  public ChangeLibraryLevelActionBase(@NotNull Project project, @NotNull String targetTableName, @NotNull String targetTableLevel) {
+    myProject = project;
     myTargetTableLevel = targetTableLevel;
-    getTemplatePresentation().setText(getActionName(isConvertingToModuleLibrary()) + " to " + targetTableName + "...");
+    getTemplatePresentation().setText(getActionName() + " to " + targetTableName + "...");
   }
 
-  @Override
-  public void actionPerformed(AnActionEvent event) {
-    final OrderEntry entry = myPanel.getSelectedEntry();
-    if (!(entry instanceof LibraryOrderEntry)) return;
-    final LibraryEx library = (LibraryEx)((LibraryOrderEntry)entry).getLibrary();
-    if (library == null) return;
+  protected abstract boolean isCopy();
 
-    final boolean copy = isConvertingToModuleLibrary();
-    final Project project = myPanel.getProject();
+  protected abstract LibraryTableModifiableModelProvider getModifiableTableModelProvider();
+
+  protected abstract JComponent getParentComponent();
+
+  @Nullable
+  protected Library doAction(LibraryEx library) {
     final VirtualFile baseDir = getBaseDir();
     final String libPath = baseDir != null ? baseDir.getPath() + "/lib" : "";
     boolean allowEmptyName = isConvertingToModuleLibrary() && library.getFiles(OrderRootType.CLASSES).length == 1;
     final String libraryName = allowEmptyName ? "" : StringUtil.notNullize(library.getName(), "Unnamed");
-    final LibraryTableModifiableModelProvider provider = myPanel.getModifiableModelProvider(myTargetTableLevel);
-    final ChangeLibraryLevelDialog dialog = new ChangeLibraryLevelDialog(myPanel.getComponent(), project, copy,
+    final LibraryTableModifiableModelProvider provider = getModifiableTableModelProvider();
+    final ChangeLibraryLevelDialog dialog = new ChangeLibraryLevelDialog(getParentComponent(), myProject, isCopy(),
                                                                          libraryName, libPath, allowEmptyName, provider);
     dialog.show();
     if (!dialog.isOK()) {
-      return;
+      return null;
     }
 
     final Set<File> fileToCopy = new LinkedHashSet<File>();
@@ -91,42 +93,14 @@ class ChangeLibraryLevelAction extends AnAction {
           fileToCopy.add(VfsUtil.virtualToIoFile(PathUtil.getLocalFile(root)));
         }
       }
-      if (!copyOrMoveFiles(copy, project, fileToCopy, targetDirectoryPath, copiedFiles)) {
-        return;
+      if (!copyOrMoveFiles(fileToCopy, targetDirectoryPath, copiedFiles)) {
+        return null;
       }
     }
 
     final Library copied = ((LibraryTableBase.ModifiableModelEx)provider.getModifiableModel()).createLibrary(dialog.getLibraryName(), library.getType());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)copied.getModifiableModel();
-    model.setProperties(library.getProperties());
-    for (OrderRootType type : OrderRootType.getAllTypes()) {
-      final String[] urls = library.getUrls(type);
-      for (String url : urls) {
-        final String protocol = VirtualFileManager.extractProtocol(url);
-        if (protocol == null) continue;
-        final String fullPath = VirtualFileManager.extractPath(url);
-        final int sep = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
-        String localPath;
-        String pathInJar;
-        if (sep != -1) {
-          localPath = fullPath.substring(0, sep);
-          pathInJar = fullPath.substring(sep);
-        }
-        else {
-          localPath = fullPath;
-          pathInJar = "";
-        }
-        final String targetPath = copiedFiles.get(localPath);
-        String targetUrl = targetPath != null ? VirtualFileManager.constructUrl(protocol, targetPath + pathInJar) : url;
-
-        if (library.isJarDirectory(url, type)) {
-          model.addJarDirectory(targetUrl, false, type);
-        }
-        else {
-          model.addRoot(targetUrl, type);
-        }
-      }
-    }
+    LibraryEditingUtil.copyLibrary(library, copiedFiles, model);
 
     AccessToken token = WriteAction.start();
     try {
@@ -135,23 +109,19 @@ class ChangeLibraryLevelAction extends AnAction {
     finally {
       token.finish();
     }
-    myPanel.getRootModel().removeOrderEntry(entry);
-    if (!isConvertingToModuleLibrary()) {
-      myPanel.getRootModel().addLibraryEntry(copied);
-    }
+    return copied;
   }
 
-  private static boolean copyOrMoveFiles(final boolean copy,
-                                         final Project project,
-                                         final Set<File> fileToCopy,
-                                         @NotNull final String targetDirPath,
-                                         final Map<String, String> copiedFiles) {
+  private boolean copyOrMoveFiles(final Set<File> filesToProcess,
+                                    @NotNull final String targetDirPath,
+                                    final Map<String, String> copiedFiles) {
+    final boolean copy = isCopy();
     final Ref<Boolean> finished = Ref.create(false);
-    new Task.Modal(project, (copy ? "Copying" : "Moving") + " Library Files", true) {
+    new Task.Modal(myProject, (copy ? "Copying" : "Moving") + " Library Files", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final File targetDir = new File(FileUtil.toSystemDependentName(targetDirPath));
-        for (final File from : fileToCopy) {
+        for (final File from : filesToProcess) {
           indicator.checkCanceled();
           final File to = FileUtil.findSequentNonexistentFile(targetDir, FileUtil.getNameWithoutExtension(from),
                                                               FileUtil.getExtension(from.getName()));
@@ -174,9 +144,9 @@ class ChangeLibraryLevelAction extends AnAction {
             }
           }
           catch (IOException e) {
-            final String actionName = getActionName(copy);
+            final String actionName = getActionName();
             final String message = "Cannot " + actionName.toLowerCase() + " file " + from.getAbsolutePath() + ": " + e.getMessage();
-            Messages.showErrorDialog(project, message, "Cannot " + actionName);
+            Messages.showErrorDialog(ChangeLibraryLevelActionBase.this.myProject, message, "Cannot " + actionName);
             LOG.info(e);
             return;
           }
@@ -206,43 +176,26 @@ class ChangeLibraryLevelAction extends AnAction {
     return true;
   }
 
-  private static String getActionName(boolean copy) {
-    return copy ? "Copy" : "Move";
-  }
-
-  private boolean isConvertingToModuleLibrary() {
-    return myTargetTableLevel.equals(LibraryTableImplUtil.MODULE_LEVEL);
-  }
-
-  @Nullable
-  private VirtualFile getBaseDir() {
-    if (isConvertingToModuleLibrary()) {
-      final VirtualFile[] roots = myPanel.getRootModel().getContentRoots();
-      if (roots.length > 0) {
-        return roots[0];
-      }
-      final VirtualFile moduleFile = myPanel.getRootModel().getModule().getModuleFile();
-      if (moduleFile != null) {
-        return moduleFile.getParent();
-      }
-    }
-    return myPanel.getProject().getBaseDir();
-  }
-
   @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final OrderEntry entry = myPanel.getSelectedEntry();
-    boolean enabled = false;
-    if (entry instanceof LibraryOrderEntry) {
-      final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
-      if (libraryOrderEntry.getLibrary() != null) {
-        boolean isFromModuleLibrary = libraryOrderEntry.isModuleLevel();
-        boolean isToModuleLibrary = isConvertingToModuleLibrary();
-        enabled = isFromModuleLibrary != isToModuleLibrary;
-      }
-    }
+    boolean enabled = isEnabled();
     presentation.setVisible(enabled);
     presentation.setEnabled(enabled);
   }
+
+  private String getActionName() {
+    return isCopy() ? "Copy" : "Move";
+  }
+
+  @Nullable
+  protected VirtualFile getBaseDir() {
+    return myProject.getBaseDir();
+  }
+
+  protected boolean isConvertingToModuleLibrary() {
+    return myTargetTableLevel.equals(LibraryTableImplUtil.MODULE_LEVEL);
+  }
+
+  protected abstract boolean isEnabled();
 }
