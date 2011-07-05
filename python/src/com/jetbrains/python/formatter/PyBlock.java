@@ -177,7 +177,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if (parentType == PyElementTypes.PARENTHESIZED_EXPRESSION) {
+    else if (parentType == PyElementTypes.PARENTHESIZED_EXPRESSION && hasLineBreaksBefore(child, 1)) {
       childIndent = Indent.getNormalIndent();
     }
 
@@ -242,7 +242,8 @@ public class PyBlock implements ASTBlock {
   }
 
   private static boolean hasLineBreaksBefore(ASTNode child, int minCount) {
-    return isWhitespaceWithLineBreaks(TreeUtil.findLastLeaf(child.getTreePrev()), minCount) ||
+    final ASTNode treePrev = child.getTreePrev();
+    return (treePrev != null && isWhitespaceWithLineBreaks(TreeUtil.findLastLeaf(treePrev), minCount)) ||
            isWhitespaceWithLineBreaks(child.getFirstChildNode(), minCount);
   }
 
