@@ -17,7 +17,6 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -142,8 +141,8 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("refactoring.extractMethod");
+  protected String getHelpId() {
+    return "refactoring.extractMethod";
   }
 
   protected JComponent createCenterPanel() {
