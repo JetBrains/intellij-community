@@ -76,6 +76,8 @@ public class WordCompletionContributor extends CompletionContributor implements 
       return false;
     }
 
+
+
     final PsiFile file = insertedElement.getContainingFile();
     final CompletionData data = CompletionUtil.getCompletionDataByElement(insertedElement, file);
     if (data != null && !(data instanceof SyntaxTableCompletionData)) {

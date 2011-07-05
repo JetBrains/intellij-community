@@ -15,10 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.completion
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
 /**
  * @author peter
@@ -78,9 +79,15 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testPossibleClosureParameter2() {
-    myFixture.configureByText("a.gpp", "{ a, <caret> }")
-    type 'h'
-    assert !lookup.focused
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    try {
+      myFixture.configureByText("a.gpp", "{ a, <caret> }")
+      type 'h'
+      assert !lookup.focused
+    }
+    finally {
+      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    }
   }
 
   public void testImpossibleClosureParameter() {
@@ -90,9 +97,15 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testFieldTypeLowercase() {
-    myFixture.configureByText "a.groovy", "class Foo { <caret> }"
-    type 'aioobe'
-    assert myFixture.lookupElementStrings == [ArrayIndexOutOfBoundsException.simpleName]
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    try {
+      myFixture.configureByText "a.groovy", "class Foo { <caret> }"
+      type 'aioobe'
+      assert myFixture.lookupElementStrings == [ArrayIndexOutOfBoundsException.simpleName]
+    }
+    finally {
+      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    }
   }
 
   public void testNoWordCompletionAutoPopup() {

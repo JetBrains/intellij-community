@@ -3,7 +3,7 @@ import sun.swing.BakedArrayList;
 class Foo {
     {
         Object element;
-        if (element instanceof bar<caret>)
+        if (element instanceof Bar<caret>)
     }
 
 }

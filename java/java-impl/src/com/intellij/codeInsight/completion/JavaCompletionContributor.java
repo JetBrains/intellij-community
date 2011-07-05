@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
@@ -362,7 +363,18 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    return StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.isRelaxedMatching();
+    return mayStartClassName(result, parameters.isRelaxedMatching());
+  }
+
+  public static boolean mayStartClassName(CompletionResultSet result, final boolean relaxedMatching) {
+    String prefix = result.getPrefixMatcher().getPrefix();
+    if (StringUtil.isEmpty(prefix)) {
+      return false;
+    }
+
+    return StringUtil.isCapitalized(prefix) ||
+           relaxedMatching ||
+           CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE == CodeInsightSettings.NONE;
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,

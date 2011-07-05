@@ -242,7 +242,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.addClass("package bar; public class Bar {}");
     final String path = getTestName(false) + ".java";
     myFixture.configureByFile(getTestName(false) + ".java");
-    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.complete(CompletionType.BASIC);
     assertPreferredItems(0, "Bar", "Bar");
     List<LookupElement> items = getLookup().getItems();
     assertEquals(((JavaPsiClassReferenceElement)items.get(0)).getQualifiedName(), "Bar");
