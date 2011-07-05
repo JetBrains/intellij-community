@@ -230,6 +230,9 @@ public class PyBlock implements ASTBlock {
       PyArgumentList argList = (PyArgumentList) _node.getPsi();
       return argList != null && argList.getArguments().length > 1;
     }
+    if (child.getElementType() == PyTokenTypes.COMMA) {
+      return false;
+    }
     return true;
   }
 
