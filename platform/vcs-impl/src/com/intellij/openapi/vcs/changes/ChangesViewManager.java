@@ -59,6 +59,7 @@ import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.UIVcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -120,9 +121,9 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myContentManager = contentManager;
     myVcsChangeDetailsManager = vcsChangeDetailsManager;
     myView = new ChangesListView(project);
-    myNoDetailsPanel = VcsChangeDetailsManager.errorPanel("No details available", false);
-    myNothingSelected = VcsChangeDetailsManager.errorPanel("Nothing selected", false);
-    myNotLoadedYet = VcsChangeDetailsManager.errorPanel("Changes content is not loaded yet", false);
+    myNoDetailsPanel = UIVcsUtil.errorPanel("No details available", false);
+    myNothingSelected = UIVcsUtil.errorPanel("Nothing selected", false);
+    myNotLoadedYet = UIVcsUtil.errorPanel("Changes content is not loaded yet", false);
 
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
@@ -263,7 +264,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       } else {
         final String freezed = ChangeListManager.getInstance(myProject).isFreezed();
         if (freezed != null) {
-          setChangeDetailsPanel(VcsChangeDetailsManager.errorPanel(freezed, false));
+          setChangeDetailsPanel(UIVcsUtil.errorPanel(freezed, false));
           return;
         }
         Pair<JPanel, Disposable> details = null;

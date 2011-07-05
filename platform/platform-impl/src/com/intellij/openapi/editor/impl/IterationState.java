@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -423,7 +424,7 @@ public final class IterationState {
 
   @Nullable
   private static Color ifDiffers(final Color c1, final Color c2) {
-    return c1 == c2 ? null : c1;
+    return Comparing.equal(c1, c2) ? null : c1;
   }
 
   public boolean atEnd() {

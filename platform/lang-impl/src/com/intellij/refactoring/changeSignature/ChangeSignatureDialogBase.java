@@ -39,7 +39,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -379,11 +378,11 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
     myParametersTable.setSurrendersFocusOnKeystroke(true);
     myPropagateParamChangesButton.setShortcut(KeyboardShortcut.fromString("alt G"));
-    final CustomLineBorder border = hasTabsInDialog ? new CustomLineBorder(1, 0, 0, 0) : new CustomLineBorder(0, 1, 1, 1);
-    final JPanel buttonsPanel = EditableRowTable.wrapToTableWithButtons(myParametersTable,
-                                                                        myParametersTableModel,
-                                                                        border,
-                                                                        myPropagateParamChangesButton);
+
+    final JPanel buttonsPanel = TableToolbarDecorator.createDecorator(myParametersTable)
+      .addExtraAction(myPropagateParamChangesButton)
+      .createPanel();
+
     myPropagateParamChangesButton.setEnabled(false);
     myPropagateParamChangesButton.setVisible(false);
 

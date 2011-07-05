@@ -13,6 +13,7 @@
 package git4idea.history.browser;
 
 import git4idea.GitBranch;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.TreeSet;
@@ -64,6 +65,11 @@ public class SymbolicRefs {
 
   public TreeSet<String> getTags() {
     return myTags;
+  }
+
+  @Nullable
+  public String getCurrentName() {
+    return myCurrent == null ? null : myCurrent.getName();
   }
 
   public GitBranch getCurrent() {

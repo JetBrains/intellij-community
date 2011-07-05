@@ -401,7 +401,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
         final boolean reformat = Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_REFORMAT));
         template.setReformatCode(reformat);
         if (template instanceof BundledFileTemplate) {
-          final boolean enabled = Boolean.getBoolean(child.getAttributeValue(ATTRIBUTE_ENABLED, "true"));
+          final boolean enabled = Boolean.parseBoolean(child.getAttributeValue(ATTRIBUTE_ENABLED, "true"));
           ((BundledFileTemplate)template).setEnabled(enabled);
         }
       }

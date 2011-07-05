@@ -793,6 +793,7 @@ public class CompositeElement extends TreeElement {
 
     @Override
     public void visitComposite(CompositeElement composite) {
+      ProgressManager.checkCanceled(); // we can safely interrupt creating children PSI any moment
       composite.createAndStorePsi();
       super.visitComposite(composite);
     }

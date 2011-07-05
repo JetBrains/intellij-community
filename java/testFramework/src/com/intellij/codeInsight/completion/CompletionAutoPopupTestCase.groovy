@@ -15,14 +15,18 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.ui.UIUtil
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * @author peter
@@ -59,15 +63,20 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
   }
 
   protected void joinCompletion() {
-        for (i in 0.1000) {
-          if (i==999) {
-            printThreadDump()
-            fail("Could not wait for committed doc")
-          }
-          CompletionPhase phase = CompletionServiceImpl.getCompletionPhase()
-          if (phase != com.intellij.codeInsight.completion.CompletionPhase.NoCompletion) break;
-          Thread.sleep(10)
-        }
+    joinCommit()
+
+    def controller = AutoPopupController.getInstance(getProject())
+    controller.executePendingRequests();
+
+    for (i in 0.1000) {
+      if (i==999) {
+        printThreadDump()
+        fail("Could not wait for committed doc")
+      }
+      CompletionPhase phase = CompletionServiceImpl.getCompletionPhase()
+      if (phase != com.intellij.codeInsight.completion.CompletionPhase.NoCompletion) break;
+      Thread.sleep(10)
+    }
 
     for (j in 1..4000) {
       LookupImpl l = null
@@ -84,7 +93,25 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     fail("Too long completion")
   }
 
+  private def joinCommit() {
+    final AtomicBoolean committed = new AtomicBoolean()
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        committed.set(true);
+      }
+    }
+    edt {
+      PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
+      manager.performWhenAllDocumentsAreCommitted("wait for all comm", runnable);
+    }
+    while (!committed.get()) {
+      UIUtil.pump();
+    }
+  }
+
   protected void joinAlarm() {
+    joinCommit()
     edt { PlatformTestUtil.waitForAlarm(CodeInsightSettings.instance.AUTO_LOOKUP_DELAY)}
   }
 

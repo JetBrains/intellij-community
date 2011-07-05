@@ -162,8 +162,12 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   }
 
   public List<String> getBranchesWithCommit(final SHAHash hash) throws VcsException {
+    return getBranchesWithCommit(hash.getValue());
+  }
+
+  public List<String> getBranchesWithCommit(final String hash) throws VcsException {
     final List<String> result = new ArrayList<String>();
-    GitBranch.listAsStrings(myProject, myRoot, true, true, result, hash.getValue());
+    GitBranch.listAsStrings(myProject, myRoot, true, true, result, hash);
     //GitBranch.listAsStrings(myProject, myRoot, true, false, result, hash.getValue());
     return result;
   }

@@ -26,6 +26,7 @@ import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,6 +37,13 @@ public class ClassWithTooManyTransitiveDependentsInspection
 
     @SuppressWarnings({"PublicField"})
     public int limit = 35;
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "class.with.too.many.transitive.dependents.display.name");
+    }
 
     @Nullable
     public CommonProblemDescriptor[] checkElement(

@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class AddRemoveUpDownPanel extends JPanel {
+class AddRemoveUpDownPanel extends JPanel {
   public static enum Buttons {
     ADD, REMOVE, UP, DOWN;
 
@@ -38,10 +39,10 @@ public class AddRemoveUpDownPanel extends JPanel {
 
     Icon getIcon() {
       switch (this) {
-        case ADD:    return PlatformIcons.TABLE_ADD_ROW;
-        case REMOVE: return PlatformIcons.TABLE_REMOVE_ROW;
-        case UP:     return PlatformIcons.TABLE_MOVE_ROW_UP;
-        case DOWN:   return PlatformIcons.TABLE_MOVE_ROW_DOWN;
+        case ADD:    return SystemInfo.isMac ? PlatformIcons.TABLE_ADD_ROW : PlatformIcons.ADD_ICON;
+        case REMOVE: return SystemInfo.isMac ? PlatformIcons.TABLE_REMOVE_ROW : PlatformIcons.DELETE_ICON;
+        case UP:     return SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_UP : PlatformIcons.MOVE_UP_ICON;
+        case DOWN:   return SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_DOWN : PlatformIcons.MOVE_DOWN_ICON;
       }
       return null;
     }
@@ -88,7 +89,7 @@ public class AddRemoveUpDownPanel extends JPanel {
   private Map<Buttons, TableActionButton> myButtons = new HashMap<Buttons, TableActionButton>();
   private final AnActionButton[] myActions;
 
-  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, boolean isHorizontal,
+  AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, boolean isHorizontal,
                               @Nullable AnActionButton[] additionalActions, Buttons... buttons) {
     super(new BorderLayout());
     AnActionButton[] actions = new AnActionButton[buttons.length];

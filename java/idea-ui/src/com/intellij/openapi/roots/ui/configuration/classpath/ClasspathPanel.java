@@ -17,7 +17,11 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -37,4 +41,12 @@ public interface ClasspathPanel {
   JComponent getComponent();
 
   ModuleConfigurationState getModuleConfigurationState();
+
+  void navigate(boolean openLibraryEditor);
+
+  @Nullable
+  OrderEntry getSelectedEntry();
+
+  @NotNull
+  LibraryTableModifiableModelProvider getModifiableModelProvider(@NotNull String tableLevel);
 }

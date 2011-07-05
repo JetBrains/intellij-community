@@ -19,13 +19,18 @@ import com.google.common.base.Predicate;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -53,10 +58,17 @@ public class LibraryEditingUtil {
   }
 
   public static String suggestNewLibraryName(LibraryTable.ModifiableModel table) {
-    final String name = "Unnamed";
-    String candidataName = name;
-    for (int idx = 1; libraryAlreadyExists(table, candidataName); candidataName = name + (idx++));
-    return candidataName;
+    return suggestNewLibraryName(table, "Unnamed");
+  }
+
+  public static String suggestNewLibraryName(LibraryTable.ModifiableModel table,
+                                             final String baseName) {
+    String candidateName = baseName;
+    int idx = 1;
+    while (libraryAlreadyExists(table, candidateName)) {
+      candidateName = baseName + (idx++);
+    }
+    return candidateName;
   }
 
   public static Predicate<Library> getNotAddedLibrariesCondition(final ModuleRootModel rootModel) {
@@ -82,5 +94,37 @@ public class LibraryEditingUtil {
         return true;
       }
     };
+  }
+
+  public static void copyLibrary(LibraryEx from, Map<String, String> rootMapping, LibraryEx.ModifiableModelEx target) {
+    target.setProperties(from.getProperties());
+    for (OrderRootType type : OrderRootType.getAllTypes()) {
+      final String[] urls = from.getUrls(type);
+      for (String url : urls) {
+        final String protocol = VirtualFileManager.extractProtocol(url);
+        if (protocol == null) continue;
+        final String fullPath = VirtualFileManager.extractPath(url);
+        final int sep = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
+        String localPath;
+        String pathInJar;
+        if (sep != -1) {
+          localPath = fullPath.substring(0, sep);
+          pathInJar = fullPath.substring(sep);
+        }
+        else {
+          localPath = fullPath;
+          pathInJar = "";
+        }
+        final String targetPath = rootMapping.get(localPath);
+        String targetUrl = targetPath != null ? VirtualFileManager.constructUrl(protocol, targetPath + pathInJar) : url;
+
+        if (from.isJarDirectory(url, type)) {
+          target.addJarDirectory(targetUrl, false, type);
+        }
+        else {
+          target.addRoot(targetUrl, type);
+        }
+      }
+    }
   }
 }

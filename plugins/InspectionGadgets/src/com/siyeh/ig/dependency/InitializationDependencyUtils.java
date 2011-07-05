@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith
+ * Copyright 2006-2011 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Key;
 
 import java.util.*;
 
-public class InitializationDependencyUtils {
+class InitializationDependencyUtils {
 
     private static final Key<Set<RefClass>> INITIALIZATION_DEPENDENT_CLASSES_KEY =
             new Key<Set<RefClass>>("INITIALIZATION_DEPENDENT_CLASSES");

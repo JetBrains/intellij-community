@@ -12,6 +12,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Map;
 
 /**
  * @author oleg
@@ -75,6 +76,12 @@ public class CheckBoxList extends JBList {
     });
   }
 
+  public void setStringItems(final Map<String, Boolean> items) {
+    for (Map.Entry<String, Boolean> entry : items.entrySet()) {
+      ((DefaultListModel) getModel()).addElement(new JCheckBox(entry.getKey(), entry.getValue()));
+    }
+  }
+
   public boolean isItemSelected(int index) {
     return ((JCheckBox)getModel().getElementAt(index)).isSelected();  
   }
@@ -99,6 +106,9 @@ public class CheckBoxList extends JBList {
     this.checkBoxListListener = checkBoxListListener;
   }
 
+  protected void adjustRendering(final JCheckBox checkBox, final boolean selected, final boolean hasFocus) {
+  }
+
   private class CellRenderer implements ListCellRenderer {
     private final Border mySelectedBorder;
     private final Border myBorder;
@@ -119,8 +129,8 @@ public class CheckBoxList extends JBList {
       checkbox.setFont(getFont(checkbox));
       checkbox.setFocusPainted(false);
       checkbox.setBorderPainted(true);
-
       checkbox.setBorder(isSelected ? mySelectedBorder : myBorder);
+      adjustRendering(checkbox, isSelected, cellHasFocus);
       return checkbox;
     }
   }

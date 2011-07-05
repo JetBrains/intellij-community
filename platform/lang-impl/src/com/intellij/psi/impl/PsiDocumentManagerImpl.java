@@ -63,15 +63,14 @@ import javax.swing.*;
 import java.util.*;
 
 //todo listen & notifyListeners readonly events?
-
 public class PsiDocumentManagerImpl extends PsiDocumentManager implements ProjectComponent, DocumentListener, SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
-  private static final Key<CommitStage> COMMIT_STAGE = new Key<CommitStage>("Commit stage");
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
   private final Project myProject;
   private final PsiManager myPsiManager;
+  private final DocumentCommitThread myDocumentCommitThread;
   private static final Key<TextBlock> KEY_TEXT_BLOCK = Key.create("KEY_TEXT_BLOCK");
   private final Set<Document> myUncommittedDocuments = Collections.synchronizedSet(new HashSet<Document>());
 
@@ -89,6 +88,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
                                 @NotNull final DocumentCommitThread documentCommitThread) {
     myProject = project;
     myPsiManager = psiManager;
+    myDocumentCommitThread = documentCommitThread;
     mySmartPointerManager = (SmartPointerManagerImpl)smartPointerManager;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
@@ -107,9 +107,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
-        documentCommitThread.cancel();
+        documentCommitThread.disable(action);
+      }
+
+      @Override
+      public void writeActionFinished(Object action) {
+        documentCommitThread.enable(action);
       }
     }, myProject);
+    documentCommitThread.enable("project open");
   }
 
   public void projectOpened() {
@@ -248,7 +254,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       action.run();
       return true;
     }
-    if (hasUncommitedDocuments()) {
+    if (!myUncommittedDocuments.isEmpty()) {
       actionsWhenAllDocumentsAreCommitted.put(key, action);
       return false;
     }
@@ -277,50 +283,40 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   boolean finishCommit(@NotNull final Document document, final List<Processor<Document>> finishRunnables, boolean synchronously) {
     if (myProject.isDisposed()) return false;
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     assert !(document instanceof DocumentWindow);
-    final boolean[] result = {true};
-    ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document,myProject) {
-      public void run() {
-        CommitStage stage = getCommitStage(document);
-        if (stage != CommitStage.QUEUED_TO_COMMIT) {
-          result[0] = false;
-          return; // there must be a synchronous commit sneaked in between queued commit and finish commit, or just document changed meanwhile
-        }
-        myIsCommitInProgress = true;
-        boolean success = true;
-        try {
-          final FileViewProvider viewProvider = getCachedViewProvider(document);
-          if (viewProvider != null) {
-            for (Processor<Document> finishRunnable : finishRunnables) {
-              success = finishRunnable.process(document);
-              if (!success) {
-                result[0] = false;
-                return;
-              }
-            }
-            viewProvider.contentsSynchronized();
+    myIsCommitInProgress = true;
+    boolean success = true;
+    try {
+      final FileViewProvider viewProvider = getCachedViewProvider(document);
+      if (viewProvider != null) {
+        for (Processor<Document> finishRunnable : finishRunnables) {
+          success = finishRunnable.process(document);
+          if (synchronously) {
+            assert success;
+          }
+          if (!success) {
+            break;
           }
         }
-        finally {
-          if (success) {
-            myUncommittedDocuments.remove(document);
-
-            boolean changed = changeCommitStage(document, CommitStage.QUEUED_TO_COMMIT, CommitStage.COMMITTED);
-            assert changed;
-
-            ((DocumentImpl)document).normalizeRangeMarkers();
-            InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
-          }
-          myIsCommitInProgress = false;
-        }
+        viewProvider.contentsSynchronized();
       }
-    });
+    }
+    finally {
+      if (success) {
+        myUncommittedDocuments.remove(document);
 
-    if (result[0]) {
+        ((DocumentImpl)document).normalizeRangeMarkers();
+        InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
+      }
+      myIsCommitInProgress = false;
+    }
+
+    if (success) {
       runAfterCommitActions(document);
     }
-    return result[0];
+    return success;
   }
 
   private void doCommit(@NotNull final Document document, final PsiFile excludeFile) {
@@ -330,10 +326,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         if (getSynchronizer().isDocumentAffectedByTransactions(document) && excludeFile == null) return;
 
         myIsCommitInProgress = true;
-        //setCommitStage(document, CommitStage.QUEUED_TO_COMMIT);
-        DocumentCommitThread.getInstance(myProject).commitSynchronously(myProject, document, excludeFile);
-        myIsCommitInProgress = false;
-        assert !myUncommittedDocuments.contains(document);
+        try {
+          myDocumentCommitThread.commitSynchronously(document, myProject, excludeFile);
+        }
+        finally {
+          myIsCommitInProgress = false;
+        }
+        assert !myUncommittedDocuments.contains(document) : "Document :"+System.identityHashCode(document);
       }
     });
   }
@@ -536,8 +535,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (!hasLockedBlocks) {
       ((SingleRootFileViewProvider)viewProvider).beforeDocumentChanged();
     }
-
-    DocumentCommitThread.getInstance(myProject).cancelCommit(document);
   }
 
   public void documentChanged(DocumentEvent event) {
@@ -565,10 +562,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (commitNecessary) {
       myUncommittedDocuments.add(document);
-      // irrespective of prev value
-      setCommitStage(document, CommitStage.DIRTY);
 
-      DocumentCommitThread.getInstance(myProject).queueCommit(document);
+      myDocumentCommitThread.queueCommit("Document changed", document, myProject);
     }
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and
@@ -675,33 +670,16 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void clearUncommitedDocuments() {
     myUncommittedDocuments.clear();
     mySynchronizer.cleanupForNextTest();
+    myDocumentCommitThread.clearQueue();
   }
 
   public PsiToDocumentSynchronizer getSynchronizer() {
     return mySynchronizer;
   }
 
-  static CommitStage getCommitStage(@NotNull Document doc) {
-    CommitStage stage = doc.getUserData(COMMIT_STAGE);
-    if (stage == null) {
-      stage = ((UserDataHolderEx)doc).putUserDataIfAbsent(COMMIT_STAGE, CommitStage.DIRTY);
-    }
-    return stage;
-  }
-  static void setCommitStage(@NotNull Document document, @NotNull CommitStage stage) {
-    document.putUserData(COMMIT_STAGE, stage);
-  }
-  static boolean changeCommitStage(@NotNull Document document, CommitStage expected, @NotNull CommitStage stage) {
-    return ((UserDataHolderEx)document).replace(COMMIT_STAGE, expected, stage);
-  }
-
 
   public void save() {
     // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
     commitAllDocuments();
-  }
-
-  static enum CommitStage {
-    DIRTY, QUEUED_TO_COMMIT, COMMITTED
   }
 }

@@ -16,45 +16,33 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.UsageInArtifact;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
   protected String myLevel;
@@ -63,6 +51,8 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     super(project);
   }
 
+
+  public abstract LibraryTablePresentation getLibraryTablePresentation();
 
   protected void processRemovedItems() {
   }
@@ -142,7 +132,11 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     });
   }
 
-  public MyNode createLibraryNode(Library library) {
+  public String getLevel() {
+    return myLevel;
+  }
+
+  public void createLibraryNode(Library library) {
     final LibraryTable table = library.getTable();
     if (table != null) {
       final String level = table.getTableLevel();
@@ -151,10 +145,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       final MyNode node = new MyNode(configurable);
       addNode(node, myRoot);
       myContext.getDaemonAnalyzer().queueUpdate(new LibraryProjectStructureElement(myContext, library));
-      return node;
     }
-
-    return null;
   }
 
   public void dispose() {
@@ -165,8 +156,15 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
   }
 
-  protected AnAction createCopyAction() {
-    return new MyCopyAction();
+  @NotNull
+  protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
+    final ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    actions.add(new MyCopyAction());
+    if (fromPopup) {
+      final BaseLibrariesConfigurable targetGroup = getOppositeGroup();
+      actions.add(new ChangeLibraryLevelAction(myProject, myTree, this, targetGroup));
+    }
+    return actions;
   }
 
   protected AbstractAddGroup createAddAction() {
@@ -275,98 +273,31 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return false;
   }
 
-  protected
   @Nullable
-  String getEmptySelectionString() {
+  protected String getEmptySelectionString() {
     return "Select a library to view or edit its details here";
   }
 
   private class MyCopyAction extends AnAction {
-    private JCheckBox mySaveAsCb;
-    private JTextField myNameTf;
-    private TextFieldWithBrowseButton myPathTf;
-    private JPanel myWholePanel;
-
     private MyCopyAction() {
       super(CommonBundle.message("button.copy"), CommonBundle.message("button.copy"), COPY_ICON);
     }
 
     public void actionPerformed(final AnActionEvent e) {
       final Object o = getSelectedObject();
-      if (o instanceof LibraryImpl) {
-        myPathTf.addBrowseFolderListener("Choose directory",
-                                         ProjectBundle.message("directory.roots.copy.label"),
-                                         myProject, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-        mySaveAsCb.addActionListener(new ActionListener() {
-          public void actionPerformed(final ActionEvent e) {
-            myPathTf.setEnabled(mySaveAsCb.isSelected());
-          }
-        });
-        mySaveAsCb.setText(ProjectBundle.message("save.as.library.checkbox", getOppositeGroup().myLevel));
-        mySaveAsCb.setSelected(false);
-        myPathTf.setEnabled(false);
+      if (o instanceof LibraryEx) {
+        final LibraryEx selected = (LibraryEx)o;
+        final String newName = Messages.showInputDialog("Enter library name:", "Copy Library", null, selected.getName() + "2", new NonEmptyInputValidator());
+        if (newName == null) return;
 
-        final DialogWrapper dlg = new DialogWrapper(myTree, false) {
-          {
-            setTitle("Copy");
-            init();
-          }
-
-          @Nullable
-          protected JComponent createCenterPanel() {
-            return myWholePanel;
-          }
-
-          public JComponent getPreferredFocusedComponent() {
-            return myNameTf;
-          }
-
-          protected void doOKAction() {
-            if (myNameTf.getText().length() == 0) {
-              Messages.showErrorDialog("Enter library copy name", CommonBundle.message("title.error"));
-              return;
-            }
-            super.doOKAction();
-          }
-        };
-        dlg.show();
-        if (!dlg.isOK()) return;
-
-        BaseLibrariesConfigurable configurable = mySaveAsCb.isSelected() ? getOppositeGroup() : BaseLibrariesConfigurable.this;
-
-        final LibraryImpl library = (LibraryImpl)myContext.getLibrary(((LibraryImpl)o).getName(), myLevel);
-
+        BaseLibrariesConfigurable configurable = BaseLibrariesConfigurable.this;
+        final LibraryEx library = (LibraryEx)myContext.getLibrary(selected.getName(), myLevel);
         LOG.assertTrue(library != null);
 
-        final LibraryTable.ModifiableModel libsModel = configurable.getModelProvider().getModifiableModel();
-        final Library lib = libsModel.createLibrary(myNameTf.getText());
-        final Library.ModifiableModel model = ((LibrariesModifiableModel)libsModel).getLibraryEditor(lib).getModel();
-        for (OrderRootType type : OrderRootType.getAllTypes()) {
-          final VirtualFile[] files = library.getFiles(type);
-          for (VirtualFile file : files) {
-            if (mySaveAsCb.isSelected() && myPathTf.getText().trim().length() > 0) {
-              final File copy = new File(new File(myPathTf.getText()), file.getName());
-              if (!copy.getParentFile().exists() && !copy.getParentFile().mkdirs()) continue;
-              try {
-                final File fromFile = VfsUtil.virtualToIoFile(file);
-                if (fromFile.isFile()) {
-                  FileUtil.copy(fromFile, copy);
-                } else {
-                  FileUtil.copyDir(fromFile, copy);
-                }
-                model.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(copy), type);
-              }
-              catch (IOException e1) {
-                LOG.error(e1);
-              }
-
-              continue;
-            }
-
-            model.addRoot(file, type);
-          }
-        }
-
+        final LibrariesModifiableModel libsModel = configurable.getModelProvider().getModifiableModel();
+        final Library lib = libsModel.createLibrary(newName, library.getType());
+        final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)libsModel.getLibraryEditor(lib).getModel();
+        LibraryEditingUtil.copyLibrary(library, Collections.<String, String>emptyMap(), model);
       }
     }
 

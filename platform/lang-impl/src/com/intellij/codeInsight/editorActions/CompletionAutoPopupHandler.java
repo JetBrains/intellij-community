@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -112,18 +113,20 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
   }
 
-    public static void invokeAutoPopupCompletion(final Project project, final Editor editor) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+  public static void invokeAutoPopupCompletion(final Project project, final Editor editor, Condition<PsiFile> condition) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
-      completeWhenAllDocumentsCommitted(project, editor, CompletionType.BASIC, false, true, 0, false);
-     }
+    completeWhenAllDocumentsCommitted(project, editor, CompletionType.BASIC, false, true, 0, false, condition);
+  }
 
-  public static void completeWhenAllDocumentsCommitted(@NotNull final Project project, @NotNull final Editor editor,
-                                                       final CompletionType completionType,
-                                                       final boolean invokedExplicitly,
-                                                       final boolean autopopup,
-                                                       final int time,
-                                                       final boolean hasModifiers) {
+  private static void completeWhenAllDocumentsCommitted(@NotNull final Project project,
+                                                        @NotNull final Editor editor,
+                                                        final CompletionType completionType,
+                                                        final boolean invokedExplicitly,
+                                                        final boolean autopopup,
+                                                        final int time,
+                                                        final boolean hasModifiers,
+                                                        final Condition<PsiFile> condition) {
     //if (true) {
     //  new CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup)
     //    .invokeCompletion(project, editor, time, hasModifiers);
@@ -131,7 +134,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     //}
     final Document document = editor.getDocument();
     final long beforeStamp = document.getModificationStamp();
-    PsiDocumentManager.getInstance(project).performWhenAllDocumentsAreCommitted("start completion when all docs committed", new Runnable() {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.performWhenAllDocumentsAreCommitted("start completion when all docs committed", new Runnable() {
       @Override
       public void run() {
         long afterStamp = document.getModificationStamp();
@@ -148,6 +152,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
               // no luck, will try later
               return;
             }
+            PsiFile file = documentManager.getPsiFile(document);
+            if (file != null && condition != null && !condition.value(file)) return;
             invokeCompletion(completionType, invokedExplicitly, autopopup, project, editor, time, hasModifiers);
           }
         }, project.getDisposed());
@@ -186,7 +192,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
             if (beforeStamp != document.getModificationStamp()) {
               // no luck, will try later
               runLaterWithCommitted(project, document, runnable);
-            } else {
+            }
+            else {
               runnable.run();
             }
           }

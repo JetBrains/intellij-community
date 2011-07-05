@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.ui.RowEditableTableModel;
 import com.intellij.util.ui.ItemRemovable;
 
 import javax.swing.table.AbstractTableModel;
@@ -33,7 +32,7 @@ import java.util.List;
 /**
 * @author nik
 */
-class ClasspathTableModel extends AbstractTableModel implements ItemRemovable, RowEditableTableModel {
+class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathTableModel");
   public static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
   private static final String SCOPE_COLUMN_NAME = ProjectBundle.message("modules.order.export.scope.column");
@@ -84,16 +83,9 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable, R
     return myItems.remove(row);
   }
 
-  @Override
-  public void addRow() {
-  }
 
   public void removeRow(int row) {
     removeDataRow(row);
-  }
-
-  @Override
-  public void exchangeRows(int index1, int index2) {
   }
 
   public void clear() {

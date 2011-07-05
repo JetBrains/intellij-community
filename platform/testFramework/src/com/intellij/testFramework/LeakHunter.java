@@ -20,7 +20,6 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Stack;
@@ -139,9 +138,6 @@ public class LeakHunter {
   private static final Key<Boolean> IS_NOT_A_LEAK = Key.create("IS_NOT_A_LEAK");
   public static void markAsNotALeak(UserDataHolder object) {
     object.putUserData(IS_NOT_A_LEAK, Boolean.TRUE);
-  }
-  static {
-    markAsNotALeak(DocumentCommitThread.THE_POISON_PILL);
   }
   private static boolean isReallyLeak(Field field, String fieldName, Object value, Class valueClass) {
     if (value instanceof UserDataHolder && ((UserDataHolder)value).getUserData(IS_NOT_A_LEAK) != null) return false;

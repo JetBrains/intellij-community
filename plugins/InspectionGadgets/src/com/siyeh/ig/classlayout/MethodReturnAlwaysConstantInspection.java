@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,13 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
     private static final Key<Boolean> ALWAYS_CONSTANT =
             Key.create("ALWAYS_CONSTANT");
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "method.return.always.constant.display.name");
+    }
 
     public CommonProblemDescriptor[] checkElement(
             RefEntity refEntity, AnalysisScope scope, InspectionManager manager,

@@ -61,4 +61,24 @@ public class GroupHeaderDatePseudoCommit implements CommitI {
   @Override
   public void setWireNumber(int wireNumber) {
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GroupHeaderDatePseudoCommit that = (GroupHeaderDatePseudoCommit)o;
+
+    if (myTime != that.myTime) return false;
+    if (!myGroupName.equals(that.myGroupName)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (int)(myTime ^ (myTime >>> 32));
+    result = 31 * result + myGroupName.hashCode();
+    return result;
+  }
 }

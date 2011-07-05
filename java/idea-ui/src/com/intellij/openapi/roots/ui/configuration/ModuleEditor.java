@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -466,9 +467,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
       try {
         final Object result = method.invoke(myDelegateLibrary, unwrapParams(params));
-        if (result instanceof Library.ModifiableModel) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Library.ModifiableModel.class},
-                                        new LibraryModifiableModelInvocationHandler((Library.ModifiableModel)result));
+        if (result instanceof LibraryEx.ModifiableModelEx) {
+          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryEx.ModifiableModelEx.class},
+                                        new LibraryModifiableModelInvocationHandler((LibraryEx.ModifiableModelEx)result));
         }
         return result;
       }
@@ -526,13 +527,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
           for (int idx = 0; idx < libraries.length; idx++) {
             Library library = libraries[idx];
             libraries[idx] =
-            (Library)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Library.class},
+            (Library)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryEx.class},
                                             new LibraryInvocationHandler(library));
           }
         }
         if (result instanceof Library) {
           result =
-          Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Library.class},
+          Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryEx.class},
                                  new LibraryInvocationHandler((Library)result));
         }
         return result;

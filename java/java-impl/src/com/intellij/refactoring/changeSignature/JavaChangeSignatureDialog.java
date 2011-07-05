@@ -38,9 +38,8 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.EditableRowTable;
 import com.intellij.ui.TableColumnAnimator;
-import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.TableToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
@@ -160,11 +159,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     };
     myPropExceptionsButton.setShortcut(KeyboardShortcut.fromString("alt X"));
 
-
-    final JPanel panel = EditableRowTable.wrapToTableWithButtons(table,
-                                                                        myExceptionsModel,
-                                                                        new CustomLineBorder(1,0,0,0),
-                                                                        myPropExceptionsButton);
+    final JPanel panel = TableToolbarDecorator.createDecorator(table).addExtraAction(myPropExceptionsButton).createPanel();
 
     myExceptionsModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {

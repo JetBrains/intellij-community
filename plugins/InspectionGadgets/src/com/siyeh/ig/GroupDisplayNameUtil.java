@@ -59,6 +59,7 @@ public class GroupDisplayNameUtil {
         packageGroupDisplayNameMap.put("packaging", GroupNames.PACKAGING_GROUP_NAME);
         packageGroupDisplayNameMap.put("performance", GroupNames.PERFORMANCE_GROUP_NAME);
         packageGroupDisplayNameMap.put("portability", GroupNames.PORTABILITY_GROUP_NAME);
+        packageGroupDisplayNameMap.put("redundancy", GroupNames.DECLARATION_REDUNDANCY);
         packageGroupDisplayNameMap.put("resources", GroupNames.RESOURCE_GROUP_NAME);
         packageGroupDisplayNameMap.put("security", GroupNames.SECURITY_GROUP_NAME);
         packageGroupDisplayNameMap.put("serialization", GroupNames.SERIALIZATION_GROUP_NAME);

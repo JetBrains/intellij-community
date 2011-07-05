@@ -125,12 +125,13 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     return null;
   }
 
-  public void setText(TextWithImports item) {
+  @Override
+  protected void doSetText(TextWithImports item) {
     final String itemText = item.getText().replace('\n', ' ');
     restoreFactory(item);
     item.setText(itemText);
     if (!"".equals(itemText)) {
-      if (myComboBox.getItemCount() == 0 || !equalLight(item, (TextWithImports)myComboBox.getItemAt(0))) {
+      if (myComboBox.getItemCount() == 0 || !item.equals(myComboBox.getItemAt(0))) {
         myComboBox.insertItemAt(item, 0);
       }
     }
@@ -141,8 +142,8 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     myComboBox.getEditor().setItem(item);
   }
 
-  private static boolean equalLight(TextWithImports item, TextWithImports second) {
-    return item.getText().equals(second.getText()) && item.getImports().equals(second.getImports());
+  @Override
+  protected void updateEditorUi() {
   }
 
   public TextWithImports getText() {

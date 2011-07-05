@@ -290,6 +290,10 @@ public class LibraryOptionsPanel implements Disposable {
   private void updateState() {
     myMessageLabel.setIcon(null);
     myConfigureButton.setVisible(true);
+    myDownloadRadioButton.setEnabled(mySettings.getDownloadSettings() != null);
+    if (!myDownloadRadioButton.isEnabled() && myDownloadRadioButton.isSelected() && myUseLibraryRadioButton.isVisible()) {
+      myUseLibraryRadioButton.setSelected(true);
+    }
     String message = "";
     boolean showConfigurePanel = true;
     switch (myButtonEnumModel.getSelected()) {

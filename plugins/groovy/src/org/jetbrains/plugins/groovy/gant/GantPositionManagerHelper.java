@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.gant;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -47,12 +48,13 @@ public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
 
   public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull final String runtimeName, final Project project) {
     try {
-      PsiFile[] files = FilenameIndex.getFilesByName(project, runtimeName + "." + GantScriptType.DEFAULT_EXTENSION,
+      final String fileName = StringUtil.getShortName(runtimeName);
+      PsiFile[] files = FilenameIndex.getFilesByName(project, fileName + "." + GantScriptType.DEFAULT_EXTENSION,
                                                      GlobalSearchScope.allScope(project));
       if (files.length == 1) return files[0];
 
       if (files.length == 0) {
-        files = FilenameIndex.getFilesByName(project, runtimeName + ".groovy", GlobalSearchScope.allScope(project));
+        files = FilenameIndex.getFilesByName(project, fileName + ".groovy", GlobalSearchScope.allScope(project));
 
         PsiFile candidate = null;
         for (PsiFile file : files) {

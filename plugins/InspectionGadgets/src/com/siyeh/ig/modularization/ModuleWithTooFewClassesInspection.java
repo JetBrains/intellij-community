@@ -25,6 +25,7 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,6 +35,13 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
 
     @SuppressWarnings({"PublicField"})
     public int limit = 10;
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "module.with.too.few.classes.display.name");
+    }
 
     @Override
     @Nullable

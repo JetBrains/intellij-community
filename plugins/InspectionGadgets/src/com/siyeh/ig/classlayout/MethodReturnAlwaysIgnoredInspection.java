@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -33,15 +34,24 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
     private static final Logger LOG =
             Logger.getInstance("MethodReturnAlwaysIgnoredInspection");
 
-    private static final Key<Boolean> ALWAYS_IGNORED = Key.create("ALWAYS_IGNORED_METHOD");
+    private static final Key<Boolean> ALWAYS_IGNORED =
+            Key.create("ALWAYS_IGNORED_METHOD");
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "method.return.always.ignored.display.name");
+    }
 
     @Nullable
     public RefGraphAnnotator getAnnotator(RefManager refManager) {
         return new MethodIgnoredAnnotator();
     }
 
-    public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope,
-                                                  InspectionManager manager, GlobalInspectionContext globalContext) {
+    public CommonProblemDescriptor[] checkElement(
+            RefEntity refEntity, AnalysisScope scope, InspectionManager manager,
+            GlobalInspectionContext globalContext) {
         final CommonProblemDescriptor[] originalProblemDescriptors =
                 super.checkElement(refEntity, scope, manager, globalContext);
         if (!(refEntity instanceof RefMethod)) {
@@ -67,7 +77,8 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
         }
 
         final ProblemDescriptor descriptor = manager.createProblemDescriptor(method,
-                InspectionGadgetsBundle.message("method.return.always.ignored.problem.descriptor"), false, (LocalQuickFix []) null,
+                InspectionGadgetsBundle.message("method.return.always.ignored.problem.descriptor",
+                        refMethod.getName()), false, null,
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         if (originalProblemDescriptors == null) {
             return new ProblemDescriptor[]{descriptor};

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Set;
@@ -37,6 +38,13 @@ public class ClassWithTooManyDependenciesInspection
 
     @SuppressWarnings({"PublicField"})
     public int limit = 10;
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "class.with.too.many.dependencies.display.name");
+    }
 
     @Override
     public void runInspection(

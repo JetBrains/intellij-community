@@ -185,6 +185,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexer.start(myText);
     int i = 0;
     while (true) {
+      ProgressManager.checkCanceled();
       IElementType type = myLexer.getTokenType();
       if (type == null) break;
 
@@ -845,7 +846,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return buildTree();
     }
     finally {
-      for (ProductionMarker marker : myProduction) {
+      for (int i = 0, myProductionSize = myProduction.size(); i < myProductionSize; i++) {
+        ProductionMarker marker = myProduction.get(i);
         if (marker instanceof StartMarker) {
           START_MARKERS.recycle((StartMarker)marker);
         }
@@ -1083,6 +1085,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private int insertLeaves(int curToken, int lastIdx, final CompositeElement curNode) {
     lastIdx = Math.min(lastIdx, myLexemeCount);
     while (curToken < lastIdx) {
+      ProgressManager.checkCanceled();
       final int start = myLexStarts[curToken];
       final int end = myLexStarts[curToken + 1];
       if (start < end || myLexTypes[curToken] instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in Python

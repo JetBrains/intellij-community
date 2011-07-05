@@ -337,10 +337,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
     result.add(new MyRemoveAction());
 
-    final AnAction copyAction = createCopyAction();
-    if (copyAction != null) {
-      result.add(copyAction);
-    }
+    final List<? extends AnAction> copyActions = createCopyActions(fromPopup);
+    result.addAll(copyActions);
     result.add(Separator.getInstance());
 
     result.add(new MyFindUsagesAction(myTree));
@@ -349,9 +347,9 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return result;
   }
 
-  @Nullable
-  protected AnAction createCopyAction() {
-    return null;
+  @NotNull
+  protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
+    return Collections.emptyList();
   }
 
   public void onStructureUnselected() {

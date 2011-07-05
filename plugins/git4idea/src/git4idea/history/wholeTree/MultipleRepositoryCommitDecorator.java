@@ -65,4 +65,24 @@ public class MultipleRepositoryCommitDecorator implements CommitI {
   public <T> T selectRepository(List<T> repositories) {
     return repositories.get(myRepositoryIdx);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    MultipleRepositoryCommitDecorator that = (MultipleRepositoryCommitDecorator)o;
+
+    if (myRepositoryIdx != that.myRepositoryIdx) return false;
+    if (!myDelegate.equals(that.myDelegate)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myDelegate.hashCode();
+    result = 31 * result + myRepositoryIdx;
+    return result;
+  }
 }

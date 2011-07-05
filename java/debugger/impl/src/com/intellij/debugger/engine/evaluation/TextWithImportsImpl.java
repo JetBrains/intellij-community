@@ -89,7 +89,7 @@ public final class TextWithImportsImpl implements TextWithImports{
       return false;
     }
     TextWithImportsImpl item = ((TextWithImportsImpl)object);
-    return Comparing.equal(item.myText, myText) && Comparing.equal(item.myImports, myImports) && Comparing.equal(item.myFileType, myFileType);
+    return Comparing.equal(item.myText, myText) && Comparing.equal(item.myImports, myImports);
   }
 
   public String toString() {

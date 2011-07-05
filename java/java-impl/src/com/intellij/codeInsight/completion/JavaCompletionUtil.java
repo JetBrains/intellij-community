@@ -664,7 +664,7 @@ public class JavaCompletionUtil {
 
   public static boolean containsMethodCalls(@Nullable final PsiElement qualifier) {
     if (qualifier == null) return false;
-    if (qualifier instanceof PsiMethodCallExpression) return true;
+    if (qualifier instanceof PsiMethodCallExpression || qualifier instanceof PsiNewExpression) return true;
     if (qualifier instanceof PsiArrayAccessExpression) {
       return containsMethodCalls(((PsiArrayAccessExpression)qualifier).getArrayExpression());
     }

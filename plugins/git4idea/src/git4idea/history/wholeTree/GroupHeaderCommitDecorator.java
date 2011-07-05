@@ -69,4 +69,24 @@ public class GroupHeaderCommitDecorator implements CommitI {
   public CommitI getDelegate() {
     return myDelegate;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GroupHeaderCommitDecorator that = (GroupHeaderCommitDecorator)o;
+
+    if (!myDecoration.equals(that.myDecoration)) return false;
+    if (!myDelegate.equals(that.myDelegate)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myDecoration.hashCode();
+    result = 31 * result + myDelegate.hashCode();
+    return result;
+  }
 }

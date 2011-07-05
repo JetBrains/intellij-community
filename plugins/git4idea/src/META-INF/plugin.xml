@@ -112,6 +112,8 @@
     <projectService
         serviceInterface="git4idea.DialogManager"
         serviceImplementation="git4idea.DialogManager"/>
+    <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
+                    serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
 
     <applicationService
         serviceInterface="git4idea.config.GitVcsApplicationSettings"
