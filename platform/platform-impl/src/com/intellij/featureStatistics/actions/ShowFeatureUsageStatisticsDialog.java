@@ -212,6 +212,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     //noinspection HardCodedStringLiteral
     final JEditorPane browser = new JEditorPane("text/html", "");
+    browser.setEditable(false);
     splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(browser));
 
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
