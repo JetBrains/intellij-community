@@ -90,8 +90,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
 
-    myBuilder.updateFromRoot();
-
     setLayout(new BorderLayout());
 
     myTree.addComponentListener(new ComponentAdapter() {

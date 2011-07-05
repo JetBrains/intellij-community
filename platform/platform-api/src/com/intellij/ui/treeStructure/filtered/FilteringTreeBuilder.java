@@ -138,10 +138,12 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
-    updateFromRoot();
+    queueUpdate();
 
     getReady(this).doWhenDone(new Runnable() {
       public void run() {
+        getTree().validate();
+
         Object toSelect = preferredSelection != null ? preferredSelection : myLastSuccessfulSelect;
 
         if (adjustSelection && toSelect != null) {
