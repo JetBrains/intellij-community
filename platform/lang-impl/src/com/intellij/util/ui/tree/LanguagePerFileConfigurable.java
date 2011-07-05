@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.tree;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -99,7 +100,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   }
 
   public void selectFile(@NotNull VirtualFile virtualFile) {
-    myTreeView.select(virtualFile);
+    myTreeView.select(virtualFile instanceof VirtualFileWindow? ((VirtualFileWindow)virtualFile).getDelegate() : virtualFile);
   }
 
   private void createUIComponents() {
