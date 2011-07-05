@@ -54,6 +54,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -98,10 +100,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
   private Splitter mySplitter;
-  // todo group somewhere
-  private JPanel myNoDetailsPanel;
-  private JPanel myNothingSelected;
-  private JPanel myNotLoadedYet;
+  private DetailsPanel myDetailsPanel;
+  private GenericDetailsLoader<Change, Pair<JPanel, Disposable>> myDetailsLoader;
   private boolean myDetailsOn;
   private ChangesViewManager.MyFileListener myFileListener;
   private final SLRUMap<FilePath, Pair<JPanel, Disposable>> myDetailsCache;
@@ -111,6 +111,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private Runnable myUpdateDetails;
   private MessageBusConnection myConnection;
   private ChangesViewManager.ToggleDetailsAction myToggleDetailsAction;
+  private PairConsumer<Change,Pair<JPanel, Disposable>> myDetailsConsumer;
+  private final TreeSelectionListener myTsl;
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
@@ -121,9 +123,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myContentManager = contentManager;
     myVcsChangeDetailsManager = vcsChangeDetailsManager;
     myView = new ChangesListView(project);
-    myNoDetailsPanel = UIVcsUtil.errorPanel("No details available", false);
-    myNothingSelected = UIVcsUtil.errorPanel("Nothing selected", false);
-    myNotLoadedYet = UIVcsUtil.errorPanel("Changes content is not loaded yet", false);
 
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
@@ -141,6 +140,12 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myUpdateDetails = new Runnable() {
       @Override
       public void run() {
+        changeDetails();
+      }
+    };
+    myTsl = new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
         changeDetails();
       }
     };
@@ -173,6 +178,12 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   public void projectClosed() {
+    if (myToggleDetailsAction.isSelected(null)) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
+      EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentListener);
+    }
+    myDetailsPanel.clear();
+    myView.removeTreeSelectionListener(myTsl);
     myConnection.disconnect();
     myDetailsCache.clear();
     myDisposed = true;
@@ -244,56 +255,92 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     content.add(myProgressLabel, BorderLayout.SOUTH);
     panel.setContent(content);
 
+    myDetailsPanel = new DetailsPanel();
+    initDetailsLoader();
+
     myView.installDndSupport(ChangeListManagerImpl.getInstanceImpl(myProject));
-    myView.addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        changeDetails();
-      }
-    });
+    myView.addTreeSelectionListener(myTsl);
     return panel;
+  }
+
+  private void initDetailsLoader() {
+    final PairConsumer<Change, Pair<JPanel, Disposable>> cacheConsumer = new PairConsumer<Change, Pair<JPanel, Disposable>>() {
+      @Override
+      public void consume(Change change, Pair<JPanel, Disposable> pair) {
+        final FilePath filePath = ChangesUtil.getFilePath(change);
+        final Pair<JPanel, Disposable> old = myDetailsCache.get(filePath);
+        if (old == null) {
+          myDetailsCache.put(filePath, pair);
+        } else if (old != pair) {
+          Disposer.dispose(pair.getSecond());
+        }
+      }
+    };
+    myDetailsConsumer = new PairConsumer<Change, Pair<JPanel, Disposable>>() {
+      @Override
+      public void consume(Change change, Pair<JPanel, Disposable> pair) {
+        cacheConsumer.consume(change, pair);
+        myDetailsPanel.data(pair.getFirst());
+        myDetailsPanel.layout();
+      }
+    };
+    myDetailsLoader = new GenericDetailsLoader<Change, Pair<JPanel, Disposable>>(new Consumer<Change>() {
+      @Override
+      public void consume(Change change) {
+        final FilePath filePath = ChangesUtil.getFilePath(change);
+        Pair<JPanel, Disposable> details = myDetailsCache.get(filePath);
+        if (details != null) {
+          myDetailsConsumer.consume(change, details);
+        } else if (myVcsChangeDetailsManager.getPanel(change)) {
+          myDetailsPanel.loading();
+          myDetailsPanel.layout();
+        }
+      }
+    }, myDetailsConsumer);
+    myDetailsLoader.setCacheConsumer(cacheConsumer);
+    myVcsChangeDetailsManager.setDetails(myDetailsLoader);
   }
 
   private void changeDetails() {
     if (! myDetailsOn) {
-      setChangeDetailsPanel(null);
+      if (mySplitter.getSecondComponent() != null) {
+        setChangeDetailsPanel(null);
+      }
     } else {
-      final Change[] selectedChanges = myView.getSelectedChanges();
-      if (selectedChanges.length == 0) {
-        setChangeDetailsPanel(myNothingSelected);
-      } else {
-        final String freezed = ChangeListManager.getInstance(myProject).isFreezed();
-        if (freezed != null) {
-          setChangeDetailsPanel(UIVcsUtil.errorPanel(freezed, false));
+      setDetails();
+      myDetailsPanel.layout();
+
+      if (mySplitter.getSecondComponent() == null) {
+        setChangeDetailsPanel(myDetailsPanel.myPanel);
+      }
+    }
+  }
+
+  private void setDetails() {
+    final Change[] selectedChanges = myView.getSelectedChanges();
+    if (selectedChanges.length == 0) {
+      myDetailsPanel.nothingSelected();
+    } else {
+      final String freezed = ChangeListManager.getInstance(myProject).isFreezed();
+      if (freezed != null) {
+        myDetailsPanel.data(UIVcsUtil.errorPanel(freezed, false));
+        return;
+      }
+
+      myDetailsPanel.notAvailable();
+      for (Change change : selectedChanges) {
+        if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
+          myDetailsPanel.loadingInitial();
           return;
         }
-        Pair<JPanel, Disposable> details = null;
-        FilePath filePath = null;
-        for (Change change : selectedChanges) {
-          if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
-            setChangeDetailsPanel(myNotLoadedYet);
-            return;
-          }
-          filePath = ChangesUtil.getFilePath(change);
-          details = myDetailsCache.get(filePath);
-          if (details != null) break;
-          details = myVcsChangeDetailsManager.getPanel(change);
-          if (details != null) {
-            myDetailsCache.put(filePath, details);
-            break;
-          }
+        if (myVcsChangeDetailsManager.canComment(change)) {
+          myDetailsFilePath = ChangesUtil.getFilePath(change);
+          myDetailsLoader.updateSelection(change, true);
+          return;
         }
-
-        final JPanel panel;
-        if (details == null) {
-          panel = myNoDetailsPanel;
-        }
-        else {
-          myDetailsFilePath = filePath;
-          panel = details.getFirst();
-        }
-        setChangeDetailsPanel(panel);
       }
+
+      myDetailsPanel.notAvailable();
     }
   }
 
@@ -578,6 +625,63 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       if (vf != null) {
         impl(vf);
       }
+    }
+  }
+
+  private static class DetailsPanel {
+    private CardLayout myLayout;
+    private JPanel myPanel;
+    private JPanel myDataPanel;
+    private Layer myCurrentLayer;
+
+    private DetailsPanel() {
+      myPanel = new JPanel();
+      myLayout = new CardLayout();
+      myPanel.setLayout(myLayout);
+      myDataPanel = new JPanel(new BorderLayout());
+
+      myPanel.add(UIVcsUtil.errorPanel("No details available", false), Layer.notAvailable.name());
+      myPanel.add(UIVcsUtil.errorPanel("Nothing selected", false), Layer.nothingSelected.name());
+      myPanel.add(UIVcsUtil.errorPanel("Changes content is not loaded yet", false), Layer.notLoadedInitial.name());
+      myPanel.add(UIVcsUtil.errorPanel("Loading...", false), Layer.loading.name());
+      myPanel.add(myDataPanel, Layer.data.name());
+    }
+
+    public void nothingSelected() {
+      myCurrentLayer = Layer.nothingSelected;
+    }
+
+    public void notAvailable() {
+      myCurrentLayer = Layer.notAvailable;
+    }
+
+    public void loading() {
+      myCurrentLayer = Layer.loading;
+    }
+
+    public void loadingInitial() {
+      myCurrentLayer = Layer.notLoadedInitial;
+    }
+
+    public void data(final JPanel panel) {
+      myCurrentLayer = Layer.data;
+      myPanel.add(panel, Layer.data.name());
+    }
+
+    public void layout() {
+      myLayout.show(myPanel, myCurrentLayer.name());
+    }
+
+    public void clear() {
+      myPanel.removeAll();
+    }
+
+    private static enum Layer {
+      notAvailable,
+      nothingSelected,
+      notLoadedInitial,
+      loading,
+      data,
     }
   }
 }

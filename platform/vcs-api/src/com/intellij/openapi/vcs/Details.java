@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.actions;
-
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.util.BeforeAfter;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
+package com.intellij.openapi.vcs;
 
 /**
  * @author irengrig
- *         Date: 6/10/11
- *         Time: 6:39 PM
+ *         Date: 7/5/11
+ *         Time: 7:32 PM
  */
-public interface DiffRequestFromChange<T extends DiffContent> {
-  boolean canCreateRequest(final Change change);
-  @Nullable
-  List<BeforeAfter<T>> createRequestForChange(final Change change, int extraLines) throws VcsException;
+public interface Details<Id, Data> {
+  void take(Id id, Data data);
+  Id getCurrentlySelected();
 }
