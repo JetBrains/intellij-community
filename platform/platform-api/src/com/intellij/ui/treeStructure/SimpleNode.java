@@ -230,6 +230,10 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return false;
   }
 
+  public boolean isAlwaysLeaf() {
+    return false;
+  }
+
   public boolean shouldHaveSeparator() {
     return false;
   }
@@ -279,4 +283,5 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   public final int hashCode() {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }
+
 }

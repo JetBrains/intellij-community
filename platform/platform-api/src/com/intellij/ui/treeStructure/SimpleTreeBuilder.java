@@ -41,6 +41,8 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
     return ((SimpleNode) nodeDescriptor).isAutoExpandNode();
   }
 
+
+
   public final void updateFromRoot() {
     updateFromRoot(false);
   }

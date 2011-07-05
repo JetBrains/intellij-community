@@ -527,6 +527,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       return list.isEmpty() ? EMPTY_EN_ARRAY : list.toArray(new EditorNode[list.size()]);
     }
 
+
+    @Override
+    public boolean isAlwaysLeaf() {
+      return !(myConfigurable instanceof Configurable.Composite);
+    }
+
     @Override
     public boolean isContentHighlighted() {
       return getParent() == myRoot;

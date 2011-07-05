@@ -29,6 +29,11 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
     return ((SimpleNode) element).getParent();
   }
 
+  @Override
+  public boolean isAlwaysLeaf(Object element) {
+    return ((SimpleNode)element).isAlwaysLeaf();
+  }
+
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return (NodeDescriptor) element;

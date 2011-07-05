@@ -170,6 +170,24 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     public Object[] getEqualityObjects() {
       return new Object[] {myDelegate};
     }
+
+    @Override
+    public boolean isAlwaysShowPlus() {
+      if (myDelegate instanceof SimpleNode) {
+        return ((SimpleNode)myDelegate).isAlwaysShowPlus();
+      }
+
+      return super.isAlwaysShowPlus();
+    }
+
+    @Override
+    public boolean isAlwaysLeaf() {
+      if (myDelegate instanceof SimpleNode) {
+        return ((SimpleNode)myDelegate).isAlwaysLeaf();
+      }
+
+      return super.isAlwaysLeaf();
+    }
   }
 
 
@@ -187,6 +205,11 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
 
   public Object getParentElement(Object element) {
     return ((Node) element).getParent();
+  }
+
+  @Override
+  public boolean isAlwaysLeaf(Object element) {
+    return ((Node)element).isAlwaysLeaf();
   }
 
   @NotNull

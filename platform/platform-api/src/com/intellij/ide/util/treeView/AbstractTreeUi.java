@@ -3571,7 +3571,7 @@ public class AbstractTreeUi {
 
   public boolean addSubtreeToUpdate(final DefaultMutableTreeNode root, final Runnable runAfterUpdate, final boolean updateStructure) {
   Object element = getElementFor(root);
-    if (getTreeStructure().isAlwaysLeaf(element)) {
+    if (element != null && getTreeStructure().isAlwaysLeaf(element)) {
       removeFromUnbuilt(root);
       removeLoading(root, true);
 
