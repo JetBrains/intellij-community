@@ -647,42 +647,33 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     LogicalPosition pos = myEditor.offsetToLogicalPosition(lookupStart);
     Point location = myEditor.logicalPositionToXY(pos);
     location.y += myEditor.getLineHeight();
-    JComponent editorComponent = myEditor.getComponent();
-    JComponent internalComponent = myEditor.getContentComponent();
-    final JRootPane rootPane = editorComponent.getRootPane();
-    if (rootPane == null) {
-      LOG.error(myEditor.isDisposed() + "; shown=" + myShown + "; disposed=" + myDisposed + "; editorShowing=" + myEditor.getContentComponent().isShowing());
-    }
-    JLayeredPane layeredPane = rootPane.getLayeredPane();
-    Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
-    Point originalPoint = new Point(layeredPanePoint);
-    SwingUtilities.convertPointToScreen(originalPoint, layeredPane);
-    layeredPanePoint.x -= myCellRenderer.getIconIndent();
-    layeredPanePoint.x -= component.getInsets().left;
+    location.x -= myCellRenderer.getIconIndent() + component.getInsets().left;
 
-    int shiftLow = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
-    int shiftHigh = layeredPanePoint.y - dim.height;
+    SwingUtilities.convertPointToScreen(location, myEditor.getContentComponent());
+    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(location);
+
     if (!isPositionedAboveCaret()) {
-      myPositionedAbove = shiftLow < 0 && shiftLow < shiftHigh;
+      int shiftLow = screenRectangle.height - (location.y + dim.height);
+      myPositionedAbove = shiftLow < 0 && shiftLow < location.y - dim.height;
     }
     if (isPositionedAboveCaret()) {
-      layeredPanePoint.y -= dim.height + myEditor.getLineHeight();
+      location.y -= dim.height + myEditor.getLineHeight();
       if (pos.line == 0) {
-        layeredPanePoint.y += 1;
+        location.y += 1;
         //otherwise the lookup won't intersect with the editor and every editor's resize (e.g. after typing in console) will close the lookup
       }
     }
 
-    final Point painPoint = new Point(layeredPanePoint);
-    SwingUtilities.convertPointToScreen(painPoint, layeredPane);
-    final Rectangle originScreenRect = ScreenUtil.getScreenRectangle(originalPoint);
-    if (! originScreenRect.contains(painPoint)) {
-      final Point p = ScreenUtil.findNearestPointOnBorder(originScreenRect, painPoint);
-      SwingUtilities.convertPointFromScreen(p, layeredPane);
-      return p;
+    if (!screenRectangle.contains(location)) {
+      location = ScreenUtil.findNearestPointOnBorder(screenRectangle, location);
     }
 
-    return layeredPanePoint;
+    final JRootPane rootPane = myEditor.getComponent().getRootPane();
+    if (rootPane == null) {
+      LOG.error(myEditor.isDisposed() + "; shown=" + myShown + "; disposed=" + myDisposed + "; editorShowing=" + myEditor.getContentComponent().isShowing());
+    }
+    SwingUtilities.convertPointFromScreen(location, rootPane.getLayeredPane());
+    return location;
   }
 
   public void finishLookup(final char completionChar) {
