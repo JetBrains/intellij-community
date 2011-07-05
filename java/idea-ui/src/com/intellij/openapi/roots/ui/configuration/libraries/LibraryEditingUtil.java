@@ -53,10 +53,17 @@ public class LibraryEditingUtil {
   }
 
   public static String suggestNewLibraryName(LibraryTable.ModifiableModel table) {
-    final String name = "Unnamed";
-    String candidataName = name;
-    for (int idx = 1; libraryAlreadyExists(table, candidataName); candidataName = name + (idx++));
-    return candidataName;
+    return suggestNewLibraryName(table, "Unnamed");
+  }
+
+  public static String suggestNewLibraryName(LibraryTable.ModifiableModel table,
+                                             final String baseName) {
+    String candidateName = baseName;
+    int idx = 1;
+    while (libraryAlreadyExists(table, candidateName)) {
+      candidateName = baseName + (idx++);
+    }
+    return candidateName;
   }
 
   public static Predicate<Library> getNotAddedLibrariesCondition(final ModuleRootModel rootModel) {

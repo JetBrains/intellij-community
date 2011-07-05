@@ -24,8 +24,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
@@ -48,11 +52,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -69,7 +74,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
-  private final Table myEntryTable;
+  private final JBTable myEntryTable;
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private List<AddItemPopupAction<?>> myPopupActions = null;
@@ -81,7 +86,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     myState = state;
     myModel = new ClasspathTableModel(state, getStructureConfigurableContext());
-    myEntryTable = new Table(myModel);
+    myEntryTable = new JBTable(myModel);
     myEntryTable.setShowGrid(false);
     myEntryTable.setDragEnabled(false);
     myEntryTable.setShowHorizontalLines(false);
@@ -102,7 +107,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    new SpeedSearchBase<Table>(myEntryTable) {
+    new SpeedSearchBase<JBTable>(myEntryTable) {
       public int getSelectedIndex() {
         return myEntryTable.getSelectedRow();
       }
@@ -189,8 +194,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       public void update(AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
-        if (myEntryTable.getSelectedRowCount() != 1) return;
-        final OrderEntry entry = myModel.getItemAt(myEntryTable.getSelectedRow()).getEntry();
+        final OrderEntry entry = getSelectedEntry();
         if (entry != null && entry.isValid()){
           if (!(entry instanceof ModuleSourceOrderEntry)){
             presentation.setEnabled(true);
@@ -202,7 +206,23 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
                                              myEntryTable);
     actionGroup.add(navigateAction);
     actionGroup.add(new MyFindUsagesAction());
+    addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.PROJECT_LEVEL,
+                                LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()).getPresentation());
+    addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL,
+                                LibraryTablesRegistrar.getInstance().getLibraryTable().getPresentation());
+    addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL, ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION);
     PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+  }
+
+  private void addChangeLibraryLevelAction(DefaultActionGroup actionGroup, String tableLevel, LibraryTablePresentation presentation) {
+    actionGroup.add(new ChangeLibraryLevelAction(this, presentation.getDisplayName(true), tableLevel));
+  }
+
+  @Override
+  @Nullable
+  public OrderEntry getSelectedEntry() {
+    if (myEntryTable.getSelectedRowCount() != 1) return null;
+    return myModel.getItemAt(myEntryTable.getSelectedRow()).getEntry();
   }
 
   private void setFixedColumnWidth(final int columnIndex, final String textToMeasure) {
@@ -215,9 +235,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     checkboxColumn.setMinWidth(width);
   }
 
-  private void navigate(boolean openLibraryEditor) {
-    final int selectedRow = myEntryTable.getSelectedRow();
-    final OrderEntry entry = myModel.getItemAt(selectedRow).getEntry();
+  @Override
+  public void navigate(boolean openLibraryEditor) {
+    final OrderEntry entry = getSelectedEntry();
     final ProjectStructureConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myState.getProject());
     if (entry instanceof ModuleOrderEntry){
       Module module = ((ModuleOrderEntry)entry).getModule();
@@ -316,29 +336,15 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, PlatformIcons.TABLE_EDIT_ROW) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        final int row = myEntryTable.getSelectedRow();
-        final ClasspathTableItem<?> item = myModel.getItemAt(row);
-        final OrderEntry entry = item.getEntry();
+        final OrderEntry entry = getSelectedEntry();
         if (!(entry instanceof LibraryOrderEntry)) return;
 
         final Library library = ((LibraryOrderEntry)entry).getLibrary();
         if (library == null) {
           return;
         }
-        final LibraryTableModifiableModelProvider provider;
         final LibraryTable table = library.getTable();
-        if (table == null) {
-          final LibraryTable moduleLibraryTable = getRootModel().getModuleLibraryTable();
-          provider = new LibraryTableModifiableModelProvider() {
-            public LibraryTable.ModifiableModel getModifiableModel() {
-              return moduleLibraryTable.getModifiableModel();
-            }
-
-          };
-        }
-        else {
-          provider = getStructureConfigurableContext().createModifiableModelProvider(table.getTableLevel());
-        }
+        final LibraryTableModifiableModelProvider provider = getModifiableModelProvider(table != null ? table.getTableLevel() : LibraryTableImplUtil.MODULE_LEVEL);
         EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject());
         dialog.setContextModule(getRootModel().getModule());
         dialog.show();
@@ -410,6 +416,21 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.setBorder(new LineBorder(UIUtil.getBorderColor()));
 
     return EditableRowTable.wrapToTableWithButtons(myEntryTable, myModel, new CustomLineBorder(0, 1, 1, 1), new AddRemoveUpDownPanel.Buttons[0], actions.toArray(new AnActionButton[actions.size()]));
+  }
+
+  @NotNull
+  public LibraryTableModifiableModelProvider getModifiableModelProvider(@NotNull String tableLevel) {
+    if (LibraryTableImplUtil.MODULE_LEVEL.equals(tableLevel)) {
+      final LibraryTable moduleLibraryTable = getRootModel().getModuleLibraryTable();
+      return new LibraryTableModifiableModelProvider() {
+        public LibraryTable.ModifiableModel getModifiableModel() {
+          return moduleLibraryTable.getModifiableModel();
+        }
+      };
+    }
+    else {
+      return getStructureConfigurableContext().createModifiableModelProvider(tableLevel);
+    }
   }
 
   @Override
@@ -538,7 +559,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   public void selectOrderEntry(@NotNull OrderEntry entry) {
     for (int row = 0; row < myModel.getRowCount(); row++) {
-      if (entry.getPresentableName().equals(myModel.getItemAt(row).getEntry().getPresentableName())) {
+      final OrderEntry orderEntry = myModel.getItemAt(row).getEntry();
+      if (orderEntry != null && entry.getPresentableName().equals(orderEntry.getPresentableName())) {
         myEntryTable.getSelectionModel().setSelectionInterval(row, row);
         TableUtil.scrollSelectionToVisible(myEntryTable);
       }
@@ -681,27 +703,23 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }
 
     protected ProjectStructureElement getSelectedElement() {
-      int row = myEntryTable.getSelectedRow();
-      if (0 <= row && row < myModel.getRowCount()) {
-        ClasspathTableItem<?> item = myModel.getItemAt(row);
-        final OrderEntry entry = item.getEntry();
-        if (entry instanceof LibraryOrderEntry) {
-          final Library library = ((LibraryOrderEntry)entry).getLibrary();
-          if (library != null) {
-            return new LibraryProjectStructureElement(getContext(), library);
-          }
+      final OrderEntry entry = getSelectedEntry();
+      if (entry instanceof LibraryOrderEntry) {
+        final Library library = ((LibraryOrderEntry)entry).getLibrary();
+        if (library != null) {
+          return new LibraryProjectStructureElement(getContext(), library);
         }
-        else if (entry instanceof ModuleOrderEntry) {
-          final Module module = ((ModuleOrderEntry)entry).getModule();
-          if (module != null) {
-            return new ModuleProjectStructureElement(getContext(), module);
-          }
+      }
+      else if (entry instanceof ModuleOrderEntry) {
+        final Module module = ((ModuleOrderEntry)entry).getModule();
+        if (module != null) {
+          return new ModuleProjectStructureElement(getContext(), module);
         }
-        else if (entry instanceof JdkOrderEntry) {
-          final Sdk jdk = ((JdkOrderEntry)entry).getJdk();
-          if (jdk != null) {
-            return new SdkProjectStructureElement(getContext(), jdk);
-          }
+      }
+      else if (entry instanceof JdkOrderEntry) {
+        final Sdk jdk = ((JdkOrderEntry)entry).getJdk();
+        if (jdk != null) {
+          return new SdkProjectStructureElement(getContext(), jdk);
         }
       }
       return null;

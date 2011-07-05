@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -110,7 +111,7 @@ public class OrderEntryCellAppearanceUtils {
     return testSource ? PlatformIcons.TEST_SOURCE_FOLDER : PlatformIcons.SOURCE_FOLDERS_ICON;
   }
 
-  public static ModifiableCellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected, final boolean showVersion) {
+  public static ModifiableCellAppearance forJdk(@Nullable Sdk jdk, boolean isInComboBox, final boolean selected, final boolean showVersion) {
     if (jdk == null) {
       return SimpleTextCellAppearance.invalid(NO_JDK, CellAppearanceUtils.INVALID_ICON);
     }
@@ -132,7 +133,7 @@ public class OrderEntryCellAppearanceUtils {
     return ending.getAppearance();
   }
 
-  public static CellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected) {
+  public static CellAppearance forJdk(@Nullable Sdk jdk, boolean isInComboBox, final boolean selected) {
     return forJdk(jdk, isInComboBox, selected, true);
   }
 

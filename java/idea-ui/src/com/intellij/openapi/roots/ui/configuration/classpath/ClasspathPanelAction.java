@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -29,7 +31,7 @@ abstract class ClasspathPanelAction implements ActionListener, Runnable {
   }
 
   @Override
-  public void actionPerformed(ActionEvent e) {
+  public void actionPerformed(@Nullable ActionEvent e) {
     execute();
   }
 
