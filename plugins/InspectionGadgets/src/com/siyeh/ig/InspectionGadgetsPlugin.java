@@ -74,6 +74,7 @@ import com.siyeh.ig.numeric.*;
 import com.siyeh.ig.packaging.*;
 import com.siyeh.ig.performance.*;
 import com.siyeh.ig.portability.*;
+import com.siyeh.ig.redundancy.ElementOnlyUsedFromTestCodeInspection;
 import com.siyeh.ig.redundancy.UnusedLabelInspection;
 import com.siyeh.ig.resources.*;
 import com.siyeh.ig.security.*;
@@ -985,6 +986,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerRedundancyInspections() {
+        m_inspectionClasses.add(ElementOnlyUsedFromTestCodeInspection.class);
         m_inspectionClasses.add(UnusedLabelInspection.class);
     }
 
