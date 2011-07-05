@@ -88,7 +88,7 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
 
   public Dimension getMinimumSize() {
     final Dimension size = super.getMinimumSize();
-    size.height = myBannerMinHeight > 0 ? myBannerMinHeight : size.height;
+    size.height = Math.max(myBannerMinHeight, size.height);
     return size;
   }
 
