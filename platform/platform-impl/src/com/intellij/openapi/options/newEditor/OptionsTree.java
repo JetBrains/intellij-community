@@ -650,7 +650,13 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     @Override
     protected void processMouseEvent(final MouseEvent e) {
       final MyTreeUi ui = (MyTreeUi)myTree.getUI();
-      if (e.getID() == MouseEvent.MOUSE_RELEASED && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !ui.isToggleEvent(e)) {
+      final boolean toggleNow =
+        e.getID() == MouseEvent.MOUSE_RELEASED && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !ui.isToggleEvent(e);
+
+      final boolean toggleLater =
+        e.getID() == MouseEvent.MOUSE_PRESSED;
+
+      if (toggleNow || toggleLater) {
         final TreePath path = getPathForLocation(e.getX(), e.getY());
         if (path != null) {
           final Rectangle bounds = getPathBounds(path);
@@ -666,9 +672,14 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
             Point point = new Point(e.getX() - bounds.x, e.getY() - bounds.y);
             if (myRendrer.isUnderHandle(point)) {
-              ui.toggleExpandState(path);
-              e.consume();
-              return;
+              if (toggleNow) {
+                ui.toggleExpandState(path);
+                e.consume();
+                return;
+              } else if (toggleLater) {
+                e.consume();
+                return;
+              }
             }
           }
         }
