@@ -155,9 +155,17 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
             documentManager.commitAllDocuments();
 
-            if (editor.getDocument().getTextLength() != psiFile.getTextLength()) {
+            int docLength = editor.getDocument().getTextLength();
+            int psiLength = psiFile.getTextLength();
+            if (docLength != psiLength) {
               if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-                throw new AssertionError("unsuccessful commit: docText=" + editor.getDocument().getText() + "; fileText=" + psiFile.getText() + "; injected=" + (editor instanceof EditorWindow));
+                String docText = editor.getDocument().getText();
+                String psiText = psiFile.getText();
+                String message = "unsuccessful commit: (injected=" +(editor instanceof EditorWindow) +"); document " + System.identityHashCode(editor.getDocument()) + "; " +
+                                 "docText=\n'" + docText +"' (" + docText.length() +" chars; .length()="+ docLength+")\n" +
+                                 "; fileText=\n'" + psiText + "' (" + psiText.length() +" chars; .length()="+ psiLength+")\n"
+                                 ;
+                throw new AssertionError(message);
               }
 
               throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));

@@ -185,7 +185,6 @@ public class LazyParseableElement extends CompositeElement {
       if (parsedNode instanceof CompositeElement) {
         ((CompositeElement)parsedNode).createAllChildrenPsi();
       }
-      parsedNode.getTreeNext();
     }
   }
 

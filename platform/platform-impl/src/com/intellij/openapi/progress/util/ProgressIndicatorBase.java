@@ -426,4 +426,9 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     myFractionStack = new DoubleArrayList(indicator.getFractionStack());
     myFraction = indicator.getFraction();
   }
+
+  @Override
+  public String toString() {
+    return "ProgressIndicator " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
+  }
 }
