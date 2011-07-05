@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -64,6 +65,11 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
 
   public static ProjectLibrariesConfigurable getInstance(final Project project) {
     return ServiceManager.getService(project, ProjectLibrariesConfigurable.class);
+  }
+
+  @Override
+  public LibraryTablePresentation getLibraryTablePresentation() {
+    return LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getPresentation();
   }
 
   protected String getAddText() {

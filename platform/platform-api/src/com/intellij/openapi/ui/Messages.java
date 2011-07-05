@@ -438,7 +438,7 @@ public class Messages {
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
    */
   @Nullable
-  public static String showInputDialog(String message, String title, Icon icon, @NonNls String initialValue, InputValidator validator) {
+  public static String showInputDialog(String message, String title, @Nullable Icon icon, @NonNls String initialValue, @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
@@ -617,25 +617,25 @@ public class Messages {
     protected int myFocusedOptionIndex;
     protected Icon myIcon;
 
-    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
       this(project, message, title, options, defaultOptionIndex, -1, icon);
     }
 
-    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon) {
       super(project, false);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
     }
 
-    public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+    public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
       this(parent, message, title, options, defaultOptionIndex, -1, icon);
     }
 
-    public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+    public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon) {
       super(parent, false);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
     }
 
-    public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+    public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
       super(false);
       _init(title, message, options, defaultOptionIndex, -1, icon, null);
     }
@@ -861,30 +861,24 @@ public class Messages {
     private JTextComponent myField;
     private InputValidator myValidator;
 
-    public InputDialog(Project project,
-                       String message,
-                       String title,
-                       Icon icon,
-                       String initialValue,
-                       InputValidator validator,
-                       String[] options,
-                       int defaultOption) {
+    public InputDialog(Project project, String message, String title, @Nullable Icon icon, String initialValue,
+                       @Nullable InputValidator validator, String[] options, int defaultOption) {
       super(project, message, title, options, defaultOption, icon);
       myValidator = validator;
       myField.setText(initialValue);
     }
 
-    public InputDialog(Project project, String message, String title, Icon icon, String initialValue, InputValidator validator) {
+    public InputDialog(Project project, String message, String title, @Nullable Icon icon, String initialValue, @Nullable InputValidator validator) {
       this(project, message, title, icon, initialValue, validator, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     }
 
-    public InputDialog(Component parent, String message, String title, Icon icon, String initialValue, InputValidator validator) {
+    public InputDialog(Component parent, String message, String title, @Nullable Icon icon, String initialValue, @Nullable InputValidator validator) {
       super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
       myValidator = validator;
       myField.setText(initialValue);
     }
 
-    public InputDialog(String message, String title, Icon icon, String initialValue, InputValidator validator) {
+    public InputDialog(String message, String title, @Nullable Icon icon, String initialValue, @Nullable InputValidator validator) {
       super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
       myValidator = validator;
       myField.setText(initialValue);

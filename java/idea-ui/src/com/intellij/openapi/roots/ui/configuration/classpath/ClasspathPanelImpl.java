@@ -215,7 +215,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   private void addChangeLibraryLevelAction(DefaultActionGroup actionGroup, String tableLevel, LibraryTablePresentation presentation) {
-    actionGroup.add(new ChangeLibraryLevelAction(this, presentation.getDisplayName(true), tableLevel));
+    actionGroup.add(new ChangeLibraryLevelInClasspathAction(this, presentation.getDisplayName(true), tableLevel));
   }
 
   @Override
