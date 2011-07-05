@@ -15,9 +15,7 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.GlobalJavaInspectionTool;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,43 +31,13 @@ public abstract class BaseGlobalInspection extends GlobalJavaInspectionTool {
         if (shortName == null) {
             final Class<? extends BaseGlobalInspection> aClass = getClass();
             final String name = aClass.getName();
+            assert name.endsWith(INSPECTION) :
+                    "class name must end with 'Inspection' to correctly" +
+                            " calculate the short name: " + name;
             shortName = name.substring(name.lastIndexOf((int)'.') + 1,
                     name.length() - INSPECTION.length());
         }
         return shortName;
-    }
-
-    private String getPropertyPrefixForInspection() {
-        final String shortName = getShortName();
-        return getPrefix(shortName);
-    }
-
-    public static String getPrefix(String shortName) {
-        final StringBuilder builder = new StringBuilder(shortName.length() + 10);
-        builder.append(Character.toLowerCase(shortName.charAt(0)));
-        for (int i = 1; i < shortName.length(); i++) {
-            final char c = shortName.charAt(i);
-            if (Character.isUpperCase(c)) {
-                builder.append('.').append(Character.toLowerCase(c));
-            } else {
-                builder.append(c);
-            }
-        }
-        return builder.toString();
-    }
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        @NonNls final String displayNameSuffix = ".display.name";
-        return InspectionGadgetsBundle.message(getPropertyPrefixForInspection() +
-                displayNameSuffix);
-    }
-
-    @Override
-    @NotNull
-    public HighlightDisplayLevel getDefaultLevel() {
-        return HighlightDisplayLevel.WARNING;
     }
 
     @Override @Nls

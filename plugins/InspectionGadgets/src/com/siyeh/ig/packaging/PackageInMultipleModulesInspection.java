@@ -25,6 +25,7 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -32,6 +33,13 @@ import java.util.List;
 import java.util.Set;
 
 public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "package.in.multiple.modules.display.name");
+    }
 
     @Override
     @Nullable

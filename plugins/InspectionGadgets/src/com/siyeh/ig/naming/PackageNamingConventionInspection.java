@@ -30,6 +30,7 @@ import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -65,6 +66,12 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
 
     private Pattern m_regexPattern = Pattern.compile(m_regex);
 
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "package.naming.convention.display.name");
+    }
 
     @Override
     @Nullable

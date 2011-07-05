@@ -28,11 +28,19 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "class.unconnected.to.package.display.name");
+    }
 
     @Nullable
     public CommonProblemDescriptor[] checkElement(RefEntity refEntity,

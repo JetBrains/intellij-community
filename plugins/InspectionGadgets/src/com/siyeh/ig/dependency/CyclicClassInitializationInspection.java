@@ -24,12 +24,20 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class CyclicClassInitializationInspection extends BaseGlobalInspection {
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "cyclic.class.initialization.display.name");
+    }
 
     @Nullable
     public CommonProblemDescriptor[] checkElement(

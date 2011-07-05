@@ -26,6 +26,7 @@ import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,6 +36,13 @@ public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
 
     @SuppressWarnings({"PublicField"})
     public int limit = 10;
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "class.with.too.many.dependents.display.name");
+    }
 
     @Nullable
     public CommonProblemDescriptor[] checkElement(
