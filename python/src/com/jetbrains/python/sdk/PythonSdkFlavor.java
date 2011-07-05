@@ -104,7 +104,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    addToEnv(cmd, PYTHONPATH, StringUtil.join(path, File.pathSeparator));
+    addToEnv(cmd, PYTHONPATH, appendSystemPythonPath(StringUtil.join(path, File.pathSeparator)));
   }
 
   public static void addToEnv(GeneralCommandLine cmd, final String key, String value) {
