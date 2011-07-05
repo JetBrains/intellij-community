@@ -2,18 +2,17 @@ package com.jetbrains.python.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,18 +38,24 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   private PyElement myElement;
   private Visibility myVisibility;
   private Icon myIcon;
+  private boolean myInherited;
 
-  public PyStructureViewElement(PyElement element, Visibility vis) {
+  public PyStructureViewElement(PyElement element, Visibility vis, boolean inherited) {
     myElement = element;
     myVisibility = vis;
+    myInherited = inherited;
   }
 
   public PyStructureViewElement(PyElement element) {
-    this(element, Visibility.NORMAL);
+    this(element, Visibility.NORMAL, false);
   }
 
   public PyElement getValue() {
     return myElement;
+  }
+
+  public boolean isInherited() {
+    return myInherited;
   }
 
   public void navigate(boolean requestFocus) {
@@ -69,46 +74,65 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     myIcon = icon;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof StructureViewTreeElement) {
+      final Object value = ((StructureViewTreeElement)o).getValue();
+      final String name = myElement.getName();
+      if (value instanceof PyElement && name != null) {
+        return name.equals(((PyElement)value).getName());
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    final String name = myElement.getName();
+    return name != null ? name.hashCode() : 0;
+  }
+
   public StructureViewTreeElement[] getChildren() {
-    final Set<PyElement> childrenElements = new LinkedHashSet<PyElement>();
-    myElement.acceptChildren(new PyElementVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof PyClass || element instanceof PyFunction ||
-            (!(myElement instanceof PyClass) && isWorthyItem(element))) {
-          childrenElements.add((PyElement)element);
-        }
-        else {
-          element.acceptChildren(this);
-        }
-      }
-    });
-    final Collection<StructureViewTreeElement> children = new ArrayList<StructureViewTreeElement>();
-    for (PyElement element : childrenElements) {
-      final Visibility vis;
-      if (PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
-        // whatever is defined inside a def, is hidden
-        vis = Visibility.INVISIBLE;
-      }
-      else {
-        vis = getVisibilityByName(element.getName());
-      }
-      final PyStructureViewElement e = new PyStructureViewElement(element, vis);
-      children.add(e);
-      if (element instanceof PyClass && element.isValid()) {
-        PyClass the_exception = PyBuiltinCache.getInstance(element).getClass("Exception");
-        final PyClass cls = (PyClass)element;
-        for (PyClass anc : cls.iterateAncestorClasses()) {
-          if (anc == the_exception) {
-            e.setIcon(PlatformIcons.EXCEPTION_CLASS_ICON);
-            break;
-          }
+    final Collection<StructureViewTreeElement> children = new LinkedHashSet<StructureViewTreeElement>();
+    for (PyElement e : getElementChildren(myElement)) {
+      children.add(new PyStructureViewElement(e, getElementVisibility(e), false));
+    }
+    if (myElement instanceof PyClass) {
+      for (PyClass c : ((PyClass)myElement).iterateAncestorClasses()) {
+        for (PyElement e: getElementChildren(c)) {
+          children.add(new PyStructureViewElement(e, getElementVisibility(e), true));
         }
       }
     }
+    return children.toArray(new StructureViewTreeElement[children.size()]);
+  }
+
+  private static Visibility getElementVisibility(PyElement element) {
+    if (!(element instanceof PyTargetExpression) && PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
+      return Visibility.INVISIBLE;
+    }
+    else {
+      return getVisibilityByName(element.getName());
+    }
+  }
+
+  private static Collection<PyElement> getElementChildren(final PyElement element) {
+    final Collection<PyElement> children = new ArrayList<PyElement>();
+    element.acceptChildren(new PyElementVisitor() {
+      @Override
+      public void visitElement(PsiElement e) {
+        if (e instanceof PyClass || e instanceof PyFunction ||
+            (!(element instanceof PyClass) && isWorthyItem(e))) {
+          children.add((PyElement)e);
+        }
+        else {
+          e.acceptChildren(this);
+        }
+      }
+    });
     final Collection<PyTargetExpression> attrs = new ArrayList<PyTargetExpression>();
-    if (myElement instanceof PyClass) {
-      final PyClass c = (PyClass)myElement;
+    if (element instanceof PyClass) {
+      final PyClass c = (PyClass)element;
       final Comparator<PyTargetExpression> comparator = new Comparator<PyTargetExpression>() {
         @Override
         public int compare(PyTargetExpression e1, PyTargetExpression e2) {
@@ -126,10 +150,10 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     }
     for (PyTargetExpression e : attrs) {
       if (e.isValid()) {
-        children.add(new PyStructureViewElement(e, getVisibilityByName(e.getName())));
+        children.add(e);
       }
     }
-    return children.toArray(new StructureViewTreeElement[children.size()]);
+    return children;
   }
 
   private static Visibility getVisibilityByName(@Nullable String name) {
@@ -199,6 +223,9 @@ public class PyStructureViewElement implements StructureViewTreeElement {
 
       @Nullable
       public TextAttributesKey getTextAttributesKey() {
+        if (isInherited()) {
+          return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
+        }
         return null;
       }
 
