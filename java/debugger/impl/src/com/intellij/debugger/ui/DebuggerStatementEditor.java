@@ -128,9 +128,14 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
     return createItem(myEditor.getDocument(), getProject());
   }
 
-  public void setText(TextWithImports text) {
+  @Override
+  protected void doSetText(TextWithImports text) {
     restoreFactory(text);
     myEditor.setDocument(createDocument(text));
+  }
+
+  @Override
+  protected void updateEditorUi() {
     final Editor editor = myEditor.getEditor();
     if (editor != null) {
       DaemonCodeAnalyzer.getInstance(getProject()).updateVisibleHighlighters(editor);

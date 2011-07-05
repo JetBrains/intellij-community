@@ -125,7 +125,8 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     return null;
   }
 
-  public void setText(TextWithImports item) {
+  @Override
+  protected void doSetText(TextWithImports item) {
     final String itemText = item.getText().replace('\n', ' ');
     restoreFactory(item);
     item.setText(itemText);
@@ -139,6 +140,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
 
     myComboBox.getEditor().setItem(item);
+  }
+
+  @Override
+  protected void updateEditorUi() {
   }
 
   public TextWithImports getText() {

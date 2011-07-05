@@ -32,6 +32,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
@@ -165,8 +166,10 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   public void setContext(PsiElement context) {
     TextWithImports text = getText();
+    PsiElement oldContext = myContext;
     myContext = context;
 
+    CodeFragmentFactory oldFactory = myFactory;
     List<CodeFragmentFactory> factories = getAllFactories();
     if (myInitialFactory || !factories.contains(myFactory)) {
       setFactory(factories.get(0));
@@ -174,8 +177,21 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     myChooseFactory.setVisible(factories.size() > 1);
     myInitialFactory = false;
 
-    setText(new TextWithImportsImpl(text.getKind(), text.getText(), text.getImports(), myFactory.getFileType()));
+    if (!oldFactory.equals(myFactory) || !Comparing.equal(oldContext, context)) {
+      setText(new TextWithImportsImpl(text.getKind(), text.getText(), text.getImports(), myFactory.getFileType()));
+    }
+    updateEditorUi();
   }
+
+  @Override
+  public void setText(TextWithImports text) {
+    doSetText(text);
+    updateEditorUi();
+  }
+
+  protected abstract void doSetText(TextWithImports text);
+
+  protected abstract void updateEditorUi();
 
   private List<CodeFragmentFactory> getAllFactories() {
     return DebuggerUtilsEx.getCodeFragmentFactories(myContext);
