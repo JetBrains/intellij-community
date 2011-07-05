@@ -4,21 +4,25 @@ body {
     margin-right: 2px;
     margin-bottom: 6px;
 }
-h1, p {
+h1, p, ul {
    font-family: 'MS Reference Sans Serif', verdana, arial, sans-serif;
 }
 .code, .code_emphasis, .code_keyword, pre, .shortcut {
     font-family: 'Lucida Console', monospace;
 }
-h1, p, pre {
+h1, p, pre, ul {
     font-size: 10px;
     /*color: #3f3f3f;*/
 }
-p {
+p, ul {
     margin-top: 6px;
 }
-h1, p {
+h1, p, ul {
     margin-bottom: 0;
+}
+ul {
+    margin-left: 0;
+    padding-left: 14px;
 }
 h1, .image, pre {
     margin-top: 10px;
