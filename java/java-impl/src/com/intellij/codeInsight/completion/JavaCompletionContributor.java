@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
@@ -337,6 +338,10 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static boolean shouldRunClassNameCompletion(CompletionResultSet result, CompletionParameters parameters) {
+    if (!Registry.is("show.all.classes.on.first.completion") && parameters.getInvocationCount() < 2) {
+      return false;
+    }
+
     PsiElement position = parameters.getPosition();
     final PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;
@@ -346,7 +351,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         ((PsiJavaCodeReferenceElementImpl)parent).getKind() == PsiJavaCodeReferenceElementImpl.PACKAGE_NAME_KIND) {
       return false;
     }
-    
+
     PsiElement grand = parent.getParent();
     if (grand instanceof PsiSwitchLabelStatement) {
       return false;
