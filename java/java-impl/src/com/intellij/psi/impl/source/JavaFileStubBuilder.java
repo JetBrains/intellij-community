@@ -49,11 +49,11 @@ public class JavaFileStubBuilder extends DefaultStubBuilder {
     if (node == null) return false;
     final ASTNode childNode = child.getNode();
     if (childNode == null) return false;
-    return skipChildProcessingWhenBuildingStubs(node.getElementType(), childNode.getElementType());
+    return skipChildProcessingWhenBuildingStubs(node, childNode.getElementType());
   }
 
   @Override
-  public boolean skipChildProcessingWhenBuildingStubs(final IElementType nodeType, final IElementType childType) {
-    return LIGHT_BUILDER.skipChildProcessingWhenBuildingStubs(nodeType, childType);
+  public boolean skipChildProcessingWhenBuildingStubs(final ASTNode parent, final IElementType childType) {
+    return LIGHT_BUILDER.skipChildProcessingWhenBuildingStubs(parent, childType);
   }
 }
