@@ -28,7 +28,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -78,8 +77,7 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
 
   public void clearActions() {
     final Set<Action> actions = myActions.keySet();
-    for (Iterator<Action> iterator = actions.iterator(); iterator.hasNext();) {
-      Action each = iterator.next();
+    for (Action each : actions) {
       each.removePropertyChangeListener(this);
     }
     myActions.clear();
@@ -125,8 +123,8 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
 
   public void updateActions() {
     final Set<Action> actions = myActions.keySet();
-    for (Iterator<Action> iterator = actions.iterator(); iterator.hasNext();) {
-      updateAction(iterator.next());
+    for (Action action : actions) {
+      updateAction(action);
     }
   }
 
