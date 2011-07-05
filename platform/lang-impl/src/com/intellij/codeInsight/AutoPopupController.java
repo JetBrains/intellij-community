@@ -40,7 +40,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  *
@@ -61,11 +63,11 @@ public class AutoPopupController implements Disposable {
   private void setupListeners() {
     ActionManagerEx.getInstanceEx().addAnActionListener(new AnActionListener() {
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        myAlarm.cancelAllRequests();
+        cancelAllRequest();
       }
 
       public void beforeEditorTyping(char c, DataContext dataContext) {
-        myAlarm.cancelAllRequests();
+        cancelAllRequest();
       }
 
 
@@ -75,7 +77,7 @@ public class AutoPopupController implements Disposable {
 
     IdeEventQueue.getInstance().addActivityListener(new Runnable() {
       public void run() {
-        myAlarm.cancelAllRequests();
+        cancelAllRequest();
       }
     }, this);
   }
@@ -95,15 +97,14 @@ public class AutoPopupController implements Disposable {
           if (myProject.isDisposed()) return;
           if (editor.isDisposed()) return;
 
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          //PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           if (!file.isValid()) return;
 
-          if (condition != null && !condition.value(file)) return;
-          CompletionAutoPopupHandler.invokeAutoPopupCompletion(myProject, editor);
+          CompletionAutoPopupHandler.invokeAutoPopupCompletion(myProject, editor, condition);
         }
       };
 
-      myAlarm.addRequest(request, settings.AUTO_LOOKUP_DELAY);
+      addRequest(request, settings.AUTO_LOOKUP_DELAY);
     }
   }
 
@@ -114,7 +115,23 @@ public class AutoPopupController implements Disposable {
       currentCompletion.closeAndFinish(true);
     }
 
+    addRequest(request, delay);
+  }
+
+  @TestOnly
+  public void executePendingRequests() {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    while (myAlarm.getActiveRequestCount() != 0) {
+      UIUtil.pump();
+    }
+  }
+
+  private void addRequest(Runnable request, final int delay) {
     myAlarm.addRequest(request, delay);
+  }
+
+  private void cancelAllRequest() {
+    myAlarm.cancelAllRequests();
   }
 
   public void autoPopupParameterInfo(final Editor editor, final PsiElement highlightedMethod){
@@ -147,7 +164,7 @@ public class AutoPopupController implements Disposable {
         }
       };
 
-      myAlarm.addRequest(request, settings.PARAMETER_INFO_DELAY);
+      addRequest(request, settings.PARAMETER_INFO_DELAY);
     }
   }
 

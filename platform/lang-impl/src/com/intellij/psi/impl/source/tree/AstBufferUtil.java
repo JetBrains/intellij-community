@@ -20,6 +20,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ public class AstBufferUtil {
     ((TreeElement)element).acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
       @Override
       public void visitLeaf(LeafElement element) {
+        ProgressManager.checkCanceled();
         if (element instanceof ForeignLeafPsiElement ||
             skipTypes != null && skipTypes.contains(element.getElementType())) {
           return;
