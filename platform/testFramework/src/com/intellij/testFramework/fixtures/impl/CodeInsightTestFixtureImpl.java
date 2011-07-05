@@ -1231,7 +1231,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public PsiFile configureFromTempProjectFile(final String filePath) {
-    return configureByFileInner(findFileInTempDir(filePath));
+    final VirtualFile fileInTempDir = findFileInTempDir(filePath);
+    if (fileInTempDir == null) {
+      throw new IllegalArgumentException("Could not find file in temp dir: " + filePath);
+    }
+    return configureByFileInner(fileInTempDir);
   }
 
   @Override
