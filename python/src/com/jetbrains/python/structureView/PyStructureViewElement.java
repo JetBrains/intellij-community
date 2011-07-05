@@ -32,6 +32,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     NORMAL, // visible
     INVISIBLE, // not visible: e.g. local to function
     PRIVATE,  // "__foo" in a class
+    PROTECTED, // "_foo"
     PREDEFINED // like "__init__"; only if really visible
   }
 
@@ -132,12 +133,17 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   private static Visibility getVisibilityByName(@Nullable String name) {
-    if (name != null && name.startsWith("__")) {
-      if (PyNames.UnderscoredAttributes.contains(name)) {
-        return Visibility.PREDEFINED;
+    if (name != null) {
+      if (name.startsWith("__")) {
+        if (PyNames.UnderscoredAttributes.contains(name)) {
+          return Visibility.PREDEFINED;
+        }
+        else {
+          return Visibility.PRIVATE;
+        }
       }
-      else {
-        return Visibility.PRIVATE;
+      else if (name.startsWith("_")) {
+        return Visibility.PROTECTED;
       }
     }
     return Visibility.NORMAL;
@@ -211,13 +217,15 @@ public class PyStructureViewElement implements StructureViewTreeElement {
           LayeredIcon icon = new LayeredIcon(2);
           icon.setIcon(normal_icon, 0);
           Icon overlay = null;
-          if (myVisibility == Visibility.PRIVATE) {
+          if (myVisibility == Visibility.PRIVATE || myVisibility == Visibility.PROTECTED) {
             overlay = PyIcons.PRIVATE;
           }
           else if (myVisibility == Visibility.PREDEFINED) {
             overlay = PyIcons.PREDEFINED;
           }
-          else if (myVisibility == Visibility.INVISIBLE) overlay = PyIcons.INVISIBLE;
+          else if (myVisibility == Visibility.INVISIBLE) {
+            overlay = PyIcons.INVISIBLE;
+          }
           if (overlay != null) {
             icon.setIcon(overlay, 1);
           }
