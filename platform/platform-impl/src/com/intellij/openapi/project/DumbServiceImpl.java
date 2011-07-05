@@ -20,6 +20,7 @@ import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
@@ -198,6 +199,7 @@ public class DumbServiceImpl extends DumbService {
     myDumb = false;
     if (!myProject.isDisposed()) {
       myPublisher.exitDumbMode();
+      FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
     }
     while (true) {
       final Runnable runnable;
