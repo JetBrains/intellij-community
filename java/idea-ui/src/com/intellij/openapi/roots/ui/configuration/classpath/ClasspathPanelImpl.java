@@ -383,16 +383,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    //List<AnActionButton> actions = new ArrayList<AnActionButton>();
-    //actions.add(addButton);
-    //actions.add(removeButton);
-    //actions.add(upButton);
-    //actions.add(downButton);
-    //actions.add(myEditButton);
-    //if (isAnalyzeShown) {
-    //  actions.add(analyzeButton);
-    //}
-
     myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
