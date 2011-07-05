@@ -2054,7 +2054,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         position.x = drawBackground(g, backColor, text.subSequence(startToUse, softWrapStart), position, fontType, defaultBackground, clip);
       }
       boolean drawCustomBackgroundAtSoftWrapVirtualSpace = 
-        backColor != defaultBackground && (softWrapStart > start || myLastBackgroundColor == backColor);
+        !Comparing.equal(backColor, defaultBackground) && (softWrapStart > start || Comparing.equal(myLastBackgroundColor, backColor));
       drawSoftWrap(
         g, softWrap, position, fontType, backColor, drawCustomBackgroundAtSoftWrapVirtualSpace, defaultBackground, clip, caretRowPainted
       );
@@ -2463,7 +2463,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (count > 0) {
         final int lastCount = count - 1;
         final Color lastColor = color[lastCount];
-        if (_data == myLastData && _start == ends[lastCount] && (_color == null || lastColor == null || _color == lastColor)
+        if (_data == myLastData && _start == ends[lastCount] && (_color == null || lastColor == null || _color.equals(lastColor))
           && _y == y[lastCount] /* there is a possible case that vertical position is adjusted because of soft wrap */)
         {
           ends[lastCount] = _end;

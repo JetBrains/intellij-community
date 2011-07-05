@@ -101,7 +101,7 @@ public abstract class DiffMarkup implements EditorSource {
       LOG.assertTrue(lastLine <= line);
       if (lastLine == line) {
         Color lastLineColor = lastHighlighter.getLineSeparatorColor();
-        if (color == Color.GRAY || lastLineColor != Color.GRAY) {
+        if (Color.GRAY.equals(color) || !Color.GRAY.equals(lastLineColor)) {
           return null;
         }
         else {
