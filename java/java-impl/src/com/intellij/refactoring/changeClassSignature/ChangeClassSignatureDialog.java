@@ -16,9 +16,7 @@
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -28,12 +26,15 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
@@ -42,6 +43,7 @@ import java.util.List;
 
 /**
  * @author dsl
+ * @author Konstantin Bulenkov
  */
 public class ChangeClassSignatureDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog");
@@ -54,7 +56,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   private final PsiTypeParameter[] myOriginalParameters;
   private final PsiManager myManager;
   private final MyTableModel myTableModel;
-  private Table myTable;
+  private JBTable myTable;
   static final String REFACTORING_NAME = RefactoringBundle.message("changeClassSignature.refactoring.name");
 
   public ChangeClassSignatureDialog(PsiClass aClass) {
@@ -79,19 +81,22 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   protected JComponent createNorthPanel() {
-    Box box = Box.createHorizontalBox();
-    JLabel label = new JLabel(RefactoringBundle.message("changeClassSignature.class.label.text", UsageViewUtil.getDescriptiveName(myClass)));
-    box.add(label);
-    box.add(Box.createHorizontalGlue());
-    return box;
+    return new JLabel(RefactoringBundle.message("changeClassSignature.class.label.text", UsageViewUtil.getDescriptiveName(myClass)));
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.CHANGE_CLASS_SIGNATURE);
+  @Override
+  protected String getHelpId() {
+    return HelpID.CHANGE_CLASS_SIGNATURE;
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myTable;
   }
 
   protected JComponent createCenterPanel() {
-    myTable = new Table(myTableModel);
+    myTable = new JBTable(myTableModel);
+    UIUtil.setTableDecorationEnabled(myTable);
     TableColumn nameColumn = myTable.getColumnModel().getColumn(NAME_COLUMN);
     TableColumn valueColumn = myTable.getColumnModel().getColumn(VALUE_COLUMN);
     Project project = myClass.getProject();
@@ -104,19 +109,33 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.getSelectionModel().setSelectionInterval(0, 0);
     myTable.setSurrendersFocusOnKeystroke(true);
+    myTable.setCellSelectionEnabled(true);
     myTable.setFocusCycleRoot(true);
 
+    final TableColumn defaultValue = myTable.getColumnModel().getColumn(1);
+    myTable.removeColumn(defaultValue);
+    myTable.getModel().addTableModelListener(new TableModelListener() {
+      @Override
+      public void tableChanged(TableModelEvent e) {
+        if (e.getType() == TableModelEvent.INSERT) {
+          myTable.getModel().removeTableModelListener(this);
+          final TableColumnAnimator animator = new TableColumnAnimator(myTable);
+          animator.setStep(20);
+          animator.addColumn(defaultValue, myTable.getWidth() / 2);
+          animator.startAndDoWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              myTable.editCellAt(myTable.getRowCount() - 1, 0);
+            }
+          });
+          animator.start();
+        }
+      }
+    });
 
-    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
-    panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("changeClassSignature.parameters.panel.border.title"), myTable));
-    panel.add(EditableRowTable.wrapToTableWithButtons(myTable, myTableModel, new CustomLineBorder(0, 1, 1, 1)));
-    //JPanel panel = new JPanel(new BorderLayout());
-    //panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("changeClassSignature.parameters.panel.border.title")));
-    //JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
-    //
-    //panel.add(scrollPane, BorderLayout.CENTER);
-    //final JPanel buttonsTable = EditableRowTable.createButtonsTable(myTable, myTableModel, true);
-    //panel.add(buttonsTable, BorderLayout.EAST);
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("changeClassSignature.parameters.panel.border.title"), myTable), BorderLayout.NORTH);
+    panel.add(TableToolbarDecorator.createDecorator(myTable).createPanel(), BorderLayout.CENTER);
     return panel;
   }
 
@@ -171,14 +190,9 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       return myTypeParameterInfos.size();
     }
 
+    @Nullable
     public Class getColumnClass(int columnIndex) {
-      switch(columnIndex) {
-        case NAME_COLUMN:
-          return String.class;
-
-        default:
-          return null;
-      }
+      return columnIndex == NAME_COLUMN ? String.class : null;
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
@@ -187,8 +201,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
           TypeParameterInfo info = myTypeParameterInfos.get(rowIndex);
           if (info.isForExistingParameter()) {
             return myOriginalParameters[info.getOldParameterIndex()].getName();
-          }
-          else {
+          } else {
             return info.getNewName();
           }
         case VALUE_COLUMN:
@@ -204,14 +217,11 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     public String getColumnName(int column) {
       switch(column) {
-        case NAME_COLUMN:
-          return RefactoringBundle.message("column.name.name");
-        case VALUE_COLUMN:
-          return RefactoringBundle.message("changeSignature.default.value.column");
-        default:
-          LOG.assertTrue(false);
-          return null;
+        case NAME_COLUMN: return RefactoringBundle.message("column.name.name");
+        case VALUE_COLUMN: return RefactoringBundle.message("changeSignature.default.value.column");
+        default: LOG.assertTrue(false);
       }
+      return null;
     }
 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
@@ -230,7 +240,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       TableUtil.stopEditing(myTable);
       myTypeParameterInfos.add(new TypeParameterInfo("", null));
       myTypeCodeFragments.add(createValueCodeFragment());
-      fireTableDataChanged();
+      final int row = myTypeCodeFragments.size() - 1;
+      fireTableRowsInserted(row, row);
     }
 
     public void removeRow(int index) {
@@ -251,10 +262,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     public void customizeCellRenderer(JTable table, Object value,
                                       boolean isSelected, boolean hasFocus, int row, int column) {
-      if (!myTableModel.isCellEditable(row, column)) {
-        setBackground(getBackground().darker());
-      }
-      append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
+      append((String)value);
     }
   }
 
@@ -266,9 +274,11 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (!myTableModel.isCellEditable(row, column)) {
-        component.setBackground(component.getBackground().darker());
-      }
+      //if (!myTableModel.isCellEditable(row, column)) {
+      //  component.setBackground(component.getBackground().darker());
+      //}
+
+      //TODO: better solution
 
       return component;
     }

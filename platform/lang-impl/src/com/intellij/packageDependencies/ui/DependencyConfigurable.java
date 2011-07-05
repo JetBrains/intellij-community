@@ -28,9 +28,8 @@ import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.ui.EditableRowTable;
 import com.intellij.ui.RowEditableTableModel;
-import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.TableToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
@@ -101,7 +100,7 @@ public class DependencyConfigurable extends BaseConfigurable {
     table.setShowGrid(true);
     table.setRowHeight(new PackageSetChooserCombo(myProject, null).getPreferredSize().height);
 
-    return EditableRowTable.wrapToTableWithButtons(table, model , new CustomLineBorder(0, 1, 1, 1));
+    return TableToolbarDecorator.createDecorator(table).createPanel();
   }
 
   public JComponent getPreferredFocusedComponent() {

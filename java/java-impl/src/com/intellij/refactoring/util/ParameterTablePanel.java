@@ -21,8 +21,10 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.ui.*;
-import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.RowEditableTableModel;
+import com.intellij.ui.TableToolbarDecorator;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.table.JBTable;
@@ -249,10 +251,8 @@ public abstract class ParameterTablePanel extends JPanel {
       }
     });
 
-    final AddRemoveUpDownPanel.Buttons[] upDownButtons = {AddRemoveUpDownPanel.Buttons.UP, AddRemoveUpDownPanel.Buttons.DOWN};
-    JPanel listPanel = EditableRowTable.wrapToTableWithButtons(myTable, myTableModel,
-                                                               new CustomLineBorder(0, 1, 1, 1),
-                                                               upDownButtons);
+
+    JPanel listPanel = TableToolbarDecorator.createDecorator(myTable).disableAddAction().disableRemoveAction().createPanel();
     add(listPanel, BorderLayout.CENTER);
 
     if (getVariableData().length > 1) {

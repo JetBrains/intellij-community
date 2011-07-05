@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.module.Module;
@@ -48,10 +49,10 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformIcons;
@@ -142,7 +143,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
-
 
     setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.EXPORT_COLUMN_NAME);
     setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
@@ -265,40 +265,49 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private JComponent createTableWithButtons() {
     final boolean isAnalyzeShown = ((ApplicationEx)ApplicationManager.getApplication()).isInternal();
 
-    final AnActionButton addButton = new AnActionButton(ProjectBundle.message("button.add"), null, PlatformIcons.TABLE_ADD_ROW) {
+    final AnActionButton addButton = new AnActionButton(ProjectBundle.message("button.add"), null, SystemInfo.isMac ? PlatformIcons.TABLE_ADD_ROW : PlatformIcons.ADD_ICON) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         initPopupActions();
-        final JBPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<AddItemPopupAction<?>>(null, myPopupActions) {
-          @Override
-          public Icon getIconFor(AddItemPopupAction<?> aValue) {
-            return aValue.getIcon();
-          }
-
-          @Override
-          public boolean hasSubstep(AddItemPopupAction<?> selectedValue) {
-            return selectedValue.hasSubStep();
-          }
-
-          public boolean isMnemonicsNavigationEnabled() {
-            return true;
-          }
-          public PopupStep onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
-            if (selectedValue.hasSubStep()) {
-              return selectedValue.createSubStep();
+        final JBPopup popup = JBPopupFactory.getInstance().createListPopup(
+          new BaseListPopupStep<AddItemPopupAction<?>>(null, myPopupActions) {
+            @Override
+            public Icon getIconFor(AddItemPopupAction<?> aValue) {
+              return aValue.getIcon();
             }
-            return doFinalStep(new Runnable() {
-              public void run() {
-                selectedValue.execute();
+
+            @Override
+            public boolean hasSubstep(AddItemPopupAction<?> selectedValue) {
+              return selectedValue.hasSubStep();
+            }
+
+            public boolean isMnemonicsNavigationEnabled() {
+              return true;
+            }
+
+            public PopupStep onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
+              if (selectedValue.hasSubStep()) {
+                return selectedValue.createSubStep();
               }
-            });
-          }
-          @NotNull
-          public String getTextFor(AddItemPopupAction<?> value) {
-            return "&" + value.getIndex() + "  " + value.getTitle();
-          }
-        });
-        popup.showUnderneathOf(getComponent());
+              return doFinalStep(new Runnable() {
+                public void run() {
+                  selectedValue.execute();
+                }
+              });
+            }
+
+            @NotNull
+            public String getTextFor(AddItemPopupAction<?> value) {
+              return "&" + value.getIndex() + "  " + value.getTitle();
+            }
+          });
+        final List<ActionToolbarImpl> components =
+          UIUtil.findComponentsOfType((JComponent)myEntryTable.getParent().getParent().getParent(), ActionToolbarImpl.class);
+        if (components.size() == 1) {
+          popup.show(new RelativePoint(components.get(0), new Point(0, 20)));
+        } else {
+          popup.showInBestPositionFor(e.getDataContext());
+        }
       }
     };
 
@@ -326,14 +335,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    final AnActionButton removeButton = new AnActionButton(ProjectBundle.message("button.remove"), null, PlatformIcons.TABLE_REMOVE_ROW) {
+    final AnActionButton removeButton = new AnActionButton(ProjectBundle.message("button.remove"), null, SystemInfo.isMac ? PlatformIcons.TABLE_REMOVE_ROW : PlatformIcons.DELETE_ICON) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         removeAction.actionPerformed(null);
       }
     };
 
-    myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, PlatformIcons.TABLE_EDIT_ROW) {
+    myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, SystemInfo.isMac ? PlatformIcons.TABLE_EDIT_ROW : PlatformIcons.EDIT) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final OrderEntry entry = getSelectedEntry();
@@ -353,14 +362,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    final AnActionButton upButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.up"), null, PlatformIcons.TABLE_MOVE_ROW_UP) {
+    final AnActionButton upButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.up"), null, SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_UP : PlatformIcons.MOVE_UP_ICON) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveSelectedRows(-1);
       }
     };
 
-    final AnActionButton downButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.down"), null, PlatformIcons.TABLE_MOVE_ROW_DOWN) {
+    final AnActionButton downButton = new AnActionButton(ProjectBundle.message("module.classpath.button.move.down"), null, SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_DOWN : PlatformIcons.MOVE_DOWN_ICON) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveSelectedRows(+1);
@@ -374,15 +383,15 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    List<AnActionButton> actions = new ArrayList<AnActionButton>();
-    actions.add(addButton);
-    actions.add(removeButton);
-    actions.add(upButton);
-    actions.add(downButton);
-    actions.add(myEditButton);
-    if (isAnalyzeShown) {
-      actions.add(analyzeButton);
-    }
+    //List<AnActionButton> actions = new ArrayList<AnActionButton>();
+    //actions.add(addButton);
+    //actions.add(removeButton);
+    //actions.add(upButton);
+    //actions.add(downButton);
+    //actions.add(myEditButton);
+    //if (isAnalyzeShown) {
+    //  actions.add(analyzeButton);
+    //}
 
     myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -415,7 +424,17 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     downButton.setShortcut(KeyboardShortcut.fromString("alt DOWN"));
     myEntryTable.setBorder(new LineBorder(UIUtil.getBorderColor()));
 
-    return EditableRowTable.wrapToTableWithButtons(myEntryTable, myModel, new CustomLineBorder(0, 1, 1, 1), new AddRemoveUpDownPanel.Buttons[0], actions.toArray(new AnActionButton[actions.size()]));
+    final TableToolbarDecorator decorator = TableToolbarDecorator.createDecorator(myEntryTable);
+    decorator
+      .addExtraAction(addButton)
+      .addExtraAction(removeButton)
+      .addExtraAction(upButton)
+      .addExtraAction(downButton)
+      .addExtraAction(myEditButton);
+    if (isAnalyzeShown) {
+      decorator.addExtraAction(analyzeButton);
+    }
+    return decorator.createPanel();
   }
 
   @NotNull
