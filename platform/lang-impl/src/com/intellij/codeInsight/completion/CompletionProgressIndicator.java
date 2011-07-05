@@ -157,10 +157,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   void duringCompletion(CompletionInitializationContext initContext) {
     if (isAutopopupCompletion()) {
       if (shouldFocusLookup(myParameters)) {
-        final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-        if (!(phase instanceof CompletionPhase.Restarted)) {
-          ((CompletionPhase.BgCalculation)phase).focusLookupWhenDone = true;
-        }
+        myLookup.setFocused(true);
       } else {
         myLookup.addAdvertisement("Press " +
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
@@ -345,7 +342,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
     myLookup.refreshUi();
     hideAutopopupIfMeaningless();
-    updateFocus();
     if (justShown) {
       myLookup.ensureSelectionVisible();
     }
@@ -475,8 +471,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           }
         }
         else {
-          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this, ((CompletionPhase.BgCalculation)phase).focusLookupWhenDone));
-          updateFocus();
+          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this));
           updateLookup();
         }
       }
@@ -508,31 +503,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return true;
     }
     return false;
-  }
-
-  private void updateFocus() {
-    if (myLookup.isSelectionTouched()) {
-      return;
-    }
-
-    if (!isAutopopupCompletion()) {
-      myLookup.setFocused(true);
-      return;
-    }
-
-    /*
-    if (!myLookup.isHintMode()) {
-      for (LookupElement item : myLookup.getItems()) {
-        if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
-          myLookup.setFocused(false);
-          return;
-        }
-      }
-    }
-    */
-
-    final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-    myLookup.setFocused(phase instanceof CompletionPhase.ItemsCalculated && ((CompletionPhase.ItemsCalculated)phase).focusLookup);
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {
@@ -617,7 +587,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
     hideAutopopupIfMeaningless();
-    updateFocus();
   }
 
   public void scheduleRestart() {
@@ -632,6 +601,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     LOG.assertTrue(this == current, current + "!=" + this);
+
+    if (isAutopopupCompletion()) {
+      myLookup.setFocused(false);
+    }
 
     final CompletionPhase phase = new CompletionPhase.Restarted(this);
     CompletionServiceImpl.setCompletionPhase(phase);
