@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.controlflow;
+package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -27,37 +27,44 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnusedLabelInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("unused.label.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnusedLabelVisitor();
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unused.label.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnusedLabelFix();
     }
 
     private static class UnusedLabelFix extends InspectionGadgetsFix {
 
+        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unused.label.remove.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement label = descriptor.getPsiElement();
@@ -75,7 +82,8 @@ public class UnusedLabelInspection extends BaseInspection {
 
     private static class UnusedLabelVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitLabeledStatement(PsiLabeledStatement statement) {
+        @Override public void visitLabeledStatement(
+                PsiLabeledStatement statement) {
             if (containsBreakOrContinueForLabel(statement)) {
                 return;
             }
@@ -98,7 +106,6 @@ public class UnusedLabelInspection extends BaseInspection {
         private String label = null;
 
         private LabelFinder(PsiLabeledStatement target) {
-            super();
             final PsiIdentifier labelIdentifier = target.getLabelIdentifier();
             label = labelIdentifier.getText();
         }
