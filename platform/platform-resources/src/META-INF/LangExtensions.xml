@@ -391,7 +391,6 @@
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupStringWeigher" id="sLookupString" order="after sGrouping"/>
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher$Negative" id="sProximity" order="after sLookupString"/>
 
-  <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.RelaxedMatchingContributor" id="inexactMatching" order="first"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionContributor" id="default" order="last"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.ComboEditorCompletionContributor" id="comboEditor" order="first"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.WordCompletionContributor" id="wordCompletion" order="last"/>
