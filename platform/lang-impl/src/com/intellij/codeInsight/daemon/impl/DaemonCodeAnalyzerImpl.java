@@ -708,7 +708,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           runnable.run();
         }
         else {
-          PsiDocumentManager.getInstance(myProject).performWhenAllDocumentsAreCommitted("start daemon when all committed", runnable);
+          PsiDocumentManager.getInstance(myProject).cancelAndRunWhenAllCommitted("start daemon when all committed", runnable);
         }
       }
     };

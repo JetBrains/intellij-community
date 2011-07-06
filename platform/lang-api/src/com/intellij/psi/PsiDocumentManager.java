@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ public abstract class PsiDocumentManager {
    * @param action to run when all documents committed
    * @return true if action was run immediately (i.e. all documents are already committed)
    */
-  public abstract boolean performWhenAllDocumentsAreCommitted(@NotNull Object key, @NotNull Runnable action);
+  public abstract boolean cancelAndRunWhenAllCommitted(@NonNls @NotNull Object key, @NotNull Runnable action);
 
   /**
    * Returns the document manager instance for the specified project.

@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -127,15 +128,10 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
                                                         final int time,
                                                         final boolean hasModifiers,
                                                         final Condition<PsiFile> condition) {
-    //if (true) {
-    //  new CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup)
-    //    .invokeCompletion(project, editor, time, hasModifiers);
-    //  return;
-    //}
     final Document document = editor.getDocument();
     final long beforeStamp = document.getModificationStamp();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    documentManager.performWhenAllDocumentsAreCommitted("start completion when all docs committed", new Runnable() {
+    documentManager.cancelAndRunWhenAllCommitted("start completion when all docs committed", new Runnable() {
       @Override
       public void run() {
         long afterStamp = document.getModificationStamp();
@@ -182,23 +178,23 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
   public static void runLaterWithCommitted(@NotNull final Project project, final Document document, final Runnable runnable) {
     final long beforeStamp = document.getModificationStamp();
-    PsiDocumentManager.getInstance(project).performWhenAllDocumentsAreCommitted("start completion when all docs committed", new Runnable() {
-      @Override
-      public void run() {
-        // later because we may end up in write action here if there was a synchronous commit
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (beforeStamp != document.getModificationStamp()) {
-              // no luck, will try later
-              runLaterWithCommitted(project, document, runnable);
+    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).performWhenAllCommitted(new Runnable() {
+        @Override
+        public void run() {
+          // later because we may end up in write action here if there was a synchronous commit
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (beforeStamp != document.getModificationStamp()) {
+                // no luck, will try later
+                runLaterWithCommitted(project, document, runnable);
+              }
+              else {
+                runnable.run();
+              }
             }
-            else {
-              runnable.run();
-            }
-          }
-        }, project.getDisposed());
-      }
-    });
+          }, project.getDisposed());
+        }
+      });
   }
 }

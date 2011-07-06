@@ -103,7 +103,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     }
     edt {
       PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-      manager.performWhenAllDocumentsAreCommitted("wait for all comm", runnable);
+      manager.cancelAndRunWhenAllCommitted("wait for all comm", runnable);
     }
     while (!committed.get()) {
       UIUtil.pump();
