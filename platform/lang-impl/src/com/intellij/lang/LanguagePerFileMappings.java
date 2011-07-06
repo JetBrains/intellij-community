@@ -15,6 +15,7 @@
  */
 package com.intellij.lang;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
@@ -64,7 +65,11 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
   }
 
   @Nullable 
-  public T getMapping(@Nullable final VirtualFile file) {
+  public T getMapping(@Nullable VirtualFile file) {
+    if (file instanceof VirtualFileWindow) {
+      final VirtualFileWindow window = (VirtualFileWindow)file;
+      file = window.getDelegate();
+    }
     if (file != null) {
       final FilePropertyPusher<T> pusher = getFilePropertyPusher();
       final T pushedValue = pusher == null? null : file.getUserData(pusher.getFileDataKey());

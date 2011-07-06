@@ -148,7 +148,11 @@ public class LightStubBuilder implements StubBuilder {
   }
 
   @Override
-  public boolean skipChildProcessingWhenBuildingStubs(final IElementType nodeType, final IElementType childType) {
+  public final boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType) {
+    return skipChildProcessingWhenBuildingStubs(parent != null ? parent.getElementType() : null, childType);
+  }
+
+  public boolean skipChildProcessingWhenBuildingStubs(final IElementType parent, final IElementType childType) {
     return false;
   }
 

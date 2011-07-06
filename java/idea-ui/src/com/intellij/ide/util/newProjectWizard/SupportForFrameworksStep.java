@@ -32,7 +32,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   public SupportForFrameworksStep(final ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     List<FrameworkSupportProvider> providers = FrameworkSupportUtil.getProviders(builder);
     myFrameworkSupportModel = new FrameworkSupportModelInWizard(librariesContainer, builder);
-    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, librariesContainer, myFrameworkSupportModel);
+    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, myFrameworkSupportModel);
     builder.addModuleConfigurationUpdater(new ModuleBuilder.ModuleConfigurationUpdater() {
       public void update(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel) {
         mySupportForFrameworksPanel.addSupport(module, rootModel);
@@ -91,7 +91,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
     private final ModuleBuilder myBuilder;
 
     public FrameworkSupportModelInWizard(LibrariesContainer librariesContainer, ModuleBuilder builder) {
-      super(librariesContainer.getProject(), builder);
+      super(librariesContainer.getProject(), builder, librariesContainer);
       myBuilder = builder;
     }
 

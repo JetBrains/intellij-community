@@ -21,15 +21,17 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.filters.getters.AllWordsGetter;
+import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.tree.IElementType;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static com.intellij.patterns.StandardPatterns.character;
@@ -54,7 +56,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
                                                                                                             startOffset,
                                                                                                             character().javaIdentifierPart().andNot(character().equalTo('$')),
                                                                                                             character().javaIdentifierStart()));
-    for (final String word : AllWordsGetter.getAllWords(insertedElement, startOffset)) {
+    for (final String word : getAllWords(insertedElement, startOffset)) {
       if (!excludes.contains(word)) {
         final LookupElement item = LookupElementBuilder.create(word);
         javaResultSet.addElement(item);
@@ -73,6 +75,8 @@ public class WordCompletionContributor extends CompletionContributor implements 
     if (parameters.getInvocationCount() == 0) {
       return false;
     }
+
+
 
     final PsiFile file = insertedElement.getContainingFile();
     final CompletionData data = CompletionUtil.getCompletionDataByElement(insertedElement, file);
@@ -106,4 +110,20 @@ public class WordCompletionContributor extends CompletionContributor implements 
     return false;
   }
 
+  public static Set<String> getAllWords(final PsiElement context, final int offset) {
+    final Set<String> words = new LinkedHashSet<String>();
+    if (StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) {
+      return words;
+    }
+
+    final CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
+    IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
+      public void run(final CharSequence chars, final int start, final int end) {
+        if (start > offset || offset > end) {
+          words.add(chars.subSequence(start, end).toString());
+        }
+      }
+    }, chars, 0, chars.length());
+    return words;
+  }
 }

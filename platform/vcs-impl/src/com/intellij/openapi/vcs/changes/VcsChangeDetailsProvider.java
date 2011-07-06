@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.actions;
+package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.util.BeforeAfter;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.CalledInAwt;
+import com.intellij.openapi.vcs.CalledInBackground;
 
-import java.util.List;
+import javax.swing.*;
 
 /**
  * @author irengrig
- *         Date: 6/10/11
- *         Time: 6:39 PM
+ *         Date: 7/5/11
+ *         Time: 2:49 PM
  */
-public interface DiffRequestFromChange<T extends DiffContent> {
-  boolean canCreateRequest(final Change change);
-  @Nullable
-  List<BeforeAfter<T>> createRequestForChange(final Change change, int extraLines) throws VcsException;
+public interface VcsChangeDetailsProvider<T> {
+  String getProgressTitle();
+  @CalledInAwt
+  boolean canComment(final Change change);
+  @CalledInBackground
+  T load(final Change change);
+  @CalledInAwt
+  Pair<JPanel, Disposable> comment(final Change change, final T t);
 }

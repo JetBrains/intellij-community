@@ -8,8 +8,10 @@ import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
@@ -30,7 +32,8 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFrameworkSupportModel = new FrameworkSupportModelImpl(getProject(), "");
+    final Project project = getProject();
+    myFrameworkSupportModel = new FrameworkSupportModelImpl(project, "", LibrariesContainerFactory.createContainer(project));
     myNodes = new HashMap<FrameworkSupportProvider, FrameworkSupportNode>();
     final FrameworkSupportProvider[] providers = FrameworkSupportProvider.EXTENSION_POINT.getExtensions().clone();
     Arrays.sort(providers, FrameworkSupportUtil

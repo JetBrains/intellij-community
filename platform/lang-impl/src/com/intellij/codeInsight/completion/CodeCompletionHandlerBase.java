@@ -300,11 +300,17 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                   indicator.duringCompletion(initContext);
                   ProgressManager.checkCanceled();
 
-                  data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<CompletionResult>() {
+                  final List<LookupElement> items = new ArrayList<LookupElement>();
+                  CompletionService.getCompletionService().performCompletion(parameters, new Consumer<CompletionResult>() {
                     public void consume(final CompletionResult result) {
                       indicator.addItem(result);
+                      items.add(result.getLookupElement());
                     }
-                  }));
+                  });
+
+                  indicator.processDelayQueue();
+
+                  data.set(items.toArray(new LookupElement[items.size()]));
                 }
               });
             }
@@ -424,7 +430,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     indicator.getLookup().refreshUi();
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
-      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator, true));
+      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
       indicator.getLookup().setCalculating(false);
       indicator.showLookup();
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {

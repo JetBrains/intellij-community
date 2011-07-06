@@ -65,7 +65,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.elementType;
@@ -294,7 +296,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
             GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
 
             if (!PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position)) {
-              if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.isRelaxedMatching()) {
+              if (JavaCompletionContributor.mayStartClassName(result, parameters.isRelaxedMatching())) {
                 addAllClasses(parameters, result, inheritors);
               }
             }

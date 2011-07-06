@@ -26,14 +26,23 @@ public class ValueConsumer<Id, Data> {
   private Id myId;
   private Id mySetId;
   private final PairConsumer<Id, Data> myConsumer;
+  private PairConsumer<Id, Data> myCacheConsumer;
 
   protected ValueConsumer(PairConsumer<Id, Data> consumer) {
     myConsumer = consumer;
   }
 
+  public void setCacheConsumer(PairConsumer<Id, Data> cacheConsumer) {
+    myCacheConsumer = cacheConsumer;
+  }
+
   public void consume(final Id id, final Data data) {
-    if (id.equals(mySetId)) return; // already set
-    if (! id.equals(myId)) return;
+    if (id.equals(mySetId) || ! id.equals(myId)) {
+      if (myCacheConsumer != null) {
+        myCacheConsumer.consume(id, data);
+      }
+      return;
+    }
     mySetId = id;
     myConsumer.consume(id, data);
   }

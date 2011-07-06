@@ -16,15 +16,18 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -146,14 +149,11 @@ public class AllClassesGetter {
 
     final Set<String> qnames = new THashSet<String>();
 
-    final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
+    final Project project = context.getProject();
+    final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(project);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(context);
 
-    AllClassesSearch.search(scope, context.getProject(), new Condition<String>() {
-      public boolean value(String s) {
-        return prefixMatcher.prefixMatches(s);
-      }
-    }).forEach(new Processor<PsiClass>() {
+    final Processor<PsiClass> classProcessor = new Processor<PsiClass>() {
       public boolean process(PsiClass psiClass) {
         assert psiClass != null;
         if (isSuitable(context, packagePrefix, qnames, psiClass, filterByScope, pkgContext)) {
@@ -162,7 +162,31 @@ public class AllClassesGetter {
         }
         return true;
       }
-    });
+    };
+
+    PsiShortNamesCache shortNamesCache = JavaPsiFacade.getInstance(project).getShortNamesCache();
+
+    Set<String> words = WordCompletionContributor.getAllWords(context, parameters.getOffset());
+    words.add(prefixMatcher.getPrefix());
+    for (String s : words) {
+      for (PsiClass wordMatch : shortNamesCache.getClassesByName(s, scope)) {
+        classProcessor.process(wordMatch);
+      }
+    }
+
+    final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    if (indicator != null) {
+      indicator.delayAllowingFocusedLookup(new Runnable() {
+        @Override
+        public void run() {
+          AllClassesSearch.search(scope, project, new Condition<String>() {
+            public boolean value(String s) {
+              return prefixMatcher.prefixMatches(s);
+            }
+          }).forEach(classProcessor);
+        }
+      });
+    }
   }
 
 

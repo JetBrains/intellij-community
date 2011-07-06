@@ -25,6 +25,7 @@ import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -43,10 +44,12 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     return new PsiPackageReference(this, range, index);
   }
 
-  public Collection<PsiPackage> resolvePackageName(PsiPackage context, String packageName) {
-    for (PsiPackage aPackage : context.getSubPackages()) {
-      if (Comparing.equal(aPackage.getName(), packageName)) {
-        return Collections.singleton(aPackage);
+  public Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, String packageName) {
+    if (context != null) {
+      for (PsiPackage aPackage : context.getSubPackages()) {
+        if (Comparing.equal(aPackage.getName(), packageName)) {
+          return Collections.singleton(aPackage);
+        }
       }
     }
     return Collections.emptyList();
@@ -63,5 +66,4 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
       }
     });
   }
-
 }

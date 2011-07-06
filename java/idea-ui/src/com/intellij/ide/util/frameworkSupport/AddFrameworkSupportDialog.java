@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -32,8 +33,9 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
     super(module.getProject(), true);
     setTitle(ProjectBundle.message("dialog.title.add.frameworks.support"));
     myModule = module;
-    final FrameworkSupportModelBase model = new FrameworkSupportModelImpl(module.getProject(), contentRootPath);
-    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, LibrariesContainerFactory.createContainer(module.getProject()), model) {
+    final LibrariesContainer container = LibrariesContainerFactory.createContainer(module.getProject());
+    final FrameworkSupportModelBase model = new FrameworkSupportModelImpl(module.getProject(), contentRootPath, container);
+    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, model) {
       @Override
       protected void onFrameworkStateChanged() {
         setOKActionEnabled(isOKActionEnabled());

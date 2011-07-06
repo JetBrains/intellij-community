@@ -312,7 +312,7 @@ public class GitLogUI implements Disposable {
           question.putValue(commitI.selectRepository(myRootsUnderVcs), commitI.getHash());
           myDetailsCache.acceptQuestion(question);
         } else {
-          myDetailsLoader.consume(commitI, gitCommit);
+          myDetailsLoader.take(commitI, gitCommit);
         }
       }
     };
@@ -342,7 +342,7 @@ public class GitLogUI implements Disposable {
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
         final List<String> branches = myDetailsCache.getBranches(root, commitI.getHash());
         if (branches != null) {
-          myBranchesLoader.consume(commitI, branches);
+          myBranchesLoader.take(commitI, branches);
           return;
         }
 
@@ -350,7 +350,7 @@ public class GitLogUI implements Disposable {
           @Override
           public void consume(List<String> strings) {
             if (myProject.isDisposed() || strings == null) return;
-            myBranchesLoader.consume(commitI, strings);
+            myBranchesLoader.take(commitI, strings);
           }
         }, myRecheck);
       }
@@ -447,19 +447,19 @@ public class GitLogUI implements Disposable {
 
     if (meaningfulRows == 0) {
       myDetailsPanel.nothingSelected();
-      myDetailsLoader.updateSelection(null);
-      myBranchesLoader.updateSelection(null);
+      myDetailsLoader.updateSelection(null, false);
+      myBranchesLoader.updateSelection(null, false);
     } else if (meaningfulRows == 1) {
       final GitCommit commit = fullCommitPresentation(commitAt);
       if (commit == null) {
         myDetailsPanel.loading(commitAt.selectRepository(myRootsUnderVcs));
       }
-      myDetailsLoader.updateSelection(commitAt);
-      myBranchesLoader.updateSelection(commitAt);
+      myDetailsLoader.updateSelection(commitAt, false);
+      myBranchesLoader.updateSelection(commitAt, false);
     } else {
       myDetailsPanel.severalSelected();
-      myDetailsLoader.updateSelection(null);
-      myBranchesLoader.updateSelection(null);
+      myDetailsLoader.updateSelection(null, false);
+      myBranchesLoader.updateSelection(null, false);
     }
   }
 

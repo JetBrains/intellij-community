@@ -15,13 +15,15 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public interface StubBuilder {
   StubElement buildStubTree(PsiFile file);
-  boolean skipChildProcessingWhenBuildingStubs(IElementType nodeType, IElementType childType);
+  boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType);
 }

@@ -64,11 +64,17 @@ public class FragmentedDiffRequestFromChange implements DiffRequestFromChange<Sh
   }
 
   @Override
-  public List<BeforeAfter<ShiftedSimpleContent>> createRequestForChange(Change change, int extraLines) throws VcsException {
-    if (ChangesUtil.isTextConflictingChange(change)) return null;
-    if (ShowDiffAction.isBinaryChange(myProject, change)) return null;
+  public boolean canCreateRequest(Change change) {
+    if (ChangesUtil.isTextConflictingChange(change)) return false;
+    if (ShowDiffAction.isBinaryChange(myProject, change)) return false;
     final FilePath filePath = ChangesUtil.getFilePath(change);
-    if (filePath.isDirectory()) return null;
+    if (filePath.isDirectory()) return false;
+    return true;
+  }
+
+  @Override
+  public List<BeforeAfter<ShiftedSimpleContent>> createRequestForChange(Change change, int extraLines) throws VcsException {
+    final FilePath filePath = ChangesUtil.getFilePath(change);
 
     final RangesCalculator calculator = new RangesCalculator();
     calculator.execute(change, filePath, myRangesCache, LineStatusTrackerManager.getInstance(myProject));
@@ -216,7 +222,7 @@ public class FragmentedDiffRequestFromChange implements DiffRequestFromChange<Sh
       final Document oldDocument = new DocumentImpl(true);
       // todo !!! a question how to show line separators in diff etc
       // todo currently document doesn't allow to put \r as separator
-      oldDocument.setText(StringUtil.convertLineSeparators(notNullContentRevision(cr)));
+      oldDocument.replaceString(0, oldDocument.getTextLength(), StringUtil.convertLineSeparators(notNullContentRevision(cr)));
       oldDocument.setReadOnly(true);
       return oldDocument;
     }

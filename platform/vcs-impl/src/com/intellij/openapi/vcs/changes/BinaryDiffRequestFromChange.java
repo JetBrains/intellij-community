@@ -38,10 +38,12 @@ public class BinaryDiffRequestFromChange implements DiffRequestFromChange<DiffCo
   }
 
   @Override
+  public boolean canCreateRequest(Change change) {
+    return ShowDiffAction.isBinaryChange(myProject, change);
+  }
+
+  @Override
   public List<BeforeAfter<DiffContent>> createRequestForChange(Change change, int extraLines) throws VcsException {
-    if (ShowDiffAction.isBinaryChange(myProject, change)) {
-      return Collections.singletonList(ShowDiffAction.createBinaryDiffContents(myProject, change));
-    }
-    return null;
+    return Collections.singletonList(ShowDiffAction.createBinaryDiffContents(myProject, change));
   }
 }

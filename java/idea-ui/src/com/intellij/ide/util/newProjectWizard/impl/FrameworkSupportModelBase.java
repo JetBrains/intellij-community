@@ -22,6 +22,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
@@ -37,12 +38,14 @@ import java.util.Map;
 public abstract class FrameworkSupportModelBase extends UserDataHolderBase implements FrameworkSupportModel {
   private final Project myProject;
   private final ModuleBuilder myModuleBuilder;
+  private final LibrariesContainer myLibrariesContainer;
   private final EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
   private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
 
-  public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder) {
+  public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     myProject = project;
     myModuleBuilder = builder;
+    myLibrariesContainer = librariesContainer;
   }
 
   @NotNull
@@ -105,5 +108,10 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
 
   public void fireWizardStepUpdated() {
     myDispatcher.getMulticaster().wizardStepUpdated();
+  }
+
+  @NotNull
+  public LibrariesContainer getLibrariesContainer() {
+    return myLibrariesContainer;
   }
 }

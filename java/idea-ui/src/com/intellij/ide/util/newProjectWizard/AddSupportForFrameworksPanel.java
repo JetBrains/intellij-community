@@ -65,10 +65,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private final Map<FrameworkSupportNode, FrameworkSupportOptionsComponent> myInitializedOptionsComponents = new HashMap<FrameworkSupportNode, FrameworkSupportOptionsComponent>();
   private FrameworkSupportNode myLastSelectedNode;
 
-  public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final @NotNull LibrariesContainer librariesContainer,
-                                      final FrameworkSupportModelBase model) {
+  public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final FrameworkSupportModelBase model) {
     myModel = model;
-    myLibrariesContainer = librariesContainer;
+    myLibrariesContainer = model.getLibrariesContainer();
     myProviders = providers;
     createNodes();
 

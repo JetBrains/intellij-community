@@ -62,6 +62,8 @@ public class AsmCodeGenerator {
   private static final Method ourCreateTitledBorderMethod = Method.getMethod(
     "javax.swing.border.TitledBorder createTitledBorder(javax.swing.border.Border,java.lang.String,int,int,java.awt.Font,java.awt.Color)");
 
+  private static final String ourBorderFactoryClientProperty = "BorderFactoryClass";
+
   private final NestedFormLoader myFormLoader;
   private final boolean myIgnoreCustomCreation;
   private final ClassWriter myClassWriter;
@@ -820,7 +822,13 @@ public class AsmCodeGenerator {
           generator.push((String) null);
         }
         pushBorderProperties(container, generator, borderTitle, componentLocal);
-        generator.invokeStatic(ourBorderFactoryType, ourCreateTitledBorderMethod);
+
+        Type borderFactoryType = ourBorderFactoryType;
+        if (container.getDelegeeClientProperties().get(ourBorderFactoryClientProperty) != null) {
+          borderFactoryType = typeFromClassName(((StringDescriptor)container.getDelegeeClientProperties().get(ourBorderFactoryClientProperty)).getValue());
+        }
+
+        generator.invokeStatic(borderFactoryType, ourCreateTitledBorderMethod);
 
         // set border
         generator.invokeVirtual(Type.getType(JComponent.class),

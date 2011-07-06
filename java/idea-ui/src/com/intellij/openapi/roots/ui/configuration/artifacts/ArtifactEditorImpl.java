@@ -365,6 +365,17 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   @Override
   public void removePackagingElement(@NotNull final String pathToParent, @NotNull final PackagingElement<?> element) {
+    doReplaceElement(pathToParent, element, null);
+  }
+
+  @Override
+  public void replacePackagingElement(@NotNull final String pathToParent,
+                                      @NotNull final PackagingElement<?> element,
+                                      @NotNull final PackagingElement<?> replacement) {
+    doReplaceElement(pathToParent, element, replacement);
+  }
+
+  private void doReplaceElement(final @NotNull String pathToParent, final @NotNull PackagingElement<?> element, final @Nullable PackagingElement replacement) {
     myLayoutTreeComponent.editLayout(new Runnable() {
       @Override
       public void run() {
@@ -373,6 +384,9 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         for (PackagingElement<?> child : parent.getChildren()) {
           if (child.isEqualTo(element)) {
             parent.removeChild(child);
+            if (replacement != null) {
+              parent.addOrFindChild(replacement);
+            }
             break;
           }
         }

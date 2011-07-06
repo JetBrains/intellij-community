@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *         Date: 6/29/11
  *         Time: 11:38 PM
  */
-public class GenericDetailsLoader<Id, Data> implements PairConsumer<Id, Data> {
+public class GenericDetailsLoader<Id, Data> implements Details<Id,Data> {
   private final Consumer<Id> myLoader;
   private final ValueConsumer<Id, Data> myValueConsumer;
   private final AtomicReference<Id> myCurrentlySelected;
@@ -39,21 +39,27 @@ public class GenericDetailsLoader<Id, Data> implements PairConsumer<Id, Data> {
     myCurrentlySelected = new AtomicReference<Id>(null);
   }
 
-  public void updateSelection(@Nullable final Id id) {
+  public void updateSelection(@Nullable final Id id, boolean force) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myValueConsumer.setId(id);
 
-    if (! Comparing.equal(id, myCurrentlySelected.getAndSet(id))) {
+    final Id wasId = myCurrentlySelected.getAndSet(id);
+    if (force || ! Comparing.equal(id, wasId)) {
       myLoader.consume(id);
     }
   }
 
+  public void setCacheConsumer(final PairConsumer<Id, Data>  cacheConsumer) {
+    myValueConsumer.setCacheConsumer(cacheConsumer);
+  }
+
   @Override
-  public void consume(Id id, Data data) {
+  public void take(Id id, Data data) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myValueConsumer.consume(id, data);
   }
 
+  @Override
   public Id getCurrentlySelected() {
     return myCurrentlySelected.get();
   }

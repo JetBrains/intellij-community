@@ -277,7 +277,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       protected void visitNode(TreeElement tree) {
         final IElementType type = tree.getElementType();
         final CompositeElement treeParent = tree.getTreeParent();
-        if (treeParent != null && builder.skipChildProcessingWhenBuildingStubs(treeParent.getElementType(), type)) {
+        if (treeParent != null && builder.skipChildProcessingWhenBuildingStubs(treeParent, type)) {
           return;
         }
         if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
@@ -923,7 +923,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         CompositeElement parent = root.getTreeParent();
         IElementType parentType = parent == null ? null : parent.getElementType();
         final IElementType type = root.getElementType();
-        if (parentType != null && builder.skipChildProcessingWhenBuildingStubs(parentType, type)) {
+        if (parentType != null && builder.skipChildProcessingWhenBuildingStubs(parent, type)) {
           return;
         }
 

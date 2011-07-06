@@ -23,6 +23,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -87,7 +88,7 @@ public class DefaultStubBuilder implements StubBuilder {
     }
 
     for (ASTNode childNode = node.getFirstChildNode(); childNode != null; childNode = childNode.getTreeNext()) {
-      if (!skipChildProcessingWhenBuildingStubs(nodeType, childNode.getElementType())) {
+      if (!skipChildProcessingWhenBuildingStubs(node, childNode.getElementType())) {
         buildStubTreeFor(childNode, stub);
       }
     }
@@ -96,7 +97,7 @@ public class DefaultStubBuilder implements StubBuilder {
   }
 
   @Override
-  public boolean skipChildProcessingWhenBuildingStubs(IElementType nodeType, IElementType childType) {
+  public boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType) {
     return false;
   }
 }

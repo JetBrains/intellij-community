@@ -34,6 +34,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
+import com.intellij.codeInsight.CodeInsightSettings
 
 /**
  * @author peter
@@ -637,8 +638,8 @@ public interface Test {
   public void testTemplateSelectionByComma() {
     myFixture.configureByText("a.java", """
 class Foo {
-    int ITER = 2;
     int itea = 2;
+    int itera = 2;
 
     {
         it<caret>
@@ -646,9 +647,9 @@ class Foo {
 }
 """)
     type 'e'
-    assertOrderedEquals myFixture.lookupElementStrings, "itea"
+    assertOrderedEquals myFixture.lookupElementStrings, "itea", "itera"
     type 'r'
-    assertOrderedEquals myFixture.lookupElementStrings, "iter", "ITER", "Iterable", "Iterator"
+    assertOrderedEquals myFixture.lookupElementStrings, "iter", "itera"
     type ','
     assert !lookup
     assert myFixture.editor.document.text.contains('iter,')
@@ -670,9 +671,15 @@ class Foo {
   }
 
   public void testNewClassParenthesis() {
-    myFixture.configureByText("a.java", """ class Foo { { new <caret> } } """)
-    type 'fil('
-    assert myFixture.editor.document.text.contains('new File()')
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    try {
+      myFixture.configureByText("a.java", """ class Foo { { new <caret> } } """)
+      type 'fil('
+      assert myFixture.editor.document.text.contains('new File()')
+    }
+    finally {
+      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    }
   }
 
   public void testUnknownMethodParenthesis() {

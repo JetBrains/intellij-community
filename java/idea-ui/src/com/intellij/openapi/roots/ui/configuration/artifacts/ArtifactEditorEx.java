@@ -40,6 +40,8 @@ public interface ArtifactEditorEx extends ArtifactEditor, Disposable {
 
   void removePackagingElement(@NotNull String pathToParent, @NotNull PackagingElement<?> element);
 
+  void replacePackagingElement(@NotNull String pathToParent, @NotNull PackagingElement<?> element, @NotNull PackagingElement<?> replacement);
+
   LayoutTreeComponent getLayoutTreeComponent();
 
   Artifact getArtifact();
