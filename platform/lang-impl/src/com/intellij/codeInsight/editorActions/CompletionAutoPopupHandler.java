@@ -182,7 +182,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
   public static void runLaterWithCommitted(@NotNull final Project project, final Document document, final Runnable runnable) {
     final long beforeStamp = document.getModificationStamp();
-    PsiDocumentManager.getInstance(project).performWhenAllDocumentsAreCommitted("start completion when all docs committed", new Runnable() {
+    PsiDocumentManager.getInstance(project).performWhenAllDocumentsAreCommitted("run later when committed", new Runnable() {
       @Override
       public void run() {
         // later because we may end up in write action here if there was a synchronous commit
