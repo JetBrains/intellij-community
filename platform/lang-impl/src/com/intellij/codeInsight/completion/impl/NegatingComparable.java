@@ -15,14 +15,23 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
+import com.intellij.psi.ForceableComparable;
+
 /**
 * @author peter
 */
-public class NegatingComparable<T extends NegatingComparable<T>> implements Comparable<T> {
+public class NegatingComparable<T extends NegatingComparable<T>> implements Comparable<T>, ForceableComparable {
   private final Comparable myWeigh;
 
   public NegatingComparable(Comparable weigh) {
     myWeigh = weigh;
+  }
+
+  @Override
+  public void force() {
+    if (myWeigh instanceof ForceableComparable) {
+      ((ForceableComparable)myWeigh).force();
+    }
   }
 
   @Override

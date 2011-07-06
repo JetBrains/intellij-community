@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
 */
-public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<T,Loc>> {
+public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<T,Loc>>, ForceableComparable {
   private static final Comparable NULL = new Comparable() {
     public int compareTo(final Object o) {
       throw new UnsupportedOperationException("Method compareTo is not yet implemented in " + getClass().getName());
@@ -45,8 +45,8 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   public void force() {
     for (int i = 0; i < myComputedWeighs.length; i++) {
       Comparable weight = getWeight(i);
-      if (weight instanceof WeighingComparable) {
-        ((WeighingComparable)weight).force();
+      if (weight instanceof ForceableComparable) {
+        ((ForceableComparable)weight).force();
       }
     }
   }
