@@ -12,6 +12,8 @@
 11(12) READ ACCESS: status
 12(13,16) READ ACCESS: None
 13(14) element: PyStatementList. Condition: status is not None:true
-14(15) element: PyExpressionStatement
-15(16) READ ACCESS: status
-16() element: null
+14(15) element: PyPrintStatement
+15(16,18) READ ACCESS: status
+16(17) element: PyExpressionStatement
+17(18) READ ACCESS: status
+18() element: null

@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.controlflow;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -15,7 +14,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -433,41 +431,41 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     abruptFlow(node);
   }
 
+  private Instruction addBlockConnectedViaPending(final PsiElement node, final PsiElement scope) {
+    myBuilder.flowAbrupted();
+    final Instruction result = myBuilder.startNode(node);
+    node.accept(this);
+    myBuilder.addPendingEdge(scope, myBuilder.prevInstruction);
+    return result;
+  }
+
   @Override
   public void visitPyTryExceptStatement(final PyTryExceptStatement node) {
     myBuilder.startNode(node);
 
-    // Process body
+    // Process try part
     final PyTryPart tryPart = node.getTryPart();
     myBuilder.startNode(tryPart);
     tryPart.accept(this);
-    final Instruction lastBlockInstruction = myBuilder.prevInstruction;
 
-    // Goto else block after execution, or exit
+    // Goto else part after execution, or exit
     final PyElsePart elsePart = node.getElsePart();
     if (elsePart != null) {
       myBuilder.startNode(elsePart);
       elsePart.accept(this);
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-    else {
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
-    }
+    myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
 
     final ArrayList<Instruction> exceptInstructions = new ArrayList<Instruction>();
     // Store pending and clear it
-    final List<Pair<PsiElement, Instruction>> myPending = myBuilder.pending;
+    final List<Pair<PsiElement, Instruction>> pending = myBuilder.pending;
     myBuilder.pending = new ArrayList<Pair<PsiElement, Instruction>>();
     for (PyExceptPart exceptPart : node.getExceptParts()) {
-      myBuilder.prevInstruction = lastBlockInstruction;
-      final Instruction exceptInstruction = new InstructionImpl(myBuilder, exceptPart);
-      myBuilder.addNode(exceptInstruction);
-      exceptInstructions.add(exceptInstruction);
-      exceptPart.accept(this);
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      final Instruction exceptInstrcution = addBlockConnectedViaPending(exceptPart, node);
+      exceptInstructions.add(exceptInstrcution);
     }
     // Restore pending
-    for (Pair<PsiElement, Instruction> pair : myPending) {
+    for (Pair<PsiElement, Instruction> pair : pending) {
       myBuilder.addPendingEdge(pair.first, pair.second);
     }
     // Finally part handling
@@ -475,11 +473,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     Instruction finallyInstruction = null;
     Instruction lastFinallyInstruction = null;
     if (finallyPart != null) {
-      myBuilder.flowAbrupted();
-      finallyInstruction = myBuilder.startNode(finallyPart);
-      finallyPart.accept(this);
+      finallyInstruction = addBlockConnectedViaPending(finallyPart, node);
       lastFinallyInstruction = myBuilder.prevInstruction;
-      myBuilder.addPendingEdge(finallyPart, lastFinallyInstruction);
     }
 
     for (Instruction instruction : myBuilder.instructions) {
@@ -519,19 +514,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         if (pendingElement == null) {
           return;
         }
-
-        // Handle return pending instructions inside try if final block exists
+        // Handle pending exit edges from try-except-else parts (in the node scope) if finally part exists
         final boolean isPending = PsiTreeUtil.isAncestor(node, pendingElement, false) &&
                                   (finallyPart == null || !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false));
         if (!finallyRef.isNull() && isPending) {
           myBuilder.addEdge(instruction, finallyRef.get());
           myBuilder.addPendingEdge(null, lastFinallyRef.get());
-          return;
-        }
-
-        // Handle pending instructions inside try with final block
-        if (finallyPart!=null && pendingScope !=finallyPart && isPending) {
-          myBuilder.addEdge(instruction, finallyRef.get());
           return;
         }
         myBuilder.addPendingEdge(pendingScope, instruction);
