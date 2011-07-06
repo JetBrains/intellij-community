@@ -17,6 +17,7 @@ package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,8 +27,8 @@ class FrameworkSupportModelImpl extends FrameworkSupportModelBase {
   private final String myContentRootPath;
 
   public FrameworkSupportModelImpl(final @NotNull Project project,
-                                   @NotNull String baseDirectoryForLibrariesPath) {
-    super(project, null);
+                                   @NotNull String baseDirectoryForLibrariesPath, LibrariesContainer librariesContainer) {
+    super(project, null, librariesContainer);
     myContentRootPath = baseDirectoryForLibrariesPath;
   }
 
