@@ -39,15 +39,17 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   private Visibility myVisibility;
   private Icon myIcon;
   private boolean myInherited;
+  private boolean myField;
 
-  public PyStructureViewElement(PyElement element, Visibility vis, boolean inherited) {
+  public PyStructureViewElement(PyElement element, Visibility vis, boolean inherited, boolean field) {
     myElement = element;
     myVisibility = vis;
     myInherited = inherited;
+    myField = field;
   }
 
   public PyStructureViewElement(PyElement element) {
-    this(element, Visibility.NORMAL, false);
+    this(element, Visibility.NORMAL, false, false);
   }
 
   public PyElement getValue() {
@@ -56,6 +58,10 @@ public class PyStructureViewElement implements StructureViewTreeElement {
 
   public boolean isInherited() {
     return myInherited;
+  }
+
+  public boolean isField() {
+    return myField;
   }
 
   public void navigate(boolean requestFocus) {
@@ -95,16 +101,20 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   public StructureViewTreeElement[] getChildren() {
     final Collection<StructureViewTreeElement> children = new LinkedHashSet<StructureViewTreeElement>();
     for (PyElement e : getElementChildren(myElement)) {
-      children.add(new PyStructureViewElement(e, getElementVisibility(e), false));
+      children.add(new PyStructureViewElement(e, getElementVisibility(e), false, elementIsField(e)));
     }
     if (myElement instanceof PyClass) {
       for (PyClass c : ((PyClass)myElement).iterateAncestorClasses()) {
         for (PyElement e: getElementChildren(c)) {
-          children.add(new PyStructureViewElement(e, getElementVisibility(e), true));
+          children.add(new PyStructureViewElement(e, getElementVisibility(e), true, elementIsField(e)));
         }
       }
     }
     return children.toArray(new StructureViewTreeElement[children.size()]);
+  }
+
+  private static boolean elementIsField(PyElement element) {
+    return element instanceof PyTargetExpression && PsiTreeUtil.getParentOfType(element, PyClass.class) != null;
   }
 
   private static Visibility getElementVisibility(PyElement element) {

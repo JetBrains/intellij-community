@@ -40,6 +40,7 @@ public class PyStructureViewModel extends StructureViewModelBase implements Stru
   public Filter[] getFilters() {
     return new Filter[] {
       new PyInheritedMembersFilter(),
+      new PyFieldsFilter(),
     };
   }
 
