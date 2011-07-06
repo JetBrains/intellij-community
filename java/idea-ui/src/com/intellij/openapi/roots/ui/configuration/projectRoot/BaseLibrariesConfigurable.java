@@ -30,10 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.UsageInArtifact;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.ui.NonEmptyInputValidator;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -205,6 +202,13 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   public void onStructureSelected() {
     if (myCurrentConfigurable != null) {
       ((LibraryConfigurable)myCurrentConfigurable).onSelected();
+    }
+  }
+
+  public void removeLibraryNode(@NotNull Library library) {
+    final MyNode node = findNodeByObject(myRoot, library);
+    if (node != null) {
+      removePaths(TreeUtil.getPathFromRoot(node));
     }
   }
 

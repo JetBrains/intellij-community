@@ -34,8 +34,12 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   }
 
   @Override
-  public ProjectStructureElement getContainingElement() {
+  public ModuleProjectStructureElement getContainingElement() {
     return myContainingElement;
+  }
+
+  public Module getModule() {
+    return myModule;
   }
 
   @Override

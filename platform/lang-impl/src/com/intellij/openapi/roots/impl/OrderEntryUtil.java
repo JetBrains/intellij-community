@@ -150,4 +150,21 @@ public class OrderEntryUtil {
     }
     rootModel.commit();
   }
+
+  public static void replaceLibrary(@NotNull ModifiableRootModel model, @NotNull Library oldLibrary, @NotNull Library newLibrary) {
+    OrderEntry[] entries = model.getOrderEntries();
+    for (int i = 0; i < entries.length; i++) {
+      OrderEntry orderEntry = entries[i];
+      if (orderEntry instanceof LibraryOrderEntry && oldLibrary.equals(((LibraryOrderEntry)orderEntry).getLibrary())) {
+        model.removeOrderEntry(orderEntry);
+        final LibraryOrderEntry newEntry = model.addLibraryEntry(newLibrary);
+        final OrderEntry[] newEntries = new OrderEntry[entries.length];
+        System.arraycopy(entries, 0, newEntries, 0, i);
+        newEntries[i] = newEntry;
+        System.arraycopy(entries, i, newEntries, i+1, entries.length - i - 1);
+        model.rearrangeOrderEntries(newEntries);
+        return;
+      }
+    }
+  }
 }

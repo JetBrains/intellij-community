@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,7 @@ class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
   private final ClasspathPanel myPanel;
 
   public ChangeLibraryLevelInClasspathAction(@NotNull ClasspathPanel panel, final @NotNull String targetTableName, @NotNull String targetTableLevel) {
-    super(panel.getProject(), targetTableName, targetTableLevel);
+    super(panel.getProject(), targetTableName, targetTableLevel, targetTableLevel.equals(LibraryTableImplUtil.MODULE_LEVEL));
     myPanel = panel;
   }
 
@@ -45,7 +46,7 @@ class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
     final LibraryEx library = (LibraryEx)((LibraryOrderEntry)entry).getLibrary();
     if (library == null) return;
 
-    final Library copied = doAction(library);
+    final Library copied = doCopy(library);
     if (copied == null) return;
 
     myPanel.getRootModel().removeOrderEntry(entry);
@@ -77,11 +78,6 @@ class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
   @Override
   protected JComponent getParentComponent() {
     return myPanel.getComponent();
-  }
-
-  @Override
-  protected boolean isCopy() {
-    return isConvertingToModuleLibrary();
   }
 
   @Override

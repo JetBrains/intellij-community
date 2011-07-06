@@ -57,27 +57,27 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ChangeLibraryLevelActionBase");
   protected final Project myProject;
   protected final String myTargetTableLevel;
+  protected final boolean myCopy;
 
-  public ChangeLibraryLevelActionBase(@NotNull Project project, @NotNull String targetTableName, @NotNull String targetTableLevel) {
+  public ChangeLibraryLevelActionBase(@NotNull Project project, @NotNull String targetTableName, @NotNull String targetTableLevel, boolean copy) {
     myProject = project;
     myTargetTableLevel = targetTableLevel;
+    myCopy = copy;
     getTemplatePresentation().setText(getActionName() + " to " + targetTableName + "...");
   }
-
-  protected abstract boolean isCopy();
 
   protected abstract LibraryTableModifiableModelProvider getModifiableTableModelProvider();
 
   protected abstract JComponent getParentComponent();
 
   @Nullable
-  protected Library doAction(LibraryEx library) {
+  protected Library doCopy(LibraryEx library) {
     final VirtualFile baseDir = getBaseDir();
     final String libPath = baseDir != null ? baseDir.getPath() + "/lib" : "";
     boolean allowEmptyName = isConvertingToModuleLibrary() && library.getFiles(OrderRootType.CLASSES).length == 1;
     final String libraryName = allowEmptyName ? "" : StringUtil.notNullize(library.getName(), "Unnamed");
     final LibraryTableModifiableModelProvider provider = getModifiableTableModelProvider();
-    final ChangeLibraryLevelDialog dialog = new ChangeLibraryLevelDialog(getParentComponent(), myProject, isCopy(),
+    final ChangeLibraryLevelDialog dialog = new ChangeLibraryLevelDialog(getParentComponent(), myProject, myCopy,
                                                                          libraryName, libPath, allowEmptyName, provider);
     dialog.show();
     if (!dialog.isOK()) {
@@ -115,9 +115,8 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
   private boolean copyOrMoveFiles(final Set<File> filesToProcess,
                                     @NotNull final String targetDirPath,
                                     final Map<String, String> copiedFiles) {
-    final boolean copy = isCopy();
     final Ref<Boolean> finished = Ref.create(false);
-    new Task.Modal(myProject, (copy ? "Copying" : "Moving") + " Library Files", true) {
+    new Task.Modal(myProject, (myCopy ? "Copying" : "Moving") + " Library Files", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final File targetDir = new File(FileUtil.toSystemDependentName(targetDirPath));
@@ -127,7 +126,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
                                                               FileUtil.getExtension(from.getName()));
           try {
             if (from.isDirectory()) {
-              if (copy) {
+              if (myCopy) {
                 FileUtil.copyDir(from, to);
               }
               else {
@@ -135,7 +134,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
               }
             }
             else {
-              if (copy) {
+              if (myCopy) {
                 FileUtil.copy(from, to);
               }
               else {
@@ -158,7 +157,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
               if (virtualTo != null) {
                 copiedFiles.put(FileUtil.toSystemIndependentName(from.getAbsolutePath()), virtualTo.getPath());
               }
-              if (!copy) {
+              if (!myCopy) {
                 final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(from.getParentFile());
                 if (parent != null) {
                   parent.refresh(false, false);
@@ -185,7 +184,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
   }
 
   private String getActionName() {
-    return isCopy() ? "Copy" : "Move";
+    return myCopy ? "Copy" : "Move";
   }
 
   @Nullable
