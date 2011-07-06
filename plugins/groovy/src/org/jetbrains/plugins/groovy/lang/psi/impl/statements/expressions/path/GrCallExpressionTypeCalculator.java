@@ -40,7 +40,7 @@ public abstract class GrCallExpressionTypeCalculator {
   protected static PsiMethod resolveMethodCall(@NotNull GrMethodCall callExpression) {
     GrExpression eInvokedExpression = callExpression.getInvokedExpression();
     if (!(eInvokedExpression instanceof GrReferenceExpression)) return null;
-    return resolveMethodCall((GrMethodCall)eInvokedExpression);
+    return resolveMethodCall((GrReferenceExpression)eInvokedExpression);
   }
 
   @Nullable
