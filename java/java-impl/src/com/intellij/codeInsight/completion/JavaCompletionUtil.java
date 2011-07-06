@@ -811,7 +811,7 @@ public class JavaCompletionUtil {
     final boolean hasTail = tailType != TailType.NONE && tailType != TailType.UNKNOWN;
     final boolean smart = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
 
-    if (completionChar == '(' || completionChar == '.' || completionChar == ',' || completionChar == ';' || completionChar == ':') {
+    if (completionChar == '(' || completionChar == '.' || completionChar == ',' || completionChar == ';' || completionChar == ':' || completionChar == ' ') {
       context.setAddCompletionChar(false);
     }
 

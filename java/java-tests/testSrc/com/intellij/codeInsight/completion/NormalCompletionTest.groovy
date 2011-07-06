@@ -875,6 +875,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testCommaAfterVariable() throws Throwable { doTest(',') }
 
   public void testClassAngleBracket() throws Throwable { doTest('<') }
+  public void testNoArgsMethodSpace() throws Throwable { doTest(' ') }
 
   public void testClassSquareBracket() throws Throwable { doTest('[') }
   public void testPrimitiveSquareBracket() throws Throwable { doTest('[') }
