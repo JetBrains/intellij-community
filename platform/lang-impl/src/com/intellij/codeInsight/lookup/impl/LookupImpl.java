@@ -791,7 +791,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   @Override
   public boolean vetoesHiding() {
-    return myChangeGuard;
+    return myChangeGuard || myDisposed;
   }
 
   public boolean isShown() {
