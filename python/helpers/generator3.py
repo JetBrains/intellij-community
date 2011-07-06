@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.95" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.96" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -813,6 +813,9 @@ class ModuleRedeclarator(object):
 
     if version == (2, 5):
         PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there
+
+    if version >= (2, 7):
+        PREDEFINED_BUILTIN_SIGS[("enumerate", "__init__")] = "(self, iterable, start=0)" # dosctring omits this completely.
 
     if sys.platform.startswith("darwin"): # OS X
         bin_collections_name = 'collections'
