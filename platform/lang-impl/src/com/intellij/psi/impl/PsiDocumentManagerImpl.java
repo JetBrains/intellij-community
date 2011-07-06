@@ -38,10 +38,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -245,23 +242,54 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<Object, Runnable>(); //accessed from EDT only
+  private static final Object PERFORM_ALWAYS_KEY = new Object();
 
-  // returns true if action has been run immediately
+  /** Schedules action to be executed when all documents are committed.
+   *  @return true if action has been run immediately, or false if action was scheduled for execution later.
+   */
+  public boolean performWhenAllCommitted(@NotNull final Runnable action) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myUncommittedDocuments.isEmpty()) {
+      action.run();
+      return true;
+    }
+    CompositeRunnable actions = (CompositeRunnable)actionsWhenAllDocumentsAreCommitted.get(PERFORM_ALWAYS_KEY);
+    if (actions == null) {
+      actions = new CompositeRunnable();
+      actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
+    }
+    actions.add(action);
+    return false;
+  }
+
+  private static class CompositeRunnable extends ArrayList<Runnable> implements Runnable {
+    @Override
+    public void run() {
+      for (Runnable runnable : this) {
+        runnable.run();
+      }
+    }
+  }
+
+  /**
+   * Cancel previously registered action and schedules (new) action to be executed when all documents are committed.
+   *  @param key the (unique) name of the action. This action will overwrite any action which was registered under this key earlier.
+   *  @return true if action has been run immediately, or false if action was scheduled for execution later.
+   */
   @Override
-  public boolean performWhenAllDocumentsAreCommitted(@NotNull Object key, @NotNull final Runnable action) {
+  public boolean cancelAndRunWhenAllCommitted(@NotNull Object key, @NotNull final Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) {
       action.run();
       return true;
     }
-    if (!myUncommittedDocuments.isEmpty()) {
-      actionsWhenAllDocumentsAreCommitted.put(key, action);
-      return false;
+    if (myUncommittedDocuments.isEmpty()) {
+      action.run();
+      assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted;
+      return true;
     }
-
-    action.run();
-    assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted;
-    return true;
+    actionsWhenAllDocumentsAreCommitted.put(key, action);
+    return false;
   }
 
   public static void addRunOnCommit(@NotNull Document document, @NotNull Runnable action) {
