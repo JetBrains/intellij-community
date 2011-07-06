@@ -127,7 +127,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     // For dots, commas etc.
     if ((PUNCTUATION_SIGNS.contains(rightNode.getElementType())) ||
         (mCOLON.equals(rightNode.getElementType()) && !(rightNode.getPsi().getParent() instanceof GrConditionalExpression))) {
-      return NO_SPACING;
+      return NO_SPACING_WITH_NEWLINE;
     }
 
     if (DOTS.contains(leftType)) {

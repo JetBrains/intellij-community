@@ -26,12 +26,12 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -122,7 +122,8 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     // chained properties, calls, indexing, etc
     if (NESTED.contains(block.getNode().getElementType()) && blockPsi.getParent() != null && !NESTED.contains(blockPsi.getParent().getNode().getElementType())) {
       final List<Block> subBlocks = new ArrayList<Block>();
-      addNestedChildren(node.getPsi(), subBlocks, myAlignment, myWrap, mySettings, true);
+      Alignment dotsAlignment = mySettings.ALIGN_MULTILINE_CHAINED_METHODS ? Alignment.createAlignment() : null;
+      addNestedChildren(node.getPsi(), subBlocks, dotsAlignment, myWrap, mySettings, true);
       return subBlocks;
     }
 
@@ -386,7 +387,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
 
   private static void addNestedChildren(final PsiElement elem, List<Block> list,
-                                        final Alignment alignment,
+                                        @Nullable final Alignment alignment,
                                         final Wrap wrap,
                                         final CodeStyleSettings settings, final boolean topLevel) {
     final List<ASTNode> children = visibleChildren(elem.getNode());
@@ -403,7 +404,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
           }
           if (i < grandChildren.size()) {
             assert nameElement == grandChildren.get(i).getPsi();
-            list.add(new MethodCallWithoutQualifierBlock(nameElement, alignment, wrap, settings, topLevel, children, elem));
+            list.add(new MethodCallWithoutQualifierBlock(nameElement, null, wrap, settings, topLevel, children, elem));
           }
           return;
         }
@@ -425,7 +426,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     if (NESTED.contains(fst.getElementType())) {
       addNestedChildren(fst.getPsi(), list, alignment, wrap, settings, false);
     } else {
-      list.add(new GroovyBlock(fst, alignment, Indent.getContinuationWithoutFirstIndent(), wrap, settings));
+      list.add(new GroovyBlock(fst, null, Indent.getContinuationWithoutFirstIndent(), wrap, settings));
     }
     addNestedChildrenSuffix(list, alignment, wrap, settings, topLevel, children, limit);
   }
@@ -440,7 +441,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       if (canBeCorrectBlock(childNode)) {
         IElementType type = childNode.getElementType();
         Indent indent = topLevel || NESTED.contains(type) || type == mIDENT ? Indent.getContinuationWithoutFirstIndent() : Indent.getNoneIndent();
-        list.add(new GroovyBlock(childNode, childNode instanceof CompositeElement || type == mIDENT ? alignment : null, indent, wrap, settings));
+        list.add(new GroovyBlock(childNode, TokenSets.DOTS.contains(type) ? alignment : null, indent, wrap, settings));
       }
     }
   }

@@ -24,7 +24,8 @@ def f(
     , b) {
   [a + b
       // comment for this formula
-      , a * b, a / b
+      , a * b
+      , a / b
   ].collect { it * 2 }
 }
 
