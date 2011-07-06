@@ -490,21 +490,8 @@ public class NameUtil {
         return null;
       }
 
-      int nextStart = NameUtil.nextWord(name, nameIndex);
       if (isWordSeparator(name.charAt(nameIndex))) {
-        assert nextStart - nameIndex == 1 : "'" + name + "'" + nameIndex + " " + nextStart;
-        char p = myPattern[patternIndex];
-        if (isWordSeparator(p)) {
-          if (myOptions != MatchingCaseSensitivity.NONE &&
-              nameIndex == 0 && name.length() > 1 && patternIndex + 1 < myPattern.length &&
-              isWordSeparator(name.charAt(1)) && !isWordSeparator(myPattern[patternIndex + 1])) {
-            return null;
-          }
-
-          return matchName(name, patternIndex + 1, nextStart);
-        }
-
-        return matchName(name, patternIndex, nextStart);
+        return skipSeparators(name, patternIndex, nameIndex);
       }
 
       if (StringUtil.toLowerCase(name.charAt(nameIndex)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
@@ -514,14 +501,22 @@ public class NameUtil {
         return null;
       }
 
+      if (myOptions == MatchingCaseSensitivity.ALL && name.charAt(nameIndex) != myPattern[patternIndex]) {
+        return null;
+      }
+
+      int nextStart = NameUtil.nextWord(name, nameIndex);
+
       boolean uppers = isWordStart(myPattern[patternIndex]);
 
       int i = 1;
       while (true) {
         if (patternIndex + i == myPattern.length) {
+          //end of pattern reached, the last word matches
           return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
         }
         if (i + nameIndex == nextStart) {
+          //whole word match
           break;
         }
         char p = myPattern[patternIndex + i];
@@ -565,6 +560,23 @@ public class NameUtil {
         i--;
       }
       return null;
+    }
+
+    private FList<TextRange> skipSeparators(String name, int patternIndex, int nameIndex) {
+      int nextStart = NameUtil.nextWord(name, nameIndex);
+      assert nextStart - nameIndex == 1 : "'" + name + "'" + nameIndex + " " + nextStart;
+      char p = myPattern[patternIndex];
+      if (isWordSeparator(p)) {
+        if (myOptions != MatchingCaseSensitivity.NONE &&
+            nameIndex == 0 && name.length() > 1 && patternIndex + 1 < myPattern.length &&
+            isWordSeparator(name.charAt(1)) && !isWordSeparator(myPattern[patternIndex + 1])) {
+          return null;
+        }
+
+        return matchName(name, patternIndex + 1, nextStart);
+      }
+
+      return matchName(name, patternIndex, nextStart);
     }
 
     @Nullable
