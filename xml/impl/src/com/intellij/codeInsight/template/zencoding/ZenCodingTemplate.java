@@ -267,6 +267,9 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
         }
       }
     }
+    if (bracesStack != 0 || inQuotes || inApostrophes) {
+      return null;
+    }
     return result;
   }
 
@@ -416,9 +419,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   ) {
     InputValidatorEx validator = new InputValidatorEx() {
       public String getErrorText(String inputString) {
-        ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), true);
-        assert generator != null;
-        if (!checkTemplateKey(inputString, callback, generator)) {
+        if (!checkTemplateKey(inputString, callback)) {
           return XmlBundle.message("zen.coding.incorrect.abbreviation.error");
         }
         return null;
@@ -438,6 +439,12 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     if (abbreviation != null) {
       doWrap(selection, abbreviation, callback);
     }
+  }
+
+  public static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
+    ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), true);
+    assert generator != null;
+    return checkTemplateKey(inputString, callback, generator);
   }
 
   public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
