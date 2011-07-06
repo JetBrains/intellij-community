@@ -366,4 +366,8 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
       DEFAULT_PATCH_EXTENSION = PATCH;
     }
   }
+
+  public boolean isChangedOnServerEnabled() {
+    return ENABLE_BACKGROUND_PROCESSES && CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND;
+  }
 }

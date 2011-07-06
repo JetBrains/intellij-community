@@ -69,7 +69,7 @@ public class ControlledCycle implements Runnable {
     myControlledAlarm = ControlledAlarmFactory.createOnApplicationPooledThread(project, name);
   }
 
-  public void startIfNotStarted(final int refreshInterval) {
+  public boolean startIfNotStarted(final int refreshInterval) {
     final boolean refreshIntervalChanged = (refreshInterval > 0) && refreshInterval != myRefreshInterval;
     if (refreshIntervalChanged) {
       mySimpleAlarm.cancelAllRequests();
@@ -82,6 +82,7 @@ public class ControlledCycle implements Runnable {
     if (wasSet || refreshIntervalChanged) {
       mySimpleAlarm.addRequest(this, myRefreshInterval);
     }
+    return wasSet;
   }
 
   public void stop() {

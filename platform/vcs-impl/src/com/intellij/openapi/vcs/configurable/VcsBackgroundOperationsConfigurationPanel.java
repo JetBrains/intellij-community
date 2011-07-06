@@ -84,6 +84,8 @@ public class VcsBackgroundOperationsConfigurationPanel implements SearchableConf
     settings.PERFORM_ADD_REMOVE_IN_BACKGROUND = myCbAddRemoveInBackground.isSelected();
     settings.PERFORM_ROLLBACK_IN_BACKGROUND = myPerformRevertInBackgroundCheckBox.isSelected();
 
+    boolean remoteCacheStateChanged = (settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND != myTrackChangedOnServer.isSelected()) ||
+                                      (settings.ENABLE_BACKGROUND_PROCESSES = myEnableBackgroundProcesses.isSelected());
     if (! myProject.isDefault()) {
       settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = myTrackChangedOnServer.isSelected();
       settings.CHANGED_ON_SERVER_INTERVAL = ((Number) myChangedOnServerInterval.getValue()).intValue();
@@ -96,7 +98,7 @@ public class VcsBackgroundOperationsConfigurationPanel implements SearchableConf
       setting.setValue(myPromptOptions.get(setting).isSelected());
     }
     // will check if should + was started -> inside
-    RemoteRevisionsCache.getInstance(myProject).updateAutomaticRefreshAlarmState();
+    RemoteRevisionsCache.getInstance(myProject).updateAutomaticRefreshAlarmState(remoteCacheStateChanged);
   }
 
   public boolean isModified() {

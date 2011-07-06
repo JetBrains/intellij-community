@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -76,11 +77,11 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
         myVcsManager.removeVcsListener(RemoteRevisionsCache.this);
       }
     });
+    final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
     myControlledCycle = new ControlledCycle(project, new ControlledCycle.MyCallback() {
       public boolean call(final AtomicSectionsAware atomicSectionsAware) {
         atomicSectionsAware.checkShouldExit();
-        final boolean shouldBeDone = VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND &&
-          myVcsManager.hasActiveVcss();
+        final boolean shouldBeDone = vcsConfiguration.isChangedOnServerEnabled() && myVcsManager.hasActiveVcss();
 
         if (shouldBeDone) {
           boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep(atomicSectionsAware);
@@ -96,33 +97,31 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
 
     updateRoots();
 
-    if ((! myProject.isDefault()) && VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND) {
-      // do not start if there're no vcses
-      if (! myVcsManager.hasActiveVcss()) return;
-
+    if ((! myProject.isDefault()) && vcsConfiguration.isChangedOnServerEnabled()) {
       ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.REMOTE_REVISIONS_CACHE,
                                                                            new Runnable() {
                                                                              public void run() {
+                                                                               // do not start if there're no vcses
+                                                                               if (! myVcsManager.hasActiveVcss() || ! vcsConfiguration. isChangedOnServerEnabled()) return;
                                                                                myControlledCycle.startIfNotStarted(-1);
                                                                              }
                                                                            });
     }
   }
 
-  public void updateAutomaticRefreshAlarmState() {
+  public void updateAutomaticRefreshAlarmState(boolean remoteCacheStateChanged) {
+    manageAlarm();
+  }
+
+  private void manageAlarm() {
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-    if ((! myProject.isDefault()) && myVcsManager.hasActiveVcss() && vcsConfiguration.ENABLE_BACKGROUND_PROCESSES && vcsConfiguration.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND) {
+    if ((! myProject.isDefault()) && myVcsManager.hasActiveVcss() && vcsConfiguration.isChangedOnServerEnabled()) {
       // will check whether is already started inside
       // interval is checked further, this is small and constant
       myControlledCycle.startIfNotStarted(-1);
     } else {
       myControlledCycle.stop();
     }
-  }
-
-  private void updateOnDirectoryMappingChanged() {
-    updateRoots();
-    updateAutomaticRefreshAlarmState();
   }
 
   private void updateRoots() {
@@ -138,11 +137,21 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   }
 
   public void directoryMappingChanged() {
-    try {
-      updateOnDirectoryMappingChanged();
-      myRemoteRevisionsNumbersCache.directoryMappingChanged();
-      myRemoteRevisionsStateCache.directoryMappingChanged();
-    } catch (ProcessCanceledException ignore) {
+    if (! VcsConfiguration.getInstance(myProject).isChangedOnServerEnabled()) {
+      manageAlarm();
+    } else {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            updateRoots();
+            myRemoteRevisionsNumbersCache.directoryMappingChanged();
+            myRemoteRevisionsStateCache.directoryMappingChanged();
+            manageAlarm();
+          } catch (ProcessCanceledException ignore) {
+          }
+        }
+      });
     }
   }
 

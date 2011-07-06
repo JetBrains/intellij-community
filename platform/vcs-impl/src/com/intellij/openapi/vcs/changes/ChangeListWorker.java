@@ -95,6 +95,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myDefault = defaultList;
   }
 
+  public void onAfterWorkerSwitch(@NotNull final ChangeListWorker previous) {
+    final boolean somethingChanged = myDelta.step(previous.myIdx, myIdx);
+    checkForMultipleCopiesNotMove();
+  }
+
   public boolean takeData(@NotNull final ChangeListWorker worker) {
     myMap.clear();
     myMap.putAll(worker.myMap);

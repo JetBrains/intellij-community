@@ -406,7 +406,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         // update member from copy
         if (takeChanges) {
           clearCurrentRevisionsCache(invalidated);
+          final ChangeListWorker oldWorker = myWorker;
           myWorker = dataHolder.getChangeListWorker();
+          myWorker.onAfterWorkerSwitch(oldWorker);
           myModifier.setWorker(myWorker);
           if (LOG.isDebugEnabled()) {
             LOG.debug("refresh procedure finished, size: " + dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize());
