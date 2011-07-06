@@ -169,8 +169,10 @@ public class AllClassesGetter {
     Set<String> words = WordCompletionContributor.getAllWords(context, parameters.getOffset());
     words.add(prefixMatcher.getPrefix());
     for (String s : words) {
-      for (PsiClass wordMatch : shortNamesCache.getClassesByName(s, scope)) {
-        classProcessor.process(wordMatch);
+      if (prefixMatcher.prefixMatches(s)) {
+        for (PsiClass wordMatch : shortNamesCache.getClassesByName(s, scope)) {
+          classProcessor.process(wordMatch);
+        }
       }
     }
 
