@@ -356,6 +356,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, c=1, d=2, e=3", new String[]{}); // no logical next
   }
 
+  public void testPy3kPastTupleArg() {
+    Map<String, PsiElement> marks = loadTest(4);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*arg, a=1, b=2", new String[]{"*arg, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("*arg, a=1, b=2", new String[]{"*arg, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*arg, a=1, b=2", new String[]{"b=2"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*arg, a=1, b=2", new String[]{"a=1, "});
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where ^P is pressed.

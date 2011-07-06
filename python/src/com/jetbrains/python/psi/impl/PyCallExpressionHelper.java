@@ -455,8 +455,10 @@ public class PyCallExpressionHelper {
           if (n_par.isPositionalContainer()) tuple_par = n_par;
           else if (n_par.isKeywordContainer()) kwd_par = n_par;
           else {
-            slots.put(n_par, null); // regular parameter that may serve as positional
-            positional_index += 1;
+            slots.put(n_par, null); // regular parameter that may serve as positional/named
+            if (tuple_par == null && kwd_par == null) {
+              positional_index += 1; // only if we're not past *param / **param
+            }
           }
         }
         else {
