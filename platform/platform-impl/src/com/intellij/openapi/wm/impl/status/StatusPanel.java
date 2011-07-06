@@ -20,6 +20,7 @@ import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Alarm;
@@ -35,14 +36,23 @@ import java.awt.event.MouseEvent;
 /**
  * @author peter
  */
-class StatusPanel {
+class StatusPanel extends JPanel {
   private boolean myLogMode;
   private boolean myDirty;
   private boolean myAfterClick;
   private final Alarm myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final TextPanel myTextPanel = new TextPanel();
+  private final TextPanel myTextPanel = new TextPanel() {
+    @Override
+    protected String getTextForPreferredSize() {
+      return getText();
+    }
+  };
 
   StatusPanel() {
+    super(new BorderLayout());
+
+    setOpaque(isOpaque() && !SystemInfo.isMac);
+
     myTextPanel.setBorder(new EmptyBorder(0, 5, 0, 0));
     myTextPanel.addMouseListener(new MouseAdapter() {
       @Override
@@ -50,18 +60,30 @@ class StatusPanel {
         if (myLogMode || myAfterClick) {
           EventLog.toggleLog(getActiveProject());
           myAfterClick = true;
+          myTextPanel.setExplicitSize(myTextPanel.getSize());
           myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
+        myTextPanel.setExplicitSize(null);
+        myTextPanel.revalidate();
         myAfterClick = false;
         if (!myLogMode) {
           myTextPanel.setCursor(Cursor.getDefaultCursor());
         }
       }
     });
+
+    add(myTextPanel, BorderLayout.WEST);
+
+    JPanel panel = new JPanel();
+    panel.setOpaque(isOpaque());
+    JLabel label = new JLabel("aaa");
+    label.setBackground(Color.yellow);
+    add(panel, BorderLayout.CENTER);
+
   }
 
   @Nullable
@@ -100,17 +122,24 @@ class StatusPanel {
           if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
             text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
           }
-          myTextPanel.setText(text);
+          setStatusText(text);
           myLogAlarm.addRequest(this, 30000);
         }
       }.run();
     } else {
       myTextPanel.setCursor(Cursor.getDefaultCursor());
       myDirty = true;
-      myTextPanel.setText(nonLogText);
+      setStatusText(nonLogText);
       myLogAlarm.cancelAllRequests();
     }
     return myLogMode;
+  }
+
+  private void setStatusText(String text) {
+    myTextPanel.setText(text);
+    if (!myAfterClick) {
+      myTextPanel.revalidate();
+    }
   }
 
   public void hideLog() {
@@ -134,7 +163,4 @@ class StatusPanel {
     return myTextPanel.getText();
   }
 
-  public TextPanel geTextPanel() {
-    return myTextPanel;
-  }
 }

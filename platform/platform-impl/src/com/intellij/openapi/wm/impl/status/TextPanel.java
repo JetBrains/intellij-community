@@ -25,7 +25,8 @@ import java.awt.*;
 public class TextPanel extends JComponent {
   private String myText;
   private final String myMaxPossibleString;
-  private Dimension myPrefSize;
+  private Integer myPrefHeight;
+  private Dimension myExplicitSize;
 
   private boolean myDecorate = true;
   private float myAlignment;
@@ -49,7 +50,7 @@ public class TextPanel extends JComponent {
   public void recomputeSize() {
     final JLabel label = new JLabel("XXX");
     label.setFont(getFont());
-    myPrefSize = label.getPreferredSize();
+    myPrefHeight = label.getPreferredSize().height;
   }
 
   public void setDecorate(boolean decorate) {
@@ -130,12 +131,16 @@ public class TextPanel extends JComponent {
   }
 
   public Dimension getPreferredSize() {
+    if (myExplicitSize != null) {
+      return myExplicitSize;
+    }
+
     int max = 0;
     String text = getTextForPreferredSize();
     if (text != null) max = getFontMetrics(getFont()).stringWidth(text);
 
-    if (myPrefSize != null) {
-      return new Dimension(20 + max, myPrefSize.height);
+    if (myPrefHeight != null) {
+      return new Dimension(20 + max, myPrefHeight);
     }
 
     return new Dimension(20 + max, getMinimumSize().height);
@@ -146,5 +151,9 @@ public class TextPanel extends JComponent {
    */
   protected String getTextForPreferredSize() {
     return myMaxPossibleString;
+  }
+
+  public void setExplicitSize(@Nullable Dimension explicitSize) {
+    myExplicitSize = explicitSize;
   }
 }
