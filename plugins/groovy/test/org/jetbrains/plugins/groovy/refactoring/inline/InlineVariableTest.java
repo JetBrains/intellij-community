@@ -40,6 +40,11 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
 
   public void testField() {doTest();}
 
+  public void testPartial1() {doTest();}
+  public void testPartial2() {doTest();}
+  public void testPartial3() {doTest();}
+  public void testPartial4() {doTest();}
+
   protected void doTest() {
     InlineMethodTest.doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", new GroovyInlineHandler());
   }

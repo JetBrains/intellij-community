@@ -50,12 +50,17 @@ public class GrVariableInliner implements InlineHandler.Inliner {
   private Project myProject;
   private final GrExpression myTempExpr;
 
-  public GrVariableInliner(GrVariable variable) {
+  public GrVariableInliner(GrVariable variable, InlineHandler.Settings settings) {
     myProject = variable.getProject();
 
-    GrExpression initializer = variable.getInitializerGroovy();
-    LOG.assertTrue(initializer != null);
-
+    GrExpression initializer;
+    if (settings instanceof InlineLocalVarSettings) {
+      initializer = ((InlineLocalVarSettings)settings).getInitializer();
+    }
+    else {
+      initializer = variable.getInitializerGroovy();
+      LOG.assertTrue(initializer != null);
+    }
     myTempExpr = (GrExpression)skipParentheses(initializer, false);
   }
 

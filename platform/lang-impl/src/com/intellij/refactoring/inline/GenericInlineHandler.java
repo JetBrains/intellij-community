@@ -57,18 +57,18 @@ public class GenericInlineHandler {
       return settings != null;
     }
 
-    final Collection<PsiReference> allReferences;
+    final Collection<? extends PsiReference> allReferences;
 
     if (settings.isOnlyOneReferenceToInline()) {
       allReferences = Collections.singleton(invocationReference);
     } else {
-      final Ref<Collection<PsiReference>> usagesRef = new Ref<Collection<PsiReference>>();
+      final Ref<Collection<? extends PsiReference>> usagesRef = new Ref<Collection<? extends PsiReference>>();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
           final ReferencesToInlineSearcher searcher = ReferencesToInlineSearchers.getSearcher(element.getLanguage());
           if (searcher != null) {
-            usagesRef.set(searcher.findReferences(element));
+            usagesRef.set(searcher.findReferences(element, settings));
           }
           else {
             usagesRef.set(ReferencesSearch.search(element).findAll());
@@ -185,7 +185,7 @@ public class GenericInlineHandler {
   }
 
   //order of usages across different files is irrelevant
-  public static PsiReference[] sortDepthFirstRightLeftOrder(final Collection<PsiReference> allReferences) {
+  public static PsiReference[] sortDepthFirstRightLeftOrder(final Collection<? extends PsiReference> allReferences) {
     final PsiReference[] usages = allReferences.toArray(new PsiReference[allReferences.size()]);
     Arrays.sort(usages, new Comparator<PsiReference>() {
       public int compare(final PsiReference usage1, final PsiReference usage2) {

@@ -24,5 +24,5 @@ import java.util.Collection;
  * @author Max Medvedev
  */
 public interface ReferencesToInlineSearcher {
-  Collection<PsiReference> findReferences(PsiElement element);
+  Collection<? extends PsiReference> findReferences(PsiElement element, InlineHandler.Settings settings);
 }

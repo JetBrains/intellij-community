@@ -1192,4 +1192,25 @@ public class PsiUtil {
 
     return !ref.isQualified() && name.equals(ref.getName());
   }
+
+  @Nullable
+  public static GrExpression getInitializerFor(GrReferenceExpression lValue) {
+    if (!isLValue(lValue)) throw new IllegalArgumentException("arg is not lValue");
+
+    final PsiElement parent = lValue.getParent();
+    if (parent instanceof GrAssignmentExpression) return ((GrAssignmentExpression)parent).getRValue();
+    if (parent instanceof GrTupleExpression) {
+      final int i = ((GrTupleExpression)parent).indexOf(lValue);
+      final PsiElement pparent = parent.getParent();
+      LOG.assertTrue(pparent instanceof GrAssignmentExpression);
+
+      final GrExpression rValue = ((GrAssignmentExpression)pparent).getRValue();
+      if (rValue instanceof GrListOrMap && !((GrListOrMap)rValue).isMap()) {
+        final GrExpression[] initializers = ((GrListOrMap)rValue).getInitializers();
+        if (initializers.length < i) return initializers[i];
+      }
+    }
+
+    return null;
+  }
 }

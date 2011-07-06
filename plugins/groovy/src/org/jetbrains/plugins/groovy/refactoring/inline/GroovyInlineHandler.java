@@ -49,14 +49,14 @@ public class GroovyInlineHandler implements InlineHandler, ReferencesToInlineSea
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
     if (element instanceof GrVariable) {
       if (GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
-        return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable)element, editor);
+        return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable)element, editor, invokedOnReference);
       }
       else if (element instanceof GrField) {
-        return GroovyInlineVariableUtil.inlineFieldSettings((GrField)element, editor, invokedOnReference);
+        return GrInlineFieldUtil.inlineFieldSettings((GrField)element, editor, invokedOnReference);
       }
     }
     else if (element instanceof GrAccessorMethod) {
-      return GroovyInlineVariableUtil.inlineFieldSettings(((GrAccessorMethod)element).getProperty(), editor, invokedOnReference);
+      return GrInlineFieldUtil.inlineFieldSettings(((GrAccessorMethod)element).getProperty(), editor, invokedOnReference);
     }
     else if (element instanceof GrMethod) {
       return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod)element, editor, invokedOnReference);
@@ -82,6 +82,11 @@ public class GroovyInlineHandler implements InlineHandler, ReferencesToInlineSea
     if (element instanceof GrAccessorMethod) {
       element = ((GrAccessorMethod)element).getProperty();
     }
+
+    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
+      GroovyInlineVariableUtil.removeDefinition(element, settings);
+      return;
+    }
     final PsiElement owner = element.getParent().getParent();
     if (element instanceof GrVariable && owner instanceof GrVariableDeclarationOwner) {
       ((GrVariableDeclarationOwner)owner).removeVariable(((GrVariable)element));
@@ -94,10 +99,10 @@ public class GroovyInlineHandler implements InlineHandler, ReferencesToInlineSea
   @Nullable
   public Inliner createInliner(PsiElement element, Settings settings) {
     if (element instanceof GrVariable) {
-      return GroovyInlineVariableUtil.createInlinerForVariable(((GrVariable)element));
+      return GroovyInlineVariableUtil.createInlinerForVariable((GrVariable)element, settings);
     }
     if (element instanceof GrAccessorMethod) {
-      return GroovyInlineVariableUtil.createInlinerForVariable(((GrAccessorMethod)element).getProperty());
+      return GroovyInlineVariableUtil.createInlinerForVariable(((GrAccessorMethod)element).getProperty(), settings);
     }
     if (element instanceof GrMethod) {
       return new GroovyMethodInliner((GrMethod)element);
@@ -106,23 +111,31 @@ public class GroovyInlineHandler implements InlineHandler, ReferencesToInlineSea
   }
 
   @Override
-  public Collection<PsiReference> findReferences(PsiElement element) {
-    if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod)element).getProperty();
-
-    if (!(element instanceof GrField)) {
-      return ReferencesSearch.search(element).findAll();
+  public Collection<? extends PsiReference> findReferences(PsiElement element, Settings settings) {
+    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
+      if (settings instanceof InlineLocalVarSettings) {
+        return ((InlineLocalVarSettings)settings).getRefs();
+      }
     }
 
-    LOG.assertTrue(((GrField)element).getSetter() == null);
+    else if (element instanceof GrAccessorMethod || element instanceof GrField) {
+      if (element instanceof GrAccessorMethod) {
+        element = ((GrAccessorMethod)element).getProperty();
+      }
 
-    Collection<PsiReference> result = new ArrayList<PsiReference>();
-    result.addAll(ReferencesSearch.search(element).findAll());
+      LOG.assertTrue(((GrField)element).getSetter() == null);
 
-    for (GrAccessorMethod getter : ((GrField)element).getGetters()) {
-      result.addAll(MethodReferencesSearch.search(getter).findAll());
+      Collection<PsiReference> result = new ArrayList<PsiReference>();
+      result.addAll(ReferencesSearch.search(element).findAll());
+
+      for (GrAccessorMethod getter : ((GrField)element).getGetters()) {
+        result.addAll(MethodReferencesSearch.search(getter).findAll());
+      }
+
+      return result;
     }
 
-    return result;
+    return ReferencesSearch.search(element).findAll();
   }
 }
 

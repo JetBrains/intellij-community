@@ -15,9 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -41,20 +45,25 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings({"OverlyComplexClass"})
 public class ControlFlowUtils {
+  private static final Logger LOG = Logger.getInstance(ControlFlowUtils.class);
 
   private ControlFlowUtils() {
     super();
   }
+
 
   public static boolean statementMayCompleteNormally(
       @Nullable GrStatement statement) {
@@ -616,4 +625,103 @@ public class ControlFlowUtils {
     }
     return null;
   }
+
+  /**
+   * searches for next or previous write access to local variable
+   * @param local variable to analyze
+   * @param place place to start searching
+   * @param ahead if true search for next write. if false searches for previous write
+   * @return all write instructions leading to (or preceding) the place
+   */
+  public static ReadWriteVariableInstruction[] findWriteAccess(GrVariable local, final PsiElement place, boolean ahead) {
+    LOG.assertTrue(GroovyRefactoringUtil.isLocalVariable(local), local.getClass());
+
+    final GrControlFlowOwner owner = findControlFlowOwner(local);
+    LOG.assertTrue(owner != null);
+
+    final Instruction cur = findInstruction(place, owner.getControlFlow());
+
+    if (cur == null) throw new IllegalArgumentException("place is not in the flow");
+
+    final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
+    final HashSet<Instruction> visited = new HashSet<Instruction>();
+    visited.add(cur);
+    writeAccess(cur, local.getName(), visited, result, ahead);
+    return result.toArray(new ReadWriteVariableInstruction[result.size()]);
+  }
+
+  @Nullable
+  private static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
+    return ContainerUtil.find(controlFlow, new Condition<Instruction>() {
+      @Override
+      public boolean value(Instruction instruction) {
+        return instruction.getElement() == place;
+      }
+    });
+  }
+
+  private static void writeAccess(Instruction cur, String name, Set<Instruction> visited, Collection<ReadWriteVariableInstruction> result, boolean ahead) {
+    final Iterable<? extends Instruction> toIterate = ahead ? cur.allSucc() : cur.allPred();
+    for (Instruction i : toIterate) {
+      if (visited.contains(i)) continue;
+      visited.add(i);
+      if (i instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)i).isWrite() && name.equals(((ReadWriteVariableInstruction)i).getVariableName())) {
+        result.add((ReadWriteVariableInstruction)i);
+      }
+      else {
+        writeAccess(i, name, visited, result, ahead);
+      }
+    }
+  }
+
+  public static ArrayList<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
+
+    final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
+      @Override
+      public BitSet join(ArrayList<BitSet> ins) {
+        BitSet result = new BitSet(flow.length);
+        for (BitSet set : ins) {
+          result.or(set);
+        }
+        return result;
+      }
+
+      @Override
+      public boolean eq(BitSet e1, BitSet e2) {
+        return e1.equals(e2);
+      }
+    };
+
+    DfaInstance<BitSet> dfa = new DfaInstance<BitSet>() {
+      @Override
+      public void fun(BitSet bitSet, Instruction instruction) {
+        if (!(instruction instanceof ReadWriteVariableInstruction)) return;
+        if (!((ReadWriteVariableInstruction)instruction).isWrite()) return;
+
+        final PsiElement element = instruction.getElement();
+        if (element instanceof GrVariable && element != var) return;
+        if (element instanceof GrReferenceExpression) {
+          final GrReferenceExpression ref = (GrReferenceExpression)element;
+          if (ref.isQualified() || ref.resolve() != var) return;
+        }
+
+        bitSet.clear();
+        bitSet.set(instruction.num());
+      }
+
+      @NotNull
+      @Override
+      public BitSet initial() {
+        return new BitSet(flow.length);
+      }
+
+      @Override
+      public boolean isForward() {
+        return true;
+      }
+    };
+
+    return new DFAEngine<BitSet>(flow, dfa, sem).performDFA();
+  }
+
 }
