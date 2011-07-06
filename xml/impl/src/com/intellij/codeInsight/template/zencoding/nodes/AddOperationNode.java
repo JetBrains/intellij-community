@@ -43,11 +43,14 @@ public class AddOperationNode extends ZenCodingNode {
 
   @NotNull
   @Override
-  public List<GenerationNode> expand(int numberInIteration, String surroundedText, CustomTemplateCallback callback) {
+  public List<GenerationNode> expand(int numberInIteration,
+                                     String surroundedText,
+                                     CustomTemplateCallback callback,
+                                     boolean insertSurroundedTextAtTheEnd) {
     List<GenerationNode> result = new ArrayList<GenerationNode>();
-    List<GenerationNode> leftNodes = myLeftOperand.expand(numberInIteration, null, callback);
+    List<GenerationNode> leftNodes = myLeftOperand.expand(numberInIteration, surroundedText, callback, false);
     result.addAll(leftNodes);
-    result.addAll(myRightOperand.expand(numberInIteration, surroundedText, callback));
+    result.addAll(myRightOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd));
     return result;
   }
 }

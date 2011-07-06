@@ -30,12 +30,19 @@ public class TextNode extends ZenCodingNode {
 
   @NotNull
   @Override
-  public List<GenerationNode> expand(int numberInIteration, String surroundedText, CustomTemplateCallback callback) {
+  public List<GenerationNode> expand(int numberInIteration,
+                                     String surroundedText,
+                                     CustomTemplateCallback callback,
+                                     boolean insertSurroundedTextAtTheEnd) {
     final TemplateToken templateToken = new TemplateToken("", Collections.<Pair<String, String>>emptyList());
-    final String text = ZenCodingUtil.replaceNumberMarkersBy(myText.replace("${nl}", "\n"), Integer.toString(numberInIteration + 1));
+    final boolean containsSurroundedTextMarker = ZenCodingUtil.containsSurroundedTextMarker(myText);
+
+    final String text = ZenCodingUtil.replaceMarkers(myText.replace("${nl}", "\n"), numberInIteration, surroundedText);
     final TemplateImpl template = new TemplateImpl("", text, "");
     ZenCodingTemplate.doSetTemplate(templateToken, template, callback);
-    final GenerationNode node = new GenerationNode(templateToken, new ArrayList<GenerationNode>(), numberInIteration, surroundedText);
+
+    final GenerationNode node = new GenerationNode(templateToken, new ArrayList<GenerationNode>(), numberInIteration,
+                                                   containsSurroundedTextMarker ? null : surroundedText, insertSurroundedTextAtTheEnd);
     return Collections.singletonList(node);
   }
 }

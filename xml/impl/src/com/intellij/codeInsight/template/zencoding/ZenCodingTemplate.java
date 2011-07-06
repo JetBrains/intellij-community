@@ -365,12 +365,12 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     if (surroundedText != null) {
       surroundedText = surroundedText.trim();
     }
-    List<GenerationNode> genNodes = node.expand(-1, surroundedText, callback);
+    List<GenerationNode> genNodes = node.expand(-1, surroundedText, callback, true);
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
     for (int i = 0, genNodesSize = genNodes.size(); i < genNodesSize; i++) {
       GenerationNode genNode = genNodes.get(i);
-      TemplateImpl template = genNode.generate(callback, generator, filters);
+      TemplateImpl template = genNode.generate(callback, generator, filters, true);
       int e = builder.insertTemplate(builder.length(), template, null);
       if (end == -1 && end < builder.length()) {
         end = e;
@@ -827,12 +827,18 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       }
 
       myIndex++;
-      token = nextToken();
-      final String value = getAttributeValueByToken(token);
-      if (value != null) {
-        myIndex++;
+      final StringBuilder attrValueBuilder = new StringBuilder();
+      String value;
+      do {
+        token = nextToken();
+        value = token != null && token == ZenCodingTokens.SHARP ? token.toString() : getAttributeValueByToken(token);
+        if (value != null) {
+          attrValueBuilder.append(value);
+          myIndex++;
+        }
       }
-      return new Pair<String, String>(name, value != null ? value : "");
+      while (value != null);
+      return new Pair<String, String>(name, attrValueBuilder.toString());
     }
 
     @Nullable

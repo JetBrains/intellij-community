@@ -15,23 +15,32 @@
  */
 package com.intellij.codeInsight.template.zencoding;
 
-import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class ZenCodingUtil {
   private static final char NUMBER_IN_ITERATION_PLACE_HOLDER = '$';
+  private static final String SURROUNDED_TEXT_MARKER = "$#";
 
   private ZenCodingUtil() {
   }
 
-  public static String replaceNumberMarkersBy(String s, String by) {
+  public static boolean containsSurroundedTextMarker(@NotNull String s) {
+    return s.contains(SURROUNDED_TEXT_MARKER);
+  }
+
+  public static String replaceMarkers(String s, int numberInIteration, @Nullable String surroundedText) {
+    final String by = Integer.toString(numberInIteration + 1);
     StringBuilder builder = new StringBuilder(s.length());
     int j = -1;
-    for (int i = 0, n = s.length(); i <= n; i++) {
+    int i = 0;
+    int n = s.length();
+    while (i <= n) {
       char c = i < n ? s.charAt(i) : 0;
-      if (c == NUMBER_IN_ITERATION_PLACE_HOLDER) {
+      if (c == NUMBER_IN_ITERATION_PLACE_HOLDER && (i == n - 1 || s.charAt(i + 1) != '#')) {
         if (j == -1) {
           j = i;
         }
@@ -45,15 +54,22 @@ public class ZenCodingUtil {
           j = -1;
         }
         if (i < n) {
-          builder.append(c);
+          if (c == NUMBER_IN_ITERATION_PLACE_HOLDER && surroundedText != null) {
+            builder.append(surroundedText);
+            i++;
+          }
+          else {
+            builder.append(c);
+          }
         }
       }
+      i++;
     }
     return builder.toString();
   }
 
-  public static String getValue(Pair<String, String> pair, int numberInIteration) {
-    String s = replaceNumberMarkersBy(pair.second, Integer.toString(numberInIteration + 1));
+  public static String getValue(String value, int numberInIteration, String surroundedText) {
+    String s = replaceMarkers(value, numberInIteration, surroundedText);
     return s.replace("\"", "&quot;");
   }
 }

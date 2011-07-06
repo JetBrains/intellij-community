@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -71,7 +72,8 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   @NotNull
   public abstract String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value,
                                                boolean hasChildren,
-                                               int numberInIteration);
+                                               int numberInIteration,
+                                               @Nullable String surroundedText);
 
   public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
 }

@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -60,12 +61,15 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   }
 
   @NotNull
-  public String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value, boolean hasChildren, int numberInIteration) {
+  public String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value,
+                                      boolean hasChildren,
+                                      int numberInIteration,
+                                      @Nullable String surroundedText) {
     StringBuilder result = new StringBuilder();
     for (Iterator<Pair<String, String>> it = attribute2value.iterator(); it.hasNext();) {
       Pair<String, String> pair = it.next();
       String name = pair.first;
-      String value = ZenCodingUtil.getValue(pair, numberInIteration);
+      String value = ZenCodingUtil.getValue(pair.second, numberInIteration, surroundedText);
       result.append(getAttributeString(name, value));
       if (it.hasNext()) {
         result.append(' ');
