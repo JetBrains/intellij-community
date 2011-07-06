@@ -55,7 +55,7 @@ public class GenerationNode {
   private final TemplateToken myTemplateToken;
   private final List<GenerationNode> myChildren;
   private final int myNumberInIteration;
-  private final String mySurroundedText;
+  private String mySurroundedText;
   private final boolean myInsertSurroundedTextAtTheEnd;
 
   private boolean myContainsSurroundedTextMarker = false;
@@ -393,5 +393,9 @@ public class GenerationNode {
 
   public String getSurroundedText() {
     return mySurroundedText;
+  }
+
+  public void setSurroundedText(String surroundedText) {
+    mySurroundedText = surroundedText;
   }
 }

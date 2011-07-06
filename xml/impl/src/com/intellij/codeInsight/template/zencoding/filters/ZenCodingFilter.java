@@ -35,7 +35,8 @@ public abstract class ZenCodingFilter {
   private static final ZenCodingFilter[] ourStandartFilters = new ZenCodingFilter[]{
     new XslZenCodingFilter(),
     new CommentZenCodingFilter(),
-    new EscapeZenCodingFilter()
+    new EscapeZenCodingFilter(),
+    new TrimZenCodingFilter()
   };
 
   @NotNull
