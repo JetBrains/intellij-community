@@ -23,7 +23,7 @@ public abstract class StructuredDocString {
     if (text == null) {
       return null;
     }
-    if (text.contains(":param ") || text.contains(":rtype") || text.contains(":type ")) {
+    if (text.contains(":param ") || text.contains(":rtype") || text.contains(":type")) {
       return new SphinxDocString(text);
     }
     return new EpydocString(text);

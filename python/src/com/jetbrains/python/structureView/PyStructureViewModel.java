@@ -3,6 +3,7 @@ package com.jetbrains.python.structureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewModelBase;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.*;
@@ -32,6 +33,15 @@ public class PyStructureViewModel extends StructureViewModelBase implements Stru
   @Override
   public boolean shouldEnterElement(Object element) {
     return element instanceof PyClass;
+  }
+
+  @NotNull
+  @Override
+  public Filter[] getFilters() {
+    return new Filter[] {
+      new PyInheritedMembersFilter(),
+      new PyFieldsFilter(),
+    };
   }
 
   @Override

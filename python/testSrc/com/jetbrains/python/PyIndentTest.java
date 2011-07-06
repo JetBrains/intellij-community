@@ -271,6 +271,20 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "");
   }
 
+  public void testNestedLists() {  // PY-4034
+    doTest("mat = [\n" +
+           "    [1, 2, 3, 4, 4.5],\n" +
+           "    [5, 6, 7, 8],\n" +
+           "    [9, 10, 11, 12],<caret>\n" +
+           "]",
+           "mat = [\n" +
+           "    [1, 2, 3, 4, 4.5],\n" +
+           "    [5, 6, 7, 8],\n" +
+           "    [9, 10, 11, 12],\n" +
+           "    <caret>\n" +
+           "]");
+  }
+
   /*
   TODO: formatter core problem?
   public void testAlignListBeforeEquals() throws Exception {
