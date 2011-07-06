@@ -249,4 +249,14 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals(((JavaPsiClassReferenceElement)items.get(1)).getQualifiedName(), "bar.Bar");
   }
 
+  public void testCaseInsensitivePrefixMatch() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    try {
+      checkPreferredItems(0, "Foo", "foo1", "foo2");
+    }
+    finally {
+      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
+    }
+  }
+
 }

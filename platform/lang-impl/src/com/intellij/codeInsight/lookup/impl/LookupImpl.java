@@ -427,7 +427,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!model.isEmpty()) {
       myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getAdComponent().getPreferredSize().width));
 
-      if (isFocused() && (!isExactPrefixItem(model.iterator().next(), true) || mySelectionTouched)) {
+      LookupElement first = model.iterator().next();
+      if (isFocused() && (!(isExactPrefixItem(first, true) || isExactPrefixItem(first, false)) || mySelectionTouched)) {
         restoreSelection(oldSelected, hasPreselected, oldInvariant, snapshot.second);
       }
       else {
