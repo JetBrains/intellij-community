@@ -53,6 +53,7 @@ public class CompletionServiceImpl extends CompletionService{
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
       public void projectClosing(Project project) {
+        LookupManager.getInstance(project).hideActiveLookup();
         setCompletionPhase(CompletionPhase.NoCompletion);
       }
     });
