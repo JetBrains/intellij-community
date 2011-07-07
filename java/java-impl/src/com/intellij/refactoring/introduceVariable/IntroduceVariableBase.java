@@ -231,7 +231,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     if (endOffset <= startOffset) return null;
 
-    PsiExpression tempExpr;
     PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
     if (PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false) == null) {
       elementAt = null;
@@ -243,10 +242,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     String text = null;
+    PsiExpression tempExpr;
     try {
       text = file.getText().subSequence(startOffset, endOffset).toString();
       String prefix = null;
-      String suffix = null;
       String stripped = text;
       if (startLiteralExpression != null) {
         final int startExpressionOffset = startLiteralExpression.getTextOffset();
@@ -262,6 +261,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         }
       }
 
+      String suffix = null;
       if (endLiteralExpression != null) {
         final int endExpressionOffset = endLiteralExpression.getTextOffset() + endLiteralExpression.getTextLength();
         if (endOffset == endExpressionOffset ) {
