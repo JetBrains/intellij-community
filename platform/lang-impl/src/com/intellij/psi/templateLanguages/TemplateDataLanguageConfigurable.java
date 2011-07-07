@@ -17,6 +17,7 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,7 +37,8 @@ import javax.swing.*;
 public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurable<Language> {
   public TemplateDataLanguageConfigurable(Project project) {
     super(project, Language.class, TemplateDataLanguageMappings.getInstance(project),
-          LangBundle.message("dialog.template.data.language.caption"), LangBundle.message("template.data.language.configurable.tree.table.title"),
+          LangBundle.message("dialog.template.data.language.caption", ApplicationNamesInfo.getInstance().getFullProductName()),
+          LangBundle.message("template.data.language.configurable.tree.table.title"),
           LangBundle.message("template.data.language.override.warning.text"),
           LangBundle.message("template.data.language.override.warning.title"));
   }
