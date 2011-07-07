@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.*;
@@ -113,18 +115,19 @@ class EventLogConsole {
     Pair<String, Boolean> pair = EventLog.formatForLog(notification);
 
     final NotificationType type = notification.getType();
-    ConsoleViewContentType contentType = type == NotificationType.ERROR
-                                         ? ConsoleViewContentType.ERROR_OUTPUT
+    TextAttributesKey key = type == NotificationType.ERROR
+                                         ? ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY
                                          : type == NotificationType.INFORMATION
-                                           ? ConsoleViewContentType.NORMAL_OUTPUT
-                                           : ConsoleViewContentType.WARNING_OUTPUT;
+                                           ? ConsoleViewContentType.NORMAL_OUTPUT_KEY
+                                           : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 
     int msgStart = document.getTextLength();
     String message = pair.first;
     append(document, message);
-    myLogEditor.getMarkupModel()
-      .addRangeHighlighter(msgStart, document.getTextLength(), HighlighterLayer.CARET_ROW + 1, contentType.getAttributes(),
-                           HighlighterTargetArea.EXACT_RANGE);
+
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
+    int layer = HighlighterLayer.CARET_ROW + 1;
+    myLogEditor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
 
     if (pair.second) {
       String s = " ";
