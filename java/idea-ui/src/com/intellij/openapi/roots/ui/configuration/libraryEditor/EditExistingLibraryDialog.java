@@ -77,7 +77,7 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
           myNameField.setText(newName);
         }
       }
-    });
+    }, getDisposable());
     init();
   }
 
