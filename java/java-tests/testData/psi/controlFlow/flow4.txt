@@ -1,0 +1,4 @@
+0: WRITE k
+1: READ k
+2: GOTO [END] 3
+
