@@ -43,7 +43,7 @@ public class LogModel {
   }
 
   void addNotification(Notification notification) {
-    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.NONE) {
+    if (notification.isImportant() || NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.NONE) {
       synchronized (myNotifications) {
         myNotifications.add(notification);
       }

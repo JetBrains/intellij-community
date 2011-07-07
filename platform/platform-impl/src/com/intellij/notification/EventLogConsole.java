@@ -30,11 +30,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
@@ -55,7 +57,7 @@ class EventLogConsole {
 
   EventLogConsole(@NotNull Project project, LogModel model) {
     myProjectModel = model;
-    myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false, true);
+    myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
 
     ((EditorMarkupModel) myLogEditor.getMarkupModel()).setErrorStripeVisible(true);
 
@@ -177,44 +179,6 @@ class EventLogConsole {
                   : notification.getType() == NotificationType.WARNING ? Color.yellow : Color.green;
     lineHighlighter.setErrorStripeMarkColor(color);
     lineHighlighter.setErrorStripeTooltip(message);
-    lineHighlighter.setGutterIconRenderer(new GutterIconRenderer() {
-      @NotNull
-      @Override
-      public Icon getIcon() {
-        return IconLoader.getIcon("/general/reset.png");
-      }
-
-      @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-      @Override
-      public boolean equals(Object obj) {
-        return this == obj;
-      }
-
-      @Override
-      public int hashCode() {
-        return 0;
-      }
-
-      @Override
-      public String getTooltipText() {
-        return "Mark as read";
-      }
-
-      @Override
-      public boolean isNavigateAction() {
-        return true;
-      }
-
-      @Override
-      public AnAction getClickAction() {
-        return new AnAction() {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            myProjectModel.removeNotification(notification);
-          }
-        };
-      }
-    });
 
     myProjectModel.removeHandlers.put(notification, new Runnable() {
       @Override
