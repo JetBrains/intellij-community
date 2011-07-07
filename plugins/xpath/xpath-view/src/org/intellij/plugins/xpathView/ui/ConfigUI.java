@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
+import com.intellij.ui.IdeBorderFactory;
 import org.intellij.plugins.xpathView.Config;
 
 import com.intellij.ui.ColorPanel;
@@ -73,7 +74,7 @@ public class ConfigUI extends JPanel {
         showInMainMenu.setToolTipText("Uncheck to remove XPath-related actions from the Main-Menubar");
 
         JPanel settings = new JPanel(new BorderLayout());
-        settings.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Settings"));
+        settings.setBorder(IdeBorderFactory.createTitledBorder("Settings"));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.NORTH);
         c.add(settings, BorderLayout.NORTH);
 
@@ -91,7 +92,7 @@ public class ConfigUI extends JPanel {
         settings.add(/*settings = */new JPanel(new BorderLayout()), BorderLayout.SOUTH);
 
         JPanel colors = new JPanel(new GridBagLayout());
-        colors.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Colors"));
+        colors.setBorder(IdeBorderFactory.createTitledBorder("Colors"));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
         c.add(colors, BorderLayout.NORTH);
 

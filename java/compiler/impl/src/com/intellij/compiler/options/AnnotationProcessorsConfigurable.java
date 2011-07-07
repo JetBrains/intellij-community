@@ -110,7 +110,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
 
     final JPanel processorTablePanel = new JPanel(new BorderLayout());
     myProcessorsModel = new ProcessorTableModel();
-    processorTablePanel.setBorder(new TitledBorder("Annotation Processors"));
+    processorTablePanel.setBorder(IdeBorderFactory.createTitledBorder("Annotation Processors"));
     myProcessorTable = new Table(myProcessorsModel);
     myProcessorTable.getEmptyText().setText("No processors configured");
 

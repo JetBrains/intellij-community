@@ -103,7 +103,7 @@ public class CodeStyleImportsPanel extends JPanel {
       public void actionPerformed(ActionEvent e) {
         boolean isComma = myJspImportCommaSeparated.isSelected();
         labelPanel.removeAll();
-        labelPanel.add(isComma ? commaSeparatedLabel : oneImportPerDirectiveLabel, BorderLayout.CENTER);
+        labelPanel.add(isComma ? commaSeparatedLabel : oneImportPerDirectiveLabel, BorderLayout.NORTH);
         labelPanel.repaint();
         labelPanel.revalidate();
       }

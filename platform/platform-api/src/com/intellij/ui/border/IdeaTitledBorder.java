@@ -14,17 +14,17 @@ import java.awt.*;
 public class IdeaTitledBorder extends TitledBorder {
 
   // Space between the border and the component's edge
-  static protected final int EDGE_SPACING = 0;
+  static protected final int EDGE_SPACING = 2;
 
   // Space between the border and text
-  static protected final int TEXT_SPACING = 0;
+  static protected final int TEXT_SPACING = 2;
 
   // Horizontal inset of text that is left or right justified
   static protected final int TEXT_INSET_H = -15;
 
   public IdeaTitledBorder(String title) {
     super(BorderFactory.createCompoundBorder(
-      BorderFactory.createEmptyBorder(0, 15, 0, 0),
+      BorderFactory.createEmptyBorder(0, 20, 0, 0),
       BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtil.getBorderColor())),
           title + "  ");
   }

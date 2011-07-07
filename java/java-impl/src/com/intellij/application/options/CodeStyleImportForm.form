@@ -7,7 +7,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="67fc8" binding="myGeneralPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+      <grid id="67fc8" binding="myGeneralPanel" layout-manager="BorderLayout" hgap="-1" vgap="-1">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
@@ -16,7 +16,7 @@
         <border type="none"/>
         <children/>
       </grid>
-      <grid id="90fcc" binding="myJSPPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+      <grid id="90fcc" binding="myJSPPanel" layout-manager="BorderLayout" hgap="-1" vgap="-1">
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
@@ -25,7 +25,7 @@
         <border type="none"/>
         <children/>
       </grid>
-      <grid id="27541" binding="myPackagesPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+      <grid id="27541" binding="myPackagesPanel" layout-manager="BorderLayout" hgap="-1" vgap="-1">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
@@ -34,7 +34,7 @@
         <border type="none"/>
         <children/>
       </grid>
-      <grid id="ff1de" binding="myImportsLayoutPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+      <grid id="ff1de" binding="myImportsLayoutPanel" layout-manager="BorderLayout" hgap="-1" vgap="-1">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>

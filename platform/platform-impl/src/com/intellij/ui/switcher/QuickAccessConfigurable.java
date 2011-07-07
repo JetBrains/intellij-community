@@ -23,6 +23,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ui.AwtVisitor;
@@ -121,7 +122,7 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
     kbConfig.add(modifiers);
     kbConfig.add(hold);
 
-    kbConfig.setBorder(new TitledBorder("Keyboard Configuration"));
+    kbConfig.setBorder(IdeBorderFactory.createTitledBorder("Keyboard Configuration"));
 
     box.add(kbConfig);
 
@@ -178,7 +179,7 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
     hasConflicts |= printConflict(c, KeyEvent.VK_ENTER, QuickAccessSettings.SWITCH_APPLY);
 
     if (hasConflicts) {
-      myConflicts.setBorder(new TitledBorder("Conflicts"));
+      myConflicts.setBorder(IdeBorderFactory.createTitledBorder("Conflicts"));
       c.gridx = 0;
       c.gridy++;
       c.gridwidth = 2;

@@ -27,10 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.ColorChooser;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +87,7 @@ public class RegistryUi implements Disposable {
     myDescriptionLabel = new JTextArea(3, 50);
     myDescriptionLabel.setEditable(false);
     final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel);
-    label.setBorder(new TitledBorder("Description"));
+    label.setBorder(IdeBorderFactory.createTitledBorder("Description"));
 
     myContent.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
     myContent.add(label, BorderLayout.SOUTH);
