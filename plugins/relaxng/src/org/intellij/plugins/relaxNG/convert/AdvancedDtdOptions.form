@@ -6,6 +6,9 @@
       <xy x="20" y="20" width="529" height="392"/>
     </constraints>
     <properties/>
+    <clientProperties>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+    </clientProperties>
     <border type="none" title="DTD Input"/>
     <children>
       <component id="60570" class="javax.swing.JCheckBox" binding="myInlineAttlistCheckBox" default-binding="true">
@@ -131,6 +134,9 @@
           <grid row="8" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <border type="none" title="Namespace Settings"/>
         <children>
           <component id="3e6e" class="javax.swing.JLabel">

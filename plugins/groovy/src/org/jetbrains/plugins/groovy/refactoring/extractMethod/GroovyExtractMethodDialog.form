@@ -17,6 +17,9 @@
         <border type="etched" title-resource-bundle="org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle" title-key="method.border.title">
           <color color="-16777216"/>
         </border>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="76fe4" class="com.intellij.ui.EditorTextField" binding="myNameField" custom-create="true">
             <constraints>
@@ -50,6 +53,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle" title-key="signature.preview.border.title"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="703ba" class="javax.swing.JTextArea" binding="mySignatureArea">
             <constraints>

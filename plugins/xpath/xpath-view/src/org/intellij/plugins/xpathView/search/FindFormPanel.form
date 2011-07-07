@@ -29,6 +29,9 @@
         <properties>
           <visible value="true"/>
         </properties>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <border type="none" title="Match Options"/>
         <children>
           <component id="2897" class="javax.swing.JRadioButton" binding="myMatchRootNode">

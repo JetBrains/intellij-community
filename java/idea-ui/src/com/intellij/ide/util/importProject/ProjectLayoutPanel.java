@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
@@ -78,11 +79,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     final Splitter splitter = new Splitter(false);
 
     final JScrollPane entriesPane = ScrollPaneFactory.createScrollPane(myEntriesChooser);
-    entriesPane.setBorder(BorderFactory.createTitledBorder(getEntriesChooserTitle()));
+    entriesPane.setBorder(IdeBorderFactory.createTitledBorder(getEntriesChooserTitle()));
     splitter.setFirstComponent(entriesPane);
 
     final JScrollPane depsPane = ScrollPaneFactory.createScrollPane(myDependenciesList);
-    depsPane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(getDependenciesTitle()), depsPane.getBorder()));
+    depsPane.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(getDependenciesTitle()), depsPane.getBorder()));
     splitter.setSecondComponent(depsPane);
     
     JPanel groupPanel = new JPanel(new BorderLayout());

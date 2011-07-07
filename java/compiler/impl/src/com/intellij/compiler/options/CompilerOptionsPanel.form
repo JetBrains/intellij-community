@@ -23,6 +23,9 @@
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/CompilerBundle" title-key="label.option.resource.patterns.text"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="263f1" class="javax.swing.JTextField" binding="myResourcePatternsField">
                 <constraints>

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -64,7 +65,7 @@ public class ParameterTablePanel extends JPanel {
 
   void init(GroovyExtractMethodDialog dialog, ExtractMethodInfoHelper helper) {
 
-    setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), GroovyRefactoringBundle.message("parameters.border.title")));
+    setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("parameters.border.title")));
 
     myDialog = dialog;
     myProject = helper.getProject();

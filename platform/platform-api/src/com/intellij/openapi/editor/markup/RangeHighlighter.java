@@ -172,6 +172,10 @@ public interface RangeHighlighter extends RangeMarker {
    */
   void setLineSeparatorColor(@Nullable Color color);
 
+  void setLineSeparatorRenderer(LineSeparatorRenderer renderer);
+
+  LineSeparatorRenderer getLineSeparatorRenderer();
+
   /**
    * Returns the placement of the separator drawn by the range highlighter
    * (above or below the range).

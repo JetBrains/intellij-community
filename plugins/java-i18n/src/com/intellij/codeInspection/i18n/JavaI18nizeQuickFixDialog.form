@@ -15,6 +15,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/CodeInsightBundle" title-key="i18n.quickfix.preview.panel.title"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="77d27" class="com.intellij.openapi.ui.ex.MultiLineLabel" binding="myPreviewLabel">
             <constraints>
@@ -45,6 +48,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/CodeInsightBundle" title-key="i18n.quickfix.code.panel.title"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <grid id="76504" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>

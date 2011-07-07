@@ -16,8 +16,10 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
 
@@ -31,6 +33,13 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null);
+    boolean visible = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
+    e.getPresentation().setVisible(visible);
+    if (visible) {
+      e.getPresentation()
+        .setText(IdeBundle.message("whatsnew.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
+      e.getPresentation().setDescription(
+        IdeBundle.message("whatsnew.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
+    }
   }
 }

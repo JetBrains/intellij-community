@@ -29,14 +29,20 @@ import java.util.ArrayList;
 
 public class TextCompareProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.Processor");
+  private final DiffPolicy myDiffPolicy;
   private final ComparisonPolicy myComparisonPolicy;
 
-  public TextCompareProcessor(ComparisonPolicy comparisonPolicy) {
+  public TextCompareProcessor(ComparisonPolicy comparisonPolicy, final DiffPolicy diffPolicy) {
     myComparisonPolicy = comparisonPolicy;
+    myDiffPolicy = diffPolicy;
+  }
+
+  public TextCompareProcessor(ComparisonPolicy comparisonPolicy) {
+    this(comparisonPolicy, DiffPolicy.LINES_WO_FORMATTING);
   }
 
   public ArrayList<LineFragment> process(String text1, String text2) throws FilesTooBigForDiffException {
-    DiffFragment[] woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(text1, text2);
+    DiffFragment[] woFormattingBlocks = myDiffPolicy.buildFragments(text1, text2);
     DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(myComparisonPolicy).
         correctAndNormalize(woFormattingBlocks);
     ArrayList<LineFragment> lineBlocks = new DiffFragmentsProcessor().process(step1lineFragments);

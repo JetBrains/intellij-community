@@ -553,7 +553,7 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="select+" toReformat="true" toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;&#10;  &lt;option value=&quot;$VAR2$&quot;&gt;$END$&lt;/option&gt;&lt;/select&gt;">
+  <template description="" name="select+" toReformat="true" toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;&#10;  &lt;option value=&quot;$VAR2$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/select&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -587,7 +587,7 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;...style.css&quot; media=&quot;all&quot;&gt;" name="link:css" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;$END$style.css&quot; media=&quot;all&quot;&gt;">
+  <template description="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;....css&quot; media=&quot;all&quot;&gt;" name="link:css" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;$END$.css&quot; media=&quot;all&quot;&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -711,7 +711,7 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="map+" toReformat="true" toShortenFQNames="true" value="&lt;map name=&quot;$VAR0$&quot;&gt;&#10;  &lt;area shape=&quot;$VAR1$&quot; coords=&quot;$VAR2$&quot; href=&quot;$VAR3$&quot; alt=&quot;$VAR4$&quot;&gt;&lt;/map&gt;">
+  <template description="" name="map+" toReformat="true" toShortenFQNames="true" value="&lt;map name=&quot;$VAR0$&quot;&gt;&#10;  &lt;area shape=&quot;$VAR1$&quot; coords=&quot;$VAR2$&quot; href=&quot;$VAR3$&quot; alt=&quot;$VAR4$&quot;&gt;&#10;&lt;/map&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>

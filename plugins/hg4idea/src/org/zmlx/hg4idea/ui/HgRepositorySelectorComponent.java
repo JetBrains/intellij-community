@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -36,7 +37,7 @@ public class HgRepositorySelectorComponent {
   }
 
   public void setTitle(String title) {
-    mainPanel.setBorder(BorderFactory.createTitledBorder(title));
+    mainPanel.setBorder(IdeBorderFactory.createTitledBorder(title));
   }
 
   public VirtualFile getRepository() {

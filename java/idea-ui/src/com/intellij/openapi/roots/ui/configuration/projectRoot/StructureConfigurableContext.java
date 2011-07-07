@@ -29,19 +29,18 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorLi
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EventDispatcher;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class StructureConfigurableContext implements Disposable, LibraryEditorListener {
   private final ProjectStructureDaemonAnalyzer myDaemonAnalyzer;
   public final ModulesConfigurator myModulesConfigurator;
   public final Map<String, LibrariesModifiableModel> myLevel2Providers = new THashMap<String, LibrariesModifiableModel>();
-  private final List<LibraryEditorListener> myLibraryEditorListeners = new ArrayList<LibraryEditorListener>();
+  private final EventDispatcher<LibraryEditorListener> myLibraryEditorListeners = EventDispatcher.create(LibraryEditorListener.class);
   private final Project myProject;
 
 
@@ -103,17 +102,15 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
   }
 
   public void addLibraryEditorListener(LibraryEditorListener listener) {
-    myLibraryEditorListeners.add(listener);
+    myLibraryEditorListeners.addListener(listener);
   }
 
-  public void removeLibraryEditorListener(LibraryEditorListener listener) {
-    myLibraryEditorListeners.remove(listener);
+  public void addLibraryEditorListener(@NotNull LibraryEditorListener listener, @NotNull Disposable parentDisposable) {
+    myLibraryEditorListeners.addListener(listener, parentDisposable);
   }
 
   public void libraryRenamed(@NotNull Library library, String oldName, String newName) {
-    for (LibraryEditorListener listener : myLibraryEditorListeners) {
-      listener.libraryRenamed(library, oldName, newName);
-    }
+    myLibraryEditorListeners.getMulticaster().libraryRenamed(library, oldName, newName);
   }
 
   public StructureLibraryTableModifiableModelProvider getGlobalLibrariesProvider() {

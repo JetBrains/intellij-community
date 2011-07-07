@@ -17,7 +17,8 @@ package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.framework.library.LibraryVersionProperties;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +31,7 @@ import java.util.List;
  * @author nik
  */
 public class CustomLibraryDescriptionImpl extends CustomLibraryDescriptionBase {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl");
   private final DownloadableLibraryType myLibraryType;
 
   public CustomLibraryDescriptionImpl(@NotNull DownloadableLibraryType downloadableLibraryType) {
@@ -57,5 +59,11 @@ public class CustomLibraryDescriptionImpl extends CustomLibraryDescriptionBase {
         return myLibraryType.equals(type);
       }
     };
+  }
+
+  public static CustomLibraryDescriptionImpl createDescription(Class<? extends DownloadableLibraryType> typeClass) {
+    final DownloadableLibraryType libraryType = LibraryType.EP_NAME.findExtension(typeClass);
+    LOG.assertTrue(libraryType != null, typeClass);
+    return new CustomLibraryDescriptionImpl(libraryType);
   }
 }

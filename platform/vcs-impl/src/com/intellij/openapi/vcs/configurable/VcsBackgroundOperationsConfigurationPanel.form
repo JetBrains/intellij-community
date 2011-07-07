@@ -27,9 +27,12 @@
               <grid id="d038a" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
+                <clientProperties>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                </clientProperties>
                 <border type="none" title-resource-bundle="messages/VcsBundle" title-key="background.operations.title">
                   <font/>
                 </border>
@@ -87,9 +90,12 @@
               <grid id="d20ff" binding="myBackgroundProcesses" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
+                <clientProperties>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                </clientProperties>
                 <border type="none" title-resource-bundle="messages/VcsBundle" title-key="options.background.processes.title"/>
                 <children>
                   <component id="de949" class="javax.swing.JCheckBox" binding="myEnableBackgroundProcesses">
@@ -106,6 +112,9 @@
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
+                    <clientProperties>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                    </clientProperties>
                     <border type="none" title-resource-bundle="messages/VcsBundle" title-key="cache.settings.dialog.title"/>
                     <children>
                       <component id="f7b04" class="javax.swing.JComponent" binding="myCachePanel" custom-create="true">
@@ -126,6 +135,9 @@
                       <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
+                    <clientProperties>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                    </clientProperties>
                     <border type="none" title-resource-bundle="messages/VcsBundle" title-key="options.check.changed.on.server.title"/>
                     <children>
                       <component id="9e0bc" class="javax.swing.JCheckBox" binding="myTrackChangedOnServer">

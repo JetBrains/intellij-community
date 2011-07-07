@@ -102,6 +102,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.create.avd.dialog.sdcard.title"/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <children>
           <component id="60ba2" class="javax.swing.JRadioButton" binding="mySdCardSizeRadioButton">
             <constraints>

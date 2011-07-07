@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -133,7 +134,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     enableCompilerSettings(!outputPathInherited);
 
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createTitledBorder(ProjectBundle.message("project.roots.output.compiler.title")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ProjectBundle.message("project.roots.output.compiler.title")));
     panel.add(outputPathsPanel, BorderLayout.NORTH);
     return panel;
   }

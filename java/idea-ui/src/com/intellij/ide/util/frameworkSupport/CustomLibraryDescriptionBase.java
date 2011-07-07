@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.frameworkSupport;
 
+import com.intellij.framework.library.LibraryVersionProperties;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -46,7 +47,7 @@ public abstract class CustomLibraryDescriptionBase extends CustomLibraryDescript
     if (files.length == 0) {
       return null;
     }
-    return new NewLibraryConfiguration(myDefaultLibraryName) {
+    return new NewLibraryConfiguration(myDefaultLibraryName, getDownloadableLibraryType(), new LibraryVersionProperties()) {
       @Override
       public void addRoots(@NotNull LibraryEditor editor) {
         for (VirtualFile file : files) {

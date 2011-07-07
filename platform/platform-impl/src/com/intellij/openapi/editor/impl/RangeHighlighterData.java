@@ -44,6 +44,7 @@ abstract class RangeHighlighterData {
   private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
   private CustomHighlighterRenderer myCustomRenderer;
   int myLine; // for PersistentRangeHighlighterImpl only
+  private LineSeparatorRenderer myLineSeparatorRenderer;
 
   RangeHighlighterData(@NotNull MarkupModel model,
                        @NotNull HighlighterTargetArea target,
@@ -238,5 +239,13 @@ abstract class RangeHighlighterData {
 
   public MarkupModel getMarkupModel() {
     return myModel;
+  }
+
+  public void setLineSeparatorRenderer(LineSeparatorRenderer renderer) {
+    myLineSeparatorRenderer = renderer;
+  }
+
+  public LineSeparatorRenderer getLineSeparatorRenderer() {
+    return myLineSeparatorRenderer;
   }
 }

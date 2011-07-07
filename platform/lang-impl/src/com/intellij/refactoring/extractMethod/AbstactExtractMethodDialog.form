@@ -47,6 +47,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/RefactoringBundle" title-key="refactoring.extract.method.dialog.parameters"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="d4ee9" class="com.intellij.refactoring.extractMethod.AbstractParameterTablePanel" binding="myParametersPanel" custom-create="true">
             <constraints>

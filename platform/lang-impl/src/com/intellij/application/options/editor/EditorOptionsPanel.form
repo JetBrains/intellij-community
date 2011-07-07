@@ -31,6 +31,9 @@
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.advanced.mouse.usages"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="18220" class="javax.swing.JCheckBox" binding="myCbHonorCamelHumpsWhenSelectingByClicking">
                 <constraints>
@@ -73,6 +76,9 @@
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.virtual.space"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="400d4" class="javax.swing.JCheckBox" binding="myCbVirtualPageAtBottom">
                 <constraints>
@@ -189,6 +195,9 @@
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.brace.highlighting"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="917a4" class="javax.swing.JCheckBox" binding="myCbHighlightScope">
                 <constraints>
@@ -225,6 +234,9 @@
             </constraints>
             <properties/>
             <border type="none" title="Scrolling"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="a193a" class="javax.swing.JRadioButton" binding="myRbPreferScrolling">
                 <constraints>
@@ -262,6 +274,9 @@
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.limits"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="498f1" class="javax.swing.JLabel">
                 <constraints>
@@ -377,6 +392,9 @@
             </constraints>
             <properties/>
             <border type="none" title="Formatting"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="d393f" class="javax.swing.JCheckBox" binding="myShowOptimizeImportsDialogCheckBox" default-binding="true">
                 <constraints>

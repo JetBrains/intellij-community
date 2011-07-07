@@ -19,6 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     for (T element : getContext().getList()) {
       fileChooser.addElement(element, getContext().isMarked(element));
     }
-    fileChooser.setBorder(BorderFactory.createTitledBorder(IdeBundle.message("project.import.select.title", getContext().getName())));
+    fileChooser.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("project.import.select.title", getContext().getName())));
     openModuleSettingsCheckBox.setSelected(getBuilder().isOpenProjectSettingsAfter());
   }
 

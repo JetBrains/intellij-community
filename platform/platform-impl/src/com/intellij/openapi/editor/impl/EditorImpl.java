@@ -2547,7 +2547,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         endShift = Math.min(endShift, mySettings.getRightMargin(myProject) * EditorUtil.getSpaceWidth(Font.PLAIN, this));
       }
 
-      UIUtil.drawLine(g, 0, y - 1, endShift, y - 1);
+      final LineSeparatorRenderer lineSeparatorRenderer = marker.getLineSeparatorRenderer();
+      if (lineSeparatorRenderer != null) {
+        lineSeparatorRenderer.drawLine(g, 0, endShift, y - 1);
+      } else {
+        UIUtil.drawLine(g, 0, y - 1, endShift, y - 1);
+      }
     }
   }
 

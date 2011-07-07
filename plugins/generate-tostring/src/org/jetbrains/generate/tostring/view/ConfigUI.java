@@ -16,6 +16,7 @@
 package org.jetbrains.generate.tostring.view;
 
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.IdeBorderFactory;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.exception.ParseErrorException;
@@ -100,7 +101,7 @@ public class ConfigUI extends JPanel {
         // UI Layout - Settings
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder(etched, "Settings"));
+        panel.setBorder(IdeBorderFactory.createTitledBorder("Settings"));
         Container innerPanel = Box.createHorizontalBox();
         innerPanel.add(fullyQualifiedName);
         innerPanel.add(Box.createHorizontalGlue());
@@ -137,7 +138,7 @@ public class ConfigUI extends JPanel {
         }
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder(etched, "When method already exists"));
+        panel.setBorder(IdeBorderFactory.createTitledBorder("When method already exists"));
         for (JRadioButton anInitialValueForReplaceDialog : initialValueForReplaceDialog) {
             panel.add(anInitialValueForReplaceDialog);
         }
@@ -155,7 +156,7 @@ public class ConfigUI extends JPanel {
         }
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder(etched, "Where to insert?"));
+        panel.setBorder(IdeBorderFactory.createTitledBorder("Where to insert?"));
         for (JRadioButton anInitialValueForNewMethodDialog : initialValueForNewMethodDialog) {
             panel.add(anInitialValueForNewMethodDialog);
         }
@@ -166,7 +167,7 @@ public class ConfigUI extends JPanel {
         // UI Layout - Exclude fields
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder(etched, "Exclude"));
+        panel.setBorder(IdeBorderFactory.createTitledBorder("Exclude"));
         innerPanel = Box.createHorizontalBox();
         innerPanel.add(filterConstant);
         innerPanel.add(Box.createHorizontalGlue());

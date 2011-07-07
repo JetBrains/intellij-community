@@ -14,6 +14,9 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <border type="none" title="Merge with:"/>
         <children>
           <component id="99075" class="javax.swing.JRadioButton" binding="branchOption">

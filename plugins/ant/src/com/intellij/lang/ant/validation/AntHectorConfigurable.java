@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NonNls;
@@ -70,7 +71,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
 
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(BorderFactory.createTitledBorder("File Context"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder("File Context"));
     myCombo = new ComboBox();
     myCombo.putClientProperty(CONTEXTS_COMBO_KEY, Boolean.TRUE);
     panel.add(

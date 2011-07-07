@@ -34,6 +34,9 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.actions"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="185b0" class="javax.swing.JCheckBox" binding="myLogMessageCheckBox">
                 <constraints>
@@ -159,6 +162,9 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.suspend.policy"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="f6192" class="javax.swing.JRadioButton" binding="mySuspendThreadRadio">
                 <constraints>
@@ -208,6 +214,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.conditions"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <grid id="bf471" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
             <margin top="0" left="0" bottom="0" right="0"/>

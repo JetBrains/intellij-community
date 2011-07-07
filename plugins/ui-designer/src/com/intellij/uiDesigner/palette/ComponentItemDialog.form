@@ -36,6 +36,9 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/UIDesignerBundle" title-key="group.vertical.size.policy"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="f84fa" class="javax.swing.JCheckBox" binding="myChkVerCanShrink">
                 <constraints>
@@ -70,6 +73,9 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/UIDesignerBundle" title-key="group.horizontal.size.policy"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="c7e68" class="javax.swing.JCheckBox" binding="myChkHorCanShrink">
                 <constraints>

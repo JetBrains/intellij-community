@@ -15,6 +15,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.ui.options"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="33d7c" class="javax.swing.JCheckBox" binding="myMoveMouseOnDefaultButtonCheckBox">
             <constraints>
@@ -167,6 +170,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.transparency"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="3d7be" class="javax.swing.JLabel">
             <constraints>
@@ -220,6 +226,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.window.options"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="e4f17" class="javax.swing.JCheckBox" binding="myShowToolStripesCheckBox">
             <constraints>

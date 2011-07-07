@@ -1,0 +1,5 @@
+0: READ c
+1: WRITE c
+2: READ c
+3: COND_GOTO [END] 0
+

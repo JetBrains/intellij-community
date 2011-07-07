@@ -53,6 +53,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.CacheOneStepIterator;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final Window myOwnerWindow;
   private final DiffPanelOptions myOptions;
 
-  private final DiffPanelState myData;
+  private DiffPanelState myData;
 
   private final Rediffers myDiffUpdater;
   private final DiffSideView myLeftSide;
@@ -123,6 +124,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
       setComparisonPolicy(defaultComparisonPolicy);
     }
+  }
+
+  public void setDiffPanelState(DiffPanelState data) {
+    myData = data;
+  }
+
+  public DiffPanelState getDiffPanelState() {
+    return myData;
   }
 
   public void noSynchScroll() {
@@ -202,12 +211,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.disableToolbar(!value);
   }
 
-  public void setLineShift(int offset1, int offset2) {
+  public void setLineNumberConvertors(final Convertor<Integer, Integer> old, final Convertor<Integer, Integer> newConvertor) {
     if (getEditor1() != null) {
-      ((EditorGutterComponentEx) getEditor1().getGutter()).setLineShift(offset1);
+      ((EditorGutterComponentEx) getEditor1().getGutter()).setLineNumberConvertor(old);
     }
     if (getEditor2() != null) {
-      ((EditorGutterComponentEx) getEditor2().getGutter()).setLineShift(offset2);
+      ((EditorGutterComponentEx) getEditor2().getGutter()).setLineNumberConvertor(newConvertor);
     }
   }
 

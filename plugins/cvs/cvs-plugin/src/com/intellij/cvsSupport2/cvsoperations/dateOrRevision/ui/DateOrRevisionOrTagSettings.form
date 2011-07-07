@@ -7,6 +7,9 @@
     </constraints>
     <properties/>
     <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.configure.branch.or.date.use.version"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
     <children>
       <component id="ca0af" class="javax.swing.JRadioButton" binding="myUseBranch">
         <constraints>

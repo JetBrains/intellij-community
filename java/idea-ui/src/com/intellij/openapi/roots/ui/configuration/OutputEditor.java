@@ -23,6 +23,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,10 +48,10 @@ public class OutputEditor extends ModuleElementsEditor {
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     panel.add(myCompilerOutputEditor.createComponentImpl(), gc);
     final JPanel javadocPanel = (JPanel)myJavadocEditor.createComponentImpl();
-    javadocPanel.setBorder(BorderFactory.createTitledBorder(myJavadocEditor.getDisplayName()));
+    javadocPanel.setBorder(IdeBorderFactory.createTitledBorder(myJavadocEditor.getDisplayName()));
     panel.add(javadocPanel, gc);
     final JPanel annotationsPanel = (JPanel)myAnnotationsEditor.createComponentImpl();
-    annotationsPanel.setBorder(BorderFactory.createTitledBorder(myAnnotationsEditor.getDisplayName()));
+    annotationsPanel.setBorder(IdeBorderFactory.createTitledBorder(myAnnotationsEditor.getDisplayName()));
     panel.add(annotationsPanel, gc);
     panel.add(Box.createVerticalBox(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.CENTER,
                                                               GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0));

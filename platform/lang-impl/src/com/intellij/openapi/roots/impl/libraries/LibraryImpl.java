@@ -352,7 +352,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       final Object state = myProperties.getState();
       if (state != null) {
         final Element propertiesElement = XmlSerializer.serialize(state, SERIALIZATION_FILTERS);
-        if (propertiesElement != null) {
+        if (propertiesElement != null && (!propertiesElement.getContent().isEmpty() || !propertiesElement.getAttributes().isEmpty())) {
           element.addContent(propertiesElement.setName(PROPERTIES_ELEMENT));
         }
       }

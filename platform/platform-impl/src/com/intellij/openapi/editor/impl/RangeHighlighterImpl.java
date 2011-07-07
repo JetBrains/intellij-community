@@ -151,6 +151,16 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     getData().setLineSeparatorColor(color);
   }
 
+  @Override
+  public void setLineSeparatorRenderer(LineSeparatorRenderer renderer) {
+    getData().setLineSeparatorRenderer(renderer);
+  }
+
+  @Override
+  public LineSeparatorRenderer getLineSeparatorRenderer() {
+    return getData().getLineSeparatorRenderer();
+  }
+
   public SeparatorPlacement getLineSeparatorPlacement() {
     return getData().getLineSeparatorPlacement();
   }

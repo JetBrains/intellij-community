@@ -57,7 +57,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     updateButtons();
 
     if (labelText != null) {
-      setBorder(BorderFactory.createTitledBorder(new EtchedBorder(),labelText));
+      setBorder(IdeBorderFactory.createTitledBorder(labelText));
     }
   }
 

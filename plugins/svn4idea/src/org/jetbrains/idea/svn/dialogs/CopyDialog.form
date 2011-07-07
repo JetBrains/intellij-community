@@ -43,6 +43,9 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <border type="none" title="Copy From"/>
         <children>
           <component id="15c1b" class="javax.swing.JRadioButton" binding="myWorkingCopyRadioButton" default-binding="true">
@@ -111,6 +114,9 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <border type="none" title="Copy To"/>
         <children>
           <component id="f1672" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myToURLText">

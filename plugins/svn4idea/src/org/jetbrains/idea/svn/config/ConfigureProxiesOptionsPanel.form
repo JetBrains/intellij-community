@@ -17,6 +17,9 @@
         </constraints>
         <properties/>
         <border type="line" title-resource-bundle="org/jetbrains/idea/svn/SvnBundle" title-key="dialog.edit.http.proxies.settings.panel.proxy.title"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="e6880" class="javax.swing.JLabel">
             <constraints>
@@ -176,6 +179,9 @@
         </constraints>
         <properties/>
         <border type="line" title-resource-bundle="org/jetbrains/idea/svn/SvnBundle" title-key="dialog.edit.http.proxies.settings.panel.ssl.title"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="23c81" class="javax.swing.JLabel">
             <constraints>
@@ -258,6 +264,9 @@
         </constraints>
         <properties/>
         <border type="line" title-resource-bundle="org/jetbrains/idea/svn/SvnBundle" title-key="dialog.edit.http.proxies.settings.panel.repositories.title"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="e003d" class="javax.swing.JButton" binding="myTestConnectionButton">
             <constraints>

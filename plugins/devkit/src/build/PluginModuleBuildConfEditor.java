@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -77,7 +78,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     myWholePanel.add(myPluginXMLLabel, gc);
     myWholePanel.add(myPluginXML, gc);
     JPanel manifestPanel = new JPanel(new GridBagLayout());
-    manifestPanel.setBorder(BorderFactory.createTitledBorder(DevKitBundle.message("manifest.settings")));
+    manifestPanel.setBorder(IdeBorderFactory.createTitledBorder(DevKitBundle.message("manifest.settings")));
     gc.insets.left = 0;
     manifestPanel.add(myUseUserManifest, gc);
     gc.insets.left = 2;

@@ -9,6 +9,9 @@
     <border type="none" title-resource-bundle="git4idea/i18n/GitBundle" title-key="refspec.title" title-position="2">
       <font/>
     </border>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
     <children>
       <scrollpane class="com.intellij.ui.components.JBScrollPane" id="97a2b">
         <constraints>

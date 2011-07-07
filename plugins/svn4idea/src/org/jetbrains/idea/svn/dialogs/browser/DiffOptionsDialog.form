@@ -49,6 +49,9 @@
           <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <border type="none" title="Compare Type" title-justification="4" title-position="2">
           <font name="Tahoma" size="11" style="0"/>
           <title-color color="-16777216"/>

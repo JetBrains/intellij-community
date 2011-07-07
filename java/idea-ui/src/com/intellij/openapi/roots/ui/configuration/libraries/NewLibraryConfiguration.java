@@ -15,17 +15,36 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author nik
 */
 public abstract class NewLibraryConfiguration {
-  private String myDefaultLibraryName;
+  private final String myDefaultLibraryName;
+  private final LibraryType<?> myLibraryType;
+  private final LibraryProperties myProperties;
 
-  protected NewLibraryConfiguration(String defaultLibraryName) {
+  protected NewLibraryConfiguration(@NotNull String defaultLibraryName) {
+    this(defaultLibraryName, null, null);
+  }
+
+  protected <P extends LibraryProperties> NewLibraryConfiguration(@NotNull String defaultLibraryName, @Nullable LibraryType<P> libraryType, @Nullable P properties) {
     myDefaultLibraryName = defaultLibraryName;
+    myLibraryType = libraryType;
+    myProperties = properties;
+  }
+
+  public LibraryType<?> getLibraryType() {
+    return myLibraryType;
+  }
+
+  public LibraryProperties getProperties() {
+    return myProperties;
   }
 
   public String getDefaultLibraryName() {

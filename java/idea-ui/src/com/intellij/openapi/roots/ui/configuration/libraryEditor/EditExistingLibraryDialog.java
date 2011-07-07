@@ -18,10 +18,13 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -37,7 +40,9 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   public static EditExistingLibraryDialog createDialog(Component parent,
                                                        LibraryTableModifiableModelProvider modelProvider,
                                                        Library library,
-                                                       @Nullable Project project) {
+                                                       @Nullable Project project,
+                                                       LibraryTablePresentation presentation,
+                                                       StructureConfigurableContext context) {
     LibraryTable.ModifiableModel modifiableModel = modelProvider.getModifiableModel();
     boolean commitChanges = false;
     ExistingLibraryEditor libraryEditor;
@@ -48,19 +53,31 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
       libraryEditor = new ExistingLibraryEditor(library, null);
       commitChanges = true;
     }
-    return new EditExistingLibraryDialog(parent, modifiableModel, project, libraryEditor, commitChanges);
+    return new EditExistingLibraryDialog(parent, modifiableModel, project, libraryEditor, commitChanges, presentation, context);
   }
 
   private EditExistingLibraryDialog(Component parent,
-                                   LibraryTable.ModifiableModel tableModifiableModel,
-                                   @Nullable Project project, ExistingLibraryEditor libraryEditor, boolean commitChanges) {
+                                    LibraryTable.ModifiableModel tableModifiableModel,
+                                    @Nullable Project project,
+                                    ExistingLibraryEditor libraryEditor,
+                                    boolean commitChanges,
+                                    LibraryTablePresentation presentation, StructureConfigurableContext context) {
     super(parent, new LibraryRootsComponent(project, libraryEditor));
+    setTitle("Configure " + presentation.getDisplayName(false));
     myTableModifiableModel = tableModifiableModel;
     myLibraryEditor = libraryEditor;
     myCommitChanges = commitChanges;
     if (commitChanges) {
       Disposer.register(getDisposable(), libraryEditor);
     }
+    context.addLibraryEditorListener(new LibraryEditorListener() {
+      @Override
+      public void libraryRenamed(@NotNull Library library, String oldName, String newName) {
+        if (library.equals(myLibraryEditor.getLibrary())) {
+          myNameField.setText(newName);
+        }
+      }
+    }, getDisposable());
     init();
   }
 

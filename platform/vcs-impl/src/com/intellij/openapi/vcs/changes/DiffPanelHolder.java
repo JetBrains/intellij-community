@@ -33,7 +33,7 @@ public class DiffPanelHolder {
   public static final int cacheLimit = 10;
   private final LinkedList<DiffPanel> myCache;
   private final LinkedList<DiffPanel> myOwnList;
-  private final Project myProject;
+  protected final Project myProject;
 
   public DiffPanelHolder(LinkedList<DiffPanel> cache, Project project) {
     myCache = cache;
@@ -54,16 +54,21 @@ public class DiffPanelHolder {
 
   public DiffPanel getOrCreate() {
     if (myCache.isEmpty()) {
-      final DiffPanel diffPanel = DiffManager.getInstance().createDiffPanel(null, myProject);
-      diffPanel.enableToolbar(false);
-      diffPanel.removeStatusBar();
-      DiffPanelOptions o = ((DiffPanelEx)diffPanel).getOptions();
-      o.setRequestFocusOnNewContent(false);
+      final DiffPanel diffPanel = create();
       myOwnList.addLast(diffPanel);
       return diffPanel;
     }
     final DiffPanel diffPanel = myCache.removeFirst();
     myOwnList.addLast(diffPanel);
+    return diffPanel;
+  }
+
+  protected DiffPanel create() {
+    final DiffPanel diffPanel = DiffManager.getInstance().createDiffPanel(null, myProject);
+    diffPanel.enableToolbar(false);
+    diffPanel.removeStatusBar();
+    DiffPanelOptions o = ((DiffPanelEx)diffPanel).getOptions();
+    o.setRequestFocusOnNewContent(false);
     return diffPanel;
   }
 }

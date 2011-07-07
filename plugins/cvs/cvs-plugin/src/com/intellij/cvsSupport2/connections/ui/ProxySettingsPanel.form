@@ -8,6 +8,9 @@
     </constraints>
     <properties/>
     <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.configure.proxy.proxy.settings"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
     <children>
       <component id="cfc45" class="javax.swing.JCheckBox" binding="myUseProxy">
         <constraints>

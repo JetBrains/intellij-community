@@ -39,6 +39,9 @@
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="messages/UIDesignerBundle" title-key="title.default.alignment"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="5e09f" class="javax.swing.JRadioButton" binding="myLeftRadioButton">
             <constraints>
@@ -107,6 +110,9 @@
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="messages/UIDesignerBundle" title-key="title.size"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="8274" class="javax.swing.JRadioButton" binding="myPreferredRadioButton">
             <constraints>

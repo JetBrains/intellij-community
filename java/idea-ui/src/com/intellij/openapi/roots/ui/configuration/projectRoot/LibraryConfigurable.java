@@ -150,6 +150,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   private void resetProperties() {
     if (myLibraryEditorComponent != null) {
+      myLibraryEditorComponent.updatePropertiesLabel();
       myLibraryEditorComponent.resetProperties();
       myPropertiesLoaded = true;
     }

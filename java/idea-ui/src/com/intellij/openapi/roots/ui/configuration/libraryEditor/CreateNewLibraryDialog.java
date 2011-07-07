@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -68,7 +69,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
   public Library createLibrary() {
     final LibraryTableBase.ModifiableModelEx modifiableModel = (LibraryTableBase.ModifiableModelEx)getTableModifiableModel();
     final Library library = modifiableModel.createLibrary(myLibraryEditor.getName(), myLibraryEditor.getType());
-    final Library.ModifiableModel model = library.getModifiableModel();
+    final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
     myLibraryEditor.apply(model);
     new WriteAction() {
       protected void run(final Result result) {

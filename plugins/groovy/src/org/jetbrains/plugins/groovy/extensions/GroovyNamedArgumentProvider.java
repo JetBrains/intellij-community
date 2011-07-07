@@ -123,14 +123,15 @@ public abstract class GroovyNamedArgumentProvider {
 
   public static class ArgumentDescriptor {
 
-    private PsiElement myNavigationElement;
+    private final PsiElement myNavigationElement;
 
     private boolean isShowFirst = true;
 
-    protected ArgumentDescriptor() {
+    public ArgumentDescriptor() {
+      this(null);
     }
 
-    protected ArgumentDescriptor(PsiElement navigationElement) {
+    public ArgumentDescriptor(@Nullable PsiElement navigationElement) {
       this.myNavigationElement = navigationElement;
     }
 

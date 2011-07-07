@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.DateFilterComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -205,7 +206,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         myEditors.put(vcs, editor);
 
         JPanel wrapperPane = new JPanel(new BorderLayout());
-        wrapperPane.setBorder(BorderFactory.createTitledBorder(vcs.getDisplayName()));
+        wrapperPane.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName()));
         final JCheckBox checkBox = new JCheckBox(VcsBundle.message("composite.change.provider.include.vcs.checkbox", vcs.getDisplayName()), true);
         checkBox.addActionListener(new ActionListener() {
           public void actionPerformed(final ActionEvent e) {

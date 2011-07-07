@@ -23,6 +23,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,7 +63,7 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications")));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications")));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {

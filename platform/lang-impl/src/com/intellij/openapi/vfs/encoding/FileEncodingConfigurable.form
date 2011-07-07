@@ -6,6 +6,9 @@
       <xy x="20" y="20" width="571" height="400"/>
     </constraints>
     <properties/>
+    <clientProperties>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+    </clientProperties>
     <border type="none" title=""/>
     <children>
       <component id="e9af6" class="javax.swing.JLabel" binding="myTitleLabel">

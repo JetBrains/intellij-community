@@ -44,6 +44,9 @@
               </grid>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+            </clientProperties>
             <border type="etched" title="Options"/>
             <children>
               <component id="e40ef" class="javax.swing.JCheckBox" binding="revisionCbx">

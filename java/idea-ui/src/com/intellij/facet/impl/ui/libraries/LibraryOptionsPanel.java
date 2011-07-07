@@ -252,7 +252,7 @@ public class LibraryOptionsPanel implements Disposable {
   private void doCreate() {
     final NewLibraryConfiguration libraryConfiguration = mySettings.getLibraryDescription().createNewLibrary(myPanel, getBaseDirectory());
     if (libraryConfiguration != null) {
-      final NewLibraryEditor libraryEditor = new NewLibraryEditor();
+      final NewLibraryEditor libraryEditor = new NewLibraryEditor(libraryConfiguration.getLibraryType(), libraryConfiguration.getProperties());
       libraryEditor.setName(myLibrariesContainer.suggestUniqueLibraryName(libraryConfiguration.getDefaultLibraryName()));
       libraryConfiguration.addRoots(libraryEditor);
       if (myLibraryComboBoxModel.get(0) == null) {
@@ -345,7 +345,7 @@ public class LibraryOptionsPanel implements Disposable {
     else {
       path = PathUtil.getFileName(downloadPath);
     }
-    return MessageFormat.format("{0} jar(s) will be downloaded into <b>{1}</b> directory <br>" +
+    return MessageFormat.format("{0} {0, choice, 1#jar|2#jars} will be downloaded into <b>{1}</b> directory<br>" +
                                    "{2} library <b>{3}</b> will be created",
                                    downloadSettings.getSelectedDownloads().size(),
                                    path,

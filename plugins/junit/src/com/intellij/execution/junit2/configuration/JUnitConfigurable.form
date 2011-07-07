@@ -91,6 +91,9 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/ExecutionBundle" title-key="junit.configuration.test.border"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="b109" class="com.intellij.openapi.ui.LabeledComponent" binding="myMethod">
                 <constraints>

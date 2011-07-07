@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,14 +55,19 @@ public class DownloadableLibraryEditor extends LibraryPropertiesEditor {
     myDescription = description;
     myEditorComponent = editorComponent;
     myLibraryType = libraryType;
-    myDescriptionLabel.setText(libraryType.getDescription(editorComponent.getProperties()));
+    updateDescription();
     myCurrentVersionString = myEditorComponent.getProperties().getVersionString();
+    myChangeVersionButton.setVisible(!myEditorComponent.isNewLibrary());
     myChangeVersionButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         changeVersion();
       }
     });
+  }
+
+  private void updateDescription() {
+    myDescriptionLabel.setText(myLibraryType.getDescription(myEditorComponent.getProperties()));
   }
 
   private void changeVersion() {
@@ -91,9 +97,11 @@ public class DownloadableLibraryEditor extends LibraryPropertiesEditor {
               final NewLibraryEditor editor = settings.download(myMainPanel);
               if (editor != null) {
                 myEditorComponent.getLibraryEditor().removeAllRoots();
-                editor.copyRoots(myEditorComponent.getLibraryEditor());
+                myEditorComponent.getLibraryEditor().setName(editor.getName());
+                editor.applyTo((LibraryEditorBase)myEditorComponent.getLibraryEditor());
                 myEditorComponent.updateRootsTree();
                 myCurrentVersionString = settings.getVersion().getVersionString();
+                updateDescription();
                 myModified = true;
               }
             }
@@ -130,5 +138,6 @@ public class DownloadableLibraryEditor extends LibraryPropertiesEditor {
 
   @Override
   public void reset() {
+    updateDescription();
   }
 }

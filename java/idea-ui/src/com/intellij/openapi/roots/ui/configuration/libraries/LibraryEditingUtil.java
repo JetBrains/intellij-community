@@ -16,17 +16,24 @@
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.google.common.base.Predicate;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.ModuleLibraryTable;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,6 +44,8 @@ import java.util.Set;
  * @author nik
  */
 public class LibraryEditingUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil");
+
   private LibraryEditingUtil() {
   }
 
@@ -126,5 +135,14 @@ public class LibraryEditingUtil {
         }
       }
     }
+  }
+
+  public static LibraryTablePresentation getLibraryTablePresentation(@NotNull Project project, @NotNull String level) {
+    if (level.equals(LibraryTableImplUtil.MODULE_LEVEL)) {
+      return ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION;
+    }
+    final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, project);
+    LOG.assertTrue(table != null, level);
+    return table.getPresentation();
   }
 }

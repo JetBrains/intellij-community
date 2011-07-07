@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffPanel;
-import com.intellij.openapi.diff.ShiftedSimpleContent;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,8 +30,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.Details;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.actions.DiffRequestFromChange;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.UIVcsUtil;
@@ -69,7 +66,7 @@ public class VcsChangeDetailsManager {
 
     myDiffPanelCache = new LinkedList<DiffPanel>();
     myDedicatedList.add(new BinaryDiffDetailsProvider(project, myDiffPanelCache));
-    myDedicatedList.add(new FragmentedDiffDetailsProvider(project, new FragmentedDiffRequestFromChange(project), myDiffPanelCache));
+    myDedicatedList.add(new FragmentedDiffDetailsProvider(project, myDiffPanelCache));
 
     Disposer.register(project, new Disposable() {
       @Override
@@ -190,7 +187,8 @@ public class VcsChangeDetailsManager {
       topPanel.add(wrapper, BorderLayout.CENTER);
 
       wholeWrapper.add(topPanel, BorderLayout.NORTH);
-      wholeWrapper.add(new JBScrollPane(panel.getComponent()), BorderLayout.CENTER);
+      //wholeWrapper.add(new JBScrollPane(panel.getComponent()), BorderLayout.CENTER);
+      wholeWrapper.add(panel.getComponent(), BorderLayout.CENTER);
 
       return new Pair<JPanel, Disposable>(wholeWrapper, new Disposable() {
         @Override
@@ -229,17 +227,16 @@ public class VcsChangeDetailsManager {
       UIVcsUtil.errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false), null);
   }
 
-  private static class FragmentedDiffDetailsProvider implements VcsChangeDetailsProvider<ValueWithVcsException<List<BeforeAfter<ShiftedSimpleContent>>>> {
-    private final DiffRequestFromChange<ShiftedSimpleContent> myRequestFromChange;
+  private static class FragmentedDiffDetailsProvider implements VcsChangeDetailsProvider<ValueWithVcsException<FragmentedContent>> {
+    private final FragmentedDiffRequestFromChange myRequestFromChange;
     private final Project myProject;
     private final LinkedList<DiffPanel> myDiffPanelCache;
 
     private FragmentedDiffDetailsProvider(Project project,
-                                          DiffRequestFromChange<ShiftedSimpleContent> requestFromChange,
                                           final LinkedList<DiffPanel> diffPanelCache) {
-      myRequestFromChange = requestFromChange;
+      myRequestFromChange = new FragmentedDiffRequestFromChange(project);
       myProject = project;
-      myDiffPanelCache = diffPanelCache;
+      myDiffPanelCache = new LinkedList<DiffPanel>();
     }
 
     @Override
@@ -253,22 +250,22 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
-    public ValueWithVcsException<List<BeforeAfter<ShiftedSimpleContent>>> load(final Change change) {
-      return new ValueWithVcsException<List<BeforeAfter<ShiftedSimpleContent>>>() {
+    public ValueWithVcsException<FragmentedContent> load(final Change change) {
+      return new ValueWithVcsException<FragmentedContent>() {
         @Override
-        protected List<BeforeAfter<ShiftedSimpleContent>> computeImpl() throws VcsException {
-          return myRequestFromChange.createRequestForChange(change, extraLines);
+        protected FragmentedContent computeImpl() throws VcsException {
+          return myRequestFromChange.getRanges(change, extraLines);
         }
       };
     }
 
     @Override
-    public Pair<JPanel, Disposable> comment(Change change, ValueWithVcsException<List<BeforeAfter<ShiftedSimpleContent>>> value) {
-      final List<BeforeAfter<ShiftedSimpleContent>> requestForChange;
+    public Pair<JPanel, Disposable> comment(Change change, ValueWithVcsException<FragmentedContent> value) {
+      final FragmentedContent requestForChange;
       try {
         requestForChange = value.get();
         if (requestForChange == null) throw new VcsException("Can not load content");
-        if (requestForChange.isEmpty()) {
+        if (requestForChange.getRanges().isEmpty()) {
           return noDifferences();
         }
       }

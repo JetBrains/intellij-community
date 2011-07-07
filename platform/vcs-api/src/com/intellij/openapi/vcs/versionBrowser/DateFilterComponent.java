@@ -40,7 +40,7 @@ public class DateFilterComponent {
   private JPanel myRootPanel;
 
   public DateFilterComponent() {
-    myDatePanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("border.changes.filter.date.filter")));
+    myDatePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter")));
     myDateAfter.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
     myDateBefore.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
     ActionListener listener = new ActionListener() {

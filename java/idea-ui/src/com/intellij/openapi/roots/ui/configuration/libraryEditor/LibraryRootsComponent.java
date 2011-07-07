@@ -116,7 +116,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       myDescriptor = new DefaultLibraryRootsComponentDescriptor();
     }
     init(new LibraryTreeStructure(this, myDescriptor));
-    updateProperties();
+    updatePropertiesLabel();
   }
 
   @NotNull
@@ -125,7 +125,12 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return getLibraryEditor().getProperties();
   }
 
-  private void updateProperties() {
+  @Override
+  public boolean isNewLibrary() {
+    return getLibraryEditor() instanceof NewLibraryEditor;
+  }
+
+  public void updatePropertiesLabel() {
     StringBuilder text = new StringBuilder();
     for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES))) {
       if (text.length() > 0) {
@@ -343,7 +348,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
           }
         }
       });
-      updateProperties();
+      updatePropertiesLabel();
       myTreeBuilder.queueUpdate();
     }
     return filesToAttach;
@@ -383,7 +388,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   protected void librariesChanged(boolean putFocusIntoTree) {
-    updateProperties();
+    updatePropertiesLabel();
     myTreeBuilder.queueUpdate();
     if (putFocusIntoTree) {
       myTree.requestFocus();

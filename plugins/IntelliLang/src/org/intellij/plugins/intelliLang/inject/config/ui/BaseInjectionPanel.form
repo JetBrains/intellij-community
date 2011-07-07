@@ -19,6 +19,9 @@
         </constraints>
         <properties/>
         <border type="none" title="Places Pattern"/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <children/>
       </grid>
       <nested-form id="b6e0b" form-file="org/intellij/plugins/intelliLang/inject/config/ui/AdvancedPanel.form" binding="myAdvancedPanel" custom-create="true">

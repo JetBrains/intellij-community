@@ -16,6 +16,9 @@
           <maximumSize width="250" height="150"/>
           <preferredSize width="250" height="150"/>
         </properties>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <border type="etched" title="Module Settings"/>
         <children>
           <component id="1f996" class="javax.swing.JLabel">

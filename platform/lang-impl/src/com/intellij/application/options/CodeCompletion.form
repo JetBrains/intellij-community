@@ -25,7 +25,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.border.IdeaBorderFactory"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
               <html.disable class="java.lang.Boolean" value="false"/>
             </clientProperties>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="title.code.completion"/>
@@ -207,6 +207,9 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+            </clientProperties>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="title.parameter.info"/>
             <children>
               <component id="c7fb5" class="javax.swing.JCheckBox" binding="myCbParameterInfoPopup">

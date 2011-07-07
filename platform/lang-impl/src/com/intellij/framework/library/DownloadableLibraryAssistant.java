@@ -33,4 +33,5 @@ public abstract class DownloadableLibraryAssistant {
 
   @NotNull
   public abstract DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull URL... localUrls);
+
 }

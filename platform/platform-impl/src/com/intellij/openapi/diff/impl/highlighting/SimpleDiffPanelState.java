@@ -22,6 +22,7 @@ import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.fragments.FragmentListImpl;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
+import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.project.Project;
@@ -31,20 +32,30 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements Disposable  {
-  private ComparisonPolicy myComparisonPolicy = ComparisonPolicy.DEFAULT;
+  protected ComparisonPolicy myComparisonPolicy = ComparisonPolicy.DEFAULT;
+  protected DiffPolicy myDiffPolicy;
   protected final DiffMarkupType myAppender1;
   protected final DiffMarkupType myAppender2;
-  private FragmentList myFragmentList = FragmentList.EMPTY;
-  private final Project myProject;
+  protected FragmentList myFragmentList = FragmentList.EMPTY;
+  protected final Project myProject;
 
   public SimpleDiffPanelState(DiffMarkupType diffMarkup1, DiffMarkupType diffMarkup2, Project project) {
     myAppender1 = diffMarkup1;
     myAppender2 = diffMarkup2;
     myProject = project;
+    myDiffPolicy = DiffPolicy.LINES_WO_FORMATTING;
   }
 
   public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
     myComparisonPolicy = comparisonPolicy;
+  }
+
+  public void setDiffPolicy(DiffPolicy diffPolicy) {
+    myDiffPolicy = diffPolicy;
+  }
+
+  public DiffPolicy getDiffPolicy() {
+    return myDiffPolicy;
   }
 
   public ComparisonPolicy getComparisonPolicy() {
@@ -86,7 +97,7 @@ public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements 
       return LineBlocks.EMPTY;
     }
 
-    return addMarkup(new TextCompareProcessor(myComparisonPolicy).process(myAppender1.getText(), myAppender2.getText()));
+    return addMarkup(new TextCompareProcessor(myComparisonPolicy, myDiffPolicy).process(myAppender1.getText(), myAppender2.getText()));
   }
 
   public Project getProject() { return myProject; }

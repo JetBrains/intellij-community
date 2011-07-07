@@ -15,6 +15,9 @@
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.add.to.group"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <scrollpane class="com.intellij.ui.components.JBScrollPane" id="fe8a">
             <constraints>
@@ -62,6 +65,9 @@
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.group.anchor"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="f4be7" class="javax.swing.JRadioButton" binding="myAnchorFirstRadio">
                 <constraints>
@@ -198,6 +204,9 @@
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.keyboard.shortcuts"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="d5e7e" class="javax.swing.JLabel">
             <constraints>

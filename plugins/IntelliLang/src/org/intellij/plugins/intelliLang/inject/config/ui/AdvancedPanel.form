@@ -15,6 +15,9 @@
         </constraints>
         <properties/>
         <border type="none" title="Advanced"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="843" class="javax.swing.JLabel">
             <constraints>

@@ -21,6 +21,7 @@ import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +48,7 @@ public class BrowserSettingsPanel extends JPanel {
 
     // generic system browser
     final JPanel genericPanel = new JPanel();
-    genericPanel.setBorder(BorderFactory.createTitledBorder("Default Web Browser"));
+    genericPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Web Browser"));
     genericPanel.setLayout(new BoxLayout(genericPanel, BoxLayout.Y_AXIS));
     final JPanel innerPanel1 = new JPanel(new BorderLayout());
 

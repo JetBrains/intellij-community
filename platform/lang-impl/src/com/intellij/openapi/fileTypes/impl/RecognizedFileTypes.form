@@ -7,6 +7,9 @@
     </constraints>
     <properties/>
     <border type="etched" title-resource-bundle="messages/FileTypesBundle" title-key="filetypes.recognized.group"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
     <children>
       <scrollpane class="com.intellij.ui.components.JBScrollPane" id="de9d1">
         <constraints>
