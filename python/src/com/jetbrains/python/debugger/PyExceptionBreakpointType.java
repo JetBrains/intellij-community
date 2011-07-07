@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -168,7 +169,7 @@ public class PyExceptionBreakpointType
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
       panel.add(innerPanel, BorderLayout.NORTH);
-      panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Notifications"));
+      panel.setBorder(IdeBorderFactory.createTitledBorder("Notifications"));
 
       ActionListener listener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
