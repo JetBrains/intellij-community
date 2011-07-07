@@ -15,6 +15,9 @@
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.variable.constraints.border"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <grid id="4cae8" binding="textConstraintsPanel" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
@@ -23,6 +26,9 @@
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.text.constraints.border"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="cc210" class="javax.swing.JLabel">
                 <constraints>
@@ -72,6 +78,9 @@
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.expression.constraints.border"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="2bdb4" class="javax.swing.JCheckBox" binding="read">
                 <constraints>
@@ -197,6 +206,9 @@
                 </constraints>
                 <properties/>
                 <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.script.constraints.border"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
                 <children>
                   <component id="cdf9" class="javax.swing.JLabel">
                     <constraints>
@@ -227,6 +239,9 @@
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.occurrences.count.border"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="e4b4a" class="javax.swing.JLabel">
                 <constraints>
@@ -284,6 +299,9 @@
             </constraints>
             <properties/>
             <border type="none" title="Contained in constraints"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="7003f" class="com.intellij.ui.ComboboxWithBrowseButton" binding="withinCombo">
                 <constraints>
@@ -318,6 +336,9 @@
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.variables.border"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <grid id="d6a7" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
