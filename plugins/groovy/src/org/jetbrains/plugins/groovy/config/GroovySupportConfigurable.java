@@ -15,12 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
+import com.intellij.framework.library.FrameworkSupportWithLibrary;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
-import com.intellij.ide.util.frameworkSupport.FrameworkVersionWithLibrary;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,18 +32,11 @@ import java.util.List;
 /**
 * @author peter
 */
-public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
-  private FrameworkVersion myVersion;
-
-  public GroovySupportConfigurable() {
-  }
-
+public class GroovySupportConfigurable extends FrameworkSupportConfigurable implements FrameworkSupportWithLibrary {
+  @NotNull
   @Override
-  public FrameworkVersion getSelectedVersion() {
-    if (myVersion == null) {
-      myVersion = new FrameworkVersionWithLibrary("", true, new GroovyLibraryDescription());
-    }
-    return myVersion;
+  public CustomLibraryDescription createLibraryDescription() {
+    return new GroovyLibraryDescription();
   }
 
   @Override

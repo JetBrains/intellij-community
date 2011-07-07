@@ -17,8 +17,8 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.JarDirectories;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.LightFilePointer;
@@ -67,6 +67,11 @@ public class NewLibraryEditor extends LibraryEditorBase {
   @Override
   public LibraryProperties getProperties() {
     return myProperties;
+  }
+
+  @Override
+  public void setProperties(LibraryProperties properties) {
+    myProperties = properties;
   }
 
   @Override
@@ -168,12 +173,13 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return false;
   }
 
-  public void apply(@NotNull Library.ModifiableModel model) {
+  public void apply(@NotNull LibraryEx.ModifiableModelEx model) {
     model.setName(myLibraryName);
-    applyRoots(model);
+    applyTo(model);
   }
 
-  public void applyRoots(Library.ModifiableModel model) {
+  public void applyTo(LibraryEx.ModifiableModelEx model) {
+    model.setProperties(myProperties);
     for (OrderRootType type : myRoots.keySet()) {
       for (LightFilePointer pointer : myRoots.get(type)) {
         model.addRoot(pointer.getUrl(), type);
@@ -186,7 +192,8 @@ public class NewLibraryEditor extends LibraryEditorBase {
     }
   }
 
-  public void copyRoots(LibraryEditor editor) {
+  public void applyTo(LibraryEditorBase editor) {
+    editor.setProperties(myProperties);
     for (OrderRootType type : myRoots.keySet()) {
       for (LightFilePointer pointer : myRoots.get(type)) {
         editor.addRoot(pointer.getUrl(), type);

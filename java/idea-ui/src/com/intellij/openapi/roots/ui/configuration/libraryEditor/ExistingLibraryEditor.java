@@ -71,6 +71,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
     return myLibraryProperties;
   }
 
+  @Override
   public void setProperties(LibraryProperties properties) {
     myLibraryProperties = properties;
   }

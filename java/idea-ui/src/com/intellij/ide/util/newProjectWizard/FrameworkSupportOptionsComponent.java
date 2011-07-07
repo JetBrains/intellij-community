@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
+import com.intellij.framework.library.FrameworkSupportWithLibrary;
 import com.intellij.ide.util.frameworkSupport.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
@@ -77,8 +78,9 @@ public class FrameworkSupportOptionsComponent {
 
     final CustomLibraryDescription description = createLibraryDescription();
     if (description != null) {
+      final boolean libraryOnly = myConfigurable instanceof FrameworkSupportWithLibrary && ((FrameworkSupportWithLibrary)myConfigurable).isLibraryOnly();
       myLibraryOptionsPanel = new LibraryOptionsPanel(description, myModel.getBaseDirectoryForLibrariesPath(), myConfigurable.getSelectedVersion(),
-                                                      container, !myConfigurable.isLibraryOnly());
+                                                      container, !libraryOnly);
       Disposer.register(myConfigurable, myLibraryOptionsPanel);
       if (addSeparator) {
         JComponent separator1 = SeparatorFactory.createSeparator("Libraries", null);
@@ -99,13 +101,12 @@ public class FrameworkSupportOptionsComponent {
 
   @Nullable
   private CustomLibraryDescription createLibraryDescription() {
-    List<? extends FrameworkVersion> versions = myConfigurable.getVersions();
-    if (versions.isEmpty()) return null;
-
-    if (versions.get(0) instanceof FrameworkVersionWithLibrary) {
-      return ((FrameworkVersionWithLibrary)versions.get(0)).getLibraryDescription();
+    if (myConfigurable instanceof FrameworkSupportWithLibrary) {
+      return ((FrameworkSupportWithLibrary)myConfigurable).createLibraryDescription();
     }
 
+    List<? extends FrameworkVersion> versions = myConfigurable.getVersions();
+    if (versions.isEmpty()) return null;
     return OldCustomLibraryDescription.createByVersions(versions);
   }
 

@@ -38,7 +38,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author nik
@@ -85,9 +87,8 @@ public class LibrariesContainerFactory {
     LibraryTableBase.ModifiableModelEx modifiableModel = (LibraryTableBase.ModifiableModelEx) table.getModifiableModel();
     final String name = StringUtil.isEmpty(editor.getName()) ? null : getUniqueLibraryName(editor.getName(), modifiableModel);
     Library library = modifiableModel.createLibrary(name, editor.getType());
-    final Library.ModifiableModel model = library.getModifiableModel();
-    editor.applyRoots(model);
-    ((LibraryEx.ModifiableModelEx)model).setProperties(editor.getProperties());
+    final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
+    editor.applyTo(model);
     model.commit();
     modifiableModel.commit();
     return library;
@@ -273,7 +274,7 @@ public class LibrariesContainerFactory {
       Library library = model.createLibrary(getUniqueLibraryName(libraryEditor.getName(), model), libraryEditor.getType());
       ExistingLibraryEditor createdLibraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
       createdLibraryEditor.setProperties(libraryEditor.getProperties());
-      libraryEditor.copyRoots(createdLibraryEditor);
+      libraryEditor.applyTo(createdLibraryEditor);
       return library;
     }
 

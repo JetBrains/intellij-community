@@ -15,23 +15,16 @@
  */
 package com.intellij.framework.library;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
-
-import java.net.URL;
 
 /**
  * @author nik
  */
-public abstract class DownloadableLibraryAssistant {
-  public static DownloadableLibraryAssistant getInstance() {
-    return ServiceManager.getService(DownloadableLibraryAssistant.class);
-  }
+public interface FrameworkSupportWithLibrary {
 
   @NotNull
-  public abstract DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName);
+  CustomLibraryDescription createLibraryDescription();
 
-  @NotNull
-  public abstract DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull URL... localUrls);
-
+  boolean isLibraryOnly();
 }

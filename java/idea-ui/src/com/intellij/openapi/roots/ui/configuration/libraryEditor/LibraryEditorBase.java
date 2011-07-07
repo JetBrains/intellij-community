@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,4 +43,6 @@ public abstract class LibraryEditorBase implements LibraryEditor {
   }
 
   protected abstract Collection<OrderRootType> getOrderRootTypes();
+
+  public abstract void setProperties(LibraryProperties properties);
 }

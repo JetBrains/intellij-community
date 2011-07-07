@@ -355,7 +355,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         final String tableLevel = table != null ? table.getTableLevel() : LibraryTableImplUtil.MODULE_LEVEL;
         final LibraryTablePresentation presentation = LibraryEditingUtil.getLibraryTablePresentation(getProject(), tableLevel);
         final LibraryTableModifiableModelProvider provider = getModifiableModelProvider(tableLevel);
-        EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject(), presentation);
+        EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject(),
+                                                                                  presentation, getStructureConfigurableContext());
         dialog.setContextModule(getRootModel().getModule());
         dialog.show();
         myEntryTable.repaint();

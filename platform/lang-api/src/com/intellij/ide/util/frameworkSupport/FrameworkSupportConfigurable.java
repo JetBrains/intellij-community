@@ -48,10 +48,6 @@ public abstract class FrameworkSupportConfigurable implements Disposable {
     return Collections.emptyList();
   }
 
-  public boolean isLibraryOnly() {
-    return false;
-  }
-
   public void onFrameworkSelectionChanged(boolean selected) {
   }
 
