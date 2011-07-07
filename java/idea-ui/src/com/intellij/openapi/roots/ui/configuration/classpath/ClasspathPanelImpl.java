@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -33,6 +32,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -206,15 +206,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
                                              myEntryTable);
     actionGroup.add(navigateAction);
     actionGroup.add(new MyFindUsagesAction());
-    addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.PROJECT_LEVEL,
-                                LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()).getPresentation());
-    addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL,
-                                LibraryTablesRegistrar.getInstance().getLibraryTable().getPresentation());
-    addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL, ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION);
+    addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.PROJECT_LEVEL);
+    addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL);
+    addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL);
     PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
-  private void addChangeLibraryLevelAction(DefaultActionGroup actionGroup, String tableLevel, LibraryTablePresentation presentation) {
+  private void addChangeLibraryLevelAction(DefaultActionGroup actionGroup, String tableLevel) {
+    final LibraryTablePresentation presentation = LibraryEditingUtil.getLibraryTablePresentation(getProject(), tableLevel);
     actionGroup.add(new ChangeLibraryLevelInClasspathAction(this, presentation.getDisplayName(true), tableLevel));
   }
 
@@ -353,8 +352,10 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           return;
         }
         final LibraryTable table = library.getTable();
-        final LibraryTableModifiableModelProvider provider = getModifiableModelProvider(table != null ? table.getTableLevel() : LibraryTableImplUtil.MODULE_LEVEL);
-        EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject());
+        final String tableLevel = table != null ? table.getTableLevel() : LibraryTableImplUtil.MODULE_LEVEL;
+        final LibraryTablePresentation presentation = LibraryEditingUtil.getLibraryTablePresentation(getProject(), tableLevel);
+        final LibraryTableModifiableModelProvider provider = getModifiableModelProvider(tableLevel);
+        EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject(), presentation);
         dialog.setContextModule(getRootModel().getModule());
         dialog.show();
         myEntryTable.repaint();

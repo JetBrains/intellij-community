@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.util.Comparing;
@@ -37,7 +38,7 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   public static EditExistingLibraryDialog createDialog(Component parent,
                                                        LibraryTableModifiableModelProvider modelProvider,
                                                        Library library,
-                                                       @Nullable Project project) {
+                                                       @Nullable Project project, LibraryTablePresentation presentation) {
     LibraryTable.ModifiableModel modifiableModel = modelProvider.getModifiableModel();
     boolean commitChanges = false;
     ExistingLibraryEditor libraryEditor;
@@ -48,13 +49,17 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
       libraryEditor = new ExistingLibraryEditor(library, null);
       commitChanges = true;
     }
-    return new EditExistingLibraryDialog(parent, modifiableModel, project, libraryEditor, commitChanges);
+    return new EditExistingLibraryDialog(parent, modifiableModel, project, libraryEditor, commitChanges, presentation);
   }
 
   private EditExistingLibraryDialog(Component parent,
-                                   LibraryTable.ModifiableModel tableModifiableModel,
-                                   @Nullable Project project, ExistingLibraryEditor libraryEditor, boolean commitChanges) {
+                                    LibraryTable.ModifiableModel tableModifiableModel,
+                                    @Nullable Project project,
+                                    ExistingLibraryEditor libraryEditor,
+                                    boolean commitChanges,
+                                    LibraryTablePresentation presentation) {
     super(parent, new LibraryRootsComponent(project, libraryEditor));
+    setTitle(presentation.getLibraryTableEditorTitle());
     myTableModifiableModel = tableModifiableModel;
     myLibraryEditor = libraryEditor;
     myCommitChanges = commitChanges;
