@@ -138,11 +138,9 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
-    queueUpdate();
-
-    getReady(this).doWhenDone(new Runnable() {
+    queueUpdate().doWhenDone(new Runnable() {
       public void run() {
-        getTree().validate();
+        revalidateTree();
 
         Object toSelect = preferredSelection != null ? preferredSelection : myLastSuccessfulSelect;
 
@@ -182,6 +180,14 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
     return result;
   }
+
+  public void revalidateTree() {
+    myTree.invalidate();
+    myTree.setRowHeight(myTree.getRowHeight() == -1 ? -2 : -1);
+    myTree.revalidate();
+    myTree.repaint();
+  }
+
 
   private FilteringTreeStructure getFilteredStructure() {
     return ((FilteringTreeStructure)getTreeStructure());

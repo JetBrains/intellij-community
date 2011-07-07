@@ -3664,6 +3664,7 @@ public class AbstractTreeUi {
     boolean willAffectSelection = elements.length > 0 || elements.length == 0 && addToSelection;
     if (!willAffectSelection) {
       runDone(onDone);
+      maybeReady();
       return;
     }
 
@@ -3689,66 +3690,71 @@ public class AbstractTreeUi {
 
     runDone(new Runnable() {
       public void run() {
-        if (!checkDeferred(deferred, onDone)) return;
+        try {
+          if (!checkDeferred(deferred, onDone)) return;
 
-        final Set<Object> currentElements = getSelectedElements();
+          final Set<Object> currentElements = getSelectedElements();
 
-        if (checkCurrentSelection && !currentElements.isEmpty() && elements.length == currentElements.size()) {
-          boolean runSelection = false;
-          for (Object eachToSelect : elements) {
-            if (!currentElements.contains(eachToSelect)) {
-              runSelection = true;
-              break;
-            }
-          }
-
-          if (!runSelection) {
-            if (elements.length > 0) {
-              selectVisible(elements[0], onDone, true, true, scrollToVisible);
-            }
-            return;
-          }
-        }
-
-        Set<Object> toSelect = new HashSet<Object>();
-        myTree.clearSelection();
-        ContainerUtil.addAll(toSelect, elements);
-        if (addToSelection) {
-          toSelect.addAll(currentElements);
-        }
-
-        if (checkIfInStructure) {
-          final Iterator<Object> allToSelect = toSelect.iterator();
-          while (allToSelect.hasNext()) {
-            Object each = allToSelect.next();
-            if (!isInStructure(each)) {
-              allToSelect.remove();
-            }
-          }
-        }
-
-        final Object[] elementsToSelect = ArrayUtil.toObjectArray(toSelect);
-
-        if (wasRootNodeInitialized()) {
-          final int[] originalRows = myTree.getSelectionRows();
-          if (!addToSelection) {
-            myTree.clearSelection();
-          }
-          addNext(elementsToSelect, 0, new Runnable() {
-            public void run() {
-              if (getTree().isSelectionEmpty()) {
-                processInnerChange(new Runnable() {
-                  public void run() {
-                    restoreSelection(currentElements);
-                  }
-                });
+          if (checkCurrentSelection && !currentElements.isEmpty() && elements.length == currentElements.size()) {
+            boolean runSelection = false;
+            for (Object eachToSelect : elements) {
+              if (!currentElements.contains(eachToSelect)) {
+                runSelection = true;
+                break;
               }
-              runDone(onDone);
             }
-          }, originalRows, deferred, scrollToVisible, canSmartExpand);
+
+            if (!runSelection) {
+              if (elements.length > 0) {
+                selectVisible(elements[0], onDone, true, true, scrollToVisible);
+              }
+              return;
+            }
+          }
+
+          Set<Object> toSelect = new HashSet<Object>();
+          myTree.clearSelection();
+          ContainerUtil.addAll(toSelect, elements);
+          if (addToSelection) {
+            toSelect.addAll(currentElements);
+          }
+
+          if (checkIfInStructure) {
+            final Iterator<Object> allToSelect = toSelect.iterator();
+            while (allToSelect.hasNext()) {
+              Object each = allToSelect.next();
+              if (!isInStructure(each)) {
+                allToSelect.remove();
+              }
+            }
+          }
+
+          final Object[] elementsToSelect = ArrayUtil.toObjectArray(toSelect);
+
+          if (wasRootNodeInitialized()) {
+            final int[] originalRows = myTree.getSelectionRows();
+            if (!addToSelection) {
+              myTree.clearSelection();
+            }
+            addNext(elementsToSelect, 0, new Runnable() {
+              public void run() {
+                if (getTree().isSelectionEmpty()) {
+                  processInnerChange(new Runnable() {
+                    public void run() {
+                      restoreSelection(currentElements);
+                    }
+                  });
+                }
+                runDone(onDone);
+              }
+            }, originalRows, deferred, scrollToVisible, canSmartExpand);
+          }
+          else {
+            addToDeferred(elementsToSelect, onDone, addToSelection);
+          }
         }
-        else {
-          addToDeferred(elementsToSelect, onDone, addToSelection);
+        finally {
+          maybeReady();
         }
       }
     });
@@ -3891,24 +3897,31 @@ public class AbstractTreeUi {
     });
   }
 
-  public void scrollSelectionToVisible(@Nullable Runnable onDone, boolean shouldBeCentered) {
-    int[] rows = myTree.getSelectionRows();
-    if (rows == null || rows.length == 0) {
-      runDone(onDone);
-      return;
-    }
+  public void scrollSelectionToVisible(@Nullable final Runnable onDone, final boolean shouldBeCentered) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (isReleased()) return;
+
+        int[] rows = myTree.getSelectionRows();
+        if (rows == null || rows.length == 0) {
+          runDone(onDone);
+          return;
+        }
 
 
-    Object toSelect = null;
-    for (int eachRow : rows) {
-      TreePath path = myTree.getPathForRow(eachRow);
-      toSelect = getElementFor(path.getLastPathComponent());
-      if (toSelect != null) break;
-    }
+        Object toSelect = null;
+        for (int eachRow : rows) {
+          TreePath path = myTree.getPathForRow(eachRow);
+          toSelect = getElementFor(path.getLastPathComponent());
+          if (toSelect != null) break;
+        }
 
-    if (toSelect != null) {
-      selectVisible(toSelect, onDone, true, shouldBeCentered, true);
-    }
+        if (toSelect != null) {
+          selectVisible(toSelect, onDone, true, shouldBeCentered, true);
+        }
+      }
+    });
   }
 
   private void selectVisible(Object element, final Runnable onDone, boolean addToSelection, boolean canBeCentered, final boolean scroll) {

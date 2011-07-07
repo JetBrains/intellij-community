@@ -30,6 +30,7 @@ import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
@@ -78,6 +79,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     };
 
     myTree = new MyTree();
+    TreeUtil.installActions(myTree);
     myTree.setBorder(new EmptyBorder(0, 1, 0, 0));
 
     myTree.setRowHeight(-1);
@@ -95,17 +97,17 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     myTree.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(final ComponentEvent e) {
-        revalidateTree();
+        myBuilder.revalidateTree();
       }
 
       @Override
       public void componentMoved(final ComponentEvent e) {
-        revalidateTree();
+        myBuilder.revalidateTree();
       }
 
       @Override
       public void componentShown(final ComponentEvent e) {
-        revalidateTree();
+        myBuilder.revalidateTree();
       }
     });
 
@@ -172,6 +174,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   ActionCallback queueSelection(final Configurable configurable) {
     final ActionCallback callback = new ActionCallback();
+
     final Update update = new Update(this) {
       public void run() {
         if (configurable == null) {
@@ -222,12 +225,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     });
   }
 
-  void revalidateTree() {
-    myTree.invalidate();
-    myTree.setRowHeight(myTree.getRowHeight() == -1 ? -2 : -1);
-    myTree.revalidate();
-    myTree.repaint();
-  }
 
   public JTree getTree() {
     return myTree;
