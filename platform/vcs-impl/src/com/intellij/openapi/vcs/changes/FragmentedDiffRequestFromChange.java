@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diff.ShiftedSimpleContent;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
@@ -24,7 +23,6 @@ import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.BackgroundSynchronousInvisibleComputable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -33,12 +31,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.actions.DiffRequestFromChange;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -54,7 +50,7 @@ import java.util.ListIterator;
  *         Date: 6/15/11
  *         Time: 6:02 PM
  */
-public class FragmentedDiffRequestFromChange implements DiffRequestFromChange<ShiftedSimpleContent> {
+public class FragmentedDiffRequestFromChange {
   private final Project myProject;
   private final SLRUMap<Pair<Long, String>, List<BeforeAfter<TextRange>>> myRangesCache;
 
@@ -63,17 +59,15 @@ public class FragmentedDiffRequestFromChange implements DiffRequestFromChange<Sh
     myRangesCache = new SLRUMap<Pair<Long, String>, List<BeforeAfter<TextRange>>>(10, 10);
   }
 
-  @Override
   public boolean canCreateRequest(Change change) {
     if (ChangesUtil.isTextConflictingChange(change)) return false;
-    if (ShowDiffAction.isBinaryChange(myProject, change)) return false;
+    if (ShowDiffAction.isBinaryChange(change)) return false;
     final FilePath filePath = ChangesUtil.getFilePath(change);
     if (filePath.isDirectory()) return false;
     return true;
   }
 
-  @Override
-  public List<BeforeAfter<ShiftedSimpleContent>> createRequestForChange(Change change, int extraLines) throws VcsException {
+  public FragmentedContent getRanges(Change change, int extraLines) throws VcsException {
     final FilePath filePath = ChangesUtil.getFilePath(change);
 
     final RangesCalculator calculator = new RangesCalculator();
@@ -82,28 +76,9 @@ public class FragmentedDiffRequestFromChange implements DiffRequestFromChange<Sh
     if (exception != null) {
       throw exception;
     }
-    final FileType fileType = filePath.getFileType();
     final List<BeforeAfter<TextRange>> ranges = calculator.expand(extraLines);
-    final List<BeforeAfter<ShiftedSimpleContent>> result = new ArrayList<BeforeAfter<ShiftedSimpleContent>>(ranges.size());
-    final VirtualFile vFile = filePath.getVirtualFile();
-    for (BeforeAfter<TextRange> range : ranges) {
-      final TextRange beforeRange = range.getBefore();
-      final TextRange convertedBefore = new TextRange(calculator.getOldDocument().getLineStartOffset(beforeRange.getStartOffset()),
-                                                calculator.getOldDocument().getLineStartOffset(beforeRange.getEndOffset()));
-      final ShiftedSimpleContent before = new ShiftedSimpleContent(calculator.getOldDocument().getText(convertedBefore), fileType, beforeRange.getStartOffset());
-      final TextRange afterRange = range.getAfter();
-      final TextRange convertedAfter = new TextRange(calculator.getDocument().getLineStartOffset(afterRange.getStartOffset()),
-                                                calculator.getDocument().getLineStartOffset(afterRange.getEndOffset()));
-      final ShiftedSimpleContent after = new ShiftedSimpleContent(calculator.getDocument().getText(convertedAfter), fileType, afterRange.getStartOffset());
-      if (vFile != null) {
-        before.setCharset(vFile.getCharset());
-        before.setBOM(vFile.getBOM());
-        after.setCharset(vFile.getCharset());
-        after.setBOM(vFile.getBOM());
-      }
-      result.add(new BeforeAfter<ShiftedSimpleContent>(before, after));
-    }
-    return result;
+
+    return new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges);
   }
 
   private static class RangesCalculator {
@@ -127,13 +102,13 @@ public class FragmentedDiffRequestFromChange implements DiffRequestFromChange<Sh
         public void run() {
           try {
             myDocument = null;
+            myOldDocument = documentFromRevision(change.getBeforeRevision());
             final String convertedPath = FilePathsHelper.convertPath(filePath);
             if (filePath.getVirtualFile() != null) {
               myDocument = FileDocumentManager.getInstance().getDocument(filePath.getVirtualFile());
               if (myDocument != null) {
                 final List<BeforeAfter<TextRange>> cached = cache.get(new Pair<Long, String>(myDocument.getModificationStamp(), convertedPath));
                 if (cached != null) {
-                  myOldDocument = documentFromRevision(change.getBeforeRevision());
                   myRanges = cached;
                   return;
                 }
@@ -149,8 +124,6 @@ public class FragmentedDiffRequestFromChange implements DiffRequestFromChange<Sh
               }
             }
 
-            // calculate from texts
-            myOldDocument = documentFromRevision(change.getBeforeRevision());
             final TextCompareProcessor processor = new TextCompareProcessor(ComparisonPolicy.DEFAULT);
             final ArrayList<LineFragment> lineFragments = processor.process(myOldDocument.getText(), myDocument.getText());
             myRanges = new ArrayList<BeforeAfter<TextRange>>(lineFragments.size());

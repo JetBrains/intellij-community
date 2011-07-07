@@ -90,11 +90,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private Color myBackgroundColor = null;
   private String myLastGutterToolTip = null;
   private int myLastPreferredHeight = -1;
-  private int myLineShift;
+  private Convertor<Integer, Integer> myLineNumberConvertor;
 
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
-    myLineShift = 0;
+    myLineNumberConvertor = Convertor.SELF;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       installDnD();
     }
@@ -365,7 +365,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
         continue;
       }
-      int logLine = logicalPosition.line + myLineShift;
+      int logLine = myLineNumberConvertor.convert(logicalPosition.line);
       String s = String.valueOf(logLine + 1);
       g.drawString(s,
                    getLineNumberAreaOffset() + getLineNumberAreaWidth() -
@@ -965,7 +965,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void setLineNumberAreaWidth(final Convertor<Integer, Integer> calculator) {
-    final int lineNumberAreaWidth = calculator.convert(endLineNumber() + myLineShift);
+    final int lineNumberAreaWidth = calculator.convert(myLineNumberConvertor.convert(endLineNumber()));
     if (myLineNumberAreaWidth != lineNumberAreaWidth) {
       myLineNumberAreaWidth = lineNumberAreaWidth;
       fireResized();
@@ -990,11 +990,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public int getIconsAreaWidth() {
     return myIconsAreaWidth;
-  }
-
-  @Override
-  public void setLineShift(int lineShift) {
-    myLineShift = lineShift;
   }
 
   private boolean isMirrored() {
@@ -1298,6 +1293,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
     return null;
+  }
+
+  @Override
+  public void setLineNumberConvertor(Convertor<Integer, Integer> lineNumberConvertor) {
+    myLineNumberConvertor = lineNumberConvertor;
   }
 
   private void invokePopup(MouseEvent e) {

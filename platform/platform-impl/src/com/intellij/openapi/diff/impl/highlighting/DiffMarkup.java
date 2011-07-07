@@ -44,6 +44,7 @@ public abstract class DiffMarkup implements EditorSource {
     "#com.intellij.openapi.diff.impl.highlighting.EditorTextAppender");
   private static final int LAYER = HighlighterLayer.SELECTION - 1;
 
+  private final ArrayList<RangeHighlighter> myExtraHighLighters = new ArrayList<RangeHighlighter>();
   private final ArrayList<RangeHighlighter> myHighLighters = new ArrayList<RangeHighlighter>();
   private final HashSet<RangeHighlighter> myActionHighlighters = new HashSet<RangeHighlighter>();
   private final Project myProject;
@@ -89,6 +90,16 @@ public abstract class DiffMarkup implements EditorSource {
     if (marker == null) return;
     saveHighlighter(marker);
     marker.setLineMarkerRenderer(LineRenderer.bottom());
+  }
+
+  void setSeparatorMarker(int line) {
+    RangeHighlighter marker = getMarkupModel().addLineHighlighter(line, LAYER, null);
+    marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
+    final FragmentBoundRenderer renderer = new FragmentBoundRenderer();
+    marker.setLineSeparatorColor(renderer.getColor());
+    marker.setLineSeparatorRenderer(renderer);
+    marker.setLineMarkerRenderer(renderer);
+    myExtraHighLighters.add(marker);
   }
 
   private RangeHighlighter createLineMarker(TextAttributesKey type, int line) {
@@ -165,6 +176,10 @@ public abstract class DiffMarkup implements EditorSource {
   public void resetHighlighters() {
     removeHighlighters(myHighLighters);
     removeHighlighters(myActionHighlighters);
+    for (RangeHighlighter highLighter : myExtraHighLighters) {
+      highLighter.dispose();
+    }
+    myExtraHighLighters.clear();
   }
 
   private void removeHighlighters(Collection<RangeHighlighter> highlighters) {

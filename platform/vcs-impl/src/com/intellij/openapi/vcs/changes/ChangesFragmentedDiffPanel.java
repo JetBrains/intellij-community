@@ -20,7 +20,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ShiftedSimpleContent;
+import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.highlighting.FragmentedDiffPanelState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -30,8 +34,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,8 +44,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
-import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -51,17 +55,24 @@ import java.util.List;
 public class ChangesFragmentedDiffPanel implements Disposable {
   private final JPanel myPanel;
   private final Project myProject;
-  private final List<BeforeAfter<ShiftedSimpleContent>> myDiffs;
+  private final FragmentedContent myFragmentedContent;
   private final String myFilePath;
   private final DiffPanelHolder myMyDiffPanelHolder;
 
-  public ChangesFragmentedDiffPanel(final Project project, final List<BeforeAfter<ShiftedSimpleContent>> diffs,
+  public ChangesFragmentedDiffPanel(final Project project, final FragmentedContent fragmentedContent,
                                     final LinkedList<DiffPanel> cache, String filePath) {
     myProject = project;
-    myMyDiffPanelHolder = new DiffPanelHolder(cache, myProject);
-    myDiffs = diffs;
+    myMyDiffPanelHolder = new DiffPanelHolder(cache, myProject) {
+      @Override
+      protected DiffPanel create() {
+        final DiffPanel diffPanel = super.create();
+        ((DiffPanelImpl) diffPanel).setDiffPanelState(new FragmentedDiffPanelState((ContentChangeListener)diffPanel, project));
+        return diffPanel;
+      }
+    };
+    myFragmentedContent = fragmentedContent;
     myFilePath = filePath;
-    assert ! myDiffs.isEmpty();
+    assert ! myFragmentedContent.getRanges().isEmpty();
 
     myPanel = new JPanel(new BorderLayout());
   }
@@ -83,50 +94,71 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     wrapper.add(label);
     topPanel.add(wrapper, BorderLayout.CENTER);
 
-    final MyScrollingHelper scrollingHelper = new MyScrollingHelper();
-    topPanel.add(scrollingHelper.getLeftScroll(), BorderLayout.SOUTH);
-
     myPanel.add(topPanel, BorderLayout.NORTH);
 
     final JPanel wrapperDiffs = new JPanel(new GridBagLayout());
     final JPanel oneMore = new JPanel(new BorderLayout());
     oneMore.add(wrapperDiffs, BorderLayout.NORTH);
-    final JBScrollPane scrollBig =
-      new JBScrollPane(oneMore, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    myPanel.add(scrollBig, BorderLayout.CENTER);
-    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                             new Insets(0, 0, 0, 0), 0, 0);
 
-    final SplittersSynchronizer splittersSynchronizer = new SplittersSynchronizer();
+    final LineNumberConvertor oldConvertor = new LineNumberConvertor();
+    final LineNumberConvertor newConvertor = new LineNumberConvertor();
+    final StringBuilder sbOld = new StringBuilder();
+    final StringBuilder sbNew = new StringBuilder();
+    // line starts
+    final List<BeforeAfter<Integer>> ranges = new ArrayList<BeforeAfter<Integer>>();
 
-    final VisibleAreaListener val = new VisibleAreaListener() {
-      @Override
-      public void visibleAreaChanged(VisibleAreaEvent e) {
-        oneMore.revalidate();
-        oneMore.repaint();
-        scrollingHelper.onEditorAreaChanged(e);
+    BeforeAfter<Integer> lines = new BeforeAfter<Integer>(0,0);
+    for (BeforeAfter<TextRange> lineNumbers : myFragmentedContent.getRanges()) {
+      ranges.add(lines);
+      oldConvertor.put(lines.getBefore(), lineNumbers.getBefore().getStartOffset());
+      newConvertor.put(lines.getAfter(), lineNumbers.getAfter().getStartOffset());
+
+      final Document document = myFragmentedContent.getBefore();
+      if (sbOld.length() > 0) {
+        sbOld.append('\n');
       }
-    };
+      sbOld.append(document.getText(new TextRange(document.getLineStartOffset(lineNumbers.getBefore().getStartOffset()),
+                                                  document.getLineEndOffset(lineNumbers.getBefore().getEndOffset()))));
 
-    for (int i = 0; i < myDiffs.size(); i++) {
-      BeforeAfter<ShiftedSimpleContent> diff = myDiffs.get(i);
-      final DiffPanel diffPanel = myMyDiffPanelHolder.getOrCreate();
-      ((DiffPanelImpl) diffPanel).noSynchScroll();
-      diffPanel.setContents(diff.getBefore(), diff.getAfter());
-      ((DiffPanelImpl) diffPanel).prefferedSizeByContents(-1);
-      ((DiffPanelImpl) diffPanel).setLineShift(diff.getBefore().getLineShift(), diff.getAfter().getLineShift());
-      if (i == 0) {
-        ((DiffPanelImpl) diffPanel).getEditor1().getScrollingModel().addVisibleAreaListener(val);
+      final Document document1 = myFragmentedContent.getAfter();
+      if (sbNew.length() > 0) {
+        sbNew.append('\n');
       }
+      sbNew.append(document1.getText(new TextRange(document1.getLineStartOffset(lineNumbers.getAfter().getStartOffset()),
+                                    document1.getLineEndOffset(lineNumbers.getAfter().getEndOffset()))));
+      int before = lines.getBefore() + lineNumbers.getBefore().getEndOffset() - lineNumbers.getBefore().getStartOffset() + 1;
+      int after = lines.getAfter() + lineNumbers.getAfter().getEndOffset() - lineNumbers.getAfter().getStartOffset() + 1;
+      lines = new BeforeAfter<Integer>(before, after);
+    }
+    ranges.add(new BeforeAfter<Integer>(lines.getBefore() == 0 ? 0 : lines.getBefore() - 1,
+                                        lines.getAfter() == 0 ? 0 : lines.getAfter() - 1));
 
-      wrapperDiffs.add(diffPanel.getComponent(), gb);
-      ++ gb.gridy;
+    final DiffPanel diffPanel = myMyDiffPanelHolder.getOrCreate();
+    final FragmentedDiffPanelState diffPanelState = (FragmentedDiffPanelState)((DiffPanelImpl) diffPanel).getDiffPanelState();
+    diffPanelState.setRanges(ranges);
+    diffPanel.setContents(new SimpleContent(sbOld.toString()), new SimpleContent(sbNew.toString()));
+    ((DiffPanelImpl) diffPanel).setLineNumberConvertors(oldConvertor, newConvertor);
+    ((DiffPanelImpl) diffPanel).prefferedSizeByContents(-1);
 
-      scrollingHelper.nextPanel(diff, diffPanel);
-      splittersSynchronizer.add(((DiffPanelImpl)diffPanel).getSplitter(), ((DiffPanelImpl) diffPanel).getEditor1());
+    myPanel.add(diffPanel.getComponent(), BorderLayout.CENTER);
+  }
+
+  private static class LineNumberConvertor implements Convertor<Integer, Integer> {
+    private final TreeMap<Integer, Integer> myFragmentStarts;
+
+    private LineNumberConvertor() {
+      myFragmentStarts = new TreeMap<Integer, Integer>();
     }
 
-    scrollingHelper.afterPanelsAdded();
+    public void put(final int start, final int offset) {
+      myFragmentStarts.put(start, offset);
+    }
+
+    @Override
+    public Integer convert(Integer o) {
+      final Map.Entry<Integer, Integer> floor = myFragmentStarts.floorEntry(o);
+      return floor == null ? o : floor.getValue() + o - floor.getKey();
+    }
   }
 
   private static class MyScrollingHelper {

@@ -271,18 +271,22 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   private static boolean isBinaryDiff(Project project, Change[] changes, int index) {
     if (index >= 0 && index < changes.length) {
       final Change change = changes[index];
-      return isBinaryChange(project, change);
+      return isBinaryChangeAndCanShow(project, change);
     }
     return false;
   }
 
-  public static boolean isBinaryChange(Project project, Change change) {
+  public static boolean isBinaryChange(Change change) {
     final ContentRevision bRev = change.getBeforeRevision();
     final ContentRevision aRev = change.getAfterRevision();
 
     return (aRev == null || aRev instanceof BinaryContentRevision)
-           && (bRev == null || bRev instanceof BinaryContentRevision)
-           && (aRev == null || BinaryDiffTool.canShow(project, change.getVirtualFile()));
+           && (bRev == null || bRev instanceof BinaryContentRevision);
+  }
+
+  public static boolean isBinaryChangeAndCanShow(Project project, Change change) {
+    // todo bug here would appear when there would be another diff providers for bimary revisions
+    return isBinaryChange(change) && (change.getAfterRevision() == null || BinaryDiffTool.canShow(project, change.getVirtualFile()));
   }
 
   public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, int index, @NotNull final ShowDiffUIContext context) {

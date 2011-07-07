@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,5 +54,5 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   @Nullable
   public abstract Point getPoint(GutterIconRenderer renderer);
 
-  public abstract void setLineShift(int lineShift);
+  public abstract void setLineNumberConvertor(final Convertor<Integer, Integer> lineNumberConvertor);
 }

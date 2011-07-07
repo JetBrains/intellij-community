@@ -272,7 +272,9 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         if (old == null) {
           myDetailsCache.put(filePath, pair);
         } else if (old != pair) {
-          Disposer.dispose(pair.getSecond());
+          if (pair.getSecond() != null) {
+            Disposer.dispose(pair.getSecond());
+          }
         }
       }
     };

@@ -39,7 +39,7 @@ public class BinaryDiffRequestFromChange implements DiffRequestFromChange<DiffCo
 
   @Override
   public boolean canCreateRequest(Change change) {
-    return ShowDiffAction.isBinaryChange(myProject, change);
+    return ShowDiffAction.isBinaryChangeAndCanShow(myProject, change);
   }
 
   @Override
