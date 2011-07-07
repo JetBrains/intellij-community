@@ -28,6 +28,9 @@
               <splitpane position="right"/>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+            </clientProperties>
             <border type="none" title="Associated Files"/>
             <children>
               <grid id="82810" binding="myToolbar" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -62,6 +65,9 @@
               <splitpane position="left"/>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+            </clientProperties>
             <border type="none" title="Project XSLT Files"/>
             <children>
               <scrollpane class="com.intellij.ui.components.JBScrollPane" id="39878">

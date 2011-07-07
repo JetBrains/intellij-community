@@ -7,6 +7,9 @@
     </constraints>
     <properties/>
     <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.error.highlighting"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
     <children>
       <hspacer id="81401">
         <constraints>

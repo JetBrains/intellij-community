@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public class WebBrowsersPanel extends JPanel {
   private void createIndividualSettings(@NotNull final BrowsersConfiguration.BrowserFamily family, final JPanel container) {
     final JPanel result = new JPanel();
 
-    result.setBorder(BorderFactory.createTitledBorder(family.getName()));
+    result.setBorder(IdeBorderFactory.createTitledBorder(family.getName()));
 
     result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
 

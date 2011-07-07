@@ -8,6 +8,9 @@
     </constraints>
     <properties/>
     <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.ext.protocol.settings"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
     <children>
       <grid id="3574d" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="5">
         <margin top="5" left="5" bottom="5" right="5"/>

@@ -23,6 +23,9 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.configure.ssh.private.key.file"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <component id="37beb" class="javax.swing.JCheckBox" binding="myUsePrivateKeyFile">
                 <constraints>

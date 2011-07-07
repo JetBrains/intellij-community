@@ -21,6 +21,9 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+            </clientProperties>
             <border type="none" title="Output"/>
             <children>
               <component id="22af" class="javax.swing.JCheckBox" binding="mySaveToFile">
@@ -122,6 +125,9 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+            </clientProperties>
             <border type="etched" title="Input"/>
             <children>
               <component id="13095" class="javax.swing.JLabel">
@@ -164,6 +170,9 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+            </clientProperties>
             <border type="none" title="Parameters"/>
             <children>
               <scrollpane class="com.intellij.ui.components.JBScrollPane" id="fabc7">
@@ -235,6 +244,9 @@
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+            </clientProperties>
             <border type="none" title="Classpath and JDK"/>
             <children>
               <component id="62b8e" class="javax.swing.JRadioButton" binding="myModuleChoice">

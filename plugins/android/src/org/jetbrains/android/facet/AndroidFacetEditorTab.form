@@ -115,6 +115,9 @@
                 </constraints>
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.facet.settings.res.overlay.panel.title"/>
+                <clientProperties>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                </clientProperties>
                 <children>
                   <component id="de3b3" class="com.intellij.ui.components.JBList" binding="myResOverlayList">
                     <constraints>
@@ -175,6 +178,9 @@
                 </constraints>
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apk.settings.title"/>
+                <clientProperties>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                </clientProperties>
                 <children>
                   <component id="d83b5" class="javax.swing.JRadioButton" binding="myUseAptResDirectoryFromPathRadio">
                     <constraints>
@@ -234,6 +240,9 @@
                 </constraints>
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.aidl.settings.title"/>
+                <clientProperties>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                </clientProperties>
                 <children>
                   <component id="1d0b4" class="javax.swing.JLabel" binding="myAidlGenPathLabel">
                     <constraints>
@@ -266,6 +275,9 @@
                 </constraints>
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apt.settings.title"/>
+                <clientProperties>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                </clientProperties>
                 <children>
                   <grid id="1f282" binding="myAaptCompilerPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>

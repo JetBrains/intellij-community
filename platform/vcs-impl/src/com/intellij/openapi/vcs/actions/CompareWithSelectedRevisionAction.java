@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
@@ -205,7 +206,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     });
     final JScrollPane textScrollPane = ScrollPaneFactory.createScrollPane(textArea);
     panel.add(textScrollPane, BorderLayout.CENTER);
-    textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),VcsBundle.message("border.selected.revision.commit.message")));
+    textScrollPane.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.selected.revision.commit.message")));
     return panel;
   }
 
@@ -301,7 +302,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
     JPanel jPanel = new JPanel(new BorderLayout());
     final JScrollPane textScrollPane = ScrollPaneFactory.createScrollPane(textArea);
-    textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),VcsBundle.message("border.selected.revision.commit.message")));
+    textScrollPane.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.selected.revision.commit.message")));
     jPanel.add(textScrollPane, BorderLayout.SOUTH);
 
     jPanel.setPreferredSize(new Dimension(300, 100));

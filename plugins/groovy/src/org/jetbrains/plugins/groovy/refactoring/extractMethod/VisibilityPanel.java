@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.psi.PsiModifier;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
@@ -35,7 +36,7 @@ public class VisibilityPanel extends JPanel {
   private final JRadioButton myRbPublic;
 
   public VisibilityPanel() {
-    setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), GroovyRefactoringBundle.message("visibility.border.title")));
+    setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("visibility.border.title")));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
 

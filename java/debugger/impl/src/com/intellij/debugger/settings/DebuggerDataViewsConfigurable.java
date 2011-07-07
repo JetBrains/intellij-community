@@ -23,6 +23,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.ui.RegistryCheckBox;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +135,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     tooltipLabel.setLabelFor(myValueTooltipDelayField);
 
     final JPanel showPanel = new JPanel(new GridBagLayout());
-    showPanel.setBorder(BorderFactory.createTitledBorder("Show"));
+    showPanel.setBorder(IdeBorderFactory.createTitledBorder("Show"));
 
     showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     showPanel.add(myCbShowObjectId, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
@@ -149,7 +150,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     arraysComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
     arraysPanel.add(arraysComponent, BorderLayout.CENTER);
     arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
-    arraysPanel.setBorder(BorderFactory.createTitledBorder("Arrays"));
+    arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays"));
     panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(4, 6, 0, 0), 0, 0));
 
     panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(10, 6, 0, 10), 0, 0));

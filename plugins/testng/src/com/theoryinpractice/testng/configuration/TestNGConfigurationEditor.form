@@ -38,6 +38,9 @@
           <grid row="1" column="0" row-span="1" col-span="5" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+        </clientProperties>
         <border type="etched" title="Search for tests:"/>
         <children>
           <component id="3d515" class="com.intellij.openapi.ui.LabeledComponent" binding="methodField">

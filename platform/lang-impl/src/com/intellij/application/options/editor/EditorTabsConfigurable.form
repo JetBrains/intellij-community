@@ -15,6 +15,9 @@
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.tab.appearance"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="91ecb" class="javax.swing.JCheckBox" binding="myScrollTabLayoutInEditorCheckBox">
             <constraints>
@@ -94,6 +97,9 @@
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.tab.closing.policy"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="3c616" class="javax.swing.JLabel">
             <constraints>

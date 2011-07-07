@@ -15,6 +15,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="title.naming"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="c217b" class="javax.swing.JCheckBox" binding="myCbPreferLongerNames">
             <constraints>
@@ -157,6 +160,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="title.order.of.members"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <grid id="32fc8" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="3">
             <margin top="0" left="0" bottom="0" right="0"/>
@@ -210,6 +216,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="title.naming.comment.code"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="da6e1" class="javax.swing.JCheckBox" binding="myCbLineCommentAtFirstColumn">
             <constraints>
@@ -240,6 +249,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="title.naming.final.modifier"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="a987" class="javax.swing.JCheckBox" binding="myCbGenerateFinalLocals">
             <constraints>

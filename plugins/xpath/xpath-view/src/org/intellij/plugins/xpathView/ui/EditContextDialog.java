@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.Table;
@@ -102,7 +103,7 @@ public class EditContextDialog extends DialogWrapper {
     protected JComponent createCenterPanel() {
 
         final JPanel p = new JPanel(new BorderLayout());
-        p.setBorder(BorderFactory.createTitledBorder("Variables"));
+        p.setBorder(IdeBorderFactory.createTitledBorder("Variables"));
 
         final DefaultActionGroup group = new DefaultActionGroup(null, false);
         group.add(new AnAction("Add", null, IconLoader.getIcon("/general/add.png")) {
@@ -139,7 +140,7 @@ public class EditContextDialog extends DialogWrapper {
         mySplitter.setHonorComponentsMinimumSize(true);
 
         final JComponent n = new JPanel(new BorderLayout());
-        n.setBorder(BorderFactory.createTitledBorder("Namespaces"));
+        n.setBorder(IdeBorderFactory.createTitledBorder("Namespaces"));
 
         if (myContextProvider.getContextElement() == null) {
             final DefaultActionGroup nsActionGroup = new DefaultActionGroup();

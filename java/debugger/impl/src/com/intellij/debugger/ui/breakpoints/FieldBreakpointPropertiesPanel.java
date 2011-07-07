@@ -22,6 +22,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,7 +59,7 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), DebuggerBundle.message("label.group.watch.events")));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events")));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -96,7 +97,7 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
 
     fieldBreakpoint.WATCH_ACCESS = myWatchAccessCheckBox.isSelected();
     fieldBreakpoint.WATCH_MODIFICATION = myWatchModificationCheckBox.isSelected();
-    
+
     super.saveTo(breakpoint, afterUpdate);
   }
 }

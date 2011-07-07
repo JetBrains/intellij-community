@@ -90,6 +90,9 @@
         </constraints>
         <properties/>
         <border type="etched" title="When files are created"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="61373" class="javax.swing.JRadioButton" binding="myShowDialogOnAddingFile">
             <constraints>
@@ -125,6 +128,9 @@
         </constraints>
         <properties/>
         <border type="etched" title="When empty changelist becomes inactive"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="7b546" class="javax.swing.JRadioButton">
             <constraints>
@@ -160,6 +166,9 @@
         </constraints>
         <properties/>
         <border type="etched" title="When files are deleted"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="1256b" class="javax.swing.JRadioButton" binding="myShowDialogOnRemovingFile">
             <constraints>
@@ -201,6 +210,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="border.display.dialog.when.commands.invoked"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children/>
       </grid>
       <hspacer id="308c6">

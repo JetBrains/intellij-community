@@ -42,6 +42,9 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/ProjectBundle" title-key="label.text.autodetection.skip.modules"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <grid id="24018" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
@@ -110,6 +113,9 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/ProjectBundle" title-key="label.text.autodetection.skip.files"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
             <children>
               <grid id="4807d" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>

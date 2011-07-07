@@ -26,6 +26,9 @@
           <font/>
           <title-color color="-16777216"/>
         </border>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="864a1" class="javax.swing.JRadioButton" binding="myForceRebaseRadioButton" default-binding="true">
             <constraints>
@@ -64,6 +67,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="git4idea/i18n/GitBundle" title-key="update.options.save.before.update"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="98593" class="javax.swing.JRadioButton" binding="myStashRadioButton" default-binding="true">
             <constraints>

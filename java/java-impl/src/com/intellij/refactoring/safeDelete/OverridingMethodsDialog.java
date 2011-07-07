@@ -161,7 +161,7 @@ class OverridingMethodsDialog extends DialogWrapper {
 
 
 
-    /*Border titledBorder = BorderFactory.createTitledBorder("Select methods");
+    /*Border titledBorder = IdeBorderFactory.createTitledBorder("Select methods");
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
     panel.setBorder(border);*/

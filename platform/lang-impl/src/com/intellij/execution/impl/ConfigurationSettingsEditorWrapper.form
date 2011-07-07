@@ -28,6 +28,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/ExecutionBundle" title-key="before.launch.panel.title"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children/>
       </grid>
       <component id="c7b94" class="javax.swing.JCheckBox" binding="myCbStoreProjectConfiguration">

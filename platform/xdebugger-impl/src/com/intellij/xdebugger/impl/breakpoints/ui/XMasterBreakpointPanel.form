@@ -15,6 +15,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/XDebuggerBundle" title-key="xbreakpoint.group.depends.on"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <grid id="a3556" binding="myMasterBreakpointComboBoxPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>

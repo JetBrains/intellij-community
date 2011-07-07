@@ -6,6 +6,9 @@
       <xy x="20" y="20" width="424" height="262"/>
     </constraints>
     <properties/>
+    <clientProperties>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+    </clientProperties>
     <border type="none" title="Dom Generator Config"/>
     <children>
       <component id="29b47" class="javax.swing.JLabel">

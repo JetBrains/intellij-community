@@ -195,6 +195,9 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="title.spaces"/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+            </clientProperties>
             <children>
               <component id="f4575" class="javax.swing.JCheckBox" binding="mySpacesAroundEquality">
                 <constraints>

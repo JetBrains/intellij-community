@@ -15,6 +15,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.update.options.updating.group"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="6f65e" class="javax.swing.JLabel">
             <constraints>
@@ -60,6 +63,9 @@
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.update.options.other.settings"/>
+<clientProperties>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+</clientProperties>
         <children>
           <component id="94646" class="javax.swing.JCheckBox" binding="myMakeNewFilesReadOnly">
             <constraints>
