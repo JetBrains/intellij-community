@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -50,8 +51,8 @@ public class TextComponentUndoProvider implements Disposable {
     myOldKeymap = myTextComponent.getKeymap();
     Keymap keymap = JTextComponent.addKeymap(null, myOldKeymap);
     com.intellij.openapi.keymap.Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] undoShortcuts = activeKeymap.getShortcuts("$Undo");
-    Shortcut[] redoShortcuts = activeKeymap.getShortcuts("$Redo");
+    Shortcut[] undoShortcuts = activeKeymap.getShortcuts(IdeActions.ACTION_UNDO);
+    Shortcut[] redoShortcuts = activeKeymap.getShortcuts(IdeActions.ACTION_REDO);
 
     Action undoAction = new AbstractAction ("Undo") {
       public void actionPerformed(ActionEvent e) {
