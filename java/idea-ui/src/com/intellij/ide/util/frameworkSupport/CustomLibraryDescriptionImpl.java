@@ -17,6 +17,7 @@ package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.framework.library.LibraryVersionProperties;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;

@@ -252,7 +252,7 @@ public class LibraryOptionsPanel implements Disposable {
   private void doCreate() {
     final NewLibraryConfiguration libraryConfiguration = mySettings.getLibraryDescription().createNewLibrary(myPanel, getBaseDirectory());
     if (libraryConfiguration != null) {
-      final NewLibraryEditor libraryEditor = new NewLibraryEditor();
+      final NewLibraryEditor libraryEditor = new NewLibraryEditor(libraryConfiguration.getLibraryType(), libraryConfiguration.getProperties());
       libraryEditor.setName(myLibrariesContainer.suggestUniqueLibraryName(libraryConfiguration.getDefaultLibraryName()));
       libraryConfiguration.addRoots(libraryEditor);
       if (myLibraryComboBoxModel.get(0) == null) {

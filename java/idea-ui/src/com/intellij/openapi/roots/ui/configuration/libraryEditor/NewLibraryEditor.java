@@ -47,7 +47,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
     this(null, null);
   }
 
-  public NewLibraryEditor(LibraryType type, LibraryProperties properties) {
+  public NewLibraryEditor(@Nullable LibraryType type, @Nullable LibraryProperties properties) {
     myType = type;
     myProperties = properties;
     myRoots = new MultiMap<OrderRootType, LightFilePointer>();

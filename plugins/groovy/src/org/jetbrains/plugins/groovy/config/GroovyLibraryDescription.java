@@ -19,7 +19,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;
@@ -147,7 +146,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   }
 
   @Nullable
-  private VirtualFile findFile(String path) {
+  private static VirtualFile findFile(String path) {
     if (path != null && path.length() > 0) {
       return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
     }

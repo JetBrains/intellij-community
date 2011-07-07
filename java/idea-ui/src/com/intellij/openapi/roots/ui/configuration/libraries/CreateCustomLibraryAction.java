@@ -57,7 +57,7 @@ public class CreateCustomLibraryAction extends CustomLibraryActionBase {
       return;
     }
 
-    final NewLibraryEditor libraryEditor = new NewLibraryEditor();
+    final NewLibraryEditor libraryEditor = new NewLibraryEditor(libraryConfiguration.getLibraryType(), libraryConfiguration.getProperties());
     libraryEditor.setName(libraryConfiguration.getDefaultLibraryName());
     libraryConfiguration.addRoots(libraryEditor);
     LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();

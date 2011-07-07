@@ -125,6 +125,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return getLibraryEditor().getProperties();
   }
 
+  @Override
+  public boolean isNewLibrary() {
+    return getLibraryEditor() instanceof NewLibraryEditor;
+  }
+
   public void updatePropertiesLabel() {
     StringBuilder text = new StringBuilder();
     for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES))) {

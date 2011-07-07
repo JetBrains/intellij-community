@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 public interface LibraryEditorComponent<P extends LibraryProperties> {
   @NotNull
   P getProperties();
-  
+
+  boolean isNewLibrary();
+
   LibraryEditor getLibraryEditor();
 
   @Nullable

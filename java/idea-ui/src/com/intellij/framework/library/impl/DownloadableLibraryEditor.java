@@ -57,6 +57,7 @@ public class DownloadableLibraryEditor extends LibraryPropertiesEditor {
     myLibraryType = libraryType;
     updateDescription();
     myCurrentVersionString = myEditorComponent.getProperties().getVersionString();
+    myChangeVersionButton.setVisible(!myEditorComponent.isNewLibrary());
     myChangeVersionButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
