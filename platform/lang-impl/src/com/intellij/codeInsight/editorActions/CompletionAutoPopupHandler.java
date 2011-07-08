@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -82,59 +83,32 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
-    scheduleAutoPopup(project, editor);
+    scheduleAutoPopup(editor, null);
     return Result.STOP;
   }
 
-  public static void scheduleAutoPopup(final Project project, final Editor editor) {
+  public static void scheduleAutoPopup(final Editor editor, @Nullable final Condition<PsiFile> condition) {
+    final Project project = editor.getProject();
+    assert project != null;
     final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
 
-    final Runnable request = new Runnable() {
-      @Override
-      public void run() {
-        if (phase.isExpired()) return;
-        invokeCompletion(CompletionType.BASIC, true, project, editor, 0);
-      }
-    };
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
       @Override
       public void run() {
-        runLaterWithCommitted(project, editor.getDocument(), request);
-      }
-    }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
-  }
-
-  public static void invokeAutoPopupCompletion(final Project project, final Editor editor, final Condition<PsiFile> condition) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    final Document document = editor.getDocument();
-    final long beforeStamp = document.getModificationStamp();
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    documentManager.cancelAndRunWhenAllCommitted("start completion when all docs committed", new Runnable() {
-      @Override
-      public void run() {
-        long afterStamp = document.getModificationStamp();
-        if (beforeStamp != afterStamp) {
-          // no luck, will try later
-          return;
-        }
-        // later because we may end up in write action here if there was a synchronous commit
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        runLaterWithCommitted(project, editor.getDocument(), new Runnable() {
           @Override
           public void run() {
-            long afterStamp = document.getModificationStamp();
-            if (beforeStamp != afterStamp) {
-              // no luck, will try later
-              return;
-            }
-            PsiFile file = documentManager.getPsiFile(document);
+            if (phase.isExpired()) return;
+
+            PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
             if (file != null && condition != null && !condition.value(file)) return;
+
             invokeCompletion(CompletionType.BASIC, true, project, editor, 0);
           }
-        }, project.getDisposed());
+        });
       }
-    });
+    }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
   }
 
   public static void invokeCompletion(CompletionType completionType,

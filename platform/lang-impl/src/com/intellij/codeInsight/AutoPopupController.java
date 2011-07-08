@@ -90,17 +90,12 @@ public class AutoPopupController implements Disposable {
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_COMPLETION_LOOKUP) {
-      final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
-      if (file == null) return;
+      if (PsiUtilBase.getPsiFileInEditor(editor, myProject) == null) return;
       final Runnable request = new Runnable(){
         public void run(){
-          if (myProject.isDisposed()) return;
-          if (editor.isDisposed()) return;
-
-          //PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          if (!file.isValid()) return;
-
-          CompletionAutoPopupHandler.invokeAutoPopupCompletion(myProject, editor, condition);
+          if (!myProject.isDisposed() && !editor.isDisposed()) {
+            CompletionAutoPopupHandler.scheduleAutoPopup(editor, condition);
+          }
         }
       };
 

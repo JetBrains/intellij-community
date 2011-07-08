@@ -591,7 +591,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void scheduleRestart() {
     if (isAutopopupCompletion() && hideAutopopupIfMeaningless()) {
-      CompletionAutoPopupHandler.scheduleAutoPopup(getProject(), myEditor);
+      CompletionAutoPopupHandler.scheduleAutoPopup(myEditor, null);
       return;
     }
 

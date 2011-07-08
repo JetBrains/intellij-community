@@ -77,7 +77,7 @@ public class TypedHandler extends TypedActionHandlerBase {
         });
         lookup.appendPrefix(charTyped);
         if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
-          CompletionAutoPopupHandler.scheduleAutoPopup(editor.getProject(), editor);
+          CompletionAutoPopupHandler.scheduleAutoPopup(editor, null);
         }
 
         AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
