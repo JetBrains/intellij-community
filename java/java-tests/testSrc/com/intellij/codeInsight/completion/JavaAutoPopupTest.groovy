@@ -583,6 +583,11 @@ public interface Test {
     for (i in 0.."iter".size()) {
       edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     }
+    if (lookup) {
+      println lookup.items
+      println myFixture.editor.document.text
+      println myFixture.editor.caretModel.offset
+    }
     assert !lookup
   }
 
