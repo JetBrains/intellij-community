@@ -853,6 +853,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         if (LookupActionHandler.DEBUG) {
           System.out.println("LookupImpl.caretPositionChanged");
           System.out.println("myChangeGuard = " + myChangeGuard);
+          System.out.println("myDisposed = " + myDisposed);
         }
         if (!myChangeGuard) {
           hide();
