@@ -453,12 +453,21 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  private void insertDummyIdentifier(final CompletionInitializationContext initContext, boolean hasModifiers, int invocationCount) {
+  private void insertDummyIdentifier(final CompletionInitializationContext initContext,
+                                     final boolean hasModifiers,
+                                     final int invocationCount) {
     final PsiFile originalFile = initContext.getFile();
-    final PsiFile fileCopy = createFileCopy(originalFile);
+    final PsiFile fileCopy;
+    AccessToken token = WriteAction.start();
+    try {
+      fileCopy = createFileCopy(originalFile);
+    }
+    finally {
+      token.finish();
+    }
     final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy);
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
-    int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy, initContext.getStartOffset());
+    final int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy, initContext.getStartOffset());
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
 
     final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
@@ -483,9 +492,28 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     });
     final Document hostDocument = hostFile.getViewProvider().getDocument();
     assert hostDocument != null : "no host document";
-    PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
 
-    doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
+    final Project project = hostFile.getProject();
+
+    if (autopopup) {
+      final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false);
+      CompletionServiceImpl.setCompletionPhase(phase);
+
+      CompletionAutoPopupHandler.runLaterWithCommitted(project, hostDocument, new Runnable() {
+        @Override
+        public void run() {
+          if (phase != CompletionServiceImpl.getCompletionPhase()) return;
+          if (hostEditor.isDisposed()) return;
+          if (DumbService.getInstance(project).isDumb()) return;
+
+          doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
+        }
+      });
+    } else {
+      PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
+
+      doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
+    }
   }
 
   private static CompletionContext createCompletionContext(PsiFile hostFile,
@@ -605,37 +633,31 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   protected PsiFile createFileCopy(PsiFile file) {
-    AccessToken token = WriteAction.start();
-    try {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
-          // must not cache injected file copy, since it does not reflect changes in host document
-          && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-        final SoftReference<Pair<PsiFile, Document>> reference = file.getUserData(FILE_COPY_KEY);
-        if (reference != null) {
-          final Pair<PsiFile, Document> pair = reference.get();
-          if (pair != null && pair.first.isValid() && pair.first.getClass().equals(file.getClass())) {
-            final PsiFile copy = pair.first;
-            if (copy.getModificationStamp() > file.getModificationStamp()) {
-              ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
-            }
-            final Document document = pair.second;
-            assert document != null;
-            document.setText(file.getText());
-            return copy;
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
+        // must not cache injected file copy, since it does not reflect changes in host document
+        && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+      final SoftReference<Pair<PsiFile, Document>> reference = file.getUserData(FILE_COPY_KEY);
+      if (reference != null) {
+        final Pair<PsiFile, Document> pair = reference.get();
+        if (pair != null && pair.first.isValid() && pair.first.getClass().equals(file.getClass())) {
+          final PsiFile copy = pair.first;
+          if (copy.getModificationStamp() > file.getModificationStamp()) {
+            ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
           }
+          final Document document = pair.second;
+          assert document != null;
+          document.setText(file.getText());
+          return copy;
         }
       }
+    }
 
-      final PsiFile copy = (PsiFile)file.copy();
-      final Document document = copy.getViewProvider().getDocument();
-      assert document != null;
-      file.putUserData(FILE_COPY_KEY, new SoftReference<Pair<PsiFile,Document>>(Pair.create(copy, document)));
-      return copy;
-    }
-    finally {
-      token.finish();
-    }
+    final PsiFile copy = (PsiFile)file.copy();
+    final Document document = copy.getViewProvider().getDocument();
+    assert document != null;
+    file.putUserData(FILE_COPY_KEY, new SoftReference<Pair<PsiFile,Document>>(Pair.create(copy, document)));
+    return copy;
   }
 
   private static boolean isAutocompleteOnInvocation(final CompletionType type) {

@@ -27,6 +27,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import java.util.concurrent.atomic.AtomicBoolean
+import com.intellij.openapi.application.ApplicationManager
 
 /**
  * @author peter
@@ -63,7 +64,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
   }
 
   protected void joinCompletion() {
-    joinCommit()
+    joinCommit() // file copy commit in background
 
     def controller = AutoPopupController.getInstance(getProject())
     controller.executePendingRequests();
@@ -95,15 +96,10 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
 
   private def joinCommit() {
     final AtomicBoolean committed = new AtomicBoolean()
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        committed.set(true);
-      }
-    }
     edt {
-      PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-      manager.cancelAndRunWhenAllCommitted("wait for all comm", runnable);
+      PsiDocumentManager.getInstance(project).cancelAndRunWhenAllCommitted("wait for all comm") {
+        ApplicationManager.application.invokeLater { committed.set(true) }
+      }
     }
     while (!committed.get()) {
       UIUtil.pump();

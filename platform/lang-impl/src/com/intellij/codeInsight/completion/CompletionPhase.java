@@ -50,7 +50,7 @@ public abstract class CompletionPhase implements Disposable {
 
   public final CompletionProgressIndicator indicator;
 
-  protected CompletionPhase(CompletionProgressIndicator indicator) {
+  protected CompletionPhase(@Nullable CompletionProgressIndicator indicator) {
     this.indicator = indicator;
   }
 
@@ -65,14 +65,22 @@ public abstract class CompletionPhase implements Disposable {
   }
 
   public static class AutoPopupAlarm extends CompletionPhase {
-    public AutoPopupAlarm() {
+    final boolean copyCommit;
+
+    public AutoPopupAlarm(boolean copyCommit) {
       super(null);
+      this.copyCommit = copyCommit;
     }
 
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       CompletionServiceImpl.setCompletionPhase(NoCompletion);
       return time;
+    }
+
+    @Override
+    public String toString() {
+      return "AutoPopupAlarm{copyCommit=" + copyCommit + '}';
     }
   }
   public static class Synchronous extends CompletionPhase {
