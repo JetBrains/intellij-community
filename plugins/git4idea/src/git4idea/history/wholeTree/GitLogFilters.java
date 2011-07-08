@@ -16,14 +16,12 @@
 package git4idea.history.wholeTree;
 
 import com.google.common.collect.Sets;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.history.browser.ChangesFilter;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -36,7 +34,7 @@ public class GitLogFilters {
   @Nullable
   private final Set<ChangesFilter.Filter> myCommitterFilters;
   @Nullable
-  private final Set<ChangesFilter.Filter> myStructureFilters;
+  private final Map<VirtualFile, ChangesFilter.Filter> myStructureFilters;
   @Nullable
   private final List<String> myPossibleReferencies;
 
@@ -46,14 +44,14 @@ public class GitLogFilters {
 
   public GitLogFilters(@Nullable ChangesFilter.Comment commentFilter,
                        @Nullable Set<ChangesFilter.Filter> committerFilters,
-                       @Nullable Set<ChangesFilter.Filter> structureFilters, @Nullable List<String> possibleReferencies) {
+                       @Nullable Map<VirtualFile, ChangesFilter.Filter> structureFilters, @Nullable List<String> possibleReferencies) {
     myCommentFilter = commentFilter;
     myCommitterFilters = committerFilters;
     myStructureFilters = structureFilters;
     myPossibleReferencies = possibleReferencies;
   }
 
-  public void callConsumer(final Consumer<List<ChangesFilter.Filter>> consumer, boolean takeComment) {
+  public void callConsumer(final Consumer<List<ChangesFilter.Filter>> consumer, boolean takeComment, final VirtualFile root) {
     final List<Set<ChangesFilter.Filter>> filters = new ArrayList<Set<ChangesFilter.Filter>>();
     if (takeComment && myCommentFilter != null) {
       filters.add(Collections.<ChangesFilter.Filter, ChangesFilter.Filter>singletonMap(myCommentFilter, myCommentFilter).keySet());
@@ -62,7 +60,10 @@ public class GitLogFilters {
       filters.add(myCommitterFilters);
     }
     if (myStructureFilters != null) {
-      filters.add(myStructureFilters);
+      final ChangesFilter.Filter filter = myStructureFilters.get(root);
+      if (filter != null) {
+        filters.add(Collections.singleton(filter));
+      }
     }
     final Set<List<ChangesFilter.Filter>> cartesian = Sets.cartesianProduct(filters);
     if (cartesian.isEmpty()) {
@@ -85,7 +86,7 @@ public class GitLogFilters {
   }
 
   @Nullable
-  public Set<ChangesFilter.Filter> getStructureFilters() {
+  public Map<VirtualFile,ChangesFilter.Filter> getStructureFilters() {
     return myStructureFilters;
   }
 
@@ -97,5 +98,13 @@ public class GitLogFilters {
   @Nullable
   public List<String> getPossibleReferencies() {
     return myPossibleReferencies;
+  }
+
+  public boolean haveStructureFilter() {
+    return myStructureFilters != null;
+  }
+
+  public boolean haveStructuresForRoot(VirtualFile root) {
+    return haveStructureFilter() && myStructureFilters.containsKey(root);
   }
 }

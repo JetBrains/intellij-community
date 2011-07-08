@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -36,6 +37,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.ui.SearchFieldAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.PopupHandler;
@@ -45,6 +47,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -107,6 +110,8 @@ public class GitLogUI implements Disposable {
   private MyFilterUi myUserFilterI;
   private MyCherryPick myCherryPickAction;
   private MyRefreshAction myRefreshAction;
+  private MyStructureFilter myStructureFilter;
+  private StructureFilterAction myStructureFilterAction;
   private AnAction myCopyHashAction;
   // todo group somewhere??
   private Consumer<CommitI> myDetailsLoaderImpl;
@@ -603,6 +608,7 @@ public class GitLogUI implements Disposable {
     }
     group.add(myBranchSelectorAction.asTextAction());
     group.add(myUsersFilterAction.asTextAction());
+    group.add(myStructureFilterAction.asTextAction());
     group.add(myCherryPickAction);
     group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
     group.add(myRefreshAction);
@@ -618,16 +624,20 @@ public class GitLogUI implements Disposable {
         reloadRequest();
       }
     });
-    myUserFilterI = new MyFilterUi(new Runnable() {
+    final Runnable reloadCallback = new Runnable() {
       @Override
       public void run() {
         reloadRequest();
       }
-    });
+    };
+    myUserFilterI = new MyFilterUi(reloadCallback);
     myUsersFilterAction = new UsersFilterAction(myProject, myUserFilterI);
     group.add(new MyTextFieldAction());
     group.add(myBranchSelectorAction);
     group.add(myUsersFilterAction);
+    myStructureFilter = new MyStructureFilter(reloadCallback);
+    myStructureFilterAction = new StructureFilterAction(myProject, myStructureFilter);
+    group.add(myStructureFilterAction);
     myCherryPickAction = new MyCherryPick();
     group.add(myCherryPickAction);
     group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
@@ -1118,7 +1128,7 @@ public class GitLogUI implements Disposable {
     myCommentSearchContext.clear();
     myUsersSearchContext.clear();
 
-    if (commentFilterEmpty && (myUserFilterI.myFilter == null)) {
+    if (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected) {
       myUsersSearchContext.clear();
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters());
     } else {
@@ -1140,9 +1150,33 @@ public class GitLogUI implements Disposable {
           userFilters.add(new ChangesFilter.Author(regexp));
         }
       }
+      Map<VirtualFile, ChangesFilter.Filter> structureFilters = null;
+      if (! myStructureFilter.myAllSelected) {
+        structureFilters = new HashMap<VirtualFile, ChangesFilter.Filter>();
+        final Collection<VirtualFile> selected = new ArrayList<VirtualFile>(myStructureFilter.getSelected());
+        final ArrayList<VirtualFile> copy = new ArrayList<VirtualFile>(myRootsUnderVcs);
+        Collections.sort(copy, FilePathComparator.getInstance());
+        Collections.reverse(copy);
+        for (VirtualFile root : copy) {
+          final Collection<VirtualFile> selectedForRoot = new SmartList<VirtualFile>();
+          final Iterator<VirtualFile> iterator = selected.iterator();
+          while (iterator.hasNext()) {
+            VirtualFile next = iterator.next();
+            if (VfsUtil.isAncestor(root, next, false)) {
+              selectedForRoot.add(next);
+              iterator.remove();
+            }
+          }
+          if (! selectedForRoot.isEmpty()) {
+            final ChangesFilter.StructureFilter structureFilter = new ChangesFilter.StructureFilter();
+            structureFilter.addFiles(selectedForRoot);
+            structureFilters.put(root, structureFilter);
+          }
+        }
+      }
 
       final List<String> possibleReferencies = commentFilterEmpty ? null : Arrays.asList(myPreviousFilter.split("[\\s]"));
-      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(comment, userFilters, null,
+      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(comment, userFilters, structureFilters,
                                                                                             possibleReferencies));
     }
     myCommentSearchContext.addHighlighter(myDetailsPanel.getHtmlHighlighter());
@@ -1300,6 +1334,39 @@ public class GitLogUI implements Disposable {
     public void setMe(final String me) {
       myMeIsKnown = ! StringUtil.isEmptyOrSpaces(me);
       myMe = me == null ? "" : me.trim();
+    }
+  }
+
+  private static class MyStructureFilter implements StructureFilterI {
+    private boolean myAllSelected;
+    private final List<VirtualFile> myFiles;
+    private final Runnable myReloadCallback;
+
+    private MyStructureFilter(Runnable reloadCallback) {
+      myReloadCallback = reloadCallback;
+      myFiles = new ArrayList<VirtualFile>();
+      myAllSelected = true;
+    }
+
+    @Override
+    public void allSelected() {
+      if (myAllSelected) return;
+      myAllSelected = true;
+      myReloadCallback.run();
+    }
+
+    @Override
+    public void select(Collection<VirtualFile> files) {
+      myAllSelected = false;
+      if (Comparing.haveEqualElements(files, myFiles)) return;
+      myFiles.clear();
+      myFiles.addAll(files);
+      myReloadCallback.run();
+    }
+
+    @Override
+    public Collection<VirtualFile> getSelected() {
+      return myFiles;
     }
   }
 }

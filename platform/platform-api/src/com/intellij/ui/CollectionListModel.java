@@ -18,6 +18,8 @@ package com.intellij.ui;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -73,5 +75,13 @@ public class CollectionListModel extends AbstractListModel {
   public void contentsChanged(Object element) {
     int i = myItems.indexOf(element);
     fireContentsChanged(this, i, i);
+  }
+
+  public void sort(final Comparator<?> comparator) {
+    Collections.sort(myItems, comparator);
+  }
+
+  public List getItems() {
+    return Collections.unmodifiableList(myItems);
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
@@ -100,8 +101,11 @@ public class ByRootLoader extends TaskDescriptor {
       public void consume(List<ChangesFilter.Filter> filters) {
         ProgressManager.checkCanceled();
         try {
+          final List<String> parameters = new ArrayList<String>();
+          final List<VirtualFile> paths = new ArrayList<VirtualFile>();
+          ChangesFilter.filtersToParameters(filters, parameters, paths);
           final List<Pair<String,GitCommit>> stash = GitHistoryUtils.loadStashStackAsCommits(myProject, myRootHolder.getRoot(),
-                                                                             mySymbolicRefs, ChangesFilter.filtersToParameterArray(filters));
+                                                                             mySymbolicRefs, parameters.toArray(new String[parameters.size()]));
           if (stash == null) return;
           for (Pair<String, GitCommit> pair : stash) {
             ProgressManager.checkCanceled();
@@ -120,7 +124,7 @@ public class ByRootLoader extends TaskDescriptor {
           myMediator.acceptException(e);
         }
       }
-    }, true);
+    }, true, myRootHolder.getRoot());
 
     myDetailsCache.putStash(myRootHolder.getRoot(), stashMap);
     ProgressManager.checkCanceled();
@@ -141,7 +145,11 @@ public class ByRootLoader extends TaskDescriptor {
       public void consume(List<ChangesFilter.Filter> filters) {
         for (String hash : hashes) {
           try {
-            final SHAHash shaHash = GitChangeUtils.commitExists(myProject, myRootHolder.getRoot(), hash, ChangesFilter.filtersToParameterArray(filters));
+            final List<String> parameters = new ArrayList<String>();
+            final List<VirtualFile> paths = new ArrayList<VirtualFile>();
+            ChangesFilter.filtersToParameters(filters, parameters, paths);
+            final SHAHash shaHash = GitChangeUtils.commitExists(myProject, myRootHolder.getRoot(), hash, paths,
+                                                                parameters.toArray(new String[parameters.size()]));
             if (shaHash == null) continue;
             if (controlSet.contains(shaHash)) continue;
             controlSet.add(shaHash);
@@ -167,7 +175,7 @@ public class ByRootLoader extends TaskDescriptor {
           }
         }
       }
-    }, false);
+    }, false, myRootHolder.getRoot());
 
     if (! result.isEmpty()) {
       final StepType stepType = myMediator.appendResult(myTicket, result, null);

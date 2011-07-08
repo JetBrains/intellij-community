@@ -17,7 +17,6 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -39,11 +38,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.treeStructure.SimpleNodeRenderer;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,13 +75,14 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final MyExpansionListener myExpansionListener = new MyExpansionListener();
 
   public FileSystemTreeImpl(@Nullable Project project, FileChooserDescriptor descriptor) {
-    this(project, descriptor, new Tree(), null, null);
+    this(project, descriptor, new Tree(), null, null, null);
     myTree.setRootVisible(descriptor.isTreeRootVisible());
     myTree.setShowsRootHandles(true);
   }
 
   public FileSystemTreeImpl(@Nullable Project project, FileChooserDescriptor descriptor, Tree tree, TreeCellRenderer renderer,
-                            final Runnable onInitialized) {
+                            final Runnable onInitialized,
+                            Convertor<TreePath, String> speedSearchConvertor) {
     myProject = project;
     myTreeStructure = new FileTreeStructure(project, descriptor);
     myDescriptor = descriptor;
@@ -114,7 +117,11 @@ public class FileSystemTreeImpl implements FileSystemTree {
       }
     });
 
-    new TreeSpeedSearch(myTree);
+    if (speedSearchConvertor != null) {
+      new TreeSpeedSearch(myTree, speedSearchConvertor);
+    } else {
+      new TreeSpeedSearch(myTree);
+    }
     myTree.setLineStyleAngled();
     TreeUtil.installActions(myTree);
 
@@ -218,6 +225,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (myTreeBuilder != null) {
       Disposer.dispose(myTreeBuilder);
     }
+  }
+
+  public AbstractTreeBuilder getTreeBuilder() {
+    return myTreeBuilder;
   }
 
   /**

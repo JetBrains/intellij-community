@@ -304,12 +304,15 @@ public class GitChangeUtils {
 
   @Nullable
   public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference,
-                                     final String... parameters) {
+                                     List<VirtualFile> paths, final String... parameters) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters(parameters);
     h.addParameters("--max-count=1", "--pretty=%H", "--encoding=UTF-8", anyReference, "--");
+    if (paths != null && ! paths.isEmpty()) {
+      h.addRelativeFiles(paths);
+    }
     try {
       final String output = h.run().trim();
       if (StringUtil.isEmptyOrSpaces(output)) return null;

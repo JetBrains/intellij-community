@@ -166,7 +166,7 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     final VirtualFile root = GitUtil.getGitRoot(filePath);
     if (root == null) return false;
 
-    final SHAHash shaHash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, "--all");
+    final SHAHash shaHash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, null, "--all");
     if (shaHash == null) {
       throw new VcsException("Can not apply patch to " + filePath.getPath() + ".\nCan not find revision '" + beforeVersionId + "'.");
     }

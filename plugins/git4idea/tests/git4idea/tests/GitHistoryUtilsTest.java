@@ -270,7 +270,7 @@ public class GitHistoryUtilsTest extends GitSingleUserTest {
       }
     };
 
-    GitHistoryUtils.hashesWithParents(myProject, bfilePath, consumer, null);
+    GitHistoryUtils.hashesWithParents(myProject, bfilePath, consumer, null, null);
 
     assertEquals(hashesWithParents.size(), expectedSize);
     for (Iterator hit = hashesWithParents.iterator(), myIt = myRevisionsAfterRename.iterator(); hit.hasNext(); ) {

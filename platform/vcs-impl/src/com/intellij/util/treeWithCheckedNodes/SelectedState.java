@@ -22,6 +22,7 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -90,5 +91,10 @@ public class SelectedState<T> {
 
   public Set<T> getSelected() {
     return Collections.unmodifiableSet(mySelected);
+  }
+
+  public void setSelection(Collection<T> files) {
+    mySelected.clear();
+    mySelected.addAll(files);
   }
 }
