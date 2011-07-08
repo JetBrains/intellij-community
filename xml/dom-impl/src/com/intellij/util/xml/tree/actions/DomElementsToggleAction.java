@@ -16,11 +16,11 @@
 
 package com.intellij.util.xml.tree.actions;
 
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.TypeNameManager;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
@@ -48,7 +48,8 @@ public class DomElementsToggleAction extends ToggleAction {
       myIcon = IconLoader.getIcon("/nodes/pointcut.png");
     }
     this.myIcon = myIcon;
-    myText = TypeNameManager.getTypeName(myClass);
+
+    myText = TypePresentationService.getService().getTypePresentableName(myClass);
 
     if(getHiders() == null) DomUtil.getFile(myTreeView.getRootElement()).putUserData(BaseDomElementNode.TREE_NODES_HIDERS_KEY, new HashMap<Class, Boolean>());
 

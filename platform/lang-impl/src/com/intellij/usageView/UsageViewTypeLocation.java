@@ -16,6 +16,7 @@
 
 package com.intellij.usageView;
 
+import com.intellij.ide.TypePresentationService;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -25,7 +26,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xml.TypeNameManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -66,7 +66,7 @@ public class UsageViewTypeLocation extends ElementDescriptionLocation {
         return type;
       }
 
-      return TypeNameManager.getTypeName(psiElement.getClass());
+      return TypePresentationService.getService().getTypePresentableName(psiElement.getClass());
     }
   };
 }

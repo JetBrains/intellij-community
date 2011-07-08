@@ -16,6 +16,7 @@
 
 package com.intellij.util.xml.tree.actions;
 
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -28,7 +29,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.MergedObject;
-import com.intellij.util.xml.TypeNameManager;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomElementsGroupNode;
@@ -131,7 +131,8 @@ public class AddElementInCollectionAction extends AddDomElementAction {
       final DomElementsGroupNode selectedNode = getDomElementsGroupNode(getTreeView(e));
       if (selectedNode != null) {
         final Type type = selectedNode.getChildDescription().getType();
-        text += " " + TypeNameManager.getTypeName(ReflectionUtil.getRawType(type));
+
+        text += " " + TypePresentationService.getService().getTypePresentableName(ReflectionUtil.getRawType(type));
       }
     }
     return text;

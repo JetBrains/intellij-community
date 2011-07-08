@@ -16,6 +16,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.find.impl.HelpID;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -27,7 +28,6 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.util.xml.TypeNameManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -120,7 +120,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       return LangBundle.message("java.terms.expression");
     }
 
-    final String name = TypeNameManager.getTypeName(element.getClass());
+    final String name = TypePresentationService.getService().getTypePresentableName(element.getClass());
     if (name != null) {
       return name;
     }

@@ -55,14 +55,14 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     return null;
   }
 
-  @Override@Nullable
+  @Override @Nullable
   public String getTypePresentableName(Class type) {
     Set<PresentationTemplate> templates = mySuperClasses.get(type);
     for (PresentationTemplate template : templates) {
       String typeName = template.getTypeName();
       if (typeName != null) return typeName;
     }
-    return null;
+    return getDefaultTypeName(type);
   }
 
   @Override

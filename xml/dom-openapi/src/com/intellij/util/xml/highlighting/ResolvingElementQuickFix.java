@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -56,7 +57,8 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
     myNewName = newName;
     myParents = parents;
     myChildDescription = childDescription;
-    myTypeName = TypeNameManager.getTypeName(myClazz);
+
+    myTypeName = TypePresentationService.getService().getTypePresentableName(myClazz);
   }
 
   public void setTypeName(final String typeName) {

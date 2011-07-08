@@ -16,6 +16,7 @@
 
 package com.intellij.util.xml.ui.actions;
 
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
@@ -123,7 +124,8 @@ public abstract class AddDomElementAction extends AnAction {
       for (Type type : chooser.getChooserTypes()) {
 
         final Class<?> rawType = ReflectionUtil.getRawType(type);
-        String name = TypeNameManager.getTypeName(rawType);
+
+        String name = TypePresentationService.getService().getTypePresentableName(rawType);
         Icon icon = null;
         if (!showAsPopup() || descriptions.length == 1) {
 //          if (descriptions.length > 1) {

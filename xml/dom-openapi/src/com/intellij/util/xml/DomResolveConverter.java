@@ -17,6 +17,7 @@ package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
@@ -113,7 +114,8 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
   }
 
   public String getErrorMessage(final String s, final ConvertContext context) {
-    return CodeInsightBundle.message("error.cannot.resolve.0.1", TypeNameManager.getTypeName(myClass), s);
+
+    return CodeInsightBundle.message("error.cannot.resolve.0.1", TypePresentationService.getService().getTypePresentableName(myClass), s);
   }
 
   public final String toString(final T t, final ConvertContext context) {
