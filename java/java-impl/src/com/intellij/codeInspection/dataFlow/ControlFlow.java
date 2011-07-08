@@ -24,21 +24,20 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.FlushVariableInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.TObjectIntHashMap;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 
 public class ControlFlow {
   private final ArrayList<Instruction> myInstructions = new ArrayList<Instruction>();
-  private final HashMap<PsiElement,Integer> myElementToStartOffsetMap = new HashMap<PsiElement, Integer>();
-  private final HashMap<PsiElement,Integer> myElementToEndOffsetMap = new HashMap<PsiElement, Integer>();
+  private final TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<PsiElement>();
+  private final TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<PsiElement>();
   private DfaVariableValue[] myFields;
   private final DfaValueFactory myFactory;
 
@@ -55,11 +54,11 @@ public class ControlFlow {
   }
 
   public void startElement(PsiElement psiElement) {
-    myElementToStartOffsetMap.put(psiElement, Integer.valueOf(myInstructions.size()));
+    myElementToStartOffsetMap.put(psiElement, myInstructions.size());
   }
 
   public void finishElement(PsiElement psiElement) {
-    myElementToEndOffsetMap.put(psiElement, Integer.valueOf(myInstructions.size()));
+    myElementToEndOffsetMap.put(psiElement, myInstructions.size());
   }
 
   public void addInstruction(Instruction instruction) {
@@ -73,15 +72,13 @@ public class ControlFlow {
   }
 
   public int getStartOffset(PsiElement element){
-    Integer value = myElementToStartOffsetMap.get(element);
-    if (value == null) return -1;
-    return value.intValue();
+    if (!myElementToStartOffsetMap.containsKey(element)) return -1;
+    return myElementToStartOffsetMap.get(element);
   }
 
   public int getEndOffset(PsiElement element){
-    Integer value = myElementToEndOffsetMap.get(element);
-    if (value == null) return -1;
-    return value.intValue();
+    if (!myElementToEndOffsetMap.containsKey(element)) return -1;
+    return myElementToEndOffsetMap.get(element);
   }
 
   public DfaVariableValue[] getFields() {
