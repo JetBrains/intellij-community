@@ -26,9 +26,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -84,25 +82,18 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
-    scheduleAutoPopup(project, editor, file);
+    scheduleAutoPopup(project, editor);
     return Result.STOP;
   }
 
-  public static void scheduleAutoPopup(final Project project, final Editor editor, final PsiFile file) {
-    final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
-
-    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false);
+  public static void scheduleAutoPopup(final Project project, final Editor editor) {
+    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
 
     final Runnable request = new Runnable() {
       @Override
       public void run() {
-        if (CompletionServiceImpl.getCompletionPhase() != phase) return;
-
-        if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
-        if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway
-        if (DumbService.getInstance(project).isDumb()) return;
-
+        if (phase.isExpired()) return;
         invokeCompletion(CompletionType.BASIC, false, true, project, editor, 0, false);
       }
     };

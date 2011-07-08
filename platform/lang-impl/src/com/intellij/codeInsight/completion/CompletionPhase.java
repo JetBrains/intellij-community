@@ -25,8 +25,11 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.messages.MessageBusConnection;
@@ -66,10 +69,21 @@ public abstract class CompletionPhase implements Disposable {
 
   public static class AutoPopupAlarm extends CompletionPhase {
     final boolean copyCommit;
+    private final Editor myEditor;
+    private final Expirable focusStamp;
+    private final Project myProject;
 
-    public AutoPopupAlarm(boolean copyCommit) {
+    public AutoPopupAlarm(boolean copyCommit, Editor editor) {
       super(null);
       this.copyCommit = copyCommit;
+      myEditor = editor;
+      myProject = editor.getProject();
+      focusStamp = IdeFocusManager.getInstance(myProject).getTimestamp(false);
+    }
+
+    public boolean isExpired() {
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) return false; //it will fail anyway
+      return CompletionServiceImpl.getCompletionPhase() != this || focusStamp.isExpired() || DumbService.getInstance(myProject).isDumb() || myEditor.isDisposed();
     }
 
     @Override
