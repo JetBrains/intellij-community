@@ -27,6 +27,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -42,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MavenAttachSourcesProvider implements AttachSourcesProvider {
+  @NotNull
   public Collection<AttachSourcesAction> getActions(final List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
     Collection<MavenProject> projects = getMavenProjects(psiFile);
     if (projects.isEmpty()) return Collections.emptyList();

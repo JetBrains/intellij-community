@@ -18,11 +18,13 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
 public interface AttachSourcesProvider {
+  @NotNull
   Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, PsiFile psiFile);
 
   interface AttachSourcesAction {
