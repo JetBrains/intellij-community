@@ -76,7 +76,8 @@ public class ProjectSettingsService {
     Configurable additionalSettingsConfigurable = getLibrarySettingsConfigurable(value);
     if (additionalSettingsConfigurable != null) {
       LibraryOrderEntry entry = (LibraryOrderEntry) value.getOrderEntry();
-      ShowSettingsUtil.getInstance().showSettingsDialog(entry.getOwnerModule().getProject(), additionalSettingsConfigurable);
+      ShowSettingsUtil.getInstance()
+        .showSettingsDialog(entry.getOwnerModule().getProject(), additionalSettingsConfigurable.getDisplayName());
     }
   }
 
@@ -94,10 +95,7 @@ public class ProjectSettingsService {
       Project project = libOrderEntry.getOwnerModule().getProject();
       LibraryType libType = ((LibraryEx)lib).getType();
       if (libType != null) {
-        LibraryRootsComponentDescriptor libComponentDescriptor = libType.createLibraryRootsComponentDescriptor();
-        if (libComponentDescriptor != null) {
-          return libComponentDescriptor.getAdditionalSettingsConfigurable(project);
-        }
+        return LibrarySettingsProvider.getAdditionalSettingsConfigurable(project, libType);
       }
     }
     return null;

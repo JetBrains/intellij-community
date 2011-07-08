@@ -154,6 +154,7 @@
   <extensionPoint name="orderEnumerationHandler" interface="com.intellij.openapi.roots.OrderEnumerationHandler"/>
   <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
                   area="IDEA_PROJECT"/>
+  <extensionPoint name="librarySettingsProvider" interface="com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider"/>
 
   <extensionPoint name="smartPointerElementInfoFactory" interface="com.intellij.psi.impl.smartPointers.SmartPointerElementInfoFactory"/>
   <extensionPoint name="elementSignatureProvider" interface="com.intellij.codeInsight.folding.impl.ElementSignatureProvider"/>
