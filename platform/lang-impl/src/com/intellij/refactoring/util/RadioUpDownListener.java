@@ -37,15 +37,27 @@ public class RadioUpDownListener extends KeyAdapter {
     final int selected = getSelected();
     if (selected != -1) {
       if (e.getKeyCode() == KeyEvent.VK_UP) {
-        int newIdx = selected - 1;
-        if (newIdx < 0) newIdx = myRadioButtons.length - 1;
-        click(myRadioButtons[newIdx]);
+        up(selected, selected);
       }
       else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-        int newIdx = selected + 1;
-        if (newIdx > myRadioButtons.length - 1) newIdx = 0;
-        click(myRadioButtons[newIdx]);
+        down(selected, selected);
       }
+    }
+  }
+
+  private void down(int selected, int stop) {
+    int newIdx = selected + 1;
+    if (newIdx > myRadioButtons.length - 1) newIdx = 0;
+    if (!click(myRadioButtons[newIdx]) && stop != newIdx) {
+      down(newIdx, selected);
+    }
+  }
+
+  private void up(int selected, int stop) {
+    int newIdx = selected - 1;
+    if (newIdx < 0) newIdx = myRadioButtons.length - 1;
+    if (!click(myRadioButtons[newIdx]) && stop != newIdx) {
+      up(newIdx, selected);
     }
   }
 
@@ -58,10 +70,12 @@ public class RadioUpDownListener extends KeyAdapter {
     return -1;
   }
 
-  private static void click(final JRadioButton button) {
-    if (button.isEnabled()) {
+  private static boolean click(final JRadioButton button) {
+    if (button.isEnabled() && button.isVisible()) {
       button.requestFocus();
       button.doClick();
+      return true;
     }
+    return false;
   }
 }
