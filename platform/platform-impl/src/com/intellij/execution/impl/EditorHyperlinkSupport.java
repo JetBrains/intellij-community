@@ -109,6 +109,16 @@ public class EditorHyperlinkSupport {
     return myHighlighterToMessageInfoMap.get(findLinkRangeAt(offset));
   }
 
+  @Nullable
+  public RangeHighlighter findHyperlinkRange(HyperlinkInfo info) {
+    for (RangeHighlighter highlighter : myHighlighterToMessageInfoMap.keySet()) {
+      if (info == myHighlighterToMessageInfoMap.get(highlighter)) {
+        return highlighter;
+      }
+    }
+    return null;
+  }
+
   private static boolean containsOffset(final int offset, final RangeHighlighter highlighter) {
     return highlighter.getStartOffset() <= offset && offset <= highlighter.getEndOffset();
   }

@@ -36,11 +36,12 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -114,7 +115,7 @@ class EventLogConsole {
 
     append(document, DateFormat.getTimeInstance(DateFormat.MEDIUM).format(notification.getCreationTime()) + " ");
 
-    Pair<String, Boolean> pair = EventLog.formatForLog(notification);
+    EventLog.LogEntry pair = EventLog.formatForLog(notification);
 
     final NotificationType type = notification.getType();
     TextAttributesKey key = type == NotificationType.ERROR
@@ -124,40 +125,17 @@ class EventLogConsole {
                                            : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 
     int msgStart = document.getTextLength();
-    String message = pair.first;
+    String message = pair.message;
     append(document, message);
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
     int layer = HighlighterLayer.CARET_ROW + 1;
     myLogEditor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
 
-    if (pair.second) {
-      String s = " ";
-      append(document, s);
-
-      final int linkStart = document.getTextLength();
-      append(document, "more");
-      myHyperlinkSupport.addHyperlink(linkStart, document.getTextLength(), null, new HyperlinkInfo() {
-        @Override
-        public void navigate(Project project) {
-          Balloon balloon = notification.getBalloon();
-          if (balloon != null) {
-            balloon.hide();
-          }
-
-          Window window = NotificationsManagerImpl.findWindowForBalloon(project);
-          if (window != null) {
-            Point point = EventLogConsole.this.myLogEditor
-              .visualPositionToXY(EventLogConsole.this.myLogEditor.offsetToVisualPosition(linkStart));
-            Point target = SwingUtilities.convertPoint(EventLogConsole.this.myLogEditor.getContentComponent(), point, window);
-            balloon = NotificationsManagerImpl.createBalloon(notification, true, true, false);
-            balloon.show(new RelativePoint(window, target), Balloon.Position.above);
-          }
-        }
-      });
-
-      append(document, " ");
+    for (Pair<TextRange, HyperlinkInfo> link : pair.links) {
+      myHyperlinkSupport.addHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, link.second);
     }
+
     append(document, "\n");
 
     if (scroll) {
@@ -190,6 +168,18 @@ class EventLogConsole {
 
   public Editor getConsoleEditor() {
     return myLogEditor;
+  }
+
+  @Nullable
+  public RelativePoint getHyperlinkLocation(HyperlinkInfo info) {
+    Project project = myLogEditor.getProject();
+    RangeHighlighter range = myHyperlinkSupport.findHyperlinkRange(info);
+    Window window = NotificationsManagerImpl.findWindowForBalloon(project);
+    if (range != null && window != null) {
+      Point point = this.myLogEditor.visualPositionToXY(this.myLogEditor.offsetToVisualPosition(range.getStartOffset()));
+      return new RelativePoint(window, SwingUtilities.convertPoint(this.myLogEditor.getContentComponent(), point, window));
+    }
+    return null;
   }
 
   private static void append(Document document, String s) {

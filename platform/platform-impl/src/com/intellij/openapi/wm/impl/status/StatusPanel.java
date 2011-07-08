@@ -118,7 +118,7 @@ class StatusPanel extends JPanel {
       new Runnable() {
         @Override
         public void run() {
-          String text = EventLog.formatForLog(statusMessage).first;
+          String text = EventLog.formatForLog(statusMessage).status;
           if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
             text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
           }

@@ -16,8 +16,10 @@
 
 package com.intellij.notification;
 
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfiguration;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -31,17 +33,21 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -93,7 +99,7 @@ public class EventLog implements Notifications {
     return getLogModel(project).getStatusMessage();
   }
 
-  public static Pair<String, Boolean> formatForLog(@NotNull final Notification notification) {
+  public static LogEntry formatForLog(@NotNull final Notification notification) {
     boolean showLink = notification.getListener() != null;
     String content = notification.getContent();
     String mainText = notification.getTitle();
@@ -111,7 +117,42 @@ public class EventLog implements Notifications {
     }
 
     mainText = mainText.replaceAll("<[^>]*>", "");
-    return Pair.create(mainText, showLink);
+
+    String status = mainText;
+
+    List<Pair<TextRange, HyperlinkInfo>> links = new ArrayList<Pair<TextRange, HyperlinkInfo>>();
+    if (showLink) {
+      mainText += " more ";
+      links.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(mainText.length() - 5, 4), new HyperlinkInfo() {
+        @Override
+        public void navigate(Project project) {
+          Balloon balloon = notification.getBalloon();
+          if (balloon != null) {
+            balloon.hide();
+          }
+
+          RelativePoint target = EventLog.getProjectComponent(project).myConsole.getHyperlinkLocation(this);
+          if (target != null) {
+            balloon = NotificationsManagerImpl.createBalloon(notification, true, true, false);
+            balloon.show(target, Balloon.Position.above);
+          }
+        }
+      }));
+    }
+
+    return new LogEntry(mainText, status, links);
+  }
+
+  public static class LogEntry {
+    public final String message;
+    public final String status;
+    public final List<Pair<TextRange, HyperlinkInfo>> links;
+
+    public LogEntry(String message, String status, List<Pair<TextRange, HyperlinkInfo>> links) {
+      this.message = message;
+      this.status = status;
+      this.links = links;
+    }
   }
 
   private static int eolIndex(String mainText) {
