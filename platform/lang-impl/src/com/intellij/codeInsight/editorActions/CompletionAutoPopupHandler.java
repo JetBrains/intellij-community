@@ -89,7 +89,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
   public static void scheduleAutoPopup(final Editor editor, @Nullable final Condition<PsiFile> condition) {
     final Project project = editor.getProject();
-    assert project != null;
+    if (project == null) return;
+
     final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
 
