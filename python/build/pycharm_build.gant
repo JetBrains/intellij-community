@@ -431,7 +431,11 @@ def layoutFull(String target, Set usedJars) {
       jar("extensions.jar") { module("extensions")}
 
       jar("pycharm.jar") {
-        implementationModules.each { module it }
+        implementationModules.each {
+          module(it) {
+            exclude(name: "**/tips/**")
+          }
+        }
         zipfileset(src: "${home}/lib/client-api.jar")
         zipfileset(src: "${home}/lib/ideaLicenseDecoder.jar")
       }
@@ -450,7 +454,11 @@ def layoutFull(String target, Set usedJars) {
         module("forms_rt")
       }
 
-      jar("resources_en.jar") {
+      jar([name: "resources_en.jar", duplicate: "preserve"]) {
+        // custom resources go first
+        fileset(dir: "$home/python/resources") {
+          include(name: "**/tips/**")
+        }
         module("platform-resources-en") {
           ant.patternset {
             exclude(name: "tips/images/switcher.png")
