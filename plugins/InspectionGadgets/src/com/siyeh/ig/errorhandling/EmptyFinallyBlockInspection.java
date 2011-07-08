@@ -83,7 +83,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
             final PsiElement first = tryBlock.getFirstBodyElement();
             final PsiElement last = tryBlock.getLastBodyElement();
             if (first != null && last != null) {
-              parent.addRange(first, last);
+              parent.addRangeAfter(first, last, tryStatement);
             }
             tryStatement.delete();
         }
