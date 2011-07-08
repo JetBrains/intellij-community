@@ -137,6 +137,10 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  public void testTryTry() {
+    doTest();
+  }
+
   public void testIsinstance() {
     doTest();
   }

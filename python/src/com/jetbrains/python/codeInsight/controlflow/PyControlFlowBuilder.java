@@ -27,6 +27,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public static final TokenSet CALL_OR_REF_EXPR = TokenSet.create(PyElementTypes.CALL_EXPRESSION, PyElementTypes.REFERENCE_EXPRESSION);
   public static final String SELF_ASSERT_RAISES = "self.assertRaises";
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
+  private List<Pair<PsiElement, Instruction>> myPendindBackup = null;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //// Control flow builder staff
@@ -431,14 +432,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     abruptFlow(node);
   }
 
-  private Instruction addBlockConnectedViaPending(final PsiElement node, final PsiElement scope) {
-    myBuilder.flowAbrupted();
-    final Instruction result = myBuilder.startNode(node);
-    node.accept(this);
-    myBuilder.addPendingEdge(scope, myBuilder.prevInstruction);
-    return result;
-  }
-
   @Override
   public void visitPyTryExceptStatement(final PyTryExceptStatement node) {
     myBuilder.startNode(node);
@@ -456,75 +449,133 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
 
+    // Process except parts
     final ArrayList<Instruction> exceptInstructions = new ArrayList<Instruction>();
-    // Store pending and clear it
-    final List<Pair<PsiElement, Instruction>> pending = myBuilder.pending;
-    myBuilder.pending = new ArrayList<Pair<PsiElement, Instruction>>();
+    storeAndClearPending();
     for (PyExceptPart exceptPart : node.getExceptParts()) {
-      final Instruction exceptInstrcution = addBlockConnectedViaPending(exceptPart, node);
+      myBuilder.flowAbrupted();
+      final Instruction exceptInstrcution = myBuilder.startNode(exceptPart);
+      exceptPart.accept(this);
+      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
       exceptInstructions.add(exceptInstrcution);
     }
-    // Restore pending
-    for (Pair<PsiElement, Instruction> pair : pending) {
-      myBuilder.addPendingEdge(pair.first, pair.second);
-    }
-    // Finally part handling
+    restorePending();
+
+    final List<Instruction> normalExits = new ArrayList<Instruction>();
     final PyFinallyPart finallyPart = node.getFinallyPart();
-    Instruction finallyInstruction = null;
-    Instruction lastFinallyInstruction = null;
+    final Instruction finallyFailInstruction;
+
+    // Store pending normal exit instructions from try-except-else parts
     if (finallyPart != null) {
-      finallyInstruction = addBlockConnectedViaPending(finallyPart, node);
-      lastFinallyInstruction = myBuilder.prevInstruction;
+      myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+        public void process(final PsiElement pendingScope, final Instruction instruction) {
+          final PsiElement pendingElement = instruction.getElement();
+          if (pendingElement != null) {
+            final boolean isPending = PsiTreeUtil.isAncestor(node, pendingElement, false) &&
+                                      !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false);
+            if (isPending && pendingScope != null) {
+              normalExits.add(instruction);
+            }
+            else {
+              myBuilder.addPendingEdge(pendingScope, instruction);
+            }
+          }
+        }
+      });
     }
 
+    // Finally-fail part handling
+    if (finallyPart != null) {
+      myBuilder.flowAbrupted();
+      finallyFailInstruction = myBuilder.startNode(finallyPart);
+      finallyPart.accept(this);
+      myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+    } else {
+      finallyFailInstruction = null;
+    }
+
+    // Create exception edges
     for (Instruction instruction : myBuilder.instructions) {
       final PsiElement e = instruction.getElement();
       if (e == null || !canRaiseExceptions(instruction)) {
         continue;
       }
       // All instructions inside the try part have edges to except and finally parts
-      if (PsiTreeUtil.isAncestor(tryPart, e, true)) {
+      if (PsiTreeUtil.getParentOfType(e, PyTryPart.class, true) == tryPart) {
         for (Instruction inst : exceptInstructions) {
           myBuilder.addEdge(instruction, inst);
         }
         if (finallyPart != null) {
-          myBuilder.addEdge(instruction, finallyInstruction);
+          myBuilder.addEdge(instruction, finallyFailInstruction);
         }
       }
       if (finallyPart != null) {
         // All instructions inside except parts have edges to the finally part
         for (PyExceptPart exceptPart : node.getExceptParts()) {
           if (PsiTreeUtil.isAncestor(exceptPart, e, true)) {
-            myBuilder.addEdge(instruction, finallyInstruction);
+            myBuilder.addEdge(instruction, finallyFailInstruction);
           }
         }
         // All instructions inside the else part have edges to the finally part
         if (PsiTreeUtil.isAncestor(elsePart, e, true)) {
-          myBuilder.addEdge(instruction, finallyInstruction);
+          myBuilder.addEdge(instruction, finallyFailInstruction);
         }
       }
     }
 
-    final Ref<Instruction> finallyRef = new Ref<Instruction>(finallyInstruction);
-    final Ref<Instruction> lastFinallyRef = new Ref<Instruction>(lastFinallyInstruction);
+    if (finallyPart != null) {
+      myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+        @Override
+        public void process(PsiElement pendingScope, Instruction instruction) {
+          final PsiElement e = instruction.getElement();
+          if (e != null) {
+            // Change the scope of pending edges from finally-fail part to point to the last instruction
+            if (PsiTreeUtil.isAncestor(finallyPart, e, false)) {
+              myBuilder.addPendingEdge(null, instruction);
+            }
+            // Connect pending fail edges to the finally-fail part
+            else if (pendingScope == null && PsiTreeUtil.isAncestor(node, e, false)) {
+              myBuilder.addEdge(instruction, finallyFailInstruction);
+            }
+            else {
+              myBuilder.addPendingEdge(pendingScope, instruction);
+            }
+          }
+        }
+      });
 
-    myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
-      public void process(final PsiElement pendingScope, final Instruction instruction) {
-        final PsiElement pendingElement = instruction.getElement();
-        if (pendingElement == null) {
-          return;
-        }
-        // Handle pending exit edges from try-except-else parts (in the node scope) if finally part exists
-        final boolean isPending = PsiTreeUtil.isAncestor(node, pendingElement, false) &&
-                                  (finallyPart == null || !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false));
-        if (!finallyRef.isNull() && isPending) {
-          myBuilder.addEdge(instruction, finallyRef.get());
-          myBuilder.addPendingEdge(null, lastFinallyRef.get());
-          return;
-        }
-        myBuilder.addPendingEdge(pendingScope, instruction);
+      // Duplicate CFG for finally (-fail and -success) only if there are no except parts and there are some successfull exits from the
+      // try part. Otherwise a single CFG for finally provides the correct control flow
+      final Instruction finallyInstruction;
+      if (node.getExceptParts().length == 0 && !normalExits.isEmpty()) {
+        // Finally-success part handling
+        storeAndClearPending();
+        myBuilder.flowAbrupted();
+        Instruction finallySuccessInstruction = myBuilder.startNode(finallyPart);
+        finallyPart.accept(this);
+        restorePending();
+        finallyInstruction = finallySuccessInstruction;
       }
-    });
+      else {
+        finallyInstruction = finallyFailInstruction;
+      }
+
+      // Connect normal exits from try and else parts to the finally part
+      for (Instruction instr : normalExits) {
+        myBuilder.addEdge(instr, finallyInstruction);
+      }
+    }
+  }
+
+  private void storeAndClearPending() {
+    myPendindBackup = myBuilder.pending;
+    myBuilder.pending = new ArrayList<Pair<PsiElement, Instruction>>();
+  }
+
+  private void restorePending() {
+    for (Pair<PsiElement, Instruction> pair : myPendindBackup) {
+      myBuilder.addPendingEdge(pair.first, pair.second);
+    }
   }
 
   @Override
@@ -677,9 +728,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     return !PsiTreeUtil.instanceOf(instruction.getElement(),
                                    PyReturnStatement.class,
+                                   PyBreakStatement.class,
+                                   PyContinueStatement.class,
                                    PyAssignmentStatement.class,
                                    PyRaiseStatement.class,
-                                   PyStatementList.class);
+                                   PyStatementList.class,
+                                   PyTryExceptStatement.class,
+                                   PyTryPart.class,
+                                   PyExceptPart.class,
+                                   PyFinallyPart.class);
   }
 }
 
