@@ -812,7 +812,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         PopupUtil.setPopupType(myDelegate, popupType);
       }
 
-      return myDelegate.getPopup(owner, contents, point.x, point.y);
+      final Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
+      fixPopupSize(popup, contents);
+      return popup;
     }
 
     private static Point fixPopupLocation(final Component contents, final int x, final int y) {
@@ -843,6 +845,23 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
 
       return rec.getLocation();
+    }
+
+    private static void fixPopupSize(final Popup popup, final Component contents) {
+      if (!UIUtil.isUnderGTKLookAndFeel() || !(contents instanceof JPopupMenu)) return;
+
+      for (Class aClass = popup.getClass(); aClass != null && Popup.class.isAssignableFrom(aClass); aClass = aClass.getSuperclass()) {
+        try {
+          final Method getComponent = aClass.getDeclaredMethod("getComponent");
+          getComponent.setAccessible(true);
+          final Object component = getComponent.invoke(popup);
+          if (component instanceof JWindow) {
+            ((JWindow)component).setSize(new Dimension(0, 0));
+          }
+          break;
+        }
+        catch (Exception ignored) { }
+      }
     }
   }
 }
