@@ -26,7 +26,10 @@ public class IdeaTitledBorder extends TitledBorder {
     super(BorderFactory.createCompoundBorder(
       BorderFactory.createEmptyBorder(0, 20, 0, 0),
       BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtil.getBorderColor())),
-          title + "  ");
+          title + "  ",
+          LEADING,
+          DEFAULT_POSITION,
+          new Font(Font.DIALOG, Font.BOLD, 12));
   }
 
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -47,7 +50,7 @@ public class IdeaTitledBorder extends TitledBorder {
       Font font = g.getFont();
       Color color = g.getColor();
 
-      g.setFont(getFont(c).deriveFont(Font.BOLD));
+      g.setFont(getFont(c));
 
       JComponent jc = (c instanceof JComponent) ? (JComponent)c : null;
       FontMetrics fm = SwingUtilities2.getFontMetrics(jc, g);
