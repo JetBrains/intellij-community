@@ -534,10 +534,12 @@ public class NameUtil {
       }
       // there's more in the pattern, but no more words
       if (nextStart == name.length()) {
-        if (patternIndex + i == myPattern.length - 1 &&
-            ' ' == myPattern[patternIndex + i] &&
-            (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length())) {
-          return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
+        if (patternIndex + i == myPattern.length - 1) {
+          char last = myPattern[patternIndex + i];
+          if (' ' == last && (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length()) ||
+              '*' == last) {
+            return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
+          }
         }
 
         return null;
@@ -584,6 +586,7 @@ public class NameUtil {
       }
 
       String nextChar = String.valueOf(myPattern[patternIndex]);
+      boolean wordStart = isWordStart(myPattern[patternIndex]);
 
       int fromIndex = nameIndex;
       while (true) {
@@ -591,6 +594,11 @@ public class NameUtil {
         if (next < 0) {
           break;
         }
+        if (wordStart && next > 0 && next != nextWord(name, next - 1)) {
+          fromIndex = next + 1;
+          continue;
+        }
+
         FList<TextRange> ranges = matchName(name, patternIndex, next);
         if (ranges != null) {
           return ranges;
