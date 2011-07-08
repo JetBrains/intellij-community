@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.EnumMap;
@@ -93,11 +94,11 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
   }
 
-  public void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
+  public void doTest(@NonNls String fileNameBefore, @NonNls String fileNameAfter) throws Exception {
     doTextTest(Action.REFORMAT, loadFile(fileNameBefore), loadFile(fileNameAfter));
   }
 
-  public void doTextTest(final String text, String textAfter) throws IncorrectOperationException {
+  public void doTextTest(@NonNls final String text, @NonNls String textAfter) throws IncorrectOperationException {
     doTextTest(Action.REFORMAT, text, textAfter);
   }
 
@@ -164,7 +165,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
   }
 
-  public void doMethodTest(final String before, final String after) throws Exception {
+  public void doMethodTest(@NonNls final String before, @NonNls final String after) throws Exception {
     doTextTest(
       Action.REFORMAT,
       "class Foo{\n" + "    void foo() {\n" + before + '\n' + "    }\n" + "}",
@@ -172,7 +173,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     );
   }
 
-  public void doClassTest(final String before, final String after) throws Exception {
+  public void doClassTest(@NonNls final String before, @NonNls final String after) throws Exception {
     doTextTest(
       Action.REFORMAT,
       "class Foo{\n" + before + '\n' + "}",

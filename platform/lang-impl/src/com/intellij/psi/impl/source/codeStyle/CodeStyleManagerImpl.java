@@ -126,9 +126,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   private static void transformAllChildren(final ASTNode file) {
-    for (ASTNode child = file.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      transformAllChildren(child);
-    }
+    ((TreeElement)file).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    });
   }
 
 
