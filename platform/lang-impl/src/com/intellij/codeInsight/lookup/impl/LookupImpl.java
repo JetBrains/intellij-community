@@ -849,7 +849,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }, this);
 
     final CaretListener caretListener = new CaretListener() {
-      public void caretPositionChanged(CaretEvent e){
+      public void caretPositionChanged(CaretEvent e) {
+        if (LookupActionHandler.DEBUG) {
+          System.out.println("LookupImpl.caretPositionChanged");
+          System.out.println("myChangeGuard = " + myChangeGuard);
+        }
         if (!myChangeGuard) {
           hide();
         }

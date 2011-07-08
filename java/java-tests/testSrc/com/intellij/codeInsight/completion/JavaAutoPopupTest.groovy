@@ -37,6 +37,7 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
+import com.intellij.codeInsight.lookup.impl.LookupActionHandler
 
 /**
  * @author peter
@@ -553,7 +554,15 @@ public interface Test {
 
   }
 
+  @Override
+  protected void tearDown() {
+    LookupActionHandler.DEBUG = false
+    super.tearDown()
+  }
+
   public void testLeftRightMovements() {
+    LookupActionHandler.DEBUG = true
+
     myFixture.configureByText("a.java", """
       class Foo {
         void foo(String iterable) {
