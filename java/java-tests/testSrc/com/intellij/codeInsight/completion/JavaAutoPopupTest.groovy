@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.Lookup
@@ -27,14 +28,15 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
-import com.intellij.codeInsight.CodeInsightSettings
 
 /**
  * @author peter
@@ -840,6 +842,15 @@ class LiveComplete {
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
     type '\t'
     assert myFixture.file.text.contains("innerThing();")
+  }
+
+  public void _testCharSelectionUndo() {
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    def editor;
+    edt { editor = FileEditorManager.getInstance(project).openFile(myFixture.file.virtualFile, false)[0] }
+    type('ArrStoExce.')
+    edt { UndoManager.getInstance(project).undo(editor) }
+    assert myFixture.editor.document.text.contains('ArrStoExce.')
   }
 
 
