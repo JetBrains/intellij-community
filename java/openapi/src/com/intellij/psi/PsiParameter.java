@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the parameter of a Java method, foreach (enhanced for) statement or catch block.
@@ -59,6 +60,6 @@ public interface PsiParameter extends PsiVariable {
   /**
    * {@inheritDoc}
    */
-  @NotNull
+  @Nullable
   PsiTypeElement getTypeElement();
 }

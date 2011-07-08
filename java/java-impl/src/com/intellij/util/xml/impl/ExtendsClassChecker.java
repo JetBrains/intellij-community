@@ -105,12 +105,15 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
           for (PsiMethod method : value.getConstructors()) {
             final PsiParameterList psiParameterList = method.getParameterList();
             if (psiParameterList.getParametersCount() != 1) continue;
-            final PsiType psiType = psiParameterList.getParameters()[0].getTypeElement().getType();
-            if (psiType instanceof PsiClassType) {
-              final PsiClass psiClass = ((PsiClassType)psiType).resolve();
-              if (psiClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, extendClass, true)) {
-                hasConstructor = true;
-                break;
+            PsiTypeElement typeElement = psiParameterList.getParameters()[0].getTypeElement();
+            if (typeElement != null) {
+              final PsiType psiType = typeElement.getType();
+              if (psiType instanceof PsiClassType) {
+                final PsiClass psiClass = ((PsiClassType)psiType).resolve();
+                if (psiClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, extendClass, true)) {
+                  hasConstructor = true;
+                  break;
+                }
               }
             }
           }
