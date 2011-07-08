@@ -642,6 +642,10 @@ public class AbstractTreeBuilder implements Disposable {
     }
   }
 
+  public boolean isSelectionBeingAdjusted() {
+    return getUi().isSelectionBeingAdjusted();
+  }
+
   private void assertDisposed() {
     assert !isDisposed();
   }
