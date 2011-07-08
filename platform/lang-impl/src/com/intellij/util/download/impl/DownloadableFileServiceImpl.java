@@ -16,12 +16,14 @@
 package com.intellij.util.download.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.DownloadableFileSetDescription;
 import com.intellij.util.download.DownloadableFileSetVersions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.net.URL;
@@ -49,7 +51,18 @@ public class DownloadableFileServiceImpl extends DownloadableFileService {
     };
   }
 
+  @NotNull
   @Override
-  public void loadVersionsToCombobox(@NotNull DownloadableFileSetVersions<?> versions, @NotNull JComboBox comboBox) {
+  public FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description,
+                                         @Nullable Project project,
+                                         JComponent parent) {
+    return createDownloader(description.getFiles(), project, parent, description.getName());
+  }
+
+  @NotNull
+  public FileDownloader createDownloader(final List<? extends DownloadableFileDescription> fileDescriptions,
+                                         final @Nullable Project project,
+                                         JComponent parent, @NotNull String presentableDownloadName) {
+    return new FileDownloaderImpl(fileDescriptions, project, parent, presentableDownloadName);
   }
 }
