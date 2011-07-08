@@ -54,19 +54,20 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     return refEntities.length == 0 ? null : tool.getQuickFixes(refEntities);
   }
 
-  public void appendToolNodeContent(final InspectionNode toolNode, final InspectionTreeNode parentNode, final boolean showStructure) {
+
+  public void appendToolNodeContent(final InspectionNode toolNode,
+                                    final InspectionTreeNode parentNode,
+                                    final boolean showStructure,
+                                    final Map<String, Set<RefEntity>> contents,
+                                    final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionTool tool = toolNode.getTool();
 
-
-    final Map<RefEntity, CommonProblemDescriptor[]> problems =
-      tool instanceof DescriptorProviderInspection ? ((DescriptorProviderInspection)tool).getProblemElements() : null;
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
       public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
         return new RefElementContainer(refElement, problems != null ? problems.get(refElement) : null);
       }
     };
 
-    final Map<String, Set<RefEntity>> contents = tool.getContent();
     final Set<RefModule> moduleProblems = tool.getModuleProblems();
     if (moduleProblems != null && !moduleProblems.isEmpty()) {
       Set<RefEntity> entities = contents.get("");

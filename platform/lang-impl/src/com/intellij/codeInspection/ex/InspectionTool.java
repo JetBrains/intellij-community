@@ -52,6 +52,7 @@ import java.util.Set;
 public abstract class InspectionTool extends InspectionProfileEntry {
   private GlobalInspectionContextImpl myContext;
   protected static String ourOutputPath;
+  protected InspectionNode myToolNode;
 
   public void initialize(@NotNull GlobalInspectionContextImpl context) {
     myContext = context;
@@ -205,9 +206,9 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   public InspectionNode createToolNode(final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showStructure) {
-    final InspectionNode toolNode = new InspectionNode(this);
-    provider.appendToolNodeContent(toolNode, parentNode, showStructure);
-    return toolNode;
+    myToolNode = new InspectionNode(this);
+    provider.appendToolNodeContent(myToolNode, parentNode, showStructure);
+    return myToolNode;
   }
   
   @Nullable

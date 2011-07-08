@@ -106,7 +106,11 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     return false;
   }
 
-  public void appendToolNodeContent(final InspectionNode toolNode, final InspectionTreeNode parentNode, final boolean showStructure) {
+  public void appendToolNodeContent(final InspectionNode toolNode,
+                                    final InspectionTreeNode parentNode,
+                                    final boolean showStructure,
+                                    final Map<String, Set<RefEntity>> contents,
+                                    final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionTool tool = toolNode.getTool();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(tool);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {

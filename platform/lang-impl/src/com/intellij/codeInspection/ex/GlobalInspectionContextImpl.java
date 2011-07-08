@@ -184,7 +184,8 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   }
 
 
-  public void addView(InspectionResultsView view, String title) {
+  public synchronized void addView(InspectionResultsView view, String title) {
+    if (myContent != null) return;
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
       public void contentRemoved(ContentManagerEvent event) {
         if (event.getContent() == myContent){
@@ -207,7 +208,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 
-  private void addView(InspectionResultsView view) {
+  protected void addView(InspectionResultsView view) {
     addView(view, view.getCurrentProfileName() == null
                   ? InspectionsBundle.message("inspection.results.title")
                   : InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
@@ -368,6 +369,10 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     }
   }
 
+  public InspectionResultsView getView() {
+    return myView;
+  }
+
   private static void ignoreElementRecursively(final InspectionTool tool, final RefEntity refElement) {
     if (refElement != null) {
       tool.ignoreCurrentElement(refElement);
@@ -397,8 +402,9 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     LOG.info("Code inspection started");
-
-    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), InspectionsBundle.message("inspection.progress.title"), true, new PerformAnalysisInBackgroundOption(myProject)) {
+    myView = new InspectionResultsView(myProject, getCurrentProfile(), scope, this, new InspectionRVContentProviderImpl(myProject));
+    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), InspectionsBundle.message("inspection.progress.title"), true,
+                                                              new PerformAnalysisInBackgroundOption(myProject)) {
       public void run(@NotNull ProgressIndicator indicator) {
         performInspectionsWithProgress(scope, manager);
       }
@@ -409,16 +415,15 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
           public void run() {
             LOG.info("Code inspection finished");
 
-            InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(),
-                                                                         scope, GlobalInspectionContextImpl.this,
-                                                                         new InspectionRVContentProviderImpl(myProject));
-            if (!view.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-              Messages.showMessageDialog(myProject, InspectionsBundle.message("inspection.no.problems.message"),
-                                         InspectionsBundle.message("inspection.no.problems.dialog.title"), Messages.getInformationIcon());
-              close(true);
-            }
-            else {
-              addView(view);
+            if (myView != null) {
+              if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
+                Messages.showMessageDialog(myProject, InspectionsBundle.message("inspection.no.problems.message"),
+                                           InspectionsBundle.message("inspection.no.problems.dialog.title"), Messages.getInformationIcon());
+                close(true);
+              }
+              else {
+                addView(myView);
+              }
             }
           }
         });

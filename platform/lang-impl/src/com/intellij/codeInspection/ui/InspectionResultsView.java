@@ -425,7 +425,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     setCursor(currentCursor);
   }
 
-  private void addTool(InspectionTool tool, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
+  public void addTool(InspectionTool tool, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
     final InspectionTreeNode parentNode = getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : InspectionProfileEntry.GENERAL_GROUP_NAME, errorLevel, groupedBySeverity);
     tool.createToolNode(myProvider, parentNode, myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE);
     registerActionShortcuts(tool);
@@ -492,9 +492,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return resultsFound;
   }
 
-  private InspectionTreeNode getToolParentNode(String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
+  public InspectionTreeNode getToolParentNode(String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
     if (groupName == null || groupName.length() == 0) {
       return getRelativeRootNode(groupedBySeverity, errorLevel);
+    }
+    if (myGroups == null) {
+      myGroups = new HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
     }
     Map<String, InspectionGroupNode> map = myGroups.get(errorLevel);
     if (map == null) {

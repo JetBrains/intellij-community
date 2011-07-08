@@ -20,6 +20,8 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -65,9 +67,20 @@ public abstract class InspectionRVContentProvider {
   public abstract QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree);
 
 
+  public void appendToolNodeContent(final InspectionNode toolNode,
+                                    final InspectionTreeNode parentNode,
+                                    final boolean showStructure) {
+    final InspectionTool tool = toolNode.getTool();
+    final Map<String, Set<RefEntity>> content = tool.getContent();
+    appendToolNodeContent(toolNode, parentNode, showStructure, content != null ? content : new HashMap<String, Set<RefEntity>>(),
+                          tool instanceof DescriptorProviderInspection ? ((DescriptorProviderInspection)tool).getProblemElements() : null);
+  }
+
   public abstract void appendToolNodeContent(final InspectionNode toolNode,
                                              final InspectionTreeNode parentNode,
-                                             final boolean showStructure);
+                                             final boolean showStructure,
+                                             final Map<String, Set<RefEntity>> contents,
+                                             final Map<RefEntity, CommonProblemDescriptor[]> problems);
 
   protected abstract void appendDescriptor(final InspectionTool tool,
                                            final UserObjectContainer container,

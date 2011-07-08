@@ -20,7 +20,11 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,15 +32,16 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.util.TripleFunction;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import javax.swing.tree.DefaultTreeModel;
+import java.util.*;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author max
@@ -99,6 +104,37 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
       return refElement;
     }
   };
+
+  @Override
+  protected void addProblemElement(RefEntity refElement, boolean filterSuppressed, CommonProblemDescriptor... descriptions) {
+    super.addProblemElement(refElement, filterSuppressed, descriptions);
+    final InspectionResultsView view = getContext().getView();
+    if (view != null && refElement instanceof RefElement) {
+      if (myToolNode == null) {
+        final HighlightSeverity currentSeverity = getCurrentSeverity((RefElement)refElement);
+        view.addTool(this, HighlightDisplayLevel.find(currentSeverity), getContext().getUIOptions().GROUP_BY_SEVERITY);
+      }
+      final HashMap<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+      problems.put(refElement, descriptions);
+      final HashMap<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
+      final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
+      Set<RefEntity> content = contents.get(groupName);
+      if (content == null) {
+        content = new HashSet<RefEntity>();
+        contents.put(groupName, content);
+      }
+      content.add(refElement);
+      view.getProvider().appendToolNodeContent(myToolNode,
+                                               (InspectionTreeNode)myToolNode.getParent(), getContext().getUIOptions().SHOW_STRUCTURE,
+                                               contents, problems);
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          getContext().addView(view);
+          ((DefaultTreeModel)view.getTree().getModel()).reload(myToolNode);
+        }
+      });
+    }
+  }
 
   public static void addProblemDescriptors(List<ProblemDescriptor> descriptors,
                                            boolean filterSuppressed,

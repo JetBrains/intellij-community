@@ -177,7 +177,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         element.rawAddChildren(keyword);
         return element;
       }
-      if (type instanceof PsiWildcardType) {
+      if (type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType || type instanceof PsiDisjunctionType) {
         final String originalText = original.getText();
         return createType(original.getProject(), originalText, null, generated);
       }
@@ -185,10 +185,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         LightTypeElement te = new LightTypeElement(original.getManager(), ((PsiIntersectionType)type).getRepresentative());
         return ChangeUtil.generateTreeElement(te, table, manager);
       }
-      if (type instanceof PsiDisjunctionType) {
-        final String originalText = original.getText();
-        return createType(original.getProject(), originalText, null, generated);
-      }
+
       PsiClassType classType = (PsiClassType)type;
 
       String text = classType.getPresentableText();
