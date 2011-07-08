@@ -557,7 +557,7 @@ public interface Test {
     myFixture.configureByText("a.java", """
       class Foo {
         void foo(String iterable) {
-          <caret>ter
+          <caret>ter   x
         }
       }
     """)
@@ -589,6 +589,7 @@ public interface Test {
       println lookup.items
       println myFixture.editor.document.text
       println myFixture.editor.caretModel.offset
+      println myFixture.editor.settings.virtualSpace
     }
     assert !lookup
   }
