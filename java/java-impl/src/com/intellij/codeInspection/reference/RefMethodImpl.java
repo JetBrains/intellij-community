@@ -189,6 +189,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @NotNull
   public Collection<RefMethod> getSuperMethods() {
     if (mySuperMethods == null) return EMPTY_METHOD_LIST;
+    if (mySuperMethods.size() > 10) {
+      LOG.info("method: " + getName() + " owner:" + getOwnerClass().getQualifiedName());
+    }
     return mySuperMethods;
   }
 
@@ -226,7 +229,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public void addSuperMethod(RefMethodImpl refSuperMethod) {
-    if (!getSuperMethods().contains(refSuperMethod)) {
+    if (!getSuperMethods().contains(refSuperMethod) && !refSuperMethod.getSuperMethods().contains(this)) {
       if (mySuperMethods == null){
         mySuperMethods = new ArrayList<RefMethod>(1);
       }
@@ -235,7 +238,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public void markExtended(RefMethodImpl method) {
-    if (!getDerivedMethods().contains(method)) {
+    if (!getDerivedMethods().contains(method) && !method.getDerivedMethods().contains(this)) {
       if (myDerivedMethods == null) {
         myDerivedMethods = new ArrayList<RefMethod>(1);
       }
