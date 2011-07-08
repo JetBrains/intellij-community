@@ -17,7 +17,7 @@ package git4idea.tests.rebase;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.rebase.GitRebaser;
-import git4idea.tests.GitSingleUserTest;
+import git4idea.tests.GitTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -32,7 +32,7 @@ import static org.testng.Assert.assertEquals;
  * is not suitable for this.
  * @author Kirill Likhodedov
  */
-public class GitRebaserReorderCommitsTest extends GitSingleUserTest {
+public class GitRebaserReorderCommitsTest extends GitTest {
 
   private GitRebaser myRebaser;
   private VirtualFile myRoot;
@@ -41,7 +41,7 @@ public class GitRebaserReorderCommitsTest extends GitSingleUserTest {
   @BeforeMethod @Override protected void setUp() throws Exception {
     super.setUp();
     myRebaser = new GitRebaser(myProject, null);
-    myRoot = myRepo.getDir();
+    myRoot = myRepo.getVFRootDir();
     myFirstCommit = makeCommit();
   }
 
@@ -102,7 +102,7 @@ public class GitRebaserReorderCommitsTest extends GitSingleUserTest {
   }
 
   private void assertCommits(String... commits) throws IOException {
-    final String[] hashes = myRepo.execute(false, "rev-list", "--reverse", "HEAD").getStdout().split("\n");
+    final String[] hashes = myRepo.run("rev-list", "--reverse", "HEAD").split("\n");
     assertEquals(commits.length, hashes.length);
     for (int i = 0; i < commits.length; i++) {
       assertEquals(hashes[i], commits[i], "Commit #" + i + " doesn't  match");

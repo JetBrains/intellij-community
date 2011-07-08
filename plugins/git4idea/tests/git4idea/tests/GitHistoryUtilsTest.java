@@ -48,7 +48,7 @@ import static org.testng.Assert.*;
  *
  * @author Kirill Likhodedov
  */
-public class GitHistoryUtilsTest extends GitSingleUserTest {
+public class GitHistoryUtilsTest extends GitTest {
 
   private VirtualFile afile;
   private FilePath bfilePath;
@@ -89,7 +89,7 @@ public class GitHistoryUtilsTest extends GitSingleUserTest {
     };
 
     int commitIndex = 0;
-    afile = myRepo.createFile("a.txt", contents[commitIndex]);
+    afile = myRepo.createVFile("a.txt", contents[commitIndex]);
     myRepo.addCommit(commitMessages[commitIndex]);
     commitIndex++;
 
@@ -98,7 +98,7 @@ public class GitHistoryUtilsTest extends GitSingleUserTest {
     int RENAME_COMMIT_INDEX = commitIndex;
     commitIndex++;
 
-    VirtualFile dir = myRepo.getDirFixture().findOrCreateDir("dir");
+    VirtualFile dir = myRepo.createVDir("dir");
     myRepo.mv(afile, "dir/b.txt");
     myRepo.refresh();
     final File bIOFile = new File(dir.getPath(), "b.txt");
@@ -114,10 +114,9 @@ public class GitHistoryUtilsTest extends GitSingleUserTest {
     }
 
     // Retrieve hashes and timestamps
-    String[] revisions = myRepo.log("--pretty=format:%H#%at#%P", "-M").getStdout().split("\n");
-    int length = revisions.length;
+    String[] revisions = myRepo.log("--pretty=format:%H#%at#%P", "-M").split("\n");
     // later revisions to the first in the log output
-    for (int i = length-1, j = 0; i >= 0; i--, j++) {
+    for (int i = revisions.length - 1, j = 0; i >= 0; i--, j++) {
       String[] details = revisions[j].trim().split("#");
       String[] parents;
       if (details.length > 2) {
@@ -126,7 +125,7 @@ public class GitHistoryUtilsTest extends GitSingleUserTest {
         parents = ArrayUtil.EMPTY_STRING_ARRAY;
       }
       final GitTestRevision revision = new GitTestRevision(details[0], details[1], parents, commitMessages[i],
-                                                           CONFIG_USER_NAME, CONFIG_USER_EMAIL, CONFIG_USER_NAME, CONFIG_USER_EMAIL, null,
+                                                           MAIN_USER_NAME, MAIN_USER_EMAIL, MAIN_USER_NAME, MAIN_USER_EMAIL, null,
                                                            contents[i]);
       myRevisions.add(revision);
       if (i > RENAME_COMMIT_INDEX) {
@@ -156,7 +155,7 @@ public class GitHistoryUtilsTest extends GitSingleUserTest {
     myRepo.checkout("feature");
     editFileInCommand(myProject, bfile, "new content");
     myRepo.addCommit();
-    final String[] output = myRepo.log("--pretty=%H#%at", "-n1").getStdout().trim().split("#");
+    final String[] output = myRepo.log("--pretty=%H#%at", "-n1").trim().split("#");
 
     GitRevisionNumber revisionNumber = (GitRevisionNumber) GitHistoryUtils.getCurrentRevision(myProject, bfilePath, "master");
     assertEquals(revisionNumber.getRev(), output[0]);
@@ -179,9 +178,9 @@ public class GitHistoryUtilsTest extends GitSingleUserTest {
     myRepo.config("branch.master.merge", "refs/heads/master");
     myRepo.rm(bfilePath.getPath());
     myRepo.commit();
-    VirtualFile dir = myRepo.getDirFixture().findOrCreateDir("dir");
+    VirtualFile dir = myRepo.createVDir("dir");
     createFileInCommand(dir, "b.txt", "content");
-    String[] hashAndData = myRepo.log("--pretty=format:%H#%ct", "-n1").getStdout().split("#");
+    String[] hashAndData = myRepo.log("--pretty=format:%H#%ct", "-n1").split("#");
 
     final ItemLatestState state = GitHistoryUtils.getLastRevision(myProject, bfilePath);
     assertTrue(!state.isItemExists());
@@ -223,7 +222,7 @@ public class GitHistoryUtilsTest extends GitSingleUserTest {
 
   @Test
   public void testOnlyHashesHistory() throws Exception {
-    final List<Pair<SHAHash,Date>> history = GitHistoryUtils.onlyHashesHistory(myProject, bfilePath, myRepo.getDir());
+    final List<Pair<SHAHash,Date>> history = GitHistoryUtils.onlyHashesHistory(myProject, bfilePath, myRepo.getVFRootDir());
     assertEquals(history.size(), myRevisionsAfterRename.size());
     for (Iterator hit = history.iterator(), myIt = myRevisionsAfterRename.iterator(); hit.hasNext(); ) {
       Pair<SHAHash,Date> pair = (Pair<SHAHash, Date>) hit.next();

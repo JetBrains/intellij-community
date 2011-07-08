@@ -37,7 +37,7 @@ import static org.testng.Assert.assertTrue;
  * TODO: This shouldn't rely on Git. Either test all version controls, either test a mock version control. Or even use both approaches.
  * @author Kirill Likhodedov
  */
-public class ChangeListManagerUpdateOnFileChangeTest extends GitSingleUserTest {
+public class ChangeListManagerUpdateOnFileChangeTest extends GitTest {
 
   private ChangeListManagerImpl myChangeListManager;
   private VirtualFile afile;
@@ -80,7 +80,7 @@ public class ChangeListManagerUpdateOnFileChangeTest extends GitSingleUserTest {
   @Test
   public void testMoveFile() throws IOException {
     String oldpath = afile.getPath();
-    VirtualFile dir = createDirInCommand(myRepo.getDir(), "dir");
+    VirtualFile dir = createDirInCommand(myRepo.getVFRootDir(), "dir");
     moveFileInCommand(afile, dir);
     assertInChangeList(oldpath, afile.getPath());
   }

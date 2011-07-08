@@ -15,9 +15,6 @@
  */
 package git4idea.tests;
 
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -25,16 +22,15 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.testFramework.AbstractVcsTestCase;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
-import git4idea.config.GitVcsApplicationSettings;
-import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -45,56 +41,44 @@ import java.util.Map;
  */
 public abstract class GitTest extends AbstractVcsTestCase {
 
-  public static final String GIT_EXECUTABLE_PATH = "IDEA_TEST_GIT_EXECUTABLE_PATH";
+  protected GitTestRepository myRepo;
+  protected GitTestRepository myParentRepo;
+  protected GitTestRepository myBrotherRepo;
 
-  private static final String GIT_EXECUTABLE = "git";
-  protected GitTestRepository myMainRepo;
   private File myProjectDir;
+
+  private TempDirTestFixture myProjectDirFixture;
+  private TempDirTestFixture myParentDirFixture;
+  private TempDirTestFixture myBrotherDirFixture;
+
+  protected static final String MAIN_USER_NAME = "John Smith";
+  protected static final String MAIN_USER_EMAIL = "john.smith@email.com";
+  protected static final String BROTHER_USER_NAME = "Bob Doe";
+  protected static final String BROTHER_USER_EMAIL = "bob.doe@email.com";
 
   @BeforeMethod
   protected void setUp() throws Exception {
-    // setting git executable
-    String exec = System.getenv(GIT_EXECUTABLE_PATH);
-    if (exec != null) {
-      myClientBinaryPath = new File(exec);
-    }
-    if (exec == null || !myClientBinaryPath.exists()) {
-      final File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
-      myClientBinaryPath = new File(pluginRoot, "tests/git4idea/tests/data/bin");
-    }
+    myProjectDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
+    myProjectDirFixture.setUp();
+    myProjectDir = new File(myProjectDirFixture.getTempDirPath());
 
-    myMainRepo = initRepositories();
-
-    myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         try {
           initProject(myProjectDir);
+          initRepositories();
           activateVCS(GitVcs.NAME);
         } catch (Exception e) {
-          e.printStackTrace();
+          throw new RuntimeException("Exception initializing the test", e);
         }
       }
     });
-
-    final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
-    File executable = new File(myClientBinaryPath, SystemInfo.isWindows ? GIT_EXECUTABLE + ".exe" : GIT_EXECUTABLE);
-    settings.setPathToGit(executable.getPath());
 
     myTraceClient = true;
     doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
   }
-
-  /**
-   * Different implementations for {@link GitSingleUserTest} and {@link GitCollaborativeTest}:
-   * create a single or several repositories, which will be used in tests.
-   * @return main repository which IDEA project will be bound to.
-   */
-  protected abstract GitTestRepository initRepositories() throws Exception;
-
-  protected abstract void tearDownRepositories() throws Exception;
 
   @AfterMethod
   protected void tearDown() throws Exception {
@@ -103,7 +87,9 @@ public abstract class GitTest extends AbstractVcsTestCase {
       public void run() {
         try {
           tearDownProject();
-          tearDownRepositories();
+          myProjectDirFixture.tearDown();
+          myBrotherDirFixture.tearDown();
+          myParentDirFixture.tearDown();
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -111,13 +97,21 @@ public abstract class GitTest extends AbstractVcsTestCase {
     });
   }
 
-  /**
-   * Executes the given native Git command with parameters in the given working directory.
-   * @param workingDir  working directory where the command will be executed. May be null.
-   * @param commandLine command and parameters (e.g. 'status, -m').
-   */
-  protected ProcessOutput executeCommand(@Nullable File workingDir, String... commandLine) throws IOException {
-    return runClient(GIT_EXECUTABLE, null, workingDir, commandLine);
+  private void initRepositories() throws Exception {
+    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    myParentDirFixture = fixtureFactory.createTempDirTestFixture();
+    myParentDirFixture.setUp();
+    myBrotherDirFixture = fixtureFactory.createTempDirTestFixture();
+    myBrotherDirFixture.setUp();
+
+    myParentRepo = GitTestRepository.init(new File(myParentDirFixture.getTempDirPath()));
+
+    myRepo = GitTestRepository.clone(myParentRepo, myProjectDir);
+    myRepo.setName(MAIN_USER_NAME, MAIN_USER_EMAIL);
+    myRepo.refresh();
+
+    myBrotherRepo = GitTestRepository.clone(myParentRepo, new File(myBrotherDirFixture.getTempDirPath()));
+    myBrotherRepo.setName(BROTHER_USER_NAME, BROTHER_USER_EMAIL);
   }
 
   protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {
@@ -125,7 +119,7 @@ public abstract class GitTest extends AbstractVcsTestCase {
   }
 
   protected String tos(FilePath fp) {
-    return FileUtil.getRelativePath(new File(myMainRepo.getDir().getPath()), fp.getIOFile());
+    return FileUtil.getRelativePath(myProjectDir, fp.getIOFile());
   }
 
   protected String tos(Change change) {

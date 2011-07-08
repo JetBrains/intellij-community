@@ -35,7 +35,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Kirill Likhodedov
  */
-public class GitBranchTest extends GitCollaborativeTest {
+public class GitBranchTest extends GitTest {
 
   private List<TestBranch> myBranches;
   private VirtualFile myDir;
@@ -51,19 +51,19 @@ public class GitBranchTest extends GitCollaborativeTest {
 
     myBrotherRepo.pull();
     myBrotherRepo.createBranch("feature");
-    createFileInCommand(myBrotherRepo.getDir(), "feature.txt", "feature content");
+    createFileInCommand(myBrotherRepo.getVFRootDir(), "feature.txt", "feature content");
     myBrotherRepo.addCommit();
     myBrotherRepo.push("--all");
 
     myBrotherRepo.createBranch("eap");
-    createFileInCommand(myBrotherRepo.getDir(), "eap.txt", "eap content");
+    createFileInCommand(myBrotherRepo.getVFRootDir(), "eap.txt", "eap content");
     myBrotherRepo.addCommit();
     myBrotherRepo.push("--all");
 
     myRepo.pull();
     myRepo.createBranch("my_feature");
 
-    String[] branches = myRepo.branch("-a").getStdout().split("\n");
+    String[] branches = myRepo.branch("-a").split("\n");
     myBranches = new ArrayList<TestBranch>(branches.length);
     for (String b : branches) {
       boolean current = b.charAt(0) == '*';
@@ -78,7 +78,7 @@ public class GitBranchTest extends GitCollaborativeTest {
       }
       myBranches.add(branch);
     }
-    myDir = myRepo.getDir();
+    myDir = myRepo.getVFRootDir();
   }
 
   @Test

@@ -48,7 +48,7 @@ public class GitTestUtil {
     for (String path : paths) {
       String[] pathElements = path.split("/");
       boolean lastIsDir = path.endsWith("/");
-      VirtualFile currentParent = repo.getDir();
+      VirtualFile currentParent = repo.getVFRootDir();
       for (int i = 0; i < pathElements.length-1; i++) {
         currentParent = createDir(project, currentParent, pathElements[i]);
       }

@@ -48,7 +48,7 @@ import static org.testng.Assert.*;
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
  * @author Kirill Likhodedov
  */
-public class GitChangeProviderTest extends GitSingleUserTest {
+public class GitChangeProviderTest extends GitTest {
 
   private GitChangeProvider myChangeProvider;
   private VcsModifiableDirtyScope myDirtyScope;
@@ -67,7 +67,7 @@ public class GitChangeProviderTest extends GitSingleUserTest {
     myRepo.refresh();
 
     afile = myFiles.get("a.txt"); // the file is commonly used, so save it in a field.
-    myRootDir = myRepo.getDir();
+    myRootDir = myRepo.getVFRootDir();
 
     myDirtyScope = new MockDirtyScope(myProject, GitVcs.getInstance(myProject));
   }
@@ -105,7 +105,7 @@ public class GitChangeProviderTest extends GitSingleUserTest {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            final VirtualFile dir= myRepo.getDir().findChild("dir");
+            final VirtualFile dir= myRepo.getVFRootDir().findChild("dir");
             myDirtyScope.addDirtyDirRecursively(new FilePathImpl(dir));
             FileUtil.delete(VfsUtil.virtualToIoFile(dir));
           }
@@ -123,7 +123,7 @@ public class GitChangeProviderTest extends GitSingleUserTest {
     // But the order is likely preserved if it meets the natural order of the items inserted into the dirty scope.
     // That's why the test moves from .../repo/dir/new.txt to .../repo/new.txt - to make the old path appear later than the new one.
     // This is not consistent though.
-    final VirtualFile dir= myRepo.getDir().findChild("dir");
+    final VirtualFile dir= myRepo.getVFRootDir().findChild("dir");
     final VirtualFile file = create(dir, "new.txt");
     move(file, myRootDir);
     assertChanges(file, ADDED);
@@ -181,21 +181,21 @@ public class GitChangeProviderTest extends GitSingleUserTest {
   @Test
   public void testConflictCC() throws Exception {
     modifyFileInBranches("z.txt", FileAction.CREATE, FileAction.CREATE);
-    VirtualFile zfile = myRepo.getDir().findChild("z.txt");
+    VirtualFile zfile = myRepo.getVFRootDir().findChild("z.txt");
     assertChanges(zfile, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   @Test
   public void testConflictRD() throws Exception {
     modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.DELETE);
-    VirtualFile newfile = myRepo.getDir().findChild("a.txt_master_new"); // renamed in master
+    VirtualFile newfile = myRepo.getVFRootDir().findChild("a.txt_master_new"); // renamed in master
     assertChanges(newfile, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   @Test
   public void testConflictDR() throws Exception {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.RENAME);
-    VirtualFile newFile = myRepo.getDir().findChild("a.txt_feature_new"); // deleted in master, renamed in feature
+    VirtualFile newFile = myRepo.getVFRootDir().findChild("a.txt_feature_new"); // deleted in master, renamed in feature
     assertChanges(newFile, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
@@ -215,7 +215,7 @@ public class GitChangeProviderTest extends GitSingleUserTest {
   }
 
   private void performActionOnFileAndRecordToIndex(String filename, String branchName, FileAction action) throws Exception {
-    VirtualFile file = myRepo.getDir().findChild(filename);
+    VirtualFile file = myRepo.getVFRootDir().findChild(filename);
     switch (action) {
       case CREATE:
         final VirtualFile createdFile = createFileInCommand(filename, "initial content in branch " + branchName);

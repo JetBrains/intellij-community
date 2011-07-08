@@ -46,7 +46,7 @@ import static org.testng.Assert.*;
  * Defines 3 files with unix, windows and mac separator style and tries to commit them testing different git settings.
  * @author Kirill Likhodedov
  */
-public class GitLineSeparatorsConverterTest extends GitSingleUserTest {
+public class GitLineSeparatorsConverterTest extends GitTest {
   private GitVcsSettings mySettings;
   private ChangeListManagerImpl myChangeListManager;
   private String myCodeStyleSeparator;

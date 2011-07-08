@@ -15,76 +15,115 @@
  */
 package git4idea.tests;
 
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.AbstractVcsTestCase;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.ui.GuiUtils;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.test.GitTestRunEnv;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.testng.Assert.fail;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Representation of a Git repository for tests purposes.
+ * Works with {@link java.io.File} - be sure to {@link #refresh()} the repository if a {@link VirtualFile} is needed.
  * @author Kirill Likhodedov
  */
 public class GitTestRepository {
-  @NotNull private final GitTest myTest;
-  @NotNull private final TempDirTestFixture myDirFixture;
-  private VirtualFile myDir;
 
-  public GitTestRepository(@NotNull GitTest test, @NotNull TempDirTestFixture fixture) {
-    myTest = test;
-    myDirFixture = fixture;
-  }
+  private File myRootDir;
+  private GitTestRunEnv myRunEnv;
 
-  /**
-   * Creates a new Mercurial repository in a new temporary test directory.
-   * @param test   reference to the test case instance.
-   * @param parameters optional array of parameters passed to 'git init'
-   * @return created repository.
-   */
-  public static GitTestRepository create(GitTest test, String... parameters) throws Exception {
-    final TempDirTestFixture dirFixture = createFixtureDir();
-    final File repo = new File(dirFixture.getTempDirPath());
-    final ProcessOutput processOutput = test.executeCommand(repo, join("init", parameters));
-    AbstractVcsTestCase.verify(processOutput);
-    return new GitTestRepository(test, dirFixture);
-  }
-
-  public static GitTestRepository cloneFrom(GitTestRepository parent) throws Exception {
-    final TempDirTestFixture dirFixture = createFixtureDir();
-    final File repo = new File(dirFixture.getTempDirPath());
-    final ProcessOutput processOutput = parent.getTest().executeCommand(repo, "clone", parent.getDirFixture().getTempDirPath(), repo.getPath());
-    AbstractVcsTestCase.verify(processOutput);
-    return new GitTestRepository(parent.getTest(), dirFixture);
-  }
-
-  private static TempDirTestFixture createFixtureDir() throws Exception {
-    final TempDirTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-    fixture.setUp();
-    return fixture;
+  @NotNull
+  public static GitTestRepository init(@NotNull File dir) throws IOException {
+    GitTestRepository repo = new GitTestRepository(dir);
+    repo.init();
+    return repo;
   }
 
   @NotNull
-  public TempDirTestFixture getDirFixture() {
-    return myDirFixture;
+  public static GitTestRepository clone(@NotNull GitTestRepository sourceRepo, @NotNull File targetDir) throws IOException {
+    sourceRepo.run("clone", sourceRepo.getRootDir().getPath(), targetDir.getPath());
+    return new GitTestRepository(targetDir);
   }
 
-  @Nullable
-  public VirtualFile getDir() {
-    if (myDir == null) {
-      myDir = VcsUtil.getVirtualFile(myDirFixture.getTempDirPath());
-    }
-    return myDir;
+  /**
+   * Create new GitTestRepository related to the given directory - the Git repository root.
+   * @param rootDir
+   */
+  public GitTestRepository(@NotNull File rootDir) {
+    myRootDir = rootDir;
+    myRunEnv = new GitTestRunEnv(myRootDir);
+  }
+
+  public void init() throws IOException {
+    myRunEnv.run("init");
+  }
+
+  @NotNull
+  public File getRootDir() {
+    return myRootDir;
+  }
+
+  @NotNull
+  public VirtualFile getVFRootDir() {
+    final VirtualFile vf = VcsUtil.getVirtualFile(myRootDir);
+    assert vf != null;
+    return vf;
+  }
+
+  public void refresh() {
+    final VirtualFile virtualFile = VcsUtil.getVirtualFile(myRootDir);
+    assert virtualFile != null;
+    virtualFile.refresh(false, true);
+  }
+
+  /**
+   * Creates a file in this repository and fills it with the given content.
+   * @param filename relative path to the file.
+   * @param content  initial content for the file.
+   * @return The created file.
+   */
+  @NotNull
+  public File createFile(String filename, String content) throws IOException {
+    File f = new File(myRootDir, filename);
+    assert f.createNewFile();
+    FileUtil.writeToFile(f, content);
+    return f;
+  }
+
+  @NotNull
+  public VirtualFile createVFile(String filename, String content) throws IOException {
+    File f = createFile(filename, content);
+    refresh();
+    final VirtualFile virtualFile = VcsUtil.getVirtualFile(f);
+    assert virtualFile != null;
+    return virtualFile;
+  }
+
+  @NotNull
+  public File createDir(String dirname) {
+    return createDir(myRootDir.getPath(), dirname);
+  }
+
+  @NotNull
+  public VirtualFile createVDir(String dirname) {
+    File d = createDir(dirname);
+    refresh();
+    final VirtualFile virtualFile = VcsUtil.getVirtualFile(d);
+    assert virtualFile != null;
+    return virtualFile;
+  }
+
+  public File createDir(String parent, String dirname) {
+    File dir = new File(parent, dirname);
+    assert dir.mkdir();
+    return dir;
+  }
+
+  public String run(String command, String... params) throws IOException {
+    return myRunEnv.run(command, params);
   }
 
   /**
@@ -95,224 +134,115 @@ public class GitTestRepository {
     config("user.email", email);
   }
 
-  /**
-   * Creates a file in this repository.
-   * @param filename relative path to the file.
-   * @return The created file.
-   */
-  public VirtualFile createFile(String filename) throws IOException {
-    return createFile(filename, null);
-  }
-
-  /**
-   * Creates a file in this repository and fills it with the given content.
-   * @param filename relative path to the file.
-   * @param content  initial content for the file.
-   * @return The created file.
-   */
-  public VirtualFile createFile(String filename, String content) throws FileNotFoundException {
-    return myTest.createFileInCommand(filename, content);
-  }
-
-  /**
-   * Natively executes the given mercurial command inside write or read action.
-   * @param writeAction           If true, the command will be executed in a write action, otherwise - inside a read action.
-   * @param commandWithParameters Mercurial command with parameters. E.g. ["status", "-a"]
-   */
-  public ProcessOutput execute(final boolean writeAction, final String... commandWithParameters) throws IOException {
-    final AtomicReference<ProcessOutput> result = new AtomicReference<ProcessOutput>();
-    final Runnable action = new Runnable() {
-      @Override public void run() {
-        try {
-          result.set(myTest.executeCommand(new File(myDirFixture.getTempDirPath()), commandWithParameters));
-        } catch (IOException e) {
-          result.set(null);
-        }
-      }
-    };
-    if (ApplicationManager.getApplication() == null) { // application may be not initialized yet. OK to just run the action then.
-      action.run();
-      return result.get();
-    }
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        if (writeAction) {
-          ApplicationManager.getApplication().runWriteAction(action);
-        } else {
-          ApplicationManager.getApplication().runReadAction(action);
-        }
-      }
-    }, ModalityState.defaultModalityState());
-    return result.get();
-  }
-
   public void add(String... filenames) throws IOException {
     if (filenames.length == 0) {
-      execute(true, "add", ".");
+      myRunEnv.run("add", ".");
     } else {
-      execute(true, join("add", filenames));
+      myRunEnv.run("add", filenames);
     }
   }
 
-  public ProcessOutput commit(@Nullable String commitMessage) throws IOException {
+  public String commit(@Nullable String commitMessage) throws IOException {
     if (commitMessage == null) {
       commitMessage = "Sample commit message";
     }
-    return execute(true, "commit", "-m", commitMessage);
+    myRunEnv.run("commit", "-m", commitMessage);
+    return lastCommit();
   }
 
   /**
    * Commit with a sample commit message. Use this when commit message doesn't matter to your test.
    */
-  public void commit() throws IOException {
-    commit(null);
+  public String commit() throws IOException {
+    return commit(null);
   }
 
   public void config(String... parameters) throws IOException {
-    execute(true, join("config", parameters));
+    myRunEnv.run("config", parameters);
   }
 
   /**
    * Create new branch and switch to it.
    */
   public void createBranch(String branchName) throws IOException {
-    execute(true, "checkout", "-b", branchName);
+    myRunEnv.run("checkout", "-b", branchName);
   }
 
   /**
    * Checkout the given branch.
    */
   public void checkout(String branchName) throws IOException {
-    execute(true, "checkout", branchName);
+    myRunEnv.run("checkout", branchName);
     // need to refresh the root directory, because checkouting a branch changes files on disk, but VFS is unaware of it.
     refresh();
   }
 
-  public ProcessOutput log(String... parameters) throws IOException {
-    return execute(false, join("log", parameters));
+  public void fetch(String... parameters) throws IOException {
+    myRunEnv.run("fetch", parameters);
+  }
+
+  public String log(String... parameters) throws IOException {
+    return myRunEnv.run("log", parameters);
   }
 
   public void merge(String... parameters) throws IOException {
-    execute(true, join("merge", parameters));
+    myRunEnv.run("merge", parameters);
+  }
+
+  public void rebase(String... parameters) throws IOException {
+    myRunEnv.run("rebase", parameters);
   }
 
   public void mv(VirtualFile file, String newPath) throws IOException {
-    execute(true, "mv", file.getPath(), newPath);
+    myRunEnv.run("mv", file.getPath(), newPath);
   }
 
   public void mv(String oldPath, String newPath) throws Exception {
-    execute(true, "mv", oldPath, newPath);
-    refreshFile(getDir(), true);
-  }
-
-  private static void refreshFile(final VirtualFile file, final boolean recursive) throws Exception {
-    GuiUtils.runOrInvokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            file.refresh(false, recursive);
-          }
-        });
-      }
-    });
+    myRunEnv.run("mv", oldPath, newPath);
   }
 
   public void pull() throws IOException {
-    execute(true, "pull");
+    myRunEnv.run("pull");
   }
 
   public void push(String... params) throws IOException {
-    execute(true, join("push", params));
+    myRunEnv.run("push", params);
   }
 
   public void rm(String... filenames) throws Exception {
-    execute(true, join("rm", filenames));
-    refreshFile(getDir(), true);
+    myRunEnv.run("rm", filenames);
   }
 
-  public void update() throws IOException {
-    execute(true, "update");
+  public void stash(String... params) throws IOException {
+    myRunEnv.run("stash", params);
+  }
+
+  public void unstash() throws IOException {
+    myRunEnv.run("stash", "pop");
   }
 
   /**
    * Calls add() and then commit(). A shorthand for usual test situations when a file is added and then immediately committed.
    */
-  public ProcessOutput addCommit() throws IOException {
+  public String addCommit() throws IOException {
+    return addCommit(null);
+  }
+
+  public String addCommit(@Nullable String commitMessage) throws IOException {
     add();
-    return commit(null);
+    return commit(commitMessage);
   }
 
-  public void addCommit(String commitMessage) throws IOException {
-    add();
-    commit(commitMessage);
-  }
-
-  /**
-   * Calls pull, update and merge on this repository. Common for merge testing.
-   */
-  public void pullUpdateMerge() throws IOException {
-    pull();
-    update();
-    merge();
-  }
-
-  /**
-   * Writes the given content to the file.
-   * @param file    file which content will be substituted by the given one.
-   * @param content new file content
-   */
-  public static void printToFile(VirtualFile file, String content) throws FileNotFoundException {
-    PrintStream centralPrinter = null;
-    try {
-      centralPrinter = new PrintStream(new FileOutputStream(new File(file.getPath())));
-      centralPrinter.print(content);
-      centralPrinter.close();
-    } finally {
-      if (centralPrinter != null) {
-        centralPrinter.close();
-      }
-    }
-  }
-
-  private static String[] join(String parameter, String[] parameters) {
-    String[] pars = new String[parameters.length+1];
-    pars[0] = parameter;
-    System.arraycopy(parameters, 0, pars, 1, parameters.length);
-    return pars;
-  }
-
-  public void refresh() {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        try {
-          refreshFile(getDir(), true);
-        } catch (Exception e) {
-          e.printStackTrace();
-          fail("Exception while refreshing repository", e);
-        }
-      }
-    }, ModalityState.defaultModalityState());
-  }
-
-  public void addRemotes(String... parameters) throws IOException {
-    for (String s : parameters) {
-      execute(true, "remote", "add", s);
-    }
-  }
-
-  public ProcessOutput branch(String... parameters) throws IOException {
-    return execute(false, join("branch", parameters));
-  }
-
-  @NotNull
-  public GitTest getTest() {
-    return myTest;
+  public String branch(String... parameters) throws IOException {
+    return myRunEnv.run("branch", parameters);
   }
 
   public String lastCommit() throws IOException {
-    return execute(false, "rev-parse", "HEAD").getStdout().trim();
+    return myRunEnv.run("rev-parse", "HEAD").trim();
   }
 
+  public String createAddCommit() throws IOException {
+    createFile("file" + Math.random() + ".txt", "Some content " + Math.random());
+    return addCommit();
+  }
 }

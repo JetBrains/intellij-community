@@ -31,7 +31,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Kirill Likhodedov
  */
-public class GitMergeTest extends GitCollaborativeTest {
+public class GitMergeTest extends GitTest {
 
   /**
    * Tests that merge commit after resolving a conflict works fine if there is a file with spaces in its path.
@@ -43,16 +43,16 @@ public class GitMergeTest extends GitCollaborativeTest {
     GitTestUtil.createFileStructure(myProject, myRepo, PATH);
     myRepo.commit();
     myRepo.push("origin", "master");
-    editFileInCommand(myRepo.getDir().findFileByRelativePath(PATH), "my content");
+    editFileInCommand(myRepo.getVFRootDir().findFileByRelativePath(PATH), "my content");
     myRepo.addCommit();
 
     myBrotherRepo.pull();
-    editFileInCommand(myBrotherRepo.getDir().findFileByRelativePath(PATH), "brother content");
+    editFileInCommand(myBrotherRepo.getVFRootDir().findFileByRelativePath(PATH), "brother content");
     myBrotherRepo.addCommit();
     myBrotherRepo.push();
 
     myRepo.pull();
-    editFileInCommand(myRepo.getDir().findFileByRelativePath(PATH), "my and brother content"); // manually resolving conflict
+    editFileInCommand(myRepo.getVFRootDir().findFileByRelativePath(PATH), "my and brother content"); // manually resolving conflict
     myRepo.add();
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -65,12 +65,12 @@ public class GitMergeTest extends GitCollaborativeTest {
       @Override
       public void run() {
         res.set(changeListManager.commitChangesSynchronouslyWithResult(changeList, new ArrayList<Change>(
-          changeListManager.getChangesIn(myRepo.getDir()))));
+          changeListManager.getChangesIn(myRepo.getVFRootDir()))));
       }
     }, ModalityState.defaultModalityState());
     assertTrue(res.get());
     changeListManager.ensureUpToDate(false);
-    assertTrue(changeListManager.getChangesIn(myRepo.getDir()).isEmpty());
+    assertTrue(changeListManager.getChangesIn(myRepo.getVFRootDir()).isEmpty());
   }
 
 }
