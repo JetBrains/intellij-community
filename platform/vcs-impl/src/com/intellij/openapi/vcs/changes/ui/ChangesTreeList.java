@@ -27,12 +27,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -52,7 +49,6 @@ import javax.swing.border.Border;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -640,48 +636,30 @@ public abstract class ChangesTreeList<T> extends JPanel {
     public MyListCellRenderer() {
       super(new BorderLayout());
       myCheckbox = new JCheckBox();
-      myTextRenderer = new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          final FilePath path = TreeModelBuilder.getPathForObject(value);
-          if (path.isDirectory()) {
-            setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
-          } else {
-            setIcon(path.getFileType().getIcon());
-          }
-          final FileStatus fileStatus;
-          if (value instanceof Change) {
-            fileStatus = ((Change) value).getFileStatus();
-          }
-          else {
-            final VirtualFile virtualFile = path.getVirtualFile();
-            if (virtualFile != null) {
-              fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-            }
-            else {
-              fileStatus = FileStatus.NOT_CHANGED;
-            }
-          }
-          append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor(), null));
+      myTextRenderer = new VirtualFileListCellRenderer(myProject) {
+        @Override
+        protected void putParentPath(Object value, FilePath path, FilePath self) {
+          super.putParentPath(value, path, self);
           final boolean applyChangeDecorator = (value instanceof Change) && myChangeDecorator != null;
-          final File parentFile = path.getIOFile().getParentFile();
-          if (parentFile != null) {
-            final String parentPath = parentFile.getPath();
-            List<Pair<String,ChangeNodeDecorator.Stress>> parts = null;
-            if (applyChangeDecorator) {
-              parts = myChangeDecorator.stressPartsOfFileName((Change)value, parentPath);
-            }
-            if (parts == null) {
-              parts = Collections.singletonList(new Pair<String, ChangeNodeDecorator.Stress>(parentPath, ChangeNodeDecorator.Stress.PLAIN));
-            }
-
-            append(" (");
-            for (Pair<String, ChangeNodeDecorator.Stress> part : parts) {
-              append(part.getFirst(), part.getSecond().derive(SimpleTextAttributes.GRAYED_ATTRIBUTES));
-            }
-            append(")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
           if (applyChangeDecorator) {
             myChangeDecorator.decorate((Change) value, this, isShowFlatten());
+          }
+        }
+
+        @Override
+        protected void putParentPathImpl(Object value, String parentPath, FilePath self) {
+          final boolean applyChangeDecorator = (value instanceof Change) && myChangeDecorator != null;
+          List<Pair<String,ChangeNodeDecorator.Stress>> parts = null;
+          if (applyChangeDecorator) {
+            parts = myChangeDecorator.stressPartsOfFileName((Change)value, parentPath);
+          }
+          if (parts == null) {
+            super.putParentPathImpl(value, parentPath, self);
+            return;
+          }
+
+          for (Pair<String, ChangeNodeDecorator.Stress> part : parts) {
+            append(part.getFirst(), part.getSecond().derive(SimpleTextAttributes.GRAYED_ATTRIBUTES));
           }
         }
       };

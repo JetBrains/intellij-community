@@ -16,10 +16,14 @@
 package com.intellij.util.download;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.download.impl.FileDownloader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.net.URL;
+import java.util.List;
 
 /**
  * @author nik
@@ -33,7 +37,14 @@ public abstract class DownloadableFileService {
   public abstract DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName);
 
   @NotNull
-  public abstract DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@NotNull String groupId, @NotNull URL... localUrls);
+  public abstract DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@NotNull String groupId,
+                                                                                                    @NotNull URL... localUrls);
 
-  public abstract void loadVersionsToCombobox(@NotNull DownloadableFileSetVersions<?> versions, @NotNull JComboBox comboBox);
+  @NotNull
+  public abstract FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description, @Nullable Project project,
+                                                  JComponent parent);
+
+  @NotNull
+  public abstract FileDownloader createDownloader(List<? extends DownloadableFileDescription> fileDescriptions, @Nullable Project project,
+                                                  JComponent parent, @NotNull String presentableDownloadName);
 }

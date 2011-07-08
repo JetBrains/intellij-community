@@ -23,8 +23,10 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import git4idea.GitBranch;
-import git4idea.changes.GitChangeUtils;
-import git4idea.history.browser.*;
+import git4idea.history.browser.ChangesFilter;
+import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.LowLevelAccessImpl;
+import git4idea.history.browser.SymbolicRefs;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -53,6 +55,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   private LowLevelAccessImpl myLowLevelAccess;
   private SymbolicRefs mySymbolicRefs;
   private final LoadGrowthController.ID myId;
+  private final boolean myHaveStructureFilter;
   // state
   @NotNull
   private volatile StepType myStepType;
@@ -69,10 +72,11 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
                                 Project project,
                                 MyRootHolder rootHolder,
                                 final UsersIndex usersIndex,
-                                final LoadGrowthController.ID id) {
+                                final LoadGrowthController.ID id, boolean haveStructureFilter) {
     myRootHolder = rootHolder;
     myUsersIndex = usersIndex;
     myId = id;
+    myHaveStructureFilter = haveStructureFilter;
     myLoadParents = filters == null || filters.isEmpty();
     myTicket = ticket;
     myFilters = filters;
@@ -142,7 +146,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
 
     myRepeatingLoadConsumer.reset();
     int count = MediatorImpl.ourManyLoadedStep;
-    boolean shouldFull = true;
+    boolean shouldFull = ! myHaveStructureFilter;
     if (LoadAlgorithm.LoadType.TEST.equals(loadType)) {
       count = ourFirstLoadCount;
     } else if (LoadAlgorithm.LoadType.SHORT.equals(loadType) || LoadAlgorithm.LoadType.SHORT_START.equals(loadType)) {
@@ -249,30 +253,6 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
       filters = myFilters;
     }
     return filters;
-  }
-
-  public void loadByHashesAside(final List<String> hashes) {
-    final List<CommitI> result = new ArrayList<CommitI>();
-    final List<List<AbstractHash>> parents = myLoadParents ? new ArrayList<List<AbstractHash>>() : null;
-    for (String hash : hashes) {
-      try {
-        final SHAHash shaHash = GitChangeUtils.commitExists(myProject, myRootHolder.getRoot(), hash);
-        if (shaHash == null) continue;
-        final List<GitCommit> commits = myLowLevelAccess.getCommitDetails(Collections.singletonList(shaHash.getValue()), mySymbolicRefs);
-        myDetailsCache.acceptAnswer(commits, myRootHolder.getRoot());
-        appendCommits(result, parents, commits);
-      }
-      catch (VcsException e1) {
-        continue;
-      }
-    }
-    if (! result.isEmpty()) {
-      final StepType stepType = myMediator.appendResult(myTicket, result, parents);
-      // here we react only on "stop", not on "pause"
-      if (StepType.STOP.equals(stepType)) {
-        myStepType = StepType.STOP;
-      }
-    }
   }
 
   private void appendCommits(List<CommitI> result, List<List<AbstractHash>> parents, List<GitCommit> commits) {

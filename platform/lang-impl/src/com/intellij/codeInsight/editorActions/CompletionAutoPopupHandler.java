@@ -26,9 +26,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -37,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -84,83 +83,37 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
-    scheduleAutoPopup(project, editor, file);
+    scheduleAutoPopup(editor, null);
     return Result.STOP;
   }
 
-  public static void scheduleAutoPopup(final Project project, final Editor editor, final PsiFile file) {
-    final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
-
-    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false);
+  public static void scheduleAutoPopup(final Editor editor, @Nullable final Condition<PsiFile> condition) {
+    final Project project = editor.getProject();
+    assert project != null;
+    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
 
-    final Runnable request = new Runnable() {
-      @Override
-      public void run() {
-        if (CompletionServiceImpl.getCompletionPhase() != phase) return;
-
-        if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
-        if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway
-        if (DumbService.getInstance(project).isDumb()) return;
-
-        invokeCompletion(CompletionType.BASIC, false, true, project, editor, 0, false);
-      }
-    };
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
       @Override
       public void run() {
-        runLaterWithCommitted(project, editor.getDocument(), request);
+        runLaterWithCommitted(project, editor.getDocument(), new Runnable() {
+          @Override
+          public void run() {
+            if (phase.isExpired()) return;
+
+            PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+            if (file != null && condition != null && !condition.value(file)) return;
+
+            invokeCompletion(CompletionType.BASIC, true, project, editor, 0);
+          }
+        });
       }
     }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
   }
 
-  public static void invokeAutoPopupCompletion(final Project project, final Editor editor, Condition<PsiFile> condition) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    completeWhenAllDocumentsCommitted(project, editor, CompletionType.BASIC, false, true, 0, false, condition);
-  }
-
-  private static void completeWhenAllDocumentsCommitted(@NotNull final Project project,
-                                                        @NotNull final Editor editor,
-                                                        final CompletionType completionType,
-                                                        final boolean invokedExplicitly,
-                                                        final boolean autopopup,
-                                                        final int time,
-                                                        final boolean hasModifiers,
-                                                        final Condition<PsiFile> condition) {
-    final Document document = editor.getDocument();
-    final long beforeStamp = document.getModificationStamp();
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    documentManager.cancelAndRunWhenAllCommitted("start completion when all docs committed", new Runnable() {
-      @Override
-      public void run() {
-        long afterStamp = document.getModificationStamp();
-        if (beforeStamp != afterStamp) {
-          // no luck, will try later
-          return;
-        }
-        // later because we may end up in write action here if there was a synchronous commit
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            long afterStamp = document.getModificationStamp();
-            if (beforeStamp != afterStamp) {
-              // no luck, will try later
-              return;
-            }
-            PsiFile file = documentManager.getPsiFile(document);
-            if (file != null && condition != null && !condition.value(file)) return;
-            invokeCompletion(completionType, invokedExplicitly, autopopup, project, editor, time, hasModifiers);
-          }
-        }, project.getDisposed());
-      }
-    });
-  }
-
   public static void invokeCompletion(CompletionType completionType,
-                                      boolean invokedExplicitly,
                                       boolean autopopup,
-                                      Project project, Editor editor, int time, boolean hasModifiers) {
+                                      Project project, Editor editor, int time) {
     // retrieve the injected file from scratch since our typing might have destroyed the old one completely
     Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
@@ -170,7 +123,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
     try {
-      new CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup).invokeCompletion(project, newEditor, time, hasModifiers);
+      new CodeCompletionHandlerBase(completionType, false, autopopup).invokeCompletion(project, newEditor, time, false);
     }
     catch (IndexNotReadyException ignored) {
     }

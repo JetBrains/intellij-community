@@ -45,7 +45,7 @@ public abstract class AbstractTreeStructure {
   }
 
   public static class Delegate extends AbstractTreeStructure {
-    private AbstractTreeStructure myDelegee;
+    private final AbstractTreeStructure myDelegee;
 
     public Delegate(AbstractTreeStructure delegee) {
       myDelegee = delegee;
@@ -93,7 +93,7 @@ public abstract class AbstractTreeStructure {
     }
 
     @Override
-    public AsyncResult revalidateElement(Object element) {
+    public AsyncResult<Object> revalidateElement(Object element) {
       return myDelegee.revalidateElement(element);
     }
 

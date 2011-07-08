@@ -77,6 +77,10 @@ public class MultiMap<K, V> {
     list.add(value);
   }
 
+  public Set<Map.Entry<K, Collection<V>>> entrySet() {
+    return myMap.entrySet();
+  }
+
   public boolean isEmpty() {
     for(Collection<V> valueList: myMap.values()) {
       if (!valueList.isEmpty()) {

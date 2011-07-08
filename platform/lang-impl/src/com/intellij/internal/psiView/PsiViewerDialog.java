@@ -21,6 +21,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
@@ -692,11 +693,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
                                    ? (PsiElement)elementObject
                                    : elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
         if (element != null) {
-          final PsiElement psiElement = FileContextUtil.getFileContext(element.getContainingFile());
-          final int textOffset = psiElement == null ? 0 : psiElement.getTextOffset();
-          TextRange range = element.getTextRange();
-          int start = range.getStartOffset() + textOffset;
-          int end = range.getEndOffset() + textOffset;
+          TextRange hostRange = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, element.getTextRange());
+          int start = hostRange.getStartOffset();
+          int end = hostRange.getEndOffset();
           final ViewerTreeStructure treeStructure = (ViewerTreeStructure)myTreeBuilder.getTreeStructure();
           PsiElement rootPsiElement = treeStructure.getRootPsiElement();
           if (rootPsiElement != null) {

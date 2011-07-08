@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package git4idea.history.wholeTree;
 
-package com.intellij.codeInspection.dataFlow;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.Collection;
 
 /**
- * @author Gregory.Shrago
+ * @author irengrig
+ *         Date: 7/8/11
+ *         Time: 1:49 PM
  */
-public interface InstructionHandler<T extends DataFlowRunner, S extends DfaMemoryState> {
-  S createEmptyMemoryState(final T dataFlowRunner);
+public interface StructureFilterI {
+  void allSelected();
+  void select(final Collection<VirtualFile> files);
+  Collection<VirtualFile> getSelected();
 }

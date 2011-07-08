@@ -172,11 +172,20 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     }
   }
 
+  private Configurable myQueuedConfigurable;
+
   ActionCallback queueSelection(final Configurable configurable) {
+    if (myBuilder.isSelectionBeingAdjusted()) {
+      return new ActionCallback.Rejected();
+    }
+
     final ActionCallback callback = new ActionCallback();
 
+    myQueuedConfigurable = configurable;
     final Update update = new Update(this) {
       public void run() {
+        if (configurable != myQueuedConfigurable) return;
+
         if (configurable == null) {
           myTree.getSelectionModel().clearSelection();
           myContext.fireSelected(null, OptionsTree.this);
@@ -185,6 +194,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           myBuilder.getReady(this).doWhenDone(new Runnable() {
             @Override
             public void run() {
+              if (configurable != myQueuedConfigurable) return;
+
               final EditorNode editorNode = myConfigurable2Node.get(configurable);
               FilteringTreeStructure.Node editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
               if (editorUiNode == null) return;

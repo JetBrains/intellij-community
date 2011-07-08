@@ -410,11 +410,11 @@ public class GitHistoryUtils {
   }
 
   public static void historyWithLinks(final Project project,
-                                                 FilePath path,
-                                                 final SymbolicRefs refs,
-                                                 final AsynchConsumer<GitCommit> gitCommitConsumer,
-                                                 final Getter<Boolean> isCanceled,
-                                                 final String... parameters) throws VcsException {
+                                      FilePath path,
+                                      final SymbolicRefs refs,
+                                      final AsynchConsumer<GitCommit> gitCommitConsumer,
+                                      final Getter<Boolean> isCanceled,
+                                      Collection<VirtualFile> paths, final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
@@ -425,9 +425,14 @@ public class GitHistoryUtils {
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
     parser.parseStatusBeforeName(true);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", "--full-history", "--sparse");
+    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", "--full-history");
     h.endOptions();
-    h.addRelativePaths(path);
+    if (paths != null && ! paths.isEmpty()) {
+      h.addRelativeFiles(paths);
+    } else {
+      h.addRelativePaths(path);
+      h.addParameters("--sparse");
+    }
 
     final VcsException[] exc = new VcsException[1];
     final Semaphore semaphore = new Semaphore();
@@ -609,7 +614,7 @@ public class GitHistoryUtils {
 
   public static void hashesWithParents(Project project, FilePath path, final AsynchConsumer<CommitHashPlusParents> consumer,
                                        final Getter<Boolean> isCanceled,
-                                       final String... parameters) throws VcsException {
+                                       Collection<VirtualFile> paths, final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
@@ -619,10 +624,15 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8", "--full-history", "--sparse");
+    h.addParameters(parser.getPretty(), "--encoding=UTF-8", "--full-history");
 
     h.endOptions();
-    h.addRelativePaths(path);
+    if (paths != null && ! paths.isEmpty()) {
+      h.addRelativeFiles(paths);
+    } else {
+      h.addParameters("--sparse");
+      h.addRelativePaths(path);
+    }
 
     final Semaphore semaphore = new Semaphore();
     h.addLineListener(new GitLineHandlerListener() {

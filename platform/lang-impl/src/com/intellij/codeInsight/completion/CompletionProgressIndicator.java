@@ -591,7 +591,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void scheduleRestart() {
     if (isAutopopupCompletion() && hideAutopopupIfMeaningless()) {
-      CompletionAutoPopupHandler.scheduleAutoPopup(getProject(), myEditor, getParameters().getOriginalFile());
+      CompletionAutoPopupHandler.scheduleAutoPopup(myEditor, null);
       return;
     }
 
@@ -619,8 +619,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
         closeAndFinish(false);
 
-        CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(), false,
-                                                    isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(), false);
+        CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
+                                                    isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount());
       }
     });
   }

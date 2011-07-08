@@ -19,9 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AreaMap;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,19 +30,11 @@ import java.util.regex.Pattern;
 
 public class ChangesFilter {
 
-  public static void filtersToParameters(Collection<Filter> filters, List<String> parameters) {
+  public static void filtersToParameters(Collection<Filter> filters, List<String> parameters, Collection<VirtualFile> paths) {
     for (Filter filter : filters) {
       filter.getCommandParametersFilter().applyToCommandLine(parameters);
+      filter.getCommandParametersFilter().applyToPaths(paths);
     }
-  }
-
-  public static String[] filtersToParameterArray(Collection<Filter> filters) {
-    if (filters == null || filters.isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final ArrayList<String> strings = new ArrayList<String>();
-    for (Filter filter : filters) {
-      filter.getCommandParametersFilter().applyToCommandLine(strings);
-    }
-    return ArrayUtil.toStringArray(strings);
   }
 
   public abstract static class Merger {
@@ -141,6 +131,7 @@ public class ChangesFilter {
 
   public interface CommandParametersFilter {
     void applyToCommandLine(final List<String> sink);
+    void applyToPaths(Collection<VirtualFile> paths);
   }
 
   public interface Filter {
@@ -162,6 +153,10 @@ public class ChangesFilter {
       myCommandParametersFilter = new CommandParametersFilter() {
         public void applyToCommandLine(List<String> sink) {
           sink.add("--author=" + myRegexp);
+        }
+
+        @Override
+        public void applyToPaths(Collection<VirtualFile> paths) {
         }
       };
       myMemoryFilter = new MemoryFilter() {
@@ -211,6 +206,10 @@ public class ChangesFilter {
         public void applyToCommandLine(List<String> sink) {
           sink.add("--committer=" + myRegexp);
         }
+
+        @Override
+        public void applyToPaths(Collection<VirtualFile> paths) {
+        }
       };
       myMemoryFilter = new MemoryFilter() {
         public boolean applyInMemory(GitCommit commit) {
@@ -257,6 +256,10 @@ public class ChangesFilter {
         public void applyToCommandLine(List<String> sink) {
           sink.add("--before=" + formatDate(myDate));
         }
+
+        @Override
+        public void applyToPaths(Collection<VirtualFile> paths) {
+        }
       };
       myMemoryFilter = new MemoryFilter() {
         public boolean applyInMemory(GitCommit commit) {
@@ -302,6 +305,10 @@ public class ChangesFilter {
       myCommandParametersFilter = new CommandParametersFilter() {
         public void applyToCommandLine(List<String> sink) {
           sink.add("--after=" + formatDate(myDate));
+        }
+
+        @Override
+        public void applyToPaths(Collection<VirtualFile> paths) {
         }
       };
       myMemoryFilter = new MemoryFilter() {
@@ -374,8 +381,13 @@ public class ChangesFilter {
       };
     }
 
-    // todo optimization here
-    public boolean addPath(final VirtualFile vf) {
+    public void addFiles(final Collection<VirtualFile> files) {
+      for (VirtualFile file : files) {
+        myMap.put(FilePathsHelper.convertWithLastSeparator(file), file);
+      }
+    }
+
+    /*public boolean addPath(final VirtualFile vf) {
       final Collection<VirtualFile> filesWeAlreadyHave = myMap.values();
       final Collection<VirtualFile> childrenToRemove = new ArrayList<VirtualFile>();
       for (VirtualFile current : filesWeAlreadyHave) {
@@ -396,7 +408,7 @@ public class ChangesFilter {
 
       myMap.put(FilePathsHelper.convertWithLastSeparator(vf), vf);
       return true;
-    }
+    } */
 
     public boolean containsFile(final VirtualFile vf) {
       return myMap.contains(FilePathsHelper.convertWithLastSeparator(vf));
@@ -412,7 +424,16 @@ public class ChangesFilter {
 
     // can be applied only in memory
     public CommandParametersFilter getCommandParametersFilter() {
-      return null;
+      return new CommandParametersFilter() {
+        @Override
+        public void applyToCommandLine(List<String> sink) {
+        }
+
+        @Override
+        public void applyToPaths(Collection<VirtualFile> paths) {
+          paths.addAll(myMap.values());
+        }
+      };
     }
 
     @NotNull
@@ -434,6 +455,10 @@ public class ChangesFilter {
         public void applyToCommandLine(List<String> sink) {
           sink.add("--grep=" + myRegexp);
           sink.add("--regexp-ignore-case");
+        }
+
+        @Override
+        public void applyToPaths(Collection<VirtualFile> paths) {
         }
       };
       myMemoryFilter = new MemoryFilter() {

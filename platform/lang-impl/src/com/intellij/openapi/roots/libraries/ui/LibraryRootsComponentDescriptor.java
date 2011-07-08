@@ -45,12 +45,4 @@ public abstract class LibraryRootsComponentDescriptor {
     return OrderRootType.getAllTypes();
   }
 
-  /**
-   * @param project The current project.
-   * @return A configurable which contains additional library settings in File/Settings.
-   */
-  @Nullable
-  public Configurable getAdditionalSettingsConfigurable(Project project) {
-    return null;
-  }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.LibraryVersionProperties;
@@ -23,6 +22,8 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.download.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,9 +109,10 @@ public class LibraryDownloadSettings {
 
   @Nullable
   public NewLibraryEditor download(JComponent parent) {
-    LibraryDownloader downloader = new LibraryDownloader(mySelectedDownloads, null, parent, myDirectoryForDownloadedLibrariesPath, myLibraryName);
-    VirtualFile[] files = downloader.download();
-    if (files.length != mySelectedDownloads.size()) {
+    VirtualFile[] files = DownloadableFileService.getInstance().createDownloader(mySelectedDownloads, null, parent, myLibraryName + " Library")
+      .toDirectory(myDirectoryForDownloadedLibrariesPath)
+      .download();
+    if (files == null) {
       return null;
     }
 

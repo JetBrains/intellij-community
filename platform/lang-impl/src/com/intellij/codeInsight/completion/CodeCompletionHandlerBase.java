@@ -496,16 +496,13 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final Project project = hostFile.getProject();
 
     if (autopopup) {
-      final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false);
+      final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, hostEditor);
       CompletionServiceImpl.setCompletionPhase(phase);
 
       CompletionAutoPopupHandler.runLaterWithCommitted(project, hostDocument, new Runnable() {
         @Override
         public void run() {
-          if (phase != CompletionServiceImpl.getCompletionPhase()) return;
-          if (hostEditor.isDisposed()) return;
-          if (DumbService.getInstance(project).isDumb()) return;
-
+          if (phase.isExpired()) return;
           doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
         }
       });

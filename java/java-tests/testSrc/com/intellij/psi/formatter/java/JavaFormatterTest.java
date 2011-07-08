@@ -13,7 +13,9 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 
 /**
@@ -39,7 +41,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testLabel1() throws Exception {
     CodeStyleSettings settings = getSettings();
 
-    settings.LABELED_STATEMENT_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+    settings.LABELED_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     settings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE = true;
     settings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_SIZE = 0;
 
@@ -53,7 +55,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testNullMethodParameter() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.CALL_PARAMETERS_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("NullMethodParameter.java", "NullMethodParameter_after.java");
   }
@@ -131,10 +133,10 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testIfElse() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.IF_BRACE_FORCE = CodeStyleSettings.DO_NOT_FORCE;
-    settings.FOR_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
-    settings.WHILE_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
-    settings.DOWHILE_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE;
+    settings.FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
+    settings.WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
+    settings.DOWHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
 
     settings.ELSE_ON_NEW_LINE = true;
     settings.SPECIAL_ELSE_IF_TREATMENT = false;
@@ -152,14 +154,14 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     settings.ALIGN_MULTILINE_PARAMETERS = true;
     settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     settings.WHILE_ON_NEW_LINE = true;
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     doTest();
   }
 
   public void testIfBraces() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     settings.KEEP_LINE_BREAKS = false;
     doTest();
   }
@@ -198,11 +200,11 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testIf() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     doTest("If.java", "If.java");
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     settings.KEEP_LINE_BREAKS = false;
     doTest("If_after.java", "If.java");
 
@@ -223,7 +225,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testBinaryOperation() throws IncorrectOperationException {
     final CodeStyleSettings settings = getSettings();
 
-    String text = "class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        + ccc + eee + ddd;\n" + "    }\n" + "}";
+    @NonNls String text = "class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        + ccc + eee + ddd;\n" + "    }\n" + "}";
 
 
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
@@ -354,7 +356,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testBraces() throws Exception {
     final CodeStyleSettings settings = getSettings();
 
-    final String text =
+    @NonNls final String text =
       "class Foo {\n" +
       "void foo () {\n" +
       "if (a) {\n" +
@@ -363,8 +365,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
       "}\n" +
       "}";
 
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     doTextTest(text, "\n" +
                      "class Foo {\n" +
                      "    void foo() {\n" +
@@ -374,8 +376,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                      "    }\n" +
                      "}");
 
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTextTest(text, "\n" +
                      "class Foo {\n" +
                      "    void foo()\n" +
@@ -388,8 +390,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                      "}");
 
 
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     doTextTest(text, "\n" +
                      "class Foo {\n" +
                      "    void foo()\n" +
@@ -401,8 +403,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                      "        }\n" +
                      "}");
 
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     doTextTest(text, "\n" +
                      "class Foo {\n" +
                      "    void foo()\n" +
@@ -414,8 +416,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                      "}");
 
 
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED2;
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED2;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     doTextTest(text, "\n" +
                      "class Foo {\n" +
                      "    void foo()\n" +
@@ -427,7 +429,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                      "        }\n" +
                      "}");
 
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTextTest("class Foo {\n" + "    static{\n" + "foo();\n" + "}" + "}",
                "class Foo {\n" + "    static\n" + "    {\n" + "        foo();\n" + "    }\n" + "}");
 
@@ -860,7 +862,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     final CodeStyleSettings settings = getSettings();
     settings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE = true;
     settings.SPECIAL_ELSE_IF_TREATMENT = true;
-    settings.FOR_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+    settings.FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     myTextRange = new TextRange(59, 121);
     doTextTest("public class Foo {\n" +
                "    public void foo() {\n" +
@@ -905,8 +907,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testBraceOnNewLineIfWrapped() throws Exception {
-    getSettings().BINARY_OPERATION_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
     getSettings().RIGHT_MARGIN = 35;
     getSettings().ALIGN_MULTILINE_BINARY_OPERATION = true;
 
@@ -933,11 +935,11 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testFirstArgumentWrapping() throws Exception {
     getSettings().RIGHT_MARGIN = 20;
-    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1);" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(\n" + "                1);\n" + "    }\n" + "}");
 
-    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1,2);" + "    }\n" + "}", "class Foo {\n" +
                                                                                                         "    void foo() {\n" +
                                                                                                         "        fooFooFooFoo(\n" +
@@ -958,8 +960,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testAssertStatementWrapping() throws Exception {
-    getSettings().ASSERT_STATEMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().BINARY_OPERATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+    getSettings().ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     getSettings().RIGHT_MARGIN = 40;
     final JavaPsiFacade facade = getJavaFacade();
     final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
@@ -1003,8 +1005,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testAssertStatementWrapping2() throws Exception {
-    getSettings().BINARY_OPERATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
-    getSettings().ASSERT_STATEMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getSettings().ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().RIGHT_MARGIN = 37;
 
     final CodeStyleSettings.IndentOptions options = getSettings().getIndentOptions(StdFileTypes.JAVA);
@@ -1051,10 +1053,10 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 37;
     getSettings().ALIGN_MULTILINE_EXTENDS_LIST = true;
 
-    getSettings().EXTENDS_KEYWORD_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().EXTENDS_LIST_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
-    getSettings().ASSERT_STATEMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false;
     getSettings().ALIGN_MULTILINE_BINARY_OPERATION = true;
 
@@ -1084,7 +1086,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testLBrace() throws Exception {
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     getSettings().RIGHT_MARGIN = 14;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        \n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "\n" + "    }\n" + "}");
@@ -1161,7 +1163,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
               result[0] = CodeStyleManager.getInstance(getProject()).reformat(fragment);
             }
             catch (IncorrectOperationException e) {
-              assertTrue(e.getLocalizedMessage(), false);
+              fail(e.getLocalizedMessage());
             }
           }
         });
@@ -1192,7 +1194,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testArrayInitializerWrapping() throws Exception {
-    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = false;
     getSettings().RIGHT_MARGIN = 37;
 
@@ -1267,9 +1269,9 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testRemoveLineBreak() throws Exception {
     getSettings().KEEP_LINE_BREAKS = true;
-    getSettings().CLASS_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    getSettings().BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
 
     doTextTest("class A\n" + "{\n" + "}", "class A {\n" + "}");
 
@@ -1367,25 +1369,25 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testStaticBlockBraces() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
                "class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}");
 
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
     doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
                "class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}");
 
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
                "class Foo {\n" + "    static\n" + "    {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}");
 
 
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "        }\n" + "}",
                "class Foo {\n" + "    static\n" + "        {\n" + "        //comment\n" + "        i = foo();\n" + "        }\n" + "}");
 
 
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED2;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                       "    static\n" +
                                                                                                                       "        {\n" +
@@ -1398,7 +1400,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testBraces2() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
     doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "         if (clientSocket == null)\n" +
@@ -1461,13 +1463,13 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
      "    }\n" +
      "}");
 
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
 
     doTextTest("class Foo{\n" + "    /**\n" + "     *\n" + "     */\n" + "    void foo() {\n" + "    }\n" + "}",
                "class Foo {\n" + "    /**\n" + "     *\n" + "     */\n" + "    void foo() {\n" + "    }\n" + "}");
 
 
-    getSettings().CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
 
     doTextTest("/**\n" + " *\n" + " */\n" + "class Foo\n{\n" + "}", "/**\n" + " *\n" + " */\n" + "class Foo {\n" + "}");
 
@@ -1478,7 +1480,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testSynchronized() throws Exception {
 
-    getSettings().BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                    "    void foo() {\n" +
                                                                                                                    "        synchronized (this) {\n" +
@@ -1487,7 +1489,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                                                                                                                    "    }\n" +
                                                                                                                    "}");
 
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                    "    void foo() {\n" +
                                                                                                                    "        synchronized (this)\n" +
@@ -1497,7 +1499,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                                                                                                                    "    }\n" +
                                                                                                                    "}");
 
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                    "    void foo() {\n" +
                                                                                                                    "        synchronized (this)\n" +
@@ -1508,7 +1510,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                                                                                                                    "}");
 
 
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED2;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {\n" + "foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                           "    void foo() {\n" +
                                                                                                                           "        synchronized (this)\n" +
@@ -1521,7 +1523,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testNextLineShiftedForBlockStatement() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
 
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a)\n" + "        foo();\n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        if (a)\n" + "            foo();\n" + "    }\n" + "}");
@@ -1533,7 +1535,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testLongCallChainAfterElse() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     getSettings().KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().ELSE_ON_NEW_LINE = false;
@@ -1697,7 +1699,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testDoNotWrapLBrace() throws IncorrectOperationException {
-    getSettings().BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     getSettings().RIGHT_MARGIN = 66;
     doTextTest("public class Test {\n" +
                "    void foo(){\n" +
@@ -1715,7 +1717,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testNewLinesAroundArrayInitializer() throws IncorrectOperationException {
-    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
     getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
     getSettings().RIGHT_MARGIN = 40;
@@ -1763,14 +1765,14 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testLongAnnotationsAreNotWrapped() throws Exception {
-    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTest();
   }
 
   public void testWrapExtendsList() throws Exception {
     getSettings().RIGHT_MARGIN = 50;
-    getSettings().EXTENDS_LIST_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
-    getSettings().EXTENDS_KEYWORD_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getSettings().EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
     doTextTest("class ColtreDataProvider extends DataProvider, AgentEventListener, ParameterDataEventListener {\n}",
                "class ColtreDataProvider extends DataProvider,\n" +
@@ -1780,7 +1782,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testWrapLongExpression() throws Exception {
     getSettings().RIGHT_MARGIN = 80;
-    getSettings().BINARY_OPERATION_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_BINARY_OPERATION = true;
     doTextTest("class Foo {\n" +
                "    void foo () {\n" +
@@ -1798,8 +1800,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testDoNotWrapCallChainIfParametersWrapped() throws Exception {
     getSettings().RIGHT_MARGIN = 87;
-    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     //getSettings().PREFER_PARAMETERS_WRAP = true;
 
@@ -1832,7 +1834,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testRightMargin_2() throws Exception {
     getSettings().RIGHT_MARGIN = 65;
-    getSettings().ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = true;
     getSettings().KEEP_LINE_BREAKS = false;
 
@@ -1845,7 +1847,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testRightMargin_3() throws Exception {
     getSettings().RIGHT_MARGIN = 65;
-    getSettings().ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
     getSettings().KEEP_LINE_BREAKS = false;
 
@@ -1909,7 +1911,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     try {
       codeStyleSettings.RIGHT_MARGIN = 80;
       codeStyleSettings.KEEP_LINE_BREAKS = false;
-      codeStyleSettings.METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
+      codeStyleSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
 
       doClassTest(
         "public void foo(String p1,\n" +
@@ -1946,7 +1948,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     try {
       codeStyleSettings.RIGHT_MARGIN = 20;
-      codeStyleSettings.ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+      codeStyleSettings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
       doMethodTest(
         "int i=0; //comment comment",
         "int i =\n" +
@@ -2029,15 +2031,15 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
 public void testSCR260() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     settings.KEEP_LINE_BREAKS = false;
     doTest();
   }
 
   public void testSCR114() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     settings.CATCH_ON_NEW_LINE = true;
     doTest();
   }
@@ -2045,7 +2047,7 @@ public void testSCR260() throws Exception {
   public void testSCR259() throws Exception {
     myTextRange = new TextRange(36, 60);
     final CodeStyleSettings settings = getSettings();
-    settings.IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     settings.KEEP_LINE_BREAKS = false;
     doTest();
   }
@@ -2058,15 +2060,15 @@ public void testSCR260() throws Exception {
 
   public void testSCR395() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     doTest();
   }
 
   public void testSCR11799() throws Exception {
     final CodeStyleSettings settings = getSettings();
     settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
-    settings.CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
   }
 
@@ -2078,7 +2080,7 @@ public void testSCR260() throws Exception {
 
   public void testSCR879() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
   }
 
@@ -2107,7 +2109,7 @@ public void testSCR260() throws Exception {
   public void testSCR479() throws Exception {
     final CodeStyleSettings settings = getSettings();
     settings.RIGHT_MARGIN = 80;
-    settings.TERNARY_OPERATION_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    settings.TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest("public class Foo {\n" +
                "    public static void main(String[] args) {\n" +
                "        if (name != null ?                !name.equals(that.name) : that.name !=                null)\n" +
@@ -2152,9 +2154,9 @@ public void testSCR260() throws Exception {
 
   public void testSCR1535() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTextTest("public class Foo {\n" +
                "    public int foo() {\n" +
                "        if (a) {\n" +
@@ -2175,9 +2177,9 @@ public void testSCR260() throws Exception {
 
   public void testSCR970() throws Exception {
     final CodeStyleSettings settings = getSettings();
-    settings.THROWS_KEYWORD_WRAP = CodeStyleSettings.WRAP_ALWAYS;
-    settings.THROWS_LIST_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    settings.METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    settings.THROWS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    settings.THROWS_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    settings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTest();
   }
 
@@ -2191,18 +2193,18 @@ public void testSCR260() throws Exception {
 
   public void test1607() throws Exception {
     getSettings().RIGHT_MARGIN = 30;
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getSettings().METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest("class TEst {\n" + "void foo(A a,B b){ /* compiled code */ }\n" + "}",
                "class TEst {\n" + "    void foo(A a, B b)\n" + "    { /* compiled code */ }\n" + "}");
   }
 
   public void testSCR1615() throws Exception {
-    getSettings().CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
 
     doTextTest(
       "public class ZZZZ \n" +
@@ -2231,15 +2233,15 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR524() throws Exception {
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
     doTextTest("class Foo {\n" + "    void foo() { return;}" + "}", "class Foo {\n" + "    void foo() { return;}\n" + "}");
 
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED2;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = false;
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
 
     doTextTest("class Foo{\n" +
                "void foo() {\n" +
@@ -2268,8 +2270,8 @@ public void testSCR260() throws Exception {
 
   public void testSCR3062() throws Exception {
     getSettings().KEEP_LINE_BREAKS = false;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     getSettings().RIGHT_MARGIN = 80;
 
@@ -2328,7 +2330,7 @@ public void testSCR260() throws Exception {
   public void testSCR1701() throws Exception {
     getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
     getSettings().SPACE_WITHIN_METHOD_PARENTHESES = false;
-    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        foo(a,b);" + "    }\n" + "}",
@@ -2336,7 +2338,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR1703() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTextTest("class Foo{\n" +
                "    void foo() {\n" +
                "        for (Object o : localizations) {\n" +
@@ -2365,7 +2367,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR1795() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
     doTextTest("public class Test {\n" +
                "    public static void main(String[] args) {\n" +
                "        do {\n" +
@@ -2393,8 +2395,8 @@ public void testSCR260() throws Exception {
 
   public void test1980() throws Exception {
     getSettings().RIGHT_MARGIN = 144;
-    getSettings().TERNARY_OPERATION_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
     getSettings().TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = true;
     doTextTest("class Foo{\n" +
@@ -2445,7 +2447,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR2132() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
     getSettings().ELSE_ON_NEW_LINE = true;
 
     doTextTest("class Foo {\n" +
@@ -2496,7 +2498,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR2241() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     getSettings().SPECIAL_ELSE_IF_TREATMENT = true;
     getSettings().ELSE_ON_NEW_LINE = true;
     doTextTest("class Foo {\n" +
@@ -2521,8 +2523,8 @@ public void testSCR260() throws Exception {
   }
 
     public void testSCRIDEA_4783() throws IncorrectOperationException {
-    getSettings().ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().RIGHT_MARGIN = 80;
 
     doTextTest("class Foo{\n" +
@@ -2884,7 +2886,7 @@ public void testSCR260() throws Exception {
 
   */
   public void testIDEADEV_23551() throws IncorrectOperationException {
-    getSettings().BINARY_OPERATION_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
 
     getSettings().RIGHT_MARGIN = 60;
     doTextTest("public class Wrapping {\n" +
@@ -2905,7 +2907,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testIDEADEV_22967() throws IncorrectOperationException {
-    getSettings().METHOD_ANNOTATION_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
     doTextTest("public interface TestInterface {\n" +
                "\n" +
@@ -2941,7 +2943,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testIDEADEV_22967_2() throws IncorrectOperationException {
-    getSettings().METHOD_ANNOTATION_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
     doTextTest("public interface TestInterface {\n" + "    @Deprecated\n" + "    <T> void parametrizedAnnotated(T data);\n" + "}",
                "public interface TestInterface {\n" + "    @Deprecated\n" + "    <T> void parametrizedAnnotated(T data);\n" + "}");

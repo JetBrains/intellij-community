@@ -65,15 +65,21 @@ public class LoadController implements Loader {
         new LoaderAndRefresherImpl.OneRootHolder(root) :
         new LoaderAndRefresherImpl.ManyCaseHolder(i, rootsHolder);
 
+      final boolean haveStructureFilter = filters.haveStructureFilter();
+      // check if no files under root are selected
+      if (haveStructureFilter && ! filters.haveStructuresForRoot(root)) {
+        ++ i;
+        continue;
+      }
       filters.callConsumer(new Consumer<List<ChangesFilter.Filter>>() {
         @Override
         public void consume(final List<ChangesFilter.Filter> filters) {
           final LoaderAndRefresherImpl loaderAndRefresher =
           new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
-                                     loadGrowthController.getId());
+                                     loadGrowthController.getId(), haveStructureFilter);
           list.add(loaderAndRefresher);
         }
-      }, true);
+      }, true, root);
 
       shortLoaders.add(new ByRootLoader(myProject, rootHolder, myMediator, myDetailsCache, ticket, myUsersIndex, filters, startingPoints));
       ++ i;

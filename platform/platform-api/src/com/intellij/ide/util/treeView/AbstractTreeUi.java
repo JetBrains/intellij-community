@@ -182,6 +182,8 @@ public class AbstractTreeUi {
   private boolean mySelectionIsAdjusted;
   private boolean myReleaseRequested;
 
+  private boolean mySelectionIsBeingAdjusted;
+
   private final Set<Object> myRevalidatedObjects = new HashSet<Object>();
 
   private final Set<Runnable> myUserRunnables = new HashSet<Runnable>();
@@ -3713,7 +3715,7 @@ public class AbstractTreeUi {
           }
 
           Set<Object> toSelect = new HashSet<Object>();
-          myTree.clearSelection();
+          clearSelection();
           ContainerUtil.addAll(toSelect, elements);
           if (addToSelection) {
             toSelect.addAll(currentElements);
@@ -3734,7 +3736,7 @@ public class AbstractTreeUi {
           if (wasRootNodeInitialized()) {
             final int[] originalRows = myTree.getSelectionRows();
             if (!addToSelection) {
-              myTree.clearSelection();
+              clearSelection();
             }
             addNext(elementsToSelect, 0, new Runnable() {
               public void run() {
@@ -3758,6 +3760,20 @@ public class AbstractTreeUi {
         }
       }
     });
+  }
+
+  private void clearSelection() {
+    mySelectionIsBeingAdjusted = true;
+    try {
+      myTree.clearSelection();
+    }
+    finally {
+      mySelectionIsBeingAdjusted = false;
+    }
+  }
+
+  public boolean isSelectionBeingAdjusted() {
+    return mySelectionIsBeingAdjusted;
   }
 
   private void restoreSelection(Set<Object> selection) {
@@ -4564,7 +4580,7 @@ public class AbstractTreeUi {
     final UpdaterTreeState state = new UpdaterTreeState(this);
 
     myTree.collapsePath(new TreePath(myTree.getModel().getRoot()));
-    myTree.clearSelection();
+    clearSelection();
     getRootNode().removeAllChildren();
 
     myRootNodeWasQueuedToInitialize = false;

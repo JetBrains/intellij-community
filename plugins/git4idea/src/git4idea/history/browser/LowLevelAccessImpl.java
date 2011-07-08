@@ -67,7 +67,8 @@ public class LowLevelAccessImpl implements LowLevelAccess {
                                     final AsynchConsumer<CommitHashPlusParents> consumer,
                                     Getter<Boolean> isCanceled, int useMaxCnt) throws VcsException {
     final List<String> parameters = new ArrayList<String>();
-    ChangesFilter.filtersToParameters(filters, parameters);
+    final Collection<VirtualFile> paths = new HashSet<VirtualFile>();
+    ChangesFilter.filtersToParameters(filters, parameters, paths);
 
     if (! startingPoints.isEmpty()) {
       for (String startingPoint : startingPoints) {
@@ -80,7 +81,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       parameters.add("--max-count=" + useMaxCnt);
     }
 
-    GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, isCanceled, ArrayUtil.toStringArray(parameters));
+    GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, isCanceled, paths, ArrayUtil.toStringArray(parameters));
   }
 
   @Override
@@ -143,7 +144,8 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       parameters.add("--max-count=" + useMaxCnt);
     }
 
-    ChangesFilter.filtersToParameters(filters, parameters);
+    final Collection<VirtualFile> paths = new HashSet<VirtualFile>();
+    ChangesFilter.filtersToParameters(filters, parameters, paths);
 
     if (! startingPoints.isEmpty()) {
       for (String startingPoint : startingPoints) {
@@ -158,7 +160,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     }
 
     GitHistoryUtils.historyWithLinks(myProject, new FilePathImpl(myRoot),
-                                     refs, consumer, isCanceled, ArrayUtil.toStringArray(parameters));
+                                     refs, consumer, isCanceled, paths, ArrayUtil.toStringArray(parameters));
   }
 
   public List<String> getBranchesWithCommit(final SHAHash hash) throws VcsException {
