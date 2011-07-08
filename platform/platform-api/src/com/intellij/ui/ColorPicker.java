@@ -34,10 +34,12 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.MemoryImageSource;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -52,7 +54,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
   private final ColorWheelPanel myColorWheelPanel;
 
   private boolean myAutoUpdate = false;
-  
+
   private RecentColorsComponent myRecentColorsComponent;
 
   public ColorPicker() {
@@ -60,6 +62,10 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
   }
 
   public ColorPicker(@Nullable Color color) {
+    this(color, true);
+  }  
+
+  public ColorPicker(@Nullable Color color, boolean restoreColors) {
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
@@ -76,7 +82,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
           ColorPicker.this.consume(color);
           myColorWheelPanel.setColor(color);
         }
-      });
+      }, restoreColors);
 
       add(myRecentColorsComponent, BorderLayout.SOUTH);
     }
@@ -95,11 +101,11 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
   public void appendRecentColor() {
     myRecentColorsComponent.appendColor(myColor);
   }
-  
+
   public void saveRecentColors() {
     myRecentColorsComponent.saveColors();
   }
-  
+
   public Color getColor() {
     return myColor;
   }
@@ -358,14 +364,14 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     rgbPanel.setLayout(new BoxLayout(rgbPanel, BoxLayout.X_AXIS));
     rgbPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     rgbPanel.add(new JLabel("R:"));
-    rgbPanel.add(Box.createHorizontalStrut(3));
+    rgbPanel.add(Box.createHorizontalStrut(2));
     final JTextField r = new JTextField(new NumberDocument(), "", 3);
     r.putClientProperty("_key", "red");
     r.getDocument().addDocumentListener(l);
     rgbPanel.add(r);
     rgbPanel.add(Box.createHorizontalStrut(5));
     rgbPanel.add(new JLabel("G:"));
-    rgbPanel.add(Box.createHorizontalStrut(3));
+    rgbPanel.add(Box.createHorizontalStrut(2));
     final JTextField g = new JTextField(new NumberDocument(), "", 3);
     g.putClientProperty("_key", "green");
     g.setColumns(3);
@@ -373,7 +379,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     rgbPanel.add(g);
     rgbPanel.add(Box.createHorizontalStrut(5));
     rgbPanel.add(new JLabel("B:"));
-    rgbPanel.add(Box.createHorizontalStrut(3));
+    rgbPanel.add(Box.createHorizontalStrut(2));
     final JTextField b = new JTextField(new NumberDocument(), "", 3);
     b.putClientProperty("_key", "blue");
     b.setColumns(3);
@@ -401,7 +407,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
   public static void main(String[] args) {
     final JFrame frame = new JFrame();
 
-    frame.getContentPane().add(new ColorPicker(new Color(255, 0, 0)));
+    frame.getContentPane().add(new ColorPicker(new Color(255, 0, 0), false));
 
     frame.pack();
     frame.setVisible(true);
@@ -698,10 +704,8 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     @Override
     protected void paintComponent(Graphics _g) {
       final Dimension size = getSize();
-      final int w = size.width - BORDER_SIZE * 2;
-      int h = size.height - BORDER_SIZE * 2;
       int _size = Math.min(size.width, size.height);
-      _size = Math.min(_size, 400);
+      _size = Math.min(_size, 600);
 
       if (myImage != null && myShouldInvalidate) {
         if (myImage.getWidth(null) != _size) {
@@ -712,68 +716,14 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       myShouldInvalidate = false;
 
       if (myImage == null) {
-        myImage = new BufferedImage(_size, _size, BufferedImage.TYPE_INT_ARGB);
-
-        int rw = w / 8;
-        int rb = w / 16;
-        if (rw > 20) rw = 20;
-        //box = new Rectangle(w-rw-rb,h/20,rw,h*9/10);
-        rw = 0;
-
-        int r = h;
-        if (h > w - rw - 2 * rb) {
-          r = w - rw - 2 * rb;
-        }
-        else {
-          r = h;
-        }
-        r = r * 9 / 10;
-        myWheel = new Rectangle(BORDER_SIZE, BORDER_SIZE, _size - BORDER_SIZE * 2,
-                                _size - BORDER_SIZE * 2);//new Rectangle((w - rw - r - 2 * rb) / 2, (h - r) / 2, r, r);
-
-        int saturation_step = 1;
-        int hue_step = 1;
-
-        if (r < 350) {
-          hue_step = 2;
-        }
-        if (r <= 280) {
-          saturation_step = 3;
-          hue_step = 2;
-        }
-        if (r <= 150) {
-          saturation_step = 5;
-          hue_step = 3;
-        }
-
-        Graphics g = myImage.getGraphics();
-        //((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        //g.setColor(Color.BLACK);
-        //g.fillRect(myWheel.x, myWheel.y, myWheel.width, myWheel.height);
-        
-        int s;
-        int midx = BORDER_SIZE + myWheel.width / 2;
-        int midy = BORDER_SIZE + myWheel.height / 2;
-        // BUG: low saturation values don't work under Windows
-        for (s = 100; s > 20; s -= saturation_step) {
-          int arcw = myWheel.width * s / 100;
-          int arch = myWheel.height * s / 100;
-          float sat = s / 100F;
-          for (h = 0; h <= 360; h += hue_step) {
-            float hue = h / 360F;
-            if (hue >= 1f) hue = 0f;
-            Color c = Color.getHSBColor(hue, sat, myBrightness);
-            g.setColor(c);
-            g.fillArc(midx - arcw / 2, midy - arch / 2, arcw, arch, h, hue_step);
-          }
-        }
+        myImage = createImage(new ColorWheelImageProducer(_size - BORDER_SIZE * 2, _size - BORDER_SIZE * 2, myBrightness));
+        myWheel = new Rectangle(BORDER_SIZE, BORDER_SIZE, _size - BORDER_SIZE * 2, _size - BORDER_SIZE * 2);
       }
 
       _g.setColor(UIManager.getColor("Panel.background"));
       _g.fillRect(0, 0, getWidth(), getHeight());
 
-      _g.drawImage(myImage, 0, 0, null);
+      _g.drawImage(myImage, myWheel.x, myWheel.y, null);
 
       int midx = myWheel.x + myWheel.width / 2;
       int midy = myWheel.y + myWheel.height / 2;
@@ -860,7 +810,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
     private List<Color> myRecentColors = new ArrayList<Color>();
 
-    private RecentColorsComponent(final Consumer<Color> listener) {
+    private RecentColorsComponent(final Consumer<Color> listener, boolean restoreColors) {
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent e) {
@@ -871,7 +821,9 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
         }
       });
 
-      restoreColors();
+      if (restoreColors) {
+        restoreColors();
+      }
     }
 
     private void restoreColors() {
@@ -901,9 +853,9 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
         int ndx = pair.second + pair.first * 10;
         if (myRecentColors.size() > ndx) {
           return myRecentColors.get(ndx);
-        }        
+        }
       }
-      
+
       return null;
     }
 
@@ -916,12 +868,12 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
       PropertiesComponent.getInstance().setValue(COLOR_CHOOSER_COLORS_KEY, StringUtil.join(values, ",,,"));
     }
-    
+
     public void appendColor(Color c) {
       if (!myRecentColors.contains(c)) {
         myRecentColors.add(c);
       }
-      
+
       if (myRecentColors.size() > 20) {
         myRecentColors = new ArrayList<Color>(myRecentColors.subList(myRecentColors.size() - 20, myRecentColors.size()));
       }
@@ -1017,8 +969,92 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     protected void doOKAction() {
       myColorPicker.appendRecentColor();
       myColorPicker.saveRecentColors();
-      
+
       super.doOKAction();
+    }
+  }
+
+  /**
+   * Produces the image of a ColorWheel.
+   *
+   * @author Werner Randelshofer
+   * @version 1.0 August 27, 2005 Created.
+   * @see ColorWheel
+   */
+  public static class ColorWheelImageProducer extends MemoryImageSource {
+    private int[] myPixels;
+    private int myWidth, myHeight;
+    private float myBrightness = 1f;
+
+    private float[] myHues;
+    private float[] mySat;
+    private int[] myAlphas;
+
+    public ColorWheelImageProducer(int w, int h, float brightness) {
+      super(w, h, null, 0, w);
+      myPixels = new int[w * h];
+      myWidth = w;
+      myHeight = h;
+      myBrightness = brightness;
+      generateLookupTables();
+      newPixels(myPixels, ColorModel.getRGBdefault(), 0, w);
+      setAnimated(true);
+      generateColorWheel();
+    }
+
+    public int getRadius() {
+      return Math.min(myWidth, myHeight) / 2 - 2;
+    }
+
+    private void generateLookupTables() {
+      mySat = new float[myWidth * myHeight];
+      myHues = new float[myWidth * myHeight];
+      myAlphas = new int[myWidth * myHeight];
+      float radius = getRadius();
+
+      // blend is used to create a linear alpha gradient of two extra pixels
+      float blend = (radius + 2f) / radius - 1f;
+
+      // Center of the color wheel circle
+      int cx = myWidth / 2;
+      int cy = myHeight / 2;
+
+      for (int x = 0; x < myWidth; x++) {
+        int kx = x - cx; // Kartesian coordinates of x
+        int squarekx = kx * kx; // Square of kartesian x
+
+        for (int y = 0; y < myHeight; y++) {
+          int ky = cy - y; // Kartesian coordinates of y
+
+          int index = x + y * myWidth;
+          mySat[index] = (float)Math.sqrt(squarekx + ky
+                                                           * ky)
+                               / radius;
+          if (mySat[index] <= 1f) {
+            myAlphas[index] = 0xff000000;
+          }
+          else {
+            myAlphas[index] = (int)((blend - Math.min(blend,
+                                                    mySat[index] - 1f)) * 255 / blend) << 24;
+            mySat[index] = 1f;
+          }
+          if (myAlphas[index] != 0) {
+            myHues[index] = (float)(Math.atan2(ky, kx) / Math.PI / 2d);
+          }
+        }
+      }
+    }
+
+    public void generateColorWheel() {
+      for (int index = 0; index < myPixels.length; index++) {
+        if (myAlphas[index] != 0) {
+          myPixels[index] = myAlphas[index]
+                          | 0xffffff
+                            & Color.HSBtoRGB(myHues[index],
+                                             mySat[index], myBrightness);
+        }
+      }
+      newPixels();
     }
   }
 }
