@@ -47,9 +47,14 @@ import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -58,6 +63,9 @@ public class EventLog implements Notifications {
   public static final String LOG_REQUESTOR = "Internal log requestor";
   public static final String LOG_TOOL_WINDOW_ID = "Event Log";
   private final LogModel myModel = new LogModel(null);
+  private static final String A_CLOSING = "</a>";
+  private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
+  private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=\"([^>]*)\"[^>]*>");
 
   public EventLog() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, this);
@@ -100,47 +108,62 @@ public class EventLog implements Notifications {
   }
 
   public static LogEntry formatForLog(@NotNull final Notification notification) {
-    boolean showLink = notification.getListener() != null;
     String content = notification.getContent();
     String mainText = notification.getTitle();
-    if (StringUtil.isNotEmpty(content) && !content.startsWith("<")) {
-      if (StringUtil.isNotEmpty(mainText)) {
-        mainText += ": ";
+    boolean showMore = false;
+    if (StringUtil.isNotEmpty(content)) {
+      if (content.startsWith("<")) {
+        showMore = true;
       }
-      mainText += content;
+      else {
+        if (StringUtil.isNotEmpty(mainText)) {
+          mainText += ": ";
+        }
+        mainText += content;
+      }
     }
 
     int nlIndex = eolIndex(mainText);
     if (nlIndex >= 0) {
       mainText = mainText.substring(0, nlIndex);
-      showLink = true;
+      showMore = true;
     }
-
-    mainText = mainText.replaceAll("<[^>]*>", "");
-
-    String status = mainText;
 
     List<Pair<TextRange, HyperlinkInfo>> links = new ArrayList<Pair<TextRange, HyperlinkInfo>>();
-    if (showLink) {
-      mainText += " more ";
-      links.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(mainText.length() - 5, 4), new HyperlinkInfo() {
-        @Override
-        public void navigate(Project project) {
-          Balloon balloon = notification.getBalloon();
-          if (balloon != null) {
-            balloon.hide();
-          }
 
-          RelativePoint target = EventLog.getProjectComponent(project).myConsole.getHyperlinkLocation(this);
-          if (target != null) {
-            balloon = NotificationsManagerImpl.createBalloon(notification, true, true, false);
-            balloon.show(target, Balloon.Position.above);
-          }
+    String message = "";
+    while (true) {
+      Matcher tagMatcher = TAG_PATTERN.matcher(mainText);
+      if (!tagMatcher.find()) {
+        message += mainText;
+        break;
+      }
+      message += mainText.substring(0, tagMatcher.start());
+      Matcher aMatcher = A_PATTERN.matcher(tagMatcher.group());
+      if (aMatcher.matches()) {
+        final String href = aMatcher.group(2);
+        int linkEnd = mainText.indexOf(A_CLOSING, tagMatcher.end());
+        if (linkEnd > 0) {
+          String linkText = mainText.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
+
+          links.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(message.length(), linkText.length()), new NotificationHyperlinkInfo(notification, href)));
+
+          message += linkText;
+          mainText = mainText.substring(linkEnd + A_CLOSING.length());
+          continue;
         }
-      }));
+      }
+      mainText = mainText.substring(tagMatcher.end());
     }
 
-    return new LogEntry(mainText, status, links);
+    String status = message;
+
+    if (showMore) {
+      message += " more ";
+      links.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(message.length() - 5, 4), new ShowBalloon(notification)));
+    }
+
+    return new LogEntry(message, status, links);
   }
 
   public static class LogEntry {
@@ -158,6 +181,8 @@ public class EventLog implements Notifications {
   private static int eolIndex(String mainText) {
     int nlIndex = mainText.indexOf("<br>");
     if (nlIndex < 0) nlIndex = mainText.indexOf("<br/>");
+    if (nlIndex < 0) nlIndex = mainText.indexOf("<p/>");
+    if (nlIndex < 0) nlIndex = mainText.indexOf("<p>");
     if (nlIndex < 0) nlIndex = mainText.indexOf("\n");
     return nlIndex;
   }
@@ -297,5 +322,52 @@ public class EventLog implements Notifications {
       toolWindow.getContentManager().addContent(content);
     }
 
+  }
+
+  private static class NotificationHyperlinkInfo implements HyperlinkInfo {
+    private final Notification myNotification;
+    private final String myHref;
+
+    public NotificationHyperlinkInfo(Notification notification, String href) {
+      myNotification = notification;
+      myHref = href;
+    }
+
+    @Override
+    public void navigate(Project project) {
+      NotificationListener listener = myNotification.getListener();
+      if (listener != null) {
+        EventLogConsole console = EventLog.getProjectComponent(project).myConsole;
+        URL url = null;
+        try {
+          url = new URL(null, myHref);
+        }
+        catch (MalformedURLException ignored) {
+        }
+        listener.hyperlinkUpdate(myNotification, new HyperlinkEvent(console, HyperlinkEvent.EventType.ACTIVATED, url, myHref));
+      }
+    }
+  }
+
+  private static class ShowBalloon implements HyperlinkInfo {
+    private final Notification myNotification;
+
+    public ShowBalloon(Notification notification) {
+      myNotification = notification;
+    }
+
+    @Override
+    public void navigate(Project project) {
+      Balloon balloon = myNotification.getBalloon();
+      if (balloon != null) {
+        balloon.hide();
+      }
+
+      RelativePoint target = EventLog.getProjectComponent(project).myConsole.getHyperlinkLocation(this);
+      if (target != null) {
+        balloon = NotificationsManagerImpl.createBalloon(myNotification, true, true, false);
+        balloon.show(target, Balloon.Position.above);
+      }
+    }
   }
 }
