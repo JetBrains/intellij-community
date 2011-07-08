@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.library;
+package com.intellij.util.download;
 
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author nik
  */
-public interface DownloadableFileDescription {
+public interface DownloadableFileSetDescription {
   @NotNull
-  String getDownloadUrl();
+  String getName();
 
   @NotNull
-  String getPresentableFileName();
+  String getVersionString();
 
   @NotNull
-  String getPresentableDownloadUrl();
-
-  @NotNull
-  String getDefaultFileName();
-
-  @NotNull
-  String generateFileName(@NotNull Condition<String> validator);
+  List<? extends DownloadableFileDescription> getFiles();
 }

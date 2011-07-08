@@ -18,10 +18,10 @@ package com.intellij.ide.util.frameworkSupport;
 import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.framework.library.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
-import com.intellij.framework.library.impl.DownloadableFileDescriptionImpl;
+import com.intellij.util.download.impl.DownloadableFileDescriptionImpl;
 import com.intellij.framework.library.impl.DownloadableLibraryDescriptionImpl;
 import com.intellij.framework.library.impl.FrameworkLibraryVersionImpl;
 import com.intellij.openapi.roots.libraries.LibraryType;
@@ -54,7 +54,8 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
       for (LibraryInfo info : version.getLibraries()) {
         final LibraryDownloadInfo downloadingInfo = info.getDownloadingInfo();
         if (downloadingInfo != null) {
-          final DownloadableFileDescription element = new DownloadableFileDescriptionImpl(downloadingInfo.getDownloadUrl(), downloadingInfo.getFileNamePrefix(), downloadingInfo.getFileNameSuffix());
+          final DownloadableFileDescription
+            element = new DownloadableFileDescriptionImpl(downloadingInfo.getDownloadUrl(), downloadingInfo.getFileNamePrefix(), downloadingInfo.getFileNameSuffix());
           downloads.add(element);
         }
       }

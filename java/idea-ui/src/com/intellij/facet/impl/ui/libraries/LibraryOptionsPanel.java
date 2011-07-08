@@ -15,6 +15,7 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
+import com.intellij.util.download.DownloadableFileSetVersions;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.IdeBundle;
@@ -100,7 +101,7 @@ public class LibraryOptionsPanel implements Disposable {
     final DownloadableLibraryDescription description = libraryDescription.getDownloadableDescription();
     if (description != null) {
       showCard("loading");
-      description.fetchLibraryVersions(new DownloadableLibraryDescription.LibraryVersionsCallback() {
+      description.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
         @Override
         public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
           //noinspection SSBasedInspection

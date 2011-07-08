@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.library.impl;
+package com.intellij.util.download.impl;
 
-import com.intellij.framework.library.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.text.UniqueNameGenerator;

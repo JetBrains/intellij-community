@@ -304,6 +304,9 @@
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManager"/>
 
+    <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryService"
+                        serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
+
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>

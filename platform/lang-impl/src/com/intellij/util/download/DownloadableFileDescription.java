@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.library;
+package com.intellij.util.download;
 
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
-import com.intellij.util.download.DownloadableFileSetDescription;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public interface FrameworkLibraryVersion extends DownloadableFileSetDescription {
+public interface DownloadableFileDescription {
   @NotNull
-  String getDefaultLibraryName();
+  String getDownloadUrl();
 
-  boolean isCompatibleWith(@NotNull FrameworkVersion frameworkVersion);
+  @NotNull
+  String getPresentableFileName();
+
+  @NotNull
+  String getPresentableDownloadUrl();
+
+  @NotNull
+  String getDefaultFileName();
+
+  @NotNull
+  String generateFileName(@NotNull Condition<String> validator);
 }

@@ -15,9 +15,10 @@
  */
 package com.intellij.framework.library.impl;
 
-import com.intellij.framework.library.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.util.download.impl.DownloadableFileSetDescriptionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +27,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class FrameworkLibraryVersionImpl implements FrameworkLibraryVersion {
-  private final List<DownloadableFileDescription> myLibraryFiles;
-  private final String myVersionString;
+public class FrameworkLibraryVersionImpl extends DownloadableFileSetDescriptionImpl implements FrameworkLibraryVersion {
   private final String myLibraryCategory;
   private final FrameworkVersion myFrameworkVersion;
 
@@ -36,28 +35,15 @@ public class FrameworkLibraryVersionImpl implements FrameworkLibraryVersion {
                                      List<DownloadableFileDescription> libraryFiles,
                                      String category,
                                      @Nullable FrameworkVersion frameworkVersion) {
-    myVersionString = versionString;
-    myLibraryFiles = libraryFiles;
+    super(category, versionString, libraryFiles);
     myLibraryCategory = category;
     myFrameworkVersion = frameworkVersion;
   }
 
   @NotNull
   @Override
-  public String getVersionString() {
-    return myVersionString;
-  }
-
-  @NotNull
-  @Override
   public String getDefaultLibraryName() {
     return myVersionString.length() > 0 ? myLibraryCategory + "-" + myVersionString : myLibraryCategory;
-  }
-
-  @NotNull
-  @Override
-  public List<DownloadableFileDescription> getLibraryFiles() {
-    return myLibraryFiles;
   }
 
   @Override

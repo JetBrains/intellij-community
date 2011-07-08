@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.library;
+package com.intellij.util.download;
 
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
-import com.intellij.util.download.DownloadableFileSetDescription;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author nik
  */
-public interface FrameworkLibraryVersion extends DownloadableFileSetDescription {
-  @NotNull
-  String getDefaultLibraryName();
+public interface DownloadableFileSetVersions<F extends DownloadableFileSetDescription> {
+  void fetchVersions(@NotNull FileSetVersionsCallback<F> callback);
 
-  boolean isCompatibleWith(@NotNull FrameworkVersion frameworkVersion);
+  abstract class FileSetVersionsCallback<F extends DownloadableFileSetDescription> {
+    public abstract void onSuccess(@NotNull List<? extends F> versions);
+
+    public void onError(@NotNull String errorMessage) {
+    }
+  }
 }

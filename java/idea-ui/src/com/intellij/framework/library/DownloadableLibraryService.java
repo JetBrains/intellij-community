@@ -16,6 +16,7 @@
 package com.intellij.framework.library;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -23,15 +24,14 @@ import java.net.URL;
 /**
  * @author nik
  */
-public abstract class DownloadableLibraryAssistant {
-  public static DownloadableLibraryAssistant getInstance() {
-    return ServiceManager.getService(DownloadableLibraryAssistant.class);
+public abstract class DownloadableLibraryService {
+  public static DownloadableLibraryService getInstance() {
+    return ServiceManager.getService(DownloadableLibraryService.class);
   }
-
-  @NotNull
-  public abstract DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName);
 
   @NotNull
   public abstract DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull URL... localUrls);
 
+  @NotNull
+  public abstract CustomLibraryDescription createDescriptionForType(Class<? extends DownloadableLibraryType> typeClass);
 }

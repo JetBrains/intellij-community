@@ -141,8 +141,8 @@
   <applicationService serviceInterface="com.intellij.ide.PowerSaveMode"
                       serviceImplementation="com.intellij.ide.PowerSaveMode"/>
 
-  <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryAssistant"
-                      serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryAssistantImpl"/>
+  <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
+                      serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
 
   <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitThread"
       serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
