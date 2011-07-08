@@ -108,6 +108,12 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     model.setListener(this);
     createView();
     moduleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
+    commonJavaParameters.setModuleContext(moduleSelector.getModule());
+    moduleClasspath.getComponent().addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        commonJavaParameters.setModuleContext(moduleSelector.getModule());
+      }
+    });
     registerListener(new JRadioButton[] {packageTest, classTest, methodTest, groupTest, suiteTest}, new ChangeListener()
     {
       public void stateChanged(ChangeEvent e) {

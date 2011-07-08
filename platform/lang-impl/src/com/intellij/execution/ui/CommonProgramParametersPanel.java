@@ -51,6 +51,7 @@ public class CommonProgramParametersPanel extends JPanel {
   private EnvironmentVariablesComponent myEnvVariablesComponent;
 
   private Module myModuleContext = null;
+  private boolean myHaveModuleContext = false;
 
   public CommonProgramParametersPanel() {
     super();
@@ -83,7 +84,7 @@ public class CommonProgramParametersPanel extends JPanel {
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final List<String> macros = new ArrayList<String>(PathMacros.getInstance().getUserMacroNames());
-        if (myModuleContext != null) macros.add("MODULE_DIR");
+        if (myHaveModuleContext) macros.add("MODULE_DIR");
 
         final JList list = new JBList(ArrayUtil.toStringArray(macros));
         final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
@@ -138,6 +139,7 @@ public class CommonProgramParametersPanel extends JPanel {
 
   public void setModuleContext(Module moduleContext) {
     myModuleContext = moduleContext;
+    myHaveModuleContext = true;
   }
 
   public LabeledComponent<RawCommandLineEditor> getProgramParametersComponent() {

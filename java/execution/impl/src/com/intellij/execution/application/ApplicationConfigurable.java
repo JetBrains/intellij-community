@@ -45,6 +45,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
 
   public ApplicationConfigurable(final Project project) {
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
+    myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
     myModule.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
