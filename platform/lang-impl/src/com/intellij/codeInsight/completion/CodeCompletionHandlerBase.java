@@ -27,7 +27,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -220,7 +222,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
     }
 
-    doComplete(time, initializationContext[0], hasModifiers);
+    insertDummyIdentifier(initializationContext[0], hasModifiers, time);
   }
 
   @NotNull
@@ -245,11 +247,15 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return lookup;
   }
 
-  private void doComplete(final int invocationCount, CompletionInitializationContext initContext, boolean hasModifiers) {
+  private void doComplete(CompletionInitializationContext initContext,
+                          boolean hasModifiers,
+                          int invocationCount,
+                          PsiFile hostFile,
+                          int hostStartOffset, Editor hostEditor, OffsetMap hostMap) {
+    CompletionContext context = createCompletionContext(hostFile, hostStartOffset, hostEditor, hostMap);
+    CompletionParameters parameters = createCompletionParameters(invocationCount, initContext, context);
+
     final Editor editor = initContext.getEditor();
-
-    final CompletionParameters parameters = createCompletionParameters(invocationCount, initContext);
-
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
@@ -331,21 +337,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return data;
   }
 
-
-  private CompletionParameters createCompletionParameters(int invocationCount, final CompletionInitializationContext initContext) {
-    final Ref<CompletionContext> ref = Ref.create(null);
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ref.set(insertDummyIdentifier(initContext));
-          }
-        });
-      }
-    });
-    final CompletionContext newContext = ref.get();
+  private CompletionParameters createCompletionParameters(int invocationCount,
+                                                          CompletionInitializationContext initContext,
+                                                          final CompletionContext newContext) {
 
     final int offset = newContext.getStartOffset();
     final PsiFile fileCopy = newContext.file;
@@ -459,12 +453,21 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  private CompletionContext insertDummyIdentifier(CompletionInitializationContext initContext) {
+  private void insertDummyIdentifier(final CompletionInitializationContext initContext,
+                                     final boolean hasModifiers,
+                                     final int invocationCount) {
     final PsiFile originalFile = initContext.getFile();
-    PsiFile fileCopy = createFileCopy(originalFile);
-    PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy);
+    final PsiFile fileCopy;
+    AccessToken token = WriteAction.start();
+    try {
+      fileCopy = createFileCopy(originalFile);
+    }
+    finally {
+      token.finish();
+    }
+    final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy);
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
-    int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy, initContext.getStartOffset());
+    final int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy, initContext.getStartOffset());
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
 
     final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
@@ -473,15 +476,54 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       hostMap.addOffset(key, injectedLanguageManager.injectedToHost(fileCopy, original.getOffset(key)));
     }
 
-    Document document = fileCopy.getViewProvider().getDocument();
+    final Document document = fileCopy.getViewProvider().getDocument();
     assert document != null : "no document";
-    patchFileCopy(initContext, fileCopy, document);
+
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            patchFileCopy(initContext, fileCopy, document);
+          }
+        });
+      }
+    });
     final Document hostDocument = hostFile.getViewProvider().getDocument();
     assert hostDocument != null : "no host document";
-    PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
+
+    final Project project = hostFile.getProject();
+
+    if (autopopup) {
+      final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false);
+      CompletionServiceImpl.setCompletionPhase(phase);
+
+      CompletionAutoPopupHandler.runLaterWithCommitted(project, hostDocument, new Runnable() {
+        @Override
+        public void run() {
+          if (phase != CompletionServiceImpl.getCompletionPhase()) return;
+          if (hostEditor.isDisposed()) return;
+          if (DumbService.getInstance(project).isDumb()) return;
+
+          doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
+        }
+      });
+    } else {
+      PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
+
+      doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
+    }
+  }
+
+  private static CompletionContext createCompletionContext(PsiFile hostFile,
+                                                           int hostStartOffset,
+                                                           Editor hostEditor,
+                                                           OffsetMap hostMap) {
     assert hostFile.isValid() : "file became invalid";
     assert hostMap.getOffset(CompletionInitializationContext.START_OFFSET) < hostFile.getTextLength() : "startOffset outside the host file";
 
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
     CompletionContext context;
     PsiFile injected = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
     if (injected != null) {
@@ -494,10 +536,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       for (final OffsetKey key : new ArrayList<OffsetKey>(hostMap.keySet())) {
         map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(hostEditor.offsetToLogicalPosition(hostMap.getOffset(key)))));
       }
-      context = new CompletionContext(initContext.getProject(), injectedEditor, injected, map);
+      context = new CompletionContext(hostFile.getProject(), injectedEditor, injected, map);
       assert hostStartOffset == injectedLanguageManager.injectedToHost(injected, context.getStartOffset()) : "inconsistent injected offset translation";
     } else {
-      context = new CompletionContext(initContext.getProject(), hostEditor, hostFile, hostMap);
+      context = new CompletionContext(hostFile.getProject(), hostEditor, hostFile, hostMap);
     }
 
     assert context.getStartOffset() < context.file.getTextLength() : "start outside the file";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight;
+package com.intellij.util.download;
 
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
-public interface AttachSourcesProvider {
-  @NotNull
-  Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, PsiFile psiFile);
+/**
+ * @author nik
+ */
+public interface DownloadableFileSetVersions<F extends DownloadableFileSetDescription> {
+  void fetchVersions(@NotNull FileSetVersionsCallback<F> callback);
 
-  interface AttachSourcesAction {
-    String getName();
-    String getBusyText();
-    ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile);
+  abstract class FileSetVersionsCallback<F extends DownloadableFileSetDescription> {
+    public abstract void onSuccess(@NotNull List<? extends F> versions);
+
+    public void onError(@NotNull String errorMessage) {
+    }
   }
 }

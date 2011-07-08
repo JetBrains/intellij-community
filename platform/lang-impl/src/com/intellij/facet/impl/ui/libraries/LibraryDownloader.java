@@ -16,7 +16,7 @@
 
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.framework.library.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;

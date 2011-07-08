@@ -91,7 +91,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   public static void scheduleAutoPopup(final Project project, final Editor editor, final PsiFile file) {
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
 
-    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm();
+    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false);
     CompletionServiceImpl.setCompletionPhase(phase);
 
     final Runnable request = new Runnable() {

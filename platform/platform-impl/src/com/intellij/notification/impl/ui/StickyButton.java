@@ -25,11 +25,6 @@ import java.awt.event.ActionListener;
  */
 public class StickyButton extends JToggleButton {
 
-  public StickyButton(final String text, final ActionListener listener) {
-    this(text);
-    addActionListener(listener);
-  }
-
   public StickyButton(final String text) {
     super(text);
 

@@ -39,13 +39,13 @@ public class ConsoleViewContentType {
   public static final ColorKey CONSOLE_BACKGROUND_KEY = ColorKey.createColorKey("CONSOLE_BACKGROUND_KEY");
 
   public static final TextAttributesKey NORMAL_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_NORMAL_OUTPUT");
-  public static final TextAttributesKey WARNING_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_WARNING_OUTPUT");
+  public static final TextAttributesKey LOG_WARNING_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("LOG_WARNING_OUTPUT");
   public static final TextAttributesKey ERROR_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_ERROR_OUTPUT");
+  public static final TextAttributesKey LOG_ERROR_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("LOG_ERROR_OUTPUT");
   public static final TextAttributesKey USER_INPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_USER_INPUT");
   public static final TextAttributesKey SYSTEM_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_SYSTEM_OUTPUT");
 
   public static final ConsoleViewContentType NORMAL_OUTPUT = new ConsoleViewContentType("NORMAL_OUTPUT", NORMAL_OUTPUT_KEY);
-  public static final ConsoleViewContentType WARNING_OUTPUT = new ConsoleViewContentType("ERROR_OUTPUT", WARNING_OUTPUT_KEY);
   public static final ConsoleViewContentType ERROR_OUTPUT = new ConsoleViewContentType("ERROR_OUTPUT", ERROR_OUTPUT_KEY);
   public static final ConsoleViewContentType USER_INPUT = new ConsoleViewContentType("USER_OUTPUT", USER_INPUT_KEY);
   public static final ConsoleViewContentType SYSTEM_OUTPUT = new ConsoleViewContentType("SYSTEM_OUTPUT", SYSTEM_OUTPUT_KEY);

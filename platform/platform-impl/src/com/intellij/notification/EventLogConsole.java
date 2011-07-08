@@ -26,13 +26,17 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
@@ -53,7 +57,7 @@ class EventLogConsole {
 
   EventLogConsole(@NotNull Project project, LogModel model) {
     myProjectModel = model;
-    myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false, true);
+    myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
 
     ((EditorMarkupModel) myLogEditor.getMarkupModel()).setErrorStripeVisible(true);
 
@@ -113,18 +117,19 @@ class EventLogConsole {
     Pair<String, Boolean> pair = EventLog.formatForLog(notification);
 
     final NotificationType type = notification.getType();
-    ConsoleViewContentType contentType = type == NotificationType.ERROR
-                                         ? ConsoleViewContentType.ERROR_OUTPUT
+    TextAttributesKey key = type == NotificationType.ERROR
+                                         ? ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY
                                          : type == NotificationType.INFORMATION
-                                           ? ConsoleViewContentType.NORMAL_OUTPUT
-                                           : ConsoleViewContentType.WARNING_OUTPUT;
+                                           ? ConsoleViewContentType.NORMAL_OUTPUT_KEY
+                                           : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 
     int msgStart = document.getTextLength();
     String message = pair.first;
     append(document, message);
-    myLogEditor.getMarkupModel()
-      .addRangeHighlighter(msgStart, document.getTextLength(), HighlighterLayer.CARET_ROW + 1, contentType.getAttributes(),
-                           HighlighterTargetArea.EXACT_RANGE);
+
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
+    int layer = HighlighterLayer.CARET_ROW + 1;
+    myLogEditor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
 
     if (pair.second) {
       String s = " ";
@@ -174,44 +179,6 @@ class EventLogConsole {
                   : notification.getType() == NotificationType.WARNING ? Color.yellow : Color.green;
     lineHighlighter.setErrorStripeMarkColor(color);
     lineHighlighter.setErrorStripeTooltip(message);
-    lineHighlighter.setGutterIconRenderer(new GutterIconRenderer() {
-      @NotNull
-      @Override
-      public Icon getIcon() {
-        return IconLoader.getIcon("/general/reset.png");
-      }
-
-      @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-      @Override
-      public boolean equals(Object obj) {
-        return this == obj;
-      }
-
-      @Override
-      public int hashCode() {
-        return 0;
-      }
-
-      @Override
-      public String getTooltipText() {
-        return "Mark as read";
-      }
-
-      @Override
-      public boolean isNavigateAction() {
-        return true;
-      }
-
-      @Override
-      public AnAction getClickAction() {
-        return new AnAction() {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            myProjectModel.removeNotification(notification);
-          }
-        };
-      }
-    });
 
     myProjectModel.removeHandlers.put(notification, new Runnable() {
       @Override

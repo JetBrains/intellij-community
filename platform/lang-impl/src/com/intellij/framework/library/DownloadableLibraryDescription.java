@@ -15,21 +15,10 @@
  */
 package com.intellij.framework.library;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.intellij.util.download.DownloadableFileSetVersions;
 
 /**
  * @author nik
  */
-public interface DownloadableLibraryDescription {
-
-  void fetchLibraryVersions(@NotNull LibraryVersionsCallback callback);
-
-  abstract class LibraryVersionsCallback {
-    public abstract void onSuccess(@NotNull List<? extends FrameworkLibraryVersion> versions);
-
-    public void onError(@NotNull String errorMessage) {
-    }
-  }
+public interface DownloadableLibraryDescription extends DownloadableFileSetVersions<FrameworkLibraryVersion> {
 }

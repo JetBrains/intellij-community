@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight;
+package com.intellij.util.download;
 
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-
-public interface AttachSourcesProvider {
+/**
+ * @author nik
+ */
+public interface DownloadableFileDescription {
   @NotNull
-  Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, PsiFile psiFile);
+  String getDownloadUrl();
 
-  interface AttachSourcesAction {
-    String getName();
-    String getBusyText();
-    ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile);
-  }
+  @NotNull
+  String getPresentableFileName();
+
+  @NotNull
+  String getPresentableDownloadUrl();
+
+  @NotNull
+  String getDefaultFileName();
+
+  @NotNull
+  String generateFileName(@NotNull Condition<String> validator);
 }

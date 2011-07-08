@@ -15,7 +15,7 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.framework.library.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.ui.ListCellRendererWrapper;
@@ -118,12 +118,12 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     init();
   }
 
-  private void onVersionChanged(final @Nullable List<DownloadableFileDescription> selected) {
+  private void onVersionChanged(final @Nullable List<? extends DownloadableFileDescription> selected) {
     final FrameworkLibraryVersion version = getSelectedVersion();
     if (Comparing.equal(myLastSelectedVersion, version)) return;
 
     if (version != null) {
-      final List<DownloadableFileDescription> downloads = version.getLibraryFiles();
+      final List<? extends DownloadableFileDescription> downloads = version.getFiles();
       myFilesList.setModel(new CollectionListModel(
         ContainerUtil.map2Array(downloads, JCheckBox.class, new Function<DownloadableFileDescription, JCheckBox>() {
           @Override
@@ -169,7 +169,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
 
   private List<DownloadableFileDescription> getSelectedDownloads(FrameworkLibraryVersion version) {
     List<DownloadableFileDescription> selected = new ArrayList<DownloadableFileDescription>();
-    List<DownloadableFileDescription> downloads = version.getLibraryFiles();
+    List<? extends DownloadableFileDescription> downloads = version.getFiles();
     for (int i = 0; i < downloads.size(); i++) {
       if (myFilesList.isItemSelected(i)) {
         selected.add(downloads.get(i));

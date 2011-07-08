@@ -36,7 +36,7 @@ public class DownloadableLibraryDescriptionImpl implements DownloadableLibraryDe
   }
 
   @Override
-  public void fetchLibraryVersions(@NotNull LibraryVersionsCallback callback) {
+  public void fetchVersions(@NotNull FileSetVersionsCallback<FrameworkLibraryVersion> callback) {
     callback.onSuccess(myVersions);
   }
 }

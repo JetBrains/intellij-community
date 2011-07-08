@@ -17,10 +17,7 @@ package com.intellij.framework.library.impl;
 
 import com.intellij.facet.impl.ui.libraries.DownloadingOptionsDialog;
 import com.intellij.facet.impl.ui.libraries.LibraryDownloadSettings;
-import com.intellij.framework.library.DownloadableLibraryDescription;
-import com.intellij.framework.library.DownloadableLibraryType;
-import com.intellij.framework.library.FrameworkLibraryVersion;
-import com.intellij.framework.library.LibraryVersionProperties;
+import com.intellij.framework.library.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
@@ -29,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBa
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.download.DownloadableFileSetVersions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -72,7 +70,7 @@ public class DownloadableLibraryEditor extends LibraryPropertiesEditor {
 
   private void changeVersion() {
     final ModalityState current = ModalityState.current();
-    myDescription.fetchLibraryVersions(new DownloadableLibraryDescription.LibraryVersionsCallback() {
+    myDescription.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
       @Override
       public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {

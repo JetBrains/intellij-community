@@ -127,7 +127,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
     assert !isDisposed;
     assert project.isInitialized();
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
-    if (psiFile == null || !psiFile.isPhysical()) return false;
+    if (psiFile == null) return false;
 
     doQueue(document, project, getCommitStage(document), reason);
     return true;

@@ -15,7 +15,7 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.framework.library.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.LibraryVersionProperties;
@@ -40,19 +40,19 @@ public class LibraryDownloadSettings {
   private final boolean myDownloadSources;
   private final boolean myDownloadJavaDocs;
   private final LibrariesContainer.LibraryLevel myLibraryLevel;
-  private final List<DownloadableFileDescription> mySelectedDownloads;
+  private final List<? extends DownloadableFileDescription> mySelectedDownloads;
 
   public LibraryDownloadSettings(@NotNull FrameworkLibraryVersion libraryVersion,
                                  @Nullable DownloadableLibraryType libraryType,
                                  final LibrariesContainer.LibraryLevel libraryLevel, final String downloadedLibrariesPath) {
     this(libraryVersion, libraryType, downloadedLibrariesPath, libraryVersion.getDefaultLibraryName(), libraryLevel,
-         libraryVersion.getLibraryFiles(), true, true);
+         libraryVersion.getFiles(), true, true);
   }
 
   public LibraryDownloadSettings(@NotNull FrameworkLibraryVersion libraryVersion, @Nullable DownloadableLibraryType libraryType,
                                  @NotNull String directoryForDownloadedLibrariesPath, @NotNull String libraryName,
                                  @NotNull LibrariesContainer.LibraryLevel libraryLevel,
-                                 @NotNull List<DownloadableFileDescription> selectedDownloads,
+                                 @NotNull List<? extends DownloadableFileDescription> selectedDownloads,
                                  boolean downloadSources, boolean downloadJavaDocs) {
     myVersion = libraryVersion;
     myLibraryType = libraryType;
@@ -85,7 +85,7 @@ public class LibraryDownloadSettings {
     return myDirectoryForDownloadedLibrariesPath;
   }
 
-  public List<DownloadableFileDescription> getSelectedDownloads() {
+  public List<? extends DownloadableFileDescription> getSelectedDownloads() {
     return mySelectedDownloads;
   }
 

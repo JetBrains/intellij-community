@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -41,6 +42,7 @@ public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
     return null;
   }
 
+  @NotNull
   @Override
   public Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
     VirtualFile jar = getJarByPsiFile(psiFile);
@@ -67,7 +69,7 @@ public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
     if (propertiesFile == null) return Collections.emptyList();
 
     final Library library = getLibraryFromOrderEntriesList(orderEntries);
-    if (library == null) return null;
+    if (library == null) return Collections.emptyList();
 
     final String sourceFileName = artifactName + '-' + version + "-sources.jar";
 

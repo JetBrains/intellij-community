@@ -233,6 +233,20 @@ public class EventLog implements Notifications {
         }
       });
       group.add(new ScrollToTheEndToolbarAction(editor));
+      group.add(new DumbAwareAction("Mark all as read", "Mark all unread notifications as read", IconLoader.getIcon("/general/reset.png")) {
+        @Override
+        public void update(AnActionEvent e) {
+          e.getPresentation().setEnabled(!getProjectComponent(project).myProjectModel.getNotifications().isEmpty());
+        }
+
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          LogModel model = getProjectComponent(project).myProjectModel;
+          for (Notification notification : model.getNotifications()) {
+            model.removeNotification(notification);
+          }
+        }
+      });
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
       toolbar.setTargetComponent(panel);

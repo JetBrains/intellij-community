@@ -16,22 +16,15 @@
 package com.intellij.framework.library;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.util.download.DownloadableFileSetDescription;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author nik
  */
-public interface FrameworkLibraryVersion {
+public interface FrameworkLibraryVersion extends DownloadableFileSetDescription {
   @NotNull
   String getDefaultLibraryName();
-
-  @NotNull
-  String getVersionString();
-
-  @NotNull
-  List<DownloadableFileDescription> getLibraryFiles();
 
   boolean isCompatibleWith(@NotNull FrameworkVersion frameworkVersion);
 }

@@ -280,9 +280,6 @@
     <projectService serviceInterface="com.intellij.psi.controlFlow.ControlFlowFactory"
                     serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
-
     <applicationService serviceInterface="com.intellij.psi.CommonReferenceProviderTypes"
                     serviceImplementation="com.intellij.psi.impl.CommonReferenceProviderTypesImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
@@ -306,6 +303,9 @@
 
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManager"/>
+
+    <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryService"
+                        serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
 
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
 

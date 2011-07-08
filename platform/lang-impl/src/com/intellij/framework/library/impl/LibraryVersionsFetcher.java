@@ -15,64 +15,27 @@
  */
 package com.intellij.framework.library.impl;
 
-import com.intellij.facet.frameworks.LibrariesDownloadAssistant;
 import com.intellij.facet.frameworks.beans.Artifact;
-import com.intellij.facet.frameworks.beans.ArtifactItem;
-import com.intellij.framework.library.DownloadableFileDescription;
-import com.intellij.framework.library.DownloadableLibraryAssistant;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.download.impl.FileSetVersionsFetcherBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class LibraryVersionsFetcher implements DownloadableLibraryDescription {
-  private static final Comparator<FrameworkLibraryVersion> VERSIONS_COMPARATOR = new Comparator<FrameworkLibraryVersion>() {
-    @Override
-    public int compare(FrameworkLibraryVersion o1, FrameworkLibraryVersion o2) {
-      return -StringUtil.compareVersionNumbers(o1.getVersionString(), o2.getVersionString());
-    }
-  };
-  private final String myGroupId;
-  private final URL[] myLocalUrls;
+public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<FrameworkLibraryVersion> implements DownloadableLibraryDescription {
 
   public LibraryVersionsFetcher(@NotNull String groupId, @NotNull URL[] localUrls) {
-    myGroupId = groupId;
-    myLocalUrls = localUrls;
+    super(groupId, localUrls);
   }
 
   @Override
-  public void fetchLibraryVersions(@NotNull final LibraryVersionsCallback callback) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final Artifact[] versions = LibrariesDownloadAssistant.getVersions(myGroupId, myLocalUrls);
-        final List<FrameworkLibraryVersion> result = new ArrayList<FrameworkLibraryVersion>();
-        for (Artifact version : versions) {
-          final ArtifactItem[] items = version.getItems();
-          final List<DownloadableFileDescription> files = new ArrayList<DownloadableFileDescription>();
-          for (ArtifactItem item : items) {
-            String url = item.getUrl();
-            final String prefix = version.getUrlPrefix();
-            if (!url.startsWith("http://") && prefix != null) {
-              url = prefix + url;
-            }
-            files.add(DownloadableLibraryAssistant.getInstance().createFileDescription(url, item.getName()));
-          }
-          result.add(new FrameworkLibraryVersionImpl(version.getVersion(), files, myGroupId, null));
-        }
-        Collections.sort(result, VERSIONS_COMPARATOR);
-        callback.onSuccess(result);
-      }
-    });
+  protected FrameworkLibraryVersion createVersion(Artifact version, List<DownloadableFileDescription> files) {
+    return new FrameworkLibraryVersionImpl(version.getVersion(), files, myGroupId, null);
   }
 }

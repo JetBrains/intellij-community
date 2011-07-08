@@ -247,6 +247,9 @@
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
 
+    <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
+
     <!-- Errors -->
     <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
     <projectConfigurable provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider"/>
