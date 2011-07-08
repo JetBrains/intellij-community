@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -123,9 +124,9 @@ public final class IconLoader {
   }
 
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass, boolean computeNow) {
-    final LazyIcon icon = new LazyIcon(aClass, path);
+    final ByClass icon = new ByClass(aClass, path);
 
-    if (computeNow) {
+    if (computeNow || !Registry.is("ide.lazyIconLoading")) {
       return icon.getOrComputeIcon();
     }
 
@@ -279,17 +280,10 @@ public final class IconLoader {
     }
   }
 
-  private static class LazyIcon implements Icon {
-    boolean myWasComputed;
-    Icon myIcon;
-    private final Class myCallerClass;
-    private final String myPath;
+  public abstract static class LazyIcon implements Icon {
 
-    public LazyIcon(Class aClass, String path) {
-      myCallerClass = aClass;
-      myPath = path;
-      myWasComputed = false;
-    }
+    private boolean myWasComputed;
+    private Icon myIcon;
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -311,19 +305,42 @@ public final class IconLoader {
       return icon != null ? icon.getIconHeight() : 0;
     }
 
-    synchronized Icon getOrComputeIcon() {
+
+    protected synchronized final Icon getOrComputeIcon() {
       if (!myWasComputed) {
         myWasComputed = true;
-        URL url = myCallerClass.getResource(myPath);
-        myIcon = findIcon(url);
+        myIcon = compute();
       }
 
       return myIcon;
     }
 
+    public final void load() {
+      getIconWidth();
+    }
+
+    protected abstract Icon compute();
+
+  }
+
+  private static class ByClass extends LazyIcon {
+    private final Class myCallerClass;
+    private final String myPath;
+
+    public ByClass(Class aClass, String path) {
+      myCallerClass = aClass;
+      myPath = path;
+    }
+
+    @Override
+    protected Icon compute() {
+      URL url = myCallerClass.getResource(myPath);
+      return findIcon(url);
+    }
+
     @Override
     public String toString() {
-      return "icon path=" + myPath + " class=" + myCallerClass + " wasComputed=" + myWasComputed + " icon=" + myIcon;
+      return "icon path=" + myPath + " class=" + myCallerClass;
     }
   }
 }

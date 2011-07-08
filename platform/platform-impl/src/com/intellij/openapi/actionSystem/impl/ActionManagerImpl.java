@@ -40,6 +40,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
@@ -428,17 +429,31 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
-  private static void setIconFromClass(@NotNull final Class actionClass, @NotNull ClassLoader classLoader, @NotNull final String iconPath, final String className,
+  private static void setIconFromClass(@NotNull final Class actionClass, @NotNull final ClassLoader classLoader, @NotNull final String iconPath, final String className,
                                        final Presentation presentation, final PluginId pluginId) {
-    //try to find icon in idea class path
-    Icon icon = IconLoader.findIcon(iconPath, actionClass);
-    if (icon == null) icon = IconLoader.findIcon(iconPath, classLoader);
-    if (icon == null) {
-     reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action class='" + className + "'");
+
+    final IconLoader.LazyIcon lazyIcon = new IconLoader.LazyIcon() {
+      @Override
+      protected Icon compute() {
+        //try to find icon in idea class path
+        Icon icon = IconLoader.findIcon(iconPath, actionClass, true);
+        if (icon == null) {
+          icon = IconLoader.findIcon(iconPath, classLoader);
+        }
+
+        if (icon == null) {
+          reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action class='" + className + "'");
+        }
+
+        return icon;
+      }
+    };
+
+    if (!Registry.is("ide.lazyIconLoading")) {
+      lazyIcon.load();
     }
-    else {
-      presentation.setIcon(icon);
-    }
+
+    presentation.setIcon(lazyIcon);
   }
 
   private static String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
