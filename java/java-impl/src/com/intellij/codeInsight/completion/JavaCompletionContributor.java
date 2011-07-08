@@ -338,7 +338,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static boolean shouldRunClassNameCompletion(CompletionResultSet result, CompletionParameters parameters) {
-    if (!Registry.is("show.all.classes.on.first.completion") && parameters.getInvocationCount() < 2) {
+    if (!mayShowAllClasses(parameters)) {
       return false;
     }
 
@@ -369,6 +369,10 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     return mayStartClassName(result, parameters.isRelaxedMatching());
+  }
+
+  public static boolean mayShowAllClasses(CompletionParameters parameters) {
+    return Registry.is("show.all.classes.on.first.completion") || parameters.getInvocationCount() >= 2;
   }
 
   public static boolean mayStartClassName(CompletionResultSet result, final boolean relaxedMatching) {
