@@ -91,10 +91,4 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
     return new OrderRootType[0];
   }
 
-  /**
-   * @return True if library roots are files, not directories (for e.g., JavaScript files) 
-   */
-  public boolean isFileBased() {
-    return false;
-  }
 }

@@ -130,21 +130,16 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   static VirtualFile[] getLibraryRoots(LibraryOrderEntry orderEntry) {
     final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
     final Library library = orderEntry.getLibrary();
+    if (library == null) return VirtualFile.EMPTY_ARRAY;
     OrderRootType[] rootTypes = LibraryType.DEFAULT_EXTERNAL_ROOT_TYPES;
     if (library instanceof LibraryEx) {
       LibraryType libraryType = ((LibraryEx)library).getType();
       if (libraryType != null) {
         rootTypes = libraryType.getExternalRootTypes();
-        if (libraryType.isFileBased()) {
-          for (OrderRootType rootType : rootTypes) {
-            files.addAll(Arrays.asList(library.getFiles(rootType)));
-          }
-          return VfsUtil.toVirtualFileArray(files);
-        }
       }
     }
     for (OrderRootType rootType : rootTypes) {
-      files.addAll(Arrays.asList(orderEntry.getRootFiles(rootType)));
+      files.addAll(Arrays.asList(library.getFiles(rootType)));
     }
     return VfsUtil.toVirtualFileArray(files);
   }
