@@ -94,7 +94,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       @Override
       public void run() {
         if (phase.isExpired()) return;
-        invokeCompletion(CompletionType.BASIC, false, true, project, editor, 0, false);
+        invokeCompletion(CompletionType.BASIC, true, project, editor, 0);
       }
     };
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
@@ -105,20 +105,9 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
   }
 
-  public static void invokeAutoPopupCompletion(final Project project, final Editor editor, Condition<PsiFile> condition) {
+  public static void invokeAutoPopupCompletion(final Project project, final Editor editor, final Condition<PsiFile> condition) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    completeWhenAllDocumentsCommitted(project, editor, CompletionType.BASIC, false, true, 0, false, condition);
-  }
-
-  private static void completeWhenAllDocumentsCommitted(@NotNull final Project project,
-                                                        @NotNull final Editor editor,
-                                                        final CompletionType completionType,
-                                                        final boolean invokedExplicitly,
-                                                        final boolean autopopup,
-                                                        final int time,
-                                                        final boolean hasModifiers,
-                                                        final Condition<PsiFile> condition) {
     final Document document = editor.getDocument();
     final long beforeStamp = document.getModificationStamp();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -141,7 +130,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
             }
             PsiFile file = documentManager.getPsiFile(document);
             if (file != null && condition != null && !condition.value(file)) return;
-            invokeCompletion(completionType, invokedExplicitly, autopopup, project, editor, time, hasModifiers);
+            invokeCompletion(CompletionType.BASIC, true, project, editor, 0);
           }
         }, project.getDisposed());
       }
@@ -149,9 +138,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   }
 
   public static void invokeCompletion(CompletionType completionType,
-                                      boolean invokedExplicitly,
                                       boolean autopopup,
-                                      Project project, Editor editor, int time, boolean hasModifiers) {
+                                      Project project, Editor editor, int time) {
     // retrieve the injected file from scratch since our typing might have destroyed the old one completely
     Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
@@ -161,7 +149,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
     try {
-      new CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup).invokeCompletion(project, newEditor, time, hasModifiers);
+      new CodeCompletionHandlerBase(completionType, false, autopopup).invokeCompletion(project, newEditor, time, false);
     }
     catch (IndexNotReadyException ignored) {
     }
