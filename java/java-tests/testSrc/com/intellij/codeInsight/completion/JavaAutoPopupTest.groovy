@@ -599,6 +599,8 @@ public interface Test {
       println myFixture.editor.document.text
       println myFixture.editor.caretModel.offset
       println myFixture.editor.settings.virtualSpace
+      println LookupManager.getInstance(project)
+      println LookupManager.getInstance(project).getActiveLookup()
     }
     assert !lookup
   }

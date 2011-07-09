@@ -206,6 +206,11 @@ public class LookupManagerImpl extends LookupManager {
         myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
 
         Disposer.dispose(connector);
+        if (LookupActionHandler.DEBUG) {
+          System.out.println("LookupManagerImpl.lookupClosed2");
+          System.out.println("myActiveLookup = " + myActiveLookup);
+          System.out.println("this = " + this);
+        }
       }
     });
 
