@@ -90,10 +90,11 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       // hell
     }
 
-    if (color != null) {
-      consume(color);
-      myColorWheelPanel.setColor(color);
-    }
+    Color _color = color == null ? myRecentColorsComponent.getMostRecentColor() : color;
+    if (_color == null) _color = Color.WHITE;
+    
+    consume(_color);
+    myColorWheelPanel.setColor(_color);
 
     setSize(300, 350);
   }
@@ -423,7 +424,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
   public static void main(String[] args) {
     final JFrame frame = new JFrame();
 
-    frame.getContentPane().add(new ColorPicker(new Color(255, 0, 0), false));
+    frame.getContentPane().add(new ColorPicker(null, false));
 
     frame.pack();
     frame.setVisible(true);
@@ -840,6 +841,11 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       if (restoreColors) {
         restoreColors();
       }
+    }
+    
+    @Nullable
+    public Color getMostRecentColor() {
+      return myRecentColors.isEmpty() ? null : myRecentColors.get(myRecentColors.size() - 1);
     }
 
     private void restoreColors() {
