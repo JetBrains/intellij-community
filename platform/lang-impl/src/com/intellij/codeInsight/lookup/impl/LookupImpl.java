@@ -1186,6 +1186,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       LOG.error("Disposing under a change guard");
     }
 
+    if (LookupActionHandler.DEBUG) {
+      System.out.println("LookupImpl.doHide");
+      System.out.println("fireCanceled = " + fireCanceled);
+    }
+
     if (myDisposed) {
       LOG.error(disposeTrace);
     }
