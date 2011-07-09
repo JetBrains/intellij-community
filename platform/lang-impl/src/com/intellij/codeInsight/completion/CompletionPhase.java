@@ -18,6 +18,11 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
@@ -69,6 +74,7 @@ public abstract class CompletionPhase implements Disposable {
 
   public static class AutoPopupAlarm extends CompletionPhase {
     final boolean copyCommit;
+    private boolean actionsHappened;
     private final Editor myEditor;
     private final Expirable focusStamp;
     private final Project myProject;
@@ -79,10 +85,17 @@ public abstract class CompletionPhase implements Disposable {
       myEditor = editor;
       myProject = editor.getProject();
       focusStamp = IdeFocusManager.getInstance(myProject).getTimestamp(false);
+      ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+        @Override
+        public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+          actionsHappened = true;
+        }
+      }, this);
     }
 
     public boolean isExpired() {
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) return false; //it will fail anyway
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) return true; //it will fail anyway
+      if (actionsHappened) return true;
       return CompletionServiceImpl.getCompletionPhase() != this || focusStamp.isExpired() || DumbService.getInstance(myProject).isDumb() || myEditor.isDisposed();
     }
 
