@@ -360,6 +360,18 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
     result.add(previewPanel, BorderLayout.NORTH);
 
+    FocusAdapter selectAllListener = new FocusAdapter() {
+      @Override
+      public void focusGained(final FocusEvent e) {
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            ((JTextField)e.getSource()).selectAll();
+          }
+        });
+      }
+    };
+
     final JPanel rgbPanel = new JPanel();
     rgbPanel.setLayout(new BoxLayout(rgbPanel, BoxLayout.X_AXIS));
     rgbPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
@@ -368,6 +380,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     final JTextField r = new JTextField(new NumberDocument(), "", 3);
     r.putClientProperty("_key", "red");
     r.getDocument().addDocumentListener(l);
+    r.addFocusListener(selectAllListener);
     rgbPanel.add(r);
     rgbPanel.add(Box.createHorizontalStrut(5));
     rgbPanel.add(new JLabel("G:"));
@@ -376,6 +389,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     g.putClientProperty("_key", "green");
     g.setColumns(3);
     g.getDocument().addDocumentListener(l);
+    g.addFocusListener(selectAllListener);
     rgbPanel.add(g);
     rgbPanel.add(Box.createHorizontalStrut(5));
     rgbPanel.add(new JLabel("B:"));
@@ -384,6 +398,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     b.putClientProperty("_key", "blue");
     b.setColumns(3);
     b.getDocument().addDocumentListener(l);
+    b.addFocusListener(selectAllListener);
     rgbPanel.add(b);
 
     result.add(rgbPanel, BorderLayout.WEST);
@@ -397,6 +412,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     hex.putClientProperty("_key", "hex");
     hex.setColumns(6);
     hex.getDocument().addDocumentListener(l);
+    hex.addFocusListener(selectAllListener);
     hexPanel.add(hex);
 
     result.add(hexPanel, BorderLayout.EAST);
