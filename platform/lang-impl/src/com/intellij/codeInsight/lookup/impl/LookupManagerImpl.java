@@ -209,7 +209,8 @@ public class LookupManagerImpl extends LookupManager {
         if (LookupActionHandler.DEBUG) {
           System.out.println("LookupManagerImpl.lookupClosed2");
           System.out.println("myActiveLookup = " + myActiveLookup);
-          System.out.println("this = " + this);
+          System.out.println("this = " + LookupManagerImpl.this);
+          System.out.println("project = " + myProject);
         }
       }
     });
