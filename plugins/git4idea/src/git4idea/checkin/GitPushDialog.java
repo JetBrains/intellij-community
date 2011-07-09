@@ -398,7 +398,7 @@ public class GitPushDialog extends DialogWrapper {
   /**
    * @return the currently selected git root
    */
-  private VirtualFile getGitRoot() {
+  public VirtualFile getGitRoot() {
     return (VirtualFile)myGitRootComboBox.getSelectedItem();
   }
 

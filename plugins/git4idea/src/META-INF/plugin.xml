@@ -66,6 +66,12 @@
     </group>
   </actions>
 
+  <project-components>
+    <component>
+      <implementation-class>git4idea.repo.GitRepositoryManager</implementation-class>
+    </component>
+  </project-components>
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -106,9 +112,6 @@
     <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
-    <projectService
-        serviceInterface="git4idea.branch.GitBranches"
-        serviceImplementation="git4idea.branch.GitBranches"/>
     <projectService
         serviceInterface="git4idea.DialogManager"
         serviceImplementation="git4idea.DialogManager"/>

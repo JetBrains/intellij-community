@@ -29,6 +29,7 @@ import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitPullDialog;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,11 +75,13 @@ public class GitPull extends GitRepositoryAction {
       @Override
       protected void onSuccess() {
         GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
+        GitRepositoryManager.getInstance(project).refreshRepository(root);
       }
 
       @Override
       protected void onFailure() {
         GitUIUtil.notifyGitErrors(project, "Error pulling " + dialog.getRemote(), "", h.errors());
+        GitRepositoryManager.getInstance(project).refreshRepository(root);
       }
     });
   }

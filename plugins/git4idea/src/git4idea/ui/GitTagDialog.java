@@ -27,6 +27,7 @@ import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -198,6 +199,7 @@ public class GitTagDialog extends DialogWrapper {
       }
       finally {
         exceptions.addAll(h.errors());
+        GitRepositoryManager.getInstance(myProject).refreshRepository(getGitRoot());
       }
     }
     finally {

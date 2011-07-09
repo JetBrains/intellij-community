@@ -51,6 +51,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaser;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.stash.GitChangesSaver;
 import git4idea.stash.GitShelveChangesSaver;
 import git4idea.stash.GitStashChangesSaver;
@@ -220,6 +221,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     if (d.isOK()) {
       d.rebaseAndPush();
     }
+    GitRepositoryManager.getInstance(project).refreshAllRepositories();
   }
 
   /**
@@ -253,6 +255,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
               }
               final String pushMessage = "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum);
               VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(), pushMessage, MessageType.INFO);
+              GitRepositoryManager.getInstance(myProject).refreshAllRepositories();
               return;
             }
             pushExceptions = new ArrayList<VcsException>(exceptions);

@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ public class GitRevert extends BasicAction {
       }
     }
     RollbackChangesDialog.rollbackChanges(project, changes);
+    GitRepositoryManager.getInstance(project).refreshRepositoriesForFiles(affectedFiles);
     return false;
   }
 

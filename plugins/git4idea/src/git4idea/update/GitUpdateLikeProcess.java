@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.util.continuation.*;
 import com.intellij.util.ui.UIUtil;
+import git4idea.repo.GitRepositoryManager;
 
 /**
  * @author irengrig
@@ -70,6 +71,7 @@ public abstract class GitUpdateLikeProcess {
         myProjectManager.unblockReloadingProjectOnExternalChanges();
         myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
         myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
+        GitRepositoryManager.getInstance(myProject).refreshAllRepositories();
         changeListManager.letGo();
       }
     };

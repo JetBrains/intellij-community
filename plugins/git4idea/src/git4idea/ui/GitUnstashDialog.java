@@ -40,6 +40,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeConflictResolver;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.stash.GitStashUtils;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
@@ -440,6 +441,7 @@ public class GitUnstashDialog extends DialogWrapper {
     } else if (rc != 0) {
       GitUIUtil.showOperationErrors(project, h.errors(), h.printableCommandLine());
     }
+    GitRepositoryManager.getInstance(project).refreshRepository(d.getGitRoot());
   }
 
   private static class UnstashConflictResolver extends GitMergeConflictResolver {

@@ -32,6 +32,7 @@ import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -172,6 +173,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     lfs.refreshIoFiles(filesToRefresh);
+    GitRepositoryManager.getInstance(myProject).refreshAllRepositories();
   }
 
   /**

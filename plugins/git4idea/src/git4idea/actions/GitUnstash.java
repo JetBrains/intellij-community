@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 

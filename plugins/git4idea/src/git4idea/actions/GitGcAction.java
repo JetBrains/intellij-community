@@ -23,6 +23,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -39,15 +40,25 @@ public class GitGcAction extends GitRepositoryAction {
   }
 
   @Override
-  protected void perform(@NotNull Project project,
+  protected void perform(@NotNull final Project project,
                          @NotNull List<VirtualFile> gitRoots,
                          @NotNull VirtualFile defaultRoot,
                          Set<VirtualFile> affectedRoots,
                          List<VcsException> exceptions) throws VcsException {
-    for (VirtualFile root : gitRoots) {
+    for (final VirtualFile root : gitRoots) {
       final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.GC);
       final GitTask task = new GitTask(project, handler, getActionName());
-      task.executeAsync(new GitTaskResultHandlerAdapter());
+      task.executeAsync(new GitTaskResultHandlerAdapter() {
+        @Override
+        protected void onSuccess() {
+          GitRepositoryManager.getInstance(project).refreshRepository(root);
+        }
+
+        @Override
+        protected void onFailure() {
+          GitRepositoryManager.getInstance(project).refreshRepository(root);
+        }
+      });
     }
   }
 }

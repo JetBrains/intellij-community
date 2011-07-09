@@ -177,7 +177,7 @@ public class GitFetchDialog extends DialogWrapper {
   /**
    * @return get current git root
    */
-  protected VirtualFile getGitRoot() {
+  public VirtualFile getGitRoot() {
     return (VirtualFile)myGitRoot.getSelectedItem();
   }
 

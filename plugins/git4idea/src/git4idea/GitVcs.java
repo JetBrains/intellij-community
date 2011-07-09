@@ -18,6 +18,7 @@ package git4idea;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -50,7 +51,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.branch.GitBranchWidget;
-import git4idea.branch.GitBranches;
 import git4idea.changes.GitChangeProvider;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
@@ -358,11 +358,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     NewGitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
 
-    GitBranches.getInstance(myProject).activate(this);
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar != null) {
-      myBranchWidget = new GitBranchWidget(myProject);
-      statusBar.addWidget(myBranchWidget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), myProject);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      if (statusBar != null) {
+        myBranchWidget = new GitBranchWidget(myProject);
+        statusBar.addWidget(myBranchWidget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), myProject);
+      }
     }
   }
 
@@ -390,7 +391,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     NewGitUsersComponent.getInstance(myProject).deactivate();
     GitProjectLogManager.getInstance(myProject).deactivate();
 
-    GitBranches.getInstance(myProject).deactivate();
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null && myBranchWidget != null) {
       statusBar.removeWidget(myBranchWidget.ID());

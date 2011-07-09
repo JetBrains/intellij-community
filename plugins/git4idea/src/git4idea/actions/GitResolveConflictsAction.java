@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -64,6 +65,7 @@ public class GitResolveConflictsAction extends GitAction {
     }
 
     AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<VirtualFile>(conflictedFiles), GitVcs.getInstance(project).getMergeProvider());
+    GitRepositoryManager.getInstance(project).refreshAllRepositories();
   }
 
   @Override
