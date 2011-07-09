@@ -48,6 +48,7 @@ public class GitRebaseUtils {
    *
    * @param root the git root
    * @return true if the rebase directory presents in the root
+   * @deprecated
    */
   public static boolean isRebaseInTheProgress(VirtualFile root) {
     return getRebaseDir(root) != null;
