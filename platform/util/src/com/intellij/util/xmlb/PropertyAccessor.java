@@ -32,6 +32,7 @@ class PropertyAccessor implements Accessor {
   private final Class<?> myType;
   private final Method myReadMethod;
   private final Method myWriteMethod;
+  private final Type myGenericType;
 
   public PropertyAccessor(PropertyDescriptor descriptor) {
     this(descriptor.getName(), descriptor.getPropertyType(), descriptor.getReadMethod(), descriptor.getWriteMethod());
@@ -42,6 +43,7 @@ class PropertyAccessor implements Accessor {
     myType = type;
     myReadMethod = readMethod;
     myWriteMethod = writeMethod;
+    myGenericType = myReadMethod.getGenericReturnType();
   }
 
   public Object read(Object o) {
@@ -91,7 +93,7 @@ class PropertyAccessor implements Accessor {
   }
 
   public Type getGenericType() {
-    return myReadMethod.getGenericReturnType();
+    return myGenericType;
   }
 
   @NonNls

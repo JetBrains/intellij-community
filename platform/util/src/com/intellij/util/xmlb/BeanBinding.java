@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
@@ -35,9 +36,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 class BeanBinding implements Binding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xmlb.BeanBinding");
+
+  private static final ConcurrentHashMap<Class, SoftReference<List<Accessor>>> ourAccessorCache = new ConcurrentHashMap<Class, SoftReference<List<Accessor>>>();
 
   private final String myTagName;
   private final Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
@@ -196,7 +200,13 @@ class BeanBinding implements Binding {
 
   @NotNull
   static List<Accessor> getAccessors(Class<?> aClass) {
-    final List<Accessor> accessors = Lists.newArrayList();
+    final SoftReference<List<Accessor>> reference = ourAccessorCache.get(aClass);
+    List<Accessor> accessors = reference == null ? null : reference.get();
+    if (accessors != null) {
+      return accessors;
+    }
+
+    accessors = Lists.newArrayList();
 
     final Map<String, Pair<Method, Method>> candidates = Maps.newTreeMap();  // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
@@ -229,6 +239,8 @@ class BeanBinding implements Binding {
         accessors.add(new FieldAccessor(field));
       }
     }
+
+    ourAccessorCache.put(aClass, new SoftReference<List<Accessor>>(accessors));
 
     return accessors;
   }
