@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.classes.extractSuperclass;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -120,7 +121,7 @@ public class PyExtractSuperclassDialog  extends UpDirectedMembersMovingDialog {
     box.add(_panel);
     box.add(Box.createVerticalStrut(5));
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
     final VirtualFile root = getRoot();
     assert root != null;
 
