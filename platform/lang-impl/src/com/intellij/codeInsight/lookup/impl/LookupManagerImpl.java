@@ -188,6 +188,10 @@ public class LookupManagerImpl extends LookupManager {
       }
 
       private void lookupClosed() {
+        if (LookupActionHandler.DEBUG) {
+          System.out.println("LookupManagerImpl.lookupClosed");
+        }
+
         alarm.cancelAllRequests();
         if (daemonCodeAnalyzer != null) {
           daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
