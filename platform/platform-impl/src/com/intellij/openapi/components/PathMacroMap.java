@@ -63,16 +63,19 @@ public abstract class PathMacroMap {
                                @Nullable final NotNullFunction<Object, Boolean> filter,
                                @Nullable final NotNullFunction<Object, Boolean> recursiveFilter) {
     List content = e.getContent();
-    for (Object child : content) {
+    for (int i = 0, contentSize = content.size(); i < contentSize; i++) {
+      Object child = content.get(i);
       if (child instanceof Element) {
         Element element = (Element)child;
         substitute(element, caseSensitive, recursively, filter, recursiveFilter);
       }
       else if (child instanceof Text) {
         Text t = (Text)child;
-        if (filter == null || filter.fun(t)) t.setText((recursively || (recursiveFilter != null && recursiveFilter.fun(t)))
-                                                       ? substituteRecursively(t.getText(), caseSensitive)
-                                                       : substitute(t.getText(), caseSensitive));
+        if (filter == null || filter.fun(t)) {
+          t.setText((recursively || (recursiveFilter != null && recursiveFilter.fun(t)))
+                    ? substituteRecursively(t.getText(), caseSensitive)
+                    : substitute(t.getText(), caseSensitive));
+        }
       }
       else if (child instanceof Comment) {
         /*do not substitute in comments
@@ -86,7 +89,8 @@ public abstract class PathMacroMap {
     }
 
     List attributes = e.getAttributes();
-    for (final Object attribute1 : attributes) {
+    for (int i = 0, attributesSize = attributes.size(); i < attributesSize; i++) {
+      Object attribute1 = attributes.get(i);
       Attribute attribute = (Attribute)attribute1;
       if (filter == null || filter.fun(attribute)) {
         final String value = (recursively || (recursiveFilter != null && recursiveFilter.fun(attribute)))
