@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -168,7 +169,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
 
   @Nullable
   private File selectFile(String title, String description) {
-    FileChooserDescriptor fcd = new FileChooserDescriptor(true, true, false, false, false, false);
+    FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setTitle(title);
     fcd.setDescription(description);

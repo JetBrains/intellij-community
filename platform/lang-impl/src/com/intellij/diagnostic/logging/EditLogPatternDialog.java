@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -52,7 +52,7 @@ public class EditLogPatternDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    myFilePattern.addBrowseFolderListener(UIBundle.message("file.chooser.default.title"), null, null, new FileChooserDescriptor(true, true, false, false, false, false), TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myFilePattern.addBrowseFolderListener(UIBundle.message("file.chooser.default.title"), null, null, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(), TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myFilePattern.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         setOKActionEnabled(myFilePattern.getText() != null && myFilePattern.getText().length() > 0);

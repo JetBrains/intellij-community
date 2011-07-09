@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG.convert;
 
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -134,7 +135,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final SchemaType outputType = getOutputType();
     myLineLength.setEnabled(outputType == SchemaType.DTD || outputType == SchemaType.RNC);
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
     final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(firstFile);
     descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, module);
 
