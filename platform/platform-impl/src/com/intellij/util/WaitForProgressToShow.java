@@ -32,18 +32,7 @@ public class WaitForProgressToShow {
   }
 
   public static void runOrInvokeAndWaitAboveProgress(final Runnable command) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      command.run();
-    } else {
-      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-      if (pi != null) {
-        execute(pi);
-        application.invokeAndWait(command, pi.getModalityState());
-      } else {
-        application.invokeAndWait(command, ModalityState.defaultModalityState());
-      }
-    }
+    runOrInvokeAndWaitAboveProgress(command, ModalityState.defaultModalityState());
   }
 
   public static void runOrInvokeAndWaitAboveProgress(final Runnable command, @Nullable final ModalityState modalityState) {
