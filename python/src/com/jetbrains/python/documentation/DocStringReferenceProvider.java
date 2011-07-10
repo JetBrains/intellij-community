@@ -30,6 +30,10 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       allParamTags.add("@" + tag);
       allParamTags.add(":" + tag);
     }
+    for (String tag : EpydocString.RTYPE_TAGS) {
+      allParamTags.add("@" + tag);
+      allParamTags.add(":" + tag);
+    }
     allParamTags.add("@type");
     allParamTags.add(":type");
     ALL_PARAM_TAGS = ArrayUtil.toStringArray(allParamTags);
