@@ -803,6 +803,26 @@ class X {
 ''')
     myFixture.configureFromExistingVirtualFile file.virtualFile
     myFixture.completeBasic()
-    assertTrue(myFixture.lookupElementStrings.size() > 1)
+    assertFalse(myFixture.lookupElementStrings.contains('Foo'))
+  }
+
+  public void testFieldVsPackage2() {
+    myFixture.addFileToProject 'aaa/bbb/Foo.groovy', 'package aaa.bbb; class Foo{}'
+    def file = myFixture.addFileToProject('aaa/bar.groovy', '''
+package aaa
+
+import aaa.*
+
+class X {
+  def bbb = 'text'
+
+  def foo() {
+    bbb.<caret>
+  }
+}
+''')
+    myFixture.configureFromExistingVirtualFile file.virtualFile
+    myFixture.completeBasic()
+    assertFalse(myFixture.lookupElementStrings.contains('Foo'))
   }
 }

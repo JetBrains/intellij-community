@@ -549,6 +549,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
       else if (isInPossibleClosureParameter(context.getFile().findElementAt(context.getStartOffset()))) {
         context.setDummyIdentifier(setCorrectCase(context) + "->");
       }
+      else {
+        context.setDummyIdentifier(setCorrectCase(context));
+      }
     }
   }
 
