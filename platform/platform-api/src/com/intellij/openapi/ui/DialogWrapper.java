@@ -365,6 +365,27 @@ public abstract class DialogWrapper {
                          new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
                                                 0));
       if (actions.length > 0) {
+        if (SystemInfo.isMac) {
+          // move ok action to the right
+          int okNdx = ArrayUtil.indexOf(actions, getOKAction());
+          if (okNdx >= 0 && okNdx != actions.length - 1) {
+            //actions = ArrayUtil.append(ArrayUtil.remove(actions, getOKAction()), getOKAction());
+          }
+          
+          // move cancel action to the left
+          int cancelNdx = ArrayUtil.indexOf(actions, getCancelAction());
+          if (cancelNdx > 0) {
+            //actions = ArrayUtil.join(new Action[] {getCancelAction()}, ArrayUtil.remove(actions, getCancelAction()));
+          }
+
+          if (!hasFocusedAction(actions)) {
+            int ndx = ArrayUtil.find(actions, getCancelAction());
+            if (ndx >= 0) {
+              actions[ndx].putValue(FOCUSED_ACTION, Boolean.TRUE);
+            }
+          }
+        }
+        
         JPanel buttonsPanel = createButtons(actions, buttons);
         lrButtonsPanel.add(buttonsPanel,
                            new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
@@ -429,6 +450,15 @@ public abstract class DialogWrapper {
     return panel;
   }
 
+  private boolean hasFocusedAction(Action[] actions) {
+    for (Action action : actions) {
+      if (action.getValue(FOCUSED_ACTION) != null && (Boolean)action.getValue(FOCUSED_ACTION)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
 
   private JPanel createButtons(Action[] actions, List<JButton> buttons) {
     JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? 0 : 5, 0));
@@ -721,9 +751,16 @@ public abstract class DialogWrapper {
    */
   protected Action[] createActions() {
     if (getHelpId() == null) {
+      if (SystemInfo.isMac) {
+        return new Action[]{getCancelAction(), getOKAction()}; 
+      }
+      
       return new Action[]{getOKAction(), getCancelAction()};
     }
     else {
+      if (SystemInfo.isMac) {
+        return new Action[]{getHelpAction(), getCancelAction(), getOKAction()};
+      }
       return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
     }
   }
