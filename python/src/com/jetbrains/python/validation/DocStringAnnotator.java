@@ -52,8 +52,6 @@ public class DocStringAnnotator extends PyAnnotator {
       if (PydevConsoleRunner.isInPydevConsole(stmt)){
         return;
       }
-      Annotation ann = getHolder().createInfoAnnotation(stmt, null);
-      ann.setTextAttributes(PyHighlighter.PY_DOC_COMMENT);
 
       final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(stmt.getProject());
       if (settings.isEpydocFormat(stmt.getContainingFile()) || settings.isReSTFormat(stmt.getContainingFile())) {

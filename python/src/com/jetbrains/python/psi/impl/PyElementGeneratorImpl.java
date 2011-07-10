@@ -237,4 +237,9 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     }
     return (T)ret;
   }
+
+  public PyExpressionStatement createDocstring(String content){
+    return createFromText(LanguageLevel.getDefault(),
+                          PyExpressionStatement.class, content + "\n");
+  }
 }

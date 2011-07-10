@@ -50,9 +50,9 @@ public class ExpressionParsing extends Parsing {
       buildTokenElement(PyElementTypes.BOOL_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
-    else if (firstToken == PyTokenTypes.STRING_LITERAL) {
+    else if (PyTokenTypes.STRING_NODES.contains(firstToken)) {
       final PsiBuilder.Marker marker = myBuilder.mark();
-      while (myBuilder.getTokenType() == PyTokenTypes.STRING_LITERAL) {
+      while (PyTokenTypes.STRING_NODES.contains(myBuilder.getTokenType())) {
         myBuilder.advanceLexer();
       }
       marker.done(PyElementTypes.STRING_LITERAL_EXPRESSION);

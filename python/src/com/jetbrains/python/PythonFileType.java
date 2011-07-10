@@ -1,11 +1,17 @@
 package com.jetbrains.python;
 
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.lexer.PythonEditorHighlighter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +36,15 @@ public class PythonFileType extends LanguageFileType {
   public PythonFileType() {
     super(new PythonLanguage());
     _icon = IconLoader.getIcon("/com/jetbrains/python/icons/pythonFile.png");
+
+    FileTypeEditorHighlighterProviders.INSTANCE.addExplicitExtension(this, new EditorHighlighterProvider() {
+      @Override
+      public EditorHighlighter getEditorHighlighter(@Nullable Project project,
+                                                    @NotNull FileType fileType, @Nullable VirtualFile virtualFile,
+                                                    @NotNull EditorColorsScheme colors) {
+        return new PythonEditorHighlighter(colors, project, virtualFile);
+      }
+    });
   }
 
   @NotNull

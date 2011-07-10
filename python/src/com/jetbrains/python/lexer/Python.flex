@@ -43,9 +43,15 @@ EXPONENT = [eE][+\-]?({DIGIT})+
 
 IMAGNUMBER=(({FLOATNUMBER})|({INTPART}))[Jj]
 
-STRING_LITERAL=[UuBb]?({RAW_STRING}|{QUOTED_STRING})
-RAW_STRING=[Rr]{QUOTED_STRING}
-QUOTED_STRING=({TRIPLE_APOS_LITERAL})|({QUOTED_LITERAL})|({DOUBLE_QUOTED_LITERAL})|({TRIPLE_QUOTED_LITERAL})
+//STRING_LITERAL=[UuBb]?({RAW_STRING}|{QUOTED_STRING})
+//RAW_STRING=[Rr]{QUOTED_STRING}
+//QUOTED_STRING=({TRIPLE_APOS_LITERAL})|({QUOTED_LITERAL})|({DOUBLE_QUOTED_LITERAL})|({TRIPLE_QUOTED_LITERAL})
+
+SINGLE_QUOTED_STRING=[UuBb]?[Rr]?({QUOTED_LITERAL} | {DOUBLE_QUOTED_LITERAL})
+TRIPLE_QUOTED_STRING=[UuBb]?[Rr]?({TRIPLE_QUOTED_LITERAL}|{TRIPLE_APOS_LITERAL})
+
+DOCSTRING_LITERAL=({SINGLE_QUOTED_STRING}|{TRIPLE_QUOTED_STRING})
+
 QUOTED_LITERAL="'" ([^\\\'\r\n] | {ESCAPE_SEQUENCE} | (\\[\r\n]))* ("'"|\\)?
 DOUBLE_QUOTED_LITERAL=\"([^\\\"\r\n]|{ESCAPE_SEQUENCE}|(\\[\r\n]))*?(\"|\\)?
 ESCAPE_SEQUENCE=\\[^\r\n]
@@ -62,22 +68,30 @@ ONE_TWO_APOS = ('[^']) | ('\\[^]) | (''[^']) | (''\\[^])
 APOS_STRING_CHAR = [^\\'] | {ANY_ESCAPE_SEQUENCE} | {ONE_TWO_APOS}
 TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 
+%state PENDING_DOCSTRING
+%state USUAL
 
 %%
 
-[\n]                  { return PyTokenTypes.LINE_BREAK; }
-[\ ]                  { return PyTokenTypes.SPACE; }
-[\t]                  { return PyTokenTypes.TAB; }
-[\f]                  { return PyTokenTypes.FORMFEED; }
+[\n]                        { return PyTokenTypes.LINE_BREAK; }
+[\ ]                        { return PyTokenTypes.SPACE; }
+[\t]                        { return PyTokenTypes.TAB; }
+[\f]                        { return PyTokenTypes.FORMFEED; }
+{END_OF_LINE_COMMENT}       { return PyTokenTypes.END_OF_LINE_COMMENT; }
+"\\"                        { return PyTokenTypes.BACKSLASH; }
 
-{END_OF_LINE_COMMENT} { return PyTokenTypes.END_OF_LINE_COMMENT; }
+<YYINITIAL> {
+.                     { yypushback(1); yybegin(PENDING_DOCSTRING);}
+}
 
+<USUAL> {
 {LONGINTEGER}         { return PyTokenTypes.INTEGER_LITERAL; }
 {INTEGER}             { return PyTokenTypes.INTEGER_LITERAL; }
 {FLOATNUMBER}         { return PyTokenTypes.FLOAT_LITERAL; }
 {IMAGNUMBER}          { return PyTokenTypes.IMAGINARY_LITERAL; }
 
-{STRING_LITERAL}      { return PyTokenTypes.STRING_LITERAL; }
+{SINGLE_QUOTED_STRING} { return PyTokenTypes.SINGLE_QUOTED_STRING; }
+{TRIPLE_QUOTED_STRING} { return PyTokenTypes.TRIPLE_QUOTED_STRING; }
 
 "and"                 { return PyTokenTypes.AND_KEYWORD; }
 "assert"              { return PyTokenTypes.ASSERT_KEYWORD; }
@@ -149,12 +163,22 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 "}"                   { return PyTokenTypes.RBRACE; }
 "@"                   { return PyTokenTypes.AT; }
 ","                   { return PyTokenTypes.COMMA; }
-":"                   { return PyTokenTypes.COLON; }
+":"                   { yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }
 "."                   { return PyTokenTypes.DOT; }
 "`"                   { return PyTokenTypes.TICK; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
-"\\"                  { return PyTokenTypes.BACKSLASH; }
 
 .                     { return PyTokenTypes.BAD_CHARACTER; }
+}
+
+<PENDING_DOCSTRING> {
+{SINGLE_QUOTED_STRING}          { yybegin(USUAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }
+{TRIPLE_QUOTED_STRING}          { yybegin(USUAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }
+{DOCSTRING_LITERAL}[\n\t\f; ]   { yypushback(1); yybegin(USUAL); return PyTokenTypes.DOCSTRING; }
+{DOCSTRING_LITERAL}(\ )*[\\]    { yypushback(1); return PyTokenTypes.DOCSTRING; }
+
+.                               { yypushback(1); yybegin(USUAL); }
+}
+
 

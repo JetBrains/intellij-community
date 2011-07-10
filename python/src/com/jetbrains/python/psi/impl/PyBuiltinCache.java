@@ -264,6 +264,16 @@ public class PyBuiltinCache {
   }
 
   @Nullable
+  public PyClassType getUnicodeType(LanguageLevel level) {
+    if (level.isPy3K()) {
+      return getObjectType("str");
+    }
+    else {
+      return getObjectType("unicode");
+    }
+  }
+
+  @Nullable
   public PyType getStringType(LanguageLevel level) {
     if (level.isPy3K()) {
       return getObjectType("str");

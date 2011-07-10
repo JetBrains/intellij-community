@@ -72,8 +72,18 @@ public class PyTokenTypes {
   public static final PyElementType INTEGER_LITERAL = new PyElementType("INTEGER_LITERAL");
   public static final PyElementType FLOAT_LITERAL = new PyElementType("FLOAT_LITERAL");
   public static final PyElementType IMAGINARY_LITERAL = new PyElementType("IMAGINARY_LITERAL");
-  public static final PyElementType STRING_LITERAL = new PyElementType("STRING_LITERAL");
 
+  public static final PyElementType SINGLE_QUOTED_STRING = new PyElementType("SINGLE_QUOTED_STRING");
+  public static final PyElementType TRIPLE_QUOTED_STRING = new PyElementType("TRIPLE_QUOTED_STRING");
+  public static final PyElementType SINGLE_QUOTED_UNICODE = new PyElementType("SINGLE_QUOTED_UNICODE");
+  public static final PyElementType TRIPLE_QUOTED_UNICODE = new PyElementType("TRIPLE_QUOTED_UNICODE");
+
+  public static final PyElementType DOCSTRING = new PyElementType("DOCSTRING");
+
+  public static final TokenSet UNICODE_NODES = TokenSet.create(TRIPLE_QUOTED_UNICODE, SINGLE_QUOTED_UNICODE);
+
+  public static final TokenSet STRING_NODES = TokenSet.orSet(UNICODE_NODES, TokenSet.create(SINGLE_QUOTED_STRING,
+                                                             TRIPLE_QUOTED_STRING, DOCSTRING));
   // Operators
   public static final PyElementType PLUS = new PyElementType("PLUS", "__add__");// +
   public static final PyElementType MINUS = new PyElementType("MINUS", "__sub__");// -

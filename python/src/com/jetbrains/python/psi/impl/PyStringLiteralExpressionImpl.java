@@ -1,6 +1,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -8,8 +10,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.highlighting.PySyntaxHighlighterFactory;
+import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -142,7 +147,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
 
   public List<ASTNode> getStringNodes() {
-    return Arrays.asList(getNode().getChildren(TokenSet.create(PyTokenTypes.STRING_LITERAL)));
+    return Arrays.asList(getNode().getChildren(PyTokenTypes.STRING_NODES));
   }
 
   public String getStringValue() {
@@ -276,18 +281,17 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     final List<ASTNode> nodes = getStringNodes();
     if (nodes.size() > 0) {
       String text = getStringNodes().get(0).getText();
-      if (LanguageLevel.forElement(this).isPy3K()) {
-        if (isBytes(text)) {
-          return PyBuiltinCache.getInstance(this).getObjectType("bytes");
-        }
-      }
-      else {
-        if (isUnicode(text)) {
-          return PyBuiltinCache.getInstance(this).getObjectType("unicode");
+      SyntaxHighlighter highlighter = PySyntaxHighlighterFactory.getSyntaxHighlighter(PythonLanguage.getInstance(), getProject(),
+                                                      getContainingFile().getVirtualFile());
+      Lexer lexer = highlighter.getHighlightingLexer();
+      if (lexer instanceof PythonHighlightingLexer) {
+        IElementType type = ((PythonHighlightingLexer)lexer).convertStringType(getStringNodes().get(0).getElementType(), text);
+        if (PyTokenTypes.UNICODE_NODES.contains(type)) {
+          return PyBuiltinCache.getInstance(this).getUnicodeType(LanguageLevel.forElement(this));
         }
       }
     }
-    return PyBuiltinCache.getInstance(this).getStrType();
+    return PyBuiltinCache.getInstance(this).getBytesType(LanguageLevel.forElement(this));
   }
 
   @NotNull

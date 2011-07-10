@@ -74,9 +74,6 @@ public class UnicodeOrByteLiteralAnnotator extends PyAnnotator {
         boolean is_unicode = isDefaultUnicode(expr);
         is_unicode |= (first_char == 'u');
         is_unicode &= (first_char != 'b');
-        if (is_unicode) {
-          getHolder().createInfoAnnotation(node, null).setTextAttributes(PyHighlighter.PY_UNICODE_STRING);
-        }
         final boolean is_raw = isRaw(text);
         // highlight escapes
         Matcher n_matcher = N_ESC_PATTERN.matcher(text);

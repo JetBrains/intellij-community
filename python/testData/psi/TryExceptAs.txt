@@ -17,7 +17,7 @@ PyFile:TryExceptAs.py
             PyArgumentList
               PsiElement(Py:LPAR)('(')
               PyStringLiteralExpression: myfile.txt
-                PsiElement(Py:STRING_LITERAL)(''myfile.txt'')
+                PsiElement(Py:SINGLE_QUOTED_STRING)(''myfile.txt'')
               PsiElement(Py:RPAR)(')')
     PsiWhiteSpace('\n')
     PyExceptPart

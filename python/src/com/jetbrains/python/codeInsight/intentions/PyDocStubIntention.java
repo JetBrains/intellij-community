@@ -59,8 +59,7 @@ public class PyDocStubIntention extends BaseIntentionAction {
         ws = ws + whitespace.getText().split("\n")[1];
     }
     String docContent = ws + documentationProvider.generateDocumentationContentStub(function, ws, true);
-    PyExpressionStatement string = elementGenerator.createFromText(LanguageLevel.forElement(function), PyExpressionStatement.class,
-                                                                       "\"\"\"" + docContent + "\"\"\"");
+    PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
     if (list.getStatements().length != 0)
       list.addBefore(string, list.getStatements()[0]);
 

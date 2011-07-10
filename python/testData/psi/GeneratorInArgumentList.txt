@@ -3,14 +3,14 @@ PyFile:GeneratorInArgumentList.py
     PyCallExpression: "".join
       PyReferenceExpression: join
         PyStringLiteralExpression: 
-          PsiElement(Py:STRING_LITERAL)('""')
+          PsiElement(Py:SINGLE_QUOTED_STRING)('""')
         PsiElement(Py:DOT)('.')
         PsiElement(Py:IDENTIFIER)('join')
       PyArgumentList
         PsiElement(Py:LPAR)('(')
         PyGeneratorExpression
           PyStringLiteralExpression:  
-            PsiElement(Py:STRING_LITERAL)('' '')
+            PsiElement(Py:SINGLE_QUOTED_STRING)('' '')
           PsiWhiteSpace(' ')
           PsiElement(Py:FOR_KEYWORD)('for')
           PsiWhiteSpace(' ')

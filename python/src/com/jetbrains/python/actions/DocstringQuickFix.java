@@ -66,8 +66,7 @@ public class DocstringQuickFix implements LocalQuickFix {
       replacement = createUnexpectedReplacement(replacement);
     }
     if (!replacement.equals(element.getText())) {
-      PyStringLiteralExpression str = (PyStringLiteralExpression)elementGenerator.createFromText(LanguageLevel.forElement(element),
-                                                                        PyExpressionStatement.class, replacement).getExpression();
+      PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
       element.replace(str);
     }
   }

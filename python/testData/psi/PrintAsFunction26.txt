@@ -18,5 +18,5 @@ PyFile:PrintAsFunction26.py
       PyArgumentList
         PsiElement(Py:LPAR)('(')
         PyStringLiteralExpression: a
-          PsiElement(Py:STRING_LITERAL)(''a'')
+          PsiElement(Py:SINGLE_QUOTED_STRING)(''a'')
         PsiElement(Py:RPAR)(')')

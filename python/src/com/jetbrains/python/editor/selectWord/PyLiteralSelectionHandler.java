@@ -19,7 +19,7 @@ public class PyLiteralSelectionHandler implements ExtendWordSelectionHandler {
   @Override
   public boolean canSelect(PsiElement e) {
     final ASTNode node = e.getNode();
-    return node != null && node.getElementType() == PyTokenTypes.STRING_LITERAL;
+    return node != null && PyTokenTypes.STRING_NODES.contains(node.getElementType());
   }
 
   @Override

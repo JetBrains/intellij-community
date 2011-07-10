@@ -68,4 +68,6 @@ public abstract class PyElementGenerator {
   public abstract PyNamedParameter createParameter(@NotNull String name);
 
   public abstract PsiFile createDummyFile(LanguageLevel langLevel, String contents);
+
+  public abstract PyExpressionStatement createDocstring(String content);
 }

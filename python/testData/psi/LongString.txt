@@ -6,7 +6,7 @@ PyFile:LongString.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 
-      PsiElement(Py:STRING_LITERAL)('""""""')
+      PsiElement(Py:TRIPLE_QUOTED_STRING)('""""""')
   PsiWhiteSpace('\n')
   PyAssignmentStatement
     PyTargetExpression: b
@@ -17,7 +17,7 @@ PyFile:LongString.py
     PyStringLiteralExpression: 
 "1.0" encoding="ascii"?
 
-      PsiElement(Py:STRING_LITERAL)('"""\n"1.0" encoding="ascii"?\n"""')
+      PsiElement(Py:TRIPLE_QUOTED_STRING)('"""\n"1.0" encoding="ascii"?\n"""')
   PsiWhiteSpace('\n')
   PyAssignmentStatement
     PyTargetExpression: str
@@ -34,11 +34,11 @@ PyFile:LongString.py
       PyArgumentList
         PsiElement(Py:LPAR)('(')
         PyStringLiteralExpression: \\\\
-          PsiElement(Py:STRING_LITERAL)('r"""\\\\"""')
+          PsiElement(Py:TRIPLE_QUOTED_STRING)('r"""\\\\"""')
         PsiElement(Py:COMMA)(',')
         PsiWhiteSpace(' ')
         PyStringLiteralExpression: &#92;
-          PsiElement(Py:STRING_LITERAL)('r"""&#92;"""')
+          PsiElement(Py:TRIPLE_QUOTED_STRING)('r"""&#92;"""')
         PsiElement(Py:COMMA)(',')
         PsiWhiteSpace(' ')
         PyReferenceExpression: str

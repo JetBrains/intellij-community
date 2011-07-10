@@ -3,7 +3,7 @@ PyFile:ExecPy2.py
     PsiElement(Py:EXEC_KEYWORD)('exec')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: print 1
-      PsiElement(Py:STRING_LITERAL)(''print 1'')
+      PsiElement(Py:SINGLE_QUOTED_STRING)(''print 1'')
     PsiWhiteSpace(' ')
     PsiElement(Py:IN_KEYWORD)('in')
     PsiWhiteSpace(' ')

@@ -19,7 +19,7 @@ PyFile:ErrorInParameterList.py
       PsiErrorElement:formal parameter name expected
         PsiElement(Py:FROM_KEYWORD)('from')
         PsiElement(Py:EQ)('=')
-        PsiElement(Py:STRING_LITERAL)('''')
+        PsiElement(Py:SINGLE_QUOTED_STRING)('''')
       PsiElement(Py:RPAR)(')')
     PsiElement(Py:COLON)(':')
     PsiWhiteSpace('\n        ')

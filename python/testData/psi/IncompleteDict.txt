@@ -10,7 +10,7 @@ PyFile:IncompleteDict.py
       PsiWhiteSpace(' ')
       PyKeyValueExpression
         PyStringLiteralExpression: key
-          PsiElement(Py:STRING_LITERAL)(''key'')
+          PsiElement(Py:SINGLE_QUOTED_STRING)(''key'')
         PsiElement(Py:COLON)(':')
         PsiErrorElement:expression expected
           <empty list>

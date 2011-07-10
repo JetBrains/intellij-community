@@ -1,6 +1,5 @@
 package com.jetbrains.python.highlighting;
 
-import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -27,7 +26,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
+    return new PythonHighlightingLexer(myLanguageLevel);
   }
 
   private static TextAttributesKey _copy(String name, TextAttributesKey src) {
@@ -102,7 +101,12 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     keys.put(PyTokenTypes.INTEGER_LITERAL, PY_NUMBER);
     keys.put(PyTokenTypes.FLOAT_LITERAL, PY_NUMBER);
     keys.put(PyTokenTypes.IMAGINARY_LITERAL, PY_NUMBER);
-    keys.put(PyTokenTypes.STRING_LITERAL, PY_BYTE_STRING);
+    keys.put(PyTokenTypes.SINGLE_QUOTED_STRING, PY_BYTE_STRING);
+    keys.put(PyTokenTypes.TRIPLE_QUOTED_STRING, PY_BYTE_STRING);
+    keys.put(PyTokenTypes.SINGLE_QUOTED_UNICODE, PY_UNICODE_STRING);
+    keys.put(PyTokenTypes.TRIPLE_QUOTED_UNICODE, PY_UNICODE_STRING);
+
+    keys.put(PyTokenTypes.DOCSTRING, PY_DOC_COMMENT);
 
     keys.put(PyTokenTypes.LPAR, PY_PARENTHS);
     keys.put(PyTokenTypes.RPAR, PY_PARENTHS);

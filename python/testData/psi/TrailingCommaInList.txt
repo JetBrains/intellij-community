@@ -8,9 +8,9 @@ PyFile:TrailingCommaInList.py
     PyListLiteralExpression
       PsiElement(Py:LBRACKET)('[')
       PyStringLiteralExpression: a
-        PsiElement(Py:STRING_LITERAL)(''a'')
+        PsiElement(Py:SINGLE_QUOTED_STRING)(''a'')
       PsiElement(Py:COMMA)(',')
       PyStringLiteralExpression: b
-        PsiElement(Py:STRING_LITERAL)(''b'')
+        PsiElement(Py:SINGLE_QUOTED_STRING)(''b'')
       PsiElement(Py:COMMA)(',')
       PsiElement(Py:RBRACKET)(']')

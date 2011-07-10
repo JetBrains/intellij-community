@@ -4,7 +4,7 @@ PyFile:DictLiteral.py
       PsiElement(Py:LBRACE)('{')
       PyKeyValueExpression
         PyStringLiteralExpression: a
-          PsiElement(Py:STRING_LITERAL)(''a'')
+          PsiElement(Py:SINGLE_QUOTED_STRING)(''a'')
         PsiElement(Py:COLON)(':')
         PsiWhiteSpace(' ')
         PyNumericLiteralExpression
@@ -13,7 +13,7 @@ PyFile:DictLiteral.py
       PsiWhiteSpace(' ')
       PyKeyValueExpression
         PyStringLiteralExpression: b
-          PsiElement(Py:STRING_LITERAL)(''b'')
+          PsiElement(Py:SINGLE_QUOTED_STRING)(''b'')
         PsiElement(Py:COLON)(':')
         PsiWhiteSpace(' ')
         PyNumericLiteralExpression

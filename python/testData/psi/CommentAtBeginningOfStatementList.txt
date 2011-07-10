@@ -32,7 +32,7 @@ PyFile:CommentAtBeginningOfStatementList.py
               PsiElement(Py:PRINT_KEYWORD)('print')
               PsiWhiteSpace(' ')
               PyStringLiteralExpression: no
-                PsiElement(Py:STRING_LITERAL)(''no'')
+                PsiElement(Py:SINGLE_QUOTED_STRING)(''no'')
   PsiWhiteSpace('\n\n')
   PyExpressionStatement
     PyCallExpression: foo

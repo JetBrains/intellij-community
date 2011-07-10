@@ -42,8 +42,7 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
         content = content.length() == 1 ? "" : content.substring(1, content.length()-1);
       }
 
-      PyExpression newString = elementGenerator.createFromText(LanguageLevel.forElement(expression),
-                                PyExpressionStatement.class, myModificator+"\"\"\"" + content + "\"\"\"").getExpression();
+      PyExpression newString = elementGenerator.createDocstring(myModificator+"\"\"\"" + content + "\"\"\"").getExpression();
       expression.replace(newString);
     }
   }

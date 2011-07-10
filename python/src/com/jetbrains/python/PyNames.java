@@ -36,6 +36,7 @@ public class PyNames {
   public static final String FAKE_OLD_BASE = "___Classobj";
 
   public static final String FUTURE_MODULE = "__future__";
+  public static final String UNICODE_LITERALS = "unicode_literals";
 
   public static final String CLASSMETHOD = "classmethod";
   public static final String STATICMETHOD = "staticmethod";

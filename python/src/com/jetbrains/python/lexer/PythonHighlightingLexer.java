@@ -1,6 +1,7 @@
 package com.jetbrains.python.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -12,11 +13,38 @@ public class PythonHighlightingLexer extends PythonLexer {
 
   public PythonHighlightingLexer(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
+    hasUnicodeImport = false;
+  }
+
+  public IElementType convertStringType(IElementType tokenType, String tokenText) {
+    if (tokenType == PyTokenTypes.SINGLE_QUOTED_STRING) {
+      if (myLanguageLevel.isPy3K()) {
+        if (!tokenText.toLowerCase().startsWith("b")) return PyTokenTypes.SINGLE_QUOTED_UNICODE;
+      }
+      else {
+        if ((hasUnicodeImport && !tokenText.toLowerCase().startsWith("b"))
+            || tokenText.toLowerCase().startsWith("u")) return PyTokenTypes.SINGLE_QUOTED_UNICODE;
+      }
+    }
+    if (tokenType == PyTokenTypes.TRIPLE_QUOTED_STRING) {
+      if (myLanguageLevel.isPy3K()) {
+        if (!tokenText.toLowerCase().startsWith("b")) return PyTokenTypes.TRIPLE_QUOTED_UNICODE;
+      }
+      else {
+        if ((hasUnicodeImport && !tokenText.toLowerCase().startsWith("b"))
+            || tokenText.toLowerCase().startsWith("u")) return PyTokenTypes.TRIPLE_QUOTED_UNICODE;
+      }
+    }
+    return tokenType;
   }
 
   @Override
   public IElementType getTokenType() {
     final String tokenText = getTokenText();
+    IElementType tokenType = super.getTokenType();
+    if (PyTokenTypes.STRING_NODES.contains(tokenType))
+      return convertStringType(tokenType, tokenText);
+
     if (myLanguageLevel.hasWithStatement()) {
       if (tokenText.equals("with")) return PyTokenTypes.WITH_KEYWORD;
       if (tokenText.equals("as")) return PyTokenTypes.AS_KEYWORD;
@@ -35,4 +63,88 @@ public class PythonHighlightingLexer extends PythonLexer {
     }
     return super.getTokenType();
   }
+
+  private enum state {
+    init,
+    pending_future,
+    pending_import,
+    pending_lpar,
+    pending_id,
+    pending_comma,
+    stop
+  } ;
+
+  private state myState = state.init;
+  private boolean hasUnicodeImport = false;
+  private int myImportOffset = -1;
+
+  @Override
+  public void advance() {
+    IElementType type = super.getTokenType();
+    String tokenText = super.getTokenText();
+    switch (myState) {
+      case init:
+        if (type == PyTokenTypes.BACKSLASH) break;
+        if (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(type)) break;
+        if (PyTokenTypes.END_OF_LINE_COMMENT == type) break;
+        if (PyTokenTypes.DOCSTRING == type) break;
+        if (type == PyTokenTypes.FROM_KEYWORD)
+          myState = state.pending_future;
+        else myState = state.stop;
+        break;
+      case pending_future:
+        if (type == PyTokenTypes.BACKSLASH) break;
+        if (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(type)) break;
+        if (type == PyTokenTypes.IDENTIFIER && PyNames.FUTURE_MODULE.equals(tokenText))
+          myState = state.pending_import;
+        else myState = state.stop;
+        break;
+      case pending_import:
+        if (type == PyTokenTypes.BACKSLASH) break;
+        if (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(type)) break;
+        if (type == PyTokenTypes.IMPORT_KEYWORD)
+          myState = state.pending_lpar;
+        else myState = state.stop;
+        break;
+
+      case pending_lpar:
+        if (type == PyTokenTypes.LPAR) {
+          myState = state.pending_id;
+          break;
+        }
+      case pending_id:
+        if (type == PyTokenTypes.BACKSLASH) break;
+        if (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(type)) break;
+        if (type == PyTokenTypes.IDENTIFIER) {
+          myState = state.pending_comma;
+          if (PyNames.UNICODE_LITERALS.equals(tokenText)) {
+            hasUnicodeImport = true;
+            myImportOffset = getTokenEnd();
+          }
+        }
+        else myState = state.init;
+        break;
+      case pending_comma:
+        if (type == PyTokenTypes.RPAR) break;
+        if (type == PyTokenTypes.BACKSLASH) break;
+        if (PyTokenTypes.LINE_BREAK == type) myState = state.init;
+        if (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(type)) break;
+        if (type == PyTokenTypes.COMMA)
+          myState = state.pending_id;
+        break;
+    }
+    super.advance();
+  }
+
+
+  public int getImportOffset() {
+    return myImportOffset;
+  }
+
+  public void clearState(int position) {
+    myState = state.init;
+    myImportOffset = position;
+    hasUnicodeImport = false;
+  }
+
 }

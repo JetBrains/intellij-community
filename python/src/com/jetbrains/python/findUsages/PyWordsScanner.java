@@ -13,6 +13,6 @@ public class PyWordsScanner extends DefaultWordsScanner {
         super(new PythonLexer(),
                 TokenSet.create(PyTokenTypes.IDENTIFIER),
                 TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT),
-                TokenSet.create(PyTokenTypes.STRING_LITERAL));
+                PyTokenTypes.STRING_NODES);
     }
 }

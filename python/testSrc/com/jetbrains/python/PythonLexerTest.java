@@ -113,7 +113,7 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
   public void testBytesLiteral() {
-    doTest("b'ABC'", "Py:STRING_LITERAL");
+    doTest("b'ABC'", "Py:SINGLE_QUOTED_STRING");
   }
 
   public void testOctalLiteral() {
@@ -128,15 +128,15 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   public void testLongString() {
     doTest(THREE_QUOTES + THREE_QUOTES + "\nb=" + THREE_QUOTES + THREE_QUOTES,
-           "Py:STRING_LITERAL", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:EQ", "Py:STRING_LITERAL");
+           "Py:DOCSTRING", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:EQ", "Py:TRIPLE_QUOTED_STRING");
   }
 
   public void testLongStringEscaped() {
-    doTest("''' \\'''foo\\''' ''';", "Py:STRING_LITERAL", "Py:SEMICOLON");
+    doTest("''' \\'''foo\\''' ''';", "Py:DOCSTRING", "Py:SEMICOLON");
   }
 
   public void testLongStringWithLineBreak() {
-    doTest(THREE_QUOTES + "\\\na\n\n" + THREE_QUOTES + ";", "Py:STRING_LITERAL", "Py:SEMICOLON");
+    doTest(THREE_QUOTES + "\\\na\n\n" + THREE_QUOTES + ";", "Py:DOCSTRING", "Py:SEMICOLON");
   }
 
 
@@ -149,25 +149,25 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
   public void testBackslashBeforeEmptyLine() {
-    doTest("x=\"a\" + \\\n     \"b\" \\\n\nprint x", "Py:IDENTIFIER", "Py:EQ", "Py:STRING_LITERAL", "Py:SPACE", "Py:PLUS", "Py:SPACE", "Py:LINE_BREAK",
-           "Py:STRING_LITERAL", "Py:SPACE", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+    doTest("x=\"a\" + \\\n     \"b\" \\\n\nprint x", "Py:IDENTIFIER", "Py:EQ", "Py:SINGLE_QUOTED_STRING", "Py:SPACE", "Py:PLUS", "Py:SPACE", "Py:LINE_BREAK",
+           "Py:SINGLE_QUOTED_STRING", "Py:SPACE", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:IDENTIFIER" , "Py:SPACE", "Py:IDENTIFIER");
   }
 
   public void testIncompleteTripleQuotedString() {  // PY-1768
-    doTest("'''abc\nd", "Py:STRING_LITERAL");
+    doTest("tmp = '''abc\nd",  "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING");
   }
 
   public void testEscapedClosingTripleApos() {  // PY-1777
-    doTest("''' foo '\\''' bar '''", "Py:STRING_LITERAL");
+    doTest("''' foo '\\''' bar '''", "Py:TRIPLE_QUOTED_STRING");
   }
 
   public void testEscapedClosingTripleQuote() {  // PY-1777
-    doTest(THREE_QUOTES + " foo \"\\" + THREE_QUOTES + " bar " + THREE_QUOTES, "Py:STRING_LITERAL");
+    doTest(THREE_QUOTES + " foo \"\\" + THREE_QUOTES + " bar " + THREE_QUOTES, "Py:TRIPLE_QUOTED_STRING");
   }
 
   public void testOddNumberOfQuotes() {  // PY-2802
-    doTest("'''foo''''", "Py:STRING_LITERAL", "Py:STRING_LITERAL");
+    doTest("'''foo''''", "Py:TRIPLE_QUOTED_STRING", "Py:SINGLE_QUOTED_STRING");
   }
 
   public void testDedentBeforeComment() {  // PY-2209 & friends

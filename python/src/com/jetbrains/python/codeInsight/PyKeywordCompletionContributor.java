@@ -90,7 +90,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     public boolean isAcceptable(Object element, PsiElement context) {
       if (element instanceof PsiElement) {
         final ASTNode ctxNode = context.getNode();
-        if (ctxNode != null && ctxNode.getElementType() == PyTokenTypes.STRING_LITERAL) return false; // no sense inside string
+        if (ctxNode != null && PyTokenTypes.STRING_NODES.contains(ctxNode.getElementType())) return false; // no sense inside string
         PsiElement p = (PsiElement)element;
         //int org_offset = p.getUserData(ORG_OFFSET); // saved by fillCompletionVariants()
         p = p.getUserData(ORG_ELT); // saved by fillCompletionVariants().
