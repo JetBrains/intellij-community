@@ -229,7 +229,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private List<String> getImplicitlyImportedPackages() {
     final ArrayList<String> result = new ArrayList<String>();
-    result.add(getPackageName());
     ContainerUtil.addAll(result, IMPLICITLY_IMPORTED_PACKAGES);
     if (isScript()) {
       result.addAll(GroovyScriptTypeDetector.getScriptType(this).appendImplicitImports(this));
@@ -241,8 +240,27 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                          PsiElement place) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
 
+    final PsiPackage currentPackage = facade.findPackage(getPackageName());
+    if (currentPackage != null) {
+      if (!currentPackage.processDeclarations(processor, state, lastParent, place)) return false;
+    }
+
+    final DelegatingScopeProcessor packageSkipper = new DelegatingScopeProcessor(processor) {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (element instanceof PsiPackage) return true;
+        return super.execute(element, state);
+      }
+    };
+
+
     for (final String implicitlyImported : getImplicitlyImportedPackages()) {
-      if (!processDeclarationsInPackage(processor, state, lastParent, place, facade, implicitlyImported)) return false;
+      PsiPackage aPackage = facade.findPackage(implicitlyImported);
+      if (aPackage == null) continue;
+
+      if (!aPackage.processDeclarations(packageSkipper, state, lastParent, place)) {
+        return false;
+      }
     }
 
     for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {
