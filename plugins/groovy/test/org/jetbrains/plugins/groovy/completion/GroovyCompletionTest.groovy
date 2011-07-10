@@ -786,4 +786,21 @@ while(true) {
     }
   }
   
+  public void testFieldVsPackage() {
+    myFixture.addFileToProject 'aaa/bbb/Foo.groovy', 'package aaa.bbb; class Foo{}'
+    def file = myFixture.addFileToProject('aaa/bar.groovy', '''
+package aaa
+
+class X {
+  def bbb = 'text'
+
+  def foo() {
+    bbb.<caret>toString()
+  }
+}
+''')
+    myFixture.configureFromExistingVirtualFile file.virtualFile
+    myFixture.completeBasic()
+    assertTrue(myFixture.lookupElementStrings != null && myFixture.lookupElements.length > 0);
+  }
 }

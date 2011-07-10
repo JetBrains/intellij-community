@@ -536,19 +536,32 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   static JavaGlobalMemberLookupElement createGlobalMemberElement(PsiMember member, PsiClass containingClass, boolean shouldImport) {
-    return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER,
-                                             shouldImport);
+    return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
   }
+
+  private static final String DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED = "intelliJIdeaRulezzz";
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     if (context.getCompletionType() == CompletionType.BASIC && context.getFile() instanceof GroovyFile) {
       if (semicolonNeeded(context)) {
-        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";");
+        context.setDummyIdentifier(setCorrectCase(context) + ";");
       }
       else if (isInPossibleClosureParameter(context.getFile().findElementAt(context.getStartOffset()))) {
-        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + "->");
+        context.setDummyIdentifier(setCorrectCase(context) + "->");
       }
     }
+  }
+
+  private static String setCorrectCase(CompletionInitializationContext context) {
+    final PsiElement element = context.getFile().findElementAt(context.getStartOffset());
+    if (element == null) return DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED;
+
+    final String text = element.getText();
+    if (text.length() == 0) return DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED;
+
+    if (Character.isUpperCase(text.charAt(0))) return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+
+    return DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED;
   }
 
   public static boolean isInPossibleClosureParameter(PsiElement position) { //Closure cl={String x, <caret>...
