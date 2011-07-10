@@ -66,6 +66,10 @@ public class PyRenameTest extends PyLightFixtureTestCase {
     doTest("bar");
   }
 
+  public void testEpydocRenameType() {
+    doTest("Shazam");
+  }
+
   public void testRenameGlobalWithoutToplevel() { // PY-3547
     doTest("bar");
   }

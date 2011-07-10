@@ -109,6 +109,10 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
 
     @Override
     public void disposeUIResources() { }
-  }
 
+    @Override
+    public String getHelpTopic() {
+      return "reference-python-buildout";
+    }
+  }
 }

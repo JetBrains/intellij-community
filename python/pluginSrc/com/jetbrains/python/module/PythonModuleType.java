@@ -26,7 +26,7 @@ public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilder> 
                                               final PythonModuleBuilder moduleBuilder,
                                               final ModulesProvider modulesProvider) {
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    steps.add(new PythonSdkSelectStep(moduleBuilder, null, null, wizardContext.getProject()));
+    steps.add(new PythonSdkSelectStep(moduleBuilder, null, "reference.project.structure.sdk.python", wizardContext.getProject()));
     final List<FrameworkSupportProvider> frameworkSupportProviderList = FrameworkSupportUtil.getProviders(getInstance());
     if (!frameworkSupportProviderList.isEmpty()) {
       steps.add(new SupportForFrameworksStep(moduleBuilder, LibrariesContainerFactory.createContainer(wizardContext.getProject())));

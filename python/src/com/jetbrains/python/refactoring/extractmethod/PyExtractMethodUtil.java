@@ -460,7 +460,12 @@ public class PyExtractMethodUtil {
       }
     };
 
-    final AbstractExtractMethodDialog dialog = new AbstractExtractMethodDialog(project, "method_name", fragment, validator, decorator);
+    final AbstractExtractMethodDialog dialog = new AbstractExtractMethodDialog(project, "method_name", fragment, validator, decorator) {
+      @Override
+      protected String getHelpId() {
+        return "python.reference.extractMethod";
+      }
+    };
     dialog.show();
 
     //return if don`t want to extract method

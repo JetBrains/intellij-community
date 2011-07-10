@@ -1,9 +1,11 @@
 try:
-   from mercurial import lsprof
+    from mercurial import lsprof
 except ImportError:
-   raise Error
+    raise Error
 p = 123
 try:
-   return foo
+    return foo
+    x = 1
 finally:
-   print(p)
+    print(p)
+y = 2

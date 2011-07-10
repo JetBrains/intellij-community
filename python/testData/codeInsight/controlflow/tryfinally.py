@@ -3,4 +3,5 @@ try:
   status = open('/proc/self/status', 'r')
 finally:
   if status is not None:
-    status.close()
+    print('opened: %r' % status)
+status.close()

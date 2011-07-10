@@ -24,10 +24,12 @@ public class PyStructureViewTest extends PyLightFixtureTestCase {
            " D1(C)\n" +
            " D2(C)\n" +
            " D3(lib1.C)\n" +
-           " D4(foo.bar.C)\n");
+           " D4(foo.bar.C)\n",
+           false);
   }
 
-  public void testAttributes() { // PY-3371
+  // PY-3371
+  public void testAttributes() {
     myFixture.configureByFile(TEST_DIRECTORY + "attributes.py");
     doTest("-attributes.py\n" +
            " -B(object)\n" +
@@ -48,13 +50,38 @@ public class PyStructureViewTest extends PyLightFixtureTestCase {
            "  i3\n" +
            "  i4\n" +
            "  i5\n" +
-           " g2\n");
+           " g2\n",
+           false);
   }
 
-  private void doTest(final String expected) {
+  // PY-3936
+  public void testInherited() {
+    myFixture.configureByFile(TEST_DIRECTORY + "inherited.py");
+    doTest("-inherited.py\n" +
+           " -C(object)\n" +
+           "  f(self, x)\n" +
+           "  __str__(self)\n" +
+           "  x\n" +
+           "  __delattr__(self, name)\n" +
+           "  __getattribute__(self, name)\n" +
+           "  __hash__(self)\n" +
+           "  __init__(self)\n" +
+           "  __new__(cls, *more)\n" +
+           "  __reduce_ex__(self, *args, **kwargs)\n" +
+           "  __reduce__(self, *args, **kwargs)\n" +
+           "  __repr__(self)\n" +
+           "  __setattr__(self, name, value)\n" +
+           "  __class__\n" +
+           "  __dict__\n" +
+           "  __doc__\n",
+           true);
+  }
+
+  private void doTest(final String expected, final boolean inherited) {
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
       public void consume(StructureViewComponent component) {
+        component.setActionActive("SHOW_INHERITED", !inherited);
         assertTreeEqual(component.getTree(), expected);
       }
     });

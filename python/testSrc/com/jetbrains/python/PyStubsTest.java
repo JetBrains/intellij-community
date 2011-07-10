@@ -1,6 +1,3 @@
-/*
- * @author max
- */
 package com.jetbrains.python;
 
 import com.intellij.openapi.application.Result;
@@ -26,6 +23,10 @@ import com.jetbrains.python.toolbox.Maybe;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @author max
+ * @author yole
+ */
 @TestDataPath("$CONTENT_ROOT/../testData/stubs/")
 public class PyStubsTest extends PyLightFixtureTestCase {
 
@@ -316,7 +317,11 @@ public class PyStubsTest extends PyLightFixtureTestCase {
   }
 
   public void testIfNameMain() {  // PY-4008
+    final PyFileImpl file = (PyFileImpl) getTestFile();
     ensureVariableNotInIndex("xyzzy");
+    assertNotParsed(file);
+    file.acceptChildren(new PyRecursiveElementVisitor());  // assert no error on switching from stub to AST
+    assertNotNull(file.getTreeElement());
   }
 
   public void testVariableInComprehension() {  // PY-4029

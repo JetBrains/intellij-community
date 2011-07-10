@@ -157,7 +157,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             ControlFlowUtil.iteratePrev(number, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
               public ControlFlowUtil.Operation fun(final Instruction inst) {
                 try {
-                  if (inst.num() == number){
+                  if (inst.num() == number) {
                     return ControlFlowUtil.Operation.NEXT;
                   }
                   if (inst instanceof ReadWriteInstruction) {
@@ -190,15 +190,15 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           if (readAccessSeen.get()){
             return;
           }
-          if (resolve2Scope){
+          if (resolve2Scope) {
             if (owner instanceof PyFile){
               registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
             }
             else {
               registerUnboundLocal(node);
             }
-          } else
-          if (owner instanceof PyFunction && PsiTreeUtil.getParentOfType(owner, PyClass.class, PyFile.class) instanceof PyFile){
+          }
+          else if (owner instanceof PyFunction && PsiTreeUtil.getParentOfType(owner, PyClass.class, PyFile.class) instanceof PyFile){
             registerUnboundLocal(node);
           }
         }
