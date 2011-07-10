@@ -273,11 +273,19 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return getDescription();
   }
 
+  @Override
+  public String getShortName() {
+    return getDisplayInfoInternal(false, 30);
+  }
 
   public String getDisplayName() {
+    return getDisplayInfoInternal(true, -1);
+  }
+
+  private String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
     final int lineNumber = (getHighlighter().getDocument().getLineNumber(getHighlighter().getStartOffset()) + 1);
     if(isValid()) {
-      final String className = getClassName();
+      String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
       final boolean hasMethodInfo = myMethodName != null && myMethodName.length() > 0;
       if (hasClassInfo || hasMethodInfo) {
@@ -288,12 +296,21 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
           if (hasClassInfo) {
             final int dotIndex = className.lastIndexOf(".");
             if (dotIndex >= 0 && !isFile) {
-              info.append(className.substring(dotIndex + 1));
               packageName = className.substring(0, dotIndex);
+              className = className.substring(dotIndex + 1); 
             }
-            else {
-              info.append(className);
+
+            if (totalTextLength != -1) {
+              if (className.length() + (hasMethodInfo ? myMethodName.length() : 0) > totalTextLength + 3) {
+                int offset = totalTextLength - (hasMethodInfo ? myMethodName.length() : 0);
+                if (offset > 0 && offset < className.length()) {
+                  className = className.substring(className.length() - offset);
+                  info.append("...");
+                }
+              }
             }
+            
+            info.append(className);
           }
           if(hasMethodInfo) {
             if (isFile) {
@@ -304,7 +321,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             }
             info.append(myMethodName);
           }
-          if (packageName != null) {
+          if (showPackageInfo && packageName != null) {
             info.append(" (").append(packageName).append(")");
           }
           return DebuggerBundle.message("line.breakpoint.display.name.with.class.or.method", lineNumber, info.toString());

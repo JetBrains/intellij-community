@@ -33,7 +33,7 @@ import com.intellij.debugger.ui.DebuggerStatementEditor;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Key;
@@ -189,7 +189,7 @@ public abstract class BreakpointPropertiesPanel {
     myConditionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint condition");
     myLogExpressionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint logMessage");
     
-    final JComboBox baseBreakpointCombo = new ComboBox();
+    final JComboBox baseBreakpointCombo = new ComboBoxWithWidePopup();
     myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, baseBreakpointCombo);
     baseBreakpointCombo.setRenderer(new BreakpointComboRenderer(baseBreakpointCombo.getRenderer()));
     baseBreakpointCombo.addItemListener(new ItemListener() {
@@ -683,7 +683,7 @@ public abstract class BreakpointPropertiesPanel {
     @Override
     public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       Breakpoint breakpoint = ((ComboboxItem)value).getBreakpoint();
-      final String text = breakpoint != null ? breakpoint.getDisplayName() : DebuggerBundle.message("value.none");
+      final String text = breakpoint != null ? index == -1 ? breakpoint.getShortName() : breakpoint.getDisplayName() : DebuggerBundle.message("value.none");
       setText(text);
 
       final Icon icon;

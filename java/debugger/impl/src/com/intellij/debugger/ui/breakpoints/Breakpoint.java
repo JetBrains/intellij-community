@@ -76,6 +76,10 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   public abstract void processClassPrepare(DebugProcess debuggerProcess, final ReferenceType referenceType);
 
   public abstract String getDisplayName ();
+  
+  public String getShortName() {
+    return getDisplayName();
+  }
 
   @Nullable
   public String getClassName() {
