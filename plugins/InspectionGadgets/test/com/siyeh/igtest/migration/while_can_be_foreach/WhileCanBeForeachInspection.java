@@ -77,4 +77,17 @@ public class WhileCanBeForeachInspection {
     return total;
   }
 
+    void foo(List<String> list, String newCd) {
+        final ListIterator<String> iter = list.listIterator();
+        while( iter.hasNext() )
+        {
+            final String cd = iter.next();
+            if( cd.getBytes().equals( newCd.getBytes() ) )
+            {
+                iter.add( newCd );
+                return;
+            }
+        }
+    }
+
 }
