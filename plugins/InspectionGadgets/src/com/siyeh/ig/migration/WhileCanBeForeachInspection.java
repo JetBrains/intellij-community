@@ -134,7 +134,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                     isIteratorNextDeclaration(firstStatement, iterator,
                             contentType);
             final PsiStatement statementToSkip;
-            String contentVariableName;
+            @NonNls String contentVariableName;
             if (isDeclaration) {
                 final PsiDeclarationStatement declarationStatement =
                         (PsiDeclarationStatement)firstStatement;
@@ -548,10 +548,10 @@ public class WhileCanBeForeachInspection extends BaseInspection {
 
         private static boolean isIteratorRemoveCalled(PsiVariable iterator,
                                                       PsiElement context) {
-            final IteratorRemoveVisitor visitor =
-                    new IteratorRemoveVisitor(iterator);
+            final IteratorMethodCallVisitor visitor =
+                    new IteratorMethodCallVisitor(iterator);
             context.accept(visitor);
-            return visitor.isRemoveCalled();
+            return visitor.isMethodCalled();
         }
 
         private static boolean isIteratorHasNextCalled(PsiVariable iterator,
@@ -613,29 +613,32 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         }
     }
 
-    private static class IteratorRemoveVisitor
+    private static class IteratorMethodCallVisitor
             extends JavaRecursiveElementVisitor {
 
-        private boolean removeCalled = false;
+        private boolean methodCalled = false;
         private final PsiVariable iterator;
 
-        private IteratorRemoveVisitor(@NotNull PsiVariable iterator) {
+        IteratorMethodCallVisitor(PsiVariable iterator) {
             this.iterator = iterator;
         }
 
         @Override public void visitElement(@NotNull PsiElement element) {
-            if (!removeCalled) {
+            if (!methodCalled) {
                 super.visitElement(element);
             }
         }
 
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
+            if (methodCalled) {
+                return;
+            }
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            @NonNls final String name = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.REMOVE.equals(name)) {
+            final String name = methodExpression.getReferenceName();
+            if (HardcodedMethodConstants.NEXT.equals(name)) {
                 return;
             }
             final PsiExpression qualifier =
@@ -647,12 +650,12 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                     (PsiReferenceExpression)qualifier;
             final PsiElement target = referenceExpression.resolve();
             if (iterator.equals(target)) {
-                removeCalled = true;
+                methodCalled = true;
             }
         }
 
-        public boolean isRemoveCalled() {
-            return removeCalled;
+        public boolean isMethodCalled() {
+            return methodCalled;
         }
     }
 
