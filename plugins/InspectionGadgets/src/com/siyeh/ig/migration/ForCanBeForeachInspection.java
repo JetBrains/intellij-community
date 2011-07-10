@@ -1128,9 +1128,8 @@ public class ForCanBeForeachInspection extends BaseInspection{
                         CommonClassNames.JAVA_UTIL_COLLECTION)){
             return false;
         }
-        final String iteratorName = variable.getName();
         final PsiExpression condition = forStatement.getCondition();
-        if(!isHasNext(condition, iteratorName)){
+        if(!isHasNext(condition, variable)){
             return false;
         }
         final PsiStatement update = forStatement.getUpdate();
@@ -1141,10 +1140,10 @@ public class ForCanBeForeachInspection extends BaseInspection{
         if(body == null){
             return false;
         }
-        if(calculateCallsToIteratorNext(iteratorName, body) != 1){
+        if(calculateCallsToIteratorNext(variable, body) != 1){
             return false;
         }
-        if(isIteratorMethodCalled(iteratorName, body)){
+        if(isIteratorMethodCalled(variable, body)){
             return false;
         }
         return !VariableAccessUtils.variableIsReturned(variable, body) &&
@@ -1153,26 +1152,27 @@ public class ForCanBeForeachInspection extends BaseInspection{
                         body);
     }
 
-    private static int calculateCallsToIteratorNext(String iteratorName,
+    private static int calculateCallsToIteratorNext(PsiVariable iterator,
                                                     PsiStatement body){
         if(body == null){
             return 0;
         }
         final NumCallsToIteratorNextVisitor visitor =
-                new NumCallsToIteratorNextVisitor(iteratorName);
+                new NumCallsToIteratorNextVisitor(iterator);
         body.accept(visitor);
         return visitor.getNumCallsToIteratorNext();
     }
 
-    private static boolean isIteratorMethodCalled(String iteratorName,
+    private static boolean isIteratorMethodCalled(PsiVariable iterator,
                                                   PsiStatement body){
         final IteratorMethodCallVisitor visitor =
-                new IteratorMethodCallVisitor(iteratorName);
+                new IteratorMethodCallVisitor(iterator);
         body.accept(visitor);
         return visitor.isMethodCalled();
     }
 
-    private static boolean isHasNext(PsiExpression condition, String iterator){
+    private static boolean isHasNext(PsiExpression condition,
+                                     PsiVariable iterator){
         if(!(condition instanceof PsiMethodCallExpression)){
             return false;
         }
@@ -1194,7 +1194,12 @@ public class ForCanBeForeachInspection extends BaseInspection{
         if(qualifier == null){
             return true;
         }
-        final String target = qualifier.getText();
+        if (!(qualifier instanceof PsiReferenceExpression)) {
+            return false;
+        }
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression) qualifier;
+        final PsiElement target = referenceExpression.resolve();
         return iterator.equals(target);
     }
 
@@ -1382,10 +1387,10 @@ public class ForCanBeForeachInspection extends BaseInspection{
             extends JavaRecursiveElementVisitor{
 
         private int numCallsToIteratorNext = 0;
-        private final String iteratorName;
+        private final PsiVariable iterator;
 
-        NumCallsToIteratorNextVisitor(String iteratorName){
-            this.iteratorName = iteratorName;
+        NumCallsToIteratorNextVisitor(PsiVariable iterator){
+            this.iterator = iterator;
         }
 
         @Override public void visitMethodCallExpression(
@@ -1402,8 +1407,13 @@ public class ForCanBeForeachInspection extends BaseInspection{
             if(qualifier == null){
                 return;
             }
-            final String qualifierText = qualifier.getText();
-            if(!iteratorName.equals(qualifierText)){
+            if (!(qualifier instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) qualifier;
+            final PsiElement target = referenceExpression.resolve();
+            if(!iterator.equals(target)){
                 return;
             }
             numCallsToIteratorNext++;
@@ -1416,11 +1426,12 @@ public class ForCanBeForeachInspection extends BaseInspection{
 
     private static class IteratorMethodCallVisitor
             extends JavaRecursiveElementVisitor{
-        private boolean methodCalled = false;
-        private final String iteratorName;
 
-        IteratorMethodCallVisitor(String iteratorName){
-            this.iteratorName = iteratorName;
+        private boolean methodCalled = false;
+        private final PsiVariable iterator;
+
+        IteratorMethodCallVisitor(PsiVariable iterator){
+            this.iterator = iterator;
         }
 
         @Override public void visitElement(@NotNull PsiElement element){
@@ -1443,11 +1454,14 @@ public class ForCanBeForeachInspection extends BaseInspection{
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(qualifier != null){
-                final String qualifierText = qualifier.getText();
-                if(iteratorName.equals(qualifierText)){
-                    methodCalled = true;
-                }
+            if (!(qualifier instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)qualifier;
+            final PsiElement target = referenceExpression.resolve();
+            if (iterator.equals(target)) {
+                methodCalled = true;
             }
         }
 
