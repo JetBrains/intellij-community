@@ -22,8 +22,9 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.CommandButtonGroup;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,16 +109,48 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected JComponent createSouthPanel() {
-    final CommandButtonGroup panel = new CommandButtonGroup();
+    JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
-    if (mySteps.size() > 1) {
-      panel.addButton(myPreviousButton);
-      panel.addButton(myNextButton);
+    JPanel buttonPanel = new JPanel();
+    buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+    panel.add(buttonPanel, BorderLayout.EAST);
+
+    if (SystemInfo.isMac) {
+      JPanel leftPanel = new JPanel();
+      myHelpButton.putClientProperty("JButton.buttonType", "help");
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        myHelpButton.setText("");
+      }
+
+      leftPanel.add(myHelpButton);
+      panel.add(leftPanel, BorderLayout.WEST);
+
+      buttonPanel.add(myCancelButton);
+      buttonPanel.add(Box.createHorizontalStrut(5));
+      buttonPanel.add(myFinishButton);
+
+      if (mySteps.size() > 1) {
+        buttonPanel.add(Box.createHorizontalStrut(5));
+        buttonPanel.add(myPreviousButton);
+        buttonPanel.add(Box.createHorizontalStrut(5));
+        buttonPanel.add(myNextButton);
+      }
     }
-    panel.addButton(myFinishButton);
-    panel.addButton(myCancelButton);
-    panel.addButton(myHelpButton);
+    else {
+      if (mySteps.size() > 1) {
+        buttonPanel.add(myPreviousButton);
+        buttonPanel.add(Box.createHorizontalStrut(5));
+        buttonPanel.add(myNextButton);
+        buttonPanel.add(Box.createHorizontalStrut(5));
+      }
+
+      buttonPanel.add(myFinishButton);
+      buttonPanel.add(Box.createHorizontalStrut(5));
+      buttonPanel.add(myCancelButton);
+      buttonPanel.add(Box.createHorizontalStrut(5));
+      buttonPanel.add(myHelpButton);
+    }
 
     myPreviousButton.setEnabled(false);
     myPreviousButton.addActionListener(new ActionListener() {
