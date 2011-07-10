@@ -791,6 +791,8 @@ while(true) {
     def file = myFixture.addFileToProject('aaa/bar.groovy', '''
 package aaa
 
+import aaa.*
+
 class X {
   def bbb = 'text'
 
@@ -801,6 +803,6 @@ class X {
 ''')
     myFixture.configureFromExistingVirtualFile file.virtualFile
     myFixture.completeBasic()
-    assertTrue(myFixture.lookupElementStrings != null && myFixture.lookupElements.length > 0);
+    assertTrue(myFixture.lookupElementStrings.size() > 1)
   }
 }
