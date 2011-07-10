@@ -20,7 +20,7 @@ package com.intellij.codeInspection.reference;
  *
  * @author anna
  * @since 6.0
- * @see RefManager#getPackage
+ * @see RefJavaManager#getPackage
  */
 public interface RefPackage extends RefEntity {
   /**
