@@ -17,6 +17,7 @@ if [ -z "$IDEA_JDK" ]; then
   if [ -z "$IDEA_JDK" ] && ([ "$OS_TYPE" = "MAC" -a -e "$JAVA_HOME/bin/java" ] || [ -e "$JAVA_HOME/lib/tools.jar" ]); then
     IDEA_JDK=$JAVA_HOME
   fi
+
   if [ -z "$IDEA_JDK" ]; then
     # Try to get the jdk path from java binary path
     JAVA_BIN_PATH=`which java`
@@ -25,19 +26,26 @@ if [ -z "$IDEA_JDK" ]; then
       # Mac readlink doesn't support -f option.
       [ "$OS_TYPE" = "MAC" ] && CANONICALIZE_OPTION="" || CANONICALIZE_OPTION="-f"
 
-      JAVA_LOCATION=`readlink $CANONICALIZE_OPTION $JAVA_BIN_PATH | xargs dirname | xargs dirname | xargs dirname`
+      JAVA_LOCATION=`readlink $CANONICALIZE_OPTION $JAVA_BIN_PATH`
+      case "$JAVA_LOCATION" in
+        */jre/bin/java)
+          JAVA_LOCATION=`echo "$JAVA_LOCATION" | xargs dirname | xargs dirname | xargs dirname` ;;
+        *)
+          JAVA_LOCATION=`echo "$JAVA_LOCATION" | xargs dirname | xargs dirname` ;;
+      esac
+
       if [ "$OS_TYPE" = "MAC" ]; then
-        # Current MacOS jdk:
-	if [ -x "$JAVA_LOCATION/CurrentJDK/Home/bin/java" ]; then
-	  IDEA_JDK="$JAVA_LOCATION/CurrentJDK/Home"
-	fi
+        if [ -x "$JAVA_LOCATION/CurrentJDK/Home/bin/java" ]; then
+          IDEA_JDK="$JAVA_LOCATION/CurrentJDK/Home"
+        fi
       else
         if [ -x "$JAVA_LOCATION/bin/java" ]; then
-	  IDEA_JDK="$JAVA_LOCATION"
-	fi
+          IDEA_JDK="$JAVA_LOCATION"
+        fi
       fi
     fi
   fi
+
   if [ -z "$IDEA_JDK" ]; then
     echo ERROR: cannot start IntelliJ IDEA.
     echo No JDK found to run IDEA. Please validate either IDEA_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation.
