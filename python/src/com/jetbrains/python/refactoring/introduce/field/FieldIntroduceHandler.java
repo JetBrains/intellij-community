@@ -169,7 +169,7 @@ public class FieldIntroduceHandler extends IntroduceHandler {
 
   @Override
   protected String getHelpId() {
-    return "refactoring.introduceField";
+    return "python.reference.introduceField";
   }
 
   @Override
