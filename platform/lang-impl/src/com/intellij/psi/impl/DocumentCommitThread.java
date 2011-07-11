@@ -124,8 +124,8 @@ public class DocumentCommitThread implements Runnable, Disposable {
   }
 
   public boolean queueCommit(@NonNls String reason, @NotNull Document document, @NotNull Project project) {
-    assert !isDisposed;
-    assert project.isInitialized();
+    assert !isDisposed : "already disposed";
+    assert project.isInitialized() : project;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
     if (psiFile == null) return false;
 
