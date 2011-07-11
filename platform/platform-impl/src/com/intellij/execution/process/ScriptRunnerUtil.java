@@ -75,6 +75,7 @@ public final class ScriptRunnerUtil {
                                         @NotNull final Condition<Key> outputTypeFilter,
                                         final long timeout)
     throws ExecutionException {
+    LOG.assertTrue(!processHandler.isStartNotified());
     final StringBuilder outputBuilder = new StringBuilder();
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
