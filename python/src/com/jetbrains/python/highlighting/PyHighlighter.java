@@ -1,5 +1,6 @@
 package com.jetbrains.python.highlighting;
 
+import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -26,7 +27,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new PythonHighlightingLexer(myLanguageLevel);
+    return new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
   }
 
   private static TextAttributesKey _copy(String name, TextAttributesKey src) {

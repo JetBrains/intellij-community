@@ -25,6 +25,8 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
     synchronized (this) {
       final Document document = e.getDocument();
       Lexer l = getLexer();
+      // if the document been changed before "from __future__ import unicode_literals"
+      // we should update the whole document
       if (l instanceof PythonHighlightingLexer &&
           (((PythonHighlightingLexer)l).getImportOffset() > e.getOffset()
            || ((PythonHighlightingLexer)l).getImportOffset() == -1)) {
