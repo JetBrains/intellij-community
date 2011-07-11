@@ -48,14 +48,15 @@ import java.util.List;
 /**
  * @author ven
  */
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class TypeInferenceHelper {
 
   @Nullable
   public static PsiType getInferredType(final GrReferenceExpression refExpr) {
-    return RecursionManager.createGuard("refType").doPreventingRecursion(refExpr, new Computable<PsiType>() {
+    return RecursionManager.createGuard("refType").doPreventingRecursion(refExpr, true, new Computable<PsiType>() {
       @Override
       public PsiType compute() {
-        GroovyPsiElement scope =
+        @SuppressWarnings("unchecked") GroovyPsiElement scope =
           PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrClosableBlock.class, GrClassInitializer.class, GroovyFileBase.class);
         if (scope instanceof GrMethod) {
           scope = ((GrMethod)scope).getBlock();
@@ -183,6 +184,7 @@ public class TypeInferenceHelper {
     return null;
   }
 
+  @Nullable
   public static PsiType getInitializerFor(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof GrAssignmentExpression) {
