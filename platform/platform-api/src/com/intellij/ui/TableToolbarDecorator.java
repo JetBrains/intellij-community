@@ -18,9 +18,11 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
@@ -52,24 +54,25 @@ public class TableToolbarDecorator {
 
   private TableToolbarDecorator(JTable table) {
     myTable = table;
+    myTable.setBorder(IdeBorderFactory.createEmptyBorder(0));
     myModel = table.getModel();
     myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
-    myBorder = SystemInfo.isMac ? new CustomLineBorder(0,1,1,1) : null;
-    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myModel instanceof RowEditableTableModel;
-    if (myModel instanceof RowEditableTableModel) {
+    myBorder = SystemInfo.isMac ? new CustomLineBorder(0,1,1,1) : new CustomLineBorder(0, 1, 0, 0);
+    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myModel instanceof EditableModel;
+    if (myModel instanceof EditableModel) {
       createDefaultActions();
     }
   }
 
   private void createDefaultActions() {
     final JTable table = myTable;
-    final RowEditableTableModel tableModel = (RowEditableTableModel)myModel;
+    final EditableModel tableModel = (EditableModel)myModel;
 
     myAddAction = new Runnable() {
       public void run() {
         TableUtil.stopEditing(table);
         tableModel.addRow();
-        final int index = tableModel.getRowCount() - 1;
+        final int index = myModel.getRowCount() - 1;
         table.editCellAt(index, 0);
         table.setRowSelectionInterval(index, index);
         table.setColumnSelectionInterval(0, 0);
@@ -87,9 +90,9 @@ public class TableToolbarDecorator {
       public void run() {
         TableUtil.stopEditing(table);
         int index = table.getSelectedRow();
-        if (0 <= index && index < tableModel.getRowCount()) {
+        if (0 <= index && index < myModel.getRowCount()) {
           tableModel.removeRow(index);
-          if (index < tableModel.getRowCount()) {
+          if (index < myModel.getRowCount()) {
             table.setRowSelectionInterval(index, index);
           }
           else {
@@ -109,7 +112,7 @@ public class TableToolbarDecorator {
       public void run() {
         TableUtil.stopEditing(table);
         int index = table.getSelectedRow();
-        if (0 < index && index < tableModel.getRowCount()) {
+        if (0 < index && index < myModel.getRowCount()) {
           tableModel.exchangeRows(index, index - 1);
           table.setRowSelectionInterval(index - 1, index - 1);
         }
@@ -121,7 +124,7 @@ public class TableToolbarDecorator {
       public void run() {
         TableUtil.stopEditing(table);
         int index = table.getSelectedRow();
-        if (0 <= index && index < tableModel.getRowCount() - 1) {
+        if (0 <= index && index < myModel.getRowCount() - 1) {
           tableModel.exchangeRows(index, index + 1);
           table.setRowSelectionInterval(index + 1, index + 1);
         }
@@ -131,12 +134,12 @@ public class TableToolbarDecorator {
    }
 
   private static void updateButtons(final JTable table,
-                                    final RowEditableTableModel tableModel,
+                                    final EditableModel tableModel,
                                     final AddRemoveUpDownPanel p) {
     if (table.isEnabled()) {
       final int index = table.getSelectedRow();
-      if (0 <= index && index < tableModel.getRowCount()) {
-        final boolean downEnable = index < tableModel.getRowCount() - 1;
+      if (0 <= index && index < ((TableModel)tableModel).getRowCount()) {
+        final boolean downEnable = index < ((TableModel)tableModel).getRowCount() - 1;
         final boolean upEnable = index > 0;
         if (p != null) {
           p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, true);
@@ -229,22 +232,24 @@ public class TableToolbarDecorator {
                              buttons);
     myPanel.setBorder(myBorder);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(0));
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.add(myPanel, getPlacement());
-    if (myModel instanceof RowEditableTableModel && buttons.length > 0) {
-      updateButtons(myTable, (RowEditableTableModel)myModel, myPanel);
+    if (myModel instanceof EditableModel && buttons.length > 0) {
+      updateButtons(myTable, (EditableModel)myModel, myPanel);
 
       if (myUpAction != null && myUpActionEnabled && myDownAction != null && myDownActionEnabled) {
-        TableRowsDnDSupport.install(myTable, (RowEditableTableModel)myModel);
+        TableRowsDnDSupport.install(myTable, (EditableModel)myModel);
       }
       myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
-          updateButtons(myTable, (RowEditableTableModel)myModel, myPanel);
+          updateButtons(myTable, (EditableModel)myModel, myPanel);
         }
       });
     }
+    panel.setBorder(new LineBorder(UIUtil.getBorderColor()));
     return panel;
   }
 

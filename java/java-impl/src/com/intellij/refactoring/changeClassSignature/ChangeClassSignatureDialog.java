@@ -181,7 +181,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     return null;
   }
 
-  private class MyTableModel extends AbstractTableModel implements RowEditableTableModel {
+  private class MyTableModel extends AbstractTableModel implements EditableModel {
     public int getColumnCount() {
       return 2;
     }

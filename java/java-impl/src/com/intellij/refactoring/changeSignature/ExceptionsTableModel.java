@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.ui.RowEditableTableModel;
+import com.intellij.ui.EditableModel;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class ExceptionsTableModel extends AbstractTableModel implements RowEditableTableModel {
+public class ExceptionsTableModel extends AbstractTableModel implements EditableModel {
   private List<PsiTypeCodeFragment> myTypeCodeFragments;
   private final PsiElement myContext;
   private List<ThrownExceptionInfo> myExceptionInfos;

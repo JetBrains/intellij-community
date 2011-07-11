@@ -15,17 +15,14 @@
  */
 package com.intellij.ui;
 
-import javax.swing.table.TableModel;
-
 /**
- * @author dsl
  * @author Konstantin Bulenkov
- *
- *  @deprecated
- * @see EditableModel
+ * @since 11.0
  */
-public interface RowEditableTableModel extends TableModel {
+public interface EditableModel {
   void addRow();
+
   void removeRow(int index);
+
   void exchangeRows(int oldIndex, int newIndex);
 }
