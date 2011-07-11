@@ -45,4 +45,9 @@ public abstract class RenamePyElementProcessor extends RenamePsiElementProcessor
       }
     }
   }
+
+  @Override
+  public String getHelpID(PsiElement element) {
+    return "python.reference.rename";
+  }
 }
