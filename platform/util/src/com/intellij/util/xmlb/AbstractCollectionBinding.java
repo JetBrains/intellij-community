@@ -124,6 +124,9 @@ abstract class AbstractCollectionBinding implements Binding {
     if (tagName != null) {
       Element result = new Element(tagName);
       for (Object e : iterable) {
+        if (e == null) {
+          throw new XmlSerializationException("Collection " + myAccessor + " contains 'null' object");
+        }
         final Binding binding = getElementBinding(e.getClass());
         result.addContent((Content)binding.serialize(e, result));
       }
