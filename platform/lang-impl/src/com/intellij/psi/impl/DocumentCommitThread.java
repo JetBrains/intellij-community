@@ -318,7 +318,9 @@ public class DocumentCommitThread implements Runnable, Disposable {
 
   public void commitSynchronously(@NotNull Document document, @NotNull Project project, PsiFile excludeFile) {
     assert !isDisposed;
-    assert project.isInitialized();
+
+    if (!project.isInitialized()) return;
+
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     setCommitStage(document, CommitStage.ABOUT_TO_BE_SYNC_COMMITTED, true);
     removeCommitFromQueue(document);
