@@ -1,5 +1,6 @@
 package com.jetbrains.python.lexer;
 
+import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -27,12 +28,16 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
       Lexer l = getLexer();
       // if the document been changed before "from __future__ import unicode_literals"
       // we should update the whole document
-      if (l instanceof PythonHighlightingLexer &&
-          (((PythonHighlightingLexer)l).getImportOffset() > e.getOffset()
-           || ((PythonHighlightingLexer)l).getImportOffset() == -1)) {
+      if (l instanceof LayeredLexer) {
+        Lexer delegate = ((LayeredLexer)l).getDelegate();
+        if (delegate instanceof PythonHighlightingLexer &&
+            (((PythonHighlightingLexer)delegate).getImportOffset() > e.getOffset()
+             || ((PythonHighlightingLexer)delegate).getImportOffset() == -1)) {
 
-        ((PythonHighlightingLexer)l).clearState(e.getDocument().getTextLength());
-        setText(document.getCharsSequence());
+          ((PythonHighlightingLexer)delegate).clearState(e.getDocument().getTextLength());
+          setText(document.getCharsSequence());
+        }
+        else super.documentChanged(e);
       }
       else super.documentChanged(e);
     }
