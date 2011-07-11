@@ -11,10 +11,20 @@ import java.util.Collection;
  * @author yole
  */
 public class JythonSdkFlavor extends PythonSdkFlavor {
+  private static final String JYTHONPATH = "JYTHONPATH";
+
   private JythonSdkFlavor() {
   }
 
   public static JythonSdkFlavor INSTANCE = new JythonSdkFlavor();
+
+  public static String appendSystemJythonPath(String pythonPath) {
+    String syspath = System.getenv(JYTHONPATH);
+    if (syspath != null) {
+      pythonPath += File.pathSeparator + syspath;
+    }
+    return pythonPath;
+  }
 
   @Override
   public boolean isValidSdkHome(String path) {
@@ -29,11 +39,12 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    addToEnv(cmd, "JYTHONPATH", StringUtil.join(path, File.pathSeparator));
+    final String jythonPath = StringUtil.join(path, File.pathSeparator);
+    addToEnv(cmd, JYTHONPATH, appendSystemJythonPath(jythonPath));
     cmd.getParametersList().add(getPythonPathCmdLineArgument(path));
   }
 
   public static String getPythonPathCmdLineArgument(Collection<String> path) {
-    return "-Dpython.path=" + StringUtil.join(path, File.pathSeparator);
+    return "-Dpython.path=" + appendSystemJythonPath(StringUtil.join(path, File.pathSeparator));
   }
 }
