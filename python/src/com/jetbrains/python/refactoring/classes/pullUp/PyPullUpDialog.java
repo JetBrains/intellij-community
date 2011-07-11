@@ -56,7 +56,7 @@ public class PyPullUpDialog extends UpDirectedMembersMovingDialog {
   }
 
   protected String getHelpId() {
-    return "refactoring.pullMembersUp";
+    return "python.reference.pullMembersUp";
   }
 
   protected JComponent createNorthPanel() {
