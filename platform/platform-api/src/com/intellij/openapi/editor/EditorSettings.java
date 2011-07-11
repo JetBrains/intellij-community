@@ -76,9 +76,10 @@ public interface EditorSettings {
 
   boolean isCamelWords();
   void setCamelWords(boolean val);
+  /** Allows to remove 'use camel words' setup specific to the current settings object (if any) and use the shared one. */
+  void resetCamelWords();
 
   boolean isAdditionalPageAtBottom();
-
   void setAdditionalPageAtBottom(boolean val);
 
   boolean isDndEnabled();
