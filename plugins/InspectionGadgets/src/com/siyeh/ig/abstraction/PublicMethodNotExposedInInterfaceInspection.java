@@ -82,10 +82,10 @@ public class PublicMethodNotExposedInInterfaceInspection
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new PublicMethodNotExposedInInterface();
+        return new PublicMethodNotExposedInInterfaceVisitor();
     }
 
-    private class PublicMethodNotExposedInInterface
+    private class PublicMethodNotExposedInInterfaceVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(@NotNull PsiMethod method) {
