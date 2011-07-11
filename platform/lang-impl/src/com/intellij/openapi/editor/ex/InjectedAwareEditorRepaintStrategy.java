@@ -63,10 +63,8 @@ public class InjectedAwareEditorRepaintStrategy implements EditorRepaintStrategy
 
     final List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(psiFile);
     for (DocumentWindow injectedDocument : injectedDocuments) {
-      for (RangeMarker rangeMarker : injectedDocument.getHostRanges()) {
-        if (Math.max(rangeMarker.getStartOffset(), startOffset) <= Math.min(rangeMarker.getEndOffset(), endOffset)) {
-          return true;
-        }
+      if (injectedDocument.containsRange(startOffset, endOffset)) {
+        return true;
       }
     }
     return false;
