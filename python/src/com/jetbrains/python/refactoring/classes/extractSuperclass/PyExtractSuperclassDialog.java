@@ -156,7 +156,7 @@ public class PyExtractSuperclassDialog  extends UpDirectedMembersMovingDialog {
 
   @Override
   protected String getHelpId() {
-    return "refactoring.extract.superclass.dialog";
+    return "python.reference.extractSuperclass";
   }
 
   @Override
