@@ -356,4 +356,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doMethodTest("try (R r =  null) { }",
                  "try (R r=null) { }");
   }
+
+  public void testBetweenMethodCallArguments() throws Exception {
+    // Inspired by IDEA-71823
+    getSettings().SPACE_AFTER_COMMA = false;
+    
+    doMethodTest(
+      "foo(1, 2, 3);",
+      "foo(1,2,3);"
+    );
+  }
 }
