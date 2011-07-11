@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
+import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
@@ -72,7 +73,7 @@ public class SpellCheckerSettingsPane implements Disposable {
             if (errorsConfigurable != null) {
               optionsEditor.select(errorsConfigurable).doWhenDone(new Runnable() {
                 public void run() {
-                  errorsConfigurable.selectInspectionTool("SpellCheckingInspection");
+                  errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
                 }
               });
             }
