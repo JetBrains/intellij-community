@@ -43,6 +43,7 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.IdeaXml;
+import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,6 +67,7 @@ public class IdeaSpecificSettings {
   @NonNls private static final String SRCROOT_BIND_ATTR = "bind";
   private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
   @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
+  public static final String INHERIT_JDK = "inheritJdk";
 
   private IdeaSpecificSettings() {
   }
@@ -100,6 +102,10 @@ public class IdeaSpecificSettings {
       }
     }
 
+    final String inheritJdk = root.getAttributeValue(INHERIT_JDK);
+    if (inheritJdk != null && Boolean.parseBoolean(inheritJdk)) {
+      model.inheritSdk();
+    }
     for (Object o : root.getChildren("lib")) {
       Element libElement = (Element)o;
       final String libName = libElement.getAttributeValue("name");
@@ -277,6 +283,10 @@ public class IdeaSpecificSettings {
           root.addContent(element);
           isModified = true;
         }
+      }
+      if (entry instanceof InheritedJdkOrderEntry && EclipseModuleManager.getInstance(entry.getOwnerModule()).getInvalidJdk() != null) {
+        root.setAttribute(INHERIT_JDK, "true");
+        isModified = true;
       }
       if (!(entry instanceof LibraryOrderEntry)) continue;
 
