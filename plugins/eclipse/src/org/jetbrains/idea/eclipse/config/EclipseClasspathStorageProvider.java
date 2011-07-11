@@ -110,10 +110,13 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   static CachedXmlDocumentSet getFileCache(final Module module) {
-    CachedXmlDocumentSet fileCache = EclipseModuleManager.getInstance(module).getDocumentSet();
+    final EclipseModuleManager moduleManager = EclipseModuleManager.getInstance(module);
+    CachedXmlDocumentSet fileCache = moduleManager != null ? moduleManager.getDocumentSet() : null;
     if (fileCache == null) {
       fileCache = new CachedXmlDocumentSet(module.getProject());
-      EclipseModuleManager.getInstance(module).setDocumentSet(fileCache);
+      if (moduleManager != null) {
+        moduleManager.setDocumentSet(fileCache);
+      }
       registerFiles(fileCache, module, ClasspathStorage.getModuleDir(module), ClasspathStorage.getStorageRootFromOptions(module));
       fileCache.preload();
     }
@@ -158,8 +161,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
 
     public CachedXmlDocumentSet getFileSet() {
-      CachedXmlDocumentSet fileCache = EclipseModuleManager.getInstance(module).getDocumentSet();
-      return fileCache != null ? fileCache : getFileCache(module);
+      return getFileCache(module);
     }
 
     public Set<String> getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException {
