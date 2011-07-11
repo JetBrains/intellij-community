@@ -283,6 +283,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testTupleAsDictKey() {  // PY-4144
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }
