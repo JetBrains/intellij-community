@@ -811,7 +811,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         shouldMoveSelection = false;
       }
 
-      if (shouldMoveSelection && (myFiltered == null || myFiltered.contains(current))) {
+      if (shouldMoveSelection && type != DocumentEvent.EventType.INSERT && (myFiltered == null || myFiltered.contains(current))) {
         shouldMoveSelection = false;
       }
 
