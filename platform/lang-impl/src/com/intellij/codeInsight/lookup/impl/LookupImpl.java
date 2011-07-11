@@ -731,7 +731,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     int lookupStart = caretOffset - prefix.length();
 
     int len = myEditor.getDocument().getTextLength();
-    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + "caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
+    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
     LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
 
     myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
