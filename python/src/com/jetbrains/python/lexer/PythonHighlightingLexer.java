@@ -16,26 +16,31 @@ public class PythonHighlightingLexer extends PythonLexer {
     hasUnicodeImport = false;
   }
 
-  public IElementType convertStringType(IElementType tokenType, String tokenText) {
+  static public IElementType convertStringType(IElementType tokenType, String tokenText,
+                                        LanguageLevel languageLevel, boolean unicodeImport) {
     if (tokenType == PyTokenTypes.SINGLE_QUOTED_STRING) {
-      if (myLanguageLevel.isPy3K()) {
+      if (languageLevel.isPy3K()) {
         if (!tokenText.toLowerCase().startsWith("b")) return PyTokenTypes.SINGLE_QUOTED_UNICODE;
       }
       else {
-        if ((hasUnicodeImport && !tokenText.toLowerCase().startsWith("b"))
+        if ((unicodeImport && !tokenText.toLowerCase().startsWith("b"))
             || tokenText.toLowerCase().startsWith("u")) return PyTokenTypes.SINGLE_QUOTED_UNICODE;
       }
     }
     if (tokenType == PyTokenTypes.TRIPLE_QUOTED_STRING) {
-      if (myLanguageLevel.isPy3K()) {
+      if (languageLevel.isPy3K()) {
         if (!tokenText.toLowerCase().startsWith("b")) return PyTokenTypes.TRIPLE_QUOTED_UNICODE;
       }
       else {
-        if ((hasUnicodeImport && !tokenText.toLowerCase().startsWith("b"))
+        if ((unicodeImport && !tokenText.toLowerCase().startsWith("b"))
             || tokenText.toLowerCase().startsWith("u")) return PyTokenTypes.TRIPLE_QUOTED_UNICODE;
       }
     }
     return tokenType;
+  }
+
+  public IElementType convertStringType(IElementType tokenType, String tokenText) {
+    return convertStringType(tokenType, tokenText, myLanguageLevel, hasUnicodeImport);
   }
 
   @Override

@@ -1,8 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lexer.Lexer;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -11,13 +9,11 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.highlighting.PySyntaxHighlighterFactory;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.intellij.lang.regexp.RegExpLanguageHost;
@@ -281,11 +277,25 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     final List<ASTNode> nodes = getStringNodes();
     if (nodes.size() > 0) {
       String text = getStringNodes().get(0).getText();
-      SyntaxHighlighter highlighter = PySyntaxHighlighterFactory.getSyntaxHighlighter(PythonLanguage.getInstance(), getProject(),
-                                                      getContainingFile().getVirtualFile());
-      Lexer lexer = highlighter.getHighlightingLexer();
-      if (lexer instanceof PythonHighlightingLexer) {
-        IElementType type = ((PythonHighlightingLexer)lexer).convertStringType(getStringNodes().get(0).getElementType(), text);
+
+      PyFile file = PsiTreeUtil.getParentOfType(this, PyFile.class);
+      if (file != null) {
+        boolean hasUnicodeImport = false;
+        List<PyFromImportStatement> fromImports = file.getFromImports();
+loop:
+        for (PyFromImportStatement st : fromImports) {
+          if (st.isFromFuture()) {
+            PyImportElement[] elements = st.getImportElements();
+            for (PyImportElement e : elements) {
+              if (PyNames.UNICODE_LITERALS.equals(e.getVisibleName())) {
+                hasUnicodeImport = true;
+                break loop;
+              }
+            }
+          }
+        }
+        IElementType type = PythonHighlightingLexer.convertStringType(getStringNodes().get(0).getElementType(), text,
+                                                                      LanguageLevel.forElement(this), hasUnicodeImport);
         if (PyTokenTypes.UNICODE_NODES.contains(type)) {
           return PyBuiltinCache.getInstance(this).getUnicodeType(LanguageLevel.forElement(this));
         }
