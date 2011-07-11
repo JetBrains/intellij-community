@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstru
 */
 class ReadWriteVariableInstructionImpl extends InstructionImpl implements ReadWriteVariableInstruction {
   private final boolean myIsWrite;
-  public String myName;
+  private final String myName;
 
   ReadWriteVariableInstructionImpl(String varName, PsiElement element, int num, boolean isWrite) {
     super(element, num);

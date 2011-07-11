@@ -27,7 +27,7 @@ import java.util.Stack;
 /**
  * @author ven
  */
-public class InstructionImpl implements Instruction, Cloneable {
+public class InstructionImpl implements Instruction {
   ArrayList<InstructionImpl> myPred = new ArrayList<InstructionImpl>();
 
   ArrayList<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
