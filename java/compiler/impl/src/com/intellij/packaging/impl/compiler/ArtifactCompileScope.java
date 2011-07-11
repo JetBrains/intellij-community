@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
@@ -62,12 +63,14 @@ public class ArtifactCompileScope {
     return baseScope;
   }
 
-  public static Set<Artifact> getArtifactsToBuild(final Project project, final CompileScope compileScope) {
+  public static Set<Artifact> getArtifactsToBuild(final Project project,
+                                                  final CompileScope compileScope,
+                                                  final boolean addIncludedArtifactsWithOutputPathsOnly) {
     final Artifact[] artifactsFromScope = getArtifacts(compileScope);
     final ArtifactManager artifactManager = ArtifactManager.getInstance(project);
     PackagingElementResolvingContext context = artifactManager.getResolvingContext();
     if (artifactsFromScope != null) {
-      return addIncludedArtifacts(Arrays.asList(artifactsFromScope), context);
+      return addIncludedArtifacts(Arrays.asList(artifactsFromScope), context, addIncludedArtifactsWithOutputPathsOnly);
     }
 
     final Set<Artifact> cached = compileScope.getUserData(CACHED_ARTIFACTS_KEY);
@@ -86,7 +89,7 @@ public class ArtifactCompileScope {
         }
       }
     }
-    Set<Artifact> result = addIncludedArtifacts(artifacts, context);
+    Set<Artifact> result = addIncludedArtifacts(artifacts, context, addIncludedArtifactsWithOutputPathsOnly);
     compileScope.putUserData(CACHED_ARTIFACTS_KEY, result);
     return result;
   }
@@ -107,17 +110,23 @@ public class ArtifactCompileScope {
   }
 
   @NotNull
-  private static Set<Artifact> addIncludedArtifacts(@NotNull Collection<Artifact> artifacts, @NotNull PackagingElementResolvingContext context) {
+  private static Set<Artifact> addIncludedArtifacts(@NotNull Collection<Artifact> artifacts,
+                                                    @NotNull PackagingElementResolvingContext context,
+                                                    final boolean withOutputPathOnly) {
     Set<Artifact> result = new HashSet<Artifact>();
     for (Artifact artifact : artifacts) {
-      collectIncludedArtifacts(artifact, context, result);
+      collectIncludedArtifacts(artifact, context, new HashSet<Artifact>(), result, withOutputPathOnly);
     }
     return result;
   }
 
-  private static void collectIncludedArtifacts(Artifact artifact, final PackagingElementResolvingContext context, final Set<Artifact> result) {
-    if (!result.add(artifact)) {
+  private static void collectIncludedArtifacts(Artifact artifact, final PackagingElementResolvingContext context,
+                                               final Set<Artifact> processed, final Set<Artifact> result, final boolean withOutputPathOnly) {
+    if (!processed.add(artifact)) {
       return;
+    }
+    if (!withOutputPathOnly || !StringUtil.isEmpty(artifact.getOutputPath())) {
+      result.add(artifact);
     }
 
     ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE, new Processor<ArtifactPackagingElement>() {
@@ -125,7 +134,7 @@ public class ArtifactCompileScope {
         public boolean process(ArtifactPackagingElement element) {
           Artifact included = element.findArtifact(context);
           if (included != null) {
-            collectIncludedArtifacts(included, context, result);
+            collectIncludedArtifacts(included, context, processed, result, withOutputPathOnly);
           }
           return true;
         }

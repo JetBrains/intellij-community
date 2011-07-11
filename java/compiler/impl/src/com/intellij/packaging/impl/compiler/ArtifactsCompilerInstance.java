@@ -90,7 +90,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
       protected void run(final Result result) {
         final Set<Artifact> artifacts;
         if (selectedOnly) {
-          artifacts = ArtifactCompileScope.getArtifactsToBuild(getProject(), myContext.getCompileScope());
+          artifacts = ArtifactCompileScope.getArtifactsToBuild(getProject(), myContext.getCompileScope(), true);
         }
         else {
           artifacts = new HashSet<Artifact>(Arrays.asList(ArtifactManager.getInstance(getProject()).getArtifacts()));

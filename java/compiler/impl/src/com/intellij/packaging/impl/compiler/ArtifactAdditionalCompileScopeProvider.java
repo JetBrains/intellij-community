@@ -41,7 +41,7 @@ public class ArtifactAdditionalCompileScopeProvider extends AdditionalCompileSco
     }
     return new ReadAction<CompileScope>() {
       protected void run(final Result<CompileScope> result) {
-        final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, baseScope);
+        final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, baseScope, false);
         result.setResult(ArtifactCompileScope.createScopeForModulesInArtifacts(project, artifacts));
       } 
     }.execute().getResultObject();
