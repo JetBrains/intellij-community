@@ -109,7 +109,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertOrderedEquals myFixture.lookupElementStrings, "iterable", "iterable2"
 
     assertEquals 'iterable', lookup.currentItem.lookupString
-    myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN
+    edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
