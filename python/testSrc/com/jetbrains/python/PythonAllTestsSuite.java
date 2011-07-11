@@ -81,7 +81,8 @@ public class PythonAllTestsSuite {
     PyCompatibilityInspectionTest.class,
     PyUnresolvedReferencesInspectionTest.class,
     PyUnusedImportTest.class,
-    PyDeprecationTest.class
+    PyDeprecationTest.class,
+    PythonHighlightingLexerTest.class
   };
 
   public static TestSuite suite() {
