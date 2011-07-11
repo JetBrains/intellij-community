@@ -388,7 +388,7 @@ public class ReferenceExpressionCompletionContributor {
     if (varType instanceof PsiEllipsisType) {
       varType = ((PsiEllipsisType)varType).getComponentType();
     }
-    if (varType instanceof PsiWildcardType) {
+    if (varType instanceof PsiWildcardType || varType instanceof PsiCapturedWildcardType) {
       varType = TypeConversionUtil.erasure(expectedType);
     }
 
