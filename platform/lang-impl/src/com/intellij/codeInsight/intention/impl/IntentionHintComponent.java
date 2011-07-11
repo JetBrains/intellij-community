@@ -125,9 +125,9 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   @NotNull
-  public static IntentionHintComponent showIntentionHint(@NotNull Project project,
+  public static IntentionHintComponent showIntentionHint(@NotNull final Project project,
                                                          @NotNull PsiFile file,
-                                                         @NotNull Editor editor,
+                                                         @NotNull final Editor editor,
                                                          @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded,
                                                          @NotNull Point position) {
@@ -138,9 +138,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     if (showExpanded) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          component.showPopup();
+          if (!editor.isDisposed()) {
+            component.showPopup();
+          }
         }
-      });
+      }, project.getDisposed());
     }
 
     return component;
