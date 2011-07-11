@@ -44,6 +44,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
   
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
   private static final Pair<PyStatement, Boolean> EMPTY_DEF_RESULT = Pair.create(null, false);
+  private static final String HELP_ID = "python.reference.inline";
 
   public static PyInlineLocalHandler getInstance() {
     return Extensions.findExtension(EP_NAME, PyInlineLocalHandler.class);
@@ -91,21 +92,21 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     if (def == null || getValue(def) == null){
       final String key = defPair.second ? "variable.has.no.dominating.definition" : "variable.has.no.initializer";
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.inlineVariable");
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
       return;
     }
 
     if (def instanceof PyAssignmentStatement && ((PyAssignmentStatement)def).getTargets().length > 1){
       highlightManager.addOccurrenceHighlights(editor, new PsiElement[] {def}, writeAttributes, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(PyBundle.message("refactoring.inline.local.multiassignment", localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.inlineVariable");
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
       return;
     }
 
     final PsiElement[] refsToInline = PyDefUseUtil.getPostRefs(containerBlock, local, getObject(def));
     if (refsToInline.length == 0) {
       String message = RefactoringBundle.message("variable.is.never.used", localName);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.inlineVariable");
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
       return;
     }
 
@@ -116,7 +117,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       String occurencesString = RefactoringBundle.message("occurences.string", occurrencesCount);
       final String promptKey = "inline.local.variable.prompt";
       final String question = RefactoringBundle.message(promptKey, localName) + " " + occurencesString;
-      RefactoringMessageDialog dialog = new RefactoringMessageDialog(REFACTORING_NAME, question, "refactoring.inlineVariable", "OptionPane.questionIcon", true, project);
+      RefactoringMessageDialog dialog = new RefactoringMessageDialog(REFACTORING_NAME, question, HELP_ID, "OptionPane.questionIcon", true, project);
       dialog.show();
       if (!dialog.isOK()){
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
@@ -129,7 +130,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       final PsiFile otherFile = ref.getContainingFile();
       if (!otherFile.equals(workingFile)) {
         String message = RefactoringBundle.message("variable.is.referenced.in.multiple.files", localName);
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.inlineVariable");
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
         return;
       }
     }
@@ -147,7 +148,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
           String message =
             RefactoringBundle
               .getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
-          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.inlineVariable");
+          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
         }
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
