@@ -446,7 +446,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (!(phase instanceof CompletionPhase.BgCalculation) || phase.indicator != CompletionProgressIndicator.this) return;
 
         LOG.assertTrue(!getProject().isDisposed(), "project disposed");
-        LOG.assertTrue(!myEditor.isDisposed(), "editor disposed");
+
+        if (myEditor.isDisposed()) {
+          LookupManager.getInstance(getProject()).hideActiveLookup();
+          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+          return;
+        }
+
         if (myEditor instanceof EditorWindow) {
           LOG.assertTrue(((EditorWindow)myEditor).getInjectedFile().isValid(), "injected file !valid");
           LOG.assertTrue(((DocumentWindow)myEditor.getDocument()).isValid(), "docWindow !valid");
