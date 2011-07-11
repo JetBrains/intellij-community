@@ -16,13 +16,17 @@
 package git4idea.checkin;
 
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,16 +42,90 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
   @NotNull
   @Override
   protected CheckinHandler createVcsHandler(final CheckinProjectPanel panel) {
-    return new CheckinHandler() {
-      @Override
-      public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-        if (panel.getCommitMessage().trim().isEmpty()) {
-          Messages.showMessageDialog(panel.getComponent(), GitBundle.message("git.commit.message.empty"),
-                                     GitBundle.message("git.commit.message.empty.title"), Messages.getErrorIcon());
-          return ReturnResult.CANCEL;
-        }
+    return new MyCheckinHandler(panel);
+  }
+
+  private class MyCheckinHandler extends CheckinHandler {
+    private CheckinProjectPanel myPanel;
+
+    public MyCheckinHandler(CheckinProjectPanel panel) {
+      myPanel = panel;
+    }
+
+    @Override
+    public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
+      // empty commit message check
+      if (myPanel.getCommitMessage().trim().isEmpty()) {
+        Messages.showMessageDialog(myPanel.getComponent(), GitBundle.message("git.commit.message.empty"),
+                                   GitBundle.message("git.commit.message.empty.title"), Messages.getErrorIcon());
+        return ReturnResult.CANCEL;
+      }
+
+      // Warning: commit on a detached HEAD
+      DetachedRoot detachedRoot = getDetachedRoot();
+      if (detachedRoot == null) {
         return ReturnResult.COMMIT;
       }
-    };
+
+      final String title;
+      final String message;
+      final CharSequence rootPath = StringUtil.last(detachedRoot.myRoot.getPresentableUrl(), 50, true);
+      final String messageCommonStart = "The Git repository <code>" + rootPath + "</code>";
+      if (detachedRoot.myRebase) {
+        title = "Unfinished rebase process";
+        message = messageCommonStart + " <br/> has an <b>unfinished rebase</b> process. <br/>" +
+                  "You probably want to <b>continue rebase</b> instead of committing. <br/>" +
+                  "Committing during rebase may lead to the commit loss. <br/>" +
+                  "<a href='http://www.kernel.org/pub/software/scm/git/docs/git-rebase.html'>Read more about Git rebase</a>.";
+      } else {
+        title = "Commit in detached HEAD may be dangerous";
+        message = messageCommonStart + " is in the <b>detached HEAD</b> state. <br/>" +
+                  "You can look around, make experimental changes and commit them, but be sure to checkout a branch not to lose your work. <br/>" +
+                  "Otherwise you risk losing your changes. <br/>" +
+                  "<a href='http://sitaramc.github.com/concepts/detached-head.html'>Read more about detached HEAD</a>.";
+      }
+
+      final int choice = Messages.showDialog(myPanel.getComponent(), "<html>" + message + "</html>", title,
+                                             new String[]{"Commit", "Cancel"},
+                                             1, Messages.getWarningIcon());
+      if (choice == 0) {
+        return ReturnResult.COMMIT;
+      } else {
+        return ReturnResult.CLOSE_WINDOW;
+      }
+    }
+
+    /**
+     * Scans the Git roots, selected for commit, for the root which is on a detached HEAD.
+     * Returns null, if all repositories are on the branch.
+     * There might be several detached repositories, - in that case only one is returned.
+     * This is because the situation is very rare, while it requires a lot of additional effort of making a well-formed message.
+     */
+    @Nullable
+    private DetachedRoot getDetachedRoot() {
+      GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(myPanel.getProject());
+      for (VirtualFile root : myPanel.getRoots()) {
+        GitRepository repository = repositoryManager.getRepositoryForRoot(root);
+        if (repository == null) {
+          continue;
+        }
+        if (!repository.isOnBranch()) {
+          return new DetachedRoot(root, repository.isRebaseInProgress());
+        }
+      }
+      return null;
+    }
+
+    private class DetachedRoot {
+      final VirtualFile myRoot;
+      final boolean myRebase; // rebase in progress, or just detached due to a checkout of a commit.
+
+      public DetachedRoot(@NotNull VirtualFile root, boolean rebase) {
+        myRoot = root;
+        myRebase = rebase;
+      }
+    }
+
   }
+
 }
