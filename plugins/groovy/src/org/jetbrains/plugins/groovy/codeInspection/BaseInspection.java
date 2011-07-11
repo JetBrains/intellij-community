@@ -18,12 +18,12 @@ package org.jetbrains.plugins.groovy.codeInspection;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 import java.lang.reflect.Method;
@@ -32,7 +32,8 @@ import java.util.List;
 
 public abstract class BaseInspection extends GroovySuppressableInspectionTool {
 
-  private final String m_shortName = null;
+  private final String m_shortName = StringUtil.trimEnd(getClass().getSimpleName(), "Inspection");
+
   protected static final String ASSIGNMENT_ISSUES = "Assignment issues";
   protected static final String CONFUSING_CODE_CONSTRUCTS = "Potentially confusing code constructs";
   protected static final String CONTROL_FLOW = "Control Flow";
@@ -52,12 +53,6 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
 
   @NotNull
   public String getShortName() {
-    if (m_shortName == null) {
-      final Class<? extends BaseInspection> aClass = getClass();
-      @NonNls final String name = aClass.getName();
-      return name.substring(name.lastIndexOf((int) '.') + 1,
-          name.length() - "Inspection".length());
-    }
     return m_shortName;
   }
 
