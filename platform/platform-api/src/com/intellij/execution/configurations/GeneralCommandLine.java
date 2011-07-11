@@ -18,6 +18,8 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.diagnostic.Log;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 public class GeneralCommandLine {
+  private static final Logger LOG = Logger.getInstance("#" + GeneralCommandLine.class.getName());
   private Map<String, String> myEnvParams;
   private boolean myPassParentEnvs;
   private String myExePath = null;
@@ -144,6 +147,13 @@ public class GeneralCommandLine {
   private String[] getEnvParamsArray() {
     final Map<String, String> envParams = collectEnvParams();
     if (envParams == null) return null;
+    for (Iterator<String> iterator = envParams.keySet().iterator(); iterator.hasNext(); ) {
+      final String key = iterator.next();
+      if (envParams.get(key) == null) {
+        LOG.info("null value for env variable: " + key);
+        iterator.remove();
+      }
+    }
     final String[] result = new String[envParams.size()];
     int i=0;
     for (final String key : envParams.keySet()) {
