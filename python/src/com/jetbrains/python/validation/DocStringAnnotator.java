@@ -54,7 +54,9 @@ public class DocStringAnnotator extends PyAnnotator {
       }
 
       final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(stmt.getProject());
-      if (settings.isEpydocFormat(stmt.getContainingFile()) || settings.isReSTFormat(stmt.getContainingFile())) {
+      if (settings.isPlain(stmt.getContainingFile()))
+        return;       // nothing to annotate if docstrings are plain
+      else {
         String[] tags = settings.isEpydocFormat(stmt.getContainingFile()) ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
         int pos = 0;
         while(true) {

@@ -32,6 +32,10 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
     return isFormat(file, DocStringFormat.REST);
   }
 
+  public boolean isPlain(PsiFile file) {
+    return isFormat(file, DocStringFormat.PLAIN);
+  }
+
   private boolean isFormat(PsiFile file, final String format) {
     if (file instanceof PyFile) {
       PyTargetExpression expr = ((PyFile) file).findTopLevelAttribute(PyNames.DOCFORMAT);
