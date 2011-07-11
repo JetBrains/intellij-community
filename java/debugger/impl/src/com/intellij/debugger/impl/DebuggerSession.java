@@ -242,27 +242,29 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public void stepOut() {
     final SuspendContextImpl suspendContext = getSuspendContext();
-    mySteppingThroughThreads.add(suspendContext.getThread());
-    resumeAction(myDebugProcess.createStepOutCommand(suspendContext), EVENT_STEP);
+    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOutCommand(suspendContext);
+    mySteppingThroughThreads.add(cmd.getContextThread());
+    resumeAction(cmd, EVENT_STEP);
   }
 
   public void stepOver(boolean ignoreBreakpoints) {
     final SuspendContextImpl suspendContext = getSuspendContext();
-    mySteppingThroughThreads.add(suspendContext.getThread());
-    resumeAction(myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints), EVENT_STEP);
+    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints);
+    mySteppingThroughThreads.add(cmd.getContextThread());
+    resumeAction(cmd, EVENT_STEP);
   }
 
   public void stepInto(final boolean ignoreFilters, final @Nullable RequestHint.SmartStepFilter smartStepFilter) {
     final SuspendContextImpl suspendContext = getSuspendContext();
-    mySteppingThroughThreads.add(suspendContext.getThread());
-    resumeAction(myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter), EVENT_STEP);
+    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter);
+    mySteppingThroughThreads.add(cmd.getContextThread());
+    resumeAction(cmd, EVENT_STEP);
   }
 
   public void runToCursor(Document document, int line, final boolean ignoreBreakpoints) {
     try {
-      DebugProcessImpl.ResumeCommand runToCursorCommand = myDebugProcess.createRunToCursorCommand(getSuspendContext(), document, line,
-                                                                                             ignoreBreakpoints);
-      mySteppingThroughThreads.add(getSuspendContext().getThread());
+      DebugProcessImpl.ResumeCommand runToCursorCommand = myDebugProcess.createRunToCursorCommand(getSuspendContext(), document, line, ignoreBreakpoints);
+      mySteppingThroughThreads.add(runToCursorCommand.getContextThread());
       resumeAction(runToCursorCommand, EVENT_STEP);
     }
     catch (EvaluateException e) {
@@ -274,7 +276,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void resume() {
     final SuspendContextImpl suspendContext = getSuspendContext();
     if(suspendContext != null) {
-      mySteppingThroughThreads.remove(suspendContext.getThread());
+      mySteppingThroughThreads.clear();
       resetIgnoreStepFiltersFlag();
       resumeAction(myDebugProcess.createResumeCommand(suspendContext), EVENT_RESUME);
     }

@@ -147,6 +147,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
   private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  /** @noinspection FieldCanBeLocal*/
   private volatile boolean myDebugProcessStarted = false;
 
   protected DebugProcessImpl(Project project) {
@@ -183,24 +184,27 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   @Nullable
   public Pair<Method, Value> getLastExecutedMethod() {
-    if (myReturnValueWatcher == null) {
+    final MethodReturnValueWatcher watcher = myReturnValueWatcher;
+    if (watcher == null) {
       return null;
     }
-    final Method method = myReturnValueWatcher.getLastExecutedMethod();
+    final Method method = watcher.getLastExecutedMethod();
     if (method == null) {
       return null;
     }
-    return new Pair<Method, Value>(method, myReturnValueWatcher.getLastMethodReturnValue());
+    return new Pair<Method, Value>(method, watcher.getLastMethodReturnValue());
   }
 
   public void setWatchMethodReturnValuesEnabled(boolean enabled) {
-    if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.setFeatureEnabled(enabled);
+    final MethodReturnValueWatcher watcher = myReturnValueWatcher;
+    if (watcher != null) {
+      watcher.setFeatureEnabled(enabled);
     }
   }
 
   public boolean isWatchMethodReturnValuesEnabled() {
-    return myReturnValueWatcher != null && myReturnValueWatcher.isFeatureEnabled();
+    final MethodReturnValueWatcher watcher = myReturnValueWatcher;
+    return watcher != null && watcher.isFeatureEnabled();
   }
 
   public boolean canGetMethodReturnValue() {
@@ -1381,11 +1385,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.step.out"));
       final SuspendContextImpl suspendContext = getSuspendContext();
-      final ThreadReferenceProxyImpl thread = suspendContext.getThread();
+      final ThreadReferenceProxyImpl thread = getContextThread();
       RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
       hint.setIgnoreFilters(mySession.shouldIgnoreSteppingFilters());
-      if (myReturnValueWatcher != null) {
-        myReturnValueWatcher.enable(thread.getThreadReference());
+      applyThreadFilter(thread);
+      final MethodReturnValueWatcher rvWatcher = myReturnValueWatcher;
+      if (rvWatcher != null) {
+        rvWatcher.enable(thread.getThreadReference());
       }
       doStep(suspendContext, thread, StepRequest.STEP_OUT, hint);
       super.contextAction();
@@ -1405,7 +1411,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.step.into"));
       final SuspendContextImpl suspendContext = getSuspendContext();
-      final ThreadReferenceProxyImpl stepThread = suspendContext.getThread();
+      final ThreadReferenceProxyImpl stepThread = getContextThread();
       final RequestHint hint = mySmartStepFilter != null?
                                new RequestHint(stepThread, suspendContext, mySmartStepFilter) :
                                new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
@@ -1418,6 +1424,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }
       }
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
+      applyThreadFilter(stepThread);
       doStep(suspendContext, stepThread, StepRequest.STEP_INTO, hint);
       super.contextAction();
     }
@@ -1434,18 +1441,22 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.step.over"));
       final SuspendContextImpl suspendContext = getSuspendContext();
-      final ThreadReferenceProxyImpl steppingThread = suspendContext.getThread();
+      final ThreadReferenceProxyImpl stepThread = getContextThread();
       // need this hint whil stepping over for JSR45 support:
       // several lines of generated java code may correspond to a single line in the source file,
       // from which the java code was generated
-      RequestHint hint = new RequestHint(steppingThread, suspendContext, StepRequest.STEP_OVER);
+      RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_OVER);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
       hint.setIgnoreFilters(myIsIgnoreBreakpoints || mySession.shouldIgnoreSteppingFilters());
 
-      if (myReturnValueWatcher != null) {
-        myReturnValueWatcher.enable(steppingThread.getThreadReference());
+      applyThreadFilter(stepThread);
+
+      final MethodReturnValueWatcher rvWatcher = myReturnValueWatcher;
+      if (rvWatcher != null) {
+        rvWatcher.enable(stepThread.getThreadReference());
       }
-      doStep(suspendContext, steppingThread, StepRequest.STEP_OVER, hint);
+
+      doStep(suspendContext, stepThread, StepRequest.STEP_OVER, hint);
 
       if (myIsIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
@@ -1475,6 +1486,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
         breakpointManager.disableBreakpoints(DebugProcessImpl.this);
       }
+      applyThreadFilter(getContextThread());
       myRunToCursorBreakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
       myRunToCursorBreakpoint.LOG_ENABLED = false;
       myRunToCursorBreakpoint.createRequest(getSuspendContext().getDebugProcess());
@@ -1485,8 +1497,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public abstract class ResumeCommand extends SuspendContextCommandImpl {
 
+    private final ThreadReferenceProxyImpl myContextThread;
+
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
+      final ThreadReferenceProxyImpl contextThread = mySession.getContextManager().getContext().getThreadProxy();
+      myContextThread = contextThread != null ? contextThread : getSuspendContext().getThread();
     }
 
     public Priority getPriority() {
@@ -1497,6 +1513,21 @@ public abstract class DebugProcessImpl implements DebugProcess {
       showStatusText(DebuggerBundle.message("status.process.resumed"));
       getSuspendManager().resume(getSuspendContext());
       myDebugProcessDispatcher.getMulticaster().resumed(getSuspendContext());
+    }
+
+    public ThreadReferenceProxyImpl getContextThread() {
+      return myContextThread;
+    }
+
+    protected void applyThreadFilter(ThreadReferenceProxy thread) {
+      if (getSuspendContext().getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+        // there could be explicit resume as a result of call to voteSuspend()
+        // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_
+        // resuming and all breakpoints in other threads will be ignored.
+        // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
+        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
+        breakpointManager.applyThreadFilter(DebugProcessImpl.this, thread.getThreadReference());
+      }
     }
   }
 
