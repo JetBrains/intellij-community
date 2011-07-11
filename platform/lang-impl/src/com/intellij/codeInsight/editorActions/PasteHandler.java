@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -38,14 +37,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -238,43 +235,56 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private static void indentBlock(Project project, Editor editor, int startOffset, int endOffset, int originalCaretCol) {
-    Document document = editor.getDocument();
-    CharSequence chars = document.getCharsSequence();
-    boolean hasNewLine = false;
-
-    for (int i = endOffset - 1; i >= startOffset; i--) {
-      char c = chars.charAt(i);
-      if (c == '\n' || c == '\r') {
-        hasNewLine = true;
-        break;
-      }
-      if (c != ' ' && c != '\t') return; // do not indent if does not end with line separator
+  static void indentBlock(Project project, Editor editor, final int startOffset, final int endOffset, int originalCaretCol) {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitAllDocuments();
+    final Document document = editor.getDocument();
+    PsiFile file = documentManager.getPsiFile(document);
+    if (file == null) {
+      return;
     }
 
-    if (!hasNewLine) return;
-    int lineStart = CharArrayUtil.shiftBackwardUntil(chars, startOffset - 1, "\n\r") + 1;
-    int spaceEnd = CharArrayUtil.shiftForward(chars, lineStart, " \t");
-    if (startOffset <= spaceEnd) { // we are in starting spaces
-      if (lineStart != startOffset) {
-        String deletedS = chars.subSequence(lineStart, startOffset).toString();
-        document.deleteString(lineStart, startOffset);
-        startOffset = lineStart;
-        endOffset -= deletedS.length();
-        document.insertString(endOffset, deletedS);
-        LogicalPosition pos = new LogicalPosition(editor.getCaretModel().getLogicalPosition().line, originalCaretCol);
-        editor.getCaretModel().moveToLogicalPosition(pos);
-      }
-
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (LanguageFormatting.INSTANCE.forContext(file) != null) {
-        indentBlockWithFormatter(project, document, startOffset, endOffset, file);
-      }
-      else {
-        indentPlainTextBlock(document, startOffset, endOffset, originalCaretCol);
-      }
+    if (LanguageFormatting.INSTANCE.forContext(file) != null) {
+      indentBlockWithFormatter(project, document, startOffset, endOffset, file);
     }
+    else {
+      indentPlainTextBlock(document, startOffset, endOffset, originalCaretCol);
+    } 
+    
+    
+    //boolean hasNewLine = false;
+    //for (int i = endOffset - 1; i >= startOffset; i--) {
+    //  char c = chars.charAt(i);
+    //  if (c == '\n' || c == '\r') {
+    //    hasNewLine = true;
+    //    break;
+    //  }
+    //  if (c != ' ' && c != '\t') return; // do not indent if does not end with line separator
+    //}
+    //
+    //if (!hasNewLine) return;
+    //int lineStart = CharArrayUtil.shiftBackwardUntil(chars, startOffset - 1, "\n\r") + 1;
+    //int spaceEnd = CharArrayUtil.shiftForward(chars, lineStart, " \t");
+    //if (startOffset <= spaceEnd) { // we are in starting spaces
+    //  if (lineStart != startOffset) {
+    //    String deletedS = chars.subSequence(lineStart, startOffset).toString();
+    //    document.deleteString(lineStart, startOffset);
+    //    startOffset = lineStart;
+    //    endOffset -= deletedS.length();
+    //    document.insertString(endOffset, deletedS);
+    //    LogicalPosition pos = new LogicalPosition(editor.getCaretModel().getLogicalPosition().line, originalCaretCol);
+    //    editor.getCaretModel().moveToLogicalPosition(pos);
+    //  }
+    //
+    //  PsiDocumentManager.getInstance(project).commitAllDocuments();
+    //  PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    //  if (LanguageFormatting.INSTANCE.forContext(file) != null) {
+    //    indentBlockWithFormatter(project, document, startOffset, endOffset, file);
+    //  }
+    //  else {
+    //    indentPlainTextBlock(document, startOffset, endOffset, originalCaretCol);
+    //  }
+    //}
   }
 
   private static void indentEachLine(Project project, Editor editor, int startOffset, int endOffset) {
@@ -306,100 +316,106 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private static void indentPlainTextBlock(Document document, int startOffset, int endOffset, int indentLevel) {
+  @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
+  private static void indentPlainTextBlock(final Document document, final int startOffset, final int endOffset, final int indentLevel) {
     CharSequence chars = document.getCharsSequence();
     int spaceEnd = CharArrayUtil.shiftForward(chars, startOffset, " \t");
-    if (spaceEnd > endOffset) return;
-    if (indentLevel == 0) return;
+    int line = document.getLineNumber(startOffset);
+    if (spaceEnd > endOffset || indentLevel <= 0 || line >= document.getLineCount() - 1) {
+      return;
+    }
 
+    int linesToAdjustIndent = 0;
+    for (int i = line + 1; i < document.getLineCount(); i++) {
+      if (document.getLineStartOffset(i) >= endOffset) {
+        break;
+      }
+      linesToAdjustIndent++;
+    }
+    
     char[] fill = new char[indentLevel];
     Arrays.fill(fill, ' ');
     String indentString = new String(fill);
 
-    int offset = spaceEnd;
-    while (true) {
-      document.insertString(offset, indentString);
-      chars = document.getCharsSequence();
-      endOffset += indentLevel;
-      offset = CharArrayUtil.shiftForwardUntil(chars, offset, "\n") + 1;
-      if (offset >= endOffset || offset >= document.getTextLength()) break;
-    }
+    for (
+      int lineStartOffset = document.getLineStartOffset(++line);
+      linesToAdjustIndent > 0;
+      lineStartOffset = document.getLineStartOffset(++line), linesToAdjustIndent--)
+    {
+      document.insertString(lineStartOffset, indentString);
+    } 
   }
 
-  private static void indentBlockWithFormatter(Project project, Document document,
-                                               int startOffset,
-                                               int endOffset,
-                                               PsiFile file) {
-    final FileType fileType = file.getFileType();
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+  private static void indentBlockWithFormatter(Project project, Document document, int startOffset, int endOffset, PsiFile file) {
     CharSequence chars = document.getCharsSequence();
-    int spaceStart = CharArrayUtil.shiftBackwardUntil(chars, startOffset - 1, "\n\r") + 1;
-    int spaceEnd = CharArrayUtil.shiftForward(chars, startOffset, " \t");
-    if (spaceEnd > endOffset) return;
-    while (!codeStyleManager.isLineToBeIndented(file, spaceEnd)) {
-      spaceStart = CharArrayUtil.shiftForwardUntil(chars, spaceEnd, "\n\r");
-      spaceStart = CharArrayUtil.shiftForward(chars, spaceStart, "\n\r");
-      spaceEnd = CharArrayUtil.shiftForward(chars, spaceStart, " \t");
-      if (spaceEnd >= endOffset) return;
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    if (file == null) {
+      return;
     }
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
-    Indent indent = codeStyleManager.getIndent(chars.subSequence(spaceStart, spaceEnd).toString(), fileType);
-    int newEnd = codeStyleManager.adjustLineIndent(document, spaceEnd);
-    chars = document.getCharsSequence();
-    if (spaceStart > newEnd) {
-      newEnd = spaceStart; //TODO lesya. Try to reproduce it. SCR52139
+    final int startLine = document.getLineNumber(startOffset);
+    final int startLineStartOffset = document.getLineStartOffset(startLine);
+    int indentAdjustmentAnchorLine = -1; // Line which indent change will be applied to all subsequent pasted lines.
+    int pastedLinesAfterIndentLine = 0;
+
+    final int nonWsOffset = CharArrayUtil.shiftBackward(chars, startOffset - 1, " \t");
+    boolean onNewLine = nonWsOffset >= 0 && chars.charAt(nonWsOffset) == '\n';
+    
+    int diffShift = 0;
+    if (onNewLine && (chars.charAt(startOffset) == ' ' || chars.charAt(startOffset) == '\n')) {
+      indentAdjustmentAnchorLine = startLine;
+      diffShift += startOffset - startLineStartOffset;
     }
-    Indent newIndent = codeStyleManager.getIndent(chars.subSequence(spaceStart, newEnd).toString(), fileType);
-    Indent indentShift = newIndent.subtract(indent);
-    ArrayList<Boolean> indentFlags = new ArrayList<Boolean>();
-    if (!indentShift.isZero()) {
-      //System.out.println("(paste block) old indent = " + indent);
-      //System.out.println("(paste block) new indent = " + newIndent);
-      endOffset += newEnd - spaceEnd;
-
-      int offset = newEnd;
-      while (true) {
-        offset = CharArrayUtil.shiftForwardUntil(chars, offset, "\n\r");
-        if (offset >= endOffset) break;
-        offset = CharArrayUtil.shiftForward(chars, offset, "\n\r");
-        if (offset >= endOffset) break;
-        int offset1 = CharArrayUtil.shiftForward(chars, offset, " \t");
-        if (offset1 >= endOffset) break;
-        if (chars.charAt(offset1) == '\n' || chars.charAt(offset1) == '\r') { // empty line
-          offset = offset1;
-          continue;
-        }
-        Boolean flag = codeStyleManager.isLineToBeIndented(file, offset) ? Boolean.TRUE : Boolean.FALSE;
-        indentFlags.add(flag);
-        offset = offset1;
+    
+    for (int line = startLine + 1, max = document.getLineCount(); line < max; line++) {
+      int lineStartOffset = document.getLineStartOffset(line);
+      if (lineStartOffset >= endOffset) {
+        break;
       }
 
-      offset = newEnd;
-      int count = 0;
-      while (true) {
-        offset = CharArrayUtil.shiftForwardUntil(chars, offset, "\n\r");
-        if (offset >= endOffset) break;
-        offset = CharArrayUtil.shiftForward(chars, offset, "\n\r");
-        if (offset >= endOffset) break;
-        int offset1 = CharArrayUtil.shiftForward(chars, offset, " \t");
-        if (offset1 >= endOffset) break;
-        if (chars.charAt(offset1) == '\n' || chars.charAt(offset1) == '\r') { // empty line
-          offset = offset1;
-          continue;
-        }
-        int index = count++;
-        if (indentFlags.get(index) == Boolean.FALSE) {
-          offset = offset1;
-          continue;
-        }
-        String space = chars.subSequence(offset, offset1).toString();
-        indent = codeStyleManager.getIndent(space, fileType);
-        indent = indent.add(indentShift);
-        String newSpace = codeStyleManager.fillIndent(indent, fileType);
-        document.replaceString(offset, offset1, newSpace);
-        chars = document.getCharsSequence();
-        offset += newSpace.length();
-        endOffset += newSpace.length() - space.length();
+      if (indentAdjustmentAnchorLine >= 0) {
+        pastedLinesAfterIndentLine++;
+        continue;
+      }
+
+      int j = CharArrayUtil.shiftForward(chars, lineStartOffset, " \t");
+      if (j < document.getLineEndOffset(line)) {
+        // Non-empty line is found
+        indentAdjustmentAnchorLine = line;
+      }
+    }
+
+    if (indentAdjustmentAnchorLine < 0) {
+      codeStyleManager.adjustLineIndent(file, startOffset);
+      return;
+    }
+
+    int lineAdjustmentStartOffset; // Start offset of the range which indent will be adjusted
+    final int anchorLineStart = document.getLineStartOffset(indentAdjustmentAnchorLine);
+    int lineAdjustmentEndOffset = CharArrayUtil.shiftForward(chars, anchorLineStart, " \t");
+    
+    if (onNewLine) {
+      lineAdjustmentStartOffset = nonWsOffset + 1;
+    }
+    else {
+      lineAdjustmentStartOffset = anchorLineStart;
+    }
+    codeStyleManager.adjustLineIndent(file, new TextRange(lineAdjustmentStartOffset, lineAdjustmentEndOffset));
+    int diff = lineAdjustmentEndOffset - CharArrayUtil.shiftForward(chars, anchorLineStart, " \t") - diffShift;
+    if (diff > 0) {
+      // Indent was cut.
+      for (int line = indentAdjustmentAnchorLine + 1, max = line + pastedLinesAfterIndentLine; line < max; line++) {
+        int lineStartOffset = document.getLineStartOffset(line);
+        int indentOffset = CharArrayUtil.shiftForward(chars, lineStartOffset, " \t");
+        int symbolsToCutNow = Math.min(diff, indentOffset - lineStartOffset);
+        document.deleteString(lineStartOffset, lineStartOffset + symbolsToCutNow);
+      }
+    }
+    else if (diff < 0) {
+      final CharSequence toInsert = chars.subSequence(anchorLineStart, anchorLineStart - diff);
+      for (int line = indentAdjustmentAnchorLine + 1, max = line + pastedLinesAfterIndentLine; line < max; line++) {
+        document.insertString(document.getLineStartOffset(line), toInsert);
       }
     }
   }
