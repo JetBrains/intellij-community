@@ -56,3 +56,17 @@ class M {
      return (L) t; //this should NOT generate unchecked cast
   }
 }
+
+class UncheckedCastFalsePositive {
+
+    public static void method(Object something) {
+        if (something instanceof NumberList) {
+            NumberList<? extends Number> <warning descr="Variable 'numberList' is never used">numberList</warning> = (NumberList<?  extends Number>) something;
+        }
+
+    }
+
+    public static class NumberList<E extends Number> extends ArrayList<E> {
+    }
+
+}

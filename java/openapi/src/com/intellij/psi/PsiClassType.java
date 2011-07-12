@@ -119,7 +119,7 @@ public abstract class PsiClassType extends PsiType {
   }
 
   /**
-   * Checks if the class type has any parameters which are not unbounded wildcards
+   * Checks if the class type has any parameters which are not unbounded wildcards (and not extends-wildcard with the same bound as corresponding type parameter bound)
    * and do not have substituted arguments.
    *
    * @return true if the class type has nontrivial non-substituted parameters, false otherwise
@@ -131,7 +131,17 @@ public abstract class PsiClassType extends PsiType {
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
       PsiType type = resolveResult.getSubstitutor().substitute(parameter);
       if (type != null) {
-        if (!(type instanceof PsiWildcardType) || ((PsiWildcardType)type).getBound() != null) {
+        if (!(type instanceof PsiWildcardType)) {
+          return true;
+        }
+        final PsiType bound = ((PsiWildcardType)type).getBound();
+        if (bound != null) {
+          if (((PsiWildcardType)type).isExtends()) {
+            final PsiClass superClass = parameter.getSuperClass();
+            if (superClass != null && PsiUtil.resolveClassInType(bound) == superClass) {
+              continue;
+            }
+          }
           return true;
         }
       }
