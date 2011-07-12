@@ -58,10 +58,15 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
               TextRange trStart = new TextRange(myLength, myLength+quoteCount);
               TextRange trEnd = new TextRange(stringText.length()+myLength-quoteCount,
                                               stringText.length()+myLength);
-              holder.registerProblem(string, trStart,
-                                     PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix(myModificator));
-              holder.registerProblem(string, trEnd,
-                                     PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix(myModificator));
+              if (string.getStringValue().isEmpty())
+                holder.registerProblem(string, PyBundle.message("INSP.message.single.quoted.docstring"),
+                                       new ConvertDocstringQuickFix(myModificator));
+              else {
+                holder.registerProblem(string, trStart,
+                                       PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix(myModificator));
+                holder.registerProblem(string, trEnd,
+                                       PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix(myModificator));
+              }
             }
           }
         }
