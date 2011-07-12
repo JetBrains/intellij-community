@@ -45,15 +45,24 @@ class ClassPath {
 
   @NonNls private static final String FILE_PROTOCOL = "file";
   private static final boolean myDebugTime = false;
+  private static final boolean ourDumpOrder = "true".equals(System.getProperty("idea.dump.order"));
+
   private final boolean myCanLockJars;
   private final boolean myCanUseCache;
   private static final long NS_THRESHOLD = 10000000L;
 
   private static PrintStream ourOrder;
+  private static long ourOrderSize;
+
   private final boolean myAcceptUnescapedUrls;
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  private static void printOrder(Loader loader, String resource) {
+  private static void printOrder(Loader loader, String url, Resource resource) {
+    try {
+      ourOrderSize += resource.getContentLength();
+    }
+    catch (IOException e) {
+      System.out.println(e);
+    }
     if (ourOrder == null) {
       final File orderFile = new File(PathManager.getBinPath() + File.separator + "order.txt");
       try {
@@ -62,6 +71,7 @@ class ClassPath {
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
           public void run() {
             ourOrder.close();
+            System.out.println(ourOrderSize);
           }
         });
       }
@@ -74,7 +84,7 @@ class ClassPath {
       String jarURL = FileUtil.toSystemIndependentName(loader.getBaseURL().getFile());
       jarURL = jarURL.replaceFirst(FileUtil.toSystemIndependentName(PathManager.getHomePath()), "");
       jarURL = StringUtil.trimEnd(StringUtil.trimStart(jarURL, "file:/"), "!/");
-      ourOrder.println(resource + ":" + jarURL);
+      ourOrder.println(url + ":" + jarURL);
     }
   }
 
@@ -104,7 +114,9 @@ class ClassPath {
         for (Loader loader : loaders) {
           final Resource resource = loader.getResource(s, flag);
           if (resource != null) {
-            //printOrder(loader, s);
+            if (ourDumpOrder) {
+              printOrder(loader, s, resource);
+            }
             return resource;
           }
         }

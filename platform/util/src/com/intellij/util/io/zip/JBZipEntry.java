@@ -538,4 +538,9 @@ public class JBZipEntry implements Cloneable {
       addDummyByte = true;
     }
   }
+
+  @Override
+  public String toString() {
+    return name;
+  }
 }

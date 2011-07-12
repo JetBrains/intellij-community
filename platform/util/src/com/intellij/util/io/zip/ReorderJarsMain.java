@@ -37,12 +37,12 @@ public class ReorderJarsMain {
     final String orderTxtPath = args[0];
     final String jarsPath = args[1];
     final String destinationHomePath = args[2];
-    final String libPath = args[3];
+    final String libPath = args.length > 3 ? args[3] : null;
 
     try {
       final Map<String, List<String>> toReorder = getOrder(new File(orderTxtPath));
 
-      final Set<String> ignoredJars = loadIgnoredJars(libPath);
+      final Set<String> ignoredJars = libPath == null ? Collections.<String>emptySet() : loadIgnoredJars(libPath);
 
       for (String jarUrl : toReorder.keySet()) {
 
@@ -72,7 +72,6 @@ public class ReorderJarsMain {
         for (JBZipEntry entry : entries) {
           final JBZipEntry zipEntry = file.getOrCreateEntry(entry.getName());
           zipEntry.setData(entry.getData());
-  
         }
         file.close();
 
@@ -81,7 +80,6 @@ public class ReorderJarsMain {
         FileUtil.rename(tempJarFile, resultJarFile);
         FileUtil.delete(tempJarFile);
       }
-      System.exit(0);
     }
     catch (IOException e) {
       e.printStackTrace();
