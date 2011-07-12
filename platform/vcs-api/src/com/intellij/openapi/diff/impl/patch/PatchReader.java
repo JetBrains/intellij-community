@@ -294,13 +294,15 @@ public class PatchReader {
       PatchHunk hunk = new PatchHunk(startLineBefore-1, startLineBefore+linesBefore-1, startLineAfter-1, startLineAfter+linesAfter-1);
 
       PatchLine lastLine = null;
+      int numLines = linesBefore + linesAfter;
       while (iterator.hasNext()) {
         String hunkCurLine = iterator.next();
+        -- numLines;
         if (lastLine != null && hunkCurLine.startsWith(NO_NEWLINE_SIGNATURE)) {
           lastLine.setSuppressNewLine(true);
           continue;
         }
-        if (hunkCurLine.startsWith("--- ")) {
+        if (hunkCurLine.startsWith("--- ") && numLines == 0) {
           iterator.previous();
           break;
         }
@@ -355,6 +357,7 @@ public class PatchReader {
       while (iterator.hasNext()) {
         String curLine = iterator.next();
         if (curLine.startsWith(CONTEXT_FILE_PREFIX)) {
+          iterator.previous();
           return null;
         }
         if (curLine.startsWith(CONTEXT_HUNK_PREFIX)) {
