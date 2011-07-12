@@ -37,7 +37,7 @@ public class PyPushDownDialog extends RefactoringDialog {
   }
 
   protected String getHelpId() {
-    return "refactoring.pushMembersDown";
+    return "python.reference.pushMembersDown";
   }
 
   @Override

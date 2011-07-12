@@ -41,6 +41,6 @@ public class ConstantIntroduceHandler extends IntroduceHandler {
 
   @Override
   protected String getHelpId() {
-    return "refactoring.introduceConstant";
+    return "python.reference.introduceConstant";
   }
 }

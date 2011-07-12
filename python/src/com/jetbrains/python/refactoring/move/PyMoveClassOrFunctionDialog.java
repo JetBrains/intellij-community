@@ -69,7 +69,7 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
 
   @Override
   protected String getHelpId() {
-    return "refactoring.moveClass";
+    return "python.reference.moveClass";
   }
 
   private static String getContainingFileName(PsiElement element) {

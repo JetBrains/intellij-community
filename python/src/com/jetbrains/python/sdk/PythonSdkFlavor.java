@@ -20,7 +20,7 @@ public abstract class PythonSdkFlavor {
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
   public static String appendSystemPythonPath(String pythonPath) {
-    String syspath = systemPythonPath();
+    String syspath = System.getenv(PYTHONPATH);
     if (syspath != null) {
       pythonPath += File.pathSeparator + syspath;
     }
@@ -127,11 +127,6 @@ public abstract class PythonSdkFlavor {
     else {
       envs.put(key, value);
     }
-  }
-
-  @Nullable
-  public static String systemPythonPath() {
-    return System.getenv(PYTHONPATH);
   }
 
   public static final String PYTHONPATH = "PYTHONPATH";

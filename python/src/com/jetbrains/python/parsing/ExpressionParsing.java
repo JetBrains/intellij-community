@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyBundle.message;
 
@@ -309,8 +310,10 @@ public class ExpressionParsing extends Parsing {
         }
         else if (tokenType == PyTokenTypes.LBRACKET) {
           myBuilder.advanceLexer();
+          PsiBuilder.Marker sliceOrTupleStart = myBuilder.mark();
           PsiBuilder.Marker sliceItemStart = myBuilder.mark();
           if (atToken(PyTokenTypes.COLON)) {
+            sliceOrTupleStart.drop();
             PsiBuilder.Marker sliceMarker = myBuilder.mark();
             sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
             parseSliceEnd(expr, sliceItemStart);
@@ -318,13 +321,22 @@ public class ExpressionParsing extends Parsing {
           else {
             parseSingleExpression(false);
             if (atToken(PyTokenTypes.COLON)) {
+              sliceOrTupleStart.drop();
               parseSliceEnd(expr, sliceItemStart);
             }
             else if (atToken(PyTokenTypes.COMMA)) {
               sliceItemStart.done(PyElementTypes.SLICE_ITEM);
-              parseSliceListTail(expr);
+              if (!parseSliceListTail(expr, sliceOrTupleStart)) {
+                sliceOrTupleStart.rollbackTo();
+                if (!parseTupleExpression(false, false, false)) {
+                  myBuilder.error("tuple expression expected");
+                }
+                checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
+                expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
+              }
             }
             else {
+              sliceOrTupleStart.drop();
               sliceItemStart.drop();
               checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
               expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
@@ -385,15 +397,17 @@ public class ExpressionParsing extends Parsing {
       }
     }
 
-    parseSliceListTail(exprStart);
+    parseSliceListTail(exprStart, null);
   }
 
-  private void parseSliceListTail(PsiBuilder.Marker exprStart) {
+  private boolean parseSliceListTail(PsiBuilder.Marker exprStart, @Nullable PsiBuilder.Marker sliceOrTupleStart) {
+    boolean inSlice = sliceOrTupleStart == null;
     while (atToken(PyTokenTypes.COMMA)) {
       nextToken();
       PsiBuilder.Marker sliceItemStart = myBuilder.mark();
       parseTestExpression(false, false);
       if (matchToken(PyTokenTypes.COLON)) {
+        inSlice = true;
         parseTestExpression(false, false);
         if (matchToken(PyTokenTypes.COLON)) {
           parseTestExpression(false, false);
@@ -407,7 +421,13 @@ public class ExpressionParsing extends Parsing {
     }
     checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
 
-    exprStart.done(PyElementTypes.SLICE_EXPRESSION);
+    if (inSlice) {
+      if (sliceOrTupleStart != null) {
+        sliceOrTupleStart.drop();
+      }
+      exprStart.done(PyElementTypes.SLICE_EXPRESSION);
+    }
+    return inSlice;
   }
 
   public void parseArgumentList() {
