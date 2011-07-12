@@ -187,7 +187,7 @@ public class XmlCompletionContributor extends CompletionContributor {
   @Override
   public String advertise(@NotNull final CompletionParameters parameters) {
     if (isXmlNameCompletion(parameters) && parameters.getCompletionType() == CompletionType.BASIC) {
-      if (FeatureUsageTracker.getInstance().isToBeShown(TAG_NAME_COMPLETION_FEATURE, parameters.getPosition().getProject())) {
+      if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(TAG_NAME_COMPLETION_FEATURE, parameters.getPosition().getProject())) {
         final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
         if (shortcut != null) {
           return XmlBundle.message("tag.name.completion.hint", shortcut);

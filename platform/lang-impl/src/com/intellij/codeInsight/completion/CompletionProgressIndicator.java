@@ -24,6 +24,7 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -158,12 +159,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (isAutopopupCompletion()) {
       if (shouldFocusLookup(myParameters)) {
         myLookup.setFocused(true);
-      } else {
+      } else if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER, getProject())) {
         myLookup.addAdvertisement("Press " +
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
                                       " to choose the first suggestion");
       }
-      if (!myEditor.isOneLineMode()) {
+      if (!myEditor.isOneLineMode() &&
+          FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS, getProject())) {
         myLookup.addAdvertisement(CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_DOWN) + " and " +
                                   CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_UP) +
                                   " will move caret down and up in the editor");

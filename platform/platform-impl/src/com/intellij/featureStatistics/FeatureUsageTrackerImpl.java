@@ -34,7 +34,8 @@ import java.util.Set;
         id = "other",
         file = "$APP_CONFIG$/feature.usage.statistics.xml")})
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
-  private static final long DAY = 1000 * 60 * 60 * 24;
+  private static final int HOUR = 1000 * 60 * 60;
+  private static final long DAY = HOUR * 24;
   private long FIRST_RUN_TIME = 0;
   boolean HAVE_BEEN_SHOWN = false;
 
@@ -51,17 +52,11 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     myRegistry = productivityFeaturesRegistry;
   }
 
-  String[] getFeaturesToShow(Project project) {
-    List<String> result = new ArrayList<String>();
-    for (String id : ProductivityFeaturesRegistry.getInstance().getFeatureIds()) {
-      if (isToBeShown(id, project)) {
-        result.add(id);
-      }
-    }
-    return ArrayUtil.toStringArray(result);
+  public boolean isToBeShown(String featureId, Project project) {
+    return isToBeShown(featureId, project, DAY);
   }
 
-  public boolean isToBeShown(String featureId, Project project) {
+  private boolean isToBeShown(String featureId, Project project, final long timeUnit) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
     if (descriptor == null || !descriptor.isUnused()) return false;
@@ -81,12 +76,17 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     }
 
     long current = System.currentTimeMillis();
-    long succesive_interval = descriptor.getDaysBetweenSuccesiveShowUps() * DAY + descriptor.getShownCount() * 2;
-    long firstShowUpInterval = descriptor.getDaysBeforeFirstShowUp() * DAY;
+    long succesive_interval = descriptor.getDaysBetweenSuccesiveShowUps() * timeUnit + descriptor.getShownCount() * 2;
+    long firstShowUpInterval = descriptor.getDaysBeforeFirstShowUp() * timeUnit;
     long lastTimeUsed = descriptor.getLastTimeUsed();
     long lastTimeShown = descriptor.getLastTimeShown();
     return lastTimeShown == 0 && firstShowUpInterval + getFirstRunTime() < current ||
            lastTimeShown > 0 && current - lastTimeShown > succesive_interval && current - lastTimeUsed > succesive_interval;
+  }
+
+  @Override
+  public boolean isToBeAdvertisedInLookup(@NonNls String featureId, Project project) {
+    return isToBeShown(featureId, project, HOUR);
   }
 
   public long getFirstRunTime() {

@@ -31,4 +31,7 @@ public interface CodeCompletionFeatures {
   @NonNls String EDITING_COMPLETION_REPLACE = "editing.completion.replace";
   @NonNls String EDITING_COMPLETION_FINISH_BY_DOT_ETC = "editing.completion.finishByDotEtc";
   @NonNls String EDITING_COMPLETION_FINISH_BY_SMART_ENTER = "editing.completion.finishBySmartEnter";
+
+  @NonNls String EDITING_COMPLETION_CONTROL_ENTER = "editing.completion.finishByControlEnter";
+  @NonNls String EDITING_COMPLETION_CONTROL_ARROWS = "editing.completion.cancelByControlArrows";
 }
