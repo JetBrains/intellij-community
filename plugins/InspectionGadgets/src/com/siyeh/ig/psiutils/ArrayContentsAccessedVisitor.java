@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,13 +42,9 @@ class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression)qualifier;
         final PsiElement target = referenceExpression.resolve();
-        if(target == null){
-            return;
+        if (variable.equals(target)) {
+            accessed = true;
         }
-        if(!target.equals(variable)){
-            return;
-        }
-        accessed = true;
     }
 
     @Override public void visitArrayAccessExpression(
@@ -73,10 +70,7 @@ class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression)arrayExpression;
         final PsiElement target = referenceExpression.resolve();
-        if(target == null){
-            return;
-        }
-        if(target.equals(variable)){
+        if(variable.equals(target)){
             accessed = true;
         }
     }
@@ -98,10 +92,36 @@ class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression) qualifier;
         final PsiElement target = referenceExpression.resolve();
-        if(target == null){
+        if(variable.equals(target)){
+            accessed = true;
+        }
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        if(accessed){
             return;
         }
-        if(target.equals(variable)){
+        super.visitMethodCallExpression(expression);
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
+        final String methodName = methodExpression.getReferenceName();
+        if(!HardcodedMethodConstants.CLONE.equals(methodName)){
+            return;
+        }
+        final PsiExpressionList argumentList = expression.getArgumentList();
+        if(argumentList.getExpressions().length != 0){
+            return;
+        }
+        final PsiExpression qualifier =
+                methodExpression.getQualifierExpression();
+        if(!(qualifier instanceof PsiReferenceExpression)){
+            return;
+        }
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression) qualifier;
+        final PsiElement target = referenceExpression.resolve();
+        if(variable.equals(target)){
             accessed = true;
         }
     }
