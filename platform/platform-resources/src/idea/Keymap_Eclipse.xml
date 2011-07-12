@@ -22,7 +22,9 @@
       <keyboard-shortcut first-keystroke="shift alt C" />
     </action>
     <action id="CheckinProject" />
-    <action id="CloseActiveTab" />
+    <action id="CloseActiveTab">
+      <keyboard-shortcut first-keystroke="control W" />
+    </action>
     <action id="CloseAllEditors">
       <keyboard-shortcut first-keystroke="shift control F4" />
       <keyboard-shortcut first-keystroke="shift control W" />
@@ -140,6 +142,7 @@
     </action>
     <action id="GotoDeclaration">
       <keyboard-shortcut first-keystroke="F3" />
+      <mouse-shortcut keystroke="ctrl button1"/>
     </action>
     <action id="GotoFile">
       <keyboard-shortcut first-keystroke="shift control R" />
