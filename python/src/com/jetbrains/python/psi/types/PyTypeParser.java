@@ -12,7 +12,10 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -172,15 +175,15 @@ public class PyTypeParser {
   }
 
   public static Map<TextRange, PyType> parseDocstring(PsiElement anchor, String docstring, int position) {
+    int length = docstring.length();
+    docstring = StringUtil.replace(docstring, ":py:class:", "");
+    docstring = StringUtil.replace(docstring, ":class:", "");
+    docstring = docstring.replaceAll("`([^`]+)`", "$1");
     PyType type = getTypeByName(anchor, docstring);
     Map<TextRange, PyType> res = new HashMap<TextRange, PyType>();
 
-    if (type instanceof PyClassType && type.getName() != null) {
-      String name = type.getName();
-      if (type instanceof PyTupleType)
-        name = docstring;
-      res.put(new TextRange(position, position + name.length()), type);
-    }
+    if (type instanceof PyClassType && type.getName() != null)
+      res.put(new TextRange(position, position + length), type);
 
     if (type instanceof PyUnionType) {
       List<PyType> types = ((PyUnionType)type).getMembers();
