@@ -14,7 +14,7 @@ public class PythonDocCommentUtil {
   private PythonDocCommentUtil() {
   }
 
-  static public boolean inDocComment(PsiElement element) {
+  static public boolean atDocCommentStart(PsiElement element, int offset) {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
     if (string != null) {
       PyElement func = PsiTreeUtil.getParentOfType(element, PyFunction.class, PyClass.class, PyFile.class);
@@ -26,15 +26,17 @@ public class PythonDocCommentUtil {
           String text = element.getText();
           if (str != null && text.equals(str.getText()) &&
                       (text.startsWith("\"\"\"") || text.startsWith("'''"))) {
-            PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(string, PsiErrorElement.class);
-            if (error != null)
-              return true;
-            error = PsiTreeUtil.getNextSiblingOfType(string.getParent(), PsiErrorElement.class);
-            if (error != null)
-              return true;
+            if (offset == str.getTextRange().getStartOffset()) {
+              PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(string, PsiErrorElement.class);
+              if (error != null)
+                return true;
+              error = PsiTreeUtil.getNextSiblingOfType(string.getParent(), PsiErrorElement.class);
+              if (error != null)
+                return true;
 
-            if (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''")))
-              return true;
+              if (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''")))
+                return true;
+            }
           }
         }
       }

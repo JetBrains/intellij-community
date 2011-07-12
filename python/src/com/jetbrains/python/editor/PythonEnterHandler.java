@@ -63,7 +63,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       PsiElement comment = element;
       if (comment == null && offset != 0)
         comment = file.findElementAt(offset-1);
-      if (PythonDocCommentUtil.inDocComment(comment)) {
+      int expectedStringStart = editor.getCaretModel().getOffset()-3; // """ or '''
+      if (PythonDocCommentUtil.atDocCommentStart(comment, expectedStringStart)) {
         insertDocStringStub(editor, comment);
         return Result.Continue;
       }

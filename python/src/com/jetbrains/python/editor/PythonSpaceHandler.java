@@ -43,7 +43,8 @@ public class PythonSpaceHandler extends SpaceHandler {
         PsiElement element = file.findElementAt(offset);
         if (element == null && offset > 1)
           element = file.findElementAt(offset-2);
-        if (PythonDocCommentUtil.inDocComment(element)) {
+        int expectedStringStart = editor.getCaretModel().getOffset()-4;        // """ or ''' plus space char
+        if (PythonDocCommentUtil.atDocCommentStart(element, expectedStringStart)) {
           PythonDocumentationProvider provider = new PythonDocumentationProvider();
           PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
           if (fun != null) {
