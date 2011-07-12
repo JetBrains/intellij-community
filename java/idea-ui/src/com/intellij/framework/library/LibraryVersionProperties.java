@@ -18,6 +18,7 @@ package com.intellij.framework.library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author nik
@@ -28,7 +29,7 @@ public class LibraryVersionProperties extends LibraryProperties<LibraryVersionPr
   public LibraryVersionProperties() {
   }
 
-  public LibraryVersionProperties(String versionString) {
+  public LibraryVersionProperties(@Nullable String versionString) {
     myVersionString = versionString;
   }
 

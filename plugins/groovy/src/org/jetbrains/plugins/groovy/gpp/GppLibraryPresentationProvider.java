@@ -50,7 +50,7 @@ public class GppLibraryPresentationProvider extends GroovyLibraryPresentationPro
   protected void fillLibrary(String path, LibraryEditor libraryEditor) {
     File lib = new File(path + "/lib");
     if (lib.exists()) {
-      libraryEditor.addJarDirectory(VfsUtil.getUrlForLibraryRoot(lib), false);
+      libraryEditor.addJarDirectory(VfsUtil.getUrlForLibraryRoot(lib), false, OrderRootType.CLASSES);
     }
 
     File srcRoot = new File(path + "/src");

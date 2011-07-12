@@ -37,10 +37,6 @@ public interface LibraryEditor {
 
   void addRoot(String url, OrderRootType rootType);
 
-  void addJarDirectory(VirtualFile file, boolean recursive);
-
-  void addJarDirectory(String url, boolean recursive);
-
   void addJarDirectory(VirtualFile file, boolean recursive, OrderRootType rootType);
 
   void addJarDirectory(String url, boolean recursive, OrderRootType rootType);
@@ -51,8 +47,6 @@ public interface LibraryEditor {
 
   boolean hasChanges();
 
-  boolean isJarDirectory(String url);
-
   boolean isJarDirectory(String url, OrderRootType rootType);
 
   boolean isValid(String url, OrderRootType orderRootType);
@@ -60,5 +54,5 @@ public interface LibraryEditor {
   LibraryProperties getProperties();
 
   @Nullable
-  LibraryType getType();
+  LibraryType<?> getType();
 }

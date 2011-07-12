@@ -400,6 +400,13 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return myProperties;
   }
 
+  @Override
+  public void setType(LibraryType<?> type) {
+    LOG.assertTrue(isWritable());
+    LOG.assertTrue(myType == null || myType.equals(type), "Library type cannot be changed from " + myType + " to " + type);
+    myType = type;
+  }
+
   public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     LOG.assertTrue(isWritable());
     assert !isDisposed();
@@ -530,6 +537,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         ((LibraryTableBase)myLibraryTable).fireLibraryRenamed(this);
       }
     }
+    myType = fromModel.myType;
     myProperties = fromModel.myProperties;
     if (areRootsChanged(fromModel)) {
       disposeMyPointers();

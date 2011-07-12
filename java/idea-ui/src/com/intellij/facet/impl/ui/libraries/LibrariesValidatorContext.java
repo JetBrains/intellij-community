@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public interface LibrariesValidatorContext {
-  @Nullable
+  @NotNull
   ModuleRootModel getRootModel();
 
   @Nullable

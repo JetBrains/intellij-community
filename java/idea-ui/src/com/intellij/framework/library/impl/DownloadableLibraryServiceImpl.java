@@ -18,9 +18,12 @@ package com.intellij.framework.library.impl;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryService;
 import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.framework.library.LibraryVersionProperties;
 import com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
+import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,5 +47,13 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
     final DownloadableLibraryType libraryType = LibraryType.EP_NAME.findExtension(typeClass);
     LOG.assertTrue(libraryType != null, typeClass);
     return new CustomLibraryDescriptionImpl(libraryType);
+  }
+
+  @NotNull
+  @Override
+  public LibraryPropertiesEditor createDownloadableLibraryEditor(@NotNull DownloadableLibraryDescription description,
+                                                                 @NotNull LibraryEditorComponent<LibraryVersionProperties> editorComponent,
+                                                                 @NotNull DownloadableLibraryType libraryType) {
+    return new DownloadableLibraryEditor(description, editorComponent, libraryType);
   }
 }

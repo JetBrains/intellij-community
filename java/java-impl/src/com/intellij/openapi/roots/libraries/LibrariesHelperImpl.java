@@ -21,6 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * author: lesya
@@ -29,11 +33,13 @@ public class LibrariesHelperImpl extends LibrariesHelper {
 
   @Override
   public VirtualFile findJarByClass(Library library, @NonNls String fqn) {
-    return library == null ? null : findJarByClass(library.getFiles(OrderRootType.CLASSES), fqn);
+    return library == null ? null : findRootByClass(Arrays.asList(library.getFiles(OrderRootType.CLASSES)), fqn);
   }
 
-  private VirtualFile findJarByClass(VirtualFile[] files, String fqn) {
-    for (VirtualFile file : files) {
+  @Nullable
+  @Override
+  public VirtualFile findRootByClass(List<VirtualFile> roots, String fqn) {
+    for (VirtualFile file : roots) {
       if (findInFile(file, new StringTokenizer(fqn, "."))) return file;
     }
     return null;

@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.libraries;
+package com.intellij.facet.ui.libraries;
 
-import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
+import com.intellij.facet.ui.FacetEditorValidator;
 
 /**
  * @author nik
  */
-public abstract class LibraryFilter {
-
-  public abstract boolean isSuitableLibrary(@NotNull List<VirtualFile> classesRoots, @Nullable LibraryType<?> type);
-
+public abstract class FrameworkLibraryValidator extends FacetEditorValidator {
 }

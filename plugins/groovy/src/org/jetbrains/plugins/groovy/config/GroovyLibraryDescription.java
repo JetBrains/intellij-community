@@ -19,10 +19,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
-import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
@@ -35,18 +32,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
 * @author nik
 */
 public class GroovyLibraryDescription extends CustomLibraryDescription {
   private static final String GROOVY_FRAMEWORK_NAME = "Groovy";
-  private final LibraryFilter myCondition;
   private String myEnvVariable;
+  private final Set<? extends LibraryKind<?>> myLibraryKinds;
   private final String myFrameworkName;
 
   public GroovyLibraryDescription() {
@@ -69,13 +63,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   private GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind<?>> libraryKinds, String frameworkName) {
     myEnvVariable = envVariable;
-    myCondition = new LibraryFilter() {
-      @Override
-      public boolean isSuitableLibrary(@NotNull List<VirtualFile> classesRoots,
-                                       @Nullable LibraryType<?> type) {
-        return LibraryPresentationManager.getInstance().isLibraryOfKind(classesRoots, libraryKinds);
-      }
-    };
+    myLibraryKinds = libraryKinds;
     myFrameworkName = frameworkName;
   }
 
@@ -100,8 +88,8 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @NotNull
   @Override
-  public LibraryFilter getSuitableLibraryFilter() {
-    return myCondition;
+  public Set<? extends LibraryKind<?>> getSuitableLibraryKinds() {
+    return myLibraryKinds;
   }
 
   @Override

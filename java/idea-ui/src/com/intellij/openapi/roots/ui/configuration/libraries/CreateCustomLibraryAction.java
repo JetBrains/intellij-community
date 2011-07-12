@@ -25,13 +25,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ import java.util.*;
  * @author nik
  */
 public class CreateCustomLibraryAction extends CustomLibraryActionBase {
-  public CreateCustomLibraryAction(final String name, CustomLibraryCreator creator,
+  private CreateCustomLibraryAction(final String name, CustomLibraryCreator creator,
                                    StructureConfigurableContext context,
                                    ModuleStructureConfigurable moduleStructureConfigurable, Module module) {
     super(name, null, creator.getIcon(), context, moduleStructureConfigurable, creator, module);
@@ -81,16 +82,17 @@ public class CreateCustomLibraryAction extends CustomLibraryActionBase {
     if (module == null) return Collections.emptyList();
 
     final List<AnAction> actions = new ArrayList<AnAction>();
+    final LibrariesContainer container = LibrariesContainerFactory.createContainer(context);
     for (CustomLibraryCreator creator : CustomLibraryCreator.EP_NAME.getExtensions()) {
       List<Library> libraries = new ArrayList<Library>();
       Collections.addAll(libraries, context.getProjectLibrariesProvider().getModifiableModel().getLibraries());
       Collections.addAll(libraries, context.getGlobalLibrariesProvider().getModifiableModel().getLibraries());
 
-      final LibraryFilter condition = creator.getDescription().getSuitableLibraryFilter();
+      final Set<? extends LibraryKind<?>> suitableKinds = creator.getDescription().getSuitableLibraryKinds();
       Predicate<Library> suitablePredicate = new Predicate<Library>() {
         @Override
         public boolean apply(Library input) {
-          return condition.isSuitableLibrary(Arrays.asList(context.getLibraryFiles(input, OrderRootType.CLASSES)), ((LibraryEx)input).getType());
+          return LibraryPresentationManager.getInstance().isLibraryOfKind(input, container, suitableKinds);
         }
       };
       final Predicate<Library> notAddedLibrariesCondition = LibraryEditingUtil.getNotAddedLibrariesCondition(context.getModulesConfigurator().getRootModel(module));

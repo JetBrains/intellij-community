@@ -15,31 +15,27 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
-import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 
 /**
  * @author nik
  */
 public abstract class CustomLibraryDescription {
   @Nullable
-  public DownloadableLibraryDescription getDownloadableDescription() {
-    return null;
-  }
-
-  @Nullable
   public DownloadableLibraryType getDownloadableLibraryType() {
     return null;
   }
 
   @NotNull
-  public abstract LibraryFilter getSuitableLibraryFilter();
+  public abstract Set<? extends LibraryKind<?>> getSuitableLibraryKinds();
 
   @Nullable
   public abstract NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, @Nullable VirtualFile contextDirectory);

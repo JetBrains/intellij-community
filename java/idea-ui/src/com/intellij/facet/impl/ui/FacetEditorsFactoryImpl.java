@@ -23,12 +23,29 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.MultipleFacetEditorHelper;
 import com.intellij.facet.ui.libraries.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class FacetEditorsFactoryImpl extends FacetEditorsFactory {
+  public static FacetEditorsFactoryImpl getInstanceImpl() {
+    return (FacetEditorsFactoryImpl)getInstance();
+  }
+
+  public FrameworkLibraryValidator createLibraryValidator(@NotNull CustomLibraryDescription libraryDescription,
+                                                          @NotNull FacetEditorContext context,
+                                                          @NotNull FacetValidatorsManager validatorsManager,
+                                                          @NotNull String libraryCategory) {
+    return createLibraryValidator(libraryDescription, new DelegatingLibrariesValidatorContext(context), validatorsManager, libraryCategory);
+  }
+  public FrameworkLibraryValidator createLibraryValidator(@NotNull CustomLibraryDescription libraryDescription,
+                                                          @NotNull LibrariesValidatorContext context,
+                                                          @NotNull FacetValidatorsManager validatorsManager,
+                                                          @NotNull String libraryCategory) {
+    return new FrameworkLibraryValidatorImpl(libraryDescription, context, validatorsManager, libraryCategory);
+  }
 
   public FacetLibrariesValidator createLibrariesValidator(@NotNull final LibraryInfo[] libraries, final FacetLibrariesValidatorDescription description,
                                                           final FacetEditorContext context,

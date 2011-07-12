@@ -15,7 +15,6 @@
  */
 package com.intellij.framework.library;
 
-import com.intellij.framework.library.impl.DownloadableLibraryEditor;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
@@ -44,6 +43,7 @@ public class DownloadableLibraryType extends LibraryType<LibraryVersionPropertie
     return null;
   }
 
+  @NotNull
   public DownloadableLibraryDescription getLibraryDescription() {
     return myLibraryDescription;
   }
@@ -66,7 +66,7 @@ public class DownloadableLibraryType extends LibraryType<LibraryVersionPropertie
 
   @Override
   public LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<LibraryVersionProperties> editorComponent) {
-    return new DownloadableLibraryEditor(myLibraryDescription, editorComponent, this);
+    return DownloadableLibraryService.getInstance().createDownloadableLibraryEditor(myLibraryDescription, editorComponent, this);
   }
 
   @Override

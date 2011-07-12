@@ -55,7 +55,7 @@ public class DelegatingLibrariesValidatorContext implements LibrariesValidatorCo
     return myDelegate.getModifiableRootModel();
   }
 
-  @Nullable
+  @NotNull
   public ModuleRootModel getRootModel() {
     return myDelegate.getRootModel();
   }

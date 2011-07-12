@@ -24,10 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptor;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
@@ -132,7 +129,10 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   public void updatePropertiesLabel() {
     StringBuilder text = new StringBuilder();
-    for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES))) {
+    final LibraryType<?> type = getLibraryEditor().getType();
+    final Set<LibraryKind<?>> excluded = type != null ? Collections.<LibraryKind<?>>singleton(type.getKind()) : Collections.<LibraryKind<?>>emptySet();
+    for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
+                                                                                       excluded)) {
       if (text.length() > 0) {
         text.append("\n");
       }
