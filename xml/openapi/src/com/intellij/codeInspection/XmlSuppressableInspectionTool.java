@@ -37,7 +37,20 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     return XmlSuppressionProvider.isSuppressed(element, getID());
   }
 
-  public class SuppressTag extends SuppressIntentionAction {
+  public class SuppressTag extends SuppressTagStatic {
+
+    public SuppressTag() {
+      super(getID());
+    }
+  }
+
+  public static class SuppressTagStatic extends SuppressIntentionAction {
+
+    private String id;
+
+    public SuppressTagStatic(String id) {
+      this.id = id;
+    }
 
     @NotNull
     public String getText() {
@@ -54,7 +67,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     }
 
     public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
-      XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForTag(element, getID());
+      XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForTag(element, id);
     }
   }
 
