@@ -36,7 +36,6 @@ import com.intellij.ui.ListScrollingUtil;
  * @author yole
  */
 public abstract class LookupActionHandler extends EditorActionHandler {
-  public static boolean DEBUG = false;
   protected final EditorActionHandler myOriginalHandler;
   private final boolean myRequireFocusedLookup;
 
@@ -204,19 +203,10 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
       char c = seq.charAt(offset);
       CharFilter.Result lookupAction = TypedHandler.getLookupAction(c, lookup);
-      if (DEBUG) {
-        System.out.println("LookupActionHandler$RightHandler.executeInLookup");
-        System.out.println("c = '" + c + "'");
-        System.out.println("lookupAction = " + lookupAction);
-      }
 
       if (lookupAction != CharFilter.Result.ADD_TO_PREFIX || Character.isWhitespace(c)) {
         myOriginalHandler.execute(editor, context);
         return;
-      }
-
-      if (DEBUG) {
-        System.out.println("LookupActionHandler$RightHandler.executeInLookup2");
       }
 
       lookup.performGuardedChange(new Runnable() {

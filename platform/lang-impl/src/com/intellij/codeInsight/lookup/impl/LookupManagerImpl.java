@@ -188,10 +188,6 @@ public class LookupManagerImpl extends LookupManager {
       }
 
       private void lookupClosed() {
-        if (LookupActionHandler.DEBUG) {
-          System.out.println("LookupManagerImpl.lookupClosed");
-        }
-
         alarm.cancelAllRequests();
         if (daemonCodeAnalyzer != null) {
           daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
@@ -206,12 +202,6 @@ public class LookupManagerImpl extends LookupManager {
         myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
 
         Disposer.dispose(connector);
-        if (LookupActionHandler.DEBUG) {
-          System.out.println("LookupManagerImpl.lookupClosed2");
-          System.out.println("myActiveLookup = " + myActiveLookup);
-          System.out.println("this = " + LookupManagerImpl.this);
-          System.out.println("project = " + myProject);
-        }
       }
     });
 
