@@ -17,16 +17,25 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchEP;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author irengrig
@@ -47,7 +56,10 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
   }
 
   @Override
-  public void apply(MultiMap<VirtualFile, FilePatchInProgress> patchGroups, LocalChangeList localList, String fileName) {
+  public void apply(MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
+                    LocalChangeList localList,
+                    String fileName,
+                    TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final Collection<PatchApplier> appliers = new LinkedList<PatchApplier>();
     for (VirtualFile base : patchGroups.keySet()) {
       final PatchApplier patchApplier =
@@ -60,5 +72,43 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
       appliers.add(patchApplier);
     }
     PatchApplier.executePatchGroup(appliers);
+
+    applyAdditionalInfo(myProject, additionalInfo);
+  }
+
+  public static void applyAdditionalInfo(final Project project,
+                                          TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+    final PatchEP[] extensions = Extensions.getExtensions(PatchEP.EP_NAME, project);
+    if (extensions == null && extensions.length == 0) return;
+    if (additionalInfo != null) {
+      try {
+        final Map<String, Map<String, CharSequence>> map = additionalInfo.get();
+        for (Map.Entry<String, Map<String, CharSequence>> entry : map.entrySet()) {
+          final String path = entry.getKey();
+          final Map<String, CharSequence> innerMap = entry.getValue();
+
+          for (PatchEP extension : extensions) {
+            final CharSequence charSequence = innerMap.get(extension.getName());
+            if (charSequence != null) {
+              extension.consumeContent(path, charSequence);
+            }
+          }
+        }
+      }
+      catch (PatchSyntaxException e) {
+        VcsBalloonProblemNotifier
+          .showOverChangesView(project, "Can not apply additional patch info: " + e.getMessage(), MessageType.ERROR);
+      }
+    }
+  }
+
+  public static Set<String> pathsFromGroups(MultiMap<VirtualFile, FilePatchInProgress> patchGroups) {
+    final Set<String> selectedPaths = new HashSet<String>();
+    final Collection<? extends FilePatchInProgress> values = patchGroups.values();
+    for (FilePatchInProgress value : values) {
+      final String path = value.getPatch().getBeforeName() == null ? value.getPatch().getAfterName() : value.getPatch().getBeforeName();
+      selectedPaths.add(path);
+    }
+    return selectedPaths;
   }
 }

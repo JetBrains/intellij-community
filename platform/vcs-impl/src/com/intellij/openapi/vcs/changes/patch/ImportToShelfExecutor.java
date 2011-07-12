@@ -16,26 +16,33 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchEP;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsCatchingRunnable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author irengrig
@@ -56,7 +63,10 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
   }
 
   @Override
-  public void apply(final MultiMap<VirtualFile, FilePatchInProgress> patchGroups, LocalChangeList localList, final String fileName) {
+  public void apply(final MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
+                    LocalChangeList localList,
+                    final String fileName,
+                    final TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final VcsCatchingRunnable vcsCatchingRunnable = new VcsCatchingRunnable() {
       @Override
       public void runImpl() throws VcsException {
@@ -77,9 +87,24 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
                                                        }
                                                      }));
         }
-        if (!allPatches.isEmpty()) {
+        if (! allPatches.isEmpty()) {
+          PatchEP[] patchTransitExtensions = null;
+          if (additionalInfo != null) {
+            try {
+              final List<PatchEP> list = new ArrayList<PatchEP>();
+              for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfo.get().entrySet()) {
+                list.add(new TransitExtension(entry.getKey(), entry.getValue()));
+              }
+              patchTransitExtensions = list.toArray(new PatchEP[list.size()]);
+            }
+            catch (PatchSyntaxException e) {
+              VcsBalloonProblemNotifier
+                .showOverChangesView(myProject, "Can not import additional patch info: " + e.getMessage(), MessageType.ERROR);
+            }
+          }
           try {
-            final ShelvedChangeList shelvedChangeList = ShelveChangesManager.getInstance(myProject).importFilePatches(fileName, allPatches);
+            final ShelvedChangeList shelvedChangeList = ShelveChangesManager.getInstance(myProject).
+              importFilePatches(fileName, allPatches, patchTransitExtensions);
             ShelvedChangesViewManager.getInstance(myProject).activateView(shelvedChangeList);
           }
           catch (IOException e) {
@@ -91,6 +116,32 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(vcsCatchingRunnable, "Import patch to shelf", true, myProject);
     if (! vcsCatchingRunnable.get().isEmpty()) {
       AbstractVcsHelper.getInstance(myProject).showErrors(vcsCatchingRunnable.get(), IMPORT_TO_SHELF);
+    }
+  }
+
+  private static class TransitExtension implements PatchEP {
+    private final String myName;
+    private final Map<String, CharSequence> myMap;
+
+    private TransitExtension(String name, Map<String, CharSequence> map) {
+      myName = name;
+      myMap = map;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    public CharSequence provideContent(@NotNull String path) {
+      return myMap.get(path);
+    }
+
+    @Override
+    public void consumeContent(@NotNull String path, @NotNull CharSequence content) {
+      throw new UnsupportedOperationException();
     }
   }
 }

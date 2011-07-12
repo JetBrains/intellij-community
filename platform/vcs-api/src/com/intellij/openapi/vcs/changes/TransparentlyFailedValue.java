@@ -36,4 +36,9 @@ public class TransparentlyFailedValue<T, E extends Exception> {
     if (this.e != null) throw this.e;
     return this.t;
   }
+
+  public void take(final TransparentlyFailedValue<T,E> value) {
+    this.t = value.t;
+    this.e = value.e;
+  }
 }

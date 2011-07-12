@@ -17,7 +17,10 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.PatchReader;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.PatchVirtualFileReader;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -86,6 +89,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private boolean myContainBasedChanges;
   private JLabel myPatchFileLabel;
+  private PatchReader myReader;
 
   public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
@@ -196,7 +200,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     for (FilePatchInProgress patchInProgress : included) {
       patchGroups.putValue(patchInProgress.getBase(), patchInProgress);
     }
-    executor.apply(patchGroups, getSelectedChangeList(), myRecentPathFileChange.get().getVf().getName());
+    final LocalChangeList selected = getSelectedChangeList();
+    executor.apply(patchGroups, selected, myRecentPathFileChange.get().getVf().getName(),
+                   myReader == null ? null : myReader.getAdditionalInfo(ApplyPatchDefaultExecutor.pathsFromGroups(patchGroups)));
   }
 
   @Override
@@ -229,64 +235,42 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
       final VirtualFile file = filePresentation.getVf();
 
-      final List<TextFilePatch> patches = loadPatches(file);
-      final AutoMatchIterator autoMatchIterator = new AutoMatchIterator(myProject);
-      final List<FilePatchInProgress> matchedPathes = autoMatchIterator.execute(patches);
+      final PatchReader patchReader = loadPatches(file);
+      final List<FilePatchInProgress> matchedPathes = patchReader == null ? Collections.<FilePatchInProgress>emptyList() :
+                                                      new AutoMatchIterator(myProject).execute(patchReader.getPatches());
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           myChangeListChooser.setDefaultName(file.getNameWithoutExtension().replace('_', ' ').trim());
           myPatches.clear();
           myPatches.addAll(matchedPathes);
-
+          myReader = patchReader;
           updateTree(true);
         }
       });
     }
   }
 
-  private List<TextFilePatch> loadPatches(final VirtualFile patchFile) {
+  @Nullable
+  private PatchReader loadPatches(final VirtualFile patchFile) {
     if (! patchFile.isValid()) {
-      //todo
-      //queueUpdateStatus("Cannot find patch file");
-      return Collections.emptyList();
+      return null;
     }
     PatchReader reader;
     try {
       reader = PatchVirtualFileReader.create(patchFile);
     }
     catch (IOException e) {
-      //todo
-      //queueUpdateStatus(VcsBundle.message("patch.apply.open.error", e.getMessage()));
-      return Collections.emptyList();
+      return null;
     }
-    final List<TextFilePatch> result = new LinkedList<TextFilePatch>();
-    while(true) {
-      FilePatch patch;
-      try {
-        patch = reader.readNextPatch();
-      }
-      catch (PatchSyntaxException e) {
-        // todo
-        if (e.getLine() >= 0) {
-          //queueUpdateStatus(VcsBundle.message("patch.apply.load.error.line", e.getMessage(), e.getLine()));
-        }
-        else {
-          //queueUpdateStatus(VcsBundle.message("patch.apply.load.error", e.getMessage()));
-        }
-        return Collections.emptyList();
-      }
-      if (patch == null) {
-        break;
-      }
+    try {
+      reader.parseAllPatches();
+    }
+    catch (PatchSyntaxException e) {
+      return null;
+    }
 
-      result.add((TextFilePatch) patch);
-    }
-    if (myPatches.isEmpty()) {
-      // todo
-      //queueUpdateStatus(VcsBundle.message("patch.apply.no.patches.found"));
-    }
-    return result;
+    return reader;
   }
 
   private static class FilePresentation {

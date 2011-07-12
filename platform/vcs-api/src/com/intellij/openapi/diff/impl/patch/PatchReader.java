@@ -23,22 +23,25 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PatchReader {
   @NonNls public static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
+  private final List<String> myLines;
+  private final PatchReader.PatchContentParser myPatchContentParser;
+  private final AdditionalInfoParser myAdditionalInfoParser;
+  private List<TextFilePatch> myPatches;
 
   private enum DiffFormat { CONTEXT, UNIFIED }
 
-  private final String[] myLines;
-  private int myLineIndex = 0;
-  private DiffFormat myDiffFormat = null;
   @NonNls private static final String CONTEXT_HUNK_PREFIX = "***************";
   @NonNls private static final String CONTEXT_FILE_PREFIX = "*** ";
   @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+)(,(\\d+))? \\+(\\d+)(,(\\d+))? @@.*");
@@ -46,279 +49,455 @@ public class PatchReader {
   @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
 
   public PatchReader(CharSequence patchContent) {
-    myLines = LineTokenizer.tokenize(patchContent, false);
+    myLines = LineTokenizer.tokenizeIntoList(patchContent, false);
+    myAdditionalInfoParser = new AdditionalInfoParser();
+    myPatchContentParser = new PatchContentParser();
   }
 
   public List<TextFilePatch> readAllPatches() throws PatchSyntaxException {
-    List<TextFilePatch> result = new ArrayList<TextFilePatch>();
-    while(true) {
-      TextFilePatch patch = readNextPatch();
-      if (patch == null) break;
-      result.add(patch);
-    }
-    return result;
+    parseAllPatches();
+    return myPatches;
   }
 
-  @Nullable
-  public TextFilePatch readNextPatch() throws PatchSyntaxException {
-    while (myLineIndex < myLines.length) {
-      String curLine = myLines [myLineIndex];
-      if (curLine.startsWith("--- ") && (myDiffFormat == null || myDiffFormat == DiffFormat.UNIFIED)) {
+  public List<TextFilePatch> getPatches() {
+    return myPatches;
+  }
+
+  public void parseAllPatches() throws PatchSyntaxException {
+    final ListIterator<String> iterator = myLines.listIterator();
+    if (! iterator.hasNext()) {
+      myPatches = Collections.emptyList();
+      return;
+    }
+
+    String next;
+    boolean containsAdditional = false;
+    while (iterator.hasNext()) {
+      next = iterator.next();
+      final boolean containsAdditionalNow = myAdditionalInfoParser.testIsStart(next);
+      if (containsAdditionalNow && containsAdditional) {
+        myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), "Contains additional information without patch itself"));
+      }
+      if (containsAdditionalNow) {
+        containsAdditional = containsAdditionalNow;
+        myAdditionalInfoParser.parse(next, iterator);
+        if (! iterator.hasNext()) {
+          myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), "Contains additional information without patch itself"));
+          break;
+        }
+        next = iterator.next();
+      }
+
+      if (myPatchContentParser.testIsStart(next)) {
+        myPatchContentParser.parse(next, iterator);
+        //iterator.previous();  // to correctly initialize next
+        if (containsAdditional) {
+          final String lastName = myPatchContentParser.getLastName();
+          if (lastName == null) {
+            myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), "Contains additional information without patch itself"));
+          } else {
+            myAdditionalInfoParser.copyToResult(lastName);
+          }
+        }
+        containsAdditional = false;
+      }
+    }
+    myPatches = myPatchContentParser.getResult();
+  }
+
+  public TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(final Set<String> filterByPaths) {
+    final TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException>
+      value = new TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException>();
+
+    final Map<String, Map<String, CharSequence>> map = myAdditionalInfoParser.getResultMap();
+    final Map<String, Map<String, CharSequence>>newMap = new HashMap<String, Map<String, CharSequence>>();
+
+    for (Map.Entry<String, Map<String, CharSequence>> entry : map.entrySet()) {
+      final Map<String, CharSequence> innerMap = entry.getValue();
+      if (filterByPaths == null || filterByPaths.contains(entry.getKey())) {
+        newMap.put(entry.getKey(), innerMap);
+      }
+    }
+    value.set(newMap);
+    final PatchSyntaxException e = myAdditionalInfoParser.getSyntaxException();
+    if (e != null) {
+      value.fail(e);
+    }
+    return value;
+  }
+
+  private static class AdditionalInfoParser implements Parser {
+    // first is path!
+    private final Map<String,Map<String, CharSequence>> myResultMap;
+    private Map<String, CharSequence> myAddMap;
+    private PatchSyntaxException mySyntaxException;
+
+    private AdditionalInfoParser() {
+      myAddMap = new HashMap<String, CharSequence>();
+      myResultMap = new HashMap<String, Map<String, CharSequence>>();
+    }
+
+    public PatchSyntaxException getSyntaxException() {
+      return mySyntaxException;
+    }
+
+    public Map<String, Map<String, CharSequence>> getResultMap() {
+      return myResultMap;
+    }
+
+    public void copyToResult(final String filePath) {
+      if (myAddMap != null && ! myAddMap.isEmpty()) {
+        myResultMap.put(filePath, myAddMap);
+        myAddMap = new HashMap<String, CharSequence>();
+      }
+    }
+
+    @Override
+    public boolean testIsStart(String start) {
+      if (mySyntaxException != null) return false;  // stop on first error
+      return start != null && start.contains(UnifiedDiffWriter.ADDITIONAL_PREFIX);
+    }
+
+    @Override
+    public void parse(String start, ListIterator<String> iterator) {
+      if (! iterator.hasNext()) {
+        mySyntaxException =  new PatchSyntaxException(iterator.previousIndex(), "Empty additional info header");
+        return;
+      }
+      while (true) {
+        final String header = iterator.next();
+        final int idxHead = header.indexOf(UnifiedDiffWriter.ADD_INFO_HEADER);
+        if (idxHead == -1) {
+          if (myAddMap.isEmpty()) {
+            mySyntaxException =  new PatchSyntaxException(iterator.previousIndex(), "Empty additional info header");
+          }
+          iterator.previous();
+          return;
+        }
+
+        final String subsystem = header.substring(idxHead + UnifiedDiffWriter.ADD_INFO_HEADER.length()).trim();
+        if (! iterator.hasNext()) {
+          mySyntaxException =  new PatchSyntaxException(iterator.previousIndex(), "Empty '" + subsystem + "' data section");
+          return;
+        }
+
+        final StringBuilder sb = new StringBuilder();
+        myAddMap.put(subsystem, sb);
+        while (iterator.hasNext()) {
+          final String line = iterator.next();
+          if (! line.startsWith(UnifiedDiffWriter.ADD_INFO_LINE_START)) {
+            iterator.previous();
+            break;
+          }
+          if (sb.length() > 0) {
+            sb.append("\n");
+          }
+          sb.append(StringUtil.unescapeStringCharacters(line.substring(UnifiedDiffWriter.ADD_INFO_LINE_START.length())));
+        }
+      }
+    }
+
+    public void acceptError(PatchSyntaxException e) {
+      mySyntaxException = e;
+    }
+  }
+
+
+  private static class PatchContentParser implements Parser {
+    private DiffFormat myDiffFormat = null;
+    private final List<TextFilePatch> myPatches;
+
+    private PatchContentParser() {
+      myPatches = new SmartList<TextFilePatch>();
+    }
+
+    @Override
+    public boolean testIsStart(String start) {
+      if (start.startsWith("--- ") && (myDiffFormat == null || myDiffFormat == DiffFormat.UNIFIED)) {
         myDiffFormat = DiffFormat.UNIFIED;
-        return readPatch(curLine);
+        return true;
       }
-      else if (curLine.startsWith(CONTEXT_FILE_PREFIX) && (myDiffFormat == null || myDiffFormat == DiffFormat.CONTEXT)) {
+      else if (start.startsWith(CONTEXT_FILE_PREFIX) && (myDiffFormat == null || myDiffFormat == DiffFormat.CONTEXT)) {
         myDiffFormat = DiffFormat.CONTEXT;
-        return readPatch(curLine);
+        return true;
       }
-      myLineIndex++;
+      return false;
     }
-    return null;
-  }
 
-  private TextFilePatch readPatch(String curLine) throws PatchSyntaxException {
-    final TextFilePatch curPatch;
-    curPatch = new TextFilePatch();
-    extractFileName(curLine, curPatch, true);
-    myLineIndex++;
-    curLine = myLines [myLineIndex];
-    String secondNamePrefix = myDiffFormat == DiffFormat.UNIFIED ? "+++ " : "--- ";
-    if (!curLine.startsWith(secondNamePrefix)) {
-      throw new PatchSyntaxException(myLineIndex, "Second file name expected");
+    @Override
+    public void parse(String start, ListIterator<String> iterator) throws PatchSyntaxException {
+      final TextFilePatch patch = readPatch(start, iterator);
+      if (patch != null) {
+        myPatches.add(patch);
+      }
     }
-    extractFileName(curLine, curPatch, false);
-    myLineIndex++;
-    while(myLineIndex < myLines.length) {
-      PatchHunk hunk;
-      if (myDiffFormat == DiffFormat.UNIFIED) {
-        hunk = readNextHunkUnified();
+
+    public List<TextFilePatch> getResult() throws PatchSyntaxException {
+      return myPatches;
+    }
+
+    private TextFilePatch readPatch(String curLine, ListIterator<String> iterator) throws PatchSyntaxException {
+      final TextFilePatch curPatch = new TextFilePatch();
+      extractFileName(curLine, curPatch, true);
+
+      if (! iterator.hasNext()) throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");
+      curLine = iterator.next();
+      String secondNamePrefix = myDiffFormat == DiffFormat.UNIFIED ? "+++ " : "--- ";
+      if (! curLine.startsWith(secondNamePrefix)) {
+        throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");
+      }
+      extractFileName(curLine, curPatch, false);
+
+      while (iterator.hasNext()) {
+        PatchHunk hunk;
+        if (myDiffFormat == DiffFormat.UNIFIED) {
+          hunk = readNextHunkUnified(iterator);
+        }
+        else {
+          hunk = readNextHunkContext(iterator);
+        }
+        if (hunk == null) break;
+        curPatch.addHunk(hunk);
+      }
+      return curPatch;
+    }
+
+    @Nullable
+    private PatchHunk readNextHunkUnified(ListIterator<String> iterator) throws PatchSyntaxException {
+      String curLine = null;
+      int numIncrements = 0;
+      while (iterator.hasNext()) {
+        curLine = iterator.next();
+        ++ numIncrements;
+        if (curLine.startsWith("--- ")) {
+          for (int i = 0; i < numIncrements; i++) {
+            iterator.previous();
+          }
+          return null;
+        }
+        if (curLine.startsWith("@@ ")) {
+          break;
+        }
+      }
+      if (! iterator.hasNext()) return null;
+
+      Matcher m = ourUnifiedHunkStartPattern.matcher(curLine);
+      if (!m.matches()) {
+        throw new PatchSyntaxException(iterator.previousIndex(), "Unknown hunk start syntax");
+      }
+      int startLineBefore = Integer.parseInt(m.group(1));
+      final String linesBeforeText = m.group(3);
+      int linesBefore = linesBeforeText == null ? 1 : Integer.parseInt(linesBeforeText);
+      int startLineAfter = Integer.parseInt(m.group(4));
+      final String linesAfterText = m.group(6);
+      int linesAfter = linesAfterText == null ? 1 : Integer.parseInt(linesAfterText);
+      PatchHunk hunk = new PatchHunk(startLineBefore-1, startLineBefore+linesBefore-1, startLineAfter-1, startLineAfter+linesAfter-1);
+
+      PatchLine lastLine = null;
+      while (iterator.hasNext()) {
+        String hunkCurLine = iterator.next();
+        if (lastLine != null && hunkCurLine.startsWith(NO_NEWLINE_SIGNATURE)) {
+          lastLine.setSuppressNewLine(true);
+          continue;
+        }
+        if (hunkCurLine.startsWith("--- ")) {
+          iterator.previous();
+          break;
+        }
+        lastLine = parsePatchLine(hunkCurLine, 1);
+        if (lastLine == null) {
+          iterator.previous();
+          break;
+        }
+        hunk.addLine(lastLine);
+      }
+      return hunk;
+    }
+
+    @Nullable
+    public String getLastName() {
+      if (myPatches.isEmpty()) {
+        return null;
       }
       else {
-        hunk = readNextHunkContext();
+        final TextFilePatch patch = myPatches.get(myPatches.size() - 1);
+        return patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
       }
-      if (hunk == null) break;
-      curPatch.addHunk(hunk);
     }
-    return curPatch;
-  }
 
-  @Nullable
-  private PatchHunk readNextHunkUnified() throws PatchSyntaxException {
-    while(myLineIndex < myLines.length) {
-      String curLine = myLines [myLineIndex];
-      if (curLine.startsWith("--- ") && myLineIndex < myLines.length-1 && myLines [myLineIndex+1].startsWith("+++ ")) {
+    @Nullable
+    private static PatchLine parsePatchLine(final String line, final int prefixLength) {
+      PatchLine.Type type;
+      if (line.startsWith("+")) {
+        type = PatchLine.Type.ADD;
+      }
+      else if (line.startsWith("-")) {
+        type = PatchLine.Type.REMOVE;
+      }
+      else if (line.startsWith(" ")) {
+        type = PatchLine.Type.CONTEXT;
+      }
+      else {
         return null;
       }
-      if (curLine.startsWith("@@ ")) {
-        break;
+      String lineText;
+      if (line.length() < prefixLength) {
+        lineText = "";
       }
-      myLineIndex++;
-    }
-    if (myLineIndex == myLines.length) {
-      return null;
+      else {
+        lineText = line.substring(prefixLength);
+      }
+      return new PatchLine(type, lineText);
     }
 
-    Matcher m = ourUnifiedHunkStartPattern.matcher(myLines [myLineIndex]);
-    if (!m.matches()) {
-      throw new PatchSyntaxException(myLineIndex, "Unknown hunk start syntax");
-    }
-    int startLineBefore = Integer.parseInt(m.group(1));
-    final String linesBeforeText = m.group(3);
-    int linesBefore = linesBeforeText == null ? 1 : Integer.parseInt(linesBeforeText);
-    int startLineAfter = Integer.parseInt(m.group(4));
-    final String linesAfterText = m.group(6);
-    int linesAfter = linesAfterText == null ? 1 : Integer.parseInt(linesAfterText);
-    PatchHunk hunk = new PatchHunk(startLineBefore-1, startLineBefore+linesBefore-1, startLineAfter-1, startLineAfter+linesAfter-1);
-    myLineIndex++;
-    PatchLine lastLine = null;
-    while(myLineIndex < myLines.length) {
-      String curLine = myLines [myLineIndex];
-      if (lastLine != null && curLine.startsWith(NO_NEWLINE_SIGNATURE)) {
-        lastLine.setSuppressNewLine(true);
-        myLineIndex++;
-        continue;
+    @Nullable
+    private PatchHunk readNextHunkContext(ListIterator<String> iterator) throws PatchSyntaxException {
+      while (iterator.hasNext()) {
+        String curLine = iterator.next();
+        if (curLine.startsWith(CONTEXT_FILE_PREFIX)) {
+          return null;
+        }
+        if (curLine.startsWith(CONTEXT_HUNK_PREFIX)) {
+          break;
+        }
       }
-      if (curLine.startsWith("--- ")) {
-        break;
-      }
-      lastLine = parsePatchLine(curLine, 1);
-      if (lastLine == null) {
-        break;
-      }
-      hunk.addLine(lastLine);
-      myLineIndex++;
-    }
-    return hunk;
-  }
-
-  @Nullable
-  private static PatchLine parsePatchLine(final String line, final int prefixLength) {
-    PatchLine.Type type;
-    if (line.startsWith("+")) {
-      type = PatchLine.Type.ADD;
-    }
-    else if (line.startsWith("-")) {
-      type = PatchLine.Type.REMOVE;
-    }
-    else if (line.startsWith(" ")) {
-      type = PatchLine.Type.CONTEXT;
-    }
-    else {
-      return null;
-    }
-    String lineText;
-    if (line.length() < prefixLength) {
-      lineText = "";
-    }
-    else {
-      lineText = line.substring(prefixLength); 
-    }
-    return new PatchLine(type, lineText);
-  }
-
-  @Nullable
-  private PatchHunk readNextHunkContext() throws PatchSyntaxException {
-    while(myLineIndex < myLines.length) {
-      String curLine = myLines [myLineIndex];
-      if (curLine.startsWith(CONTEXT_FILE_PREFIX)) {
+      if (! iterator.hasNext()) {
         return null;
       }
-      if (curLine.startsWith(CONTEXT_HUNK_PREFIX)) {
-        break;
+      Matcher beforeMatcher = ourContextBeforeHunkStartPattern.matcher(iterator.next());
+      if (! beforeMatcher.matches()) {
+        throw new PatchSyntaxException(iterator.previousIndex(), "Unknown before hunk start syntax");
       }
-      myLineIndex++;
-    }
-    if (myLineIndex == myLines.length) {
-      return null;
-    }
-    myLineIndex++;
-    Matcher beforeMatcher = ourContextBeforeHunkStartPattern.matcher(myLines [myLineIndex]);
-    if (!beforeMatcher.matches()) {
-      throw new PatchSyntaxException(myLineIndex, "Unknown before hunk start syntax");
-    }
-    myLineIndex++;
-    List<String> beforeLines = readContextDiffLines();
-    if (myLineIndex == myLines.length) {
-      throw new PatchSyntaxException(myLineIndex, "Missing after hunk");
-    }
-    Matcher afterMatcher = ourContextAfterHunkStartPattern.matcher(myLines [myLineIndex]);
-    if (!afterMatcher.matches()) {
-      throw new PatchSyntaxException(myLineIndex, "Unknown after hunk start syntax");
-    }
-    myLineIndex++;
-    List<String> afterLines = readContextDiffLines();
-    int startLineBefore = Integer.parseInt(beforeMatcher.group(1));
-    int endLineBefore = Integer.parseInt(beforeMatcher.group(2));
-    int startLineAfter = Integer.parseInt(afterMatcher.group(1));
-    int endLineAfter = Integer.parseInt(afterMatcher.group(2));
-    PatchHunk hunk = new PatchHunk(startLineBefore-1, endLineBefore-1, startLineAfter-1, endLineAfter-1);
+      List<String> beforeLines = readContextDiffLines(iterator);
+      if (! iterator.hasNext()) {
+        throw new PatchSyntaxException(iterator.previousIndex(), "Missing after hunk");
+      }
+      Matcher afterMatcher = ourContextAfterHunkStartPattern.matcher(iterator.next());
+      if (! afterMatcher.matches()) {
+        throw new PatchSyntaxException(iterator.previousIndex(), "Unknown after hunk start syntax");
+      }
+      //if (! iterator.hasNext()) {
+        //throw new PatchSyntaxException(iterator.previousIndex(), "Unexpected patch end");
+      //}
+      List<String> afterLines = readContextDiffLines(iterator);
+      int startLineBefore = Integer.parseInt(beforeMatcher.group(1));
+      int endLineBefore = Integer.parseInt(beforeMatcher.group(2));
+      int startLineAfter = Integer.parseInt(afterMatcher.group(1));
+      int endLineAfter = Integer.parseInt(afterMatcher.group(2));
+      PatchHunk hunk = new PatchHunk(startLineBefore-1, endLineBefore-1, startLineAfter-1, endLineAfter-1);
 
-    int beforeLineIndex = 0;
-    int afterLineIndex = 0;
-    PatchLine lastBeforePatchLine = null;
-    PatchLine lastAfterPatchLine = null;
-    if (beforeLines.size() == 0) {
-      for(String line: afterLines) {
-        hunk.addLine(parsePatchLine(line, 2));
+      int beforeLineIndex = 0;
+      int afterLineIndex = 0;
+      PatchLine lastBeforePatchLine = null;
+      PatchLine lastAfterPatchLine = null;
+      if (beforeLines.size() == 0) {
+        for(String line: afterLines) {
+          hunk.addLine(parsePatchLine(line, 2));
+        }
       }
-    }
-    else if (afterLines.size() == 0) {
-      for(String line: beforeLines) {
-        hunk.addLine(parsePatchLine(line, 2));
+      else if (afterLines.size() == 0) {
+        for(String line: beforeLines) {
+          hunk.addLine(parsePatchLine(line, 2));
+        }
       }
-    }
-    else {
-      while(beforeLineIndex < beforeLines.size() || afterLineIndex < afterLines.size()) {
-        String beforeLine = beforeLineIndex >= beforeLines.size() ? null : beforeLines.get(beforeLineIndex);
-        String afterLine = afterLineIndex >= afterLines.size() ? null : afterLines.get(afterLineIndex);
-        if (startsWith(beforeLine, NO_NEWLINE_SIGNATURE) && lastBeforePatchLine != null) {
-          lastBeforePatchLine.setSuppressNewLine(true);
-          beforeLineIndex++;
-        }
-        else if (startsWith(afterLine, NO_NEWLINE_SIGNATURE) && lastAfterPatchLine != null) {
-          lastAfterPatchLine.setSuppressNewLine(true);
-          afterLineIndex++;
-        }
-        else if (startsWith(beforeLine, " ") &&
-                 (startsWith(afterLine, " ") || afterLine == null /* handle some weird cases with line breaks truncated at EOF */ )) {
-          addContextDiffLine(hunk, beforeLine, PatchLine.Type.CONTEXT);
-          beforeLineIndex++;
-          afterLineIndex++;
-        }
-        else if (startsWith(beforeLine, "-")) {
-          lastBeforePatchLine = addContextDiffLine(hunk, beforeLine, PatchLine.Type.REMOVE);
-          beforeLineIndex++;
-        }
-        else if (startsWith(afterLine, "+")) {
-          lastAfterPatchLine = addContextDiffLine(hunk, afterLine, PatchLine.Type.ADD);
-          afterLineIndex++;
-        }
-        else if (startsWith(beforeLine, "!") && startsWith(afterLine, "!")) {
-          while(beforeLineIndex < beforeLines.size() && beforeLines.get(beforeLineIndex).startsWith("! ")) {
-            lastBeforePatchLine = addContextDiffLine(hunk, beforeLines.get(beforeLineIndex), PatchLine.Type.REMOVE);
+      else {
+        while(beforeLineIndex < beforeLines.size() || afterLineIndex < afterLines.size()) {
+          String beforeLine = beforeLineIndex >= beforeLines.size() ? null : beforeLines.get(beforeLineIndex);
+          String afterLine = afterLineIndex >= afterLines.size() ? null : afterLines.get(afterLineIndex);
+          if (startsWith(beforeLine, NO_NEWLINE_SIGNATURE) && lastBeforePatchLine != null) {
+            lastBeforePatchLine.setSuppressNewLine(true);
             beforeLineIndex++;
           }
-
-          while(afterLineIndex < afterLines.size() && afterLines.get(afterLineIndex).startsWith("! ")) {
-            lastAfterPatchLine = addContextDiffLine(hunk, afterLines.get(afterLineIndex), PatchLine.Type.ADD);
+          else if (startsWith(afterLine, NO_NEWLINE_SIGNATURE) && lastAfterPatchLine != null) {
+            lastAfterPatchLine.setSuppressNewLine(true);
             afterLineIndex++;
           }
-        }
-        else {
-          throw new PatchSyntaxException(-1, "Unknown line prefix");
-        }
-      }
-    }
-    return hunk;
-  }
+          else if (startsWith(beforeLine, " ") &&
+                   (startsWith(afterLine, " ") || afterLine == null /* handle some weird cases with line breaks truncated at EOF */ )) {
+            addContextDiffLine(hunk, beforeLine, PatchLine.Type.CONTEXT);
+            beforeLineIndex++;
+            afterLineIndex++;
+          }
+          else if (startsWith(beforeLine, "-")) {
+            lastBeforePatchLine = addContextDiffLine(hunk, beforeLine, PatchLine.Type.REMOVE);
+            beforeLineIndex++;
+          }
+          else if (startsWith(afterLine, "+")) {
+            lastAfterPatchLine = addContextDiffLine(hunk, afterLine, PatchLine.Type.ADD);
+            afterLineIndex++;
+          }
+          else if (startsWith(beforeLine, "!") && startsWith(afterLine, "!")) {
+            while(beforeLineIndex < beforeLines.size() && beforeLines.get(beforeLineIndex).startsWith("! ")) {
+              lastBeforePatchLine = addContextDiffLine(hunk, beforeLines.get(beforeLineIndex), PatchLine.Type.REMOVE);
+              beforeLineIndex++;
+            }
 
-  private static boolean startsWith(@Nullable final String line, final String prefix) {
-    return line != null && line.startsWith(prefix);
-  }
-
-  private static PatchLine addContextDiffLine(final PatchHunk hunk, final String line, final PatchLine.Type type) {
-    final PatchLine patchLine = new PatchLine(type, line.length() < 2 ? "" : line.substring(2));
-    hunk.addLine(patchLine);
-    return patchLine;
-  }
-
-  private List<String> readContextDiffLines() {
-    ArrayList<String> result = new ArrayList<String>();
-    while(myLineIndex < myLines.length) {
-      final String line = myLines[myLineIndex];
-      if (!line.startsWith(" ") && !line.startsWith("+ ") && !line.startsWith("- ") && !line.startsWith("! ") &&
-          !line.startsWith(NO_NEWLINE_SIGNATURE)) {
-        break;
-      }
-      result.add(line);
-      myLineIndex++;
-    }
-    return result;
-  }
-
-  private static void extractFileName(final String curLine, final FilePatch patch, final boolean before) {
-    String fileName = curLine.substring(4);
-    int pos = fileName.indexOf('\t');
-    if (pos < 0) {
-      pos = fileName.indexOf(' ');
-    }
-    if (pos >= 0) {
-      String versionId = fileName.substring(pos).trim();
-      fileName = fileName.substring(0, pos);
-      if (versionId.length() > 0) {
-        if (before) {
-          patch.setBeforeVersionId(versionId);
-        }
-        else {
-          patch.setAfterVersionId(versionId);
+            while(afterLineIndex < afterLines.size() && afterLines.get(afterLineIndex).startsWith("! ")) {
+              lastAfterPatchLine = addContextDiffLine(hunk, afterLines.get(afterLineIndex), PatchLine.Type.ADD);
+              afterLineIndex++;
+            }
+          }
+          else {
+            throw new PatchSyntaxException(-1, "Unknown line prefix");
+          }
         }
       }
+      return hunk;
     }
-    if (before) {
-      patch.setBeforeName(fileName);
+
+    private static boolean startsWith(@Nullable final String line, final String prefix) {
+      return line != null && line.startsWith(prefix);
     }
-    else {
-      patch.setAfterName(fileName);
+
+    private static PatchLine addContextDiffLine(final PatchHunk hunk, final String line, final PatchLine.Type type) {
+      final PatchLine patchLine = new PatchLine(type, line.length() < 2 ? "" : line.substring(2));
+      hunk.addLine(patchLine);
+      return patchLine;
     }
+
+    private List<String> readContextDiffLines(ListIterator<String> iterator) {
+      ArrayList<String> result = new ArrayList<String>();
+      while (iterator.hasNext()) {
+        final String line = iterator.next();
+        if (!line.startsWith(" ") && !line.startsWith("+ ") && !line.startsWith("- ") && !line.startsWith("! ") &&
+            !line.startsWith(NO_NEWLINE_SIGNATURE)) {
+          iterator.previous();
+          break;
+        }
+        result.add(line);
+      }
+      return result;
+    }
+
+    private static void extractFileName(final String curLine, final FilePatch patch, final boolean before) {
+      String fileName = curLine.substring(4);
+      int pos = fileName.indexOf('\t');
+      if (pos < 0) {
+        pos = fileName.indexOf(' ');
+      }
+      if (pos >= 0) {
+        String versionId = fileName.substring(pos).trim();
+        fileName = fileName.substring(0, pos);
+        if (versionId.length() > 0) {
+          if (before) {
+            patch.setBeforeVersionId(versionId);
+          }
+          else {
+            patch.setAfterVersionId(versionId);
+          }
+        }
+      }
+      if (before) {
+        patch.setBeforeName(fileName);
+      }
+      else {
+        patch.setAfterName(fileName);
+      }
+    }
+  }
+
+  private interface Parser {
+    boolean testIsStart(final String start);
+    void parse(final String start, final ListIterator<String> iterator) throws PatchSyntaxException;
   }
 }

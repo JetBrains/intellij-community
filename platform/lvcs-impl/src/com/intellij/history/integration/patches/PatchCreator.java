@@ -41,7 +41,7 @@ public class PatchCreator {
     Writer writer = new OutputStreamWriter(new FileOutputStream(filePath));
     try {
       String lineSeparator = CodeStyleSettingsManager.getInstance(p).getCurrentSettings().getLineSeparator();
-      UnifiedDiffWriter.write(patches, writer, lineSeparator);
+      UnifiedDiffWriter.write(p, patches, writer, lineSeparator);
     }
     finally {
       writer.close();
