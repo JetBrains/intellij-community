@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.ConvertDocstringQuickFix;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -41,6 +42,9 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
 
     @Override
     public void visitPyStringLiteralExpression(final PyStringLiteralExpression string) {
+      if (PydevConsoleRunner.isInPydevConsole(string)) {
+        return;
+      }
       String stringText = string.getText();
       myLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
       myModificator = stringText.substring(0, myLength);
