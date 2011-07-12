@@ -43,6 +43,16 @@ public class InplaceIntroduceConstantTest extends AbstractInplaceIntroduceTest {
     });
   }
 
+  public void testConflictingConstantName() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("BAR");
+      }
+    });
+  }
+
   public void testEscapePosition() throws Exception {
     doTestEscape();
   }

@@ -259,12 +259,13 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected void addReferenceAtCaret(Collection<PsiReference> refs) {
-    //super.addReferenceAtCaret(refs);
     final V variable = getLocalVariable();
     if (variable != null) {
       for (PsiReference reference : ReferencesSearch.search(variable)) {
         refs.add(reference);
       }
+    } else {
+      refs.clear();
     }
   }
 
