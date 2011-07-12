@@ -126,14 +126,6 @@ class UpdateFoldRegionsOperation implements Runnable {
         info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi, myFile));
         newRegions.add(region);
 
-        if (psi == null || !psi.isValid() || !foldingModel.addFoldRegion(region)) {
-          region.dispose();
-          continue;
-        }
-
-        info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
-        newRegions.add(region);
-
         boolean expandStatus = !descriptor.isNonExpandable() && shouldExpandNewRegion(element, range, rangeToExpandStatusMap);
         if (group == null) {
           shouldExpand.put(region, expandStatus);
