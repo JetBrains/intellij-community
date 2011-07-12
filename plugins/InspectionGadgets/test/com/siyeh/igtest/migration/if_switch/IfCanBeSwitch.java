@@ -7,6 +7,10 @@ class C {
     if (c == '0') System.out.println("zero"); else if (c == '1') System.out.println("one"); else System.out.println("many");
   }
 
+  void m1(byte i) {  // ok
+    if (i == (byte)0) System.out.println("zero"); else if (i == (byte)1) System.out.println("one"); else System.out.println("many");
+  }
+
   void m1(int i) {  // bad, long literals
     if (i == 0L) System.out.println("zero"); else if (i == 1L) System.out.println("one"); else System.out.println("many");
   }
