@@ -37,9 +37,8 @@ import java.io.IOException;
  */
 public class ForcedBuildFileAttribute {
   private static final Logger LOG = Logger.getInstance("#" + ForcedBuildFileAttribute.class.getName());
-  private static final Object LOCK = new Object();
 
-  private static final FileAttribute FRAMEWORK_FILE_ATTRIBUTE = new FileAttribute("forcedBuildFileFrameworkAttribute", 1, false);
+  private static final FileAttribute FRAMEWORK_FILE_ATTRIBUTE = new FileAttribute("forcedBuildFileFrameworkAttribute", 2, false);
   private static final Key<String> FRAMEWORK_FILE_MARKER = Key.create("forcedBuildFileFrameworkAttribute");
 
 
@@ -53,26 +52,24 @@ public class ForcedBuildFileAttribute {
   @Nullable
   public static String getFrameworkIdOfBuildFile(VirtualFile file) {
     if (file instanceof NewVirtualFile) {
-      synchronized (LOCK) {
-        final DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readAttribute(file);
-        if (is != null) {
+      final DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readAttribute(file);
+      if (is != null) {
+        try {
           try {
-            try {
-              if (is.available() == 0) {
-                return null;
-              }
-              return IOUtil.readString(is);
+            if (is.available() == 0) {
+              return null;
             }
-            finally {
-              is.close();
-            }
+            return IOUtil.readString(is);
           }
-          catch (IOException e) {
-            LOG.error(file.getPath(), e);
+          finally {
+            is.close();
           }
         }
-        return "";
+        catch (IOException e) {
+          LOG.error(file.getPath(), e);
+        }
       }
+      return "";
     }
     return file.getUserData(FRAMEWORK_FILE_MARKER);
   }
@@ -93,22 +90,19 @@ public class ForcedBuildFileAttribute {
     }
   }
 
-
   private static void forceBuildFile(VirtualFile file, @Nullable String value) {
     if (file instanceof NewVirtualFile) {
-      synchronized (LOCK) {
-        final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
+      final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
+      try {
         try {
-          try {
-            IOUtil.writeString(StringUtil.notNullize(value), os);
-          }
-          finally {
-            os.close();
-          }
+          IOUtil.writeString(StringUtil.notNullize(value), os);
         }
-        catch (IOException e) {
-          LOG.error(e);
+        finally {
+          os.close();
         }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
     else {
