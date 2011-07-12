@@ -60,6 +60,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -676,9 +677,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
               }
             }
 
+            CommandProcessor.getInstance().setCurrentCommandGroupId(myEditor.getDocument());
+
             actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
           }
-        }, null, null);
+        }, null, DocCommandGroupId.noneGroupId(myEditor.getDocument()));
       }
     });
   }
