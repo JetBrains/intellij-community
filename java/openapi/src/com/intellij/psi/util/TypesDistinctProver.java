@@ -79,9 +79,11 @@ public class TypesDistinctProver {
     if (type2 instanceof PsiWildcardType || type2 instanceof PsiCapturedWildcardType) return provablyDistinct(type2, type1);
 
 
+    final PsiClassType.ClassResolveResult classResolveResult1 = PsiUtil.resolveGenericsClassInType(type1);
+    final PsiClassType.ClassResolveResult classResolveResult2 = PsiUtil.resolveGenericsClassInType(type2);
     if (Comparing.equal(TypeConversionUtil.erasure(type1), TypeConversionUtil.erasure(type2))) {
-      final PsiSubstitutor substitutor1 = PsiUtil.resolveGenericsClassInType(type1).getSubstitutor();
-      final PsiSubstitutor substitutor2 = PsiUtil.resolveGenericsClassInType(type2).getSubstitutor();
+      final PsiSubstitutor substitutor1 = classResolveResult1.getSubstitutor();
+      final PsiSubstitutor substitutor2 = classResolveResult2.getSubstitutor();
       for (PsiTypeParameter parameter : substitutor1.getSubstitutionMap().keySet()) {
         final PsiType substitutedType1 = substitutor1.substitute(parameter);
         final PsiType substitutedType2 = substitutor2.substitute(parameter);
@@ -95,7 +97,11 @@ public class TypesDistinctProver {
       return false;
     }
 
-    return type2 != null && type1 != null && !type1.equals(type2);
+    final PsiClass boundClass1 = classResolveResult1.getElement();
+    final PsiClass boundClass2 = classResolveResult2.getElement();
+    return type2 != null && type1 != null && !type1.equals(type2) &&
+           !InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true) &&
+           !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true);
   }
 
   public static boolean provablyDistinct(PsiWildcardType type1, PsiWildcardType type2) {

@@ -509,3 +509,24 @@ class Refx<T> {
       return (Class<Enum>)get() == Enum.class;
     }
 }
+
+
+//hierarchy of type param bound
+abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl> {
+    void f() {
+        if (this  instanceof IndexedElementInvocationHandler) {
+        }
+    }
+}
+
+interface AbstractDomChildrenDescription {
+}
+
+class AbstractDomChildDescriptionImpl implements AbstractDomChildrenDescription {
+}
+
+class IndexedElementInvocationHandler extends DomInvocationHandler<FixedChildDescriptionImpl> {
+}
+
+class FixedChildDescriptionImpl extends AbstractDomChildDescriptionImpl {
+}
