@@ -89,7 +89,7 @@ public class UIUtil {
   private static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
   private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
   private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
-  private static final Color BORDER_COLOR = new Color(170, 170, 170);
+  private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
   // accessed only from EDT
   private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
@@ -1421,6 +1421,10 @@ public class UIUtil {
 
   public static Color getBorderColor() {
     return BORDER_COLOR;
+  }
+
+  public static Font getBorderFont() {
+    return UIManager.getFont("TitledBorder.font").deriveFont(Font.BOLD);
   }
 
   /**
