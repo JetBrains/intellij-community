@@ -180,7 +180,8 @@ public class DomImplUtil {
   public static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final String localName, final String qName, final String namespace,
                                        final XmlFile file) {
     final String localName1 = evaluatedXmlName.getXmlName().getLocalName();
-    return (localName1.equals(localName) || localName1.equals(qName)) && evaluatedXmlName.isNamespaceAllowed(namespace, file);
+    return (localName1.equals(localName) || localName1.equals(qName)) && evaluatedXmlName.isNamespaceAllowed(namespace, file,
+                                                                                                             !localName1.equals(qName));
   }
 
   @NotNull 

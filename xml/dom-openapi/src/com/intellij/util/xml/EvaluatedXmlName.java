@@ -29,7 +29,7 @@ public interface EvaluatedXmlName {
 
   EvaluatedXmlName evaluateChildName(@NotNull XmlName name);
 
-  boolean isNamespaceAllowed(String namespace, final XmlFile file);
+  boolean isNamespaceAllowed(String namespace, final XmlFile file, boolean qualified);
 
   @NotNull @NonNls
   String getNamespace(@NotNull XmlElement parentElement, final XmlFile file);
