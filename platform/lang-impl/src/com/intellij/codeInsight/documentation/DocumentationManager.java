@@ -196,7 +196,7 @@ public class DocumentationManager {
       PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class);
       if (comment == null) return;
 
-      element = comment instanceof PsiDocComment ? ((PsiDocComment)comment).getOwner() : comment.getParent();
+      element = comment instanceof PsiDocCommentBase ? ((PsiDocCommentBase)comment).getOwner() : comment.getParent();
       if (element == null) return;
       //if (!(element instanceof PsiDocCommentOwner)) return null;
     }

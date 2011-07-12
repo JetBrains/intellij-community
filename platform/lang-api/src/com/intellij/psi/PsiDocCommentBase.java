@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Rustam Vishnyakov
  */
-public interface PsiDocComment extends PsiComment {
+public interface PsiDocCommentBase extends PsiComment {
   /**
    * @return The element which this doc comment refers to or null if there is no such element.
    */
