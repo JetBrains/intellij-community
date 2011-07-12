@@ -57,6 +57,10 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     fail("Conflicts were not found");
   }
 
+  public void testRename2HideFromAnonymous() throws Exception {
+    doTest("p.Foo", "void buzz(int i)", "bazz");
+  }
+
   public void testAlignedMultilineParameters() throws Exception {
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
