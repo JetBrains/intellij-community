@@ -2,7 +2,8 @@
   <actions>
     <group id="LookupActions">
       <!-- these must be declared before standard EnterAction and TabAction -->
-      <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction"/>
+      <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$FocusedOnly"/>
+      <action id="EditorChooseLookupItemAlways" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Always"/>
       <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemReplaceAction"/>
       <action id="EditorChooseLookupItemCompleteStatement"
               class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemCompleteStatementAction"/>

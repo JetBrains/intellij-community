@@ -160,7 +160,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         myLookup.setFocused(true);
       } else {
         myLookup.addAdvertisement("Press " +
-                                      CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
+                                      CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
                                       " to choose the first suggestion");
       }
       if (!myEditor.isOneLineMode()) {
