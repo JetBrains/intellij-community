@@ -103,7 +103,15 @@ public class ReferenceAdjuster {
               return (TreeElement)replaceReferenceWithFQ(element, (PsiClass)refElement);
             }
             else {
-              return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports);
+              int oldLength = element.getTextLength();
+              TreeElement treeElement = (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports);
+              if (treeElement.getTextLength() == oldLength && ((PsiClass)refElement).getContainingClass() != null) {
+                PsiElement qualifier = ref.getQualifier();
+                if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass) {
+                  process((TreeElement)qualifier.getNode(), addImports, uncompleteCode);
+                }
+              }
+              return treeElement;
             }
           }
         }

@@ -396,6 +396,10 @@ public class ImportHelper{
       }
     }
 
+    if (useOnDemand && curRefClass != null && "java.lang".equals(StringUtil.getPackageName(curRefClass.getQualifiedName()))) {
+      return false;
+    }
+
     try {
       PsiImportList importList = file.getImportList();
       PsiImportStatement statement = useOnDemand ? factory.createImportStatementOnDemand(packageName) : factory.createImportStatement(refClass);
