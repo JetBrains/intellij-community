@@ -34,10 +34,10 @@ import java.util.Map;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class Graphics2DLog extends Graphics2D {
-  private final Graphics2D myPeer;
+  protected final Graphics2D myPeer;
 
-  public Graphics2DLog(Graphics2D g) {
-    myPeer = g;
+  public Graphics2DLog(Graphics g) {
+    myPeer = (Graphics2D)g;
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
