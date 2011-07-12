@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -27,6 +28,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -319,7 +321,17 @@ public class DocumentCommitThread implements Runnable, Disposable {
   public void commitSynchronously(@NotNull Document document, @NotNull Project project, PsiFile excludeFile) {
     assert !isDisposed;
 
-    if (!project.isInitialized()) return;
+    if (!project.isInitialized()) {
+      @NonNls String s = project + "; Disposed: "+project.isDisposed()+"; Open: "+project.isOpen();
+      s += "; SA Passed: ";
+      try {
+        s += ((StartupManagerImpl)StartupManager.getInstance(project)).startupActivityPassed();
+      }
+      catch (Exception e) {
+        s += e;
+      }
+      throw new RuntimeException(s);
+    }
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     setCommitStage(document, CommitStage.ABOUT_TO_BE_SYNC_COMMITTED, true);
@@ -366,16 +378,17 @@ public class DocumentCommitThread implements Runnable, Disposable {
                                       final PsiFile excludeFile,
                                       @NotNull final ProgressIndicator indicator,
                                       final boolean synchronously) {
-    final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
     final List<Processor<Document>> finishRunnables = new ArrayList<Processor<Document>>();
     Runnable runnable = new Runnable() {
       public void run() {
+        if (project.isDisposed()) return;
+        final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
         final FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
         if (viewProvider == null) return;
         final List<PsiFile> psiFiles = viewProvider.getAllFiles();
         for (PsiFile file : psiFiles) {
           if (file.isValid() && file != excludeFile) {
-            Processor<Document> finishRunnable = doCommit(document, file, indicator, synchronously);
+            Processor<Document> finishRunnable = doCommit(document, file, indicator, synchronously, documentManager);
             if (finishRunnable != null) {
               finishRunnables.add(finishRunnable);
             }
@@ -413,6 +426,8 @@ public class DocumentCommitThread implements Runnable, Disposable {
         ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document, project) {
           public void run() {
             if (project.isDisposed()) return;
+            PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+
             CommitStage stage = getCommitStage(document);
             log("Finish", document, synchronously, project);
             if (stage != (synchronously ? CommitStage.ABOUT_TO_BE_SYNC_COMMITTED : CommitStage.WAITING_FOR_PSI_APPLY)) {
@@ -452,10 +467,10 @@ public class DocumentCommitThread implements Runnable, Disposable {
 
   @Nullable("returns runnable to execute under write action in AWT to finish the commit")
   private Processor<Document> doCommit(@NotNull final Document document,
-                                              @NotNull final PsiFile file,
-                                              @NotNull ProgressIndicator indicator,
-                                              final boolean synchronously) {
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject())).clearTreeHardRef(document);
+                                       @NotNull final PsiFile file,
+                                       @NotNull ProgressIndicator indicator,
+                                       final boolean synchronously, PsiDocumentManager documentManager) {
+    ((PsiDocumentManagerImpl)documentManager).clearTreeHardRef(document);
     final TextBlock textBlock = PsiDocumentManagerImpl.getTextBlock(file);
     if (textBlock.isEmpty()) return null;
     final long startPsiModificationTimeStamp = file.getModificationStamp();
