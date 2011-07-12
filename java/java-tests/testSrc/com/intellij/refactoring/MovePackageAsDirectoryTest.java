@@ -63,6 +63,10 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     doTest(createAction("pack1", "target"));
   }
 
+  public void testXmlDirRefs() throws Exception {
+    doTest(createAction("pack1", "target"));
+  }
+
   private PerformAction createAction(final String packageName, final String targetPackageName) {
     return new PerformAction() {
       @Override
