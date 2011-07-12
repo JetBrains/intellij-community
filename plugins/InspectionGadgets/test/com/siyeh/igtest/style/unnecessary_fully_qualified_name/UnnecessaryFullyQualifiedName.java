@@ -1,4 +1,4 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.style.unnecessary_fully_qualified_name;
 
 import java.io.PrintStream;
 import java.util.Properties;
@@ -6,7 +6,7 @@ import java.util.Properties;
 /**
  * {@link java.lang.String}
  */
-public class UnnecessaryFullyQualifiedNameInspection
+public class UnnecessaryFullyQualifiedName
 {
     private String m_string1;
     private java.lang.String m_string;
@@ -23,4 +23,15 @@ public class UnnecessaryFullyQualifiedNameInspection
 
     java.util.Vector v;
     class Vector {}
+}
+enum SomeEnum {
+
+    Foo {
+        @Override
+        public void perform() {
+            test.Foo.perform();
+        }
+    };
+
+    public abstract void perform();
 }
