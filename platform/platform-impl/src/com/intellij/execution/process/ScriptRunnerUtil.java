@@ -57,15 +57,17 @@ public final class ScriptRunnerUtil {
   private ScriptRunnerUtil() {
   }
 
-  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine,
-                                        @NotNull Condition<Key> outputTypeFilter)
+  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine)
+    throws ExecutionException {
+    return getProcessOutput(commandLine, STDOUT_OUTPUT_KEY_FILTER);
+  }
+
+  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine, @NotNull Condition<Key> outputTypeFilter)
     throws ExecutionException {
     return getProcessOutput(commandLine, outputTypeFilter, DEFAULT_TIMEOUT);
   }
 
-  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine,
-                                        @NotNull Condition<Key> outputTypeFilter,
-                                        long timeout)
+  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine, @NotNull Condition<Key> outputTypeFilter, long timeout)
     throws ExecutionException {
     return getProcessOutput(new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()), outputTypeFilter,
                             timeout);
