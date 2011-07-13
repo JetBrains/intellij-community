@@ -149,7 +149,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.setCharset(file.getCharset());
-    h.addParameters("-p", "-l", "-t", "-M");
+    h.addParameters("-p", "-l", "-t");
     if (revision == null) {
       h.addParameters("HEAD");
     }
