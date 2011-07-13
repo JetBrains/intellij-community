@@ -12,10 +12,11 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
                      @Nullable MoveCallback callback) {
     PsiNamedElement[] elementsToMove = new PsiNamedElement[elements.length];
     for (int i = 0; i < elements.length; i++) {
-      PsiNamedElement e = getElementToMove(elements[i]);
+      final PsiNamedElement e = getElementToMove(elements[i]);
       if (e == null) {
         return;
       }
@@ -67,23 +68,24 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
                            @Nullable DataContext dataContext,
                            @Nullable PsiReference reference,
                            @Nullable Editor editor) {
-    final PsiNamedElement elementToMove = getElementToMove(element);
-    if (elementToMove != null) {
-      doMove(project, new PsiElement[] {element}, null, null);
-      return true;
-    }
-    if (element instanceof PsiNamedElement && !(element instanceof PyParameter)) {
+    final PsiNamedElement e = getElementToMove(element);
+    if (e instanceof PyClass || e instanceof PyFunction) {
+      if (isTopLevel(e)) {
+        doMove(project, new PsiElement[] {e}, null, null);
+      }
       return true;
     }
     return false;
   }
 
   @Nullable
-  private static PsiNamedElement getElementToMove(@NotNull PsiElement element) {
-    if (element instanceof PyFunction && ((PyFunction)element).isTopLevel() ||
-        element instanceof PyClass && ((PyClass)element).isTopLevel()) {
-      return (PsiNamedElement)element;
-    }
-    return null;
+  public static PsiNamedElement getElementToMove(@NotNull PsiElement element) {
+    final ScopeOwner owner = (element instanceof ScopeOwner) ? (ScopeOwner)element : ScopeUtil.getScopeOwner(element);
+    return (owner instanceof PsiNamedElement) ? (PsiNamedElement)owner : null;
+  }
+
+  private static boolean isTopLevel(@NotNull PsiElement element) {
+    return (element instanceof PyFunction && ((PyFunction)element).isTopLevel()) ||
+           (element instanceof PyClass && ((PyClass)element).isTopLevel());
   }
 }
