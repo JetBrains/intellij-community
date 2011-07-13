@@ -230,6 +230,11 @@ public class Test extends MyMap {
     assertEquals "C2", resolve("A.groovy").getName()
   }
 
+  void testPreferImportsToImplicit() {
+    myFixture.addFileToProject "a/C1.groovy", "package a; class Factory{}"
+    assertEquals "a.Factory", ((PsiClass) resolve("A.groovy")).qualifiedName
+  }
+
   void testPreferClassFromCurPackage() {
     myFixture.addFileToProject "a/Cl.groovy", "package a; class Cl{}"
     myFixture.addFileToProject "b/Cl.groovy", "package b; class Cl{}"
