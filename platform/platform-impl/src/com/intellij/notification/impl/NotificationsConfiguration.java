@@ -44,10 +44,20 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
 
   private final Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
+  private final Map<String, String> myToolWindowCapable = new LinkedHashMap<String, String>();
   private final MessageBus myMessageBus;
 
   public NotificationsConfiguration(@NotNull final MessageBus bus) {
     myMessageBus = bus;
+  }
+
+  public synchronized void registerToolWindowCapability(@NotNull String groupId, @NotNull String toolWindowId) {
+    myToolWindowCapable.put(groupId, toolWindowId);
+  }
+
+  @Nullable
+  public synchronized String getToolWindowId(@NotNull String groupId) {
+    return myToolWindowCapable.get(groupId);
   }
 
   public static NotificationsConfiguration getNotificationsConfiguration() {
@@ -136,6 +146,9 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     for (NotificationSettings settings : myIdToSettingsMap.values()) {
       element.addContent(settings.save());
     }
+    for (String entry: myToolWindowCapable.keySet()) {
+      element.addContent(new Element("toolWindow").setAttribute("group", entry));
+    }
 
     return element;
   }
@@ -147,6 +160,12 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
         final String id = settings.getGroupId();
         LOG.assertTrue(!myIdToSettingsMap.containsKey(id), String.format("Settings for '%s' already loaded!", id));
         myIdToSettingsMap.put(id, settings);
+      }
+    }
+    for (@NonNls Element child : (Iterable<? extends Element>)state.getChildren("toolWindow")) {
+      String group = child.getAttributeValue("group");
+      if (!myToolWindowCapable.containsKey(group)) {
+        myToolWindowCapable.put(group, null);
       }
     }
     _remove("Log Only");

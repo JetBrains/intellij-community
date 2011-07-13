@@ -22,7 +22,9 @@ public enum NotificationDisplayType {
 
   NONE("No popup"),
   BALLOON("Balloon"),
-  STICKY_BALLOON("Sticky balloon");
+  STICKY_BALLOON("Sticky balloon"),
+  TOOL_WINDOW("Tool window"),
+  ;
 
   private final String myTitle;
 

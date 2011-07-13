@@ -28,9 +28,21 @@ public class NotificationGroup {
   private final String myDisplayId;
 
   public NotificationGroup(String displayId, NotificationDisplayType defaultDisplayType, boolean logByDefault) {
+    this(displayId, defaultDisplayType, logByDefault, null);
+  }
+
+  public NotificationGroup(String displayId, NotificationDisplayType defaultDisplayType, boolean logByDefault, @Nullable String toolWindowId) {
     myDisplayId = displayId;
 
-    NotificationsConfiguration.getNotificationsConfiguration().registerDefaultSettings(new NotificationSettings(displayId, defaultDisplayType, logByDefault));
+    NotificationsConfiguration configuration = NotificationsConfiguration.getNotificationsConfiguration();
+    configuration.registerDefaultSettings(new NotificationSettings(displayId, defaultDisplayType, logByDefault));
+    if (toolWindowId != null) {
+      configuration.registerToolWindowCapability(displayId, toolWindowId);
+    }
+  }
+
+  public static NotificationGroup toolWindowGroup(@NotNull String displayId, @NotNull String toolWindowId) {
+    return new NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, true, toolWindowId);
   }
 
   public String getDisplayId() {

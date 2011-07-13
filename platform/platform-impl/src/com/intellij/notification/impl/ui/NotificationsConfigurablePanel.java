@@ -124,6 +124,14 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         }
 
         @Override
+        protected boolean isApplicable(NotificationDisplayType value, int row) {
+          if (value != NotificationDisplayType.TOOL_WINDOW) return true;
+
+          String groupId = ((NotificationsTableModel)getModel()).getSettings(row).getGroupId();
+          return NotificationsConfiguration.getNotificationsConfiguration().getToolWindowId(groupId) != null;
+        }
+
+        @Override
         protected String getTextFor(@NotNull NotificationDisplayType value) {
           return value.getTitle();
         }
