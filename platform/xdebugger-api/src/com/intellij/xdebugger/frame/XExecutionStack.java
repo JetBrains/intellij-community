@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +35,17 @@ public abstract class XExecutionStack {
   private final String myDisplayName;
   private final Icon myIcon;
 
+  /**
+   * @param displayName presentable name of the thread to be shown in the combobox in 'Frames' tab
+   */
   protected XExecutionStack(final String displayName) {
     this(displayName, DebuggerIcons.SUSPENDED_THREAD_ICON);
   }
 
+  /**
+   * @param displayName presentable name of the thread to be shown in the combobox in 'Frames' tab
+   * @param icon icon to be shown in the combobox in 'Frames' tab
+   */
   protected XExecutionStack(final @NotNull String displayName, final @Nullable Icon icon) {
     myDisplayName = displayName;
     myIcon = icon;
@@ -51,6 +59,16 @@ public abstract class XExecutionStack {
   @Nullable
   public final Icon getIcon() {
     return myIcon;
+  }
+
+  /**
+   * Override this method to provide an icon with optional tooltip and popup actions. This icon will be shown on the editor gutter to the
+   * left of the execution line when this thread is selected in 'Frames' tab.
+   * @return
+   */
+  @Nullable
+  public GutterIconRenderer getExecutionLineIconRenderer() {
+    return null;
   }
 
   /**
@@ -79,6 +97,11 @@ public abstract class XExecutionStack {
     /**
      * Indicate that an error occurs
      * @param errorMessage message describing the error
+     */
+    void errorOccurred(String errorMessage);
+
+    /**
+     * @deprecated use {@link #errorOccurred(String)} instead
      */
     void errorOccured(String errorMessage);
   }
