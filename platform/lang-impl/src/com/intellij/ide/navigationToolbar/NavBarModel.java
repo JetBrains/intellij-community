@@ -19,6 +19,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.extensions.Extensions;
@@ -111,7 +112,7 @@ public class NavBarModel {
 
       Object moduleOrProject = LangDataKeys.MODULE.getData(dataContext);
       if (moduleOrProject == null) {
-        moduleOrProject = LangDataKeys.PROJECT.getData(dataContext);
+        moduleOrProject = PlatformDataKeys.PROJECT.getData(dataContext);
       }
 
       if (moduleOrProject != null) {
