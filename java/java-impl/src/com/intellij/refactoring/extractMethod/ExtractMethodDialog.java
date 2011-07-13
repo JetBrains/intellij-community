@@ -37,6 +37,7 @@ import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -44,10 +45,7 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.Arrays;
 
 
@@ -353,12 +351,27 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   protected void createParametersPanel() {
     if (myParamTable != null) {
       myCenterPanel.remove(myParamTable);
-    } else {
-      myCenterPanel.add(SeparatorFactory.createSeparator("&Parameters", myParamTable), BorderLayout.NORTH);
     }
 
     myParamTable = createParameterTableComponent();
     myCenterPanel.add(myParamTable, BorderLayout.CENTER);
+    final JTable table = UIUtil.findComponentOfType(myParamTable, JTable.class);
+    myCenterPanel.add(SeparatorFactory.createSeparator("&Parameters", table), BorderLayout.NORTH);
+    if (table != null) {
+      table.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          if (table.getRowCount() > 0) {
+            final int col = table.getSelectedColumn();
+            final int row = table.getSelectedRow();
+            if (col == -1 || row == -1) {
+              table.getSelectionModel().setSelectionInterval(0, 0);
+              table.getColumnModel().getSelectionModel().setSelectionInterval(0, 0);
+            }
+          }
+        }
+      });
+    }
   }
 
   protected ParameterTablePanel createParameterTableComponent() {
