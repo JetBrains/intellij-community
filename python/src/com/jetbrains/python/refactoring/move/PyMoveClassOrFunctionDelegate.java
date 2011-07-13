@@ -49,6 +49,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
         return;
       }
       destination = dialog.getTargetPath();
+      previewUsages = dialog.isPreviewUsages();
     }
     try {
       final BaseRefactoringProcessor processor = new PyMoveClassOrFunctionProcessor(project, elementsToMove, destination, previewUsages);
