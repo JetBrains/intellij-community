@@ -4,6 +4,7 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyTokenTypes;
 
 import static com.intellij.psi.StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
 import static com.intellij.psi.StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
@@ -23,10 +24,6 @@ public class PyStringLiteralLexer extends LexerBase {
   private static final short AFTER_FIRST_QUOTE = 1;
   private static final short AFTER_LAST_QUOTE = 2;
 
-  private static final char MARK_UNICODE = 'u';
-  private static final char MARK_BYTE = 'b';
-  private static final char MARK_NONE = 0;
-
   private CharSequence myBuffer;
   private int myStart;
   private int myEnd;
@@ -34,23 +31,20 @@ public class PyStringLiteralLexer extends LexerBase {
   private int myLastState;
   private int myBufferEnd;
   private char myQuoteChar;
-  /** 'u', 'b' or 0, if string is explicitly marked as unicode, byte, or not marked. */
-  private char myUnicodeMark;
-  private final boolean myUnicodeIsDefault;
+
   private boolean myIsRaw;
   private boolean myIsTriple;
   private final IElementType myOriginalLiteralToken;
   private boolean mySeenEscapedSpacesOnly;
 
-  private static final boolean myFlagsNeedToBeSet = true;
 
   /**
    * @param originalLiteralToken the AST node we're layering over.
    * @param isUnicodeDefault true if unmarked strings are unicode (as in py3k), false otherwise (python 2.x).
    */
-  public PyStringLiteralLexer(final IElementType originalLiteralToken, boolean isUnicodeDefault) {
-    myUnicodeIsDefault = isUnicodeDefault;
+  public PyStringLiteralLexer(final IElementType originalLiteralToken) {
     myOriginalLiteralToken = originalLiteralToken;
+    myIsTriple = PyTokenTypes.TRIPLE_NODES.contains(myOriginalLiteralToken);
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
@@ -66,15 +60,10 @@ public class PyStringLiteralLexer extends LexerBase {
     // unicode flag
     char c = buffer.charAt(i);
 
-    if (c == 'u' || c == 'U') {
-      myUnicodeMark = MARK_UNICODE;
+    if (c == 'u' || c == 'U')
       i += 1;
-    }
-    else if (c == 'b' || c == 'B') {
-      myUnicodeMark = MARK_BYTE;
+    else if (c == 'b' || c == 'B')
       i += 1;
-    }
-    else myUnicodeMark = MARK_NONE;
 
     // raw flag
     c = buffer.charAt(i);
@@ -88,11 +77,6 @@ public class PyStringLiteralLexer extends LexerBase {
     c = buffer.charAt(i);
     assert (c == '"') || (c == '\'') : "String must be quoted by single or double quote";
     myQuoteChar = c;
-    if ((myBufferEnd > i+2) && (buffer.charAt(i+1) == c) && (buffer.charAt(i+2) == c)) {
-      myIsTriple = true;
-      //i += 2;
-    }
-    else myIsTriple = false;
 
     // calculate myEnd at last
     myEnd = locateToken(myStart);
@@ -175,7 +159,7 @@ public class PyStringLiteralLexer extends LexerBase {
   }
 
   private boolean isUnicodeMode() {
-    return myUnicodeMark == MARK_UNICODE || (myUnicodeIsDefault && (myUnicodeMark == MARK_NONE));
+    return PyTokenTypes.UNICODE_NODES.contains(myOriginalLiteralToken);
   }
 
   // all subsequent chars are escaped spaces

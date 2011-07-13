@@ -81,7 +81,7 @@ public class PyTokenTypes {
   public static final PyElementType DOCSTRING = new PyElementType("DOCSTRING");
 
   public static final TokenSet UNICODE_NODES = TokenSet.create(TRIPLE_QUOTED_UNICODE, SINGLE_QUOTED_UNICODE);
-
+  public static final TokenSet TRIPLE_NODES = TokenSet.create(TRIPLE_QUOTED_UNICODE, TRIPLE_QUOTED_STRING);
   public static final TokenSet STRING_NODES = TokenSet.orSet(UNICODE_NODES, TokenSet.create(SINGLE_QUOTED_STRING,
                                                              TRIPLE_QUOTED_STRING, DOCSTRING));
   // Operators
