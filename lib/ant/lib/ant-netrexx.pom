@@ -26,27 +26,31 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.8.1</version>
+    <version>1.8.2</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-netrexx</artifactId>
-  <version>1.8.1</version>
+  <version>1.8.2</version>
+  <name>Apache Ant + NetRexx</name>
   <description>NetRexxC task
     dependency can be downloaded from http://www.ibm.com/software/awdtools/netrexx/download.html</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.8.1</version>
+      <version>1.8.2</version>
       <scope>compile</scope>
     </dependency>
+    <!-- Processed too early, before maven-antrun-plugin gets a chance to work:
     <dependency>
       <groupId>com.ibm.netrexx</groupId>
       <artifactId>netrexx</artifactId>
       <version>2.0.5</version>
-      <scope>provided</scope>
+      <scope>system</scope>
+      <systemPath>${basedir}/../../../../lib/optional/NetRexxC.jar</systemPath>
     </dependency>
+    -->
   </dependencies>
   <build>
     <plugins>
@@ -59,7 +63,31 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
           <includes>
             <include>org/apache/tools/ant/taskdefs/optional/NetRexxC*</include>
           </includes>
+          <!-- Need to use this rather than system scope as above: -->
+          <compilerArguments>
+            <extdirs>${basedir}/../../../../lib/optional</extdirs>
+          </compilerArguments>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.4</version>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <configuration>
+              <tasks>
+                <ant dir="${basedir}/../../../.." antfile="fetch.xml" target="netrexx">
+                  <property name="dest" value="optional"/>
+                </ant>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
     <sourceDirectory>../../../../src/main</sourceDirectory>
