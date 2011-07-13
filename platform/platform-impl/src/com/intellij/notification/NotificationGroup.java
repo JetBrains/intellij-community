@@ -41,8 +41,8 @@ public class NotificationGroup {
     }
   }
 
-  public static NotificationGroup toolWindowGroup(@NotNull String displayId, @NotNull String toolWindowId) {
-    return new NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, true, toolWindowId);
+  public static NotificationGroup toolWindowGroup(@NotNull String displayId, @NotNull String toolWindowId, final boolean logByDefault) {
+    return new NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId);
   }
 
   public String getDisplayId() {

@@ -44,7 +44,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
 
   private final Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
-  private final Map<String, String> myToolWindowCapable = new LinkedHashMap<String, String>();
+  private final Map<String, String> myToolWindowCapable = new java.util.LinkedHashMap<String, String>();
   private final MessageBus myMessageBus;
 
   public NotificationsConfiguration(@NotNull final MessageBus bus) {
@@ -53,6 +53,10 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
 
   public synchronized void registerToolWindowCapability(@NotNull String groupId, @NotNull String toolWindowId) {
     myToolWindowCapable.put(groupId, toolWindowId);
+  }
+
+  public synchronized boolean hasToolWindowCapability(@NotNull String groupId) {
+    return myToolWindowCapable.containsKey(groupId);
   }
 
   @Nullable
@@ -164,7 +168,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     }
     for (@NonNls Element child : (Iterable<? extends Element>)state.getChildren("toolWindow")) {
       String group = child.getAttributeValue("group");
-      if (!myToolWindowCapable.containsKey(group)) {
+      if (group != null && !myToolWindowCapable.containsKey(group)) {
         myToolWindowCapable.put(group, null);
       }
     }
