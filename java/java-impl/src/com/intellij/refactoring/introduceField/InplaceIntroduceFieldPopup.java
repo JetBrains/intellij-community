@@ -45,18 +45,9 @@ import java.awt.event.ItemListener;
  * User: anna
  * Date: 3/15/11
  */
-public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
+public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPopup {
 
-  private final PsiClass myParentClass;
   private final boolean myStatic;
-  private final Editor myEditor;
-  private final Project myProject;
-
-  private PsiElement myAnchorElement;
-  private int myAnchorIdx = -1;
-  private PsiElement myAnchorElementIfAll;
-  private int myAnchorIdxIfAll = -1;
-  private final OccurenceManager myOccurenceManager;
 
   private final IntroduceFieldPopupPanel myIntroduceFieldPanel;
 
@@ -74,25 +65,8 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
                                     final PsiElement anchorElementIfAll,
                                     final OccurenceManager occurenceManager, Project project) {
     super(project, editor, initializerExpression, localVariable, occurrences, typeSelectorManager,
-          IntroduceFieldHandler.REFACTORING_NAME);
-    myParentClass = parentClass;
+          IntroduceFieldHandler.REFACTORING_NAME, parentClass, anchorElement, occurenceManager, anchorElementIfAll);
     myStatic = aStatic;
-    myAnchorElement = anchorElement;
-    myAnchorElementIfAll = anchorElementIfAll;
-    for (int i = 0, occurrencesLength = occurrences.length; i < occurrencesLength; i++) {
-      PsiExpression occurrence = occurrences[i];
-      PsiElement parent = occurrence.getParent();
-      if (parent == myAnchorElement) {
-        myAnchorIdx = i;
-      }
-      if (parent == anchorElementIfAll) {
-        myAnchorIdxIfAll = i;
-      }
-    }
-    myOccurenceManager = occurenceManager;
-    myProject = myLocalVariable != null ? myLocalVariable.getProject() : initializerExpression.getProject();
-    myEditor = editor;
-
     myIntroduceFieldPanel =
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
                                myOccurrences, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
@@ -182,12 +156,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       myIntroduceFieldPanel.saveFinalState();
     }
 
-    @Override
-    protected PsiElement checkLocalScope() {
-      return myParentClass;
-    }
-
-    @Override
+  @Override
     protected JComponent getComponent() {
       myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
         @Override
@@ -233,18 +202,7 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
       return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
     }
 
-    @Override
-    protected void restoreAnchors() {
-      if (myAnchorIdxIfAll != -1 && myOccurrences[myAnchorIdxIfAll] != null) {
-        myAnchorElementIfAll = myOccurrences[myAnchorIdxIfAll].getParent();
-      }
-
-      if (myAnchorIdx != -1 && myOccurrences[myAnchorIdx] != null) {
-        myAnchorElement = myOccurrences[myAnchorIdx].getParent();
-      }
-    }
-
-    public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
+  public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
       return myIntroduceFieldPanel.getInitializerPlace();
     }
 
@@ -273,8 +231,8 @@ public class InplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
             final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
               new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
                                                                       myOccurrences, myOccurenceManager,
-                                                                      myAnchorIdxIfAll != -1 && myOccurrences[myAnchorIdxIfAll] != null ? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
-                                                                      myAnchorIdx != -1 && myOccurrences[myAnchorIdx] != null ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
+                                                                      getAnchorElementIfAll(),
+                                                                      getAnchorElement(), myEditor,
                                                                       myParentClass);
             convertToFieldRunnable.run();
           }

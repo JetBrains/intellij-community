@@ -126,7 +126,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected abstract V getVariable();
 
   public abstract E restoreExpression(PsiFile containingFile, V variable, RangeMarker marker, String exprText);
-  protected void restoreAnchors() {}
 
   public boolean startInplaceIntroduceTemplate() {
     final boolean replaceAllOccurrences = isReplaceAllOccurrences();
@@ -365,7 +364,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           }
         }
 
-        restoreAnchors();
         myOccurrenceMarkers = null;
         if (psiField.isValid()) {
           psiField.delete();

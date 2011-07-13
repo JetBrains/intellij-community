@@ -51,12 +51,7 @@ import java.awt.event.ItemListener;
  * User: anna
  * Date: 3/18/11
  */
-public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer {
-  private PsiElement myAnchorElement;
-  private int myAnchorIdx = -1;
-  private PsiElement myAnchorElementIfAll;
-  private int myAnchorIdxIfAll = -1;
-  private final OccurenceManager myOccurenceManager;
+public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceFieldPopup {
 
   private final String myInitializerText;
 
@@ -64,8 +59,6 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
   private JCheckBox myReplaceAllCb;
 
   private JCheckBox myMoveToAnotherClassCb;
-
-  private final PsiClass myParentClass;
 
   public InplaceIntroduceConstantPopup(Project project,
                                        Editor editor,
@@ -76,21 +69,8 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
                                        TypeSelectorManagerImpl typeSelectorManager,
                                        PsiElement anchorElement,
                                        PsiElement anchorElementIfAll, OccurenceManager occurenceManager) {
-    super(project, editor, expr, localVariable, occurrences, typeSelectorManager, IntroduceConstantHandler.REFACTORING_NAME);
-    myParentClass = parentClass;
-    myAnchorElement = anchorElement;
-    myAnchorElementIfAll = anchorElementIfAll;
-    for (int i = 0, occurrencesLength = occurrences.length; i < occurrencesLength; i++) {
-      PsiExpression occurrence = occurrences[i];
-      PsiElement parent = occurrence.getParent();
-      if (parent == myAnchorElement) {
-        myAnchorIdx = i;
-      }
-      if (parent == myAnchorElementIfAll) {
-        myAnchorIdxIfAll = i;
-      }
-    }
-    myOccurenceManager = occurenceManager;
+    super(project, editor, expr, localVariable, occurrences, typeSelectorManager, IntroduceConstantHandler.REFACTORING_NAME,
+          parentClass, anchorElement, occurenceManager, anchorElementIfAll);
 
     myInitializerText = getExprText(expr, localVariable);
 
@@ -176,7 +156,7 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
         }
         field = BaseExpressionToFieldHandler.ConvertToFieldRunnable
           .appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, myParentClass, myParentClass,
-                       myAnchorElementIfAll, field);
+                       getAnchorElementIfAll(), field);
         myFieldRangeStart = myEditor.getDocument().createRangeMarker(field.getTextRange());
         return field;
       }
@@ -200,11 +180,6 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected PsiElement checkLocalScope() {
-    return myParentClass;
-  }
-
-  @Override
   protected void saveSettings(PsiVariable psiVariable) {
     super.saveSettings(psiVariable);
     JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = getSelectedVisibility();
@@ -218,10 +193,6 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
       element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
     }
     return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
-  }
-
-  @Override
-  protected void performPostIntroduceTasks() {
   }
 
   @Override
@@ -279,22 +250,11 @@ public class InplaceIntroduceConstantPopup extends AbstractJavaInplaceIntroducer
           final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
             new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
                                                                     myOccurrences, myOccurenceManager,
-                                                                    myAnchorElementIfAll, myAnchorElement, myEditor, myParentClass);
+                                                                    getAnchorElementIfAll(), getAnchorElement(), myEditor, myParentClass);
           convertToFieldRunnable.run();
         }
       }
     }.execute();
-  }
-
-  @Override
-  protected void restoreAnchors() {
-    if (myAnchorIdxIfAll != -1 && myOccurrences[myAnchorIdxIfAll] != null) {
-      myAnchorElementIfAll = myOccurrences[myAnchorIdxIfAll].getParent();
-    }
-
-    if (myAnchorIdx != -1 && myOccurrences[myAnchorIdx] != null) {
-      myAnchorElement = myOccurrences[myAnchorIdx].getParent();
-    }
   }
 
   @Override
