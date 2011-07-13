@@ -318,7 +318,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       final int startOffset = getExprMarker().getStartOffset();
       highlightManager.addOccurrenceHighlight(editor, startOffset, startOffset + variableNameLength, attributes, 0, highlighters, null);
     }
-    super.addHighlights(ranges, editor, highlighters, highlightManager);
   }
 
   protected void restoreState(final V psiField) {
