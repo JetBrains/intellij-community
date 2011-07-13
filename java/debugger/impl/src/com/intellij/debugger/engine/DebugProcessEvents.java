@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -394,7 +395,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final RequestHint.SmartStepFilter smartStepFilter = hint.getSmartStepFilter();
         if (smartStepFilter != null && !smartStepFilter.wasMethodExecuted()) {
           final String message = "Method <b>" + smartStepFilter.getTargetMethodName() + "()</b> has not been called";
-          BreakpointManager.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
+          XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
         }
       }
     }
