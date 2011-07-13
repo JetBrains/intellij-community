@@ -25,6 +25,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.messages.MessageBus;
@@ -133,8 +134,13 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   }
 
   public synchronized void registerDefaultSettings(NotificationSettings settings) {
-    if (!isRegistered(settings.getGroupId())) {
-      myIdToSettingsMap.put(settings.getGroupId(), settings);
+    String groupId = settings.getGroupId();
+    if (!isRegistered(groupId)) {
+      myIdToSettingsMap.put(groupId, settings);
+    } else if (settings.getDisplayType() == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupId)) {
+      // the first time with tool window capability
+      ObjectUtils.assertNotNull(_getSettings(groupId)).setDisplayType(NotificationDisplayType.TOOL_WINDOW);
+      myToolWindowCapable.put(groupId, null);
     }
   }
 
