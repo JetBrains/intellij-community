@@ -14,9 +14,11 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -246,14 +248,24 @@ public class PyClassRefactoringUtil {
   }
 
   private static void rememberReference(PyReferenceExpression node, PsiElement element) {
-    // we will remember reference in deepest node
-    if (node.getQualifier() instanceof PyReferenceExpression) return;
-
-    final PsiPolyVariantReference ref = node.getReference();
-    final PsiElement target = ref.resolve();
+    // We will remember reference in deepest node (except for references to PyImportedModules, as we need references to modules, not to
+    // their packages)
+    final PyExpression qualifier = node.getQualifier();
+    if (qualifier != null && !(resolveExpression(qualifier) instanceof PyImportedModule)) {
+      return;
+    }
+    final PsiElement target = resolveExpression(node);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
     }
+  }
+
+  @Nullable
+  private static PsiElement resolveExpression(@NotNull PyExpression expr) {
+    if (expr instanceof PyReferenceExpression) {
+      return ((PyReferenceExpression)expr).getReference().resolve();
+    }
+    return null;
   }
 
   public static void updateImportOfElement(PyImportStatementBase importStatement, PsiNamedElement element) {
