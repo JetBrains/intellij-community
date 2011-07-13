@@ -38,14 +38,12 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.continuation.*;
@@ -386,7 +384,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
       showError(project, VcsBundle.message("patch.apply.partially.applied"), false);
     } else if (ApplyPatchStatus.SUCCESS.equals(status)) {
       final String message = VcsBundle.message("patch.apply.success.applied.text");
-      ToolWindowManager.getInstance(project).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO, message);
       AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
     }
   }
