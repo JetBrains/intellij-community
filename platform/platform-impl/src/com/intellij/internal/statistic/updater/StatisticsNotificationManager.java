@@ -1,11 +1,13 @@
 package com.intellij.internal.statistic.updater;
 
-import com.apple.eawt.Application;
+import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
 import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
-import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -21,9 +23,13 @@ public class StatisticsNotificationManager {
   private StatisticsNotificationManager() {
   }
 
+  static {
+    NotificationsConfiguration.remove("SendUsagesStatistics");
+  }
+
   public static void showNotification(@NotNull RemotelyConfigurableStatisticsService statisticsService, Project project) {
 
-    Notifications.Bus.notify(new Notification("SendUsagesStatistics", getTitle(),
+    Notifications.Bus.notify(new Notification("IDE Usage Statistics", getTitle(),
                                               getText(),
                                               NotificationType.INFORMATION,
                                               new MyNotificationListener(statisticsService, UsageStatisticsPersistenceComponent
