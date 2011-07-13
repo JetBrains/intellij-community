@@ -20,7 +20,6 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -28,22 +27,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.MessageCategory;
 import gnu.trove.TIntObjectHashMap;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 public class HotSwapProgressImpl extends HotSwapProgress{
-  static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("HotSwap", NotificationDisplayType.NONE, true);
+  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG, true);
 
   TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<List<String>>();
   private final ProgressIndicator myProgressIndicator;
@@ -71,48 +66,38 @@ public class HotSwapProgressImpl extends HotSwapProgress{
 
   public void finished() {
     super.finished();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        final List<String> errors = getMessages(MessageCategory.ERROR);
-        final List<String> warnings = getMessages(MessageCategory.WARNING);
-        if (errors.size() > 0) {
-          final String message = buildMessage(errors);
-          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.ERROR, message, null, null);
-          NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.errors"), message,
-                                                                  NotificationType.ERROR, null).notify(getProject());
-        }
-        else if (warnings.size() > 0){
-          final String message = buildMessage(warnings);
-          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.WARNING, message, Messages.getWarningIcon(), null);
-          NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.warnings"),
-                                                                  message, NotificationType.WARNING, null).notify(getProject());
-        }
-        else if (myMessages.size() > 0){
-          final StringBuilder msg = StringBuilderSpinAllocator.alloc();
-          try {
-            for (int category : myMessages.keys()) {
-              if (msg.length() > 0) {
-                msg.append(" \n");
-              }
-              final List<String> categoryMessages = getMessages(category);
-              for (Iterator<String> it = categoryMessages.iterator(); it.hasNext();) {
-                msg.append(it.next());
-                if (it.hasNext()) {
-                  msg.append(" \n");
-                }
-              }
+
+    final List<String> errors = getMessages(MessageCategory.ERROR);
+    final List<String> warnings = getMessages(MessageCategory.WARNING);
+    if (errors.size() > 0) {
+      NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors),
+                                                              NotificationType.ERROR, null).notify(getProject());
+    }
+    else if (warnings.size() > 0){
+      NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.warnings"),
+                                            buildMessage(warnings), NotificationType.WARNING, null).notify(getProject());
+    }
+    else if (myMessages.size() > 0){
+      final StringBuilder msg = StringBuilderSpinAllocator.alloc();
+      try {
+        for (int category : myMessages.keys()) {
+          if (msg.length() > 0) {
+            msg.append(" \n");
+          }
+          final List<String> categoryMessages = getMessages(category);
+          for (Iterator<String> it = categoryMessages.iterator(); it.hasNext();) {
+            msg.append(it.next());
+            if (it.hasNext()) {
+              msg.append(" \n");
             }
-            final String message = msg.toString();
-            ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message, null, null);
-            NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(getProject());
-          }
-          finally {
-            StringBuilderSpinAllocator.dispose(msg);
           }
         }
+        NOTIFICATION_GROUP.createNotification(msg.toString(), NotificationType.INFORMATION).notify(getProject());
       }
-    });
+      finally {
+        StringBuilderSpinAllocator.dispose(msg);
+      }
+    }
   }
 
   private List<String> getMessages(int category) {
