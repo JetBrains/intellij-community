@@ -31,6 +31,7 @@ public class PyMoveClassOrFunctionTest extends PyLightFixtureTestCase {
   }
 
   // PY-3929
+  // PY-4095
   public void testImportAs() {
     doTest("f", "b.py");
   }

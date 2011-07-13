@@ -29,6 +29,7 @@ import java.util.*;
 public class PyClassRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(PyClassRefactoringUtil.class.getName());
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
+  private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
 
   private PyClassRefactoringUtil() {}
 
@@ -167,6 +168,7 @@ public class PyClassRefactoringUtil {
 
   private static void restoreReference(final PyReferenceExpression node) {
     PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
+    String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
     if (target instanceof PsiDirectory) {
       target = (PsiNamedElement)PyUtil.turnDirIntoInit(target);
     }
@@ -180,8 +182,9 @@ public class PyClassRefactoringUtil {
     if (target == null) return;
     if (PyBuiltinCache.getInstance(target).hasInBuiltins(target)) return;
     if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
-    AddImportHelper.addImport(target, node.getContainingFile(), node);
+    insertImport(node, target, asName);
     node.putCopyableUserData(ENCODED_IMPORT, null);
+    node.putCopyableUserData(ENCODED_IMPORT_AS, null);
   }
 
   public static void insertImport(PsiElement anchor, Collection<PsiNamedElement> elements) {
@@ -254,9 +257,19 @@ public class PyClassRefactoringUtil {
     if (qualifier != null && !(resolveExpression(qualifier) instanceof PyImportedModule)) {
       return;
     }
+    PyImportElement importElement = null;
+    for (ResolveResult result : node.getReference().multiResolve(false)) {
+      final PsiElement e = result.getElement();
+      if (e instanceof PyImportElement) {
+        importElement = (PyImportElement)e;
+      }
+    }
     final PsiElement target = resolveExpression(node);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
+      if (importElement != null) {
+        node.putCopyableUserData(ENCODED_IMPORT_AS, importElement.getAsName());
+      }
     }
   }
 
