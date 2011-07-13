@@ -315,7 +315,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private static Specifics checkSubtyping(PsiType type1, PsiType type2, PsiMethod method1, PsiMethod method2) {
     boolean noBoxing = type1 instanceof PsiPrimitiveType == type2 instanceof PsiPrimitiveType;
     final boolean allowUncheckedConversion =
-      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC);
+      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC) ||
+      method1.getContainingClass() == method2.getContainingClass();
     final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, allowUncheckedConversion);
     final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, allowUncheckedConversion);
     if (assignable1From2 || assignable2From1) {
