@@ -1216,6 +1216,10 @@ public class ContainerUtil {
   }
 
   @NotNull
+  public static <E> List<E> flatten(@NotNull Collection<E>[] collections) {
+    return flatten(Arrays.asList(collections));
+  }
+  @NotNull
   public static <E> List<E> flatten(@NotNull Iterable<? extends Collection<E>> collections) {
     List<E> result = new ArrayList<E>();
     for (Collection<E> list : collections) {
