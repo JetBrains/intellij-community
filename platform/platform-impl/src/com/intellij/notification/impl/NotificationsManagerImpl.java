@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -178,7 +179,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
           }
         };
         assert toolWindowId != null;
-        ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, messageType, notification.getContent(), notification.getIcon(), listener);
+        String msg = StringUtil.isEmpty(notification.getTitle()) ? notification.getContent() : notification.getTitle();
+        ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, messageType, msg, notification.getIcon(), listener);
     }
   }
 
