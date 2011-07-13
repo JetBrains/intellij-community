@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
         if (evaluator != null) {
           final int offset = editor.getCaretModel().getOffset();
           final Document document = editor.getDocument();
-          final TextRange textRange = evaluator.getExpressionRangeAtOffset(session.getProject(), document, offset);
+          final TextRange textRange = evaluator.getExpressionRangeAtOffset(session.getProject(), document, offset, false);
           if (textRange != null) {
             text = document.getText(textRange);
           }
