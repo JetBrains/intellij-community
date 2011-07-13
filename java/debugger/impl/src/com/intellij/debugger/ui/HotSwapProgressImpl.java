@@ -35,7 +35,6 @@ import gnu.trove.TIntObjectHashMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class HotSwapProgressImpl extends HotSwapProgress{
@@ -79,25 +78,11 @@ public class HotSwapProgressImpl extends HotSwapProgress{
                                             buildMessage(warnings), NotificationType.WARNING, null).notify(getProject());
     }
     else if (myMessages.size() > 0){
-      final StringBuilder msg = StringBuilderSpinAllocator.alloc();
-      try {
-        for (int category : myMessages.keys()) {
-          if (msg.length() > 0) {
-            msg.append(" \n");
-          }
-          final List<String> categoryMessages = getMessages(category);
-          for (Iterator<String> it = categoryMessages.iterator(); it.hasNext();) {
-            msg.append(it.next());
-            if (it.hasNext()) {
-              msg.append(" \n");
-            }
-          }
-        }
-        NOTIFICATION_GROUP.createNotification(msg.toString(), NotificationType.INFORMATION).notify(getProject());
+      List<String> messages = new ArrayList<String>();
+      for (int category : myMessages.keys()) {
+        messages.addAll(getMessages(category));
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(msg);
-      }
+      NOTIFICATION_GROUP.createNotification(buildMessage(messages), NotificationType.INFORMATION).notify(getProject());
     }
   }
 
@@ -107,7 +92,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
     
   private static String buildMessage(List<String> messages) {
-    return StringUtil.join(messages, " \n");
+    return StringUtil.trimEnd(StringUtil.join(messages, " \n").trim(), ";");
   }
   
   public void addMessage(DebuggerSession session, final int type, final String text) {
