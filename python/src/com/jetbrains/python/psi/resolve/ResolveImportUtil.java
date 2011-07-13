@@ -911,6 +911,13 @@ public class ResolveImportUtil {
         components.set(0, "functools");
         return PyQualifiedName.fromComponents(components);
       }
+      else if (head.equals("ntpath")) {
+        final List<String> result = new ArrayList<String>();
+        result.add("os");
+        components.set(0, "path");
+        result.addAll(components);
+        return PyQualifiedName.fromComponents(result);
+      }
     }
     return null;
   }
