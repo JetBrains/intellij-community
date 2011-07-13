@@ -141,16 +141,17 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public static void showNotification(final Notification notification, @Nullable final Project project) {
-    if (EventLog.isEventLogVisible(project)) {
+    String groupId = notification.getGroupId();
+    final NotificationSettings settings = NotificationsConfiguration.getSettings(groupId);
+
+    if (EventLog.isEventLogVisible(project) && settings.isShouldLog()) {
       return;
     }
 
-    String groupId = notification.getGroupId();
-    final NotificationSettings settings = NotificationsConfiguration.getSettings(groupId);
     NotificationDisplayType type = settings.getDisplayType();
     String toolWindowId = NotificationsConfiguration.getNotificationsConfiguration().getToolWindowId(groupId);
     if (type == NotificationDisplayType.TOOL_WINDOW &&
-        (toolWindowId == null || project == null || Arrays.asList(ToolWindowManager.getInstance(project).getToolWindowIds()).contains(toolWindowId))) {
+        (toolWindowId == null || project == null || !Arrays.asList(ToolWindowManager.getInstance(project).getToolWindowIds()).contains(toolWindowId))) {
       type = NotificationDisplayType.BALLOON;
     }
 
