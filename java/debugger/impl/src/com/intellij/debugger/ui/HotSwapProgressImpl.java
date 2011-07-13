@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.MessageCategory;
@@ -106,20 +107,8 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
     
   private static String buildMessage(List<String> messages) {
-    final StringBuilder msg = StringBuilderSpinAllocator.alloc();
-    try {
-      for (Iterator<String> it = messages.iterator(); it.hasNext();) {
-        msg.append(it.next());
-        if (it.hasNext()) {
-          msg.append(" \n");
-        }
-      }
-      return msg.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(msg);
-    }
-  } 
+    return StringUtil.join(messages, " \n");
+  }
   
   public void addMessage(DebuggerSession session, final int type, final String text) {
     List<String> messages = myMessages.get(type);
