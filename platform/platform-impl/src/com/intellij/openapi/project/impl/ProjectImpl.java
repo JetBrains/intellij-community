@@ -331,7 +331,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public synchronized void dispose() {
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    assert application.isDispatchThread();
+    assert application.isWriteAccessAllowed();  // dispose must be under write action
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
