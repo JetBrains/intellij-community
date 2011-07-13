@@ -4,14 +4,13 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.statistics.StatisticsManager;
 
-import java.util.List;
+import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.psi.PsiClass
+import com.intellij.psi.statistics.StatisticsManager
 
 public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting"; 
@@ -41,6 +40,13 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     }
     refreshSorting(lookup);
     assertPreferredItems(0, "Container", "FooBean3", "JComponent", "Frame", "Window");
+
+    int component = lookup.items.findIndexOf { it.lookupString == 'Component' }
+    for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
+      imitateItemSelection(lookup, component);
+    }
+    refreshSorting(lookup);
+    assertPreferredItems(0, "Component", "Container");
   }
 
   public void testMethodStats() throws Throwable {
