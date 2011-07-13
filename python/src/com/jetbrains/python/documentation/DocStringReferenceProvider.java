@@ -58,7 +58,8 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                           return Character.isLetterOrDigit(c) || c == '_';
                                         }}.negate();
         final String tagName = docString.substring(tagRange.getStartOffset(), tagRange.getEndOffset());
-        if (tagName.startsWith(":")) {
+        boolean isRType = isReturnType(tagName);
+        if (tagName.startsWith(":") && !isRType) {           // if ReST parameter tag
           int ws = CharMatcher.anyOf(" \t*").indexIn(docString, pos+1);
           if (ws != -1) {
             int next = CharMatcher.anyOf(" \t*").negate().indexIn(docString, ws);
@@ -74,9 +75,9 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         if (endPos < 0) {
           endPos = docString.length();
         }
-
-        result.add(new DocStringParameterReference(element, new TextRange(pos, endPos)));
-        if (tagName.equals(":type") || tagName.equals(":rtype") || tagName.equals("@type") || tagName.equals("@rtype")) {
+        if (!isRType)
+          result.add(new DocStringParameterReference(element, new TextRange(pos, endPos)));
+        if (tagName.equals(":type") || tagName.equals("@type") || isRType) {
           pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, endPos+1);
           endPos = CharMatcher.anyOf("\n\r").indexIn(docString, pos+1);
           if (endPos == -1)
@@ -91,6 +92,10 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       return result.toArray(new PsiReference[result.size()]);
     }
     return PsiReference.EMPTY_ARRAY;
+  }
+
+  private boolean isReturnType(String tagName) {
+    return tagName.equals(":rtype") || tagName.equals("@rtype") || tagName.equals("@returntype");
   }
 
   @Nullable
