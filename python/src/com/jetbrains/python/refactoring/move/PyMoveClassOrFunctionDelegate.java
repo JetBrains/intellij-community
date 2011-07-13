@@ -12,6 +12,7 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyClass;
@@ -72,6 +73,10 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
     if (e instanceof PyClass || e instanceof PyFunction) {
       if (isTopLevel(e)) {
         doMove(project, new PsiElement[] {e}, null, null);
+      }
+      else {
+        CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.move.class.or.function.error.selection"),
+                                            RefactoringBundle.message("error.title"), null);
       }
       return true;
     }
