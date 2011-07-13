@@ -10,7 +10,6 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
@@ -280,22 +279,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
       PyFile file = PsiTreeUtil.getParentOfType(this, PyFile.class);
       if (file != null) {
-        boolean hasUnicodeImport = false;
-        List<PyFromImportStatement> fromImports = file.getFromImports();
-loop:
-        for (PyFromImportStatement st : fromImports) {
-          if (st.isFromFuture()) {
-            PyImportElement[] elements = st.getImportElements();
-            for (PyImportElement e : elements) {
-              if (PyNames.UNICODE_LITERALS.equals(e.getVisibleName())) {
-                hasUnicodeImport = true;
-                break loop;
-              }
-            }
-          }
-        }
         IElementType type = PythonHighlightingLexer.convertStringType(getStringNodes().get(0).getElementType(), text,
-                                                                      LanguageLevel.forElement(this), hasUnicodeImport);
+                                                LanguageLevel.forElement(this), file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
         if (PyTokenTypes.UNICODE_NODES.contains(type)) {
           return PyBuiltinCache.getInstance(this).getUnicodeType(LanguageLevel.forElement(this));
         }
