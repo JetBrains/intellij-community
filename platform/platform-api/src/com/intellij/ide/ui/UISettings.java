@@ -275,7 +275,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     UISettings uiSettings=getInstance();
 
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
-    if(uiSettings.ANTIALIASING_IN_EDITOR) {
+    if (uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR) {
       Toolkit tk = Toolkit.getDefaultToolkit();
       //noinspection HardCodedStringLiteral
       Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
