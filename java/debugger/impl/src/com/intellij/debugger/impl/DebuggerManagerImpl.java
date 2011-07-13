@@ -15,10 +15,7 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.NameMapper;
-import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.*;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -41,6 +38,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -196,6 +194,12 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
           final PositionManager positionManager = factory.fun(process);
           if (positionManager != null) {
             process.appendPositionManager(positionManager);
+          }
+        }
+        for(PositionManagerFactory factory: Extensions.getExtensions(PositionManagerFactory.EP_NAME, myProject)) {
+          final PositionManager manager = factory.create(debugProcess);
+          if (manager != null) {
+            process.appendPositionManager(manager);
           }
         }
       }
