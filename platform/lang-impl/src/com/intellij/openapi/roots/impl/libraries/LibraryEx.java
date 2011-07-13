@@ -42,5 +42,9 @@ public interface LibraryEx extends Library {
     void setProperties(LibraryProperties properties);
 
     LibraryProperties getProperties();
+
+    void setType(LibraryType<?> type);
+
+    LibraryType<?> getType();
   }
 }

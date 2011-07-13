@@ -39,7 +39,7 @@ public class PatchWriter {
     Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
     try {
       final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
-      UnifiedDiffWriter.write(patches, writer, lineSeparator);
+      UnifiedDiffWriter.write(project, patches, writer, lineSeparator);
     }
     finally {
       writer.close();

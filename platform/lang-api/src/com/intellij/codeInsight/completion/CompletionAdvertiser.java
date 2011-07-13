@@ -38,7 +38,7 @@ public abstract class CompletionAdvertiser {
   }
 
   protected static boolean shouldShowFeature(final CompletionParameters parameters, final String id) {
-    return FeatureUsageTracker.getInstance().isToBeShown(id, parameters.getPosition().getProject());
+    return FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(id, parameters.getPosition().getProject());
   }
 
 }

@@ -457,26 +457,31 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                      final boolean hasModifiers,
                                      final int invocationCount) {
     final PsiFile originalFile = initContext.getFile();
-    final PsiFile fileCopy;
-    AccessToken token = WriteAction.start();
-    try {
-      fileCopy = createFileCopy(originalFile);
-    }
-    finally {
-      token.finish();
-    }
-    final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy);
+    final PsiFile[] fileCopy = {null};
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      @Override
+      public void run() {
+        AccessToken token = WriteAction.start();
+        try {
+          fileCopy[0] = createFileCopy(originalFile);
+        }
+        finally {
+          token.finish();
+        }
+      }
+    });
+    final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy[0]);
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
-    final int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy, initContext.getStartOffset());
+    final int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy[0], initContext.getStartOffset());
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
 
     final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
     final OffsetMap original = initContext.getOffsetMap();
     for (final OffsetKey key : new ArrayList<OffsetKey>(original.keySet())) {
-      hostMap.addOffset(key, injectedLanguageManager.injectedToHost(fileCopy, original.getOffset(key)));
+      hostMap.addOffset(key, injectedLanguageManager.injectedToHost(fileCopy[0], original.getOffset(key)));
     }
 
-    final Document document = fileCopy.getViewProvider().getDocument();
+    final Document document = fileCopy[0].getViewProvider().getDocument();
     assert document != null : "no document";
 
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
@@ -485,7 +490,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            patchFileCopy(initContext, fileCopy, document);
+            patchFileCopy(initContext, fileCopy[0], document);
           }
         });
       }

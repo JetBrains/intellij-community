@@ -22,7 +22,7 @@ import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.RowEditableTableModel;
+import com.intellij.ui.EditableModel;
 import com.intellij.ui.TableToolbarDecorator;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.components.JBComboBoxLabel;
@@ -285,7 +285,7 @@ public abstract class ParameterTablePanel extends JPanel {
     super.setEnabled(enabled);
   }
 
-  private class MyTableModel extends AbstractTableModel implements RowEditableTableModel {
+  private class MyTableModel extends AbstractTableModel implements EditableModel {
     public static final int CHECKMARK_COLUMN = 0;
     public static final int PARAMETER_TYPE_COLUMN = 1;
     public static final int PARAMETER_NAME_COLUMN = 2;

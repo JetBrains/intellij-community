@@ -28,10 +28,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestCase;
@@ -65,6 +62,13 @@ public class EclipseEmlTest extends IdeaTestCase {
 
   protected static void doTest(String relativePath, final Project project) throws Exception {
     final String path = project.getBaseDir().getPath() + relativePath;
+    final Module module = doLoadModule(path, project);
+
+
+    checkModule(path, module);
+  }
+
+  private static Module doLoadModule(final String path, final Project project) throws IOException, JDOMException, InvalidDataException {
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       @Override
       public Module compute() {
@@ -87,9 +91,7 @@ public class EclipseEmlTest extends IdeaTestCase {
         rootModel.commit();
       }
     });
-
-
-    checkModule(path, module);
+    return module;
   }
 
   protected static void checkModule(String path, Module module) throws WriteExternalException, IOException, JDOMException {
@@ -119,4 +121,17 @@ public class EclipseEmlTest extends IdeaTestCase {
     doTest("/test", getProject());
   }
 
+  public void testPreserveInheritedInvalidJdk() throws Exception {
+    final Project project = getProject();
+    final String projectBasePath = project.getBaseDir().getPath();
+    final String path = projectBasePath + "/test";
+
+    final Module module = doLoadModule(path, project);
+
+    final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    modifiableModel.inheritSdk();
+    modifiableModel.commit();
+
+    checkModule(projectBasePath + "/test/expected", module);
+  }
 }

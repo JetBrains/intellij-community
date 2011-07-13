@@ -7,6 +7,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Function;
 
 import java.util.*;
 
@@ -83,7 +84,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   }
 
   @Override
-  public void postProcessUsages(UsageInfo[] usages) {
+  public void postProcessUsages(UsageInfo[] usages, Function<PsiDirectory, PsiDirectory> newDirMapper) {
     for (UsageInfo usage : usages) {
       if (usage instanceof RemoveOnDemandImportStatementsUsageInfo) {
         final PsiElement element = usage.getElement();

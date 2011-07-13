@@ -94,9 +94,11 @@ public class DownloadableLibraryEditor extends LibraryPropertiesEditor {
             if (settings != null) {
               final NewLibraryEditor editor = settings.download(myMainPanel);
               if (editor != null) {
-                myEditorComponent.getLibraryEditor().removeAllRoots();
-                myEditorComponent.getLibraryEditor().setName(editor.getName());
-                editor.applyTo((LibraryEditorBase)myEditorComponent.getLibraryEditor());
+                final LibraryEditorBase target = (LibraryEditorBase)myEditorComponent.getLibraryEditor();
+                target.removeAllRoots();
+                target.setName(editor.getName());
+                target.setType(myLibraryType);
+                editor.applyTo(target);
                 myEditorComponent.updateRootsTree();
                 myCurrentVersionString = settings.getVersion().getVersionString();
                 updateDescription();

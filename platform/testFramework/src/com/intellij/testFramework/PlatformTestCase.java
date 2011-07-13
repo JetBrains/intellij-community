@@ -412,11 +412,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private void disposeProject() {
     UIUtil.dispatchAllInvocationEvents();
     if (myProject != null) {
-      Disposer.dispose(myProject);
-      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-      if (projectManager != null) {
-        projectManager.setCurrentTestProject(null);
-      }
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          Disposer.dispose(myProject);
+          ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+          if (projectManager != null) {
+            projectManager.setCurrentTestProject(null);
+          }
+        }
+      });
+
       myProject = null;
     }
   }

@@ -16,10 +16,12 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import com.jgoodies.forms.factories.DefaultComponentFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author yole
@@ -30,6 +32,18 @@ public class SeparatorFactory {
 
   public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor) {
     final JComponent separator = DefaultComponentFactory.getInstance().createSeparator(textWithMnemonic);
+    if (labelFor != null) {
+      ((JLabel) separator.getComponent(0)).setLabelFor(labelFor);
+    }
+    separator.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
+    return separator;
+  }
+
+  public static JComponent createSeparatorWithBoldTitle(String textWithMnemonic, @Nullable JComponent labelFor) {
+    Font oldFont = UIManager.getFont("TitledBorder.font");
+    UIManager.put("TitledBorder.font", UIUtil.getBorderFont());
+    final JComponent separator = DefaultComponentFactory.getInstance().createSeparator(textWithMnemonic);
+    UIManager.put("TitledBorder.font", oldFont);
     if (labelFor != null) {
       ((JLabel) separator.getComponent(0)).setLabelFor(labelFor);
     }

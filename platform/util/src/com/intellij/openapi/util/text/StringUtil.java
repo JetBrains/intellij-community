@@ -911,6 +911,10 @@ public class StringUtil {
     return s == null || s.length() == 0;
   }
 
+  public static boolean isEmpty(final CharSequence cs) {
+    return cs == null || cs.length() == 0;
+  }
+
   @NotNull
   public static String notNullize(final String s) {
     return notNullize(s, "");

@@ -200,31 +200,36 @@ public class PasteHandler extends EditorActionHandler {
         e.getKey().processTransferableData(project, editor, bounds, col, indented, e.getValue());
       }
 
-      final int indentOptions1 = indentOptions;
-      ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run() {
-            switch (indentOptions1) {
-              case CodeInsightSettings.INDENT_BLOCK:
-                if (!indented.get()) {
-                  indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn);
-                }
-                break;
+      boolean pastedTextContainsWhiteSpacesOnly = 
+        CharArrayUtil.shiftForward(document.getCharsSequence(), bounds.getStartOffset(), " \n\t") >= bounds.getEndOffset();
 
-              case CodeInsightSettings.INDENT_EACH_LINE:
-                if (!indented.get()) {
-                  indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
-                }
-                break;
-
-              case CodeInsightSettings.REFORMAT_BLOCK:
-                indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset()); // this is needed for example when inserting a comment before method
-                reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
-                break;
+      if (!pastedTextContainsWhiteSpacesOnly) {
+        final int indentOptions1 = indentOptions;
+        ApplicationManager.getApplication().runWriteAction(
+          new Runnable() {
+            public void run() {
+              switch (indentOptions1) {
+                case CodeInsightSettings.INDENT_BLOCK:
+                  if (!indented.get()) {
+                    indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn);
+                  }
+                  break;
+  
+                case CodeInsightSettings.INDENT_EACH_LINE:
+                  if (!indented.get()) {
+                    indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+                  }
+                  break;
+  
+                case CodeInsightSettings.REFORMAT_BLOCK:
+                  indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset()); // this is needed for example when inserting a comment before method
+                  reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+                  break;
+              }
             }
           }
-        }
-      );
+        );
+      }
 
       if (bounds.isValid()) {
         caretModel.moveToOffset(bounds.getEndOffset());
@@ -360,7 +365,7 @@ public class PasteHandler extends EditorActionHandler {
     int pastedLinesAfterIndentLine = 0;
 
     final int nonWsOffset = CharArrayUtil.shiftBackward(chars, startOffset - 1, " \t");
-    boolean onNewLine = nonWsOffset >= 0 && chars.charAt(nonWsOffset) == '\n';
+    boolean onNewLine = nonWsOffset < 0 || chars.charAt(nonWsOffset) == '\n';
     
     int diffShift = 0;
     if (onNewLine && (chars.charAt(startOffset) == ' ' || chars.charAt(startOffset) == '\n')) {

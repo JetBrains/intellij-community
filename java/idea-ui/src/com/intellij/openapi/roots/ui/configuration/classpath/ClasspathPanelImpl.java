@@ -49,6 +49,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -378,7 +379,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, PlatformIcons.TABLE_ANALYZE) {
+    final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, SystemInfo.isMac ? PlatformIcons.TABLE_ANALYZE : PlatformIcons.ANALYZE) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         AnalyzeDependenciesDialog.show(getRootModel().getModule());

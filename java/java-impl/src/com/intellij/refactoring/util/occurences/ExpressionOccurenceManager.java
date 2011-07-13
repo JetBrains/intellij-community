@@ -103,7 +103,7 @@ public class ExpressionOccurenceManager extends BaseOccurenceManager {
           if (literalExpression != null && !literals.contains(literalExpression)) { //enum. occurrences inside string literals
             final PsiExpression expression =
               IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, offset + endOffset);
-            if (expression != null) {
+            if (expression != null && IntroduceVariableBase.getErrorMessage(expression) == null) {
               results.add(expression);
               literals.add(literalExpression);
             }

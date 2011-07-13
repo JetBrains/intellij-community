@@ -38,12 +38,14 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProgressManagerImpl extends ProgressManager {
+public class ProgressManagerImpl extends ProgressManager implements Disposable{
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
   private static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
@@ -56,12 +58,13 @@ public class ProgressManagerImpl extends ProgressManager {
   private static final boolean DISABLED = Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled");
 
   private static final Map<String, Long> myWastedTime = new THashMap<String, Long>();
+  private volatile boolean enabled = true;
 
   public ProgressManagerImpl(Application application) {
-    if (!application.isUnitTestMode() && !DISABLED) {
+    if (/*!application.isUnitTestMode() && */!DISABLED) {
       final Thread thread = new Thread(NAME) {
         public void run() {
-          while (true) {
+          while (enabled) {
             try {
               sleep(10);
             }
@@ -478,23 +481,43 @@ public class ProgressManagerImpl extends ProgressManager {
     }
   }
 
+  @Override
+  public void dispose() {
+    enabled = false;
+  }
+
   //for debugging
+  @TestOnly
   @SuppressWarnings({"UnusedDeclaration"})
   private static void stopCheckCanceled() {
-    Thread[] threads = new Thread[500];
-    Thread.enumerate(threads);
-    for (Thread thread : threads) {
-      if (thread == null) continue;
-      if (NAME.equals(thread.getName())) {
-        Thread.State oldState = thread.getState();
-        thread.suspend();
-        System.out.println(thread +" suspended ("+oldState+ "->"+thread.getState()+")");
-      }
-    }
+    ((ProgressManagerImpl)getInstance()).dispose();
   }
 
   @TestOnly
   public static void setNeedToCheckCancel(boolean needToCheckCancel) {
     ourNeedToCheckCancel = needToCheckCancel;
+  }
+
+  @TestOnly
+  @SuppressWarnings({"UnusedDeclaration"})
+  public static String isCanceledThread(Thread thread) {
+    try {
+      Field th = Thread.class.getDeclaredField("threadLocals");
+      th.setAccessible(true);
+      Object tLocalMap = th.get(thread);
+      if (tLocalMap == null) return null;
+      Method getEntry = tLocalMap.getClass().getDeclaredMethod("getEntry", ThreadLocal.class);
+      getEntry.setAccessible(true);
+      Object entry = getEntry.invoke(tLocalMap, myThreadIndicator);
+      if (entry == null) return null;
+      Field value = entry.getClass().getDeclaredField("value");
+      value.setAccessible(true);
+      ProgressIndicator indicator = (ProgressIndicator)value.get(entry);
+      if (indicator ==null) return null;
+      return String.valueOf(indicator.isCanceled());
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,8 +37,17 @@ public class LineTokenizer {
   }
 
   private static String[] tokenize(final CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
+    final List<String> strings = tokenizeIntoList(chars, includeSeparators, skipLastEmptyLine);
+    return strings.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(strings);
+  }
+
+  public static List<String> tokenizeIntoList(final CharSequence chars, final boolean includeSeparators) {
+    return tokenizeIntoList(chars, includeSeparators, true);
+  }
+
+  public static List<String> tokenizeIntoList(final CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
     if (chars == null || chars.length() == 0){
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return Collections.emptyList();
     }
 
     LineTokenizer tokenizer = new LineTokenizer(chars);
@@ -57,7 +67,7 @@ public class LineTokenizer {
 
     if (!skipLastEmptyLine && stringEndsWithSeparator(tokenizer)) lines.add("");
 
-    return ArrayUtil.toStringArray(lines);
+    return lines;
   }
 
   public static int calcLineCount(final CharSequence chars, final boolean skipLastEmptyLine) {

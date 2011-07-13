@@ -114,8 +114,8 @@ public class TextPatchBuilder {
       if (afterContent == null) {
         throw new VcsException("Failed to fetch new content for changed file " + afterRevision.getPath().getPath());
       }
-      String[] beforeLines = new LineTokenizer(beforeContent).execute();
-      String[] afterLines = new LineTokenizer(afterContent).execute();
+      String[] beforeLines = tokenize(beforeContent);
+      String[] afterLines = tokenize(afterContent);
 
       DiffFragment[] woFormattingBlocks;
       DiffFragment[] step1lineFragments;
@@ -181,6 +181,10 @@ public class TextPatchBuilder {
     return result;
   }
 
+  private static String[] tokenize(String text) {
+    return text.length() == 0 ?  new String[]{text} : new LineTokenizer(text).execute();
+  }
+
   private FilePatch buildBinaryPatch(final String basePath,
                                             final AirContentRevision beforeRevision,
                                             final AirContentRevision afterRevision) throws VcsException {
@@ -218,7 +222,7 @@ public class TextPatchBuilder {
     if (content == null) {
       throw new VcsException("Failed to fetch content for added file " + afterRevision.getPath().getPath());
     }
-    String[] lines = new LineTokenizer(content).execute();
+    String[] lines = tokenize(content);
     TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for(String line: lines) {
@@ -234,7 +238,7 @@ public class TextPatchBuilder {
     if (content == null) {
       throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getPath().getPath());
     }
-    String[] lines = new LineTokenizer(content).execute();
+    String[] lines = tokenize(content);
     TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for(String line: lines) {

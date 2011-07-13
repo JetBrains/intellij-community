@@ -68,10 +68,6 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
   @NotNull
   @Override
   public Collection<PsiReference> findReferences(PsiElement element) {
-    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory) element);
-    if (aPackage != null) {
-      return ReferencesSearch.search(aPackage, element.getUseScope()).findAll();
-    }
     return ReferencesSearch.search(element).findAll();
   }
 

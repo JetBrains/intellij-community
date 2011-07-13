@@ -37,6 +37,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +87,7 @@ public class FoldingUpdate {
                                                                       final Editor editor,
                                                                       final boolean applyDefaultState) {
 
-    final TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
+    final FoldingMap elementsToFoldMap = new FoldingMap();
     getFoldingsFor(file instanceof PsiCompiledElement ? (PsiFile)((PsiCompiledElement)file).getMirror() : file, document, elementsToFoldMap, quick);
 
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap, applyDefaultState, false);
@@ -121,7 +122,7 @@ public class FoldingUpdate {
     if (injectedDocuments.isEmpty()) return null;
     final List<EditorWindow> injectedEditors = new ArrayList<EditorWindow>();
     final List<PsiFile> injectedFiles = new ArrayList<PsiFile>();
-    final List<Map<PsiElement, FoldingDescriptor>> maps = new ArrayList<Map<PsiElement, FoldingDescriptor>>();
+    final List<FoldingMap> maps = new ArrayList<FoldingMap>();
     for (DocumentWindow injectedDocument : injectedDocuments) {
       PsiFile injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
       if (injectedFile == null || !injectedFile.isValid() || !injectedDocument.isValid()) continue;
@@ -130,7 +131,7 @@ public class FoldingUpdate {
 
       injectedEditors.add((EditorWindow)injectedEditor);
       injectedFiles.add(injectedFile);
-      Map<PsiElement, FoldingDescriptor> map = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
+      final FoldingMap map = new FoldingMap();
       maps.add(map);
       getFoldingsFor(injectedFile, injectedDocument, map, false);
     }
@@ -141,7 +142,7 @@ public class FoldingUpdate {
           EditorWindow injectedEditor = injectedEditors.get(i);
           PsiFile injectedFile = injectedFiles.get(i);
           if (!injectedEditor.getDocument().isValid()) continue;
-          Map<PsiElement, FoldingDescriptor> map = maps.get(i);
+          FoldingMap map = maps.get(i);
           UpdateFoldRegionsOperation op = new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, map, applyDefaultState, true);
           injectedEditor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(op);
         }
@@ -151,7 +152,10 @@ public class FoldingUpdate {
     };
   }
 
-  private static void getFoldingsFor(@NotNull PsiFile file, @NotNull Document document, @NotNull Map<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean quick) {
+  private static void getFoldingsFor(@NotNull PsiFile file,
+                                     @NotNull Document document,
+                                     @NotNull FoldingMap elementsToFoldMap,
+                                     boolean quick) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (final Language language : viewProvider.getLanguages()) {
       final PsiFile psi = viewProvider.getPsi(language);
@@ -167,9 +171,16 @@ public class FoldingUpdate {
                       " and called on file " + psi +
                       " is outside document range: " + docRange);
           }
-          elementsToFoldMap.put(descriptor.getElement().getPsi(), descriptor);
+          elementsToFoldMap.putValue(descriptor.getElement().getPsi(), descriptor);
         }
       }
+    }
+  }
+
+  public static class FoldingMap extends MultiMap<PsiElement, FoldingDescriptor>{
+    @Override
+    protected Map<PsiElement, Collection<FoldingDescriptor>> createMap() {
+      return new TreeMap<PsiElement, Collection<FoldingDescriptor>>(COMPARE_BY_OFFSET);
     }
   }
 

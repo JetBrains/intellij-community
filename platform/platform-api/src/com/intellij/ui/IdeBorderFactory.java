@@ -18,9 +18,7 @@ package com.intellij.ui;
 import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
@@ -65,6 +63,12 @@ public class IdeBorderFactory {
                                 int titlePosition,
                                 Font titleFont,
                                 Color titleColor) {
+    return new IdeaTitledBorder(title);
+  }
+
+  @Deprecated
+  // Don't remove, used in TeamCity plugin.
+  public static TitledBorder createTitledHeaderBorder(String title) {
     return new IdeaTitledBorder(title);
   }
 

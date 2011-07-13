@@ -17,12 +17,12 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
-import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +32,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
+import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.HashSet;
@@ -50,10 +51,6 @@ public class OverlyComplexBooleanExpressionInspection
         s_booleanOperators.add("&");
         s_booleanOperators.add("|");
     }
-
-    private JFormattedTextField m_termLimitTextField;
-    private JCheckBox m_ignoreConjunctionsDisjunctionsCheckBox;
-    private JPanel m_contentPanel;
 
     /** @noinspection PublicField*/
     public int m_limit = 3;
@@ -77,21 +74,28 @@ public class OverlyComplexBooleanExpressionInspection
 
     @Override
     public JComponent createOptionsPanel() {
-        final ButtonModel pureModel =
-                m_ignoreConjunctionsDisjunctionsCheckBox.getModel();
-        pureModel.setSelected(m_ignorePureConjunctionsDisjunctions);
-        pureModel.addChangeListener(new ChangeListener() {
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final JCheckBox ignoreConjunctionsDisjunctionsCheckBox =
+                new JCheckBox(InspectionGadgetsBundle.message(
+                        "overly.complex.boolean.expression.ignore.option"),
+                        m_ignorePureConjunctionsDisjunctions);
+        ignoreConjunctionsDisjunctionsCheckBox.addChangeListener(
+                new ChangeListener() {
 
-            public void stateChanged(ChangeEvent e) {
-                m_ignorePureConjunctionsDisjunctions = pureModel.isSelected();
-            }
-        });
+                    public void stateChanged(ChangeEvent e) {
+                        m_ignorePureConjunctionsDisjunctions =
+                                ignoreConjunctionsDisjunctionsCheckBox.isSelected();
+                    }
+                }
+        );
         final NumberFormat formatter = NumberFormat.getIntegerInstance();
         formatter.setParseIntegerOnly(true);
-        m_termLimitTextField.setValue(Integer.valueOf(m_limit));
-        m_termLimitTextField.setColumns(4);
-        FormattedTextFieldMacFix.apply(m_termLimitTextField);
-        final Document document = m_termLimitTextField.getDocument();
+        final JFormattedTextField termLimitTextField =
+                new JFormattedTextField(formatter);
+        termLimitTextField.setValue(Integer.valueOf(m_limit));
+        termLimitTextField.setColumns(2);
+        UIUtil.fixFormattedField(termLimitTextField);
+        final Document document = termLimitTextField.getDocument();
         document.addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
                 textChanged();
@@ -107,15 +111,30 @@ public class OverlyComplexBooleanExpressionInspection
 
             private void textChanged() {
                 try {
-                    m_termLimitTextField.commitEdit();
-                    final Number number = (Number)m_termLimitTextField.getValue();
+                    termLimitTextField.commitEdit();
+                    final Number number = (Number)termLimitTextField.getValue();
                     m_limit = number.intValue();
                 } catch (ParseException e) {
                     // No luck this time
                 }
             }
         });
-        return m_contentPanel;
+        final GridBagConstraints constraints = new GridBagConstraints();
+        final JLabel label = new JLabel(InspectionGadgetsBundle.message(
+                "overly.complex.boolean.expression.max.terms.option"));
+        constraints.anchor = GridBagConstraints.BASELINE_LEADING;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(label, constraints);
+        constraints.fill = GridBagConstraints.NONE;
+        constraints.gridx = 1;
+        panel.add(termLimitTextField, constraints);
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.gridwidth = 2;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        panel.add(ignoreConjunctionsDisjunctionsCheckBox, constraints);
+        return panel;
     }
 
     @Override

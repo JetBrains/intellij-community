@@ -623,7 +623,7 @@ public class AbstractTreeBuilder implements Disposable {
 
   class UserRunnable implements Runnable {
 
-    private Runnable myRunnable;
+    private final Runnable myRunnable;
 
     public UserRunnable(Runnable runnable) {
       myRunnable = runnable;
@@ -643,7 +643,8 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public boolean isSelectionBeingAdjusted() {
-    return getUi().isSelectionBeingAdjusted();
+    AbstractTreeUi ui = getUi();
+    return ui != null && ui.isSelectionBeingAdjusted();
   }
 
   private void assertDisposed() {

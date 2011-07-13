@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * author: lesya
  */
@@ -34,4 +36,7 @@ public abstract class LibrariesHelper {
 
   @Nullable
   public abstract VirtualFile findJarByClass(final Library library, @NonNls String fqn);
+
+  @Nullable
+  public abstract VirtualFile findRootByClass(List<VirtualFile> roots, String fqn);
 }

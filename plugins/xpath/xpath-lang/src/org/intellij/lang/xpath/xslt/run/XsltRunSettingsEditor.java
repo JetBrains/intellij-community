@@ -221,7 +221,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             });
 
             myOutputFile.addBrowseFolderListener("Choose Output File", "The selected file will be overwritten during execution.",
-                    project, new FileChooserDescriptor(true, true, false, false, false, false));
+                    project, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor());
 
             final ItemListener outputStateListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {

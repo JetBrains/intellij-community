@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import javax.swing.table.TableModel;
 
 /**
  * @author dsl
+ * @author Konstantin Bulenkov
+ *
+ *  @deprecated
+ * @see EditableModel
  */
 public interface RowEditableTableModel extends TableModel {
   void addRow();
-
   void removeRow(int index);
-
-  void exchangeRows(int index1, int index2);
+  void exchangeRows(int oldIndex, int newIndex);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
          }, new AnyVarColumn<ParameterInfoImpl>() {
         @Override
         public boolean isCellEditable(ParameterTableModelItemBase<ParameterInfoImpl> item) {
-          boolean isGenerateDelegate = dialog instanceof ChangeSignatureDialogBase
-                                       ? ((ChangeSignatureDialogBase)dialog).isGenerateDelegate()
-                                       : dialog instanceof AbstractChangeSignatureDialog &&
-                                         ((AbstractChangeSignatureDialog)dialog).isGenerateDelegate();
+          boolean isGenerateDelegate = ((ChangeSignatureDialogBase)dialog).isGenerateDelegate();
           return !isGenerateDelegate && super.isCellEditable(item);
         }
       });

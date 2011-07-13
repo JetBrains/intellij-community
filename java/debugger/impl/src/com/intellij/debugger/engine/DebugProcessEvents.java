@@ -470,13 +470,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
           if (myReturnValueWatcher != null) {
             myReturnValueWatcher.disable();
           }
-          if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-            // there could be explicit resume as a result of call to voteSuspend()
-            // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_
-            // resuming and all breakpoints in other threads will be ignored.
-            // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
-            myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
-          }
+          //if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+          //  // there could be explicit resume as a result of call to voteSuspend()
+          //  // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_
+          //  // resuming and all breakpoints in other threads will be ignored.
+          //  // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
+          //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
+          //}
           suspendManager.voteSuspend(suspendContext);
           showStatusText(DebugProcessEvents.this, event);
         }

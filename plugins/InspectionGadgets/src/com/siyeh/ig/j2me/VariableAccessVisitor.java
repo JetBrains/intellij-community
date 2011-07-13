@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,14 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
             new HashSet<PsiField>(2);
 
     @Override public void visitReferenceExpression(
-            @NotNull PsiReferenceExpression ref) {
-        super.visitReferenceExpression(ref);
-        final PsiExpression qualifier = ref.getQualifierExpression();
+            @NotNull PsiReferenceExpression referenceExpression) {
+        super.visitReferenceExpression(referenceExpression);
+        final PsiExpression qualifier =
+                referenceExpression.getQualifierExpression();
         if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
             return;
         }
-        final PsiElement element = ref.resolve();
+        final PsiElement element = referenceExpression.resolve();
         if (!(element instanceof PsiField)) {
             return;
         }
@@ -44,15 +45,15 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
         if (overAccessedFields.contains(field)) {
             return;
         }
-        if (ControlFlowUtils.isInLoop(field)) {
+        if (ControlFlowUtils.isInLoop(referenceExpression)) {
             overAccessedFields.add(field);
         }
         final Map<PsiField,Integer> accessCounts = m_accessCounts;
         final Integer count = accessCounts.get(field);
         if (count == null) {
-            accessCounts.put(field, 1);
+            accessCounts.put(field, Integer.valueOf(1));
         } else if (count.intValue() == 1) {
-            accessCounts.put(field, 2);
+            accessCounts.put(field, Integer.valueOf(2));
         } else {
             overAccessedFields.add(field);
         }

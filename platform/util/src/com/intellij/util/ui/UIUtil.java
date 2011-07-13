@@ -89,7 +89,7 @@ public class UIUtil {
   private static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
   private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
   private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
-  private static final Color BORDER_COLOR = new Color(170, 170, 170);
+  private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
   // accessed only from EDT
   private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
@@ -1423,6 +1423,10 @@ public class UIUtil {
     return BORDER_COLOR;
   }
 
+  public static Font getBorderFont() {
+    return UIManager.getFont("TitledBorder.font").deriveFont(Font.BOLD);
+  }
+
   /**
    * @deprecated use getBorderColor instead
    */
@@ -1696,6 +1700,21 @@ public class UIUtil {
     }
 
     return null;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static void fixFormattedField(JFormattedTextField field) {
+    if (SystemInfo.isMac) {
+      final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      final int commandKeyMask = toolkit.getMenuShortcutKeyMask();
+      final InputMap inputMap = field.getInputMap();
+      final KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, commandKeyMask);
+      inputMap.put(copyKeyStroke, "copy-to-clipboard");
+      final KeyStroke pasteKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_V, commandKeyMask);
+      inputMap.put(pasteKeyStroke, "paste-from-clipboard");
+      final KeyStroke cutKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_X, commandKeyMask);
+      inputMap.put(cutKeyStroke, "cut-to-clipboard");
+    }
   }
 
   public static class MacTreeUI extends BasicTreeUI {

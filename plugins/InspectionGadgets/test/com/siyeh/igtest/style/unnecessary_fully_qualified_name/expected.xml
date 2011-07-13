@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  
+  <problem>
+    <file>UnnecessaryFullyQualifiedName.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
+    <description>Fully qualified name &lt;code&gt;java.util.List&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryFullyQualifiedName.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
+    <description>Fully qualified name &lt;code&gt;java.util.Map&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryFullyQualifiedName.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
+    <description>Fully qualified name &lt;code&gt;java.lang.System&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryFullyQualifiedName.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
+    <description>Fully qualified name &lt;code&gt;java.lang.System&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+  </problem>
+
+</problems>

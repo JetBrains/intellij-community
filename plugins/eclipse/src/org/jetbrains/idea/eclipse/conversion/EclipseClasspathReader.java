@@ -244,6 +244,7 @@ public class EclipseClasspathReader {
           }
           else {
             rootModel.setInvalidSdk(jdkName, IdeaXml.JAVA_SDK_TYPE);
+            eclipseModuleManager.setInvalidJdk(jdkName);
             unknownJdks.add(jdkName);
           }
         }

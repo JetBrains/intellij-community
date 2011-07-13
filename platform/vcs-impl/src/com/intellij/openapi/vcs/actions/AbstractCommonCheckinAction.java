@@ -68,7 +68,9 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current());
   }
 
-  protected abstract String getMnemonicsFreeActionName(VcsContext context);
+  protected String getMnemonicsFreeActionName(VcsContext context) {
+    return getActionName(context);
+  }
 
   @Nullable
   protected CommitExecutor getExecutor(Project project) {

@@ -1,5 +1,6 @@
 <component>
   <version codename="Community Edition" major="11" minor="0" eap="true" update-channel="IDEA11EAP"/>
+
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="0" maxbuild="0" version="10.5"/>
   <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
@@ -12,6 +13,7 @@
 
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/idea/"/>
+
   <help file="ideahelp.jar" root="idea"/>
   <documentation url="http://www.jetbrains.com/idea/documentation"/>
   <support url="http://www.jetbrains.com/support/idea/index.html"/>

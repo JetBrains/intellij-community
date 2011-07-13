@@ -39,7 +39,7 @@ public class LibrariesValidatorContextImpl implements LibrariesValidatorContext 
     myLibrariesContainer = LibrariesContainerFactory.createContainer(module);
   }
 
-  @Nullable
+  @NotNull
   public ModuleRootModel getRootModel() {
     return ModuleRootManager.getInstance(myModule);
   }

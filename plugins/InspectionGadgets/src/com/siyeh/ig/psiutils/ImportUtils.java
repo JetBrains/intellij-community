@@ -117,6 +117,16 @@ public class ImportUtils {
                 return true;
             }
             final String shortName = ClassUtil.extractClassName(fqName);
+            if (containingClass instanceof PsiEnumConstantInitializer) {
+                final PsiEnumConstantInitializer enumConstantInitializer =
+                        (PsiEnumConstantInitializer) containingClass;
+                final PsiEnumConstant enumConstant =
+                        enumConstantInitializer.getEnumConstant();
+                final String name = enumConstant.getName();
+                if (shortName.equals(name)) {
+                    return false;
+                }
+            }
             final PsiClass[] innerClasses =
                     containingClass.getAllInnerClasses();
             for (PsiClass innerClass : innerClasses) {

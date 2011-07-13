@@ -140,7 +140,7 @@ public class CompletionUtil {
 
 
   public static boolean shouldShowFeature(final CompletionParameters parameters, @NonNls final String id) {
-    if (FeatureUsageTracker.getInstance().isToBeShown(id, parameters.getPosition().getProject())) {
+    if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(id, parameters.getPosition().getProject())) {
       FeatureUsageTracker.getInstance().triggerFeatureShown(id);
       return true;
     }

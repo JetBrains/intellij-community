@@ -48,7 +48,7 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName {
     return EvaluatedXmlNameImpl.createEvaluatedXmlName(name, namespaceKey, false);
   }
 
-  public boolean isNamespaceAllowed(final String namespace, final XmlFile file) {
+  public boolean isNamespaceAllowed(final String namespace, final XmlFile file, boolean qualified) {
     return namespace.equals(myNamespace);
   }
 

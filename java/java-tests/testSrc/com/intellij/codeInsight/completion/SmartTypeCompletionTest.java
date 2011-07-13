@@ -1017,6 +1017,17 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doActionTest();
   }
 
+  public void testInnerClassImports() throws Throwable {
+    CodeStyleSettingsManager.getSettings(getProject()).INSERT_INNER_CLASS_IMPORTS = true;
+    try {
+      myFixture.addClass("package java.awt.geom; public class Point2D { public static class Double {} }");
+      doActionTest();
+    }
+    finally {
+      CodeStyleSettingsManager.getSettings(getProject()).INSERT_INNER_CLASS_IMPORTS = false;
+    }
+  }
+
   public void testCastWithGenerics() throws Throwable {
     doActionTest();
   }

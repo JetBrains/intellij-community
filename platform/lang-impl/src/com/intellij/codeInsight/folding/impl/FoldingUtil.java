@@ -44,13 +44,17 @@ class FoldingUtil {
     return null;
   }
 
+  @Nullable
   public static FoldRegion findFoldRegionStartingAtLine(Editor editor, int line){
     FoldRegion result = null;
-    if (line >= editor.getDocument().getLineCount()) {
+    if (line < 0 || line >= editor.getDocument().getLineCount()) {
       return result;
     }
     FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : regions) {
+      if (!region.isValid()) {
+        continue;
+      }
       if (region.getDocument().getLineNumber(region.getStartOffset()) == line) {
         if (result != null) return null;
         result = region;

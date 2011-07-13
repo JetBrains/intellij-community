@@ -1075,8 +1075,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessaryCallToStringValueOfInspection.class);
         m_inspectionClasses.add(UnnecessaryConstructorInspection.class);
         m_inspectionClasses.add(UnnecessaryEnumModifierInspection.class);
-        m_inspectionClasses.add(UnnecessaryFinalOnLocalVariableInspection.class);
-        m_inspectionClasses.add(UnnecessaryFinalOnParameterInspection.class);
+        m_inspectionClasses.add(UnnecessaryFinalOnLocalVariableOrParameterInspection.class);
         m_inspectionClasses.add(UnnecessaryFullyQualifiedNameInspection.class);
         m_inspectionClasses.add(UnnecessaryInterfaceModifierInspection.class);
         m_inspectionClasses.add(UnnecessaryParenthesesInspection.class);

@@ -40,7 +40,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
   private String myLibraryName;
   private final MultiMap<OrderRootType, LightFilePointer> myRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
-  private final LibraryType myType;
+  private LibraryType myType;
   private LibraryProperties myProperties;
 
   public NewLibraryEditor() {
@@ -60,8 +60,13 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
   @Override
   @Nullable
-  public LibraryType getType() {
+  public LibraryType<?> getType() {
     return myType;
+  }
+
+  @Override
+  public void setType(@NotNull LibraryType<?> type) {
+    myType = type;
   }
 
   @Override
@@ -123,16 +128,6 @@ public class NewLibraryEditor extends LibraryEditorBase {
   @Override
   public void addRoot(String url, OrderRootType rootType) {
     myRoots.putValue(rootType, new LightFilePointer(url));
-  }
-
-  @Override
-  public void addJarDirectory(VirtualFile file, boolean recursive) {
-    addJarDirectory(file.getUrl(), recursive, OrderRootType.CLASSES);
-  }
-
-  @Override
-  public void addJarDirectory(final String url, boolean recursive) {
-    addJarDirectory(url, recursive, OrderRootType.CLASSES);
   }
 
   @Override

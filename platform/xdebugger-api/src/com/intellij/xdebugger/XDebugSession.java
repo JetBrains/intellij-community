@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -68,6 +69,11 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   void showExecutionPoint();
 
+  void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame);
+
+  /**
+   * @deprecated use {@link #setCurrentStackFrame(com.intellij.xdebugger.frame.XExecutionStack, com.intellij.xdebugger.frame.XStackFrame)} instead
+   */
   void setCurrentStackFrame(@NotNull XStackFrame frame);
 
   /**

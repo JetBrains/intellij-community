@@ -16,11 +16,13 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -97,6 +99,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
       assert lookup != null;
       lookup.hide();
@@ -114,6 +117,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
       assert lookup != null;
       lookup.hide();

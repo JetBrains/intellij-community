@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public interface FoldingBuilder {
   /**
    * Builds the folding regions for the specified node in the AST tree and its children.
+   * Note that you can have several folding regions for one AST node, i.e. several FoldingDescriptior with similar AST node.
    *
    * @param node     the node for which folding is requested.
    * @param document the document for which folding is built. Can be used to retrieve line

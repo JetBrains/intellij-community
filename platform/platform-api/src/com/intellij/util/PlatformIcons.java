@@ -79,6 +79,7 @@ public interface PlatformIcons {
   Icon MOVE_UP_ICON = IconLoader.getIcon("/actions/moveUp.png");
   Icon MOVE_DOWN_ICON = IconLoader.getIcon("/actions/moveDown.png");
   Icon EDIT = IconLoader.getIcon("/actions/edit.png");
+  Icon ANALYZE = IconLoader.getIcon("/actions/analyze.png");
   Icon DUPLICATE_ICON = IconLoader.getIcon("/general/copy.png");
   Icon SELECT_ALL_ICON = IconLoader.getIcon("/actions/selectall.png");
   Icon UNSELECT_ALL_ICON = IconLoader.getIcon("/actions/unselectall.png");

@@ -130,7 +130,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
             qualifyMember(element, newName, outerClass, isStatic);
             break;
           }
-          outerClass = outerClass.getContainingClass();
+          outerClass = PsiTreeUtil.getParentOfType(outerClass, PsiClass.class);
         }
       }
     }

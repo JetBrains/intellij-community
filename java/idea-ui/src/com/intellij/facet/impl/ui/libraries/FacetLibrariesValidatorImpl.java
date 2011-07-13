@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -78,8 +77,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
       return ValidationResult.OK;
     }
 
-    ModuleRootModel rootModel = myContext.getRootModel();
-    List<VirtualFile> roots = collectRoots(rootModel);
+    List<VirtualFile> roots = collectRoots(myContext.getRootModel());
     RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = myRequiredLibraries.checkLibraries(VfsUtil.toVirtualFileArray(roots));
     if (info == null) {
       return ValidationResult.OK;
@@ -103,17 +101,15 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     }
   }
 
-  private List<VirtualFile> collectRoots(final @Nullable ModuleRootModel rootModel) {
+  private List<VirtualFile> collectRoots(final @NotNull ModuleRootModel rootModel) {
     final ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
-    if (rootModel != null) {
-      rootModel.orderEntries().using(myContext.getModulesProvider()).recursively().librariesOnly().forEachLibrary(new Processor<Library>() {
-        @Override
-        public boolean process(Library library) {
-          ContainerUtil.addAll(roots, myContext.getLibrariesContainer().getLibraryFiles(library, OrderRootType.CLASSES));
-          return true;
-        }
-      });
-    }
+    rootModel.orderEntries().using(myContext.getModulesProvider()).recursively().librariesOnly().forEachLibrary(new Processor<Library>() {
+      @Override
+      public boolean process(Library library) {
+        ContainerUtil.addAll(roots, myContext.getLibrariesContainer().getLibraryFiles(library, OrderRootType.CLASSES));
+        return true;
+      }
+    });
     return roots;
   }
 

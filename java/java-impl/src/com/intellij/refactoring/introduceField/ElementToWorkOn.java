@@ -163,10 +163,19 @@ public class ElementToWorkOn {
       expr = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
     }
 
-    if (localVar == null && expr == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId);
-      return null;
+    if (localVar == null) {
+      if (expr != null) {
+        final String errorMessage = IntroduceVariableBase.getErrorMessage(expr);
+        if (errorMessage != null) {
+          CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, refactoringName, helpId);
+          return null;
+        }
+      }
+      if (expr == null) {
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+        CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId);
+        return null;
+      }
     }
     return new ElementToWorkOn(localVar, expr);
   }

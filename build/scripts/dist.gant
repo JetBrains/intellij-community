@@ -64,7 +64,8 @@ target('default': 'The default target') {
   layoutAll(
           buildNumber: "IC-108.SNAPSHOT",
           version: "IdeaX",
-          system_selector: "IntelliJIdeaCE${p("component.version.major")}",
+          system_selector: "IdeaIC${p("component.version.major")}",
+          system_selector_mac: "IntelliJIdea${p("component.version.major")}CE",
           home, out)
 }
 
@@ -138,8 +139,9 @@ private def layoutMac(Map args, String home, Paths paths) {
     </array>
   """
   args["idea.properties.path"] = "$home/bin/idea.properties"
+  def system_selector = args.system_selector
   // TODO remove the next line when system_selector for Mac and other OS will be unified
-  args["system_selector"] = args.system_selector_mac
+  system_selector = args.system_selector_mac
 
   layoutMacApp(paths.distMac, home, args)
 
@@ -150,10 +152,10 @@ private def layoutMac(Map args, String home, Paths paths) {
   }
 
   ant.replace(file: "$paths.distMac/bin/idea.sh") {
-    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+    replacefilter(token: "@@system_selector@@", value: system_selector)
   }
   ant.replace(file: "$paths.distMac/bin/inspect_diff.sh") {
-    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+    replacefilter(token: "@@system_selector@@", value: system_selector)
   }
 
   patchPropertiesFile(paths.distMac)
@@ -224,4 +226,3 @@ def layoutLinux(Map args, String home, Paths paths) {
   ant.delete(file: tarPath)
   notifyArtifactBuilt(gzPath)
 }
-

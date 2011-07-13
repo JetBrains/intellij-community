@@ -18,6 +18,7 @@ package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,11 +55,15 @@ public abstract class FoldingBuilderEx implements FoldingBuilder {
    * Returns the text which is displayed in the editor for the folding region related to the
    * specified node when the folding region is collapsed.
    *
+   *
    * @param node the node for which the placeholder text is requested.
+   * @param range text range within whole file to fold
    * @return the placeholder text.
    */
   @Nullable
-  public abstract String getPlaceholderText(@NotNull ASTNode node);
+  public String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range){
+    return getPlaceholderText(node);
+  }
 
   /**
    * Returns the default collapsed state for the folding region related to the specified node.

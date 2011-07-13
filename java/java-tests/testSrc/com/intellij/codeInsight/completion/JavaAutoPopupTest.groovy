@@ -109,7 +109,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertOrderedEquals myFixture.lookupElementStrings, "iterable", "iterable2"
 
     assertEquals 'iterable', lookup.currentItem.lookupString
-    myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN
+    edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
@@ -871,6 +871,15 @@ class LiveComplete {
     type('ArrStoExce.')
     edt { UndoManager.getInstance(project).undo(editor) }
     assert myFixture.editor.document.text.contains('ArrStoExce.')
+  }
+
+  public void testAutopopupTypingUndo() {
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    def editor;
+    edt { editor = FileEditorManager.getInstance(project).openFile(myFixture.file.virtualFile, false)[0] }
+    type 'aioobeeee'
+    edt { UndoManager.getInstance(project).undo(editor) }
+    assert !myFixture.editor.document.text.contains('aioo')
   }
 
 

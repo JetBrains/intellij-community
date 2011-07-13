@@ -20,7 +20,7 @@ public class IdeaTitledBorder extends TitledBorder {
   static protected final int TEXT_SPACING = 2;
 
   // Horizontal inset of text that is left or right justified
-  static protected final int TEXT_INSET_H = -15;
+  static protected final int TEXT_INSET_H = -20;
 
   public IdeaTitledBorder(String title) {
     super(BorderFactory.createCompoundBorder(
@@ -29,7 +29,7 @@ public class IdeaTitledBorder extends TitledBorder {
           title + "  ",
           LEADING,
           DEFAULT_POSITION,
-          new Font(Font.DIALOG, Font.BOLD, 12));
+          UIUtil.getBorderFont());
   }
 
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {

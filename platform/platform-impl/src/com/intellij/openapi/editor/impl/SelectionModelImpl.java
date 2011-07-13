@@ -698,12 +698,15 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       settings.setCamelWords(false);
     }
 
-    EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
-      IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-    handler.execute(myEditor, myEditor.getDataContext());
-
-    if (needOverrideSetting) {
-      settings.setCamelWords(camelTemp);
+    try {
+      EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
+        IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
+      handler.execute(myEditor, myEditor.getDataContext());
+    }
+    finally {
+      if (needOverrideSetting) {
+        settings.resetCamelWords();
+      }
     }
   }
 

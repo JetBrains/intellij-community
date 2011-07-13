@@ -16,6 +16,8 @@
 package com.intellij.framework.library;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
+import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,4 +36,9 @@ public abstract class DownloadableLibraryService {
 
   @NotNull
   public abstract CustomLibraryDescription createDescriptionForType(Class<? extends DownloadableLibraryType> typeClass);
+
+  @NotNull
+  public abstract LibraryPropertiesEditor createDownloadableLibraryEditor(@NotNull DownloadableLibraryDescription description,
+                                   @NotNull LibraryEditorComponent<LibraryVersionProperties> editorComponent,
+                                   @NotNull DownloadableLibraryType libraryType);
 }

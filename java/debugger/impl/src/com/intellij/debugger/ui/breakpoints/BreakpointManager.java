@@ -856,14 +856,15 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  public void applyThreadFilter(final DebugProcessImpl debugProcess, ThreadReference thread) {
+  public void applyThreadFilter(final DebugProcessImpl debugProcess, ThreadReference newFilterThread) {
     final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
-    if (Comparing.equal(thread, requestManager.getFilterThread())) {
+    final ThreadReference oldFilterThread = requestManager.getFilterThread();
+    if (Comparing.equal(newFilterThread, oldFilterThread)) {
       // the filter already added
       return;
     }
-    requestManager.setFilterThread(thread);
-    if (thread == null) {
+    requestManager.setFilterThread(newFilterThread);
+    if (newFilterThread == null || oldFilterThread != null) {
       final List<Breakpoint> breakpoints = getBreakpoints();
       for (Breakpoint breakpoint : breakpoints) {
         if (LineBreakpoint.CATEGORY.equals(breakpoint.getCategory()) || MethodBreakpoint.CATEGORY.equals(breakpoint.getCategory())) {
@@ -902,19 +903,19 @@ public class BreakpointManager implements JDOMExternalizable {
         protected void addFilter(final BreakpointRequest request, final ThreadReference thread) {
           request.addThreadFilter(thread);
         }
-      }.applyFilter(eventRequestManager.breakpointRequests(), thread);
+      }.applyFilter(eventRequestManager.breakpointRequests(), newFilterThread);
 
       new FilterSetter<MethodEntryRequest>() {
         protected void addFilter(final MethodEntryRequest request, final ThreadReference thread) {
           request.addThreadFilter(thread);
         }
-      }.applyFilter(eventRequestManager.methodEntryRequests(), thread);
+      }.applyFilter(eventRequestManager.methodEntryRequests(), newFilterThread);
 
       new FilterSetter<MethodExitRequest>() {
         protected void addFilter(final MethodExitRequest request, final ThreadReference thread) {
           request.addThreadFilter(thread);
         }
-      }.applyFilter(eventRequestManager.methodExitRequests(), thread);
+      }.applyFilter(eventRequestManager.methodExitRequests(), newFilterThread);
     }
   }
 

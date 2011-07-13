@@ -52,16 +52,15 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -678,9 +677,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
               }
             }
 
+            CommandProcessor.getInstance().setCurrentCommandGroupId(myEditor.getDocument());
+
             actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
           }
-        }, null, null);
+        }, null, DocCommandGroupId.noneGroupId(myEditor.getDocument()));
       }
     });
   }
@@ -710,7 +711,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return false;
     }
 
+    ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
+    AnAction action = managerEx.getAction(actionId);
+    AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+    managerEx.fireBeforeActionPerformed(action, dataContext, event);
+
     handler.execute(getEditor(), dataContext);
+
+    managerEx.fireAfterActionPerformed(action, dataContext, event);
     return true;
   }
 

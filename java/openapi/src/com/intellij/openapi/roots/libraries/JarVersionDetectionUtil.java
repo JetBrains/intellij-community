@@ -16,18 +16,19 @@
 
 package com.intellij.openapi.roots.libraries;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -35,7 +36,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JarVersionDetectionUtil {
-  @NonNls private static final String IMPLEMENTATION_VERSION = "Implementation-Version";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.libraries.JarVersionDetectionUtil");
 
   private JarVersionDetectionUtil() {
   }
@@ -51,6 +52,30 @@ public class JarVersionDetectionUtil {
   }
 
   @Nullable
+  public static String detectJarVersion(@NotNull String detectionClass, @NotNull List<VirtualFile> files) {
+    final VirtualFile jar = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
+    if (jar != null && jar.getFileSystem() instanceof JarFileSystem) {
+      final VirtualFile manifestFile = jar.findFileByRelativePath(JarFile.MANIFEST_NAME);
+      if (manifestFile != null) {
+        try {
+          final InputStream input = manifestFile.getInputStream();
+          try {
+            return new Manifest(input).getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+          }
+          finally {
+            input.close();
+          }
+        }
+        catch (IOException e) {
+          LOG.debug(e);
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public static String detectJarVersion(ZipFile zipFile) {
     if (zipFile == null) {
       return null;
@@ -63,7 +88,7 @@ public class JarVersionDetectionUtil {
       final InputStream inputStream = zipFile.getInputStream(zipEntry);
       final Manifest manifest = new Manifest(inputStream);
       final Attributes attributes = manifest.getMainAttributes();
-      return attributes.getValue(IMPLEMENTATION_VERSION);
+      return attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
     }
     catch (IOException e) {
       return null;

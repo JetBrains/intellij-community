@@ -27,6 +27,19 @@ import java.util.Collection;
 import java.util.List;
 
 public class ObjectsConvertor {
+  private final static DownCast DOWN_CAST = new DownCast();
+
+  public static class DownCast<Sup, Sub extends Sup> implements Convertor<Sub, Sup> {
+    @Override
+    public Sup convert(Sub o) {
+      return o;
+    }
+  }
+
+  public static <Sup, Sub extends Sup> List<Sup> downcast(List<Sub> list) {
+    return convert(list, (Convertor<Sub, Sup>) DOWN_CAST);
+  }
+
   public static final Convertor<FilePath, VirtualFile> FILEPATH_TO_VIRTUAL = new Convertor<FilePath, VirtualFile>() {
     public VirtualFile convert(FilePath fp) {
       return fp.getVirtualFile();

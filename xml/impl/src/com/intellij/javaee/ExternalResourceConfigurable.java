@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AddEditRemovePanel;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
@@ -349,6 +348,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   public boolean needDisplay() {
-    return !PlatformUtils.isRubyMine();
+    return true;
   }
 }

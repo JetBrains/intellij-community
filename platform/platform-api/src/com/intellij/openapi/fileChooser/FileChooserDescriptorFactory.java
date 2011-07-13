@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,10 @@ public class FileChooserDescriptorFactory {
 
   public static FileChooserDescriptor createMultipleJavaPathDescriptor() {
     return new FileChooserDescriptor(false, true, true, false, true, true);
+  }
+
+  public static FileChooserDescriptor createSingleFileOrFolderDescriptor() {
+    return new FileChooserDescriptor(true, true, false, false, false, false);
   }
 
   public static FileChooserDescriptor getDirectoryChooserDescriptor(String aSearchedObjectName) {

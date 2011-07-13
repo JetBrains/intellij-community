@@ -55,7 +55,7 @@ public class XFramesView extends XDebugViewBase {
     myMainPanel = new JPanel(new BorderLayout());
 
     myThreadComboBox = new JComboBox();
-    myThreadComboBox.setRenderer(new ThreadComboBoxRenderer());
+    myThreadComboBox.setRenderer(new ThreadComboBoxRenderer(myThreadComboBox));
     myThreadComboBox.addItemListener(new MyItemListener());
     myMainPanel.add(myThreadComboBox, BorderLayout.NORTH);
 
@@ -142,7 +142,7 @@ public class XFramesView extends XDebugViewBase {
       XStackFrame topFrame = executionStack.getTopFrame();
       if (topFrame != null) {
         myFramesList.setSelectedValue(topFrame, true);
-        onFrameSelected(topFrame);
+        onFrameSelected(executionStack, topFrame);
       }
     }
   }
@@ -151,8 +151,8 @@ public class XFramesView extends XDebugViewBase {
     return myFramesList;
   }
 
-  private void onFrameSelected(final @NotNull XStackFrame stackFrame) {
-    mySession.setCurrentStackFrame(stackFrame);
+  private void onFrameSelected(XExecutionStack executionStack, final @NotNull XStackFrame stackFrame) {
+    mySession.setCurrentStackFrame(executionStack, stackFrame);
   }
 
   public JPanel getMainPanel() {
@@ -163,7 +163,7 @@ public class XFramesView extends XDebugViewBase {
     if (!myListenersEnabled) return;
     Object selected = myFramesList.getSelectedValue();
     if (selected instanceof XStackFrame) {
-      onFrameSelected((XStackFrame)selected);
+      onFrameSelected(mySelectedStack, (XStackFrame)selected);
     }
   }
 
@@ -212,6 +212,17 @@ public class XFramesView extends XDebugViewBase {
       });
     }
 
+    @Override
+    public void errorOccurred(final String errorMessage) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          myErrorMessage = errorMessage;
+          addFrameListElements(Collections.singletonList(errorMessage), true);
+          myRunning = false;
+        }
+      });
+    }
+
     private void addFrameListElements(final List<?> values, final boolean last) {
       if (myExecutionStack != null && myExecutionStack == mySelectedStack) {
         DefaultListModel model = myFramesList.getModel();
@@ -233,13 +244,7 @@ public class XFramesView extends XDebugViewBase {
     }
 
     public void errorOccured(final String errorMessage) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          myErrorMessage = errorMessage;
-          addFrameListElements(Collections.singletonList(errorMessage), true);
-          myRunning = false;
-        }
-      });
+      errorOccurred(errorMessage);
     }
 
     public void dispose() {

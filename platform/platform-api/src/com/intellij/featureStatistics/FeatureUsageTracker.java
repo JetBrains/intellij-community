@@ -36,4 +36,6 @@ public abstract class FeatureUsageTracker {
   public abstract void triggerFeatureShown(@NonNls String featureId);
 
   public abstract boolean isToBeShown(@NonNls String featureId, Project project);
+
+  public abstract boolean isToBeAdvertisedInLookup(@NonNls String featureId, Project project);
 }

@@ -271,7 +271,8 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("sum", true, true, false, "int"){
       @Override
       protected void showErrorMessage(Project project, Editor editor, String message) {
-        assertEquals("Cannot perform refactoring.\n" + "Selected block should represent an expression.", message);
+        assertEquals("Cannot perform refactoring.\n" +
+                     "Extracting selected expression would change the semantic of the whole expression.", message);
       }
     });
   }

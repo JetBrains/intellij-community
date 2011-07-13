@@ -15,8 +15,8 @@
  */
 package com.intellij.util.io;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -34,6 +34,7 @@ public class IOUtil {
   public static String readString(DataInput stream) throws IOException {
     int length = stream.readInt();
     if (length == -1) return null;
+    if (length == 0) return "";
 
     char[] chars = new char[length];
     byte[] bytes = new byte[length*2];
@@ -49,6 +50,10 @@ public class IOUtil {
   public static void writeString(String s, DataOutput stream) throws IOException {
     if (s == null) {
       stream.writeInt(-1);
+      return;
+    }
+    if (s.length() == 0) {
+      stream.writeInt(0);
       return;
     }
     char[] chars = s.toCharArray();

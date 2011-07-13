@@ -19,9 +19,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryDetectionManager;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +37,8 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
   private String myLibraryName = null;
   private LibraryProperties myLibraryProperties;
   private Library.ModifiableModel myModel = null;
+  private LibraryType<?> myDetectedType;
+  private boolean myDetectedTypeComputed;
 
   public ExistingLibraryEditor(@NotNull Library library, @Nullable LibraryEditorListener listener) {
     myLibrary = library;
@@ -54,8 +58,29 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
   }
 
   @Override
-  public LibraryType getType() {
-    return ((LibraryEx)myLibrary).getType();
+  public LibraryType<?> getType() {
+    final LibraryType<?> type = ((LibraryEx)myLibrary).getType();
+    if (type != null) {
+      return type;
+    }
+    return detectType();
+  }
+
+  @Override
+  public void setType(@NotNull LibraryType<?> type) {
+    ((LibraryEx.ModifiableModelEx)getModel()).setType(type);
+  }
+
+  private LibraryType detectType() {
+    if (!myDetectedTypeComputed) {
+      final Pair<LibraryType<?>,LibraryProperties<?>> pair = LibraryDetectionManager.getInstance().detectType(Arrays.asList(getFiles(OrderRootType.CLASSES)));
+      if (pair != null) {
+        myDetectedType = pair.getFirst();
+        myLibraryProperties = pair.getSecond();
+      }
+      myDetectedTypeComputed = true;
+    }
+    return myDetectedType;
   }
 
   @Override
@@ -121,16 +146,6 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
   @Override
   public void addRoot(String url, OrderRootType rootType) {
     getModel().addRoot(url, rootType);
-  }
-
-  @Override
-  public void addJarDirectory(VirtualFile file, boolean recursive) {
-    getModel().addJarDirectory(file, recursive);
-  }
-
-  @Override
-  public void addJarDirectory(String url, boolean recursive) {
-    getModel().addJarDirectory(url, recursive);
   }
 
   @Override

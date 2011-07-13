@@ -23,6 +23,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiDirectory;
@@ -42,6 +43,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -133,11 +135,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     try {
       //top level directories should be created even if they are empty
       for (PsiDirectory directory : myDirectories) {
-        final TargetDirectoryWrapper targetSubDirectory =
-          myTargetDirectory != null
-          ? new TargetDirectoryWrapper(myTargetDirectory, directory.getName())
-          : getTargetDirectory(directory);
-        targetSubDirectory.findOrCreateTargetDirectory();
+        getResultDirectory(directory).findOrCreateTargetDirectory();
       }
       for (PsiFile psiFile : myFilesToMove.keySet()) {
         myFilesToMove.get(psiFile).findOrCreateTargetDirectory();
@@ -177,11 +175,22 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
     myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-      helper.postProcessUsages(usages);
+      helper.postProcessUsages(usages, new Function<PsiDirectory, PsiDirectory>() {
+        @Override
+        public PsiDirectory fun(PsiDirectory dir) {
+          return getResultDirectory(dir).getTargetDirectory();
+        }
+      });
     }
     for (PsiDirectory directory : myDirectories) {
       directory.delete();
     }
+  }
+
+  private TargetDirectoryWrapper getResultDirectory(PsiDirectory dir) {
+    return myTargetDirectory != null
+           ? new TargetDirectoryWrapper(myTargetDirectory, dir.getName())
+           : getTargetDirectory(dir);
   }
 
   @Override

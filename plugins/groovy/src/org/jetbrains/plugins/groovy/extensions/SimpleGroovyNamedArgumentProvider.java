@@ -113,7 +113,7 @@ public class SimpleGroovyNamedArgumentProvider {
         objShowFirst = methodFirstFlag;
       }
 
-      boolean showFirst = objShowFirst != null && objShowFirst;
+      boolean showFirst = objShowFirst == null || objShowFirst;
 
       if (StringUtil.isEmptyOrSpaces(type)) {
         return showFirst ? GroovyNamedArgumentProvider.TYPE_ANY : GroovyNamedArgumentProvider.TYPE_ANY_NOT_FIRST;

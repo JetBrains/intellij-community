@@ -15,15 +15,12 @@
  */
 package com.intellij.ide.util.frameworkSupport;
 
-import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
-import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.libraries.LibraryKind;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author nik
@@ -36,25 +33,14 @@ public class CustomLibraryDescriptionImpl extends CustomLibraryDescriptionBase {
     myLibraryType = downloadableLibraryType;
   }
 
+  @NotNull
   @Override
-  public DownloadableLibraryDescription getDownloadableDescription() {
-    return myLibraryType.getLibraryDescription();
+  public Set<? extends LibraryKind<?>> getSuitableLibraryKinds() {
+    return Collections.singleton(myLibraryType.getKind());
   }
 
   @Override
   public DownloadableLibraryType getDownloadableLibraryType() {
     return myLibraryType;
-  }
-
-  @NotNull
-  @Override
-  public LibraryFilter getSuitableLibraryFilter() {
-    return new LibraryFilter() {
-      @Override
-      public boolean isSuitableLibrary(@NotNull List<VirtualFile> classesRoots,
-                                       @Nullable LibraryType<?> type) {
-        return myLibraryType.equals(type);
-      }
-    };
   }
 }

@@ -16,9 +16,11 @@
 
 package com.intellij.codeInsight.lookup.impl.actions;
 
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -26,9 +28,9 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class ChooseItemAction extends EditorAction {
-  public ChooseItemAction(){
-    super(new Handler());
+public abstract class ChooseItemAction extends EditorAction {
+  public ChooseItemAction(Handler handler){
+    super(handler);
   }
 
   @NotNull
@@ -41,16 +43,39 @@ public class ChooseItemAction extends EditorAction {
     return lookup;
   }
 
-  private static class Handler extends EditorActionHandler {
+  protected static class Handler extends EditorActionHandler {
+    final boolean focusedOnly;
+
+    Handler(boolean focusedOnly) {
+      this.focusedOnly = focusedOnly;
+    }
+
     public void execute(@NotNull final Editor editor, final DataContext dataContext) {
-      getLookup(editor).finishLookup(Lookup.NORMAL_SELECT_CHAR);
+      LookupImpl lookup = getLookup(editor);
+      if (!lookup.isFocused()) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER);
+      }
+      lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     }
 
 
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      return lookup != null && lookup.isFocused();
+      if (lookup == null) return false;
+      if (focusedOnly && !lookup.isFocused()) return false;
+      return true;
+    }
+  }
+
+  public static class Always extends ChooseItemAction {
+    public Always() {
+      super(new Handler(false));
+    }
+  }
+  public static class FocusedOnly extends ChooseItemAction {
+    public FocusedOnly() {
+      super(new Handler(true));
     }
   }
 

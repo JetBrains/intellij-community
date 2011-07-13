@@ -97,10 +97,12 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @NotNull
   public PsiTypeElement getTypeElement() {
-    final ASTNode first = getTreeParent().findChildByType(LOCAL_VARIABLE);
-    assert first != null : getText();
+    final CompositeElement parent = getTreeParent();
+    assert parent != null : this + "; [" + getText() + "]";
+    final ASTNode first = parent.findChildByType(LOCAL_VARIABLE);
+    assert first != null : this + "; [" + getText() + "]";
     final ASTNode type = first.findChildByType(TYPE);
-    assert type != null : getText();
+    assert type != null : this + "; [" + getText() + "]";
     return SourceTreeToPsiMap.treeToPsiNotNull(type);
   }
 

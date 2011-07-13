@@ -20,18 +20,16 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -54,13 +52,13 @@ public abstract class CustomLibraryActionBase extends DumbAwareAction {
 
   protected boolean askAndRemoveDuplicatedLibraryEntry(@NotNull CustomLibraryDescription description, @NotNull ModifiableRootModel rootModel) {
     List<OrderEntry> existingEntries = new ArrayList<OrderEntry>();
+    final LibrariesContainer container = LibrariesContainerFactory.createContainer(myContext);
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       if (!(entry instanceof LibraryOrderEntry)) continue;
       final Library library = ((LibraryOrderEntry)entry).getLibrary();
       if (library == null) continue;
 
-      final VirtualFile[] files = myContext.getLibraryFiles(library, OrderRootType.CLASSES);
-      if (description.getSuitableLibraryFilter().isSuitableLibrary(Arrays.asList(files), ((LibraryEx)library).getType())) {
+      if (LibraryPresentationManager.getInstance().isLibraryOfKind(library, container, description.getSuitableLibraryKinds())) {
         existingEntries.add(entry);
       }
     }

@@ -63,9 +63,18 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
   @NonNls private static final String LIBELEMENT = "libelement";
   private int myExpectedModuleSourcePlace;
   private Map<String, Integer> mySrcPlace = new LinkedHashMap<String, Integer>();
+  private String myInvalidJdk;
 
   public EclipseModuleManager(Module module) {
     myModule = module;
+  }
+
+  public void setInvalidJdk(String invalidJdk) {
+    myInvalidJdk = invalidJdk;
+  }
+
+  public String getInvalidJdk() {
+    return myInvalidJdk;
   }
 
   public static EclipseModuleManager getInstance(Module module) {

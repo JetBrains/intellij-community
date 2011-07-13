@@ -110,7 +110,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
       if (elements.length == 0) {
         final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
-        if (expression != null) {
+        if (expression != null && IntroduceVariableBase.getErrorMessage(expression) == null) {
           final PsiType originalType = RefactoringUtil.getTypeByExpressionWithExpectedType(expression);
           if (originalType != null) {
             elements = new PsiElement[]{expression};

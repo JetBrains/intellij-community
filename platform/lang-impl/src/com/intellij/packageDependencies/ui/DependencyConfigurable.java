@@ -28,7 +28,7 @@ import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.ui.RowEditableTableModel;
+import com.intellij.ui.EditableModel;
 import com.intellij.ui.TableToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -248,7 +248,7 @@ public class DependencyConfigurable extends BaseConfigurable {
     }
   }
 
-  private static class MyTableModel extends ListTableModel<DependencyRule> implements RowEditableTableModel {
+  private static class MyTableModel extends ListTableModel<DependencyRule> implements EditableModel {
     private final Project myProject;
     private final boolean myDenyRule;
 

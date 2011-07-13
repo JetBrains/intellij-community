@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditableRowTable;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.TableToolbarDecorator;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
@@ -195,7 +196,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     myExceptionsTable = new JBTable(myExceptionTableModel);
     myExceptionsTable.setPreferredScrollableViewportSize(new Dimension(200, myExceptionsTable.getRowHeight() * 8));
 
-    myExceptionsButtonPanel = EditableRowTable.createButtonsTable(myExceptionsTable, myExceptionTableModel, false);
+    myExceptionsButtonPanel = TableToolbarDecorator.createDecorator(myExceptionsTable).createPanel();
 
     myExceptionsTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     myExceptionsTable.getColumnModel().getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));

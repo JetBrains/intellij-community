@@ -140,11 +140,7 @@ public class LookupModel {
 
   public List<LookupElement> classifyByRelevance(List<LookupElement> list) {
     synchronized (lock) {
-      final Classifier<LookupElement> classifier = myArranger.createRelevanceClassifier();
-      for (LookupElement element : list) {
-        classifier.addElement(element);
-      }
-      return ContainerUtil.flatten(classifier.classify(list));
+      return ContainerUtil.flatten(myRelevanceClassifier.classify(list));
     }
   }
 }

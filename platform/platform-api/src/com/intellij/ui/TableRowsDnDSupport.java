@@ -30,7 +30,7 @@ public class TableRowsDnDSupport {
   private TableRowsDnDSupport() {
   }
 
-  public static void install(@NotNull final JTable table, @NotNull final RowEditableTableModel model) {
+  public static void install(@NotNull final JTable table, @NotNull final EditableModel model) {
     table.setDragEnabled(true);
     //table.setDropMode(DropMode.ON);
     DnDSupport.createBuilder(table)

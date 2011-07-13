@@ -325,6 +325,11 @@ public class SettingsImpl implements EditorSettings {
     myIsCamelWords = val ? Boolean.TRUE : Boolean.FALSE;
   }
 
+  @Override
+  public void resetCamelWords() {
+    myIsCamelWords = null;
+  }
+
   public boolean isBlinkCaret() {
     return myIsCaretBlinking != null
            ? myIsCaretBlinking.booleanValue()

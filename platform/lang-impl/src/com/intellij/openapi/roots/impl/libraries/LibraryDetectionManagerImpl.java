@@ -19,7 +19,9 @@ import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +44,22 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
     return true;
   }
 
+  @Nullable
+  @Override
+  public Pair<LibraryType<?>, LibraryProperties<?>> detectType(@NotNull List<VirtualFile> files) {
+    Pair<LibraryType<?>, LibraryProperties<?>> result = null;
+    for (LibraryType<?> type : LibraryType.EP_NAME.getExtensions()) {
+      final LibraryProperties<?> properties = type.detect(files);
+      if (properties != null) {
+        if (result != null) {
+          return null;
+        }
+        result = Pair.<LibraryType<?>, LibraryProperties<?>>create(type, properties);
+      }
+    }
+    return result;
+  }
+
   private List<Pair<LibraryKind, LibraryProperties>> getOrComputeKinds(List<VirtualFile> files) {
     List<Pair<LibraryKind, LibraryProperties>> result = myCache.get(files);
     if (result == null) {
@@ -53,7 +71,9 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
 
   private static List<Pair<LibraryKind, LibraryProperties>> computeKinds(List<VirtualFile> files) {
     final SmartList<Pair<LibraryKind, LibraryProperties>> result = new SmartList<Pair<LibraryKind, LibraryProperties>>();
-    for (LibraryPresentationProvider provider : LibraryPresentationProvider.EP_NAME.getExtensions()) {
+    final LibraryType<?>[] libraryTypes = LibraryType.EP_NAME.getExtensions();
+    final LibraryPresentationProvider[] presentationProviders = LibraryPresentationProvider.EP_NAME.getExtensions();
+    for (LibraryPresentationProvider provider : ContainerUtil.concat(libraryTypes, presentationProviders)) {
       final LibraryProperties properties = provider.detect(files);
       if (properties != null) {
         result.add(Pair.create(provider.getKind(), properties));

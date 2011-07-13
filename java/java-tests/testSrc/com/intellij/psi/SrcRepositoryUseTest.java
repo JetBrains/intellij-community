@@ -809,8 +809,9 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
     assertNotNull("Package " + packageName + " not found", aPackage);
 
-    PsiDirectory dir = aPackage.getDirectories()[0];
-    new RenameProcessor(myProject, dir, newPackageName, true, true).run();
+    //PsiDirectory dir = aPackage.getDirectories()[0];
+    //to rename dir with classes move is used
+    new RenameProcessor(myProject, aPackage, newPackageName, true, true).run();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package com.intellij.help.impl;
 
+import com.intellij.ide.ui.UISettings;
+
 import javax.help.DefaultHelpModel;
 import javax.help.HelpSet;
 import javax.help.JHelp;
+import java.awt.*;
 import java.util.Vector;
 
 /**
@@ -46,5 +49,11 @@ class IdeaJHelp extends JHelp{
     }
 
     updateUI();
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    UISettings.setupAntialiasing(g);
+    super.paint(g);
   }
 }

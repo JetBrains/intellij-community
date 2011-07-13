@@ -15,21 +15,21 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.util.download.DownloadableFileSetVersions;
 import com.intellij.framework.library.DownloadableLibraryDescription;
+import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureDialogCellAppearanceUtils;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryFilter;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
@@ -44,6 +44,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.download.DownloadableFileSetVersions;
 import com.intellij.util.ui.RadioButtonEnumModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -92,13 +92,11 @@ public class LibraryOptionsPanel implements Disposable {
 
   private RadioButtonEnumModel<Choice> myButtonEnumModel;
 
-  public LibraryOptionsPanel(final @NotNull CustomLibraryDescription libraryDescription,
-                                    final @NotNull String baseDirectoryPath,
-                                    @Nullable final FrameworkVersion currentFrameworkVersion,
-                             @NotNull final LibrariesContainer librariesContainer,
+  public LibraryOptionsPanel(final @NotNull CustomLibraryDescription libraryDescription, final @NotNull String baseDirectoryPath,
+                             @Nullable final FrameworkVersion currentFrameworkVersion, @NotNull final LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
     myLibrariesContainer = librariesContainer;
-    final DownloadableLibraryDescription description = libraryDescription.getDownloadableDescription();
+    final DownloadableLibraryDescription description = getDownloadableDescription(libraryDescription);
     if (description != null) {
       showCard("loading");
       description.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
@@ -120,6 +118,16 @@ public class LibraryOptionsPanel implements Disposable {
       showSettingsPanel(libraryDescription, baseDirectoryPath, currentFrameworkVersion, showDoNotCreateOption,
                         new ArrayList<FrameworkLibraryVersion>());
     }
+  }
+
+  @Nullable
+  private static DownloadableLibraryDescription getDownloadableDescription(CustomLibraryDescription libraryDescription) {
+    final DownloadableLibraryType type = libraryDescription.getDownloadableLibraryType();
+    if (type != null) return type.getLibraryDescription();
+    if (libraryDescription instanceof OldCustomLibraryDescription) {
+      return ((OldCustomLibraryDescription)libraryDescription).getDownloadableDescription();
+    }
+    return null;
   }
 
   private void showCard(final String editing) {
@@ -266,11 +274,12 @@ public class LibraryOptionsPanel implements Disposable {
   }
 
   private List<Library> calculateSuitableLibraries() {
-    final LibraryFilter filter = mySettings.getLibraryDescription().getSuitableLibraryFilter();
+    final CustomLibraryDescription description = mySettings.getLibraryDescription();
     List<Library> suitableLibraries = new ArrayList<Library>();
     for (Library library : myLibrariesContainer.getAllLibraries()) {
-      final VirtualFile[] files = myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES);
-      if (filter.isSuitableLibrary(Arrays.asList(files), ((LibraryEx)library).getType())) {
+      if (description instanceof OldCustomLibraryDescription &&
+          ((OldCustomLibraryDescription)description).isSuitableLibrary(library, myLibrariesContainer)
+          || LibraryPresentationManager.getInstance().isLibraryOfKind(library, myLibrariesContainer, description.getSuitableLibraryKinds())) {
         suitableLibraries.add(library);
       }
     }

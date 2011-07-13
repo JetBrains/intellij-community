@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,13 @@
  */
 package com.intellij.help.impl;
 
+import com.intellij.util.ui.UIUtil;
+import sun.swing.SwingUtilities2;
+
 import javax.help.JHelpContentViewer;
 import javax.help.TextHelpModel;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * It a dirty patch! Help system is so ugly that it hangs when it open some "external" links.
@@ -42,5 +47,14 @@ class IdeaJHelpContentViewer extends JHelpContentViewer{
   public void updateUI(){
     setUI(new IdeaHelpContentViewUI(this));
     invalidate();
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    final JEditorPane editorPane = UIUtil.findComponentOfType(this, JEditorPane.class);
+    if (editorPane != null) {
+      editorPane.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, SwingUtilities2.AATextInfo.getAATextInfo(true));
+    }
+    super.paint(g);
   }
 }

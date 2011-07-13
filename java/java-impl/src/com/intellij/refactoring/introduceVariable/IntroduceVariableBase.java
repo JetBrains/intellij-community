@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -74,6 +75,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
 
   protected static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
+  public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");
 
   public static SuggestedNameInfo getSuggestedName(PsiType type, final PsiExpression expression) {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
@@ -97,7 +99,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                                             statementsInRange[0].getTextRange().getEndOffset() <= offset ||
                                             isPreferStatements())) {
         selectionModel.selectLineAtCaret();
-        if (findExpressionInRange(project, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()) == null) {
+        final PsiExpression expressionInRange =
+          findExpressionInRange(project, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+        if (expressionInRange == null || getErrorMessage(expressionInRange) != null) {
           selectionModel.removeSelection();
         }
       }
@@ -214,6 +218,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return tempExpr;
   }
 
+  /**
+   * @return can return NotNull value thought extraction should fail: reason could be retrieved from {@link #getErrorMessage(PsiExpression)}
+   */
   public static PsiExpression getSelectedExpression(final Project project, final PsiFile file, int startOffset, int endOffset) {
 
     PsiElement elementAtStart = file.findElementAt(startOffset);
@@ -349,7 +356,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(refIdx[0]), PsiReferenceExpression.class);
       assert refExpr != null;
       if (ReplaceExpressionUtil.isNeedParenthesis(refExpr.getNode(), tempExpr.getNode())) {
-        return null;
+        tempExpr.putCopyableUserData(NEED_PARENTHESIS, Boolean.TRUE);
+        return tempExpr;
       }
     }
     catch (IncorrectOperationException e) {
@@ -357,6 +365,15 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
     return tempExpr;
+  }
+
+  @Nullable
+  public static String getErrorMessage(PsiExpression expr) {
+    final Boolean needParenthesis = expr.getCopyableUserData(NEED_PARENTHESIS);
+    if (needParenthesis != null && needParenthesis.booleanValue()) {
+      return "Extracting selected expression would change the semantic of the whole expression.";
+    }
+    return null;
   }
 
   private static PsiExpression createArrayCreationExpression(String text, int startOffset, int endOffset, PsiMethodCallExpression parent) {
@@ -411,6 +428,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   protected boolean invokeImpl(final Project project, final PsiExpression expr,
                                final Editor editor) {
+    if (expr != null) {
+      final String errorMessage = getErrorMessage(expr);
+      if (errorMessage != null) {
+        showErrorMessage(project, editor, RefactoringBundle.getCannotRefactorMessage(errorMessage));
+        return false;
+      }
+    }
+
     if (expr != null && expr.getParent() instanceof PsiExpressionStatement) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.introduceVariable.incompleteStatement");
     }

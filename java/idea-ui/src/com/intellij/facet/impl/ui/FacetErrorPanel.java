@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -96,6 +97,7 @@ public class FacetErrorPanel {
     return myNoErrors;
   }
 
+  @NotNull
   public FacetValidatorsManager getValidatorsManager() {
     return myValidatorsManager;
   }

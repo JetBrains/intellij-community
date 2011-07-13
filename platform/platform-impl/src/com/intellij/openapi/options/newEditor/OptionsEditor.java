@@ -108,7 +108,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   //[back/forward] private ActionToolbar myToolbar;
   private Window myWindow;
   private final PropertiesComponent myProperties;
-  private boolean myDisposed;
+  private volatile boolean myDisposed;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;

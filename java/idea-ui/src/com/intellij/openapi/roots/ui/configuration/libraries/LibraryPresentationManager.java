@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -49,11 +50,12 @@ public abstract class LibraryPresentationManager {
   public abstract List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context);
 
   @NotNull
-  public abstract List<String> getDescriptions(@NotNull VirtualFile[] classRoots);
+  public abstract List<String> getDescriptions(@NotNull VirtualFile[] classRoots, Set<LibraryKind<?>> excludedKinds);
 
   public abstract List<Library> getLibraries(@NotNull Set<LibraryKind<?>> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context);
 
   public abstract boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull LibraryKind<?> kind);
 
-  public abstract boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull Set<? extends LibraryKind<?>> acceptedKinds);
+  public abstract boolean isLibraryOfKind(@NotNull Library library, @NotNull LibrariesContainer librariesContainer,
+                                          @NotNull Set<? extends LibraryKind<?>> acceptedKinds);
 }

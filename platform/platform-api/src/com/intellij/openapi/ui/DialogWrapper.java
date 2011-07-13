@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -926,7 +927,13 @@ public abstract class DialogWrapper {
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
 
-    final JPanel root = new JPanel(new BorderLayout());
+    final JPanel root = new JPanel(new BorderLayout()) {
+      @Override
+      public void paint(Graphics g) {
+        UISettings.setupAntialiasing(g);
+        super.paint(g);
+      }
+    };
     myPeer.setContentPane(root);
 
     final JPanel northSection = new JPanel(new BorderLayout());
