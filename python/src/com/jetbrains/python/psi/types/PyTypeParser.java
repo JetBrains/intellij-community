@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.documentation.DocstringUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -176,9 +177,7 @@ public class PyTypeParser {
 
   public static Map<TextRange, PyType> parseDocstring(PsiElement anchor, String docstring, int position) {
     int length = docstring.length();
-    docstring = StringUtil.replace(docstring, ":py:class:", "");
-    docstring = StringUtil.replace(docstring, ":class:", "");
-    docstring = docstring.replaceAll("`([^`]+)`", "$1");
+    docstring = DocstringUtil.unifyDocstring(docstring);
     PyType type = getTypeByName(anchor, docstring);
     Map<TextRange, PyType> res = new HashMap<TextRange, PyType>();
 
