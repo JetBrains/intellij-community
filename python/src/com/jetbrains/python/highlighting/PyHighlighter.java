@@ -6,8 +6,10 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,25 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
+    LayeredLexer ret = new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
+    ret.registerSelfStoppingLayer(
+      new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_STRING, myLanguageLevel.isPy3K()),
+      new IElementType[]{PyTokenTypes.SINGLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY
+    );
+    ret.registerSelfStoppingLayer(
+      new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE, myLanguageLevel.isPy3K()),
+      new IElementType[]{PyTokenTypes.SINGLE_QUOTED_UNICODE}, IElementType.EMPTY_ARRAY
+    );
+    ret.registerSelfStoppingLayer(
+      new PyStringLiteralLexer(PyTokenTypes.TRIPLE_QUOTED_STRING, myLanguageLevel.isPy3K()),
+      new IElementType[]{PyTokenTypes.TRIPLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY
+    );
+    ret.registerSelfStoppingLayer(
+      new PyStringLiteralLexer(PyTokenTypes.TRIPLE_QUOTED_UNICODE, myLanguageLevel.isPy3K()),
+      new IElementType[]{PyTokenTypes.TRIPLE_QUOTED_UNICODE}, IElementType.EMPTY_ARRAY
+    );
+
+    return ret;
   }
 
   private static TextAttributesKey _copy(String name, TextAttributesKey src) {
@@ -123,6 +143,10 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
     keys.put(PyTokenTypes.END_OF_LINE_COMMENT, PY_LINE_COMMENT);
     keys.put(PyTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+
+    keys.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, PY_VALID_STRING_ESCAPE);
+    keys.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
+    keys.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
   }
 
   @NotNull
