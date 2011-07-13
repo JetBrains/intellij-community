@@ -319,7 +319,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           JPanel vcsOptions = new JPanel(new BorderLayout());
           vcsOptions.add(options.getComponent(), BorderLayout.CENTER);
           vcsOptions.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName()));
-          //vcsOptions.add(SeparatorFactory.createSeparator(vcs.getDisplayName(), null), BorderLayout.NORTH);
           vcsCommitOptions.add(vcsOptions);
           myPerVcsOptionsPanels.put(vcs, vcsOptions);
           myAdditionalComponents.add(options);
@@ -362,15 +361,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     final String actionName = getCommitActionName();
-    final String borderTitleName = actionName.replace("_", "");
-    //final String borderTitleName = actionName;
+    final String borderTitleName = actionName.replace("_", "").replace("&", "");
     if (beforeVisible) {
       beforeBox.add(Box.createVerticalGlue());
       JPanel beforePanel = new JPanel(new BorderLayout());
       beforePanel.add(beforeBox);
       beforePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.standard.checkin.options.group", borderTitleName)));
-      //beforeBox.add(SeparatorFactory.createSeparatorWithBoldTitle(VcsBundle.message("border.standard.checkin.options.group", borderTitleName), null), 0);
-      //optionsBox.add(beforeBox);
       optionsBox.add(beforePanel);
     }
 
@@ -379,8 +375,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       JPanel afterPanel = new JPanel(new BorderLayout());
       afterPanel.add(afterBox);
       afterPanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName)));
-      //afterBox.add(SeparatorFactory.createSeparatorWithBoldTitle(VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName), null), 0);
-      //optionsBox.add(afterBox);
       optionsBox.add(afterPanel);
     }
 
