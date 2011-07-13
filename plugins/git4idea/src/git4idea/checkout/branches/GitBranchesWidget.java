@@ -33,11 +33,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.awt.RelativePoint;
@@ -651,7 +649,6 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
                 message = "Refreshing remotes complete";
                 type = MessageType.INFO;
               }
-              ToolWindowManager.getInstance(myProject).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, type, message);
               GitVcs.NOTIFICATION_GROUP_ID.createNotification(message, type).notify(myProject);
 
               myRemoveConfigurations = null;

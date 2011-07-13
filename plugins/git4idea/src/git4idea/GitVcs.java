@@ -18,6 +18,7 @@ package git4idea;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -32,6 +33,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -81,8 +83,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
-  public static final NotificationGroup NOTIFICATION_GROUP_ID = new NotificationGroup("Git Messages", NotificationDisplayType.NONE, true);
+  public static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup("Git Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
   public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup("Git Important Errors", NotificationDisplayType.BALLOON, true);
+
+  static {
+    NotificationsConfiguration.remove("Git");
+  }
+
   public static final String NAME = "Git"; // Vcs name
 
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());

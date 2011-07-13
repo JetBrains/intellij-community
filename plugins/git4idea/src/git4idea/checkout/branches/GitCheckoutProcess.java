@@ -593,7 +593,6 @@ public class GitCheckoutProcess {
         final String message = "Failed to process restore shelved change list: " +
                                 finalShelve.DESCRIPTION +
                                 ". Please restore it manually.";
-        ToolWindowManager.getInstance(myProject).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.ERROR, message);
         GitVcs.NOTIFICATION_GROUP_ID.createNotification(message, NotificationType.ERROR).notify(myProject);
       }
     };
