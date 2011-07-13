@@ -53,9 +53,7 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
                 final PsiJavaToken parentSign =
                         binaryExpression.getOperationSign();
                 final IElementType parentOperator = parentSign.getTokenType();
-                final PsiJavaToken childSign =
-                        ((PsiBinaryExpression) body).getOperationSign();
-                final IElementType childOperator = childSign.getTokenType();
+              final IElementType childOperator = ((PsiBinaryExpression)body).getOperationTokenType();
                 if(!parentOperator.equals(childOperator)){
                     return false;
                 }

@@ -85,8 +85,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
                 (PsiBinaryExpression) expression;
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         assert rhs != null;
         if(tokenType.equals(JavaTokenType.AND)){
             if(isZero(lhs) || isAllOnes(rhs)){

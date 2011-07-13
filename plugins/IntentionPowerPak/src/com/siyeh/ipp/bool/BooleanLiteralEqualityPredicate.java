@@ -28,8 +28,7 @@ class BooleanLiteralEqualityPredicate implements PsiElementPredicate{
 			return false;
 		}
 		final PsiBinaryExpression expression = (PsiBinaryExpression) element;
-		final PsiJavaToken sign = expression.getOperationSign();
-		final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
 		if(!tokenType.equals(JavaTokenType.EQEQ) &&
 				!tokenType.equals(JavaTokenType.NE)){
 			return false;

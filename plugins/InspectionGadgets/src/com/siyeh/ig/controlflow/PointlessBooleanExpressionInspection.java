@@ -100,14 +100,13 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     @Nullable
     private  String calculateSimplifiedBinaryExpression(
             PsiBinaryExpression expression){
-        final PsiJavaToken sign = expression.getOperationSign();
-        final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression lhs = expression.getLOperand();
 
         final PsiExpression rhs = expression.getROperand();
         if(rhs == null){
             return null;
         }
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         final String rhsText = rhs.getText();
         final String lhsText = lhs.getText();
         if(tokenType.equals(JavaTokenType.ANDAND) ||
@@ -156,9 +155,8 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
          if(ComparisonUtils.isComparison(exp)){
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) exp;
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final String negatedComparison =
-                    ComparisonUtils.getNegatedComparison(sign);
+           final String negatedComparison =
+                    ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             assert rhs != null;
@@ -284,9 +282,8 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression){
             super.visitPrefixExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            final PsiExpression operand = expression.getOperand();
-            final IElementType tokenType = sign.getTokenType();
+          final PsiExpression operand = expression.getOperand();
+          final IElementType tokenType = expression.getOperationTokenType();
             if(!(!tokenType.equals(JavaTokenType.EXCL) ||
                     !notExpressionIsPointless(operand))){
                 registerError(expression, expression);

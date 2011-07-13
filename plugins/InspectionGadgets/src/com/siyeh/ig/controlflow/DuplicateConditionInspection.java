@@ -144,8 +144,7 @@ public class DuplicateConditionInspection extends BaseInspection {
             if (condition instanceof PsiBinaryExpression) {
                 final PsiBinaryExpression binaryExpression =
                         (PsiBinaryExpression)condition;
-                final PsiJavaToken sign = binaryExpression.getOperationSign();
-                final IElementType tokenType = sign.getTokenType();
+              final IElementType tokenType = binaryExpression.getOperationTokenType();
                 if (JavaTokenType.OROR.equals(tokenType)) {
                     final PsiExpression lhs = binaryExpression.getLOperand();
                     collectConditionsForExpression(lhs, conditions);

@@ -71,8 +71,7 @@ public class AssignmentToDateFieldFromParameterInspection
         @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!JavaTokenType.EQ.equals(tokenType)) {
                 return;
             }

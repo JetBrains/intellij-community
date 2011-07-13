@@ -1278,7 +1278,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
           if (myAssignmentTargetsAreElements)
             startElement(lExpr);
 
-          if (expression.getOperationSign().getTokenType() != JavaTokenType.EQ) {
+          if (expression.getOperationTokenType() != JavaTokenType.EQ) {
             generateReadInstruction(variable);
           }
           generateWriteInstruction(variable);
@@ -1488,7 +1488,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
   @Override public void visitPostfixExpression(PsiPostfixExpression expression) {
     startElement(expression);
 
-    IElementType op = expression.getOperationSign().getTokenType();
+    IElementType op = expression.getOperationTokenType();
     PsiExpression operand = expression.getOperand();
     operand.accept(this);
     if (op == JavaTokenType.PLUSPLUS || op == JavaTokenType.MINUSMINUS) {
@@ -1508,7 +1508,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
     PsiExpression operand = expression.getOperand();
     if (operand != null) {
-      IElementType operationSign = expression.getOperationSign().getTokenType();
+      IElementType operationSign = expression.getOperationTokenType();
       if (operationSign == JavaTokenType.EXCL) {
         // negation inverts jump targets
         PsiElement topStartStatement = myStartStatementStack.peekElement();

@@ -149,8 +149,8 @@ public class TypeEvaluator {
     else if (expr instanceof PsiBinaryExpression) {
       final PsiExpression lOperand = ((PsiBinaryExpression)expr).getLOperand();
       final PsiExpression rOperand = ((PsiBinaryExpression)expr).getROperand();
-      final PsiJavaToken operationSign = ((PsiBinaryExpression)expr).getOperationSign();
-      return TypeConversionUtil.calcTypeForBinaryExpression(evaluateType(lOperand), evaluateType(rOperand), operationSign.getTokenType(),
+      return TypeConversionUtil.calcTypeForBinaryExpression(evaluateType(lOperand), evaluateType(rOperand),
+                                                            ((PsiBinaryExpression)expr).getOperationTokenType(),
                                                             true);
     }
     else if (expr instanceof PsiPostfixExpression) {

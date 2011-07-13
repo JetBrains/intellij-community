@@ -91,9 +91,8 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
         } else if(ComparisonUtils.isComparison(newExpression)){
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) newExpression;
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final String negatedComparison =
-                    ComparisonUtils.getNegatedComparison(sign);
+          final String negatedComparison =
+                    ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             assert rhs != null;

@@ -54,8 +54,7 @@ public class DivideByZeroInspection extends BaseInspection {
             if (rhs == null) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.DIV) &&
                     !tokenType.equals(JavaTokenType.PERC)) {
                 return;
@@ -78,8 +77,7 @@ public class DivideByZeroInspection extends BaseInspection {
             if (rhs == null) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.DIVEQ)
                     && !tokenType.equals(JavaTokenType.PERCEQ)) {
                 return;

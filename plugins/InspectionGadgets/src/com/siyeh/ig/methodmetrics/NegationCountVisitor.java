@@ -25,8 +25,7 @@ class NegationCountVisitor extends JavaRecursiveElementVisitor {
 
     @Override public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
         super.visitBinaryExpression(expression);
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.NE)) {
             m_count++;
         }
@@ -38,8 +37,7 @@ class NegationCountVisitor extends JavaRecursiveElementVisitor {
 
     @Override public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
         super.visitPrefixExpression(expression);
-        final PsiJavaToken sign = expression.getOperationSign();
-        if (sign.getTokenType().equals(JavaTokenType.EXCL)) {
+      if (expression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
             m_count++;
         }
     }

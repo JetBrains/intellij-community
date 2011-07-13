@@ -38,20 +38,20 @@ import java.util.Set;
 public class PointlessArithmeticExpressionInspection
         extends BaseInspection {
 
-    private static final Set<String> arithmeticTokens =
-            new HashSet<String>(9);
+  private static final Set<IElementType> arithmeticTokens =
+          new HashSet<IElementType>(5);
 
-    static {
-        arithmeticTokens.add("+");
-        arithmeticTokens.add("-");
-        arithmeticTokens.add("*");
-        arithmeticTokens.add("/");
-        arithmeticTokens.add("%");
-        arithmeticTokens.add(">");
-        arithmeticTokens.add("<");
-        arithmeticTokens.add("<=");
-        arithmeticTokens.add(">=");
-    }
+  static {
+      arithmeticTokens.add(JavaTokenType.PLUS);
+      arithmeticTokens.add(JavaTokenType.MINUS);
+      arithmeticTokens.add(JavaTokenType.ASTERISK);
+      arithmeticTokens.add(JavaTokenType.DIV);
+      arithmeticTokens.add(JavaTokenType.PERC);
+      arithmeticTokens.add(JavaTokenType.GT);
+      arithmeticTokens.add(JavaTokenType.LT);
+      arithmeticTokens.add(JavaTokenType.LE);
+      arithmeticTokens.add(JavaTokenType.GE);
+  }
 
     /**
      * @noinspection PublicField
@@ -90,11 +90,10 @@ public class PointlessArithmeticExpressionInspection
     String calculateReplacementExpression(
             PsiExpression expression) {
         final PsiBinaryExpression exp = (PsiBinaryExpression) expression;
-        final PsiJavaToken sign = exp.getOperationSign();
-        final PsiExpression lhs = exp.getLOperand();
+      final PsiExpression lhs = exp.getLOperand();
         final PsiExpression rhs = exp.getROperand();
         assert rhs != null;
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = exp.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.PLUS)) {
             if (isZero(lhs)) {
                 return rhs.getText();
@@ -169,9 +168,7 @@ public class PointlessArithmeticExpressionInspection
                     PsiType.FLOAT.equals(expressionType)) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final String signText = sign.getText();
-            if (!arithmeticTokens.contains(signText)) {
+          if (!arithmeticTokens.contains(expression.getOperationTokenType())) {
                 return;
             }
             if (TypeUtils.expressionHasType(expression,
@@ -179,7 +176,7 @@ public class PointlessArithmeticExpressionInspection
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             final boolean isPointless;
             if (tokenType.equals(JavaTokenType.PLUS)) {
                 isPointless = additionExpressionIsPointless(lhs, rhs);

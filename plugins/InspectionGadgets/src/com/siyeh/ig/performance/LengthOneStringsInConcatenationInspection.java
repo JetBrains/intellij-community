@@ -113,8 +113,7 @@ public class LengthOneStringsInConcatenationInspection
                 return false;
             }
             final PsiBinaryExpression binaryExp = (PsiBinaryExpression)parent;
-            final PsiJavaToken sign = binaryExp.getOperationSign();
-            if (!JavaTokenType.PLUS.equals(sign.getTokenType())) {
+          if (!JavaTokenType.PLUS.equals(binaryExp.getOperationTokenType())) {
                 return false;
             }
             final PsiExpression lhs = binaryExp.getLOperand();

@@ -59,8 +59,7 @@ public class CodeInsightServicesUtil {
     }
     else if (booleanExpression instanceof PsiPrefixExpression) {
       PsiPrefixExpression expression = (PsiPrefixExpression)booleanExpression;
-      PsiJavaToken operationSign = expression.getOperationSign();
-      if (operationSign.getTokenType() == JavaTokenType.EXCL) {
+      if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
         PsiExpression operand = expression.getOperand();
         if (operand instanceof PsiParenthesizedExpression) {
           operand = ((PsiParenthesizedExpression)operand).getExpression();

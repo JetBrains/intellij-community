@@ -31,8 +31,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
     protected String getTextForElement(PsiElement element) {
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression)element;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.ANDAND)) {
             return IntentionPowerPackBundle.message("demorgans.intention.name1");
         } else {
@@ -49,8 +48,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
             throws IncorrectOperationException {
         PsiBinaryExpression exp =
                 (PsiBinaryExpression)element;
-        final PsiJavaToken sign = exp.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = exp.getOperationTokenType();
         PsiElement parent = exp.getParent();
         while (isConjunctionExpression(parent, tokenType)) {
             exp = (PsiBinaryExpression)parent;
@@ -106,9 +104,8 @@ public class DemorgansIntention extends MutablyNamedIntention {
         } else if (ComparisonUtils.isComparison(condition)) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)condition;
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final String negatedComparison =
-                    ComparisonUtils.getNegatedComparison(sign);
+          final String negatedComparison =
+                    ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             assert rhs != null;
@@ -127,8 +124,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
             return false;
         }
         final PsiBinaryExpression binExp = (PsiBinaryExpression)exp;
-        final PsiJavaToken sign = binExp.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binExp.getOperationTokenType();
         return tokenType.equals(conjunctionType);
     }
 }

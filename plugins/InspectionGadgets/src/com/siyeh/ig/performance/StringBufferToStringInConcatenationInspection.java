@@ -93,8 +93,7 @@ public class StringBufferToStringInConcatenationInspection
             }
             final PsiBinaryExpression parentBinary =
                     (PsiBinaryExpression)parent;
-            final PsiJavaToken sign = parentBinary.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = parentBinary.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.PLUS)) {
                 return;
             }

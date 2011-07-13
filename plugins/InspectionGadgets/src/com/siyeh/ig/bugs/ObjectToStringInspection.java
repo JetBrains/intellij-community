@@ -75,8 +75,7 @@ public class ObjectToStringInspection extends BaseInspection {
             if(!WellFormednessUtils.isWellFormed(expression)) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSEQ)) {
                 return;
             }

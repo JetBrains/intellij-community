@@ -66,8 +66,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
             if(rhs == null){
                 return false;
             }
-            final PsiJavaToken sign = exp.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = exp.getOperationTokenType();
             return tokenType.equals(JavaTokenType.MINUS);
         }
     }

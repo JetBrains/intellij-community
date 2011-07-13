@@ -69,7 +69,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     PsiExpression rOperand = param.getROperand();
     if (rOperand == null) return null;
     PsiType rType = rOperand.getType();
-    IElementType sign = param.getOperationSign().getNode().getElementType();
+    IElementType sign = param.getOperationTokenType();
     // optimization: if we can calculate type based on right type only
     PsiType type = TypeConversionUtil.calcTypeForBinaryExpression(null, rType, sign, false);
     if (type != TypeConversionUtil.NULL_TYPE) return type;

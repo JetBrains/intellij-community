@@ -298,8 +298,7 @@ public class RecursionUtils{
         if(expressionDefinitelyRecurses(lhs, method)){
             return true;
         }
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         if(tokenType.equals(JavaTokenType.ANDAND) ||
                 tokenType.equals(JavaTokenType.OROR)){
             return false;

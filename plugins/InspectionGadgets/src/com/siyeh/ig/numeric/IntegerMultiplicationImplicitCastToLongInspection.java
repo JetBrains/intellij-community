@@ -79,8 +79,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
         @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.ASTERISK)
                     && !tokenType.equals(JavaTokenType.LTLT)) {
                 return;

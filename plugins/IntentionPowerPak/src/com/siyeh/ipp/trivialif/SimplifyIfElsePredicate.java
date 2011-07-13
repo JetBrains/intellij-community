@@ -140,10 +140,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         final PsiAssignmentExpression elseExpression =
                 (PsiAssignmentExpression)
                         elseExpressionStatement.getExpression();
-        final PsiJavaToken thenSign = thenExpression.getOperationSign();
-        final PsiJavaToken elseSign = elseExpression.getOperationSign();
-        final IElementType thenTokenType = thenSign.getTokenType();
-        if(!thenTokenType.equals(elseSign.getTokenType())){
+      final IElementType thenTokenType = thenExpression.getOperationTokenType();
+        if(!thenTokenType.equals(elseExpression.getOperationTokenType())){
                 return false;
         }
         final PsiExpression thenLhs = thenExpression.getLExpression();
@@ -171,10 +169,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         final PsiAssignmentExpression elseExpression =
                 (PsiAssignmentExpression)
                         elseExpressionStatement.getExpression();
-        final PsiJavaToken thenSign = thenExpression.getOperationSign();
-        final PsiJavaToken elseSign = elseExpression.getOperationSign();
-        final IElementType thenTokenType = thenSign.getTokenType();
-        if(!thenTokenType.equals(elseSign.getTokenType())){
+      final IElementType thenTokenType = thenExpression.getOperationTokenType();
+        if(!thenTokenType.equals(elseExpression.getOperationTokenType())){
                 return false;
         }
         final PsiExpression thenLhs = thenExpression.getLExpression();
@@ -207,10 +203,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         final PsiAssignmentExpression elseExpression =
                 (PsiAssignmentExpression)
                         ((PsiExpressionStatement) elseBranch).getExpression();
-        final PsiJavaToken thenSign = thenExpression.getOperationSign();
-        final PsiJavaToken elseSign = elseExpression.getOperationSign();
-        final IElementType thenTokenType = thenSign.getTokenType();
-        if(!thenTokenType.equals(elseSign.getTokenType())){
+      final IElementType thenTokenType = thenExpression.getOperationTokenType();
+        if(!thenTokenType.equals(elseExpression.getOperationTokenType())){
                 return false;
         }
         final PsiExpression thenLhs = thenExpression.getLExpression();
@@ -247,10 +241,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         final PsiAssignmentExpression elseExpression =
                 (PsiAssignmentExpression)
                         elseExpressionStatement.getExpression();
-        final PsiJavaToken thenSign = thenExpression.getOperationSign();
-        final PsiJavaToken elseSign = elseExpression.getOperationSign();
-        final IElementType thenTokenType = thenSign.getTokenType();
-        if(!thenTokenType.equals(elseSign.getTokenType())){
+      final IElementType thenTokenType = thenExpression.getOperationTokenType();
+        if(!thenTokenType.equals(elseExpression.getOperationTokenType())){
                 return false;
         }
         final PsiExpression thenLhs = thenExpression.getLExpression();

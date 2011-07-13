@@ -136,8 +136,7 @@ public class NonThreadSafeLazyInitializationInspection
             }
             final PsiBinaryExpression comparison =
                     (PsiBinaryExpression) condition;
-            final PsiJavaToken sign = comparison.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = comparison.getOperationTokenType();
             if(!tokenType.equals(JavaTokenType.EQEQ)){
                 return false;
             }

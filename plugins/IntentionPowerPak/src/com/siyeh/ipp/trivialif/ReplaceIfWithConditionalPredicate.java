@@ -144,10 +144,8 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
         final PsiAssignmentExpression elseExpression =
                 (PsiAssignmentExpression)
                         ((PsiExpressionStatement) elseBranch).getExpression();
-        final PsiJavaToken thenSign = thenExpression.getOperationSign();
-        final PsiJavaToken elseSign = elseExpression.getOperationSign();
-        final IElementType tokenType = thenSign.getTokenType();
-        if(!tokenType.equals(elseSign.getTokenType())){
+      final IElementType tokenType = thenExpression.getOperationTokenType();
+        if(!tokenType.equals(elseExpression.getOperationTokenType())){
             return false;
         }
         final PsiExpression thenLhs = thenExpression.getLExpression();

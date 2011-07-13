@@ -476,7 +476,7 @@ public class ExpectedTypesProvider {
                 type = ((PsiAnonymousClass)resolved).getBaseClassType();
               }
             }
-            final int kind = assignment.getOperationSign().getTokenType() != JavaTokenType.EQ
+            final int kind = assignment.getOperationTokenType() != JavaTokenType.EQ
                              ? ExpectedTypeInfo.TYPE_STRICTLY
                              : ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
             ExpectedTypeInfoImpl info = createInfoImpl(type, kind, type, TailType.NONE);
@@ -567,7 +567,6 @@ public class ExpectedTypesProvider {
 
       PsiExpression op1 = expr.getLOperand();
       PsiExpression op2 = expr.getROperand();
-      PsiJavaToken sign = expr.getOperationSign();
       if (myForCompletion && op1.equals(myExpr)) {
         final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider, myVoidable, myUsedAfter);
         myExpr = (PsiExpression)myExpr.getParent();
@@ -583,7 +582,7 @@ public class ExpectedTypesProvider {
       PsiExpression anotherExpr = op1.equals(myExpr) ? op2 : op1;
       PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
       PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-      IElementType i = sign.getTokenType();
+      IElementType i = expr.getOperationTokenType();
       if (i == JavaTokenType.MINUS ||
           i == JavaTokenType.ASTERISK ||
           i == JavaTokenType.DIV ||
@@ -689,8 +688,7 @@ public class ExpectedTypesProvider {
     }
 
     @Override public void visitPrefixExpression(PsiPrefixExpression expr) {
-      PsiJavaToken sign = expr.getOperationSign();
-      IElementType i = sign.getTokenType();
+      IElementType i = expr.getOperationTokenType();
       final PsiType type = expr.getType();
       final TailType tailType = expr.getParent() instanceof PsiAssignmentExpression && ((PsiAssignmentExpression) expr.getParent()).getRExpression() == expr ?
                                 getAssignmentRValueTailType((PsiAssignmentExpression) expr.getParent()) :

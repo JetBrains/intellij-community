@@ -44,8 +44,7 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention {
         final PsiBinaryExpression exp =
                 (PsiBinaryExpression)element;
         assert exp != null;
-        final PsiJavaToken sign = exp.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = exp.getOperationTokenType();
         final boolean isEquals = JavaTokenType.EQEQ.equals(tokenType);
         final PsiExpression lhs = exp.getLOperand();
         @NonNls final String lhsText = lhs.getText();

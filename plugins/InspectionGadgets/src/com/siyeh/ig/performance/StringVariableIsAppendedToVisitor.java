@@ -56,8 +56,7 @@ class StringVariableIsAppendedToVisitor extends JavaRecursiveElementVisitor {
         if (!variable.equals(referent)) {
             return;
         }
-        final PsiJavaToken operationSign = assignment.getOperationSign();
-        final IElementType tokenType = operationSign.getTokenType();
+      final IElementType tokenType = assignment.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.PLUSEQ)) {
             if (onlyWarnOnLoop && !ControlFlowUtils.isInLoop(assignment)) {
                 return;

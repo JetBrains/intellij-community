@@ -36,7 +36,7 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
             final PsiJavaToken sign = exp.getOperationSign();
             operatorText = sign.getText();
             negatedOperatorText =
-                    ComparisonUtils.getNegatedComparison(sign);
+                    ComparisonUtils.getNegatedComparison(sign.getTokenType());
         }
         if (operatorText.equals(negatedOperatorText)) {
             return IntentionPowerPackBundle.message(
@@ -59,9 +59,8 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
                 (PsiBinaryExpression)element;
         final PsiExpression lhs = expression.getLOperand();
         final PsiExpression rhs = expression.getROperand();
-        final PsiJavaToken sign = expression.getOperationSign();
-        final String negatedOperator =
-                ComparisonUtils.getNegatedComparison(sign);
+      final String negatedOperator =
+                ComparisonUtils.getNegatedComparison(expression.getOperationTokenType());
         final String lhsText = lhs.getText();
         assert rhs != null;
         final String rhsText = rhs.getText();

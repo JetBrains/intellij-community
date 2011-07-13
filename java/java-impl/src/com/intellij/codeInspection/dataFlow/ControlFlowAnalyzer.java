@@ -1399,7 +1399,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiType type = expression.getType();
         PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
         generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
-        if (expression.getOperationSign().getTokenType() == JavaTokenType.EXCL) {
+        if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
           addInstruction(new NotInstruction());
         }
         else {

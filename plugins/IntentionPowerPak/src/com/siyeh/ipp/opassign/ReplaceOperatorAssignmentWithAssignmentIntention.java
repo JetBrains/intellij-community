@@ -82,9 +82,8 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
         if (rhs instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)rhs;
-            final PsiJavaToken javaToken = binaryExpression.getOperationSign();
-            final int precedence1 =
-                    ParenthesesUtils.getPrecedenceForBinaryOperator(javaToken);
+          final int precedence1 =
+                    ParenthesesUtils.getPrecedenceForBinaryOperator(binaryExpression.getOperationTokenType());
             final IElementType signTokenType = sign.getTokenType();
             final IElementType newOperatorToken = tokenMap.get(signTokenType);
             final int precedence2 =

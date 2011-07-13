@@ -32,8 +32,7 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         }
         final PsiAssignmentExpression assignment =
                 (PsiAssignmentExpression) element;
-        final PsiJavaToken sign = assignment.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = assignment.getOperationTokenType();
         if(!JavaTokenType.EQ.equals(tokenType)){
             return false;
         }
@@ -51,8 +50,7 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         if(rhsRhs == null){
             return false;
         }
-        final PsiJavaToken operatorSign = binaryRhs.getOperationSign();
-        final IElementType rhsTokenType = operatorSign.getTokenType();
+      final IElementType rhsTokenType = binaryRhs.getOperationTokenType();
         if(JavaTokenType.OROR.equals(rhsTokenType) ||
                 JavaTokenType.ANDAND.equals(rhsTokenType) ||
                 JavaTokenType.EQEQ.equals(rhsTokenType) ||

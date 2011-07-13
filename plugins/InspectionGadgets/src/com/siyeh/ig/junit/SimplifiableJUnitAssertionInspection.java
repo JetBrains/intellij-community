@@ -693,9 +693,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         if (expression instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)expression;
-            final PsiJavaToken sign =
-                    binaryExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = binaryExpression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.EQEQ)) {
                 return false;
             }

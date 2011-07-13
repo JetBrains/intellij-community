@@ -133,8 +133,7 @@ public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
     private static boolean isInvertedFieldRead(PsiReferenceExpression referenceExpression) {
         final PsiPrefixExpression prefixExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiPrefixExpression.class);
         if (prefixExpression != null) {
-            final PsiJavaToken sign = prefixExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = prefixExpression.getOperationTokenType();
             if (tokenType.equals(JavaTokenType.EXCL)) {
                 return true;
             }

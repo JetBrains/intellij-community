@@ -315,8 +315,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       PsiExpression operand = expression.getOperand();
       Boolean constBoolean = getConstBoolean(operand);
       if (constBoolean == null) return;
-      PsiJavaToken operationSign = expression.getOperationSign();
-      IElementType tokenType = operationSign.getTokenType();
+      IElementType tokenType = expression.getOperationTokenType();
       if (JavaTokenType.EXCL == tokenType) {
         if (!markAndCheckCreateResult()) {
           return;

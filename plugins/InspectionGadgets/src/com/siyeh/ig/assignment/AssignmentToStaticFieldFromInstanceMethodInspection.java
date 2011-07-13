@@ -57,8 +57,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
 
         @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression){
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                        !tokenType.equals(JavaTokenType.MINUSMINUS)){
                 return;
@@ -72,8 +71,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
 
         @Override public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression){
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                        !tokenType.equals(JavaTokenType.MINUSMINUS)){
                 return;

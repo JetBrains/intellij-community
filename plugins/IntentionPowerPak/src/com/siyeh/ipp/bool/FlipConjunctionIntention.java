@@ -43,8 +43,7 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
         PsiExpression exp = (PsiExpression)element;
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)exp;
         assert binaryExpression != null;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType conjunctionType = sign.getTokenType();
+      final IElementType conjunctionType = binaryExpression.getOperationTokenType();
         PsiElement parent = exp.getParent();
         while (isConjunctionExpression(parent, conjunctionType)) {
             exp = (PsiExpression)parent;
@@ -83,8 +82,7 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression)element;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         return tokenType.equals(conjunctionType);
     }
 }

@@ -109,9 +109,7 @@ public class InstanceOfUtils {
 
         @Override public void visitBinaryExpression(
                 PsiBinaryExpression expression) {
-            final PsiJavaToken sign =
-                    expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (tokenType == JavaTokenType.ANDAND) {
                 checkExpression(expression.getLOperand());
                 if (agreeingInstanceof) {

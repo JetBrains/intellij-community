@@ -77,8 +77,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
             throws IncorrectOperationException {
         final PsiExpression lhs = expression.getLExpression();
         final PsiExpression rhs = expression.getRExpression();
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         final String assignString;
         if (tokenType.equals(JavaTokenType.ASTERISKEQ)) {
             assignString = "<<=";
@@ -95,8 +94,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
             throws IncorrectOperationException {
         final PsiExpression lhs = expression.getLOperand();
         final PsiExpression rhs = expression.getROperand();
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         final String operatorString;
         if (tokenType.equals(JavaTokenType.ASTERISK)) {
             operatorString = "<<";

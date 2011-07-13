@@ -801,7 +801,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       final Evaluator operandEvaluator = myResult;
 
-      final IElementType operation = expression.getOperationSign().getTokenType();
+      final IElementType operation = expression.getOperationTokenType();
       final PsiType operandType = operandExpression.getType();
       @Nullable final PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
 
@@ -837,7 +837,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       @Nullable
       final PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
 
-      final IElementType operation = expression.getOperationSign().getTokenType();
+      final IElementType operation = expression.getOperationTokenType();
 
       if(operation == JavaTokenType.PLUSPLUS || operation == JavaTokenType.MINUSMINUS) {
         try {

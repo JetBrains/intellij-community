@@ -66,8 +66,7 @@ public class VariableAccessUtils {
         if (expression instanceof PsiPrefixExpression) {
             final PsiPrefixExpression prefixExpression =
                     (PsiPrefixExpression)expression;
-            final PsiJavaToken sign = prefixExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = prefixExpression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return false;
@@ -77,8 +76,7 @@ public class VariableAccessUtils {
         } else if (expression instanceof PsiPostfixExpression) {
             final PsiPostfixExpression postfixExpression =
                     (PsiPostfixExpression)expression;
-            final PsiJavaToken sign = postfixExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = postfixExpression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return false;

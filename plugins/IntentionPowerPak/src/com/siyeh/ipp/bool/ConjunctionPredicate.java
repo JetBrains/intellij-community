@@ -18,7 +18,6 @@ package com.siyeh.ipp.bool;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
@@ -30,8 +29,7 @@ class ConjunctionPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiBinaryExpression expression = (PsiBinaryExpression) element;
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
 	    if (!tokenType.equals(JavaTokenType.ANDAND) &&
 			    !tokenType.equals(JavaTokenType.OROR)) {
 		    return false;

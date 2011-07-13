@@ -56,8 +56,7 @@ public class SideEffectChecker{
 
         @Override public void visitPrefixExpression(PsiPrefixExpression expression){
             super.visitPrefixExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
 
             if(tokenType.equals(JavaTokenType.PLUSPLUS) ||
                     tokenType.equals(JavaTokenType.MINUSMINUS)){
@@ -67,8 +66,7 @@ public class SideEffectChecker{
 
         @Override public void visitPostfixExpression(PsiPostfixExpression expression){
             super.visitPostfixExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
 
             if(tokenType.equals(JavaTokenType.PLUSPLUS) ||
                     tokenType.equals(JavaTokenType.MINUSMINUS)){

@@ -50,8 +50,7 @@ public class ReplaceEqualityWithEqualsIntention extends Intention {
         if (strippedRhs == null) {
             return;
         }
-        final PsiJavaToken operationSign = exp.getOperationSign();
-        final IElementType tokenType = operationSign.getTokenType();
+      final IElementType tokenType = exp.getOperationTokenType();
         @NonNls final String expString;
         if (tokenType.equals(JavaTokenType.EQEQ)) {
             if (ParenthesesUtils.getPrecedence(strippedLhs) >

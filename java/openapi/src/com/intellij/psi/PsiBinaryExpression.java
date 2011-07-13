@@ -21,7 +21,9 @@ import com.intellij.psi.tree.IElementType;
 
 /**
  * Represents a Java binary expression (addition, multiplication and so on).
+ * @deprecated Use {@link PsiPolyadicExpression} instead.
  */
+@Deprecated
 public interface PsiBinaryExpression extends PsiExpression, PsiPolyadicExpression {
   /**
    * Returns the left operand of the expression.
