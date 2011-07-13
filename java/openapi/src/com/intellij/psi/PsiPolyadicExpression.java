@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.dataFlow;
+package com.intellij.psi;
+
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: cdr
  */
-public class InstructionFactory {
+public interface PsiPolyadicExpression extends PsiExpression {
+  @NotNull PsiExpression[] getOperands();
+
+  @NotNull
+  IElementType getOperationTokenType();
+  PsiJavaToken getTokenBeforeOperand(@NotNull PsiExpression operand);
 }

@@ -19,6 +19,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -44,9 +46,10 @@ public class ReplaceExpressionUtil {
       if (role == ChildRole.THEN_EXPRESSION) return false;
       return priority < parentPriority || role != ChildRole.ELSE_EXPRESSION;
     }
-    else if (i == JavaElementType.BINARY_EXPRESSION) {
+    else if (i == JavaElementType.BINARY_EXPRESSION || i == JavaElementType.POLYADIC_EXPRESSION) {
       if (priority < parentPriority) return true;
-      final IElementType opType = ((PsiBinaryExpression)SourceTreeToPsiMap.treeElementToPsi(oldParent)).getOperationSign().getTokenType();
+      PsiElement element = SourceTreeToPsiMap.treeElementToPsi(oldParent);
+      IElementType opType = i == JavaElementType.BINARY_EXPRESSION ? ((PsiBinaryExpression)element).getOperationTokenType() : ((PsiPolyadicExpression)element).getOperationTokenType();
       return ((CompositeElement)oldParent).getChildRole(oldExpr) != ChildRole.LOPERAND &&
              opType != JavaTokenType.PLUS &&
              opType != JavaTokenType.ASTERISK &&
@@ -100,8 +103,9 @@ public class ReplaceExpressionUtil {
     else if (i == JavaElementType.CONDITIONAL_EXPRESSION) {
       return 1;
     }
-    else if (i == JavaElementType.BINARY_EXPRESSION) {
-      IElementType opType = ((PsiBinaryExpression)SourceTreeToPsiMap.treeElementToPsi(expr)).getOperationSign().getTokenType();
+    else if (i == JavaElementType.BINARY_EXPRESSION || i == JavaElementType.POLYADIC_EXPRESSION) {
+      PsiElement element = SourceTreeToPsiMap.treeElementToPsi(expr);
+      IElementType opType = i == JavaElementType.BINARY_EXPRESSION ? ((PsiBinaryExpression)element).getOperationTokenType() : ((PsiPolyadicExpression)element).getOperationTokenType();
       if (opType == JavaTokenType.OROR) {
         return 2;
       }

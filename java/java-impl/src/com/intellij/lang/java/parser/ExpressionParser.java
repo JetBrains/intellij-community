@@ -171,28 +171,34 @@ public class ExpressionParser {
 
   @Nullable
   private static PsiBuilder.Marker parseBinary(final PsiBuilder builder, final ExprType type, final TokenSet ops) {
-    PsiBuilder.Marker left = parseExpression(builder, type);
-    if (left == null) return null;
+    PsiBuilder.Marker result = parseExpression(builder, type);
+    if (result == null) return null;
+    int operandCount = 1;
 
+    IElementType tokenType = getGtTokenType(builder);
+    IElementType currentExprTokenType = tokenType;
     while (true) {
-      final IElementType tokenType = getGtTokenType(builder);
       if (tokenType == null || !ops.contains(tokenType)) break;
 
-      final PsiBuilder.Marker binary = left.precede();
       advanceGtToken(builder, tokenType);
 
       final PsiBuilder.Marker right = parseExpression(builder, type);
-      if (right == null) {
-        error(builder, JavaErrorMessages.message("expected.expression"));
-        binary.done(JavaElementType.BINARY_EXPRESSION);
-        return binary;
+      operandCount++;
+      tokenType = getGtTokenType(builder);
+      if (tokenType == null || !ops.contains(tokenType) || tokenType != currentExprTokenType || right == null) {
+        // save
+        result = result.precede();
+        if (right == null) {
+          error(builder, JavaErrorMessages.message("expected.expression"));
+        }
+        result.done(operandCount > 2 ? JavaElementType.POLYADIC_EXPRESSION : JavaElementType.BINARY_EXPRESSION);
+        if (right == null) break;
+        currentExprTokenType = tokenType;
+        operandCount = 1;
       }
-
-      binary.done(JavaElementType.BINARY_EXPRESSION);
-      left = binary;
     }
 
-    return left;
+    return result;
   }
 
   @Nullable

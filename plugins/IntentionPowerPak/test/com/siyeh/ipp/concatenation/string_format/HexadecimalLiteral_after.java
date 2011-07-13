@@ -1,3 +1,3 @@
 class C {
-  String s = String.format("or not16");
+  String s = String.format("or not%d", 0x10);
 }

@@ -22,7 +22,7 @@ import com.intellij.psi.tree.IElementType;
 /**
  * Represents a Java binary expression (addition, multiplication and so on).
  */
-public interface PsiBinaryExpression extends PsiExpression {
+public interface PsiBinaryExpression extends PsiExpression, PsiPolyadicExpression {
   /**
    * Returns the left operand of the expression.
    *

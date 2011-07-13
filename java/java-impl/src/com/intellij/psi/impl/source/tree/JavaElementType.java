@@ -98,6 +98,7 @@ public interface JavaElementType {
   IElementType PREFIX_EXPRESSION = new JavaCompositeElementType("PREFIX_EXPRESSION", PsiPrefixExpressionImpl.class);
   IElementType POSTFIX_EXPRESSION = new JavaCompositeElementType("POSTFIX_EXPRESSION", PsiPostfixExpressionImpl.class);
   IElementType BINARY_EXPRESSION = new JavaCompositeElementType("BINARY_EXPRESSION", PsiBinaryExpressionImpl.class);
+  IElementType POLYADIC_EXPRESSION = new JavaCompositeElementType("POLYADIC_EXPRESSION", PsiPolyadicExpressionImpl.class);
   IElementType CONDITIONAL_EXPRESSION = new JavaCompositeElementType("CONDITIONAL_EXPRESSION", PsiConditionalExpressionImpl.class);
   IElementType ASSIGNMENT_EXPRESSION = new JavaCompositeElementType("ASSIGNMENT_EXPRESSION", PsiAssignmentExpressionImpl.class);
   IElementType NEW_EXPRESSION = new JavaCompositeElementType("NEW_EXPRESSION", PsiNewExpressionImpl.class);

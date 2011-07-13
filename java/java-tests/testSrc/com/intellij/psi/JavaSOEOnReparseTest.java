@@ -15,16 +15,15 @@
  */
 package com.intellij.psi;
 
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 
 
-public class JavaSOEOnReparseTest extends LightCodeInsightTestCase {
-  private static final String HUGE_EXPR;
+public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
+  private static final StringBuilder HUGE_EXPR;
   static {
-    final StringBuilder sb = new StringBuilder("\"-\"");
-    for (int i = 0; i < 10000; i++) sb.append("+\"b\"");
-    HUGE_EXPR = sb.toString();
+    HUGE_EXPR = new StringBuilder("\"-\"");
+    for (int i = 0; i < 100000; i++) HUGE_EXPR.append("+\"b\"");
   }
 
   public void testOnHugeBinaryExprInFile() throws Exception {
@@ -37,7 +36,7 @@ public class JavaSOEOnReparseTest extends LightCodeInsightTestCase {
     doTest();
   }
 
-  private static void doTest() {
+  private void doTest() {
     final int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
     // replace small expression with huge binary one
@@ -45,23 +44,27 @@ public class JavaSOEOnReparseTest extends LightCodeInsightTestCase {
       getEditor().getDocument().replaceString(pos, pos + 2, HUGE_EXPR);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }});
+    doTestConfiguredFile(false, false);
 
     // modify huge binary expression (1)
     ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() {
       getEditor().getDocument().insertString(pos, "\".\"+");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }});
+    doTestConfiguredFile(false, false);
 
     // modify huge binary expression (2)
     ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() {
       getEditor().getDocument().replaceString(pos, pos + 4, "");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }});
+    doTestConfiguredFile(false, false);
 
     // replace huge binary expression with small one
     ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() {
       getEditor().getDocument().replaceString(pos, pos + HUGE_EXPR.length(), "\".\"");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }});
+    doTestConfiguredFile(false, false);
   }
 }

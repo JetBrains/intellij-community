@@ -11,11 +11,13 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
@@ -317,24 +319,25 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
                                  final boolean removeUnusedParameters,
                                  final boolean generateDelegate,
                                  int enclosingLevel) {
-    int startOffset = myEditor.getSelectionModel().getSelectionStart();
-    int endOffset = myEditor.getSelectionModel().getSelectionEnd();
+    final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
+    ElementToWorkOn
+          .processElementToWorkOn(myEditor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(), new Pass<ElementToWorkOn>() {
+            @Override
+            public void pass(final ElementToWorkOn e) {
+              if (e == null) return;
 
-    PsiExpression expr = CodeInsightUtil.findExpressionInRange(myFile, startOffset, endOffset);
+              elementToWorkOn[0] = e;
+            }
+          });
 
-    PsiLocalVariable localVariable = null;
-    if (expr == null) {
-      PsiElement element = CodeInsightUtil.findElementInRange(myFile, startOffset, endOffset, PsiElement.class);
-      localVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
-      if (localVariable == null) {
-        return false;
-      }
-    }
-    PsiElement context = expr == null ? localVariable : expr;
+    final PsiExpression expr = elementToWorkOn[0].getExpression();
+    final PsiLocalVariable localVar = elementToWorkOn[0].getLocalVariable();
+
+    PsiElement context = expr == null ? localVar : expr;
     PsiMethod method = Util.getContainingMethod(context);
     if (method == null) return false;
 
-    final List<PsiMethod> methods = IntroduceParameterHandler.getEnclosingMethods(method);
+    final List<PsiMethod> methods = com.intellij.refactoring.introduceParameter.IntroduceParameterHandler.getEnclosingMethods(method);
     assertTrue(methods.size() > enclosingLevel);
     method = methods.get(enclosingLevel);
 
@@ -345,11 +348,11 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     else {
       methodToSearchFor = method;
     }
-    PsiExpression[] occurences = null;
+    PsiExpression[] occurences;
     PsiExpression initializer;
     if (expr == null) {
-      initializer = localVariable.getInitializer();
-      occurences = CodeInsightUtil.findReferenceExpressions(method, localVariable);
+      initializer = localVar.getInitializer();
+      occurences = CodeInsightUtil.findReferenceExpressions(method, localVar);
     }
     else {
       initializer = expr;
@@ -357,7 +360,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     }
     TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, occurences) : new TIntArrayList();
     new IntroduceParameterProcessor(
-      getProject(), method, methodToSearchFor, initializer, expr, localVariable, true, parameterName, replaceAllOccurences,
+      getProject(), method, methodToSearchFor, initializer, expr, localVar, true, parameterName, replaceAllOccurences,
       replaceFieldsWithGetters,
       declareFinal, generateDelegate, null, parametersToRemove).run();
 

@@ -19,6 +19,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NonNls;
 
 
 public class ExpressionParserTest extends JavaParsingTestCase {
@@ -115,7 +116,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testChainedClassObjectAccess() { doParserTest("A.class.B.class"); }
   public void testChainedThisObjectAccess() { doParserTest("A.this.B.this"); }
 
-  private void doParserTest(final String text) {
+  private void doParserTest(@NonNls final String text) {
     doParserTest(text, new TestParser() {
       @Override
       public void parse(final PsiBuilder builder) {

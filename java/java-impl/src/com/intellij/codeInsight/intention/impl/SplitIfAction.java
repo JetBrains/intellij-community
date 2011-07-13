@@ -36,20 +36,19 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.SplitIfAction");
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-
     if (!(element instanceof PsiJavaToken)) {
       return false;
     }
     PsiJavaToken token = (PsiJavaToken)element;
-    if (!(token.getParent() instanceof PsiBinaryExpression)) return false;
+    if (!(token.getParent() instanceof PsiPolyadicExpression)) return false;
 
-    PsiBinaryExpression expression = (PsiBinaryExpression)token.getParent();
+    PsiPolyadicExpression expression = (PsiPolyadicExpression)token.getParent();
     boolean isAndExpression = expression.getOperationTokenType() == JavaTokenType.ANDAND;
     boolean isOrExpression = expression.getOperationTokenType() == JavaTokenType.OROR;
     if (!isAndExpression && !isOrExpression) return false;
 
-    while (expression.getParent() instanceof PsiBinaryExpression) {
-      expression = (PsiBinaryExpression)expression.getParent();
+    while (expression.getParent() instanceof PsiPolyadicExpression) {
+      expression = (PsiPolyadicExpression)expression.getParent();
       if (isAndExpression && expression.getOperationTokenType() != JavaTokenType.ANDAND) return false;
       if (isOrExpression && expression.getOperationTokenType() != JavaTokenType.OROR) return false;
     }
@@ -80,16 +79,16 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
       PsiJavaToken token = (PsiJavaToken)file.findElementAt(offset);
       LOG.assertTrue(token.getTokenType() == JavaTokenType.ANDAND || token.getTokenType() == JavaTokenType.OROR);
 
-      PsiBinaryExpression expression = (PsiBinaryExpression)token.getParent();
+      PsiPolyadicExpression expression = (PsiPolyadicExpression)token.getParent();
       PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
 
       LOG.assertTrue(PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false));
 
       if (token.getTokenType() == JavaTokenType.ANDAND) {
-        doAndSplit(ifStatement, expression, editor);
+        doAndSplit(ifStatement, expression, token, editor);
       }
       else if (token.getTokenType() == JavaTokenType.OROR) {
-        doOrSplit(ifStatement, expression, editor);
+        doOrSplit(ifStatement, expression, token, editor);
       }
     }
     catch (IncorrectOperationException e) {
@@ -97,10 +96,9 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private static void doAndSplit(PsiIfStatement ifStatement, PsiBinaryExpression expression, Editor editor) throws IncorrectOperationException {
-    PsiExpression lOperand = expression.getLOperand();
-    PsiExpression rOperand = getROperand(expression);
-
+  private static void doAndSplit(PsiIfStatement ifStatement, PsiPolyadicExpression expression, PsiJavaToken token, Editor editor) throws IncorrectOperationException {
+    PsiExpression lOperand = getLOperands(expression, token);
+    PsiExpression rOperand = getROperands(expression, token);
 
     PsiManager psiManager = ifStatement.getManager();
     PsiIfStatement subIf = (PsiIfStatement)ifStatement.copy();
@@ -109,7 +107,8 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     ifStatement.getCondition().replace(RefactoringUtil.unparenthesizeExpression(lOperand));
 
     if (ifStatement.getThenBranch() instanceof PsiBlockStatement) {
-      PsiBlockStatement blockStmt = (PsiBlockStatement)JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createStatementFromText("{}", null);
+      PsiBlockStatement blockStmt =
+        (PsiBlockStatement)JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createStatementFromText("{}", null);
       blockStmt = (PsiBlockStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(blockStmt);
       blockStmt = (PsiBlockStatement)ifStatement.getThenBranch().replace(blockStmt);
       blockStmt.getCodeBlock().add(subIf);
@@ -125,17 +124,33 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     editor.getSelectionModel().removeSelection();
   }
 
-  private static PsiExpression getROperand(PsiBinaryExpression expression) throws IncorrectOperationException {
-    PsiElement e = expression;
-    while (!(e.getParent() instanceof PsiIfStatement)) e = e.getParent();
+  private static PsiExpression getROperands(PsiPolyadicExpression expression, PsiJavaToken separator) throws IncorrectOperationException {
+    PsiElement next = separator.getNextSibling();
+    if (next instanceof PsiWhiteSpace) next = next.getNextSibling();
+    if (next == null) {
+      throw new IncorrectOperationException("Unable to split '"+expression.getText()+"' at '"+separator+"' (offset "+separator.getStartOffsetInParent()+")");
+    }
 
-    return JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(
-        e.getText().substring(expression.getROperand().getTextRange().getStartOffset() - e.getTextRange().getStartOffset()), e.getParent());
+    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    String rOperands = expression.getText().substring(next.getStartOffsetInParent());
+    return factory.createExpressionFromText(rOperands, expression.getParent());
   }
 
-  private static void doOrSplit(PsiIfStatement ifStatement, PsiBinaryExpression expression, Editor editor) throws IncorrectOperationException {
-    PsiExpression lOperand = expression.getLOperand();
-    PsiExpression rOperand = getROperand(expression);
+  private static PsiExpression getLOperands(PsiPolyadicExpression expression, PsiJavaToken separator) throws IncorrectOperationException {
+    PsiElement next = separator;
+    if (next.getPrevSibling() instanceof PsiWhiteSpace) next = next.getPrevSibling();
+    if (next == null) {
+      throw new IncorrectOperationException("Unable to split '"+expression.getText()+"' left to '"+separator+"' (offset "+separator.getStartOffsetInParent()+")");
+    }
+
+    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    String rOperands = expression.getText().substring(0, next.getStartOffsetInParent());
+    return factory.createExpressionFromText(rOperands, expression.getParent());
+  }
+
+  private static void doOrSplit(PsiIfStatement ifStatement, PsiPolyadicExpression expression, PsiJavaToken token, Editor editor) throws IncorrectOperationException {
+    PsiExpression lOperand = getLOperands(expression, token);
+    PsiExpression rOperand = getROperands(expression, token);
 
     PsiIfStatement secondIf = (PsiIfStatement)ifStatement.copy();
 

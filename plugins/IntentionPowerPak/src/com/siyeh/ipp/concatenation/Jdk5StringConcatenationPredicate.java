@@ -15,17 +15,14 @@
  */
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.psi.PsiArrayInitializerMemberValue;
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class Jdk5StringConcatenationPredicate implements PsiElementPredicate {
-
     public boolean satisfiedBy(PsiElement element) {
         if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
             return false;
@@ -40,14 +37,6 @@ class Jdk5StringConcatenationPredicate implements PsiElementPredicate {
     }
 
     private static boolean isInsideAnnotation(PsiElement element) {
-        for (int i = 0; i < 20 && element instanceof PsiBinaryExpression; i++) {
-            // optimization: don't check deep string concatenations more than 20 levels up.
-            element = element.getParent();
-            if (element instanceof PsiNameValuePair ||
-                element instanceof PsiArrayInitializerMemberValue) {
-                return true;
-            }
-        }
-        return false;
+      return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
     }
 }

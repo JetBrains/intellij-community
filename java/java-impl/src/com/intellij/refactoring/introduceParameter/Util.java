@@ -30,6 +30,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -77,8 +78,18 @@ public class Util {
     }
   }
 
+  @NotNull
+  private static PsiElement getPhysical(@NotNull PsiElement expr) {
+    PsiElement physicalElement = expr.getUserData(ElementToWorkOn.PARENT);
+    if (physicalElement != null) expr = physicalElement;
+    return expr;
+  }
+
   public static PsiMethod getContainingMethod(PsiElement expr) {
-    return PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
+    return PsiTreeUtil.getParentOfType(getPhysical(expr), PsiMethod.class);
+  }
+  public static boolean isAncestor(PsiElement ancestor, PsiElement element, boolean strict) {
+    return PsiTreeUtil.isAncestor(getPhysical(ancestor), getPhysical(element), strict);
   }
 
   public static boolean anyFieldsWithGettersPresent(List<UsageInfo> classMemberRefs) {
@@ -138,10 +149,10 @@ public class Util {
             PsiElement element = reference.getElement();
             boolean stillCanBeRemoved = false;
             if (element != null) {
-              stillCanBeRemoved = PsiTreeUtil.isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(element);
+              stillCanBeRemoved = isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(getPhysical(element));
               if (!stillCanBeRemoved && occurences != null) {
                 for (PsiExpression occurence : occurences) {
-                  if (PsiTreeUtil.isAncestor(occurence, element, false)) {
+                  if (isAncestor(occurence, element, false)) {
                     stillCanBeRemoved = true;
                     break;
                   }

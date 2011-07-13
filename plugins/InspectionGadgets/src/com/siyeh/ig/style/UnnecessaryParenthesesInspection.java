@@ -112,8 +112,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
             final int childPrecedence = ParenthesesUtils.getPrecedence(child);
             if (parentPrecedence > childPrecedence) {
                 if (ignoreClarifyingParentheses) {
-                    if (parent instanceof PsiBinaryExpression &&
-                            child instanceof PsiBinaryExpression) {
+                    if (parent instanceof PsiPolyadicExpression &&
+                            child instanceof PsiPolyadicExpression) {
                         return;
                     } else if (child instanceof PsiInstanceOfExpression) {
                         return;

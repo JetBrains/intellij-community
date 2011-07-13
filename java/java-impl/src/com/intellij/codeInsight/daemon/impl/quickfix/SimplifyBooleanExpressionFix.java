@@ -121,14 +121,14 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
 
 
       final PsiElement[] children = codeBlock.getChildren();
-      if(children.length > 2){
-          final PsiElement added =
-                  parent.addRangeBefore(
-                          children[1],
-                          children[children.length - 2],
-                          orig);
-          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
-          codeStyleManager.reformat(added);
+      if (children.length > 2) {
+        final PsiElement added =
+          parent.addRangeBefore(
+            children[1],
+            children[children.length - 2],
+            orig);
+        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
+        codeStyleManager.reformat(added);
       }
       orig.delete();
     }
@@ -142,7 +142,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), true);
     final IncorrectOperationException[] exception = {null};
     result[0].accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitElement(PsiElement element) {
+      @Override
+      public void visitElement(PsiElement element) {
         // read in all children in advance since due to Igorek's exercises element replace involves its siblings invalidation
         PsiElement[] children = element.getChildren();
         for (PsiElement child : children) {
@@ -150,7 +151,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
         }
       }
 
-      @Override public void visitExpression(PsiExpression expression) {
+      @Override
+      public void visitExpression(PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
         expression.accept(expressionVisitor);
@@ -176,19 +178,22 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     PsiExpression newExpression = (PsiExpression)expression.replace(result[0]);
     simplifyIfStatement(newExpression);
   }
+
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {
     if (!(expression instanceof PsiConditionalExpression) && expression.getType() != PsiType.BOOLEAN) return false;
 
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
     final Ref<Boolean> canBeSimplified = new Ref<Boolean>(Boolean.FALSE);
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitElement(PsiElement element) {
+      @Override
+      public void visitElement(PsiElement element) {
         if (!canBeSimplified.get().booleanValue()) {
           super.visitElement(element);
         }
       }
 
-      @Override public void visitExpression(PsiExpression expression) {
+      @Override
+      public void visitExpression(PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
         expression.accept(expressionVisitor);
@@ -228,19 +233,27 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       return isCreateResult;
     }
 
-    @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
-      PsiExpression lOperand = expression.getLOperand();
-      PsiExpression rOperand = expression.getROperand();
-      PsiJavaToken operationSign = expression.getOperationSign();
-      IElementType tokenType = operationSign.getTokenType();
-      Boolean lConstBoolean = getConstBoolean(lOperand);
-      Boolean rConstBoolean = getConstBoolean(rOperand);
-
-      if (lConstBoolean != null) {
-        simplifyBinary(tokenType, lConstBoolean, rOperand);
-      }
-      else if (rConstBoolean != null) {
-        simplifyBinary(tokenType, rConstBoolean, lOperand);
+    @Override
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      PsiExpression[] operands = expression.getOperands();
+      PsiExpression lExpr = operands[0];
+      IElementType tokenType = expression.getOperationTokenType();
+      for (int i = 1; i < operands.length; i++) {
+        Boolean l = getConstBoolean(lExpr);
+        PsiExpression operand = operands[i];
+        Boolean r = getConstBoolean(operand);
+        if (l != null) {
+          simplifyBinary(tokenType, l, operand);
+        }
+        else if (r != null) {
+          simplifyBinary(tokenType, r, lExpr);
+        }
+        else {
+          resultExpression = null;
+        }
+        if (resultExpression != null) {
+          lExpr = resultExpression;
+        }
       }
     }
 
@@ -276,7 +289,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       }
     }
 
-    @Override public void visitConditionalExpression(PsiConditionalExpression expression) {
+    @Override
+    public void visitConditionalExpression(PsiConditionalExpression expression) {
       Boolean condition = getConstBoolean(expression.getCondition());
       if (condition == null) return;
       if (!markAndCheckCreateResult()) {
@@ -285,7 +299,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       resultExpression = condition.booleanValue() ? expression.getThenExpression() : expression.getElseExpression();
     }
 
-    private static PsiPrefixExpression createNegatedExpression(PsiExpression otherOperand)  {
+    private static PsiPrefixExpression createNegatedExpression(PsiExpression otherOperand) {
       PsiPrefixExpression expression = (PsiPrefixExpression)createExpression(otherOperand.getManager(), "!(xxx)");
       try {
         expression.getOperand().replace(otherOperand);
@@ -296,7 +310,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       return expression;
     }
 
-    @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
+    @Override
+    public void visitPrefixExpression(PsiPrefixExpression expression) {
       PsiExpression operand = expression.getOperand();
       Boolean constBoolean = getConstBoolean(operand);
       if (constBoolean == null) return;
@@ -311,7 +326,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     }
 
 
-    @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    @Override
+    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
       PsiExpression subexpr = expression.getExpression();
       Boolean constBoolean = getConstBoolean(subexpr);
       if (constBoolean == null) return;
@@ -321,7 +337,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       resultExpression = constBoolean.booleanValue() ? trueExpression : falseExpression;
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 

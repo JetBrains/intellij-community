@@ -16,10 +16,7 @@
 
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.DocumentWindowImpl;
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
@@ -40,6 +37,7 @@ import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ParameterizedCachedValueImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -190,21 +188,37 @@ public class InjectedLanguageUtil {
 
   private static final InjectedPsiCachedValueProvider INJECTED_PSI_PROVIDER = new InjectedPsiCachedValueProvider();
   private static final Key<ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>> INJECTED_PSI_KEY = Key.create("INJECTED_PSI");
+  public static ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> NULL_VALUE = new ParameterizedCachedValueImpl<MultiHostRegistrarImpl, PsiElement>(new ParameterizedCachedValueProvider<MultiHostRegistrarImpl, PsiElement>() {
+    @Override
+    public CachedValueProvider.Result<MultiHostRegistrarImpl> compute(PsiElement param) {
+      return CachedValueProvider.Result.create(NULL_REGISTRAR, param.getManager().getModificationTracker());
+    }
+  }) {
+    @Override
+    public boolean isFromMyProject(Project project) {
+      return true;
+    }
+  };
+
+  private static final MultiHostRegistrarImpl NULL_REGISTRAR = new MultiHostRegistrarImpl();
+
+
   private static MultiHostRegistrarImpl probeElementsUp(@NotNull PsiElement element, @NotNull PsiFile hostPsiFile, boolean probeUp) {
     PsiManager psiManager = hostPsiFile.getManager();
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
     if (injectedManager == null) return null; //for tests
 
-    for (PsiElement current = element; current != null && current != hostPsiFile; current = current.getParent()) {
+    MultiHostRegistrarImpl registrar = null;
+    PsiElement current;
+    nextParent:
+    for (current = element; current != null && current != hostPsiFile; current = current.getParent()) {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI_KEY);
-      MultiHostRegistrarImpl registrar;
       if (data == null) {
         registrar = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
         if (registrar != null) {
-          // pollute user data only if there is injected fragment there
           ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
             CachedValuesManager.getManager(psiManager.getProject()).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
           Document hostDocument = hostPsiFile.getViewProvider().getDocument();
@@ -216,6 +230,10 @@ public class InjectedLanguageUtil {
       else {
         registrar = data.getValue(current);
       }
+      if (registrar == NULL_REGISTRAR) {
+        registrar = null;
+        break;
+      }
       if (registrar != null) {
         List<Pair<Place, PsiFile>> places = registrar.result;
         // check that injections found intersect with queried element
@@ -224,14 +242,21 @@ public class InjectedLanguageUtil {
           Place place = pair.first;
           for (PsiLanguageInjectionHost.Shred shred : place) {
             if (shred.host.getTextRange().intersects(elementRange)) {
-              if (place.isValid()) return registrar;
+              if (place.isValid()) break nextParent;
             }
           }
         }
       }
       if (!probeUp) break;
     }
-    return null;
+    if (registrar == null) {
+      for (PsiElement e = element; e != current && e != null && e != hostPsiFile; e = e.getParent()) {
+        ProgressManager.checkCanceled();
+        //store no-injection flag
+        e.putUserData(INJECTED_PSI_KEY, NULL_VALUE);
+      }
+    }
+    return registrar;
   }
 
   @Nullable
@@ -324,10 +349,10 @@ public class InjectedLanguageUtil {
   }
 
   public static void clearCaches(@NotNull PsiFile injected, @NotNull DocumentWindowImpl documentWindow) {
-    VirtualFileWindow virtualFile = (VirtualFileWindow)injected.getVirtualFile();
+    VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)injected.getVirtualFile();
     PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
     if (psiManagerEx.getProject().isDisposed()) return;
-    psiManagerEx.getFileManager().setViewProvider((VirtualFile)virtualFile, null);
+    psiManagerEx.getFileManager().setViewProvider(virtualFile, null);
     PsiElement context = injected.getContext();
     PsiFile hostFile;
     if (context != null) {
@@ -349,6 +374,8 @@ public class InjectedLanguageUtil {
         }
       }
     }
+    //FileDocumentManagerImpl.registerDocument(null, virtualFile);
+    //FileDocumentManagerImpl.registerDocument(documentWindow, null);
   }
 
 

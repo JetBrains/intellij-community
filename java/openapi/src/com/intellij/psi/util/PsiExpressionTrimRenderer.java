@@ -94,12 +94,15 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitBinaryExpression(final PsiBinaryExpression expression) {
-    expression.getLOperand().accept(this);
-    myBuf.append(" ").append(expression.getOperationSign().getText()).append(" ");
-    final PsiExpression rOperand = expression.getROperand();
-    if (rOperand != null) {
-      rOperand.accept(this);
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    PsiExpression[] operands = expression.getOperands();
+    for (int i = 0; i < operands.length; i++) {
+      PsiExpression operand = operands[i];
+      operand.accept(this);
+      if (i != 0) {
+        PsiJavaToken token = expression.getTokenBeforeOperand(operand);
+        myBuf.append(" ").append(token.getText()).append(" ");
+      }
     }
   }
 

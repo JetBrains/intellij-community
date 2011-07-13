@@ -82,6 +82,13 @@ public class ContextComputationProcessor {
       collectOperands(binaryExpression.getLOperand(), result, unparsable);
       collectOperands(binaryExpression.getROperand(), result, unparsable);
     }
+    else if (expression instanceof PsiPolyadicExpression &&
+             ((PsiPolyadicExpression)expression).getOperationTokenType() == JavaTokenType.PLUS) {
+      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
+      for (PsiExpression operand : binaryExpression.getOperands()) {
+        collectOperands(operand, result, unparsable);
+      }
+    }
     else if (expression instanceof PsiAssignmentExpression &&
              ((PsiAssignmentExpression)expression).getOperationTokenType() == JavaTokenType.PLUSEQ) {
       unparsable.set(Boolean.TRUE);
@@ -112,7 +119,7 @@ public class ContextComputationProcessor {
     PsiElement target = host;
     PsiElement parent = target.getParent();
     for (; parent != null; target = parent, parent = target.getParent()) {
-      if (parent instanceof PsiBinaryExpression) continue;
+      if (parent instanceof PsiPolyadicExpression) continue;
       if (parent instanceof PsiParenthesizedExpression) continue;
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != target) continue;
       if (parent instanceof PsiArrayInitializerMemberValue) continue;

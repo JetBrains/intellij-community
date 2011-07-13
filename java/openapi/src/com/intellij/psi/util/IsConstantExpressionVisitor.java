@@ -82,20 +82,11 @@ public class IsConstantExpressionVisitor extends JavaElementVisitor {
     myIsConstant = false;
   }
 
-  @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
-    while (true) {
-      // check right operand first since it tends to be shorter
-      PsiExpression rOperand = expression.getROperand();
-      if (rOperand == null) return;
-      rOperand.accept(this);
+  @Override
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    for (PsiExpression operand : expression.getOperands()) {
+      operand.accept(this);
       if (!myIsConstant) return;
-
-      PsiExpression lOperand = expression.getLOperand();
-      if (!(lOperand instanceof PsiBinaryExpression)) {
-        lOperand.accept(this);
-        break;
-      }
-      expression = (PsiBinaryExpression)lOperand;
     }
   }
 

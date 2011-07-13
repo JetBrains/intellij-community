@@ -19,6 +19,7 @@ import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.java.FormattingAstUtil;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
@@ -27,6 +28,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -61,15 +63,14 @@ public class JavaChildWrapArranger {
    */
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
-  public Wrap arrange(ASTNode child, ASTNode parent, CodeStyleSettings settings, Wrap suggestedWrap,
-                      ReservedWrapsProvider reservedWrapsProvider)
-  {
-    final ASTNode directParent = child.getTreeParent();
+  public Wrap arrange(ASTNode child, ASTNode parent, CodeStyleSettings settings, Wrap suggestedWrap, ReservedWrapsProvider reservedWrapsProvider) {
+    ASTNode directParent = child.getTreeParent();
     int role = ((CompositeElement)directParent).getChildRole(child);
     final IElementType nodeType = parent.getElementType();
-    if (nodeType == JavaElementType.BINARY_EXPRESSION) {
+    if (parent instanceof PsiPolyadicExpression) {
       if (role == ChildRole.OPERATION_SIGN && !settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE) return null;
-      if (role == ChildRole.ROPERAND && settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE) return null;
+      boolean rOperand = ArrayUtil.indexOf(((PsiPolyadicExpression)parent).getOperands(), child.getPsi()) > 0;
+      if (settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE && rOperand) return null;
       return suggestedWrap;
     }
     final IElementType childType = child.getElementType();

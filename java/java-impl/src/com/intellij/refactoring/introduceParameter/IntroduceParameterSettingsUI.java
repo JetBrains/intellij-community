@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
@@ -23,7 +22,6 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -35,8 +33,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -61,8 +57,7 @@ public abstract class IntroduceParameterSettingsUI {
   protected JCheckBox myCbReplaceAllOccurences = null;
   protected JCheckBox myCbGenerateDelegate = null;
 
-  public IntroduceParameterSettingsUI(Project project,
-                                      PsiLocalVariable onLocalVariable,
+  public IntroduceParameterSettingsUI(PsiLocalVariable onLocalVariable,
                                       PsiExpression onExpression,
                                       PsiMethod methodToReplaceIn,
                                       TIntArrayList parametersToRemove) {

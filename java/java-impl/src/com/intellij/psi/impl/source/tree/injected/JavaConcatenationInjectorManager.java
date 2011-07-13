@@ -74,8 +74,8 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
     public CachedValueProvider.Result<MultiHostRegistrarImpl> compute(PsiElement context) {
       PsiElement element = context;
       PsiElement parent = context.getParent();
-      while (parent instanceof PsiBinaryExpression && ((PsiBinaryExpression)parent).getOperationSign().getTokenType() == JavaTokenType.PLUS
-             || parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getOperationSign().getTokenType() == JavaTokenType.PLUSEQ
+      while (parent instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.PLUS
+             || parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.PLUSEQ
              || parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != element
              || parent instanceof PsiTypeCastExpression
              || parent instanceof PsiParenthesizedExpression) {
@@ -85,9 +85,9 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
 
       PsiElement[] operands;
       PsiElement anchor;
-      if (element instanceof PsiBinaryExpression || element instanceof PsiAssignmentExpression) {
+      if (element instanceof PsiPolyadicExpression || element instanceof PsiAssignmentExpression) {
         List<PsiElement> operandList = new ArrayList<PsiElement>();
-        collectOperands(element, operandList);
+        collectOperands((PsiExpression)element, operandList);
         operands = PsiUtilBase.toPsiElementArray(operandList);
         anchor = element;
       }
@@ -105,18 +105,22 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
 
       CachedValueProvider.Result<MultiHostRegistrarImpl> result = CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, concatenationInjectorManager);
 
+      ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue;
       if (registrar.result != null) {
         // store this everywhere
-        ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
-          CachedValuesManager.getManager(context.getProject()).createParameterizedCachedValue(this, false);
+        cachedValue = CachedValuesManager.getManager(context.getProject()).createParameterizedCachedValue(this, false);
         ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
 
-        for (PsiElement operand : operands) {
-          operand.putUserData(INJECTED_PSI_IN_CONCATENATION, cachedValue);
-        }
-        anchor.putUserData(INJECTED_PSI_IN_CONCATENATION, cachedValue);
-        context.putUserData(INJECTED_PSI_IN_CONCATENATION, cachedValue);
       }
+      else {
+        cachedValue = InjectedLanguageUtil.NULL_VALUE;
+      }
+      for (PsiElement operand : operands) {
+        operand.putUserData(INJECTED_PSI_IN_CONCATENATION, cachedValue);
+      }
+      anchor.putUserData(INJECTED_PSI_IN_CONCATENATION, cachedValue);
+      context.putUserData(INJECTED_PSI_IN_CONCATENATION, cachedValue);
+
 
       return result;
     }
@@ -156,15 +160,28 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
     }
   }
 
-  private static void collectOperands(PsiElement expression, List<PsiElement> operands) {
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-      collectOperands(binaryExpression.getLOperand(), operands);
-      collectOperands(binaryExpression.getROperand(), operands);
-    }
-    else if (expression != null) {
-      operands.add(expression);
-    }
+  private static void collectOperands(PsiExpression expression, final List<PsiElement> operands) {
+    expression.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+        super.visitElement(expression);
+      }
+
+      @Override
+      public void visitExpression(PsiExpression expression) {
+        operands.add(expression); // add leaf expression to the operand list
+      }
+
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        visitExpression(expression);
+      }
+
+      @Override
+      public void visitElement(PsiElement element) {
+        // do not go deeper
+      }
+    });
   }
 
   private final List<ConcatenationAwareInjector> myConcatenationInjectors = ContainerUtil.createEmptyCOWList();

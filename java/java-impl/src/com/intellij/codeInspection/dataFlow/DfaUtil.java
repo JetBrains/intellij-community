@@ -15,6 +15,11 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Ref;
@@ -28,14 +33,10 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -213,16 +214,14 @@ public class DfaUtil {
     if (expression == null) return false;
     if (expression instanceof PsiLiteralExpression) return true;
     if (expression instanceof PsiBinaryExpression) {
-      final LinkedList<PsiExpression> stack = new LinkedList<PsiExpression>();
+      Stack<PsiExpression> stack = new Stack<PsiExpression>();
       stack.add(expression);
       while (!stack.isEmpty()) {
-        final PsiExpression psiExpression = stack.removeFirst();
-        if (psiExpression instanceof PsiBinaryExpression) {
-          final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)psiExpression;
-          stack.addLast(binaryExpression.getLOperand());
-          final PsiExpression right = binaryExpression.getROperand();
-          if (right != null) {
-            stack.addLast(right);
+        PsiExpression psiExpression = stack.pop();
+        if (psiExpression instanceof PsiPolyadicExpression) {
+          PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)psiExpression;
+          for (PsiExpression op : binaryExpression.getOperands()) {
+            stack.push(op);
           }
         }
         else if (!(psiExpression instanceof PsiLiteralExpression)) {

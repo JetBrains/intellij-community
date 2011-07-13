@@ -407,7 +407,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         return true;
       }
     }
-    else if (parent instanceof PsiBinaryExpression) {
+    else if (parent instanceof PsiBinaryExpression || parent instanceof PsiPolyadicExpression) {
       return true;
     }
     return false;

@@ -19,6 +19,7 @@ import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.java.FormattingAstUtil;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
@@ -55,17 +56,17 @@ public class JavaChildBlockWrapFactory {
     if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
       return Wrap.createWrap(settings.EXTENDS_LIST_WRAP, false);
     }
-    else if (nodeType == JavaElementType.BINARY_EXPRESSION) {
+    else if (node instanceof PsiPolyadicExpression) {
       Wrap actualWrap = wrap != null ? wrap : reservedWrapsProvider.getReservedWrap(JavaElementType.BINARY_EXPRESSION);
       if (actualWrap == null) {
         return Wrap.createWrap(settings.BINARY_OPERATION_WRAP, false);
       }
       else {
-        if (!FormattingAstUtil.binaryExpressionHasTheSamePriority(node, node.getTreeParent())) {
-          return Wrap.createChildWrap(actualWrap, WrapType.byLegacyRepresentation(settings.BINARY_OPERATION_WRAP), false);
+        if (FormattingAstUtil.areSamePriorityBinaryExpressions(node, node.getTreeParent())) {
+          return actualWrap;
         }
         else {
-          return actualWrap;
+          return Wrap.createChildWrap(actualWrap, WrapType.byLegacyRepresentation(settings.BINARY_OPERATION_WRAP), false);
         }
       }
     }

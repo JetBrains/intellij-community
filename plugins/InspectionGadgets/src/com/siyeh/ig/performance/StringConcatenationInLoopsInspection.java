@@ -70,41 +70,38 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
     private class StringConcatenationInLoopsVisitor
             extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if (expression.getROperand() == null) {
+      @Override
+      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+        super.visitPolyadicExpression(expression);
+        PsiExpression[] operands = expression.getOperands();
+        if (operands.length <= 1) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUS)) {
-                return;
-            }
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return;
-            }
-            if (!TypeUtils.isJavaLangString(type)) {
-                return;
-            }
-            if (!ControlFlowUtils.isInLoop(expression)) {
-                return;
-            }
-            if (ControlFlowUtils.isInExitStatement(expression)) {
-                return;
-            }
-            if (ExpressionUtils.isEvaluatedAtCompileTime(expression)) {
-                return;
-            }
-            if (containingStatementExits(expression)) {
-                return;
-            }
-            if (m_ignoreUnlessAssigned && !isAppendedRepeatedly(expression)) {
-                return;
-            }
-            registerError(sign);
+            final IElementType tokenType = expression.getOperationTokenType();
+        if (!tokenType.equals(JavaTokenType.PLUS)) {
+          return;
+        }
+        final PsiType type = expression.getType();
+        if (!TypeUtils.isJavaLangString(type)) {
+          return;
+        }
+        if (!ControlFlowUtils.isInLoop(expression)) {
+          return;
+        }
+        if (ControlFlowUtils.isInExitStatement(expression)) {
+          return;
+        }
+        if (ExpressionUtils.isEvaluatedAtCompileTime(expression)) {
+          return;
+        }
+        if (containingStatementExits(expression)) {
+          return;
+        }
+        if (m_ignoreUnlessAssigned && !isAppendedRepeatedly(expression)) {
+          return;
+        }
+        final PsiJavaToken sign = expression.getTokenBeforeOperand(operands[1]);
+        registerError(sign);
         }
 
         @Override public void visitAssignmentExpression(
@@ -164,7 +161,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         private boolean isAppendedRepeatedly(PsiExpression expression) {
             PsiElement parent = expression.getParent();
             while (parent instanceof PsiParenthesizedExpression ||
-                    parent instanceof PsiBinaryExpression) {
+                    parent instanceof PsiPolyadicExpression) {
                 parent = parent.getParent();
             }
             if (!(parent instanceof PsiAssignmentExpression)) {

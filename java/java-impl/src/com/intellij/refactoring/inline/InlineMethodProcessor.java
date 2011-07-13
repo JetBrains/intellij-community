@@ -959,12 +959,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
       return operand != null && canInlineParmOrThisVariable(operand, shouldBeFinal, strictlyFinal, accessCount, false);
     }
-    else if (initializer instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binExpr = (PsiBinaryExpression)initializer;
-      PsiExpression lOperand = binExpr.getLOperand();
-      PsiExpression rOperand = binExpr.getROperand();
-      return rOperand != null && canInlineParmOrThisVariable(lOperand, shouldBeFinal, strictlyFinal, accessCount, false) &&
-             canInlineParmOrThisVariable(rOperand, shouldBeFinal, strictlyFinal, accessCount, false);
+    else if (initializer instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression binExpr = (PsiPolyadicExpression)initializer;
+      for (PsiExpression op : binExpr.getOperands()) {
+        if (!canInlineParmOrThisVariable(op, shouldBeFinal, strictlyFinal, accessCount, false)) return false;
+      }
+      return true;
     }
     else if (initializer instanceof PsiClassObjectAccessExpression) {
       return true;

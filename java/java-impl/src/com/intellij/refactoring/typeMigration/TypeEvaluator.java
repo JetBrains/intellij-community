@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -151,8 +150,8 @@ public class TypeEvaluator {
       final PsiExpression lOperand = ((PsiBinaryExpression)expr).getLOperand();
       final PsiExpression rOperand = ((PsiBinaryExpression)expr).getROperand();
       final PsiJavaToken operationSign = ((PsiBinaryExpression)expr).getOperationSign();
-      return PsiBinaryExpressionImpl.calcTypeForBinaryExpression(evaluateType(lOperand), evaluateType(rOperand), operationSign.getTokenType(),
-                                                                 true);
+      return TypeConversionUtil.calcTypeForBinaryExpression(evaluateType(lOperand), evaluateType(rOperand), operationSign.getTokenType(),
+                                                            true);
     }
     else if (expr instanceof PsiPostfixExpression) {
       return evaluateType(((PsiPostfixExpression)expr).getOperand());

@@ -51,7 +51,7 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
   }
 
   public String toString() {
-    return "cond_goto " + myOffset;
+    return (isNegated() ? "!":"") + "cond?_goto " + myOffset;
   }
 
   public int getOffset() {

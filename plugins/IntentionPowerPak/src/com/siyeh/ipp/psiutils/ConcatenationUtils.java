@@ -25,31 +25,27 @@ public class ConcatenationUtils{
     }
 
     public static boolean isConcatenation(PsiElement element){
-        if(!(element instanceof PsiBinaryExpression)){
+        if(!(element instanceof PsiPolyadicExpression)){
             return false;
         }
-        final PsiBinaryExpression expression = (PsiBinaryExpression) element;
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+        final PsiPolyadicExpression expression = (PsiPolyadicExpression) element;
+      final IElementType tokenType = expression.getOperationTokenType();
         if(!tokenType.equals(JavaTokenType.PLUS)){
             return false;
         }
-        final PsiExpression rhs = expression.getROperand();
-        if(rhs == null){
-            return false;
-        }
+      PsiExpression[] operands = expression.getOperands();
+      if (operands.length <= 1) return false;
         final PsiType type = expression.getType();
         if(type == null){
-            final PsiExpression lhs = expression.getLOperand();
-            return hasStringType(lhs) || hasStringType(rhs);
+          for (PsiExpression operand : operands) {
+            if (hasStringType(operand)) return true;
+          }
+          return false;
         }
         return type.equalsToText("java.lang.String");
     }
 
     private static boolean hasStringType(PsiExpression expression) {
-        if (expression == null) {
-            return false;
-        }
         final PsiType type = expression.getType();
         return type != null && type.equalsToText("java.lang.String");
     }

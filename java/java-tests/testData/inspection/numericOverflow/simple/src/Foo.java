@@ -69,8 +69,8 @@ class c {
    l1 = LONG_MIN_VALUE / -1;
 
    l1 = 30 * 24 * 60 * 60 * 1000; 
-   l1 = 30000000 * 243232323 
-        * (LONG_MAX_VALUE +3) / 5; 
+   l1 = 30000000 * 243232323 * (LONG_MAX_VALUE +3) / 5;
+
    System.out.println(l1);
 
 

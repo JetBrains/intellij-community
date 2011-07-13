@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -50,8 +52,8 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     @NotNull
     @Override
     protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-        final List<InspectionGadgetsFix> result = new ArrayList();
-        final PsiElement expression = (PsiElement)infos[0];
+        List<InspectionGadgetsFix> result = new ArrayList<InspectionGadgetsFix>();
+        PsiElement expression = (PsiElement)infos[0];
         PsiElement parent = expression.getParent();
         if (parent instanceof PsiExpression) {
             final PsiExpression binaryExpression =
@@ -65,10 +67,8 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         if (!(expression instanceof PsiLiteralExpression)) {
             return result.toArray(new InspectionGadgetsFix[result.size()]);
         }
-        while (parent instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) parent;
-            if (TypeUtils.expressionHasType(binaryExpression,
+        while (parent instanceof PsiPolyadicExpression) {
+            if (TypeUtils.expressionHasType((PsiExpression)parent,
                     CommonClassNames.JAVA_LANG_STRING)) {
                 result.add(new CharUsedInArithmeticContentFix());
                 break;
@@ -142,32 +142,31 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
 
     private static class CharUsedInArithmeticContextVisitor
             extends BaseInspectionVisitor {
-
-        @Override
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            final PsiType type = expression.getType();
-            if (type == null || type.equalsToText("java.lang.String")) {
-                return;
-            }
+      @Override
+      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+        super.visitPolyadicExpression(expression);
             final IElementType tokenType = expression.getOperationTokenType();
             if (ComparisonUtils.isComparisonOperation(tokenType)) {
                 return;
             }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiType lhsType = lhs.getType();
-            if (PsiType.CHAR.equals(lhsType)) {
-                registerError(lhs, lhs);
-            }
-            final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            final PsiType rhsType = rhs.getType();
-            if (!PsiType.CHAR.equals(rhsType)) {
-                return;
-            }
-            registerError(rhs, rhs);
+        PsiExpression[] operands = expression.getOperands();
+        PsiType left = operands[0].getType();
+        for (int i = 1; i < operands.length; i++) {
+          PsiExpression operand = operands[i];
+          final PsiType rType = operand.getType();
+          PsiType opType = TypeConversionUtil.calcTypeForBinaryExpression(left, rType, tokenType, true);
+          if (opType == null || opType.equalsToText("java.lang.String")) {
+            return;
+          }
+
+          if (PsiType.CHAR.equals(rType)) {
+            registerError(operand, operand);
+          }
+          if (PsiType.CHAR.equals(left) && i == 1) {
+            registerError(operands[0], operands[0]);
+          }
+          left = rType;
         }
+      }
     }
 }

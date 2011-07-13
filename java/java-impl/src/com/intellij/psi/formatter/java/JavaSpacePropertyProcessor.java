@@ -889,10 +889,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
-    PsiJavaToken sign = expression.getOperationSign();
-    IElementType i = sign.getTokenType();
+  @Override
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
     if (myRole1 == ChildRole.OPERATION_SIGN || myRole2 == ChildRole.OPERATION_SIGN) {
+      IElementType i = expression.getOperationTokenType();
       if (i == JavaTokenType.OROR || i == JavaTokenType.ANDAND) {
         createSpaceInCode(mySettings.SPACE_AROUND_LOGICAL_OPERATORS);
       }

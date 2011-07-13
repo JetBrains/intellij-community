@@ -39,14 +39,14 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   @NonNls private static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
-    PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     if (concatenation != null) return;
     String message = CodeInsightBundle.message("quickfix.i18n.concatentation.error");
     throw new IncorrectOperationException(message);
   }
 
   public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
-    PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     PsiLiteralExpression literalExpression = getContainingLiteral(concatenation);
     if (literalExpression == null) return null;
     return createDialog(project, psiFile, literalExpression);
@@ -61,7 +61,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
                                            @NotNull final Editor editor,
                                            @Nullable PsiLiteralExpression literalExpression,
                                            String i18nizedText) throws IncorrectOperationException {
-    PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     PsiExpression expression = JavaPsiFacade.getInstance(psiFile.getProject()).getElementFactory().createExpressionFromText(i18nizedText, concatenation);
     return concatenation.replace(expression);
   }
@@ -79,7 +79,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   }
 
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
-    PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
+    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
     StringBuilder formatString = new StringBuilder();
     final List<PsiExpression> args = new ArrayList<PsiExpression>();
     try {
@@ -111,45 +111,39 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   }
 
   @Nullable
-  private static PsiBinaryExpression getEnclosingLiteralConcatenation(@NotNull PsiFile file, @NotNull Editor editor) {
+  private static PsiPolyadicExpression getEnclosingLiteralConcatenation(@NotNull PsiFile file, @NotNull Editor editor) {
     final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
     return getEnclosingLiteralConcatenation(elementAt);
   }
 
   @Nullable
-  public static PsiBinaryExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
-    PsiBinaryExpression element = PsiTreeUtil.getParentOfType(psiElement, PsiBinaryExpression.class, false, PsiMember.class);
+  public static PsiPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
+    PsiPolyadicExpression element = PsiTreeUtil.getParentOfType(psiElement, PsiPolyadicExpression.class, false, PsiMember.class);
     if (element == null) return null;
-    PsiBinaryExpression concatenation = null;
+
+    PsiPolyadicExpression concatenation = null;
     boolean stringLiteralOccured = false;
     while (true) {
-      PsiExpression lOperand = element.getLOperand();
-      PsiExpression rOperand = element.getROperand();
       if (element.getOperationTokenType() != JavaTokenType.PLUS) return concatenation;
-      stringLiteralOccured |= lOperand instanceof PsiLiteralExpression && ((PsiLiteralExpression)lOperand).getValue() instanceof String ||
-                              rOperand instanceof PsiLiteralExpression && ((PsiLiteralExpression)rOperand).getValue() instanceof String;
+      for (PsiExpression operand : element.getOperands()) {
+        stringLiteralOccured |= operand instanceof PsiLiteralExpression && ((PsiLiteralExpression)operand).getValue() instanceof String;
+      }
 
       if (stringLiteralOccured) {
         concatenation = element;
       }
       PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiBinaryExpression)) return concatenation;
-      element = (PsiBinaryExpression) parent;
+      if (!(parent instanceof PsiPolyadicExpression)) return concatenation;
+      element = (PsiPolyadicExpression) parent;
     }
   }
 
-  private static PsiLiteralExpression getContainingLiteral(final PsiBinaryExpression concatenation) {
-    PsiExpression operand = concatenation.getLOperand();
-    PsiLiteralExpression literalExpression = null;
-    if (operand instanceof PsiLiteralExpression) {
-      literalExpression = (PsiLiteralExpression)operand;
-    }
-    else {
-      operand = concatenation.getROperand();
+  private static PsiLiteralExpression getContainingLiteral(final PsiPolyadicExpression concatenation) {
+    for (PsiExpression operand : concatenation.getOperands()) {
       if (operand instanceof PsiLiteralExpression) {
-        literalExpression = (PsiLiteralExpression)operand;
+        return (PsiLiteralExpression)operand;
       }
     }
-    return literalExpression;
+    return null;
   }
 }
