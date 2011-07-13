@@ -41,6 +41,14 @@ public class NotificationGroup {
     }
   }
 
+  public static NotificationGroup balloonGroup(@NotNull String displayId) {
+    return new NotificationGroup(displayId, NotificationDisplayType.BALLOON, true);
+  }
+
+  public static NotificationGroup logOnlyGroup(@NotNull String displayId) {
+    return new NotificationGroup(displayId, NotificationDisplayType.NONE, true);
+  }
+
   public static NotificationGroup toolWindowGroup(@NotNull String displayId, @NotNull String toolWindowId, final boolean logByDefault) {
     return new NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId);
   }
