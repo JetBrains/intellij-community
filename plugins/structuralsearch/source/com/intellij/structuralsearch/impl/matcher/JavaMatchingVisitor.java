@@ -821,7 +821,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitBinaryExpression(final PsiBinaryExpression binExpr) {
     final PsiBinaryExpression binExpr2 = (PsiBinaryExpression)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(binExpr.getOperationSign().textMatches(binExpr2.getOperationSign()) &&
+    myMatchingVisitor.setResult(binExpr.getOperationTokenType().equals(binExpr2.getOperationTokenType()) &&
                                 myMatchingVisitor.match(binExpr.getLOperand(), binExpr2.getLOperand()) &&
                                 myMatchingVisitor.match(binExpr.getROperand(), binExpr2.getROperand()));
   }
@@ -1029,7 +1029,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitAssignmentExpression(final PsiAssignmentExpression assign) {
     final PsiAssignmentExpression assign2 = (PsiAssignmentExpression)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(assign.getOperationSign().textMatches(assign2.getOperationSign()) &&
+    myMatchingVisitor.setResult(assign.getOperationTokenType().equals(assign2.getOperationTokenType()) &&
                                 myMatchingVisitor.match(assign.getLExpression(), assign2.getLExpression()) &&
                                 myMatchingVisitor.match(assign.getRExpression(), assign2.getRExpression()));
   }
@@ -1119,7 +1119,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitPostfixExpression(final PsiPostfixExpression postfix) {
     final PsiPostfixExpression postfix2 = (PsiPostfixExpression)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(postfix.getOperationSign().textMatches(postfix2.getOperationSign())
+    myMatchingVisitor.setResult(postfix.getOperationTokenType().equals(postfix2.getOperationTokenType())
                                 && myMatchingVisitor.match(postfix.getOperand(), postfix2.getOperand()));
   }
 
@@ -1127,7 +1127,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitPrefixExpression(final PsiPrefixExpression prefix) {
     final PsiPrefixExpression prefix2 = (PsiPrefixExpression)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(prefix.getOperationSign().textMatches(prefix2.getOperationSign())
+    myMatchingVisitor.setResult(prefix.getOperationTokenType().equals(prefix2.getOperationTokenType())
                                 && myMatchingVisitor.match(prefix.getOperand(), prefix2.getOperand()));
   }
 
