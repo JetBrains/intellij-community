@@ -274,8 +274,13 @@ public class XDebuggerTestUtil {
       addChildren(stackFrames, last);
     }
 
-    public void errorOccured(String errorMessage) {
+    @Override
+    public void errorOccurred(String errorMessage) {
       setErrorMessage(errorMessage);
+    }
+
+    public void errorOccured(String errorMessage) {
+      errorOccurred(errorMessage);
     }
   }
 
