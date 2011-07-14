@@ -51,7 +51,6 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     .put("funcDef", PyHighlighter.PY_FUNC_DEFINITION)
     .put("classDef", PyHighlighter.PY_CLASS_DEFINITION)
     .put("builtin", PyHighlighter.PY_BUILTIN_NAME)
-    .put("unicode", PyHighlighter.PY_UNICODE_STRING)
     .build();
 
   @NotNull
