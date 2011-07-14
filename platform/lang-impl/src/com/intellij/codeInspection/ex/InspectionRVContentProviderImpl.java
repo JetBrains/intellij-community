@@ -33,6 +33,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultTreeModel;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +60,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                     final InspectionTreeNode parentNode,
                                     final boolean showStructure,
                                     final Map<String, Set<RefEntity>> contents,
-                                    final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+                                    final Map<RefEntity, CommonProblemDescriptor[]> problems, DefaultTreeModel model) {
     final InspectionTool tool = toolNode.getTool();
 
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
@@ -80,7 +81,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     List<InspectionTreeNode> list = buildTree(contents, false, tool, computeContainer, showStructure);
 
     for (InspectionTreeNode node : list) {
-      merge(node, toolNode, true);
+      merge(model, node, toolNode, true);
     }
 
     if (tool.isOldProblemsIncluded()) {
@@ -96,10 +97,10 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       list = buildTree(tool.getOldContent(), true, tool, computeContainer, showStructure);
 
       for (InspectionTreeNode node : list) {
-        merge(node, toolNode, true);
+        merge(model, node, toolNode, true);
       }
     }
-    merge(toolNode, parentNode, true);
+    merge(model, toolNode, parentNode, true);
   }
 
   protected void appendDescriptor(final InspectionTool tool,

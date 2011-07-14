@@ -39,6 +39,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -110,7 +111,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
                                     final InspectionTreeNode parentNode,
                                     final boolean showStructure,
                                     final Map<String, Set<RefEntity>> contents,
-                                    final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+                                    final Map<RefEntity, CommonProblemDescriptor[]> problems,
+                                    final DefaultTreeModel model) {
     final InspectionTool tool = toolNode.getTool();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(tool);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
