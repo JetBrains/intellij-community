@@ -23,7 +23,7 @@ package com.intellij.testFramework;
  */
 public enum TestFileType {
 
-  JAVA("java"), SQL("sql"), TEXT("txt"), XML("xml"), HTML("html"), XHTML("xhtml");
+  JAVA("java"), SQL("sql"), TEXT("txt"), XML("xml"), HTML("html"), XHTML("xhtml"), JS("js");
 
   private final String myExtension;
 
