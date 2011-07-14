@@ -4,6 +4,7 @@ package com.jetbrains.python.lexer;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.intellij.openapi.util.text.StringUtil;
 
 %%
 
@@ -70,6 +71,13 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 
 %state PENDING_DOCSTRING
 %state USUAL
+%{
+private int getSpaceLength(CharSequence string) {
+int i = Math.max(StringUtil.lastIndexOf(string, '"', 0, string.length()), StringUtil.lastIndexOf(string, '\'', 0, string.length()));
+return yylength()-i-1;
+
+}
+%}
 
 %%
 
@@ -173,12 +181,14 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 }
 
 <PENDING_DOCSTRING> {
-{SINGLE_QUOTED_STRING}          { yybegin(USUAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }
-{TRIPLE_QUOTED_STRING}          { yybegin(USUAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }
-{DOCSTRING_LITERAL}[\n\t\f; ]   { yypushback(1); yybegin(USUAL); return PyTokenTypes.DOCSTRING; }
-{DOCSTRING_LITERAL}(\ )*[\\]    { yypushback(1); return PyTokenTypes.DOCSTRING; }
+{SINGLE_QUOTED_STRING}          { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
+                                 else yybegin(USUAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }
+{TRIPLE_QUOTED_STRING}          { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
+                                 else yybegin(USUAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }
+{DOCSTRING_LITERAL}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); yybegin(USUAL); return PyTokenTypes.DOCSTRING; }
+{DOCSTRING_LITERAL}[\ \t]*"\\"  {
+ yypushback(getSpaceLength(yytext())); return PyTokenTypes.DOCSTRING; }
 
 .                               { yypushback(1); yybegin(USUAL); }
 }
-
 

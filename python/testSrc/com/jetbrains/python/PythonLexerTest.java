@@ -113,7 +113,7 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
   public void testBytesLiteral() {
-    doTest("b'ABC'", "Py:SINGLE_QUOTED_STRING");
+    doTest("a=b'ABC'", "Py:IDENTIFIER", "Py:EQ", "Py:SINGLE_QUOTED_STRING");
   }
 
   public void testOctalLiteral() {
@@ -159,11 +159,15 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
   public void testEscapedClosingTripleApos() {  // PY-1777
-    doTest("''' foo '\\''' bar '''", "Py:TRIPLE_QUOTED_STRING");
+    doTest("a=''' foo '\\''' bar '''", "Py:IDENTIFIER", "Py:EQ", "Py:TRIPLE_QUOTED_STRING");
   }
 
   public void testEscapedClosingTripleQuote() {  // PY-1777
-    doTest(THREE_QUOTES + " foo \"\\" + THREE_QUOTES + " bar " + THREE_QUOTES, "Py:TRIPLE_QUOTED_STRING");
+    doTest("a="+THREE_QUOTES + " foo \"\\" + THREE_QUOTES + " bar " + THREE_QUOTES, "Py:IDENTIFIER", "Py:EQ", "Py:TRIPLE_QUOTED_STRING");
+  }
+
+  public void testEOFDocstring() {  // PY-4169
+    doTest(THREE_QUOTES + " foo \"\\" + THREE_QUOTES + " bar " + THREE_QUOTES,"Py:DOCSTRING");
   }
 
   public void testOddNumberOfQuotes() {  // PY-2802

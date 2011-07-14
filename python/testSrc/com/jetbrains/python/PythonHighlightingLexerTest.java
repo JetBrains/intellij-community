@@ -133,7 +133,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
 
   public void testSingleDocStringWithBackslash() {
     doTest(LanguageLevel.PYTHON27, "\"one docstring \" \\\n\"new line of docstring\"\n",
-                      "Py:DOCSTRING", "Py:BACKSLASH", "Py:LINE_BREAK", "Py:DOCSTRING", "Py:LINE_BREAK");
+                      "Py:DOCSTRING", "Py:SPACE", "Py:BACKSLASH", "Py:LINE_BREAK", "Py:DOCSTRING", "Py:LINE_BREAK");
   }
 
   public void testSingleDocstringFunction() {
