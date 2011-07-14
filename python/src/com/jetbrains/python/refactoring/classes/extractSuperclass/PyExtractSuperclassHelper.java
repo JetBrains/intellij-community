@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
@@ -137,10 +138,24 @@ public class PyExtractSuperclassHelper {
    * @throws IOException
    */
   public static PsiFile placeFile(Project project, String path, String filename) throws IOException {
+    return placeFile(project, path, filename, null);
+  }
+
+  public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content) throws IOException {
     PsiDirectory psiDir = createDirectories(project, path);
     LOG.assertTrue(psiDir != null);
     PsiFile psiFile = psiDir.findFile(filename);
-    psiFile = psiFile != null ? psiFile : psiDir.createFile(filename);
+    if (psiFile == null) {
+      psiFile = psiDir.createFile(filename);
+      if (content != null) {
+        final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+        final Document document = manager.getDocument(psiFile);
+        if (document != null) {
+          document.setText(content);
+          manager.commitDocument(document);
+        }
+      }
+    }
     return psiFile;
   }
 

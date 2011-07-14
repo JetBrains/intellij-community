@@ -1,6 +1,8 @@
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
@@ -174,10 +176,14 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
       final File file = new File(myDestination);
       try {
         final VirtualFile baseDir = myProject.getBaseDir();
+        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
+        final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
+        final String content = (template != null) ? template.getText(fileTemplateManager.getDefaultProperties()) : null;
         psi = PyExtractSuperclassHelper.placeFile(myProject,
                                                   StringUtil.notNullize(file.getParent(),
                                                                         baseDir != null ? baseDir.getPath() : "."),
-                                                  file.getName());
+                                                  file.getName(),
+                                                  content);
       }
       catch (IOException e) {
         throw new IncorrectOperationException(String.format("Cannot create file '%s'", myDestination));

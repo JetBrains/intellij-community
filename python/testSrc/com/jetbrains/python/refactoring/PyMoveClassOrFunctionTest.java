@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyClass;
@@ -43,6 +44,7 @@ public class PyMoveClassOrFunctionTest extends PyLightFixtureTestCase {
 
   // PY-4074
   public void testNewModule() {
+    SystemProperties.setTestUserName("user1");
     doTest("f", "b.py");
   }
 
