@@ -106,7 +106,9 @@ public class PluginManager {
    */
   public static synchronized IdeaPluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
+      long start = System.currentTimeMillis();
       initializePlugins();
+      getLogger().info(ourPlugins.length + " plugins initialized in " + (System.currentTimeMillis() - start) + " ms");
       logPlugins();
       ClassloaderUtil.clearJarURLCache();
     }
