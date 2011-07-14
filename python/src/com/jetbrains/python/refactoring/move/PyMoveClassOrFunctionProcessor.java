@@ -116,6 +116,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
               checkValidImportableFile(e, dest.getVirtualFile());
             }
             for (PsiNamedElement oldElement: myElements) {
+              final PsiFile oldFile = oldElement.getContainingFile();
               PyClassRefactoringUtil.rememberNamedReferences(oldElement);
               final PsiNamedElement newElement = (PsiNamedElement)(dest.add(oldElement));
               for (UsageInfo usage : usages) {
@@ -142,8 +143,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
                   if (importStatement != null) {
                     PyClassRefactoringUtil.updateImportOfElement(importStatement, newElement);
                   }
-                  if (usage.getFile() == oldElement.getContainingFile() &&
-                      (oldExpr == null || !PsiTreeUtil.isAncestor(oldElement, oldExpr, false))) {
+                  if (usage.getFile() == oldFile && (oldExpr == null || !PsiTreeUtil.isAncestor(oldElement, oldExpr, false))) {
                     PyClassRefactoringUtil.insertImport(oldElement, newElement);
                   }
                 }
@@ -151,6 +151,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
               PyClassRefactoringUtil.restoreNamedReferences(newElement, oldElement);
               // TODO: Remove extra empty lines after the removed element
               oldElement.delete();
+              new PyImportOptimizer().processFile(oldFile).run();
             }
           }
         });
