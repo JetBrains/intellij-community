@@ -40,7 +40,6 @@ public class PyStringLiteralLexer extends LexerBase {
 
   /**
    * @param originalLiteralToken the AST node we're layering over.
-   * @param isUnicodeDefault true if unmarked strings are unicode (as in py3k), false otherwise (python 2.x).
    */
   public PyStringLiteralLexer(final IElementType originalLiteralToken) {
     myOriginalLiteralToken = originalLiteralToken;
