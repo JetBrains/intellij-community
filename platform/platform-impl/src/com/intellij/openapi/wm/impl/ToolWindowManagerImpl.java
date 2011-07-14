@@ -99,6 +99,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private boolean myEditorWasActive;
 
   private final ActiveStack myActiveStack;
+  private final SideStack mySideStack;
 
   private ToolWindowsPane myToolWindowsPane;
   private IdeFrameImpl myFrame;
@@ -185,6 +186,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myInternalDecoratorListener = new MyInternalDecoratorListener();
 
     myActiveStack = new ActiveStack();
+    mySideStack = new SideStack();
 
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       public void fileOpened(FileEditorManager source, VirtualFile file) {
@@ -854,6 +856,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
 
 
+      while (!mySideStack.isEmpty(info.getAnchor())) {
+        mySideStack.pop(info.getAnchor());
+      }
+
       final String[] all = getToolWindowIds();
       for (String eachId : all) {
         final WindowInfoImpl eachInfo = getInfo(eachId);
@@ -940,9 +946,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             info.setActive(false);
           }
           appendApplyWindowInfoCmd(info, commandsList);
+          // store WindowInfo into the SideStack
+          if (info.isDocked() && !info.isAutoHide()) {
+            mySideStack.push(info);
+          }
         }
       }
       appendAddDecoratorCmd(decorator, toBeShownInfo, dirtyMode, commandsList);
+
+      // Remove tool window from the SideStack.
+
+      mySideStack.remove(id);
     }
 
     appendApplyWindowInfoCmd(toBeShownInfo, commandsList);
@@ -1109,6 +1123,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     // Remove all references on tool window and save its last properties
     toolWindow.removePropertyChangeListener(myToolWindowPropertyChangeListener);
     myActiveStack.remove(id, true);
+    mySideStack.remove(id);
     // Destroy stripe button
     final StripeButton button = getStripeButton(id);
     button.dispose();
@@ -1684,6 +1699,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         deactivateToolWindowImpl(info.getId(), info.isAutoHide() && info.isFloating() && !hasModalChild(info), commandList);
       }
     }
+  }
+
+  public void clearSideStack() {
+    mySideStack.clear();
   }
 
   public void readExternal(final Element element) {
