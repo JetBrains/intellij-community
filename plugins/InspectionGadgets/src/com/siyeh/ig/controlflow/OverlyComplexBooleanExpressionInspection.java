@@ -17,7 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,15 +26,13 @@ import com.siyeh.ig.fixes.ExtractMethodFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -75,59 +73,27 @@ public class OverlyComplexBooleanExpressionInspection
     @Override
     public JComponent createOptionsPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
-        final JCheckBox ignoreConjunctionsDisjunctionsCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message(
+        final CheckBox ignoreConjunctionsDisjunctionsCheckBox =
+                new CheckBox(InspectionGadgetsBundle.message(
                         "overly.complex.boolean.expression.ignore.option"),
-                        m_ignorePureConjunctionsDisjunctions);
-        ignoreConjunctionsDisjunctionsCheckBox.addChangeListener(
-                new ChangeListener() {
-
-                    public void stateChanged(ChangeEvent e) {
-                        m_ignorePureConjunctionsDisjunctions =
-                                ignoreConjunctionsDisjunctionsCheckBox.isSelected();
-                    }
-                }
-        );
+                        this, "m_ignorePureConjunctionsDisjunctions");
         final NumberFormat formatter = NumberFormat.getIntegerInstance();
         formatter.setParseIntegerOnly(true);
         final JFormattedTextField termLimitTextField =
-                new JFormattedTextField(formatter);
-        termLimitTextField.setValue(Integer.valueOf(m_limit));
-        termLimitTextField.setColumns(2);
-        UIUtil.fixFormattedField(termLimitTextField);
-        final Document document = termLimitTextField.getDocument();
-        document.addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {
-                textChanged();
-            }
+                prepareNumberEditor("m_limit");
 
-            public void insertUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            private void textChanged() {
-                try {
-                    termLimitTextField.commitEdit();
-                    final Number number = (Number)termLimitTextField.getValue();
-                    m_limit = number.intValue();
-                } catch (ParseException e) {
-                    // No luck this time
-                }
-            }
-        });
         final GridBagConstraints constraints = new GridBagConstraints();
         final JLabel label = new JLabel(InspectionGadgetsBundle.message(
                 "overly.complex.boolean.expression.max.terms.option"));
+
         constraints.anchor = GridBagConstraints.BASELINE_LEADING;
         constraints.fill = GridBagConstraints.HORIZONTAL;
         panel.add(label, constraints);
+
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 1;
         panel.add(termLimitTextField, constraints);
+
         constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.gridwidth = 2;

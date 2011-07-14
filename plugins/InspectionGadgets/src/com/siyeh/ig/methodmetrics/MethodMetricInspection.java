@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import javax.swing.JComponent;
 
 public abstract class MethodMetricInspection extends BaseInspection {
 
+    @SuppressWarnings("PublicField")
     public int m_limit = getDefaultLimit();  //this is public for the DefaultJDOMSerialization thingy
 
     protected abstract int getDefaultLimit();
@@ -32,6 +33,7 @@ public abstract class MethodMetricInspection extends BaseInspection {
         return m_limit;
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleIntegerFieldOptionsPanel(getConfigurationLabel(),
                 this, "m_limit");
