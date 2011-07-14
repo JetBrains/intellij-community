@@ -32,8 +32,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.util.TripleFunction;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,13 +124,13 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
         contents.put(groupName, content);
       }
       content.add(refElement);
-      view.getProvider().appendToolNodeContent(myToolNode,
-                                               (InspectionTreeNode)myToolNode.getParent(), getContext().getUIOptions().SHOW_STRUCTURE,
-                                               contents, problems);
-      SwingUtilities.invokeLater(new Runnable() {
+
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
+          view.getProvider().appendToolNodeContent(myToolNode,
+                                                   (InspectionTreeNode)myToolNode.getParent(), getContext().getUIOptions().SHOW_STRUCTURE,
+                                                   contents, problems, (DefaultTreeModel)view.getTree().getModel());
           getContext().addView(view);
-          ((DefaultTreeModel)view.getTree().getModel()).reload(myToolNode);
         }
       });
     }

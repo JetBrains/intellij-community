@@ -33,8 +33,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
+import javax.swing.tree.*;
 import java.util.*;
 
 public abstract class InspectionRVContentProvider {
@@ -73,14 +72,15 @@ public abstract class InspectionRVContentProvider {
     final InspectionTool tool = toolNode.getTool();
     final Map<String, Set<RefEntity>> content = tool.getContent();
     appendToolNodeContent(toolNode, parentNode, showStructure, content != null ? content : new HashMap<String, Set<RefEntity>>(),
-                          tool instanceof DescriptorProviderInspection ? ((DescriptorProviderInspection)tool).getProblemElements() : null);
+                          tool instanceof DescriptorProviderInspection ? ((DescriptorProviderInspection)tool).getProblemElements() : null, null);
   }
 
   public abstract void appendToolNodeContent(final InspectionNode toolNode,
                                              final InspectionTreeNode parentNode,
                                              final boolean showStructure,
                                              final Map<String, Set<RefEntity>> contents,
-                                             final Map<RefEntity, CommonProblemDescriptor[]> problems);
+                                             final Map<RefEntity, CommonProblemDescriptor[]> problems,
+                                             final @Nullable DefaultTreeModel model);
 
   protected abstract void appendDescriptor(final InspectionTool tool,
                                            final UserObjectContainer container,
@@ -250,7 +250,7 @@ public abstract class InspectionRVContentProvider {
   }
 
   @SuppressWarnings({"ConstantConditions"}) //class cast suppression
-  protected static void merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
+  protected static void merge(@Nullable DefaultTreeModel model, InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
     if (merge) {
       for (int i = 0; i < parent.getChildCount(); i++) {
         InspectionTreeNode current = (InspectionTreeNode)parent.getChildAt(i);
@@ -259,43 +259,52 @@ public abstract class InspectionRVContentProvider {
         }
         if (current instanceof InspectionPackageNode) {
           if (((InspectionPackageNode)current).getPackageName().compareTo(((InspectionPackageNode)child).getPackageName()) == 0) {
-            processDepth(child, current);
+            processDepth(model, child, current);
             return;
           }
         }
         else if (current instanceof RefElementNode) {
           if (((RefElementNode)current).getElement().getName().compareTo(((RefElementNode)child).getElement().getName()) == 0) {
-            processDepth(child, current);
+            processDepth(model, child, current);
             return;
           }
         }
         else if (current instanceof InspectionNode) {
           if (((InspectionNode)current).getTool().getShortName().compareTo(((InspectionNode)child).getTool().getShortName()) == 0) {
-            processDepth(child, current);
+            processDepth(model, child, current);
             return;
           }
         }
         else if (current instanceof InspectionModuleNode) {
           if (((InspectionModuleNode)current).getName().compareTo(((InspectionModuleNode)child).getName()) == 0) {
-            processDepth(child, current);
+            processDepth(model, child, current);
             return;
           }
         }
         else if (current instanceof ProblemDescriptionNode) {
           if (((ProblemDescriptionNode)current).getDescriptor().getDescriptionTemplate()
             .compareTo(((ProblemDescriptionNode)child).getDescriptor().getDescriptionTemplate()) == 0) {
-            processDepth(child, current);
+            processDepth(model, child, current);
             return;
           }
         }
       }
     }
-    parent.add(child);
+    add(model, child, parent);
   }
 
-  private static void processDepth(final InspectionTreeNode child, final InspectionTreeNode current) {
+  protected static void add(@Nullable final DefaultTreeModel model, final InspectionTreeNode child, final InspectionTreeNode parent) {
+    if (model == null) {
+      parent.add(child);
+    }
+    else {
+      model.insertNodeInto(child, parent, parent.getChildCount());
+    }
+  }
+
+  private static void processDepth(@Nullable DefaultTreeModel model, final InspectionTreeNode child, final InspectionTreeNode current) {
     for (int j = 0; j < child.getChildCount(); j++) {
-      merge((InspectionTreeNode)child.getChildAt(j), current, true);
+      merge(model, (InspectionTreeNode)child.getChildAt(j), current, true);
     }
   }
 }

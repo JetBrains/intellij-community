@@ -99,7 +99,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
             final DependencyRule[] rule = validationManager.getViolatorDependencyRules(file, dependencyFile);
             for (DependencyRule dependencyRule : rule) {
               StringBuffer message = new StringBuffer();
-              message.append(MessageFormat.format(InspectionsBundle.message("inspection.dependency.violator.problem.descriptor"), dependencyRule.getDisplayText()));
+              message.append(InspectionsBundle.message("inspection.dependency.violator.problem.descriptor", dependencyRule.getDisplayText()));
               problems.add(manager.createProblemDescriptor(place, message.toString(), isOnTheFly, new LocalQuickFix[]{new EditDependencyRulesAction(dependencyRule)}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }

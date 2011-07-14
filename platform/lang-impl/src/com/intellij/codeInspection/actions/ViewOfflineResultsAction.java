@@ -162,7 +162,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
       inspectionProfile = (InspectionProfile)profile;
     }
     else {
-      inspectionProfile = new InspectionProfileImpl(profileName) {
+      inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
         public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
           return resMap.containsKey(key.toString());
         }

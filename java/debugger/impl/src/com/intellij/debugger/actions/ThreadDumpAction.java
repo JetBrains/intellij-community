@@ -220,7 +220,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     return DebuggerBundle.message("threads.export.attribute.label.locked", renderObject(monitor));
   }
 
-  private static String renderObject(ObjectReference monitor) {
+  public static String renderObject(ObjectReference monitor) {
     return DebuggerBundle.message("threads.export.attribute.label.object-id", Long.toHexString(monitor.uniqueID()), monitor.referenceType().name());
   }
 

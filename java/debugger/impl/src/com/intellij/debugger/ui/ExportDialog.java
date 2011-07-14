@@ -23,6 +23,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -200,7 +201,8 @@ public class ExportDialog extends DialogWrapper {
             if (waitedThread != null) {
               final String waitedThreadName = threadName(waitedThread);
               if (waitedThreadName != null) {
-                buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", waitedThreadName));
+                buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", waitedThreadName,
+                                                                     ThreadDumpAction.renderObject(waitedMonitor)));
               }
             }
           }
