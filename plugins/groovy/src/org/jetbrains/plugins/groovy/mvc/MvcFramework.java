@@ -496,6 +496,10 @@ public abstract class MvcFramework {
       return Collections.emptyMap();
     }
 
+    return getInstalledPluginVersions(properties);
+  }
+
+  public static Map<String, String> getInstalledPluginVersions(@NotNull PropertiesFile properties) {
     Map<String, String> pluginNames = new HashMap<String, String>();
 
     for (final Property property : properties.getProperties()) {
