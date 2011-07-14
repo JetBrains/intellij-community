@@ -51,6 +51,12 @@ public class PyMoveClassOrFunctionTest extends PyLightFixtureTestCase {
     doTest("f", "b.py");
   }
 
+  // PY-4130
+  // PY-4131
+  public void testDocstringTypes() {
+    doTest("C", "b.py");
+  }
+
   private void doTest(final String symbolName, final String toFileName) {
     String root = "/refactoring/moveClassOrFunction/" + getTestName(true);
     String rootBefore = root + "/before/src";

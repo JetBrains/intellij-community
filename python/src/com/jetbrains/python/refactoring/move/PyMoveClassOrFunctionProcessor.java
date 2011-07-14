@@ -17,6 +17,8 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
+import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -127,15 +129,26 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
                     PyClassRefactoringUtil.insertImport(newExpr, newElement, null, true);
                   }
                 }
-                PyImportStatementBase importStatement = getUsageImportStatement(usage);
-                if (importStatement != null) {
-                  PyClassRefactoringUtil.updateImportOfElement(importStatement, newElement);
+                if (oldExpr instanceof PyStringLiteralExpression) {
+                  final PsiReference[] references = oldExpr.getReferences();
+                  for (PsiReference ref : references) {
+                    if (ref instanceof DocStringTypeReference && ref.isReferenceTo(oldElement)) {
+                      ref.bindToElement(newElement);
+                    }
+                  }
                 }
-                if (usage.getFile() == oldElement.getContainingFile()) {
-                  PyClassRefactoringUtil.insertImport(oldElement, newElement);
+                else {
+                  PyImportStatementBase importStatement = getUsageImportStatement(usage);
+                  if (importStatement != null) {
+                    PyClassRefactoringUtil.updateImportOfElement(importStatement, newElement);
+                  }
+                  if (usage.getFile() == oldElement.getContainingFile() &&
+                      (oldExpr == null || !PsiTreeUtil.isAncestor(oldElement, oldExpr, false))) {
+                    PyClassRefactoringUtil.insertImport(oldElement, newElement);
+                  }
                 }
               }
-              PyClassRefactoringUtil.restoreNamedReferences(newElement);
+              PyClassRefactoringUtil.restoreNamedReferences(newElement, oldElement);
               // TODO: Remove extra empty lines after the removed element
               oldElement.delete();
             }

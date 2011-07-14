@@ -12,6 +12,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
@@ -156,12 +157,26 @@ public class PyClassRefactoringUtil {
     PyPsiUtils.removeRedundantPass(statements);
   }
 
-  public static void restoreNamedReferences(PsiElement element) {
-    element.acceptChildren(new PyRecursiveElementVisitor() {
+  public static void restoreNamedReferences(@NotNull PsiElement element) {
+    restoreNamedReferences(element, null);
+  }
+
+  public static void restoreNamedReferences(@NotNull final PsiElement newElement, @Nullable final PsiElement oldElement) {
+    newElement.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
         restoreReference(node);
+      }
+
+      @Override
+      public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+        super.visitPyStringLiteralExpression(node);
+        for (PsiReference ref : node.getReferences()) {
+          if (ref instanceof DocStringTypeReference && ref.isReferenceTo(oldElement)) {
+            ref.bindToElement(newElement);
+          }
+        }
       }
     });
   }
