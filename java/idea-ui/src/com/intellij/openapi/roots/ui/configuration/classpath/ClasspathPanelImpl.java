@@ -300,7 +300,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               return "&" + value.getIndex() + "  " + value.getTitle();
             }
           });
-        final RelativePoint point = getPointUnderButton();
+        final RelativePoint point = getPointBelowButton();
         if (point == null) {
           popup.showInBestPositionFor(e.getDataContext());
         } else {

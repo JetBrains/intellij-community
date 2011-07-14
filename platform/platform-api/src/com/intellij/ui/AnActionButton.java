@@ -83,7 +83,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
            || (myContextComponent.isVisible() && UIUtil.getParentOfType(JLayeredPane.class, myContextComponent) != null);
   }
 
-  public final RelativePoint getPointUnderButton() {
+  public final RelativePoint getPointBelowButton() {
     Container c = myContextComponent;
     ActionToolbar toolbar = null;
     while ((c = c.getParent()) != null) {
