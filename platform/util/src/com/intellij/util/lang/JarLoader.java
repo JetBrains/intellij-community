@@ -70,9 +70,6 @@ class JarLoader extends Loader {
       try {
         long start = System.currentTimeMillis();
         myMemoryLoader = JarMemoryLoader.load(file, getBaseURL());
-        if (myMemoryLoader != null) {
-          LOG.info("Classes from " + file + " preloaded in " + (System.currentTimeMillis() - start) + " ms");
-        }
       }
       finally {
         releaseZipFile(zipFile);
