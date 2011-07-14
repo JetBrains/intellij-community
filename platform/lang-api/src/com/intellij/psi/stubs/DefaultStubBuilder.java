@@ -74,7 +74,6 @@ public class DefaultStubBuilder implements StubBuilder {
         }
       }
     }
-
     return parentStub;
   }
 
