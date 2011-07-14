@@ -135,7 +135,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("changeClassSignature.parameters.panel.border.title"), myTable), BorderLayout.NORTH);
-    panel.add(TableToolbarDecorator.createDecorator(myTable).createPanel(), BorderLayout.CENTER);
+    panel.add(ToolbarDecorator.createDecorator(myTable).createPanel(), BorderLayout.CENTER);
     return panel;
   }
 

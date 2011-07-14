@@ -34,9 +34,10 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class TableToolbarDecorator {
+public class ToolbarDecorator {
   private JTable myTable;
-  private TableModel myModel;
+  private TableModel myTableModel;
+  private ListModel myListModel;
   private Border myToolbarBorder;
   private boolean myAddActionEnabled;
   private boolean myRemoveActionEnabled;
@@ -50,29 +51,66 @@ public class TableToolbarDecorator {
   private Runnable myUpAction;
   private Runnable myDownAction;
   private AddRemoveUpDownPanel myPanel;
+  private JList myList;
 
 
-  private TableToolbarDecorator(JTable table) {
+  private ToolbarDecorator(JTable table) {
     myTable = table;
     myTable.setBorder(IdeBorderFactory.createEmptyBorder(0));
-    myModel = table.getModel();
-    myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
-    myBorder = SystemInfo.isMac ? new CustomLineBorder(0,1,1,1) : new CustomLineBorder(0, 1, 0, 0);
-    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myModel instanceof EditableModel;
-    if (myModel instanceof EditableModel) {
-      createDefaultActions();
+    myTableModel = table.getModel();
+    initPositionAndBorder();
+    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myTableModel instanceof EditableModel;
+    if (myTableModel instanceof EditableModel) {
+      createDefaultTableActions();
     }
   }
 
-  private void createDefaultActions() {
+  private ToolbarDecorator(JList list) {
+    myList = list;
+    myListModel = list.getModel();
+    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = true;
+    initPositionAndBorder();
+    createDefaultListActions();
+  }
+
+  private void createDefaultListActions() {
+    myRemoveAction = new Runnable() {
+      @Override
+      public void run() {
+        ListUtil.removeSelectedItems(myList);
+        updateListButtons(myList, myPanel);
+      }
+    };
+    myUpAction = new Runnable() {
+      @Override
+      public void run() {
+        ListUtil.moveSelectedItemsUp(myList);
+        updateListButtons(myList, myPanel);
+      }
+    };
+    myDownAction = new Runnable() {
+      @Override
+      public void run() {
+        ListUtil.moveSelectedItemsDown(myList);
+        updateListButtons(myList, myPanel);
+      }
+    };
+  }
+
+  private void initPositionAndBorder() {
+    myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
+    myBorder = SystemInfo.isMac ? new CustomLineBorder(0,1,1,1) : new CustomLineBorder(0, 1, 0, 0);
+  }
+
+  private void createDefaultTableActions() {
     final JTable table = myTable;
-    final EditableModel tableModel = (EditableModel)myModel;
+    final EditableModel tableModel = (EditableModel)myTableModel;
 
     myAddAction = new Runnable() {
       public void run() {
         TableUtil.stopEditing(table);
         tableModel.addRow();
-        final int index = myModel.getRowCount() - 1;
+        final int index = myTableModel.getRowCount() - 1;
         table.editCellAt(index, 0);
         table.setRowSelectionInterval(index, index);
         table.setColumnSelectionInterval(0, 0);
@@ -90,9 +128,9 @@ public class TableToolbarDecorator {
       public void run() {
         TableUtil.stopEditing(table);
         int index = table.getSelectedRow();
-        if (0 <= index && index < myModel.getRowCount()) {
+        if (0 <= index && index < myTableModel.getRowCount()) {
           tableModel.removeRow(index);
-          if (index < myModel.getRowCount()) {
+          if (index < myTableModel.getRowCount()) {
             table.setRowSelectionInterval(index, index);
           }
           else {
@@ -100,7 +138,7 @@ public class TableToolbarDecorator {
               table.setRowSelectionInterval(index - 1, index - 1);
             }
           }
-          updateButtons(table, tableModel, myPanel);
+          updateTableButtons(table, tableModel, myPanel);
         }
 
         table.getParent().repaint();
@@ -112,7 +150,7 @@ public class TableToolbarDecorator {
       public void run() {
         TableUtil.stopEditing(table);
         int index = table.getSelectedRow();
-        if (0 < index && index < myModel.getRowCount()) {
+        if (0 < index && index < myTableModel.getRowCount()) {
           tableModel.exchangeRows(index, index - 1);
           table.setRowSelectionInterval(index - 1, index - 1);
         }
@@ -124,7 +162,7 @@ public class TableToolbarDecorator {
       public void run() {
         TableUtil.stopEditing(table);
         int index = table.getSelectedRow();
-        if (0 <= index && index < myModel.getRowCount() - 1) {
+        if (0 <= index && index < myTableModel.getRowCount() - 1) {
           tableModel.exchangeRows(index, index + 1);
           table.setRowSelectionInterval(index + 1, index + 1);
         }
@@ -133,92 +171,112 @@ public class TableToolbarDecorator {
     };
    }
 
-  private static void updateButtons(final JTable table,
-                                    final EditableModel tableModel,
-                                    final AddRemoveUpDownPanel p) {
-    if (table.isEnabled()) {
+  private static void updateListButtons(final JList list, final AddRemoveUpDownPanel p) {
+    if (list.isEnabled() && p != null) {
+      final int index = list.getSelectedIndex();
+      if (0 <= index && index < list.getModel().getSize()) {
+        final boolean downEnable = list.getMaxSelectionIndex() < list.getModel().getSize() - 1;
+        final boolean upEnable = list.getMinSelectionIndex() > 0;
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, true);
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, upEnable);
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, downEnable);
+      } else {
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, false);
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, false);
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, false);
+      }
+      p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, true);
+    }
+  }
+
+  private static void updateTableButtons(final JTable table,
+                                         final EditableModel tableModel,
+                                         final AddRemoveUpDownPanel p) {
+    if (table.isEnabled() && p != null) {
       final int index = table.getSelectedRow();
       if (0 <= index && index < ((TableModel)tableModel).getRowCount()) {
         final boolean downEnable = index < ((TableModel)tableModel).getRowCount() - 1;
         final boolean upEnable = index > 0;
-        if (p != null) {
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, true);
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, upEnable);
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, downEnable);
-        }
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, true);
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, upEnable);
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, downEnable);
       } else {
-        if (p != null) {
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, false);
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, false);
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, false);
-        }
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, false);
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, false);
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, false);
       }
-      if (p != null) {
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, true);
-      }
+      p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, true);
     }
   }
 
 
-  public static TableToolbarDecorator createDecorator(JTable table) {
-    return new TableToolbarDecorator(table);
+  public static ToolbarDecorator createDecorator(JTable table) {
+    return new ToolbarDecorator(table);
   }
 
-  public TableToolbarDecorator disableAddAction() {
+  public static ToolbarDecorator createDecorator(JList list) {
+    return new ToolbarDecorator(list);
+  }
+
+  public ToolbarDecorator disableAddAction() {
     myAddActionEnabled = false;
     return this;
   }
 
-  public TableToolbarDecorator disableRemoveAction() {
+  public ToolbarDecorator disableRemoveAction() {
     myRemoveActionEnabled = false;
     return this;
   }
 
-  public TableToolbarDecorator disableUpAction() {
+  public ToolbarDecorator disableUpAction() {
     myUpActionEnabled = false;
     return this;
   }
 
-  public TableToolbarDecorator disableDownAction() {
+  public ToolbarDecorator disableDownAction() {
     myDownActionEnabled = false;
     return this;
   }
 
-  public TableToolbarDecorator setToolbarBorder(Border border) {
+  public ToolbarDecorator setToolbarBorder(Border border) {
     myBorder = border;
     return this;
   }
 
-  public TableToolbarDecorator setLineBorder(int top, int left, int bottom, int right) {
+  public ToolbarDecorator setLineBorder(int top, int left, int bottom, int right) {
     return setToolbarBorder(new CustomLineBorder(top, left, bottom, right));
   }
 
-  public TableToolbarDecorator addExtraAction(AnActionButton action) {
+  public ToolbarDecorator addExtraAction(AnActionButton action) {
     myExtraActions.add(action);
     return this;
   }
 
-  public TableToolbarDecorator setToolbarPosition(ActionToolbarPosition position) {
+  public ToolbarDecorator setToolbarPosition(ActionToolbarPosition position) {
     myToolbarPosition = position;
     return this;
   }
 
-  public TableToolbarDecorator setAddAction(Runnable action) {
+  public ToolbarDecorator setAddAction(Runnable action) {
+    myAddActionEnabled = action != null;
     myAddAction = action;
     return this;
   }
 
-  public TableToolbarDecorator setRemoveAction(Runnable action) {
+  public ToolbarDecorator setRemoveAction(Runnable action) {
+    myRemoveActionEnabled = action != null;
     myRemoveAction = action;
     return this;
   }
 
-  public TableToolbarDecorator setUpAction(Runnable action) {
+  public ToolbarDecorator setUpAction(Runnable action) {
+    myUpActionEnabled = action != null;
     myUpAction = action;
     return this;
   }
 
-  public TableToolbarDecorator setDownAction(Runnable action) {
+  public ToolbarDecorator setDownAction(Runnable action) {
+    myDownActionEnabled = action != null;
     myDownAction = action;
     return this;
   }
@@ -226,26 +284,46 @@ public class TableToolbarDecorator {
   public JPanel createPanel() {
     final AddRemoveUpDownPanel.Buttons[] buttons = getButtons();
     myPanel = new AddRemoveUpDownPanel(createListener(),
-                             myTable,
+                             myTable == null ? myList : myTable,
                              myToolbarPosition == ActionToolbarPosition.TOP || myToolbarPosition == ActionToolbarPosition.BOTTOM,
                              myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
                              buttons);
     myPanel.setBorder(myBorder);
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable == null ? myList : myTable);
     scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(0));
-    final JPanel panel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public void addNotify() {
+        super.addNotify();
+        if (myList != null) {
+          updateListButtons(myList, myPanel);
+        }
+        if (myTable != null && myTableModel instanceof EditableModel) {
+          updateTableButtons(myTable, (EditableModel)myTableModel, myPanel);
+        }
+      }
+    };
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.add(myPanel, getPlacement());
-    if (myModel instanceof EditableModel && buttons.length > 0) {
-      updateButtons(myTable, (EditableModel)myModel, myPanel);
+    if (myTableModel instanceof EditableModel && buttons.length > 0) {
+      updateTableButtons(myTable, (EditableModel)myTableModel, myPanel);
 
       if (myUpAction != null && myUpActionEnabled && myDownAction != null && myDownActionEnabled) {
-        TableRowsDnDSupport.install(myTable, (EditableModel)myModel);
+        TableRowsDnDSupport.install(myTable, (EditableModel)myTableModel);
       }
       myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
-          updateButtons(myTable, (EditableModel)myModel, myPanel);
+          updateTableButtons(myTable, (EditableModel)myTableModel, myPanel);
+        }
+      });
+    }
+    if (myList != null) {
+      updateListButtons(myList, myPanel);
+      myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+          updateListButtons(myList, myPanel);
         }
       });
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,28 +23,33 @@ import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Panel with "Add" and "Delete" buttons on the right side.
  *
+ * @author Konstantin Bulenkov
  * @author anna
  * @since 5.1
  */
 public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
   private final String myTitle;
+
+  /**
+   * @deprecated
+   */
   protected JButton myAddButton = new JButton(CommonBundle.message("button.add"));
+  /**
+   * @deprecated
+   */
   protected JButton myDeleteButton = new JButton(CommonBundle.message("button.delete"));
+
   protected DefaultListModel myListModel = new DefaultListModel();
   protected JBList myList = new JBList(myListModel);
 
-  public AddDeleteListPanel(final String title,
-                            final List<T> initialList) {
+  public AddDeleteListPanel(final String title, final List<T> initialList) {
     myTitle = title;
     for (Object o : initialList) {
       if (o != null) {
@@ -52,22 +57,29 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
       }
     }
     myList.setCellRenderer(getListCellRenderer());
-    myList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        myDeleteButton.setEnabled(ListUtil.canRemoveSelectedItems(myList));
-      }
-    });
-    myAddButton.addActionListener(new ActionListener(){
-      public void actionPerformed(ActionEvent e) {
-        addElement(findItemToAdd());
-      }
-    });
-    myDeleteButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ListUtil.removeSelectedItems(myList);
-      }
-    });
     initPanel();
+  }
+
+  @Override
+  protected void initPanel() {
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
+      .disableUpAction()
+      .disableDownAction()
+      .setAddAction(new Runnable() {
+        @Override
+        public void run() {
+          addElement(findItemToAdd());
+        }
+      });
+    customizeDecorator(decorator);
+    setLayout(new BorderLayout());
+    add(decorator.createPanel(), BorderLayout.CENTER);
+    if (myTitle != null) {
+      setBorder(IdeBorderFactory.createTitledBorder(myTitle));
+    }
+  }
+
+  protected void customizeDecorator(ToolbarDecorator decorator) {
   }
 
   @Override

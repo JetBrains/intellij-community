@@ -30,8 +30,8 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditableRowTable;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.TableToolbarDecorator;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -196,7 +196,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     myExceptionsTable = new JBTable(myExceptionTableModel);
     myExceptionsTable.setPreferredScrollableViewportSize(new Dimension(200, myExceptionsTable.getRowHeight() * 8));
 
-    myExceptionsButtonPanel = TableToolbarDecorator.createDecorator(myExceptionsTable).createPanel();
+    myExceptionsButtonPanel = ToolbarDecorator.createDecorator(myExceptionsTable).createPanel();
 
     myExceptionsTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     myExceptionsTable.getColumnModel().getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));
