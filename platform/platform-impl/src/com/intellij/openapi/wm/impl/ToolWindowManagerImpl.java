@@ -870,7 +870,33 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       activateEditorComponentImpl(getSplittersFromFocus(), commandList, true);
     }
-    else {
+    else if (isStackEnabled()) {
+
+      // first of all we have to find tool window that was located at the same side and
+      // was hidden.
+
+      WindowInfoImpl info2 = null;
+      while (!mySideStack.isEmpty(info.getAnchor())) {
+        final WindowInfoImpl storedInfo = mySideStack.pop(info.getAnchor());
+        if (storedInfo.isSplit() != info.isSplit()) {
+          continue;
+        }
+
+        final WindowInfoImpl currentInfo = getInfo(storedInfo.getId());
+        LOG.assertTrue(currentInfo != null);
+        // SideStack contains copies of real WindowInfos. It means that
+        // these stored infos can be invalid. The following loop removes invalid WindowInfos.
+        if (storedInfo.getAnchor() == currentInfo.getAnchor() &&
+            storedInfo.getType() == currentInfo.getType() &&
+            storedInfo.isAutoHide() == currentInfo.isAutoHide()) {
+          info2 = storedInfo;
+          break;
+        }
+      }
+      if (info2 != null) {
+        showToolWindowImpl(info2.getId(), false, commandList);
+      }
+
       // If we hide currently active tool window then we should activate the previous
       // one which is located in the tool window stack.
       // Activate another tool window if no active tool window exists and
@@ -889,7 +915,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
         else {
           final String toBeActivatedId = myActiveStack.pop();
-          if (toBeActivatedId != null && getInfo(toBeActivatedId).isVisible()) {
+          if (toBeActivatedId != null && (getInfo(toBeActivatedId).isVisible() || isStackEnabled())) {
             activateToolWindowImpl(toBeActivatedId, commandList, false, true);
           }
           else {
@@ -900,6 +926,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     execute(commandList);
+  }
+
+  private boolean isStackEnabled() {
+    return Registry.is("ide.enable.toolwindow.stack");
   }
 
   /**
