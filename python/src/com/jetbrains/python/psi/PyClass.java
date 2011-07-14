@@ -109,6 +109,17 @@ public interface PyClass extends
   Iterable<PyClass> iterateAncestorClasses();
 
   /**
+   * Return the method resolution order list for this class.
+   * <br/>
+   * see http://www.python.org/download/releases/2.3/mro/
+   * <br/>
+   * <i>Note: the list begins with this class.</i> It ends with the builtin 'object'.
+   * If class hierarchy is incorrect, e.g. badly looped, assertions may fail in implementation.
+   * @return list of classes in method resolution order for this class, at least one element long.
+   */
+  @NotNull List<PyClass> getMRO();
+
+  /**
    * Scan properties in order of definition, until processor returns true for one of them.
    * @param processor to check properties
    * @param inherited whether inherited properties need to be scanned, too
