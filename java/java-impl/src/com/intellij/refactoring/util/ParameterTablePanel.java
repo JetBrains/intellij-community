@@ -23,8 +23,8 @@ import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.EditableModel;
-import com.intellij.ui.TableToolbarDecorator;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.table.JBTable;
@@ -252,7 +252,7 @@ public abstract class ParameterTablePanel extends JPanel {
     });
 
 
-    JPanel listPanel = TableToolbarDecorator.createDecorator(myTable).disableAddAction().disableRemoveAction().createPanel();
+    JPanel listPanel = ToolbarDecorator.createDecorator(myTable).disableAddAction().disableRemoveAction().createPanel();
     add(listPanel, BorderLayout.CENTER);
 
     if (getVariableData().length > 1) {

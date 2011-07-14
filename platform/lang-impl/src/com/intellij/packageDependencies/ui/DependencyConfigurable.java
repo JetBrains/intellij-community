@@ -29,7 +29,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.EditableModel;
-import com.intellij.ui.TableToolbarDecorator;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
@@ -100,7 +100,7 @@ public class DependencyConfigurable extends BaseConfigurable {
     table.setShowGrid(true);
     table.setRowHeight(new PackageSetChooserCombo(myProject, null).getPreferredSize().height);
 
-    return TableToolbarDecorator.createDecorator(table).createPanel();
+    return ToolbarDecorator.createDecorator(table).createPanel();
   }
 
   public JComponent getPreferredFocusedComponent() {

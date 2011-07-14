@@ -417,7 +417,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     downButton.setShortcut(KeyboardShortcut.fromString("alt DOWN"));
     myEntryTable.setBorder(new LineBorder(UIUtil.getBorderColor()));
 
-    final TableToolbarDecorator decorator = TableToolbarDecorator.createDecorator(myEntryTable);
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);
     decorator
       .addExtraAction(addButton)
       .addExtraAction(removeButton)

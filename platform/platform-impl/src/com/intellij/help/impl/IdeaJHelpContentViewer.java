@@ -15,6 +15,7 @@
  */
 package com.intellij.help.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
@@ -55,6 +56,7 @@ class IdeaJHelpContentViewer extends JHelpContentViewer{
     if (editorPane != null) {
       editorPane.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, SwingUtilities2.AATextInfo.getAATextInfo(true));
     }
+    UISettings.setupAntialiasing(g);
     super.paint(g);
   }
 }

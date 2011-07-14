@@ -379,7 +379,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.setSurrendersFocusOnKeystroke(true);
     myPropagateParamChangesButton.setShortcut(KeyboardShortcut.fromString("alt G"));
 
-    final JPanel buttonsPanel = TableToolbarDecorator.createDecorator(myParametersTable)
+    final JPanel buttonsPanel = ToolbarDecorator.createDecorator(myParametersTable)
       .addExtraAction(myPropagateParamChangesButton)
       .createPanel();
 
