@@ -80,16 +80,17 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     //noinspection ConstantConditions
     coverageConfig.setCurrentCoverageSuite(null);
     final CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
-    if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) || coverageRunner instanceof IDEACoverageRunner)
-        && coverageConfig.isCoverageEnabled()
-        && coverageRunner != null) {
-      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
-      coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
-      coverageConfig.appendCoverageArgument(params);
-    } else if (runnerSettings.getData() instanceof DebuggingRunnerData && !(coverageRunner instanceof IDEACoverageRunner) && coverageRunner != null){
-      Notifications.Bus.notify(new Notification("Coverage", "Coverage was not enabled",
-                                                coverageRunner.getPresentableName() + " coverage is disabled in the debug mode",
-                                                NotificationType.WARNING));
+    if (coverageConfig.isCoverageEnabled() && coverageRunner != null) {
+      if (!(runnerSettings.getData() instanceof DebuggingRunnerData) || coverageRunner instanceof IDEACoverageRunner) {
+        final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
+        coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
+        coverageConfig.appendCoverageArgument(params);
+      }
+      else if (runnerSettings.getData() instanceof DebuggingRunnerData) {
+        Notifications.Bus.notify(new Notification("Coverage", "Coverage was not enabled",
+                                                  coverageRunner.getPresentableName() + " coverage is disabled in the debug mode",
+                                                  NotificationType.WARNING));
+      }
     }
   }
 
