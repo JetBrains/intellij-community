@@ -52,10 +52,11 @@ class ClassPath {
   private static PrintStream ourOrder;
   private static long ourOrderSize;
   private final static Set<String> ourOrderedUrls = new HashSet<String>();
+  private static final String HOME = FileUtil.toSystemIndependentName(PathManager.getHomePath());
 
   private final boolean myAcceptUnescapedUrls;
 
-  private static void printOrder(Loader loader, String url, Resource resource) {
+  private static synchronized void printOrder(Loader loader, String url, Resource resource) {
     if (!ourOrderedUrls.add(url)) return;
     try {
       ourOrderSize += resource.getContentLength();
@@ -82,9 +83,12 @@ class ClassPath {
 
     if (ourOrder != null) {
       String jarURL = FileUtil.toSystemIndependentName(loader.getBaseURL().getFile());
-      jarURL = jarURL.replaceFirst(FileUtil.toSystemIndependentName(PathManager.getHomePath()), "");
-      jarURL = StringUtil.trimEnd(StringUtil.trimStart(jarURL, "file:/"), "!/");
-      ourOrder.println(url + ":" + jarURL);
+      jarURL = StringUtil.trimStart(jarURL, "file:/");
+      if (jarURL.startsWith(HOME)) {
+        jarURL = jarURL.replaceFirst(HOME, "");
+        jarURL = StringUtil.trimEnd(jarURL, "!/");
+        ourOrder.println(url + ":" + jarURL);
+      }
     }
   }
 
