@@ -348,21 +348,17 @@ public class ModuleInsight {
   private static File appendContentRoot(final ModuleDescriptor module, final File contentRoot) {
     final Set<File> moduleRoots = module.getContentRoots();
     for (File moduleRoot : moduleRoots) {
-      try {
-        if (FileUtil.isAncestor(moduleRoot, contentRoot, false)) {
-          return moduleRoot; // no need to include a separate root
-        }
-        if (FileUtil.isAncestor(contentRoot, moduleRoot, true)) {
-          final Set<File> currentSources = module.getSourceRoots(moduleRoot);
-          module.removeContentRoot(moduleRoot);
-          module.addContentRoot(contentRoot);
-          for (File source : currentSources) {
-            module.addSourceRoot(contentRoot, source);
-          }
-          return contentRoot; // no need to include a separate root
-        }
+      if (FileUtil.isAncestor(moduleRoot, contentRoot, false)) {
+        return moduleRoot; // no need to include a separate root
       }
-      catch (IOException ignored) {
+      if (FileUtil.isAncestor(contentRoot, moduleRoot, true)) {
+        final Set<File> currentSources = module.getSourceRoots(moduleRoot);
+        module.removeContentRoot(moduleRoot);
+        module.addContentRoot(contentRoot);
+        for (File source : currentSources) {
+          module.addSourceRoot(contentRoot, source);
+        }
+        return contentRoot; // no need to include a separate root
       }
     }
     module.addContentRoot(contentRoot);

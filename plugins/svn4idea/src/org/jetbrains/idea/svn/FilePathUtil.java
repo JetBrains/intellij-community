@@ -34,13 +34,8 @@ public class FilePathUtil {
     for (FilePath filePath : roots) {
       final File ioFile = filePath.getIOFile();
       if (ioFile.equals(root)) continue;
-      try {
-        if (FileUtil.isAncestor(ioFile, root, true)) {
-          return true;
-        }
-      }
-      catch (IOException e) {
-        //
+      if (FileUtil.isAncestor(ioFile, root, true)) {
+        return true;
       }
     }
     return false;

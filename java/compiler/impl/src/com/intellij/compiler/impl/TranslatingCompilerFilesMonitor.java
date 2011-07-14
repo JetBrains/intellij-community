@@ -1365,13 +1365,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private boolean belongsToIntermediateSources(VirtualFile file, Project project) {
-    try {
-      return FileUtil.isAncestor(myGeneratedDataPaths.get(project), new File(file.getPath()), true);
-    }
-    catch (IOException e) {
-      LOG.error(e); // according to javadoc of FileUtil.isAncestor(), this should never happen
-    }
-    return false;
+    return FileUtil.isAncestor(myGeneratedDataPaths.get(project), new File(file.getPath()), true);
   }
 
   private void loadInfoAndAddSourceForRecompilation(final int projectId, final VirtualFile srcFile) {

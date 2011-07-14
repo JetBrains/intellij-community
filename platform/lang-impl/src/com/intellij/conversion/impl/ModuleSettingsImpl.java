@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -128,12 +127,8 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
           final String outputUrl = outputElement.getAttributeValue("url");
           if (outputUrl != null) {
             final File outputFile = getFile(outputUrl);
-            try {
-              if (FileUtil.isAncestor(outputFile, directory, false)) {
-                return;
-              }
-            }
-            catch (IOException ignored) {
+            if (FileUtil.isAncestor(outputFile, directory, false)) {
+              return;
             }
           }
         }
@@ -141,12 +136,8 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     }
     for (Element contentRoot : getContentRootElements()) {
       final File root = getFile(contentRoot.getAttributeValue(ContentEntryImpl.URL_ATTRIBUTE));
-      try {
-        if (FileUtil.isAncestor(root, directory, true)) {
-          addExcludedFolder(directory, contentRoot);
-        }
-      }
-      catch (IOException ignored) {
+      if (FileUtil.isAncestor(root, directory, true)) {
+        addExcludedFolder(directory, contentRoot);
       }
     }
   }
@@ -204,7 +195,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     }
   }
 
-  private void addExcludedFolder(File directory, Element contentRoot) throws IOException {
+  private void addExcludedFolder(File directory, Element contentRoot) {
     for (Element excludedFolder : JDOMUtil.getChildren(contentRoot, ExcludeFolderImpl.ELEMENT_NAME)) {
       final File excludedDir = getFile(excludedFolder.getAttributeValue(ExcludeFolderImpl.URL_ATTRIBUTE));
       if (FileUtil.isAncestor(excludedDir, directory, false)) {

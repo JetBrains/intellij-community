@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 public class ProjectUtil {
   @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
@@ -60,13 +59,8 @@ public class ProjectUtil {
     if ((SystemInfo.isLinux || SystemInfo.isMac)) {
       final File projectDir = new File(path);
       final File userHomeDir = new File(SystemProperties.getUserHome());
-      try {
-        if (FileUtil.isAncestor(userHomeDir, projectDir, true)) {
-          _path = "~/" + FileUtil.getRelativePath(userHomeDir, projectDir);
-        }
-      }
-      catch (IOException e) {
-        // nothing
+      if (FileUtil.isAncestor(userHomeDir, projectDir, true)) {
+        _path = "~/" + FileUtil.getRelativePath(userHomeDir, projectDir);
       }
     }
 

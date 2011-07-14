@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -230,13 +229,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   private void assertFolderUnderMe(String url) {
     final String rootUrl = getUrl();
-    try {
-      if (!FileUtil.isAncestor(new File(rootUrl), new File(url), false)) {
-        LOG.error("The file " + url + " is not under content entry root " + rootUrl);
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    if (!FileUtil.isAncestor(new File(rootUrl), new File(url), false)) {
+      LOG.error("The file " + url + " is not under content entry root " + rootUrl);
     }
   }
 

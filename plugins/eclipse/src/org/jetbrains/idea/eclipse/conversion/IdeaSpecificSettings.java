@@ -46,7 +46,6 @@ import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -200,13 +199,8 @@ public class IdeaSpecificSettings {
     final String url = entry.getUrl();
     for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
       final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
-      try {
-        if (FileUtil.isAncestor(new File(url), new File(excludeUrl), false)) { //check if it is excluded manually
-          entry.addExcludeFolder(excludeUrl);
-        }
-      }
-      catch (IOException e) {
-        //ignore
+      if (FileUtil.isAncestor(new File(url), new File(excludeUrl), false)) { //check if it is excluded manually
+        entry.addExcludeFolder(excludeUrl);
       }
     }
   }

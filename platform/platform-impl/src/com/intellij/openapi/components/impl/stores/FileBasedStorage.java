@@ -125,12 +125,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   private static boolean isOptionsFile(final String filePath) {
-    try {
-      return FileUtil.isAncestor(new File(PathManager.getOptionsPath()), new File(filePath), false);
-    }
-    catch (IOException e) {
-      return false;
-    }
+    return FileUtil.isAncestor(new File(PathManager.getOptionsPath()), new File(filePath), false);
   }
 
   protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
