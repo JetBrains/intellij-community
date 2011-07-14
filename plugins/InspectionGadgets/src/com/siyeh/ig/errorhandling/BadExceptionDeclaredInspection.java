@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,45 +16,60 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.TestUtil;
-import com.intellij.codeInspection.ui.AddAction;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.RemoveAction;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.ig.ui.*;
-import org.jdom.Element;
+import com.siyeh.ig.ui.ExternalizableStringSet;
+import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.List;
-import java.util.Set;
 
 public class BadExceptionDeclaredInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
-    public String exceptionsString =
-      "java.lang.Throwable" + ',' +
-      "java.lang.Exception" + ',' +
-      "java.lang.Error" + ',' +
-      "java.lang.RuntimeException" + ',' +
-      "java.lang.NullPointerException" + ',' +
-      "java.lang.ClassCastException" + ',' +
-      "java.lang.ArrayIndexOutOfBoundsException";
+    public String exceptionsString = "";
+
+    /** @noinspection PublicField*/
+    public final ExternalizableStringSet exceptions =
+            new ExternalizableStringSet(
+                    "java.lang.Throwable",
+                    "java.lang.Exception",
+                    "java.lang.Error",
+                    "java.lang.RuntimeException",
+                    "java.lang.NullPointerException",
+                    "java.lang.ClassCastException",
+                    "java.lang.ArrayIndexOutOfBoundsException"
+            );
 
     /** @noinspection PublicField*/
     public boolean ignoreTestCases = false;
-    final List<String> exceptionList = new ArrayList<String>(32);
 
     public BadExceptionDeclaredInspection() {
-        parseString(exceptionsString, exceptionList);
+        if (exceptionsString.length() != 0) {
+            exceptions.clear();
+            final List<String> strings =
+                    StringUtil.split(exceptionsString, ",");
+            for (String string : strings) {
+                exceptions.add(string);
+            }
+            exceptionsString = "";
+        }
     }
 
     @Override
@@ -78,22 +93,51 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
     }
 
     @Override
-    public void readSettings(Element element) throws InvalidDataException{
-        super.readSettings(element);
-        parseString(exceptionsString, exceptionList);
+    public JComponent createOptionsPanel() {
+        final JComponent panel = new JPanel(new GridBagLayout());
+
+        final ListTable table =
+                new ListTable(new ListWrappingTableModel(exceptions,
+                        InspectionGadgetsBundle.message(
+                                "ignored.io.resource.types")));
+        final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+        final FontMetrics fontMetrics = table.getFontMetrics(table.getFont());
+        scrollPane.setPreferredSize(
+                new Dimension(0, fontMetrics.getHeight() * 7));
+        scrollPane.setMinimumSize(
+                new Dimension(0, fontMetrics.getHeight() * 3));
+
+        final ActionToolbar toolbar =
+                UiUtils.createAddRemoveTreeClassChooserToolbar(table,
+                        InspectionGadgetsBundle.message(
+                                "exception.class.column.name"),
+                        "java.lang.Throwable");
+
+        final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
+                "bad.exception.declared.ignore.exceptions.declared.in.tests.option"),
+                this, "ignoreTestCases");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(toolbar.getComponent(), constraints);
+
+        constraints.gridy = 1;
+        panel.add(scrollPane, constraints);
+
+        constraints.gridy = 2;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(checkBox,  constraints);
+
+        return panel;
     }
 
-    @Override
-    public void writeSettings(Element element) throws WriteExternalException{
-        exceptionsString = formatString(exceptionList);
-        super.writeSettings(element);
-    }
-
-    @Override
-    public JComponent createOptionsPanel(){
-        final Form form = new Form();
-        return form.getContentPanel();
-    }
 
     @Override
     public BaseInspectionVisitor buildVisitor(){
@@ -101,8 +145,6 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
     }
 
     private class BadExceptionDeclaredVisitor extends BaseInspectionVisitor{
-
-        private final Set<String> exceptionSet = new HashSet(exceptionList);
 
         @Override public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
@@ -127,40 +169,10 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
                 final PsiClass thrownClass = (PsiClass)element;
                 final String qualifiedName = thrownClass.getQualifiedName();
                 if (qualifiedName != null &&
-                        exceptionSet.contains(qualifiedName)) {
+                        exceptions.contains(qualifiedName)) {
                     registerError(reference);
                 }
             }
-        }
-    }
-
-    private class Form{
-
-        JPanel contentPanel;
-        JButton addButton;
-        JButton removeButton;
-        JCheckBox ignoreTestCasesCheckBox;
-        ListTable table;
-
-        Form(){
-            super();
-            addButton.setAction(new AddAction(table));
-            removeButton.setAction(new RemoveAction(table));
-            ignoreTestCasesCheckBox.setAction(new ToggleAction(
-                    InspectionGadgetsBundle.message(
-                            "bad.exception.declared.ignore.exceptions.declared.in.tests.option"),
-                    BadExceptionDeclaredInspection.this, "ignoreTestCases"));
-            ignoreTestCasesCheckBox.setSelected(ignoreTestCases);
-        }
-
-        private void createUIComponents() {
-            table = new ListTable(new ListWrappingTableModel(exceptionList,
-                    InspectionGadgetsBundle.message(
-                            "exception.class.column.name")));
-        }
-
-        public JComponent getContentPanel(){
-            return contentPanel;
         }
     }
 }
