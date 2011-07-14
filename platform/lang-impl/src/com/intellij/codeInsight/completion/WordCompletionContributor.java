@@ -34,8 +34,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static com.intellij.patterns.StandardPatterns.character;
-
 /**
  * @author peter
  */
@@ -52,10 +50,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
     int startOffset = parameters.getOffset();
     PsiElement insertedElement = parameters.getPosition();
     final CompletionResultSet javaResultSet = result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters));
-    final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findIdentifierPrefix(insertedElement,
-                                                                                                            startOffset,
-                                                                                                            character().javaIdentifierPart().andNot(character().equalTo('$')),
-                                                                                                            character().javaIdentifierStart()));
+    final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findAlphanumericPrefix(parameters));
     for (final String word : getAllWords(insertedElement, startOffset)) {
       if (!excludes.contains(word)) {
         final LookupElement item = LookupElementBuilder.create(word);

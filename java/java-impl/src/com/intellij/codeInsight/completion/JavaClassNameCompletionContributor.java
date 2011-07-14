@@ -56,9 +56,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           CompletionService.getCompletionService().setAdvertisementText(CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
         }
 
-        final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
-
-        addAllClasses(parameters, result, new Consumer<LookupElement>() {
+        CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
+        addAllClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result), new Consumer<LookupElement>() {
           @Override
           public void consume(LookupElement element) {
             _result.addElement(element);

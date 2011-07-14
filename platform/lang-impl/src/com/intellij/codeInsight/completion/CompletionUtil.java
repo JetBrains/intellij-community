@@ -155,6 +155,11 @@ public class CompletionUtil {
     return findIdentifierPrefix(insertedElement, offset, character().javaIdentifierPart(), character().javaIdentifierStart());
   }
 
+  public static String findReferenceOrAlphanumericPrefix(CompletionParameters parameters) {
+    String prefix = findReferencePrefix(parameters);
+    return prefix == null ? findAlphanumericPrefix(parameters) : prefix;
+  }
+
   public static String findAlphanumericPrefix(CompletionParameters parameters) {
     return findIdentifierPrefix(parameters.getPosition().getContainingFile(), parameters.getOffset(), character().letterOrDigit(), character().letterOrDigit());
   }
@@ -177,9 +182,11 @@ public class CompletionUtil {
     return text.substring(start + 1, offsetInElement).trim();
   }
 
-  public static String findPrefix(CompletionParameters parameters, ElementPattern<Character> part) {
-    return findIdentifierPrefix(parameters.getPosition().getContainingFile(), parameters.getOffset(), part, part);
+  @Nullable
+  public static String findReferencePrefix(CompletionParameters parameters) {
+    return CompletionData.getReferencePrefix(parameters.getPosition(), parameters.getOffset());
   }
+
 
   static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item) {
     final InsertionContext newContext = newContext(oldContext, item);
