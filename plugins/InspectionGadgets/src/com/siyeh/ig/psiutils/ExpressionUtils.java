@@ -243,19 +243,17 @@ public class ExpressionUtils {
         if (condition instanceof PsiPrefixExpression) {
             final PsiPrefixExpression prefixExpression =
                     (PsiPrefixExpression)condition;
-            final PsiJavaToken sign = prefixExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = prefixExpression.getOperationTokenType();
             return tokenType.equals(JavaTokenType.EXCL);
         } else if (condition instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)condition;
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final PsiExpression lhs = binaryExpression.getLOperand();
+          final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             if (rhs == null) {
                 return false;
             }
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = binaryExpression.getOperationTokenType();
             if (tokenType.equals(JavaTokenType.NE)) {
                 if (ignoreNegatedNullComparison) {
                     final String lhsText = lhs.getText();
@@ -307,8 +305,7 @@ public class ExpressionUtils {
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression)strippedExpression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (!JavaTokenType.PLUS.equals(tokenType) &&
                 !JavaTokenType.MINUS.equals(tokenType)) {
             return false;
@@ -331,8 +328,7 @@ public class ExpressionUtils {
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression)expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.LT) ||
                 tokenType.equals(JavaTokenType.LE)) {
             final PsiExpression lhs = binaryExpression.getLOperand();
@@ -354,8 +350,7 @@ public class ExpressionUtils {
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression)expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.GT) ||
                 tokenType.equals(JavaTokenType.GE)) {
             final PsiExpression lhs = binaryExpression.getLOperand();

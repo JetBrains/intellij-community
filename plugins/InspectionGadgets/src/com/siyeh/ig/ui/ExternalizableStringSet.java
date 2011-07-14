@@ -25,6 +25,15 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
+/**
+ * Always assign instances of this class to a final field to prevent an InstantiationException
+ * from DefaultJDOMExternalizer.
+ *
+ * The constructor of this class takes parameters. This means an instance of this class
+ * cannot be constructed by {@link com.intellij.openapi.util.DefaultJDOMExternalizer}.
+ * If instances of this class are assigned to a final field, DefaultJDOMExternalizer will
+ * omit the construction of a new instance and prevent the problem.
+ */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ExternalizableStringSet extends OrderedSet<String>
         implements JDOMExternalizable {

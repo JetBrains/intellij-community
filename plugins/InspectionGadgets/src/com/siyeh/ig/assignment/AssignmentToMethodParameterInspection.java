@@ -128,8 +128,7 @@ public class AssignmentToMethodParameterInspection
                 return;
             }
             super.visitPostfixExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;

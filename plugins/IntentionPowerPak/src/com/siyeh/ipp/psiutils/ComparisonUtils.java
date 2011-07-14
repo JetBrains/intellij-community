@@ -86,11 +86,6 @@ public class ComparisonUtils{
         return flippedComparisons.get(text);
     }
 
-    public static String getNegatedComparison(@NotNull PsiJavaToken sign){
-        final IElementType tokenType = sign.getTokenType();
-        return getNegatedComparison(tokenType);
-    }
-
     public static String getNegatedComparison(IElementType tokenType){
         return negatedComparisons.get(tokenType);
     }

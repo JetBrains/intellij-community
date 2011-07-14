@@ -509,6 +509,12 @@ public class ResolveMethod15Test extends Resolve15TestCase {
     assertResolvesToMethodInClass(result, "A");
   }
 
+  public void testRawInheritanceConflict() throws Exception {
+    PsiJavaReference ref = (PsiJavaReference)configureByFile();
+    final JavaResolveResult[] result = ref.multiResolve(false);
+    assertEquals("False ambiguity", 1, result.length);
+  }
+
   public void testRawVsGenericConflictInCaseOfOverride() throws Exception{
     PsiJavaReference ref = (PsiJavaReference) configureByFile();
     final JavaResolveResult result = ref.advancedResolve(true);

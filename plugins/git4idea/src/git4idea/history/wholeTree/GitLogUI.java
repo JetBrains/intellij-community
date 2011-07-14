@@ -89,6 +89,7 @@ public class GitLogUI implements Disposable {
   private UIRefresh myUIRefresh;
   private JBTable myJBTable;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
+  final List<CommitI> myCommitsInRepositoryChangesBrowser;
   private boolean myDataBeingAdded;
   private CardLayout myRepoLayout;
   private JPanel myRepoPanel;
@@ -130,6 +131,7 @@ public class GitLogUI implements Disposable {
     myPreviousFilter = "";
     myDescriptionRenderer = new DescriptionRenderer();
     myCommentSearchContext.addHighlighter(myDescriptionRenderer.myInner.myWorker);
+    myCommitsInRepositoryChangesBrowser = new ArrayList<CommitI>();
 
     mySelectionRequestsMerger = new RequestsMerger(new Runnable() {
       @Override
@@ -405,10 +407,10 @@ public class GitLogUI implements Disposable {
       myRepoPanel.repaint();
       return;
     }
-    myRepoLayout.show(myRepoPanel, "loading");
-    myRepoPanel.repaint();
-
-    gatherNotLoadedData();
+    if (! myDataBeingAdded && ! gatherNotLoadedData()) {
+      myRepoLayout.show(myRepoPanel, "loading");
+      myRepoPanel.repaint();
+    }
   }
 
   private static class MeaningfulSelection {
@@ -486,10 +488,12 @@ public class GitLogUI implements Disposable {
     gatherNotLoadedData();
   }
 
-  private void gatherNotLoadedData() {
-    if (myDataBeingAdded) return;
+  private boolean gatherNotLoadedData() {
+    if (myDataBeingAdded) return false;
     final int[] rows = myJBTable.getSelectedRows();
     final List<GitCommit> commits = new ArrayList<GitCommit>();
+    final List<CommitI> forComparison = new ArrayList<CommitI>();
+
     final MultiMap<VirtualFile,AbstractHash> missingHashes = new MultiMap<VirtualFile, AbstractHash>();
     for (int i = rows.length - 1; i >= 0; --i) {
       final int row = rows[i];
@@ -499,13 +503,18 @@ public class GitLogUI implements Disposable {
       if (details == null) {
         missingHashes.putValue(commitI.selectRepository(myRootsUnderVcs), commitI.getHash());
       } else if (missingHashes.isEmpty()) {   // no sense in collecting commits when s
+        forComparison.add(commitI);
         commits.add(details);
       }
     }
     if (! missingHashes.isEmpty()) {
       myDetailsCache.acceptQuestion(missingHashes);
-      return;
+      return false;
     }
+    if (Comparing.equal(myCommitsInRepositoryChangesBrowser, forComparison)) return true;
+    myCommitsInRepositoryChangesBrowser.clear();
+    myCommitsInRepositoryChangesBrowser.addAll(forComparison);
+
     final List<Change> changes = new ArrayList<Change>();
     for (GitCommit commit : commits) {
       changes.addAll(commit.getChanges());
@@ -514,6 +523,7 @@ public class GitLogUI implements Disposable {
     myRepositoryChangesBrowser.setChangesToDisplay(zipped);
     myRepoLayout.show(myRepoPanel, "main");
     myRepoPanel.repaint();
+    return true;
   }
 
   private JPanel createMainTable() {

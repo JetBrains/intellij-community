@@ -639,18 +639,12 @@
   
   <problem>
     <file>Foo.java</file>
-    <line>73</line>
-    
+    <line>72</line>
+
     <description>Numeric overflow in expression</description>
   </problem>
 
 
   
-  <problem>
-    <file>Foo.java</file>
-    <line>73</line>
-    
-    <description>Numeric overflow in expression</description>
-  </problem>
 </problems>
 

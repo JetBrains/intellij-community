@@ -379,8 +379,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                         (PsiBinaryExpression)expression;
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 final PsiExpression rhs = binaryExpression.getROperand();
-                final PsiJavaToken sign = binaryExpression.getOperationSign();
-                final IElementType tokenType = sign.getTokenType();
+              final IElementType tokenType = binaryExpression.getOperationTokenType();
                 if (JavaTokenType.OROR.equals(tokenType)) {
                     extractCaseExpressions(lhs, switchExpression,
                             values);

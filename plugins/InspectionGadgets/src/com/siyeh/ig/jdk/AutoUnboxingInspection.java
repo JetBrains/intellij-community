@@ -148,9 +148,7 @@ public class AutoUnboxingInspection extends BaseInspection {
                     !unboxedType.equalsToText("boolean") ) {
                 final PsiPrefixExpression prefixExpression =
                         (PsiPrefixExpression)parent;
-                final PsiJavaToken operationSign =
-                        prefixExpression.getOperationSign();
-                final IElementType tokenType = operationSign.getTokenType();
+              final IElementType tokenType = prefixExpression.getOperationTokenType();
                 if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
                     replaceExpression(prefixExpression,
                             expressionText + '=' + newExpressionText + "+1");
@@ -161,9 +159,7 @@ public class AutoUnboxingInspection extends BaseInspection {
             } else if (parent instanceof PsiPostfixExpression) {
                 final PsiPostfixExpression postfixExpression =
                         (PsiPostfixExpression)parent;
-                final PsiJavaToken operationSign =
-                        postfixExpression.getOperationSign();
-                final IElementType tokenType = operationSign.getTokenType();
+              final IElementType tokenType = postfixExpression.getOperationTokenType();
                 final PsiElement grandParent = postfixExpression.getParent();
                 if (grandParent instanceof PsiExpressionStatement) {
                     if (JavaTokenType.PLUSPLUS.equals(tokenType)) {

@@ -18,7 +18,6 @@ package com.siyeh.ig.style;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -71,8 +70,7 @@ public class ChainedEqualityInspection extends BaseInspection {
 
         private static boolean isEqualityComparison(
                 @NotNull PsiBinaryExpression expression) {
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             return tokenType.equals(JavaTokenType.EQEQ) ||
                     tokenType.equals(JavaTokenType.NE);
         }

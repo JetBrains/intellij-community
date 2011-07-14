@@ -39,8 +39,7 @@ class StringConcatPredicate implements PsiElementPredicate{
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) parent;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         if(!tokenType.equals(JavaTokenType.PLUS)){
             return false;
         }

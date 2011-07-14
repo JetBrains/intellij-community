@@ -119,8 +119,7 @@ public class DuplicateBooleanBranchInspection extends BaseInspection {
             if (condition instanceof PsiBinaryExpression) {
                 final PsiBinaryExpression binaryExpression =
                         (PsiBinaryExpression) condition;
-                final PsiJavaToken sign = binaryExpression.getOperationSign();
-                final IElementType testTokeType = sign.getTokenType();
+              final IElementType testTokeType = binaryExpression.getOperationTokenType();
                 if (testTokeType.equals(tokenType)) {
                     final PsiExpression lhs = binaryExpression.getLOperand();
                     collectConditions(lhs, conditions, tokenType);

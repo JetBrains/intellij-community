@@ -41,7 +41,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   }
 
   public void visitBinaryExpression(PsiBinaryExpression expression) {
-    visitExpression(expression);
+    visitPolyadicExpression(expression);
   }
 
   public void visitBlockStatement(PsiBlockStatement statement) {
@@ -366,5 +366,9 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitCodeFragment(JavaCodeFragment codeFragment) {
     visitFile(codeFragment);
+  }
+
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    visitExpression(expression);
   }
 }

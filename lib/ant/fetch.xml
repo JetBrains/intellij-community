@@ -60,6 +60,10 @@
   <!-- load in our properties table -->
   <property file="${lib.dir}/libraries.properties"/>
 
+  <!-- Temporary cache for working files -->
+  <property name="temp.dir" location="${user.home}/.ant/tempcache" />
+  <property name="keep.temp.dir" value="true" />
+
   <import file="get-m2.xml" />
 
   <target name="pick-dest">
@@ -99,9 +103,10 @@ Set -Ddest=LOCATION on the command line
     <macrodef name="f2">
       <attribute name="project" />
       <attribute name="archive" default="@{project}"/>
+      <attribute name="repository" default="${m2.repo}"/>
       <sequential>
         <fail>
-        Unknown archive @{archive} -no property @{archive}.version defined.
+        Unknown archive @{archive} -no property @{archive}.version defined in ${lib.dir}/libraries.properties.
           <condition>
             <not>
             <isset property="@{archive}.version"/>
@@ -112,6 +117,7 @@ Set -Ddest=LOCATION on the command line
           <dependency groupID="@{project}"
             artifactID="@{archive}"
             version="${@{archive}.version}"/>
+          <remoteRepository url="@{repository}" />
         </artifact:dependencies>
         <!-- now we are left with the problem of getting the files
              into our directory -->
@@ -123,10 +129,70 @@ Set -Ddest=LOCATION on the command line
     </macrodef>
   </target>
 
+  <target name="nonm2-macros" depends="pick-dest">
+    <macrodef name="get-ftp-file">
+      <attribute name="host" />
+      <attribute name="port" default="21"/>
+      <attribute name="remotedir" />
+      <attribute name="filename" />
+      <attribute name="localdir" default="${dest.dir}" />
+      <attribute name="user" default="anonymous"/>
+      <attribute name="pw" default="anonymous"/>
+      <sequential>
+        <ftp server="@{host}" port="@{port}" userid="@{user}" password="@{pw}" passive="true"
+            remotedir="@{remotedir}" action="get" depends="true" preserveLastModified="true"
+            skipFailedTransfers="true">
+          <fileset dir="@{localdir}">
+            <include name="@{filename}" />
+          </fileset>
+        </ftp>
+      </sequential>
+    </macrodef>
+
+  </target>
+
 
 
   <!-- any init stuff -->
   <target name="init" depends="macros" />
+
+  <target name="init-no-m2" depends="nonm2-macros" />
+
+  <target name="init-cache">
+    <available property="temp.cache.already.exists" file="${temp.dir}" type="dir" />
+    <condition property="user.wants.temp.cache">
+      <and>
+        <isset property="keep.temp.dir" />
+        <not>
+          <or>
+            <equals arg1="${keep.temp.dir}" arg2="false" casesensitive="false" />
+            <equals arg1="${keep.temp.dir}" arg2="no" casesensitive="false" />
+            <equals arg1="${keep.temp.dir}" arg2="off" casesensitive="false" />
+          </or>
+        </not>
+      </and>
+    </condition>
+    <condition property="delete.temp.cache">
+      <and>
+        <not>
+          <isset property="temp.cache.already.exists" />
+        </not>
+        <not>
+          <isset property="user.wants.temp.cache" />
+        </not>
+      </and>
+    </condition>
+  </target>
+
+  <target name="-setup-temp-cache" depends="init-cache" unless="temp.cache.already.exists"
+          description="Setup temporary cache for downloaded files">
+    <mkdir dir="${temp.dir}" />
+  </target>
+
+  <target name="-cleanup-temp-cache" depends="init-cache" if="delete.temp.cache"
+          description="Gets rid of the temporary cache directory">
+    <delete dir="${temp.dir}" />
+  </target>
 
 
   <target name="diag" depends="init">
@@ -153,16 +219,12 @@ Set -Ddest=LOCATION on the command line
     <f2 project="xml-resolver" />
   </target>
 
-  <!--
-   This is not used as
-   we like to get the more recent artifacts than are in the repo at the time of writing (2006-12-21)
-   -->
-
   <target name="networking"
     description="load networking libraries (commons-net; jsch)"
     depends="init">
     <f2 project="commons-net" />
     <f2 project="com.jcraft" archive="jsch"/>
+    <available property="have.commons.net" classname="org.apache.commons.net.ftp.FTPClientConfig"/>
   </target>
 
   <target name="regexp"
@@ -242,8 +304,40 @@ Set -Ddest=LOCATION on the command line
     <f2 project="javax.servlet" archive="servlet-api"/>
   </target>
 
+  <target name="jai" depends="init"
+          description="load java advanced imaging">
+    <f2 project="javax.media" archive="jai-core" repository="http://repository.jboss.org/maven2"/>
+    <f2 project="com.sun.media" archive="jai-codec" repository="http://repository.jboss.org/maven2"/>
+  </target>
+
+  <target name="netrexx" depends="init-no-m2,-setup-temp-cache,networking,-fetch-netrexx,-fetch-netrexx-no-commons-net,-cleanup-temp-cache"
+          description="load NetRexx compiler" />
+
+  <target name="-fetch-netrexx" depends="-setup-temp-cache"
+          description="FTPs NetRexx compiler from IBM site" if="have.commons.net">
+    <get-ftp-file host="ftp.software.ibm.com" remotedir="/software/awdtools/netrexx"
+            filename="NetRexx.zip" localdir="${temp.dir}" />
+    <copy todir="${dest.dir}" flatten="true">
+      <zipfileset src="${temp.dir}/NetRexx.zip">
+        <include name="NetRexx\lib\NetRexxC.jar" />
+        <include name="NetRexx\browse\license.txt" />
+      </zipfileset>
+    </copy>
+  </target>
+
+  <target name="-fetch-netrexx-no-commons-net" depends="-setup-temp-cache"
+          description="FTPs NetRexx compiler from IBM site" unless="have.commons.net">
+    <get src="ftp://ftp.software.ibm.com/software/awdtools/netrexx/NetRexx.zip" dest="${temp.dir}/NetRexx.zip" skipexisting="true"/>
+    <copy todir="${dest.dir}" flatten="true">
+      <zipfileset src="${temp.dir}/NetRexx.zip">
+        <include name="NetRexx\lib\NetRexxC.jar" />
+        <include name="NetRexx\browse\license.txt" />
+      </zipfileset>
+    </copy>
+  </target>
+
   <target name="all"
     description="load all the libraries (except jython)"
-    depends="logging,junit,xml,networking,regexp,antlr,bcel,jdepend,bsf,debugging,script,javamail,jspc" />
+    depends="logging,junit,xml,networking,regexp,antlr,bcel,jdepend,bsf,debugging,script,javamail,jspc,jai,netrexx" />
 
 </project>

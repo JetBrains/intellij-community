@@ -43,8 +43,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
             return;
         }
         boolean negated=false;
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         if (JavaTokenType.NE.equals(tokenType)) {
             negated = true;
         }

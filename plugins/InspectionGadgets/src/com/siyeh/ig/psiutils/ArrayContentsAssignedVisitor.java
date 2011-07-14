@@ -57,8 +57,7 @@ class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
             return;
         }
         super.visitPrefixExpression(expression);
-        final PsiJavaToken operationSign = expression.getOperationSign();
-        final IElementType tokenType = operationSign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         if(!(tokenType.equals(JavaTokenType.PLUSPLUS) ||
                 tokenType.equals(JavaTokenType.MINUSMINUS))){
             return;
@@ -84,8 +83,7 @@ class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
             return;
         }
         super.visitPostfixExpression(expression);
-        final PsiJavaToken operationSign = expression.getOperationSign();
-        final IElementType tokenType = operationSign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         if(!(tokenType.equals(JavaTokenType.PLUSPLUS) ||
                 tokenType.equals(JavaTokenType.MINUSMINUS))){
             return;

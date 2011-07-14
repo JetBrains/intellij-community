@@ -26,19 +26,20 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.8.1</version>
+    <version>1.8.2</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-jsch</artifactId>
-  <version>1.8.1</version>
+  <version>1.8.2</version>
+  <name>Apache Ant + JSch</name>
   <description>contains the sshexec and scp tasks
   jsch 0.1.29 might not be available from maven</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.8.1</version>
+      <version>1.8.2</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -59,6 +60,9 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
           <includes>
             <include>org/apache/tools/ant/taskdefs/optional/ssh/*</include>
           </includes>
+          <testIncludes>
+            <include>org/apache/tools/ant/taskdefs/optional/ssh/*</include>
+          </testIncludes>
         </configuration>
       </plugin>
     </plugins>

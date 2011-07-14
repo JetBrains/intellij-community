@@ -24,19 +24,18 @@ PsiJavaFile:And0.java
         PsiReturnStatement
           PsiKeyword:return('return')
           PsiWhiteSpace(' ')
-          PsiBinaryExpression:a & b & c
-            PsiBinaryExpression:a & b
-              PsiReferenceExpression:a
-                PsiReferenceParameterList
-                  <empty list>
-                PsiIdentifier:a('a')
-              PsiWhiteSpace(' ')
-              PsiJavaToken:AND('&')
-              PsiWhiteSpace(' ')
-              PsiReferenceExpression:b
-                PsiReferenceParameterList
-                  <empty list>
-                PsiIdentifier:b('b')
+          PsiPolyadicExpression: a & b & c
+            PsiReferenceExpression:a
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:a('a')
+            PsiWhiteSpace(' ')
+            PsiJavaToken:AND('&')
+            PsiWhiteSpace(' ')
+            PsiReferenceExpression:b
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:b('b')
             PsiWhiteSpace(' ')
             PsiJavaToken:AND('&')
             PsiWhiteSpace(' ')

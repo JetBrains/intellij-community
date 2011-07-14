@@ -528,8 +528,8 @@ public class RefactoringUtil {
 
   public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
     if (element instanceof PsiPrefixExpression) {
-      PsiJavaToken operandSign = ((PsiPrefixExpression)element).getOperationSign();
-      return operandSign.getTokenType() == JavaTokenType.PLUSPLUS || operandSign.getTokenType() == JavaTokenType.MINUSMINUS;
+      return ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.PLUSPLUS ||
+             ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.MINUSMINUS;
     }
     else if (element instanceof PsiPostfixExpression) {
       IElementType operandTokenType = ((PsiPostfixExpression)element).getOperationTokenType();

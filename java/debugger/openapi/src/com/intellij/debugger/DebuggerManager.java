@@ -46,6 +46,9 @@ public abstract class DebuggerManager implements ProjectComponent, JDOMExternali
 
   public abstract String getVMClassQualifiedName(PsiClass aClass);
 
+  /**
+   * @deprecated use PositionManagerFactory extension point instead
+   */
   public abstract void registerPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
 
   public abstract void unregisterPositionManagerFactory(Function<DebugProcess, PositionManager> factory);

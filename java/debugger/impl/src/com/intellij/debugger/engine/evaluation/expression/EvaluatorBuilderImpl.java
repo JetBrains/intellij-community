@@ -318,6 +318,33 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myResult = createBinaryEvaluator(lResult, lOperand.getType(), rResult, rOperand.getType(), opType, expressionExpectedType);
     }
 
+    @Override
+    public void visitPolyadicExpression(PsiPolyadicExpression wideExpression) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("visitPolyadicExpression " + wideExpression);
+      }
+      PsiExpression[] operands = wideExpression.getOperands();
+      operands[0].accept(this);
+      Evaluator result = myResult;
+      PsiType lType = operands[0].getType();
+      for (int i = 1; i < operands.length; i++) {
+        PsiExpression expression = operands[i];
+        if (expression == null) {
+          throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", wideExpression.getText()));
+          return;
+        }
+        expression.accept(this);
+        Evaluator rResult = myResult;
+        IElementType opType = wideExpression.getOperationTokenType();
+        PsiType expressionExpectedType = expression.getType();
+        if (expressionExpectedType == null) {
+          throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
+        }
+        myResult = createBinaryEvaluator(result, lType, rResult, expression.getType(), opType, expressionExpectedType);
+        lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, expressionExpectedType, opType, true);
+        result = myResult;
+      }
+    }
 
     // constructs binary evaluator handling unboxing and numeric promotion issues
     private static BinaryExpressionEvaluator createBinaryEvaluator(
@@ -774,7 +801,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       final Evaluator operandEvaluator = myResult;
 
-      final IElementType operation = expression.getOperationSign().getTokenType();
+      final IElementType operation = expression.getOperationTokenType();
       final PsiType operandType = operandExpression.getType();
       @Nullable final PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
 
@@ -810,7 +837,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       @Nullable
       final PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
 
-      final IElementType operation = expression.getOperationSign().getTokenType();
+      final IElementType operation = expression.getOperationTokenType();
 
       if(operation == JavaTokenType.PLUSPLUS || operation == JavaTokenType.MINUSMINUS) {
         try {

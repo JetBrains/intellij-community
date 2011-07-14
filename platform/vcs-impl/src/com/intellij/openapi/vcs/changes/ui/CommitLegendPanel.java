@@ -43,7 +43,6 @@ public class CommitLegendPanel {
   private JLabel myNewLabel;
   private JPanel myDeletedPanel;
   private JLabel myDeletedLabel;
-  private JPanel myHeadingPanel;
 
   private final InfoCalculator myInfoCalculator;
 
@@ -83,10 +82,6 @@ public class CommitLegendPanel {
     updateCategory(myModifiedShown, myModifiedIncluded, modified, includedModified);
     updateCategory(myNewShown, myNewIncluded, cntNew, includedNew);
     updateCategory(myDeletedShown, myDeletedIncluded, deleted, includedDeleted);
-  }
-
-  private void createUIComponents() {
-    myHeadingPanel = (JPanel)SeparatorFactory.createSeparator(VcsBundle.message("commit.legend.summary"), null);
   }
 
   private static void updateCategory(JLabel totalLabel,

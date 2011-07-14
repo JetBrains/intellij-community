@@ -352,74 +352,102 @@ public class PasteHandler extends EditorActionHandler {
   }
 
   private static void indentBlockWithFormatter(Project project, Document document, int startOffset, int endOffset, PsiFile file) {
+    
+    // Algorithm: the main idea is to process the first line of the pasted block, adjust its indent if necessary, calculate indent
+    // adjustment string and apply to each line of the pasted block starting from the second one.
+    //
+    // We differentiate three possible states here:
+    //   --- pasted block doesn't start new line, i.e. there are non-white space symbols before it at the first line.
+    //      Example:
+    //         old content [pasted line 1
+    //                pasted line 2]
+    //      Indent adjustment string is just the first line indent then.
+    //
+    //   --- pasted block is located at the new line and starts with white space symbols.
+    //       Example:
+    //          [   pasted line 1
+    //                 pasted line 2]
+    //       We parse existing indents of the pasted block then, adjust its first line via formatter and adjust indent of the pasted lines
+    //       starting from the second one in order to preserve old indentation.
+    //
+    //   --- pasted block is located at the new line but doesn't start with white space symbols.
+    //       Example:
+    //           [pasted line 1
+    //         pasted line 2]
+    //       We adjust the first line via formatter then and apply first line's indent to all subsequent pasted lines. 
+    
     CharSequence chars = document.getCharsSequence();
+    final int firstLine = document.getLineNumber(startOffset);
+    final int firstLineStart = document.getLineStartOffset(firstLine);
+    final int lastLine = document.getLineNumber(endOffset);
+    final int i = CharArrayUtil.shiftBackward(chars, startOffset - 1, " \t");
+    
+    // Handle situation when pasted block doesn't start new line.
+    if (chars.charAt(i) != '\n') {
+      int firstNonWsOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
+      if (firstNonWsOffset > firstLineStart) {
+        CharSequence toInsert = chars.subSequence(firstLineStart, firstNonWsOffset);
+        for (int line = firstLine + 1; line <= lastLine; line++) {
+          document.insertString(document.getLineStartOffset(line), toInsert);
+        } 
+      }
+      return;
+    }
+
+    // Sync document and PSI for correct formatting processing.
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     if (file == null) {
       return;
     }
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-
-    final int startLine = document.getLineNumber(startOffset);
-    final int startLineStartOffset = document.getLineStartOffset(startLine);
-    int indentAdjustmentAnchorLine = -1; // Line which indent change will be applied to all subsequent pasted lines.
-    int pastedLinesAfterIndentLine = 0;
-
-    final int nonWsOffset = CharArrayUtil.shiftBackward(chars, startOffset - 1, " \t");
-    boolean onNewLine = nonWsOffset < 0 || chars.charAt(nonWsOffset) == '\n';
     
-    int diffShift = 0;
-    if (onNewLine && (chars.charAt(startOffset) == ' ' || chars.charAt(startOffset) == '\n')) {
-      indentAdjustmentAnchorLine = startLine;
-      diffShift += startOffset - startLineStartOffset;
+    final int j = CharArrayUtil.shiftForward(chars, startOffset, " \t");
+    codeStyleManager.adjustLineIndent(file, startOffset);
+    
+    // Handle situation when pasted block starts with non-white space symbols.
+    if (j == startOffset) {
+      int indentOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
+      if (indentOffset > firstLineStart) {
+        CharSequence toInsert = chars.subSequence(firstLineStart, indentOffset);
+        for (int line = firstLine + 1; line <= lastLine; line++) {
+          document.insertString(document.getLineStartOffset(line), toInsert);
+        }
+      }
+      return;
     }
     
-    for (int line = startLine + 1, max = document.getLineCount(); line < max; line++) {
-      int lineStartOffset = document.getLineStartOffset(line);
-      if (lineStartOffset >= endOffset) {
-        break;
-      }
-
-      if (indentAdjustmentAnchorLine >= 0) {
-        pastedLinesAfterIndentLine++;
-        continue;
-      }
-
-      int j = CharArrayUtil.shiftForward(chars, lineStartOffset, " \t");
-      if (j < document.getLineEndOffset(line)) {
-        // Non-empty line is found
-        indentAdjustmentAnchorLine = line;
-      }
+    // Handle situation when pasted block starts from white space symbols. Assume that the pasted text started at the line start,
+    // i.e. correct indentation level is stored at the blocks structure.
+    final int firstNonWsOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
+    final int diff = firstNonWsOffset - j;
+    if (diff == 0) {
+      return;
     }
-
-    if (indentAdjustmentAnchorLine < 0) {
-      codeStyleManager.adjustLineIndent(file, startOffset);
+    if (diff > 0) {
+      CharSequence toInsert = chars.subSequence(firstLineStart, startOffset + diff);
+      for (int line = firstLine + 1; line <= lastLine; line++) {
+        document.insertString(document.getLineStartOffset(line), toInsert);
+      }
       return;
     }
 
-    int lineAdjustmentStartOffset; // Start offset of the range which indent will be adjusted
-    final int anchorLineStart = document.getLineStartOffset(indentAdjustmentAnchorLine);
-    int lineAdjustmentEndOffset = CharArrayUtil.shiftForward(chars, anchorLineStart, " \t");
-    
-    if (onNewLine) {
-      lineAdjustmentStartOffset = nonWsOffset + 1;
+    if (-diff == startOffset - firstLineStart) {
+      return;
     }
-    else {
-      lineAdjustmentStartOffset = anchorLineStart;
-    }
-    codeStyleManager.adjustLineIndent(file, new TextRange(lineAdjustmentStartOffset, lineAdjustmentEndOffset));
-    int diff = lineAdjustmentEndOffset - CharArrayUtil.shiftForward(chars, anchorLineStart, " \t") - diffShift;
-    if (diff > 0) {
-      // Indent was cut.
-      for (int line = indentAdjustmentAnchorLine + 1, max = line + pastedLinesAfterIndentLine; line < max; line++) {
-        int lineStartOffset = document.getLineStartOffset(line);
-        int indentOffset = CharArrayUtil.shiftForward(chars, lineStartOffset, " \t");
-        int symbolsToCutNow = Math.min(diff, indentOffset - lineStartOffset);
-        document.deleteString(lineStartOffset, lineStartOffset + symbolsToCutNow);
+    if (-diff > startOffset - firstLineStart) {
+      int desiredSymbolsToRemove = -diff - (startOffset - firstLineStart);
+      for (int line = firstLine + 1; line <= lastLine; line++) {
+        int currentLineStart = document.getLineStartOffset(line);
+        int currentLineIndentOffset = CharArrayUtil.shiftForward(chars, currentLineStart, " \t");
+        int symbolsToRemove = Math.min(currentLineIndentOffset - currentLineStart, desiredSymbolsToRemove);
+        if (symbolsToRemove > 0) {
+          document.deleteString(currentLineStart, currentLineStart + symbolsToRemove);
+        }
       }
     }
-    else if (diff < 0) {
-      final CharSequence toInsert = chars.subSequence(anchorLineStart, anchorLineStart - diff);
-      for (int line = indentAdjustmentAnchorLine + 1, max = line + pastedLinesAfterIndentLine; line < max; line++) {
+    else {
+      CharSequence toInsert = chars.subSequence(firstLineStart, firstLineStart + startOffset - firstLineStart + diff);
+      for (int line = firstLine + 1; line <= lastLine; line++) {
         document.insertString(document.getLineStartOffset(line), toInsert);
       }
     }

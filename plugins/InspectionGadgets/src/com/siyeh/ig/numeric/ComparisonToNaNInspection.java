@@ -39,8 +39,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
-        final PsiJavaToken sign = comparison.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = comparison.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.EQEQ)) {
             return InspectionGadgetsBundle.message(
                     "comparison.to.nan.problem.descriptor1");
@@ -87,8 +86,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
             }
             assert operand != null;
             final String operandText = operand.getText();
-            final PsiJavaToken sign = comparison.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = comparison.getOperationTokenType();
             final String negationString;
             if (tokenType.equals(JavaTokenType.EQEQ)) {
                 negationString = "";

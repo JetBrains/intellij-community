@@ -67,8 +67,7 @@ public class BadOddnessInspection extends BaseInspection {
                 return false;
             }
             final PsiBinaryExpression binary = (PsiBinaryExpression) exp;
-            final PsiJavaToken sign = binary.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = binary.getOperationTokenType();
             if (!JavaTokenType.PERC.equals(tokenType)) {
                 return false;
             }

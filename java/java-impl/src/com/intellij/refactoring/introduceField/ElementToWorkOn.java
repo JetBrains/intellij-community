@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -91,7 +92,7 @@ public class ElementToWorkOn {
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
 
-        if (statementsInRange.length == 1 && (PsiUtil.hasErrorElementChild(statementsInRange[0]) || !PsiUtil.isStatement(statementsInRange[0]))) {
+        if (statementsInRange.length == 1 && (PsiUtilBase.hasErrorElementChild(statementsInRange[0]) || !PsiUtil.isStatement(statementsInRange[0]))) {
           editor.getSelectionModel().selectLineAtCaret();
           final ElementToWorkOn elementToWorkOn = getElementToWorkOn(editor, file, refactoringName, helpId, project, localVar, expr);
           if (elementToWorkOn == null || elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null) {

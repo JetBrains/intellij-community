@@ -267,6 +267,7 @@ plugin
 plugins
 pointcut
 pointcuts
+polyadic
 popup
 popups
 posix
@@ -417,6 +418,7 @@ workflow
 wsdl
 xcode
 xcodeproj
+xhtml
 xmlschema
 xmlschemas
 xmltype

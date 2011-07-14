@@ -115,6 +115,11 @@ public class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinary
   }
 
   @Override
+  public PsiJavaToken getTokenBeforeOperand(@NotNull PsiExpression operand) {
+    return getOperationSign();
+  }
+
+  @Override
   public PsiType getType() {
     return myLOperand.getType();
   }
@@ -122,5 +127,10 @@ public class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinary
   @Override
   public String toString() {
     return "PsiBinaryExpression:" + getText();
+  }
+  @NotNull
+  @Override
+  public PsiExpression[] getOperands() {
+    return new PsiExpression[]{getLOperand(), getROperand()};
   }
 }

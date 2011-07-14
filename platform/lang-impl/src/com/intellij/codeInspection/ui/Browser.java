@@ -320,11 +320,12 @@ public class Browser extends JPanel {
     InspectionTool tool = getTool();
     assert tool != null;
     final GlobalInspectionContextImpl manager = tool.getContext();
-    if (true && refEntity instanceof RefElement){
+    if (refEntity instanceof RefElement){
       PsiElement element = ((RefElement)refEntity).getElement();
       if (element == null) return tool;
-      tool = InspectionProjectProfileManager.getInstance(manager.getProject()).getProfileWrapper().getInspectionTool(tool.getShortName(),
-                                                                                                                            element);
+      final InspectionProfileWrapper profileWrapper = InspectionProjectProfileManager.getInstance(manager.getProject()).getProfileWrapper();
+      if (profileWrapper == null) return tool;
+      tool = profileWrapper.getInspectionTool(tool.getShortName(), element);
     }
     return tool;
   }

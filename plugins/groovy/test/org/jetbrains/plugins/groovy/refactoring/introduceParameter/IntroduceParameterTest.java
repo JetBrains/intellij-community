@@ -16,15 +16,16 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -71,19 +72,22 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 
-    final PsiFile file = myFixture.getFile();
-    PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
+    final PsiFile myFile = myFixture.getFile();
+    final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
+    ElementToWorkOn
+          .processElementToWorkOn(editor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(), new Pass<ElementToWorkOn>() {
+            @Override
+            public void pass(final ElementToWorkOn e) {
+              if (e == null) return;
 
-    PsiLocalVariable localVariable = null;
-    if (expr == null) {
-      PsiElement element = CodeInsightUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
-      localVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
-      if (localVariable == null) {
-        return false;
-      }
-    }
+              elementToWorkOn[0] = e;
+            }
+          });
 
-    PsiElement context = expr == null ? localVariable : expr;
+    final PsiExpression expr = elementToWorkOn[0].getExpression();
+    final PsiLocalVariable localVar = elementToWorkOn[0].getLocalVariable();
+
+    PsiElement context = expr == null ? localVar : expr;
     PsiMethod method = Util.getContainingMethod(context);
     if (method == null) return false;
 
@@ -96,11 +100,11 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
       methodToSearchFor = method;
     }
 
-    PsiExpression initializer = (expr == null) ? localVariable.getInitializer() : expr;
+    PsiExpression initializer = expr == null ? localVar.getInitializer() : expr;
     TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, null) : new TIntArrayList();
     final Project project = myFixture.getProject();
     final IntroduceParameterProcessor processor =
-      new IntroduceParameterProcessor(project, method, methodToSearchFor, initializer, expr, localVariable, true, parameterName,
+      new IntroduceParameterProcessor(project, method, methodToSearchFor, initializer, expr, localVar, true, parameterName,
                                       replaceAllOccurences, replaceFieldsWithGetters, declareFinal, generateDelegate, null,
                                       parametersToRemove);
 

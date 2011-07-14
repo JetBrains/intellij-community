@@ -176,8 +176,7 @@ public class LoopConditionNotUpdatedInsideLoopInspection
             } else if (condition instanceof PsiPrefixExpression) {
                 final PsiPrefixExpression prefixExpression =
                         (PsiPrefixExpression)condition;
-                final PsiJavaToken sign = prefixExpression.getOperationSign();
-                final IElementType tokenType = sign.getTokenType();
+              final IElementType tokenType = prefixExpression.getOperationTokenType();
                 if (JavaTokenType.EXCL.equals(tokenType) ||
                         JavaTokenType.PLUS.equals(tokenType) ||
                         JavaTokenType.MINUS.equals(tokenType)) {

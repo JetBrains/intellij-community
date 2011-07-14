@@ -83,8 +83,7 @@ public class AssignmentToCollectionFieldFromParameterInspection
             if(!(rhs instanceof PsiReferenceExpression)){
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if(!tokenType.equals(JavaTokenType.EQ)){
                 return;
             }

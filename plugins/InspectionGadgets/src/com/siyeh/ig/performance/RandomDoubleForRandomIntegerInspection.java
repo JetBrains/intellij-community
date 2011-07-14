@@ -160,8 +160,7 @@ public class RandomDoubleForRandomIntegerInspection
             }
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)expression;
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = binaryExpression.getOperationTokenType();
             return JavaTokenType.ASTERISK.equals(tokenType);
         }
 

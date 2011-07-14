@@ -36,8 +36,7 @@ class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate{
 
     private static boolean assignmentExpressionIsMultiplyByPowerOfTwo(
             PsiAssignmentExpression expression){
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         if(!tokenType.equals(JavaTokenType.ASTERISKEQ) &&
                 !tokenType.equals(JavaTokenType.DIVEQ)){
             return false;
@@ -59,8 +58,7 @@ class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate{
 
     private static boolean binaryExpressionIsMultiplyByPowerOfTwo(
             PsiBinaryExpression expression){
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         if(!tokenType.equals(JavaTokenType.ASTERISK) &&
                 !tokenType.equals(JavaTokenType.DIV)){
             return false;

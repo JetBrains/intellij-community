@@ -24,15 +24,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,16 +55,6 @@ public class JavaResolveCache {
   private final Map<PsiVariable,Object> myVarToConstValueMap2;
 
   private static final Object NULL = Key.create("NULL");
-  public static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL){
-    public boolean isValid() {
-      return true;
-    }
-
-    @NonNls
-    public String getPresentableText() {
-      return "FAKE TYPE";
-    }
-  };
 
   public JavaResolveCache(PsiManagerEx manager) {
     ResolveCache cache = manager.getResolveCache();
@@ -93,7 +82,7 @@ public class JavaResolveCache {
     if (type == null) {
       type = f.fun(expr);
       if (type == null) {
-        type = NULL_TYPE;
+        type = TypeConversionUtil.NULL_TYPE;
       }
       type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
     }
@@ -105,7 +94,7 @@ public class JavaResolveCache {
         LOG.error("Expression: '"+expr+"' is invalid, must not be used for getType()");
       }
     }
-    return type == NULL_TYPE ? null : type;
+    return type == TypeConversionUtil.NULL_TYPE ? null : type;
   }
 
   @Nullable

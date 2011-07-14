@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -52,7 +51,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     if (operand == null) return null;
     PsiType type = operand.getType();
     if (type instanceof PsiClassType) type = PsiPrimitiveType.getUnboxedType(type);
-    IElementType opCode = SourceTreeToPsiMap.psiElementToTree(getOperationSign()).getElementType();
+    IElementType opCode = getOperationTokenType();
     if (opCode == JavaTokenType.PLUS || opCode == JavaTokenType.MINUS || opCode == JavaTokenType.TILDE) {
       if (type == null) return null;
       return PsiType.BYTE.equals(type) || PsiType.CHAR.equals(type) || PsiType.SHORT.equals(type) ? PsiType.INT : type;

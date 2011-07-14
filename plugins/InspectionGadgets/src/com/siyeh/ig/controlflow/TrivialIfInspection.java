@@ -386,10 +386,8 @@ public class TrivialIfInspection extends BaseInspection {
             final PsiAssignmentExpression elseExpression =
                     (PsiAssignmentExpression)
                             elseExpressionStatement.getExpression();
-            final PsiJavaToken thenSign = thenExpression.getOperationSign();
-            final PsiJavaToken elseSign = elseExpression.getOperationSign();
-            final IElementType thenTokenType = thenSign.getTokenType();
-            if (!thenTokenType.equals(elseSign.getTokenType())) {
+          final IElementType thenTokenType = thenExpression.getOperationTokenType();
+            if (!thenTokenType.equals(elseExpression.getOperationTokenType())) {
                 return false;
             }
             final PsiExpression thenLhs = thenExpression.getLExpression();
@@ -419,10 +417,8 @@ public class TrivialIfInspection extends BaseInspection {
             final PsiAssignmentExpression elseExpression =
                     (PsiAssignmentExpression)
                             elseExpressionStatement.getExpression();
-            final PsiJavaToken thenSign = thenExpression.getOperationSign();
-            final PsiJavaToken elseSign = elseExpression.getOperationSign();
-            final IElementType thenTokenType = thenSign.getTokenType();
-            if (!thenTokenType.equals(elseSign.getTokenType())) {
+          final IElementType thenTokenType = thenExpression.getOperationTokenType();
+            if (!thenTokenType.equals(elseExpression.getOperationTokenType())) {
                 return false;
             }
             final PsiExpression thenLhs = thenExpression.getLExpression();
@@ -461,10 +457,8 @@ public class TrivialIfInspection extends BaseInspection {
             final PsiAssignmentExpression elseExpression =
                     (PsiAssignmentExpression)
                             elseExpressionStatement.getExpression();
-            final PsiJavaToken thenSign = thenExpression.getOperationSign();
-            final PsiJavaToken elseSign = elseExpression.getOperationSign();
-            final IElementType thenTokenType = thenSign.getTokenType();
-            if (!thenTokenType.equals(elseSign.getTokenType())) {
+          final IElementType thenTokenType = thenExpression.getOperationTokenType();
+            if (!thenTokenType.equals(elseExpression.getOperationTokenType())) {
                 return false;
             }
             final PsiExpression thenLhs = thenExpression.getLExpression();
@@ -503,10 +497,8 @@ public class TrivialIfInspection extends BaseInspection {
             final PsiAssignmentExpression elseExpression =
                     (PsiAssignmentExpression)
                             elseExpressionStatement.getExpression();
-            final PsiJavaToken thenSign = thenExpression.getOperationSign();
-            final PsiJavaToken elseSign = elseExpression.getOperationSign();
-            final IElementType thenTokenType = thenSign.getTokenType();
-            if (!thenTokenType.equals(elseSign.getTokenType())) {
+          final IElementType thenTokenType = thenExpression.getOperationTokenType();
+            if (!thenTokenType.equals(elseExpression.getOperationTokenType())) {
                 return false;
             }
             final PsiExpression thenLhs = thenExpression.getLExpression();

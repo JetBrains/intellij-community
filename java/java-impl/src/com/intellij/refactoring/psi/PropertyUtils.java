@@ -148,8 +148,7 @@ public class PropertyUtils {
       return null;
     }
     final PsiAssignmentExpression assignment = (PsiAssignmentExpression)possibleAssignment;
-    final PsiJavaToken sign = assignment.getOperationSign();
-    if (!JavaTokenType.EQ.equals(sign.getTokenType())) {
+    if (!JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
       return null;
     }
     final PsiExpression lhs = assignment.getLExpression();

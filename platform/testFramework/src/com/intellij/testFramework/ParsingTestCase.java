@@ -110,7 +110,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     try {
       text = text.trim();
       String expectedText = doLoadFile(myFullDataPath, targetDataName);
-      assertEquals(expectedText, text);
+      assertEquals(targetDataName, expectedText, text);
     }
     catch(FileNotFoundException e){
       String fullName = myFullDataPath + File.separatorChar + targetDataName;

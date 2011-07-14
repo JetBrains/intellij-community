@@ -1278,7 +1278,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
           if (myAssignmentTargetsAreElements)
             startElement(lExpr);
 
-          if (expression.getOperationSign().getTokenType() != JavaTokenType.EQ) {
+          if (expression.getOperationTokenType() != JavaTokenType.EQ) {
             generateReadInstruction(variable);
           }
           generateWriteInstruction(variable);
@@ -1301,58 +1301,71 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     finishElement(expression);
   }
 
-  @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
-    startElement(expression);
+  private static enum Shortcut {
+    NO_SHORTCUT, // a || b
+    SKIP_CURRENT_OPERAND, // false || a
+    STOP_EXPRESSION         // true || a
+  }
 
-    final PsiExpression lOperand = expression.getLOperand();
-    final PsiExpression rOperand = expression.getROperand();
+  @Override
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    startElement(expression);
     IElementType signTokenType = expression.getOperationTokenType();
 
     boolean isAndAnd = signTokenType == JavaTokenType.ANDAND;
     boolean isOrOr = signTokenType == JavaTokenType.OROR;
-    if ((isAndAnd || isOrOr) && myEnabledShortCircuit) {
-      Object exprValue = myConstantEvaluationHelper.computeConstantExpression(lOperand);
-      Boolean lvalue = null;
-      if (exprValue instanceof Boolean) {
-        myCurrentFlow.setConstantConditionOccurred(true);
-        lvalue = shouldCalculateConstantExpression(expression) ? (Boolean)exprValue : null;
-      }
-      exprValue = myConstantEvaluationHelper.computeConstantExpression(rOperand);
-      Boolean rvalue = null;
-      if (exprValue instanceof Boolean) {
-        myCurrentFlow.setConstantConditionOccurred(true);
-        rvalue = shouldCalculateConstantExpression(expression) ? (Boolean)exprValue : null;
-      }
-      Boolean doShortcut;
-      if (lvalue != null) {
-        doShortcut = lvalue.booleanValue() != isAndAnd;
-      }
-      else if (rvalue != null && rvalue.booleanValue() != isAndAnd) {
-        doShortcut = Boolean.TRUE;
-      }
-      else {
-        doShortcut = null;
-      }
-        
-      generateLOperand(lOperand, rOperand, signTokenType);
-      BranchingInstruction.Role role = isAndAnd ? myEndJumpRoles.peek() : myStartJumpRoles.peek();
-      PsiElement gotoElement = isAndAnd ? myEndStatementStack.peekElement() : myStartStatementStack.peekElement();
-      boolean gotoIsAtStart = isAndAnd ? myEndStatementStack.peekAtStart() : myStartStatementStack.peekAtStart();
-      if (doShortcut == null) {
-        myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, role, lOperand));
-        addElementOffsetLater(gotoElement, gotoIsAtStart);
-      }
-      else if (doShortcut.booleanValue()) {
-        myCurrentFlow.addInstruction(new GoToInstruction(0, role));
-        addElementOffsetLater(gotoElement, gotoIsAtStart);
-      }
-    }
-    else {
-      generateLOperand(lOperand, rOperand, signTokenType);
-    }
 
-    if (rOperand != null) {
-      rOperand.accept(this);
+    PsiExpression[] operands = expression.getOperands();
+    Boolean lValue = isAndAnd;
+    PsiExpression lOperand = null;
+    Boolean rValue = null;
+    for (int i = 0; i < operands.length; i++) {
+      PsiExpression rOperand = operands[i];
+      if ((isAndAnd || isOrOr) && myEnabledShortCircuit) {
+        Object exprValue = myConstantEvaluationHelper.computeConstantExpression(rOperand);
+        if (exprValue instanceof Boolean) {
+          myCurrentFlow.setConstantConditionOccurred(true);
+          rValue = shouldCalculateConstantExpression(expression) ? (Boolean)exprValue : null;
+        }
+
+        BranchingInstruction.Role role = isAndAnd ? myEndJumpRoles.peek() : myStartJumpRoles.peek();
+        PsiElement gotoElement = isAndAnd ? myEndStatementStack.peekElement() : myStartStatementStack.peekElement();
+        boolean gotoIsAtStart = isAndAnd ? myEndStatementStack.peekAtStart() : myStartStatementStack.peekAtStart();
+
+        Shortcut shortcut;
+        if (lValue != null) {
+          shortcut = lValue.booleanValue() == isOrOr ? Shortcut.STOP_EXPRESSION : Shortcut.SKIP_CURRENT_OPERAND;
+        }
+        else if (rValue != null && rValue.booleanValue() == isOrOr) {
+          shortcut = Shortcut.STOP_EXPRESSION;
+        }
+        else {
+          shortcut = Shortcut.NO_SHORTCUT;
+        }
+
+        switch (shortcut) {
+          case NO_SHORTCUT:
+            assert lOperand != null;
+            myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, role, lOperand));
+            addElementOffsetLater(gotoElement, gotoIsAtStart);
+
+            break;
+          case STOP_EXPRESSION:
+            if (lOperand != null) {
+              myCurrentFlow.addInstruction(new GoToInstruction(0, role));
+              addElementOffsetLater(gotoElement, gotoIsAtStart);
+            }
+            break;
+          case SKIP_CURRENT_OPERAND:
+            break;
+        }
+
+        if (shortcut == Shortcut.STOP_EXPRESSION) break;
+      }
+      generateLOperand(rOperand, i == operands.length-1 ? null : operands[i+1],signTokenType);
+
+      lOperand = rOperand;
+      lValue = rValue;
     }
 
     finishElement(expression);
@@ -1475,7 +1488,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
   @Override public void visitPostfixExpression(PsiPostfixExpression expression) {
     startElement(expression);
 
-    IElementType op = expression.getOperationSign().getTokenType();
+    IElementType op = expression.getOperationTokenType();
     PsiExpression operand = expression.getOperand();
     operand.accept(this);
     if (op == JavaTokenType.PLUSPLUS || op == JavaTokenType.MINUSMINUS) {
@@ -1495,7 +1508,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
     PsiExpression operand = expression.getOperand();
     if (operand != null) {
-      IElementType operationSign = expression.getOperationSign().getTokenType();
+      IElementType operationSign = expression.getOperationTokenType();
       if (operationSign == JavaTokenType.EXCL) {
         // negation inverts jump targets
         PsiElement topStartStatement = myStartStatementStack.peekElement();

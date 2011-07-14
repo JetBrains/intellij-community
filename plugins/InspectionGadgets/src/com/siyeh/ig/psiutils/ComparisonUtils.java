@@ -18,7 +18,6 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +73,7 @@ public class ComparisonUtils {
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         return isComparisonOperation(tokenType);
     }
 
@@ -83,9 +81,8 @@ public class ComparisonUtils {
         return s_comparisonTokens.contains(tokenType);
     }
 
-    public static String getFlippedComparison(@NotNull PsiJavaToken token) {
-        final IElementType tokenType = token.getTokenType();
-        return s_swappedComparisons.get(tokenType);
+    public static String getFlippedComparison(IElementType tokenType) {
+      return s_swappedComparisons.get(tokenType);
     }
 
     public static boolean isEqualityComparison(
@@ -95,8 +92,7 @@ public class ComparisonUtils {
                tokenType.equals(JavaTokenType.NE);
     }
 
-    public static String getNegatedComparison(@NotNull PsiJavaToken token) {
-        final IElementType tokenType = token.getTokenType();
-        return s_invertedComparisons.get(tokenType);
-    }
+  public static String getNegatedComparison(IElementType tokenType) {
+    return s_invertedComparisons.get(tokenType);
+  }
 }

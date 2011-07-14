@@ -105,26 +105,39 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
   }
 
   @Override
-  public void visitBinaryExpression(PsiBinaryExpression expression) {
-    Object lOperandValue = getStoredValue(expression.getLOperand());
-    if (lOperandValue == null) {
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    PsiExpression[] operands = expression.getOperands();
+    Object lValue = getStoredValue(operands[0]);
+    if (lValue == null) {
       myResult = null;
       return;
     }
-
-    Object rOperandValue = getStoredValue(expression.getROperand());
-    if (rOperandValue == null) {
-      myResult = null;
-      return;
+    IElementType tokenType = expression.getOperationTokenType();
+    for (int i = 1; i < operands.length; i++) {
+      PsiExpression operand = operands[i];
+      Object rValue = getStoredValue(operand);
+      if (rValue == null) {
+        myResult = null;
+        break;
+      }
+      myResult = compute(lValue, rValue, tokenType, expression);
+      if (myResult == null) {
+        break;
+      }
+      lValue = myResult;
     }
+    if (myResult instanceof String) {
+      myResult = myInterner.intern((String)myResult);
+    }
+  }
 
-    PsiJavaToken operationSign = expression.getOperationSign();
-    final IElementType tokenType = operationSign.getTokenType();
-
+  private Object compute(Object lOperandValue, Object rOperandValue, IElementType tokenType, PsiElement expression) {
     Object value = null;
     if (tokenType == JavaTokenType.PLUS) {
       if (lOperandValue instanceof String || rOperandValue instanceof String) {
-        value = myInterner.intern(lOperandValue.toString() + rOperandValue.toString());
+        String l = lOperandValue.toString();
+        String r = rOperandValue.toString();
+        value = l + r;
       }
       else {
         if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
@@ -182,27 +195,23 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     }
     else if (tokenType == JavaTokenType.ANDAND) {
       if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue()) {
-        myResult = Boolean.FALSE;
-        return;
+        value = Boolean.FALSE;
       }
-      if (rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
-        myResult = Boolean.FALSE;
-        return;
+      else if (rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
+        value = Boolean.FALSE;
       }
-      if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
+      else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
         value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() && ((Boolean)rOperandValue).booleanValue());
       }
     }
     else if (tokenType == JavaTokenType.OROR) {
       if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue()) {
-        myResult = Boolean.TRUE;
-        return;
+        value = Boolean.TRUE;
       }
-      if (rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
-        myResult = Boolean.TRUE;
-        return;
+      else if (rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
+        value = Boolean.TRUE;
       }
-      if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
+      else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
         value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() || ((Boolean)rOperandValue).booleanValue());
       }
     }
@@ -421,8 +430,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
         value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() ^ ((Boolean)rOperandValue).booleanValue());
       }
     }
-
-    myResult = value;
+    return value;
   }
 
   @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
@@ -432,7 +440,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       myResult = null;
       return;
     }
-    IElementType tokenType = expression.getOperationSign().getTokenType();
+    IElementType tokenType = expression.getOperationTokenType();
     Object value = null;
     if (tokenType == JavaTokenType.MINUS) {
       if (operandValue instanceof Character) operandValue = Integer.valueOf(((Character)operandValue).charValue());
@@ -543,13 +551,13 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     return o instanceof Long || o instanceof Integer || o instanceof Short || o instanceof Byte || o instanceof Character;
   }
 
-  private void checkDivisionOverflow(long l, final long r, long minValue, PsiBinaryExpression expression) {
+  private void checkDivisionOverflow(long l, final long r, long minValue, PsiElement expression) {
     if (!myThrowExceptionOnOverflow) return;
     if (r == 0) throw new ConstantEvaluationOverflowException(expression);
     if (r == -1 && l == minValue) throw new ConstantEvaluationOverflowException(expression);
   }
 
-  private void checkMultiplicationOverflow(long result, long l, long r, PsiExpression expression) {
+  private void checkMultiplicationOverflow(long result, long l, long r, PsiElement expression) {
     if (!myThrowExceptionOnOverflow) return;
     if (r == 0 || l == 0) return;
     if (result / r != l || ((l < 0) ^ (r < 0) != (result < 0))) throw new ConstantEvaluationOverflowException(expression);
@@ -557,7 +565,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
 
   private void checkAdditionOverflow(boolean resultPositive,
                                      boolean lPositive,
-                                     boolean rPositive, PsiBinaryExpression expression) {
+                                     boolean rPositive, PsiElement expression) {
     if (!myThrowExceptionOnOverflow) return;
     boolean overflow = lPositive == rPositive && lPositive != resultPositive;
     if (overflow) throw new ConstantEvaluationOverflowException(expression);
@@ -565,7 +573,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
 
   private void checkRealNumberOverflow(Object result,
                                        Object lOperandValue,
-                                       Object rOperandValue, PsiExpression expression) {
+                                       Object rOperandValue, PsiElement expression) {
     if (!myThrowExceptionOnOverflow) return;
     if (lOperandValue instanceof Float && ((Float) lOperandValue).isInfinite()) return;
     if (lOperandValue instanceof Double && ((Double) lOperandValue).isInfinite()) return;

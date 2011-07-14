@@ -243,8 +243,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             }
             final PsiPrefixExpression prefixExpression =
                     (PsiPrefixExpression)expression;
-            final PsiJavaToken sign = prefixExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = prefixExpression.getOperationTokenType();
             if (!JavaTokenType.MINUS.equals(tokenType)) {
                 return false;
             }

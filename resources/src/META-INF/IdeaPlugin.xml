@@ -78,6 +78,10 @@
     <extensionPoint name="debugger.jvmDebugProvider"
                     interface="com.intellij.debugger.engine.JVMDebugProvider"/>
 
+    <extensionPoint name="debugger.positionManagerFactory"
+                    interface="com.intellij.debugger.PositionManagerFactory"
+                    area="IDEA_PROJECT"/>
+
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>

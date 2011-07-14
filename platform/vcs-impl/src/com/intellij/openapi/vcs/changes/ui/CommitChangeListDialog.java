@@ -318,7 +318,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         if (options != null) {
           JPanel vcsOptions = new JPanel(new BorderLayout());
           vcsOptions.add(options.getComponent(), BorderLayout.CENTER);
-          vcsOptions.add(SeparatorFactory.createSeparator(vcs.getDisplayName(), null), BorderLayout.NORTH);
+          vcsOptions.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName()));
           vcsCommitOptions.add(vcsOptions);
           myPerVcsOptionsPanels.put(vcs, vcsOptions);
           myAdditionalComponents.add(options);
@@ -361,17 +361,21 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     final String actionName = getCommitActionName();
-    final String borderTitleName = actionName.replace("_", "");
+    final String borderTitleName = actionName.replace("_", "").replace("&", "");
     if (beforeVisible) {
       beforeBox.add(Box.createVerticalGlue());
-      beforeBox.add(SeparatorFactory.createSeparator(VcsBundle.message("border.standard.checkin.options.group", borderTitleName), null), 0);
-      optionsBox.add(beforeBox);
+      JPanel beforePanel = new JPanel(new BorderLayout());
+      beforePanel.add(beforeBox);
+      beforePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.standard.checkin.options.group", borderTitleName)));
+      optionsBox.add(beforePanel);
     }
 
     if (afterVisible) {
       afterBox.add(Box.createVerticalGlue());
-      afterBox.add(SeparatorFactory.createSeparator(VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName), null), 0);
-      optionsBox.add(afterBox);
+      JPanel afterPanel = new JPanel(new BorderLayout());
+      afterPanel.add(afterBox);
+      afterPanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName)));
+      optionsBox.add(afterPanel);
     }
 
     if (hasVcsOptions || beforeVisible || afterVisible) {

@@ -81,7 +81,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
                            @NotNull TIntArrayList parametersToRemove,
                            final boolean mustBeFinal) {
     super(project, true);
-    myPanel = new IntroduceParameterSettingsPanel(project, onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
+    myPanel = new IntroduceParameterSettingsPanel(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     myProject = project;
     myClassMembersList = classMembersList;
     myOccurenceNumber = occurences.length;
@@ -295,11 +295,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
   private class IntroduceParameterSettingsPanel extends IntroduceParameterSettingsUI {
-    public IntroduceParameterSettingsPanel(Project project,
-                                           PsiLocalVariable onLocalVariable,
+    public IntroduceParameterSettingsPanel(PsiLocalVariable onLocalVariable,
                                            PsiExpression onExpression,
                                            PsiMethod methodToReplaceIn, TIntArrayList parametersToRemove) {
-      super(project, onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
+      super(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     }
 
 

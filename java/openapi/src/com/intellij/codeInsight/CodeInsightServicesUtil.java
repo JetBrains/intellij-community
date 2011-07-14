@@ -26,7 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 public class CodeInsightServicesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightServicesUtil");
 
-  private static final IElementType[] ourTokenMap = new IElementType[]{
+  private static final IElementType[] ourTokenMap = {
     JavaTokenType.EQEQ, JavaTokenType.NE,
     JavaTokenType.LT, JavaTokenType.GE,
     JavaTokenType.LE, JavaTokenType.GT,
@@ -36,39 +36,45 @@ public class CodeInsightServicesUtil {
   public static PsiExpression invertCondition(PsiExpression booleanExpression) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(booleanExpression.getProject()).getElementFactory();
 
-    if (booleanExpression instanceof PsiBinaryExpression) {
-      PsiBinaryExpression expression = (PsiBinaryExpression) booleanExpression;
-      PsiJavaToken operationSign = expression.getOperationSign();
+    if (booleanExpression instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression expression = (PsiPolyadicExpression)booleanExpression;
+      IElementType operationSign = expression.getOperationTokenType();
       for (int i = 0; i < ourTokenMap.length; i++) {
         IElementType tokenType = ourTokenMap[i];
-        if (operationSign.getTokenType() == tokenType) {
+        if (operationSign == tokenType) {
           expression = (PsiBinaryExpression)expression.copy();
-          expression.getOperationSign().replace(createOperationToken(factory, ourTokenMap[i + (i % 2 == 0 ? 1 : -1)]));
-          if (tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND) {
-            expression.getLOperand().replace(invertCondition(expression.getLOperand()));
-            expression.getROperand().replace(invertCondition(expression.getROperand()));
+          PsiExpression[] operands = expression.getOperands();
+          for (int o = 0; o < operands.length; o++) {
+            PsiExpression op = operands[o];
+            if (o != 0) {
+              expression.getTokenBeforeOperand(op).replace(createOperationToken(factory, ourTokenMap[i + (i % 2 == 0 ? 1 : -1)]));
+            }
+            if (tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND) {
+              op.replace(invertCondition(op));
+            }
           }
           return expression;
         }
       }
-    } else if (booleanExpression instanceof PsiPrefixExpression) {
-      PsiPrefixExpression expression = (PsiPrefixExpression) booleanExpression;
-      PsiJavaToken operationSign = expression.getOperationSign();
-      if (operationSign.getTokenType() == JavaTokenType.EXCL) {
+    }
+    else if (booleanExpression instanceof PsiPrefixExpression) {
+      PsiPrefixExpression expression = (PsiPrefixExpression)booleanExpression;
+      if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
         PsiExpression operand = expression.getOperand();
         if (operand instanceof PsiParenthesizedExpression) {
-          operand = ((PsiParenthesizedExpression) operand).getExpression();
+          operand = ((PsiParenthesizedExpression)operand).getExpression();
         }
         return operand;
       }
-    } else if (booleanExpression instanceof PsiLiteralExpression) {
+    }
+    else if (booleanExpression instanceof PsiLiteralExpression) {
       return booleanExpression.getText().equals("true") ?
              factory.createExpressionFromText("false", null) :
              factory.createExpressionFromText("true", null);
     }
 
     if (booleanExpression instanceof PsiParenthesizedExpression) {
-      PsiExpression operand = ((PsiParenthesizedExpression) booleanExpression).getExpression();
+      PsiExpression operand = ((PsiParenthesizedExpression)booleanExpression).getExpression();
       operand.replace(invertCondition(operand));
       return booleanExpression;
     }
@@ -76,8 +82,9 @@ public class CodeInsightServicesUtil {
     PsiPrefixExpression result = (PsiPrefixExpression)factory.createExpressionFromText("!(a)", null);
     if (!(booleanExpression instanceof PsiBinaryExpression)) {
       result.getOperand().replace(booleanExpression);
-    } else {
-      PsiParenthesizedExpression e = (PsiParenthesizedExpression) result.getOperand();
+    }
+    else {
+      PsiParenthesizedExpression e = (PsiParenthesizedExpression)result.getOperand();
       e.getExpression().replace(booleanExpression);
     }
 
@@ -115,7 +122,7 @@ public class CodeInsightServicesUtil {
       s = "==";
     }
 
-    PsiBinaryExpression expression = (PsiBinaryExpression) factory.createExpressionFromText("a" + s + "b", null);
+    PsiBinaryExpression expression = (PsiBinaryExpression)factory.createExpressionFromText("a" + s + "b", null);
     return expression.getOperationSign();
   }
 }

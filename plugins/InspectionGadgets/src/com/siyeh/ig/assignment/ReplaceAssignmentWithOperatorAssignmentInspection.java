@@ -154,8 +154,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         @Override public void visitAssignmentExpression(@NotNull
                 PsiAssignmentExpression assignment){
             super.visitAssignmentExpression(assignment);
-            final PsiJavaToken sign = assignment.getOperationSign();
-            final IElementType assignmentTokenType = sign.getTokenType();
+          final IElementType assignmentTokenType = assignment.getOperationTokenType();
             if(!assignmentTokenType.equals(JavaTokenType.EQ)){
                 return;
             }

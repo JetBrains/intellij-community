@@ -562,8 +562,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
             }
             final PsiAssignmentExpression assignment =
                     (PsiAssignmentExpression)strippedExpression;
-            final PsiJavaToken sign = assignment.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = assignment.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.EQ)) {
                 return false;
             }

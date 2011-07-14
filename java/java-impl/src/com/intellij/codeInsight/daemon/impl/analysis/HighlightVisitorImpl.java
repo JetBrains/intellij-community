@@ -231,9 +231,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) visitExpression(assignment);
   }
 
-  @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
-    super.visitBinaryExpression(expression);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkBinaryOperatorApplicable(expression));
+  @Override
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    super.visitPolyadicExpression(expression);
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkPolyadicOperatorApplicable(expression));
   }
 
   @Override public void visitBreakStatement(PsiBreakStatement statement) {

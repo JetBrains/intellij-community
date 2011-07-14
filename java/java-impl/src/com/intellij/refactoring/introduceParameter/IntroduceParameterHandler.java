@@ -51,7 +51,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
-import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.ui.MethodCellRenderer;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -82,7 +81,6 @@ import java.util.List;
 public class IntroduceParameterHandler extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterHandler");
   static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
-  private Project myProject;
   private JBPopup myEnclosingMethodsPopup;
   private InplaceIntroduceParameterPopup myInplaceIntroduceParameterPopup;
 
@@ -116,8 +114,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).hasUncommitedDocuments());
     PsiMethod method;
     if (expr != null) {
-      final PsiElement physicalElement = expr.getUserData(ElementToWorkOn.PARENT);
-      method = Util.getContainingMethod(physicalElement != null ? physicalElement : expr);
+      method = Util.getContainingMethod(expr);
     }
     else {
       method = Util.getContainingMethod(localVar);
@@ -127,10 +124,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       LOG.debug("expression:" + expr);
     }
 
-    myProject = project;
     if (expr == null && localVar == null) {
       String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
-      showErrorMessage(myProject, message, editor);
+      showErrorMessage(project, message, editor);
       return false;
     }
 
@@ -138,14 +134,14 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       final PsiElement parent = localVar.getParent();
       if (!(parent instanceof PsiDeclarationStatement)) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
-        showErrorMessage(myProject, message, editor);
+        showErrorMessage(project, message, editor);
         return false;
       }
     }
 
     if (method == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
-      showErrorMessage(myProject, message, editor);
+      showErrorMessage(project, message, editor);
       return false;
     }
 
@@ -154,7 +150,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     final PsiType typeByExpression = invokedOnDeclaration ? null : RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (!invokedOnDeclaration && typeByExpression == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
-      showErrorMessage(myProject, message, editor);
+      showErrorMessage(project, message, editor);
       return false;
     }
 

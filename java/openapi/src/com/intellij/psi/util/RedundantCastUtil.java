@@ -136,25 +136,29 @@ public class RedundantCastUtil {
       super.visitReturnStatement(statement);
     }
 
-    @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
-      PsiExpression rExpr = deparenthesizeExpression(expression.getLOperand());
-      PsiExpression lExpr = deparenthesizeExpression(expression.getROperand());
-
-      if (rExpr != null && lExpr != null) {
-        final IElementType binaryToken = expression.getOperationTokenType();
-        processBinaryExpressionOperand(lExpr, rExpr, binaryToken);
-        processBinaryExpressionOperand(rExpr, lExpr, binaryToken);
+    @Override
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      IElementType tokenType = expression.getOperationTokenType();
+      PsiExpression[] operands = expression.getOperands();
+      if (operands.length >= 2) {
+        PsiType lType = operands[0].getType();
+        processBinaryExpressionOperand(deparenthesizeExpression(operands[0]), operands[1].getType(), tokenType);
+        for (int i = 1; i < operands.length; i++) {
+          PsiExpression operand = deparenthesizeExpression(operands[i]);
+          processBinaryExpressionOperand(operand, lType, tokenType);
+          lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, operand.getType(), tokenType, true);
+        }
       }
-      super.visitBinaryExpression(expression);
+      super.visitPolyadicExpression(expression);
     }
 
     private void processBinaryExpressionOperand(final PsiExpression operand,
-                                                final PsiExpression otherOperand,
+                                                final PsiType otherType,
                                                 final IElementType binaryToken) {
       if (operand instanceof PsiTypeCastExpression) {
         PsiTypeCastExpression typeCast = (PsiTypeCastExpression)operand;
         PsiExpression toCast = typeCast.getOperand();
-        if (toCast != null && TypeConversionUtil.isBinaryOperatorApplicable(binaryToken, toCast, otherOperand, false)) {
+        if (toCast != null && TypeConversionUtil.isBinaryOperatorApplicable(binaryToken, toCast.getType(), otherType, false)) {
           addToResults(typeCast);
         }
       }

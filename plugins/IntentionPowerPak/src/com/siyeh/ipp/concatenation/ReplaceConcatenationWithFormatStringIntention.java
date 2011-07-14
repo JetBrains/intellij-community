@@ -15,8 +15,8 @@
  */
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -38,11 +38,11 @@ public class ReplaceConcatenationWithFormatStringIntention
     @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        PsiBinaryExpression expression =
-                (PsiBinaryExpression)element;
+      PsiPolyadicExpression expression =
+                (PsiPolyadicExpression)element;
         PsiElement parent = expression.getParent();
         while (ConcatenationUtils.isConcatenation(parent)) {
-            expression = (PsiBinaryExpression)parent;
+            expression = (PsiPolyadicExpression)parent;
             if (expression == null) {
                 return;
             }
@@ -51,7 +51,7 @@ public class ReplaceConcatenationWithFormatStringIntention
 
         final StringBuilder formatString = new StringBuilder();
         final List<PsiExpression> formatParameters = new ArrayList();
-        buildFormatString(expression, formatString, formatParameters);
+        PsiConcatenationUtil.buildFormatString(expression, formatString, formatParameters, true);
         if (replaceWithPrintfExpression(expression, formatString,
                 formatParameters)) {
             return;
@@ -69,7 +69,7 @@ public class ReplaceConcatenationWithFormatStringIntention
     }
 
     private static boolean replaceWithPrintfExpression(
-            PsiBinaryExpression expression,
+            PsiExpression expression,
             CharSequence formatString,
             List<PsiExpression> formatParameters)
             throws IncorrectOperationException {
@@ -129,49 +129,4 @@ public class ReplaceConcatenationWithFormatStringIntention
         return true;
     }
 
-    private static void buildFormatString(
-            PsiExpression expression, StringBuilder formatString,
-            List<PsiExpression> formatParameters) {
-        if (expression instanceof PsiLiteralExpression) {
-            final PsiLiteralExpression literalExpression =
-                    (PsiLiteralExpression) expression;
-            final String text = String.valueOf(literalExpression.getValue());
-            final String formatText =
-                    StringUtil.escapeStringCharacters(text)
-                        .replace("%", "%%").replace("\\'", "'");
-            formatString.append(formatText);
-        } else if (expression instanceof PsiBinaryExpression) {
-            final PsiType type = expression.getType();
-            if (type != null && type.equalsToText("java.lang.String")) {
-                final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) expression;
-                final PsiExpression lhs = binaryExpression.getLOperand();
-                buildFormatString(lhs, formatString, formatParameters);
-                final PsiExpression rhs = binaryExpression.getROperand();
-                if (rhs != null) {
-                    buildFormatString(rhs, formatString, formatParameters);
-                }
-            } else {
-                addFormatParameter(expression, formatString, formatParameters);
-            }
-        } else {
-          addFormatParameter(expression, formatString, formatParameters);
-        }
-    }
-
-  private static void addFormatParameter(PsiExpression expression,
-                                         StringBuilder formatString,
-                                         List<PsiExpression> formatParameters) {
-    final PsiType type = expression.getType();
-    if (type != null &&
-            (type.equalsToText("long") ||
-            type.equalsToText("int") ||
-            type.equalsToText("java.lang.Long") ||
-            type.equalsToText("java.lang.Integer"))) {
-        formatString.append("%d");
-    } else {
-        formatString.append("%s");
-    }
-    formatParameters.add(expression);
-  }
 }

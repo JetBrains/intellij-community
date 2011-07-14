@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2000-2011 JetBrains s.r.o.
  *
@@ -1088,15 +1089,24 @@ public class HighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkBinaryOperatorApplicable(PsiBinaryExpression expression) {
-    PsiExpression lOperand = expression.getLOperand();
-    PsiExpression rOperand = expression.getROperand();
-    PsiJavaToken operationSign = expression.getOperationSign();
-    if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign.getTokenType(), lOperand, rOperand, false)) {
-      String message = JavaErrorMessages
-        .message("binary.operator.not.applicable", operationSign.getText(), formatType(lOperand.getType()), formatType(rOperand.getType()));
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
+  static HighlightInfo checkPolyadicOperatorApplicable(PsiPolyadicExpression expression) {
+    PsiExpression[] operands = expression.getOperands();
+
+    PsiType lType = operands[0].getType();
+    IElementType operationSign = expression.getOperationTokenType();
+    for (int i = 1; i < operands.length; i++) {
+      PsiExpression operand = operands[i];
+      PsiType rType = operand.getType();
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false)) {
+        PsiJavaToken token = expression.getTokenBeforeOperand(operand);
+        String message = JavaErrorMessages.message("binary.operator.not.applicable", token.getText(),
+                                                    formatType(lType),
+                                                    formatType(rType));
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
+      }
+      lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, operationSign, true);
     }
+
     return null;
   }
 

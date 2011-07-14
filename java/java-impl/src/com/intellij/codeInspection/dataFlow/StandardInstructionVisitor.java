@@ -20,6 +20,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -136,7 +137,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue dfaExpr = factory.create(instruction.getCasted());
     if (dfaExpr != null) {
       DfaTypeValue dfaType = factory.getTypeFactory().create(instruction.getCastTo());
-      DfaRelationValue dfaInstanceof = factory.getRelationFactory().create(dfaExpr, dfaType, "instanceof", false);
+      DfaRelationValue dfaInstanceof = factory.getRelationFactory().create(dfaExpr, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
       if (dfaInstanceof != null && !memState.applyInstanceofOrNull(dfaInstanceof)) {
         onInstructionProducesCCE(instruction, runner);
       }
@@ -239,12 +240,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue dfaRight = memState.pop();
     DfaValue dfaLeft = memState.pop();
 
-    final String opSign = instruction.getOperationSign();
+    final IElementType opSign = instruction.getOperationSign();
     if (opSign != null) {
       final DfaValueFactory factory = runner.getFactory();
-      if (("==".equals(opSign) || "!=".equals(opSign)) &&
+      if ((JavaTokenType.EQEQ == opSign || JavaTokenType.NE == opSign) &&
           dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue) {
-        boolean negated = "!=".equals(opSign) ^ (memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight));
+        boolean negated = (JavaTokenType.NE == opSign) ^ (memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight));
         if (dfaLeft == dfaRight ^ negated) {
           memState.push(factory.getConstFactory().getTrue());
           instruction.setTrueReachable();
@@ -282,7 +283,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
         return states.toArray(new DfaInstructionState[states.size()]);
       }
-      else if ("+".equals(opSign)) {
+      else if (JavaTokenType.PLUS == opSign) {
         memState.push(instruction.getNonNullStringValue(factory));
         instruction.setTrueReachable();  // Not a branching instruction actually.
         instruction.setFalseReachable();

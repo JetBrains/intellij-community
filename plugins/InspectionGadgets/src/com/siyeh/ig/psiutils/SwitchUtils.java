@@ -101,8 +101,7 @@ public class SwitchUtils{
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType operation = sign.getTokenType();
+      final IElementType operation = binaryExpression.getOperationTokenType();
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         if(operation.equals(JavaTokenType.OROR)){
@@ -143,8 +142,7 @@ public class SwitchUtils{
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType operation = sign.getTokenType();
+      final IElementType operation = binaryExpression.getOperationTokenType();
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         if(operation.equals(JavaTokenType.OROR)){

@@ -331,7 +331,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     }
     int lineLength = myDocumentWindow.getLineEndOffset(pos.line) - myDocumentWindow.getLineStartOffset(pos.line);
     if (pos.column >= lineLength) {
-      pos = new LogicalPosition(pos.line, lineLength-1);
+      pos = new LogicalPosition(pos.line, Math.max(0, lineLength-1));
     }
     return pos;
   }

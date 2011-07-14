@@ -157,8 +157,7 @@ public class ExpectedTypeUtils{
 
         @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression binaryExpression) {
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = binaryExpression.getOperationTokenType();
             final PsiType type = binaryExpression.getType();
             final PsiExpression rhs = binaryExpression.getROperand();
             if (rhs == null) {
@@ -295,9 +294,7 @@ public class ExpectedTypeUtils{
         @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression assignment){
             final PsiExpression rExpression = assignment.getRExpression();
-            final PsiJavaToken operationSign =
-                    assignment.getOperationSign();
-            final IElementType tokenType = operationSign.getTokenType();
+          final IElementType tokenType = assignment.getOperationTokenType();
             final PsiExpression lExpression =
                     assignment.getLExpression();
             final PsiType lType = lExpression.getType();

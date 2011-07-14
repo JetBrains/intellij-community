@@ -41,14 +41,16 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   private final AtomicLong myLastStamp = new AtomicLong();
   protected final Project myProject;
   private volatile List<VirtualFile> myCache;
+  private final PsiManager myManager;
 
   public NonClasspathClassFinder(Project project) {
     myProject = project;
+    myManager = PsiManager.getInstance(myProject);
   }
 
   protected List<VirtualFile> getClassRoots() {
     List<VirtualFile> cache = myCache;
-    long stamp = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+    long stamp = myManager.getModificationTracker().getModificationCount();
     if (myLastStamp.get() != stamp) {
       cache = null;
     }
@@ -84,7 +86,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
             LOG.error("Invalid child of valid parent: " + classFile.getPath() + "; " + classRoot.isValid() + " path=" + classRoot.getPath());
             return null;
           }
-          final PsiFile file = PsiManager.getInstance(myProject).findFile(classFile);
+          final PsiFile file = myManager.findFile(classFile);
           if (file instanceof PsiClassOwner) {
             final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
             if (classes.length == 1) {
@@ -115,7 +117,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         if (dir != null && dir.isDirectory()) {
           for (final VirtualFile file : dir.getChildren()) {
             if (!file.isDirectory()) {
-              final PsiFile psi = PsiManager.getInstance(myProject).findFile(file);
+              final PsiFile psi = myManager.findFile(file);
               if (psi instanceof PsiClassOwner) {
                 ContainerUtil.addAll(result, ((PsiClassOwner)psi).getClasses());
               }
@@ -169,7 +171,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   private PsiPackageImpl createPackage(String qualifiedName) {
-    return new PsiPackageImpl((PsiManagerEx)PsiManager.getInstance(myProject), qualifiedName);
+    return new PsiPackageImpl((PsiManagerEx)myManager, qualifiedName);
   }
 
   @Override

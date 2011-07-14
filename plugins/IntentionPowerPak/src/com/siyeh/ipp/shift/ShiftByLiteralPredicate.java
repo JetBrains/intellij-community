@@ -35,8 +35,7 @@ class ShiftByLiteralPredicate implements PsiElementPredicate{
 
     private static boolean isAssignmentShiftByLiteral(
             PsiAssignmentExpression expression){
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         if(!tokenType.equals(JavaTokenType.LTLTEQ) &&
                 !tokenType.equals(JavaTokenType.GTGTEQ)){
             return false;
@@ -58,8 +57,7 @@ class ShiftByLiteralPredicate implements PsiElementPredicate{
 
     private static boolean isBinaryShiftByLiteral(
             PsiBinaryExpression expression){
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
         if(!tokenType.equals(JavaTokenType.LTLT) &&
                 !tokenType.equals(JavaTokenType.GTGT)){
             return false;

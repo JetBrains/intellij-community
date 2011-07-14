@@ -86,6 +86,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   }
 
   private int myFirstErrorOffset = Integer.MAX_VALUE;
+  private boolean mySkipEnter;
   private static final int MAX_ATTEMPTS = 20;
   private static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
 
@@ -99,6 +100,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     try {
       editor.putUserData(SMART_ENTER_TIMESTAMP, editor.getDocument().getModificationStamp());
       myFirstErrorOffset = Integer.MAX_VALUE;
+      mySkipEnter = false;
       process(project, editor, psiFile, 0);
     }
     catch (TooManyAttemptsException e) {
@@ -191,6 +193,10 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     reformat(atCaret);
     commit(editor);
 
+    if (mySkipEnter) {
+      return;
+    }
+    
     atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
     for (EnterProcessor processor : ourEnterProcessors) {
       if(atCaret == null){
@@ -290,6 +296,10 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     if (myFirstErrorOffset > offset) {
       myFirstErrorOffset = offset;
     }
+  }
+
+  public void setSkipEnter(boolean skipEnter) {
+    mySkipEnter = skipEnter;
   }
 
   protected static void plainEnter(@NotNull final Editor editor) {

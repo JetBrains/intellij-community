@@ -126,11 +126,11 @@ public class ParenthesesUtils{
         if(expression instanceof PsiPostfixExpression){
             return POSTFIX_PRECEDENCE;
         }
-        if(expression instanceof PsiBinaryExpression){
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)expression;
-            final PsiJavaToken sign =
-                    binaryExpression.getOperationSign();
+        if(expression instanceof PsiPolyadicExpression){
+            final PsiPolyadicExpression binaryExpression =
+                    (PsiPolyadicExpression)expression;
+            final IElementType sign =
+                    binaryExpression.getOperationTokenType();
             return getPrecedenceForBinaryOperator(sign);
         }
         if(expression instanceof PsiInstanceOfExpression){
@@ -214,9 +214,9 @@ public class ParenthesesUtils{
             removeParensFromPostfixExpression(postfixExpression,
                     ignoreClarifyingParentheses);
         }
-        if(expression instanceof PsiBinaryExpression){
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)expression;
+        if(expression instanceof PsiPolyadicExpression){
+            final PsiPolyadicExpression binaryExpression =
+                    (PsiPolyadicExpression)expression;
             removeParensFromBinaryExpression(binaryExpression,
                     ignoreClarifyingParentheses);
         }
@@ -282,23 +282,22 @@ public class ParenthesesUtils{
                 removeParentheses(expression, ignoreClarifyingParentheses);
             }
         } else if(parentPrecedence == childPrecedence){
-            if(parentExpression instanceof PsiBinaryExpression &&
-               body instanceof PsiBinaryExpression){
-                final PsiBinaryExpression parentBinaryExpression =
-                        (PsiBinaryExpression)parentExpression;
+            if(parentExpression instanceof PsiPolyadicExpression &&
+               body instanceof PsiPolyadicExpression){
+                final PsiPolyadicExpression parentBinaryExpression =
+                        (PsiPolyadicExpression)parentExpression;
                 final IElementType parentOperator =
                         parentBinaryExpression.getOperationTokenType();
-                final PsiBinaryExpression bodyBinaryExpression =
-                        (PsiBinaryExpression)body;
+                final PsiPolyadicExpression bodyBinaryExpression =
+                        (PsiPolyadicExpression)body;
                 final IElementType bodyOperator =
                         bodyBinaryExpression.getOperationTokenType();
                 final PsiType parentType = parentBinaryExpression.getType();
                 final PsiType bodyType = body.getType();
                 if(parentType != null && parentType.equals(bodyType) &&
                         parentOperator.equals(bodyOperator)) {
-                    final PsiExpression rhs =
-                            parentBinaryExpression.getROperand();
-                    if (!PsiTreeUtil.isAncestor(rhs, body, true) ||
+                  PsiExpression[] parentOperands = parentBinaryExpression.getOperands();
+                    if (PsiTreeUtil.isAncestor(parentOperands[0], body, true) ||
                             isCommutativeBinaryOperator(bodyOperator)) {
                         // use addAfter() + delete() instead of replace() to
                         // workaround automatic insertion of parentheses by psi
@@ -327,8 +326,8 @@ public class ParenthesesUtils{
             }
         } else {
             if (ignoreClarifyingParentheses &&
-                    parent instanceof PsiBinaryExpression &&
-                    (body instanceof PsiBinaryExpression ||
+                    parent instanceof PsiPolyadicExpression &&
+                    (body instanceof PsiPolyadicExpression ||
                             body instanceof PsiInstanceOfExpression)) {
                 removeParentheses(body, ignoreClarifyingParentheses);
             } else {
@@ -366,15 +365,12 @@ public class ParenthesesUtils{
     }
 
     private static void removeParensFromBinaryExpression(
-            @NotNull PsiBinaryExpression binaryExpression,
+            @NotNull PsiPolyadicExpression binaryExpression,
             boolean ignoreClarifyingParentheses)
             throws IncorrectOperationException {
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        removeParentheses(lhs, ignoreClarifyingParentheses);
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if (rhs != null) {
-            removeParentheses(rhs, ignoreClarifyingParentheses);
-        }
+      for (PsiExpression operand : binaryExpression.getOperands()) {
+        removeParentheses(operand, ignoreClarifyingParentheses);
+      }
     }
 
     private static void removeParensFromPostfixExpression(
@@ -495,12 +491,13 @@ public class ParenthesesUtils{
     public static boolean areParenthesesNeeded(
             PsiExpression expression, PsiElement parentExpression,
             boolean ignoreClarifyingParentheses) {
-        if (parentExpression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression parentBinaryExpression =
-                    (PsiBinaryExpression) parentExpression;
-            if (expression instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression childBinaryExpression =
-                        (PsiBinaryExpression)expression;
+        if (parentExpression instanceof PsiPolyadicExpression) {
+            final PsiPolyadicExpression parentBinaryExpression =
+                    (PsiPolyadicExpression) parentExpression;
+          PsiExpression[] parentOperands = parentBinaryExpression.getOperands();
+          if (expression instanceof PsiPolyadicExpression) {
+                final PsiPolyadicExpression childBinaryExpression =
+                        (PsiPolyadicExpression)expression;
                 final IElementType childOperator =
                         childBinaryExpression.getOperationTokenType();
                 final IElementType parentOperator =
@@ -517,21 +514,21 @@ public class ParenthesesUtils{
                 if (!parentType.equals(childType)) {
                     return true;
                 }
-                if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
-                        expression, false)) {
+                if (!PsiTreeUtil.isAncestor(parentOperands[0],
+                                            expression, false)) {
                     if (!isCommutativeBinaryOperator(parentOperator)) {
                         return true;
                     }
                 }
                 return false;
             } else if (expression instanceof PsiConditionalExpression) {
-                if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
-                        expression, false)) {
+                if (!PsiTreeUtil.isAncestor(parentOperands[0],
+                                            expression, false)) {
                     return true;
                 }
             }
         } else if (parentExpression instanceof PsiPrefixExpression) {
-            if (expression instanceof PsiBinaryExpression) {
+            if (expression instanceof PsiPolyadicExpression) {
                 return true;
             }
         }

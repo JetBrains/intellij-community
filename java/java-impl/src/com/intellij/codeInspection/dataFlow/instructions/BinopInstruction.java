@@ -31,21 +31,18 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class BinopInstruction extends BranchingInstruction {
-  private final String myOperationSign;
+  private final IElementType myOperationSign;
   private final Project myProject;
 
-  public BinopInstruction(@NonNls String opSign, PsiElement psiAnchor, @NotNull Project project) {
+  public BinopInstruction(IElementType opSign, PsiElement psiAnchor, @NotNull Project project) {
     myProject = project;
-    if (opSign != null && ("==".equals(opSign) || "!=".equals(opSign) || "instanceof".equals(opSign) || "+".equals(opSign))) {
+    if (JavaTokenType.EQEQ == opSign || JavaTokenType.NE == opSign || JavaTokenType.INSTANCEOF_KEYWORD == opSign || JavaTokenType.PLUS == opSign) {
       myOperationSign = opSign;
     }
     else {
@@ -71,7 +68,7 @@ public class BinopInstruction extends BranchingInstruction {
     return "BINOP " + myOperationSign;
   }
 
-  public String getOperationSign() {
+  public IElementType getOperationSign() {
     return myOperationSign;
   }
 }

@@ -129,8 +129,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
     final PsiPrefixExpression prefixExpression = PsiTreeUtil.getParentOfType(methodExpression, PsiPrefixExpression.class);
     if (methodExpression.getQualifierExpression() instanceof PsiSuperExpression) return true; //don't flag super calls
     if (prefixExpression != null) {
-      final PsiJavaToken sign = prefixExpression.getOperationSign();
-      final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = prefixExpression.getOperationTokenType();
       if (tokenType.equals(JavaTokenType.EXCL)) {
         return true;
       }

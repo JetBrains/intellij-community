@@ -25,6 +25,8 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +36,7 @@ import java.util.ArrayList;
 public class DfaRelationValue extends DfaValue {
   private DfaValue myLeftOperand;
   private DfaValue myRightOperand;
-  private String myRelation;
+  private IElementType myRelation;
   private boolean myIsNegated;
 
   public static class Factory {
@@ -49,9 +51,9 @@ public class DfaRelationValue extends DfaValue {
     }
 
     @Nullable
-    public DfaRelationValue create(DfaValue dfaLeft, DfaValue dfaRight, @NonNls String relation, boolean negated) {
-      if (dfaRight instanceof DfaTypeValue && !"instanceof".equals(relation)) return null;
-      if ("+".equals(relation)) return null;
+    public DfaRelationValue create(DfaValue dfaLeft, DfaValue dfaRight, IElementType relation, boolean negated) {
+      if (dfaRight instanceof DfaTypeValue && JavaTokenType.INSTANCEOF_KEYWORD != relation) return null;
+      if (JavaTokenType.PLUS == relation) return null;
 
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
           || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaUnboxedValue) {
@@ -72,21 +74,21 @@ public class DfaRelationValue extends DfaValue {
       }
     }
 
-    private DfaRelationValue createCanonicalRelation(String relation,
+    private DfaRelationValue createCanonicalRelation(IElementType relation,
                                                      boolean negated,
                                                      final DfaValue dfaLeft,
                                                      final DfaValue dfaRight) {
       // To canonical form.
-      if ("!=".equals(relation)) {
-        relation = "==";
+      if (JavaTokenType.NE == relation) {
+        relation = JavaTokenType.EQEQ;
         negated = !negated;
       }
-      else if ("<".equals(relation)) {
-        relation = ">=";
+      else if (JavaTokenType.LT == relation) {
+        relation = JavaTokenType.GE;
         negated = !negated;
       }
-      else if ("<=".equals(relation)) {
-        relation = ">";
+      else if (JavaTokenType.LE == relation) {
+        relation = JavaTokenType.GT;
         negated = !negated;
       }
 
@@ -112,18 +114,18 @@ public class DfaRelationValue extends DfaValue {
       return result;
     }
 
-    private static String getSymmetricOperation(String sign) {
-      if ("<".equals(sign)) {
-        return ">";
+    private static IElementType getSymmetricOperation(IElementType sign) {
+      if (JavaTokenType.LT == sign) {
+        return JavaTokenType.GT;
       }
-      else if (">=".equals(sign)) {
-        return "<=";
+      else if (JavaTokenType.GE == sign) {
+        return JavaTokenType.LE;
       }
-      else if (">".equals(sign)) {
-        return "<";
+      else if (JavaTokenType.GT == sign) {
+        return JavaTokenType.LT;
       }
-      else if ("<=".equals(sign)) {
-        return ">=";
+      else if (JavaTokenType.LE == sign) {
+        return JavaTokenType.GE;
       }
 
       return sign;
@@ -134,7 +136,7 @@ public class DfaRelationValue extends DfaValue {
     super(factory);
   }
 
-  private DfaRelationValue(DfaValue myLeftOperand, DfaValue myRightOperand, String myRelation, boolean myIsNegated,
+  private DfaRelationValue(DfaValue myLeftOperand, DfaValue myRightOperand, IElementType myRelation, boolean myIsNegated,
                            DfaValueFactory factory) {
     super(factory);
     this.myLeftOperand = myLeftOperand;
@@ -161,9 +163,9 @@ public class DfaRelationValue extends DfaValue {
 
   private boolean hardEquals(DfaRelationValue rel) {
     return Comparing.equal(rel.myLeftOperand,myLeftOperand)
-           && Comparing.equal(rel.myRightOperand,myRightOperand) &&
-           rel.myRelation.equals(myRelation) &&
-           rel.myIsNegated == myIsNegated;
+      && Comparing.equal(rel.myRightOperand,myRightOperand) &&
+      rel.myRelation == myRelation &&
+      rel.myIsNegated == myIsNegated;
   }
 
   @NonNls public String toString() {

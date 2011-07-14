@@ -1245,8 +1245,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) condition;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         if(!tokenType.equals(JavaTokenType.LT)){
             return false;
         }
@@ -1266,8 +1265,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) condition;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         if(!tokenType.equals(JavaTokenType.LT)){
             return null;
         }

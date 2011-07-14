@@ -96,7 +96,7 @@ public class LightStubBuilder implements StubBuilder {
       final StubElement stub = createStub(tree, element, parentStub);
 
       final List<LighterASTNode> kids = tree.getChildren(element);
-      if (kids.size() > 0) {
+      if (!kids.isEmpty()) {
         if (parent != null) {
           parents.push(parent);
           childNumbers.push(childNumber);
@@ -115,7 +115,7 @@ public class LightStubBuilder implements StubBuilder {
       }
 
       element = null;
-      while (parents.size() > 0) {
+      while (!parents.isEmpty()) {
         parent = parents.pop();
         childNumber = childNumbers.pop();
         children = kinderGarden.pop();

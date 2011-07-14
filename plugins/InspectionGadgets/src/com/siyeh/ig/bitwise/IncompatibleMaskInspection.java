@@ -43,9 +43,7 @@ public class IncompatibleMaskInspection extends BaseInspection {
     public String buildErrorString(Object... infos){
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) infos[0];
-        final PsiJavaToken operationSign =
-                binaryExpression.getOperationSign();
-        final IElementType tokenType = operationSign.getTokenType();
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
         if(tokenType.equals(JavaTokenType.EQEQ)){
             return InspectionGadgetsBundle.message(
                     "incompatible.mask.operation.problem.descriptor.always.false");
@@ -105,8 +103,7 @@ public class IncompatibleMaskInspection extends BaseInspection {
         private static boolean isIncompatibleMask(
                 PsiBinaryExpression maskExpression,
                 PsiExpression constantExpression){
-            final PsiJavaToken sign = maskExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = maskExpression.getOperationTokenType();
             final Object constantValue =
                     ConstantExpressionUtil.computeCastTo(constantExpression,
                             PsiType.LONG);
@@ -156,8 +153,7 @@ public class IncompatibleMaskInspection extends BaseInspection {
             }
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) expression;
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = binaryExpression.getOperationTokenType();
             if(!tokenType.equals(JavaTokenType.OR) &&
                     !tokenType.equals(JavaTokenType.AND)){
                 return false;

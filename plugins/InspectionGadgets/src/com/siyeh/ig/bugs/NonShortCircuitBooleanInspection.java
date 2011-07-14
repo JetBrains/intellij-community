@@ -64,8 +64,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
                     (PsiBinaryExpression) descriptor.getPsiElement();
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression rhs = expression.getROperand();
-            final PsiJavaToken operationSign = expression.getOperationSign();
-            final IElementType tokenType = operationSign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             assert rhs != null;
             final String newExpression = lhs.getText() +
                     getShortCircuitOperand(tokenType) + rhs.getText();
@@ -96,8 +95,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
             if(!(expression.getROperand() != null)){
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.AND) &&
                     !tokenType.equals(JavaTokenType.OR)) {
                 return;

@@ -165,8 +165,7 @@ public class StringConcatenationInspection extends BaseInspection {
             if(rhs == null) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!JavaTokenType.PLUS.equals(tokenType)) {
                 return;
             }
@@ -261,7 +260,7 @@ public class StringConcatenationInspection extends BaseInspection {
             if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
                 return;
             }
-            registerError(sign, expression);
+            registerError(expression.getOperationSign(), expression);
         }
 
         private boolean isInsideAnnotation(PsiBinaryExpression expression) {

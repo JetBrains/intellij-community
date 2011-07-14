@@ -219,10 +219,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   }
 
   /**
-   * @return can return NotNull value thought extraction should fail: reason could be retrieved from {@link #getErrorMessage(PsiExpression)}
+   * @return can return NotNull value although extraction will fail: reason could be retrieved from {@link #getErrorMessage(PsiExpression)}
    */
   public static PsiExpression getSelectedExpression(final Project project, final PsiFile file, int startOffset, int endOffset) {
-
     PsiElement elementAtStart = file.findElementAt(startOffset);
     if (elementAtStart == null || elementAtStart instanceof PsiWhiteSpace || elementAtStart instanceof PsiComment) {
       elementAtStart = PsiTreeUtil.skipSiblingsForward(elementAtStart, PsiWhiteSpace.class, PsiComment.class);

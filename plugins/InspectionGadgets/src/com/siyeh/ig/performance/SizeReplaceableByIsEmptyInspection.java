@@ -98,8 +98,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
                 return;
             }
             @NonNls String newExpression = qualifierExpression.getText();
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = binaryExpression.getOperationTokenType();
             if (!JavaTokenType.EQEQ.equals(tokenType)) {
                 newExpression = '!' + newExpression;
             }
@@ -129,21 +128,19 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
             }
             final PsiExpression lhs = expression.getLOperand();
             if (lhs instanceof PsiMethodCallExpression) {
-                final PsiJavaToken sign = expression.getOperationSign();
-                if (canBeReplacedByIsEmpty(lhs, sign, rhs, false)) {
+              if (canBeReplacedByIsEmpty(lhs, rhs, false, expression.getOperationTokenType())) {
                     registerError(expression, isEmptyCall);
                 }
             } else if (rhs instanceof PsiMethodCallExpression) {
-                final PsiJavaToken sign = expression.getOperationSign();
-                if (canBeReplacedByIsEmpty(rhs, sign, lhs, true)) {
+              if (canBeReplacedByIsEmpty(rhs, lhs, true, expression.getOperationTokenType())) {
                     registerError(expression, isEmptyCall);
                 }
             }
         }
 
         private boolean canBeReplacedByIsEmpty(
-                PsiExpression lhs, PsiJavaToken sign, PsiExpression rhs,
-                boolean flipped) {
+          PsiExpression lhs, PsiExpression rhs,
+          boolean flipped, IElementType tokenType) {
             final PsiMethodCallExpression callExpression =
                     (PsiMethodCallExpression)lhs;
             if (!isSizeCall(callExpression)) {
@@ -159,8 +156,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
             if (constant != 0) {
                 return false;
             }
-            final IElementType tokenType = sign.getTokenType();
-            if (JavaTokenType.EQEQ.equals(tokenType)) {
+          if (JavaTokenType.EQEQ.equals(tokenType)) {
                 return true;
             }
             if (ignoreNegations) {

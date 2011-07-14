@@ -429,14 +429,13 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         }
       }
       else if (RefactoringUtil.isPlusPlusOrMinusMinus(parent)){
-        PsiJavaToken sign;
+        IElementType sign;
         if (parent instanceof PsiPrefixExpression){
-          sign = ((PsiPrefixExpression)parent).getOperationSign();
+          sign = ((PsiPrefixExpression)parent).getOperationTokenType();
         }
         else{
-          sign = ((PsiPostfixExpression)parent).getOperationSign();
+          sign = ((PsiPostfixExpression)parent).getOperationTokenType();
         }
-        IElementType tokenType = sign.getTokenType();
 
         PsiExpression getExpr = expr;
         if (processGet){
@@ -448,7 +447,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         }
 
         @NonNls String text;
-        if (tokenType == JavaTokenType.PLUSPLUS){
+        if (sign == JavaTokenType.PLUSPLUS){
           text = "a+1";
         }
         else{

@@ -40,7 +40,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TableColumnAnimator;
-import com.intellij.ui.TableToolbarDecorator;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
@@ -160,7 +160,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     };
     myPropExceptionsButton.setShortcut(KeyboardShortcut.fromString("alt X"));
 
-    final JPanel panel = TableToolbarDecorator.createDecorator(table).addExtraAction(myPropExceptionsButton).createPanel();
+    final JPanel panel = ToolbarDecorator.createDecorator(table).addExtraAction(myPropExceptionsButton).createPanel();
     panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
 
     myExceptionsModel.addTableModelListener(new TableModelListener() {

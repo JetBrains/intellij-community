@@ -43,11 +43,11 @@ import java.util.Set;
 public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
 
-  private final HashSet<Instruction> myNPEInstructions = new HashSet<Instruction>();
-  private final HashSet<Instruction> myCCEInstructions = new HashSet<Instruction>();
-  private final HashSet<PsiExpression> myNullableArguments = new HashSet<PsiExpression>();
-  private final HashSet<PsiExpression> myNullableAssignments = new HashSet<PsiExpression>();
-  private final HashSet<PsiReturnStatement> myNullableReturns = new HashSet<PsiReturnStatement>();
+  private final Set<Instruction> myNPEInstructions = new HashSet<Instruction>();
+  private final Set<Instruction> myCCEInstructions = new HashSet<Instruction>();
+  private final Set<PsiExpression> myNullableArguments = new HashSet<PsiExpression>();
+  private final Set<PsiExpression> myNullableAssignments = new HashSet<PsiExpression>();
+  private final Set<PsiReturnStatement> myNullableReturns = new HashSet<PsiReturnStatement>();
 
   private final boolean mySuggestNullableAnnotations;
   private boolean myInNullableMethod = false;

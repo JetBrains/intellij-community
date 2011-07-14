@@ -477,8 +477,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
                 } else if(parent instanceof PsiPostfixExpression){
                     final PsiPostfixExpression postfixExpression =
                             (PsiPostfixExpression) parent;
-                    final PsiJavaToken operationSign = postfixExpression.getOperationSign();
-                    final IElementType tokenType = operationSign.getTokenType();
+                  final IElementType tokenType = postfixExpression.getOperationTokenType();
                     if(tokenType.equals(JavaTokenType.PLUSPLUS)){
                         name = ACCESS_METHOD_NAME_PREFIX + accessMethodIndex +
                                 "08";
@@ -488,8 +487,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
                     }
                 } else if(parent instanceof PsiPrefixExpression){
                     final PsiPrefixExpression prefixExpression = (PsiPrefixExpression) parent;
-                    final PsiJavaToken operationSign = prefixExpression.getOperationSign();
-                    final IElementType tokenType = operationSign.getTokenType();
+                  final IElementType tokenType = prefixExpression.getOperationTokenType();
                     if(tokenType.equals(JavaTokenType.PLUSPLUS)){
                         name = ACCESS_METHOD_NAME_PREFIX + accessMethodIndex +
                                 "04";

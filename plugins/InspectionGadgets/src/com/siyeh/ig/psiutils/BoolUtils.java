@@ -29,8 +29,7 @@ public class BoolUtils {
             return false;
         }
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) expression;
-        final PsiJavaToken sign = prefixExp.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = prefixExp.getOperationTokenType();
         return JavaTokenType.EXCL.equals(tokenType);
     }
 
@@ -61,9 +60,8 @@ public class BoolUtils {
         } else if (ComparisonUtils.isComparison(condition)) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) condition;
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final String negatedComparison =
-                    ComparisonUtils.getNegatedComparison(sign);
+          final String negatedComparison =
+                    ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             if (rhs == null) {

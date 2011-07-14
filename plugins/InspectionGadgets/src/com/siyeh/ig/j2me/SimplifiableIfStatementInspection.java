@@ -245,9 +245,8 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
         } else if (ComparisonUtils.isComparison(expression)) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) expression;
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final String negatedComparison =
-                    ComparisonUtils.getNegatedComparison(sign);
+          final String negatedComparison =
+                    ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             if (ParenthesesUtils.getPrecedence(expression) > precedence) {
@@ -390,13 +389,8 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
                     (PsiExpressionStatement)elseBranch;
             final PsiAssignmentExpression elseExpression =
                     (PsiAssignmentExpression)elseStatement.getExpression();
-            final PsiJavaToken thenOperationSign =
-                    thenExpression.getOperationSign();
-            final IElementType thenTokenType = thenOperationSign.getTokenType();
-            final PsiJavaToken elseOperationSign =
-                    elseExpression.getOperationSign();
-            final IElementType elseTokenType = elseOperationSign.getTokenType();
-            if (!thenTokenType.equals(elseTokenType)) {
+          final IElementType elseTokenType = elseExpression.getOperationTokenType();
+            if (!thenExpression.getOperationTokenType().equals(elseTokenType)) {
                 return false;
             }
             final PsiExpression thenRhs = thenExpression.getRExpression();

@@ -238,9 +238,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
                 return;
             }
             super.visitPrefixExpression(prefixExpression);
-            final PsiJavaToken operationSign =
-                    prefixExpression.getOperationSign();
-            final IElementType tokenType = operationSign.getTokenType();
+          final IElementType tokenType = prefixExpression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
@@ -265,9 +263,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
                 return;
             }
             super.visitPostfixExpression(postfixExpression);
-            final PsiJavaToken operationSign =
-                    postfixExpression.getOperationSign();
-            final IElementType tokenType = operationSign.getTokenType();
+          final IElementType tokenType = postfixExpression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;

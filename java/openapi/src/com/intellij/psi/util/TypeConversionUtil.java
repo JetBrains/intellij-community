@@ -29,6 +29,7 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,16 @@ public class TypeConversionUtil {
   private static final int BOOL_RANK = 10;
   private static final int STRING_RANK = 100;
   private static final int MAX_NUMERIC_RANK = DOUBLE_RANK;
+  public static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL){
+    public boolean isValid() {
+      return true;
+    }
+
+    @NonNls
+    public String getPresentableText() {
+      return "FAKE TYPE";
+    }
+  };
 
   static {
     TYPE_TO_RANK_MAP.put(PsiType.BYTE, BYTE_RANK);
@@ -1267,6 +1278,62 @@ public class TypeConversionUtil {
       opSign = JavaTokenType.XOR;
     }
     return opSign;
+  }
+
+  @Nullable
+  public static PsiType calcTypeForBinaryExpression(PsiType lType, PsiType rType, IElementType sign, boolean accessLType) {
+    if (sign == JavaTokenType.PLUS) {
+      // evaluate right argument first, since '+-/*%' is left associative and left operand tends to be bigger
+      if (rType == null) return null;
+      if (rType.equalsToText("java.lang.String")) {
+        return rType;
+      }
+      if (!accessLType) return NULL_TYPE;
+      if (lType == null) return null;
+      if (lType.equalsToText("java.lang.String")) {
+        return lType;
+      }
+      return unboxAndBalanceTypes(lType, rType);
+    }
+    if (sign == JavaTokenType.MINUS || sign == JavaTokenType.ASTERISK || sign == JavaTokenType.DIV || sign == JavaTokenType.PERC) {
+      if (rType == null) return null;
+      if (!accessLType) return NULL_TYPE;
+      if (lType == null) return null;
+      return unboxAndBalanceTypes(lType, rType);
+    }
+    if (sign == JavaTokenType.LTLT || sign == JavaTokenType.GTGT || sign == JavaTokenType.GTGTGT) {
+      if (!accessLType) return NULL_TYPE;
+      if (PsiType.BYTE.equals(lType) || PsiType.CHAR.equals(lType) || PsiType.SHORT.equals(lType)) {
+        return PsiType.INT;
+      }
+      if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
+      return lType;
+    }
+    if (sign == JavaTokenType.EQEQ ||
+        sign == JavaTokenType.NE ||
+        sign == JavaTokenType.LT ||
+        sign == JavaTokenType.GT ||
+        sign == JavaTokenType.LE ||
+        sign == JavaTokenType.GE ||
+        sign == JavaTokenType.OROR ||
+        sign == JavaTokenType.ANDAND) {
+      return PsiType.BOOLEAN;
+    }
+    if (sign == JavaTokenType.OR || sign == JavaTokenType.XOR || sign == JavaTokenType.AND) {
+      if (rType instanceof PsiClassType) rType = PsiPrimitiveType.getUnboxedType(rType);
+
+      if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
+
+      if (rType == null) return null;
+      if (PsiType.BOOLEAN.equals(rType)) return PsiType.BOOLEAN;
+      if (!accessLType) return NULL_TYPE;
+      if (lType == null) return null;
+      if (PsiType.BOOLEAN.equals(lType)) return PsiType.BOOLEAN;
+      if (PsiType.LONG.equals(lType) || PsiType.LONG.equals(rType)) return PsiType.LONG;
+      return PsiType.INT;
+    }
+    LOG.error("Unknown token: "+sign);
+    return null;
   }
 
   private interface Caster {

@@ -32,8 +32,7 @@ public class BoolUtils{
         if(ancestor.getParent() instanceof PsiPrefixExpression){
             final PsiPrefixExpression prefixAncestor =
                     (PsiPrefixExpression) ancestor.getParent();
-            final PsiJavaToken sign = prefixAncestor.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = prefixAncestor.getOperationTokenType();
             if(tokenType.equals(JavaTokenType.EXCL)){
                 return true;
             }
@@ -50,8 +49,7 @@ public class BoolUtils{
         if(ancestor.getParent() instanceof PsiPrefixExpression){
             final PsiPrefixExpression prefixAncestor =
                     (PsiPrefixExpression) ancestor.getParent();
-            final PsiJavaToken sign = prefixAncestor.getOperationSign();
-            if(JavaTokenType.EXCL.equals(sign.getTokenType())){
+          if(JavaTokenType.EXCL.equals(prefixAncestor.getOperationTokenType())){
                 return prefixAncestor;
             }
         }
@@ -63,8 +61,7 @@ public class BoolUtils{
             return false;
         }
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) exp;
-        final PsiJavaToken sign = prefixExp.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+      final IElementType tokenType = prefixExp.getOperationTokenType();
         return tokenType.equals(JavaTokenType.EXCL);
     }
 
@@ -109,9 +106,8 @@ public class BoolUtils{
         } else if(ComparisonUtils.isComparison(condition)){
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) condition;
-            final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final String negatedComparison =
-                    ComparisonUtils.getNegatedComparison(sign);
+          final String negatedComparison =
+                    ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             if(rhs == null){

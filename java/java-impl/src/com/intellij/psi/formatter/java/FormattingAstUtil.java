@@ -16,9 +16,8 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -136,23 +135,23 @@ public class FormattingAstUtil {
   }
 
   /**
-   * Allows to check if given <code>AST</code> nodes refer to binary expressions and have the same priority.
+   * Allows to check if given <code>AST</code> nodes refer to binary expressions which have the same priority.
    *
    * @param node1   node to check
    * @param node2   node to check
    * @return        <code>true</code> if given nodes are binary expressions and have the same priority;
    *                <code>false</code> otherwise
    */
-  public static boolean binaryExpressionHasTheSamePriority(ASTNode node1, ASTNode node2) {
+  public static boolean areSamePriorityBinaryExpressions(ASTNode node1, ASTNode node2) {
     if (node1 == null || node2 == null) {
       return false;
     }
 
-    if (node1.getElementType() != JavaElementType.BINARY_EXPRESSION || node2.getElementType() != JavaElementType.BINARY_EXPRESSION) {
+    if (!(node1 instanceof PsiPolyadicExpression) || !(node2 instanceof PsiPolyadicExpression)) {
       return false;
     }
-    PsiBinaryExpression expression1 = (PsiBinaryExpression)SourceTreeToPsiMap.treeElementToPsi(node1);
-    PsiBinaryExpression expression2 = (PsiBinaryExpression)SourceTreeToPsiMap.treeElementToPsi(node2);
+    PsiPolyadicExpression expression1 = (PsiPolyadicExpression)node1;
+    PsiPolyadicExpression expression2 = (PsiPolyadicExpression)node2;
     return expression1.getOperationTokenType() == expression2.getOperationTokenType();
   }
 }

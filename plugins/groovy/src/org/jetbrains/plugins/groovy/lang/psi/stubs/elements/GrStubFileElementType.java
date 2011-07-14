@@ -21,6 +21,7 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
@@ -41,7 +42,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   public StubBuilder getBuilder() {
     return new DefaultStubBuilder() {
-      protected StubElement createStubForFile(final PsiFile file) {
+      protected StubElement createStubForFile(@NotNull final PsiFile file) {
         if (file instanceof GroovyFile) {
           return new GrFileStub((GroovyFile)file);
         }

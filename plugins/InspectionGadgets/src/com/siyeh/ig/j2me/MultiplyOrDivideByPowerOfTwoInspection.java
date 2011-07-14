@@ -66,10 +66,9 @@ public class MultiplyOrDivideByPowerOfTwoInspection
         if (expression instanceof PsiAssignmentExpression) {
             final PsiAssignmentExpression exp =
                     (PsiAssignmentExpression)expression;
-            final PsiJavaToken sign = exp.getOperationSign();
-            lhs = exp.getLExpression();
+          lhs = exp.getLExpression();
             rhs = exp.getRExpression();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = exp.getOperationTokenType();
             if (tokenType.equals(JavaTokenType.ASTERISKEQ)) {
                 operator = "<<=";
             } else {
@@ -77,10 +76,9 @@ public class MultiplyOrDivideByPowerOfTwoInspection
             }
         } else {
             final PsiBinaryExpression exp = (PsiBinaryExpression)expression;
-            final PsiJavaToken sign = exp.getOperationSign();
-            lhs = exp.getLOperand();
+          lhs = exp.getLOperand();
             rhs = exp.getROperand();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = exp.getOperationTokenType();
             if (tokenType.equals(JavaTokenType.ASTERISK)) {
                 operator = "<<";
             } else {
@@ -159,9 +157,8 @@ public class MultiplyOrDivideByPowerOfTwoInspection
             if (rhs == null) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
 
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.ASTERISK)) {
                 if (!checkDivision || !tokenType.equals(JavaTokenType.DIV)) {
                     return;
@@ -186,8 +183,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
             if (!WellFormednessUtils.isWellFormed(expression)) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.ASTERISKEQ)) {
                 if (!checkDivision || !tokenType.equals(JavaTokenType.DIVEQ)) {
                     return;

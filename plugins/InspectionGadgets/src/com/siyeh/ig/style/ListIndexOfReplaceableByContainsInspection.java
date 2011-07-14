@@ -47,17 +47,16 @@ public class ListIndexOfReplaceableByContainsInspection
     public String buildErrorString(Object... infos) {
         final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
         final PsiExpression lhs = expression.getLOperand();
-        final PsiJavaToken sign = expression.getOperationSign();
-        final String text;
+      final String text;
         if (lhs instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression callExpression =
                     (PsiMethodCallExpression)lhs;
-            text = createContainsExpressionText(callExpression, sign, false);
+            text = createContainsExpressionText(callExpression, false, expression.getOperationTokenType());
         } else {
             final PsiMethodCallExpression callExpression =
                     (PsiMethodCallExpression)expression.getROperand();
             assert callExpression != null;
-            text = createContainsExpressionText(callExpression, sign, true);
+            text = createContainsExpressionText(callExpression, true, expression.getOperationTokenType());
         }
         return InspectionGadgetsBundle.message(
                 "indexof.replaceable.by.contains.problem.descriptor", text);
@@ -79,20 +78,19 @@ public class ListIndexOfReplaceableByContainsInspection
                     (PsiBinaryExpression)descriptor.getPsiElement();
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression rhs = expression.getROperand();
-            final PsiJavaToken sign = expression.getOperationSign();
-            final String newExpressionText;
+          final String newExpressionText;
             if (lhs instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression callExpression =
                         (PsiMethodCallExpression)lhs;
                 newExpressionText =
-                        createContainsExpressionText(callExpression, sign,
-                                false);
+                        createContainsExpressionText(callExpression,
+                                                     false, expression.getOperationTokenType());
             } else {
                 final PsiMethodCallExpression callExpression =
                         (PsiMethodCallExpression)rhs;
                 assert callExpression != null;
                 newExpressionText =
-                        createContainsExpressionText(callExpression, sign, true);
+                        createContainsExpressionText(callExpression, true, expression.getOperationTokenType());
             }
             replaceExpression(expression, newExpressionText);
         }
@@ -105,10 +103,8 @@ public class ListIndexOfReplaceableByContainsInspection
     }
 
     static String createContainsExpressionText(
-            @NotNull PsiMethodCallExpression call,
-            @NotNull PsiJavaToken sign,
-            boolean flipped) {
-        final IElementType tokenType = sign.getTokenType();
+      @NotNull PsiMethodCallExpression call,
+      boolean flipped, IElementType tokenType) {
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final PsiExpression qualifierExpression =
@@ -154,21 +150,19 @@ public class ListIndexOfReplaceableByContainsInspection
             }
             final PsiExpression lhs = expression.getLOperand();
             if (lhs instanceof PsiMethodCallExpression) {
-                final PsiJavaToken sign = expression.getOperationSign();
-                if (canBeReplacedByContains(lhs, sign, rhs, false)) {
+              if (canBeReplacedByContains(lhs, rhs, false, expression.getOperationTokenType())) {
                     registerError(expression, expression);
                 }
             } else if (rhs instanceof PsiMethodCallExpression) {
-                final PsiJavaToken sign = expression.getOperationSign();
-                if (canBeReplacedByContains(rhs, sign, lhs, true)) {
+              if (canBeReplacedByContains(rhs, lhs, true, expression.getOperationTokenType())) {
                     registerError(expression, expression);
                 }
             }
         }
 
         private static boolean canBeReplacedByContains(
-                PsiExpression lhs, PsiJavaToken sign,
-                PsiExpression rhs, boolean flipped) {
+          PsiExpression lhs,
+          PsiExpression rhs, boolean flipped, IElementType tokenType) {
             final PsiMethodCallExpression callExpression =
                     (PsiMethodCallExpression)lhs;
             if (!isIndexOfCall(callExpression)) {
@@ -181,8 +175,7 @@ public class ListIndexOfReplaceableByContainsInspection
             }
             final Integer integer = (Integer)object;
             final int constant = integer.intValue();
-            final IElementType tokenType = sign.getTokenType();
-            if (flipped) {
+          if (flipped) {
                 if (constant == -1 && (JavaTokenType.NE.equals(tokenType) ||
                                        JavaTokenType.LT.equals(tokenType) ||
                                        JavaTokenType.EQEQ.equals(tokenType) ||

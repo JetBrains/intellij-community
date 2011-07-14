@@ -323,7 +323,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Alignment createChildAlignment() {
-    final IElementType nodeType = myNode.getElementType();
+    IElementType nodeType = myNode.getElementType();
+    if (nodeType == JavaElementType.POLYADIC_EXPRESSION) nodeType = JavaElementType.BINARY_EXPRESSION;
     if (nodeType == JavaElementType.ASSIGNMENT_EXPRESSION) {
       if (myNode.getTreeParent() != null
           && myNode.getTreeParent().getElementType() == JavaElementType.ASSIGNMENT_EXPRESSION
@@ -368,7 +369,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (nodeType == JavaElementType.MODIFIER_LIST || nodeType == JavaElementType.NEW_EXPRESSION) {
       return myAlignment;
     }
-
     else {
       return null;
     }
@@ -407,10 +407,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   private boolean shouldInheritAlignment() {
-    if (myNode.getElementType() == JavaElementType.BINARY_EXPRESSION) {
+    if (myNode instanceof PsiPolyadicExpression) {
       final ASTNode treeParent = myNode.getTreeParent();
-      if (treeParent != null && treeParent.getElementType() == JavaElementType.BINARY_EXPRESSION) {
-        return FormattingAstUtil.binaryExpressionHasTheSamePriority(myNode, treeParent);
+      if (treeParent instanceof PsiPolyadicExpression) {
+        return FormattingAstUtil.areSamePriorityBinaryExpressions(myNode, treeParent);
       }
     }
     return false;
@@ -452,7 +452,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                                  arrangeChildAlignment(child, alignmentStrategy)));
     }
     else {
-      final IElementType nodeType = myNode.getElementType();
+      IElementType nodeType = myNode.getElementType();
+      if (nodeType == JavaElementType.POLYADIC_EXPRESSION) nodeType = JavaElementType.BINARY_EXPRESSION;
 
       if (childType == JavaTokenType.LBRACE && nodeType == JavaElementType.ARRAY_INITIALIZER_EXPRESSION) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
@@ -524,7 +525,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         child = processField(result, child, alignmentStrategy, defaultWrap, childIndent);
       }
       else if (childType == JavaElementType.LOCAL_VARIABLE
-               || (childType == JavaElementType.DECLARATION_STATEMENT && myNode.getElementType() == JavaElementType.METHOD))
+               || childType == JavaElementType.DECLARATION_STATEMENT && myNode.getElementType() == JavaElementType.METHOD)
       {
         result.add(new SimpleJavaBlock(child, defaultWrap, alignmentStrategy, childIndent, mySettings));
       }
@@ -545,8 +546,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
         if (block instanceof AbstractJavaBlock) {
           final AbstractJavaBlock javaBlock = (AbstractJavaBlock)block;
-          if ((nodeType == JavaElementType.METHOD_CALL_EXPRESSION && childType == JavaElementType.REFERENCE_EXPRESSION)
-              || (nodeType == JavaElementType.REFERENCE_EXPRESSION && childType == JavaElementType.METHOD_CALL_EXPRESSION))
+          if (nodeType == JavaElementType.METHOD_CALL_EXPRESSION && childType == JavaElementType.REFERENCE_EXPRESSION
+              || nodeType == JavaElementType.REFERENCE_EXPRESSION && childType == JavaElementType.METHOD_CALL_EXPRESSION)
           {
             javaBlock.setReservedWrap(getReservedWrap(nodeType), nodeType);
             javaBlock.setReservedWrap(getReservedWrap(childType), childType);

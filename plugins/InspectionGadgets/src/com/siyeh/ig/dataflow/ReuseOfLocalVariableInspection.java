@@ -185,8 +185,7 @@ public class ReuseOfLocalVariableInspection
             if(variable.getInitializer() == null){
                 return;
             }
-            final PsiJavaToken sign = assignment.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+          final IElementType tokenType = assignment.getOperationTokenType();
             if(!JavaTokenType.EQ.equals(tokenType)){
                 return;
             }

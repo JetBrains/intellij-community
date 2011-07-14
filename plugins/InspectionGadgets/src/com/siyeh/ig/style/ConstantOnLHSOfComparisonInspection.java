@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -78,9 +77,8 @@ public class ConstantOnLHSOfComparisonInspection extends BaseInspection {
             if (rhs == null) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final String flippedComparison =
-                    ComparisonUtils.getFlippedComparison(sign);
+          final String flippedComparison =
+                    ComparisonUtils.getFlippedComparison(expression.getOperationTokenType());
             if (flippedComparison == null) {
                 return;
             }

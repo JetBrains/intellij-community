@@ -242,8 +242,7 @@ public class OverlyComplexBooleanExpressionInspection
             } else if (expression instanceof PsiPrefixExpression) {
                 final PsiPrefixExpression prefixExpression =
                         (PsiPrefixExpression) expression;
-                final PsiJavaToken sign = prefixExpression.getOperationSign();
-                final IElementType tokenType = sign.getTokenType();
+              final IElementType tokenType = prefixExpression.getOperationTokenType();
                 return tokenType.equals(JavaTokenType.EXCL);
             } else if (expression instanceof PsiParenthesizedExpression) {
                 final PsiParenthesizedExpression parenthesizedExpression =
