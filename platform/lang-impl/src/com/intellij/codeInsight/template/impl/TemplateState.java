@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.OffsetMap;
@@ -51,6 +52,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.HashMap;
@@ -495,9 +497,13 @@ public class TemplateState implements Disposable {
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
 
-    final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems);
-    ((LookupImpl)lookup).setAdvertisementText(advertisingText);
-    ((LookupImpl)lookup).refreshUi();
+    final LookupImpl lookup = (LookupImpl)lookupManager.showLookup(myEditor, lookupItems);
+    if (CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && myEditor.getUserData(VariableInplaceRenamer.INPLACE_RENAMER) == null) {
+      lookup.setStartCompletionWhenNothingMatches(true);
+    }
+
+    lookup.setAdvertisementText(advertisingText);
+    lookup.refreshUi();
     ourLookupShown = true;
     lookup.addLookupListener(new LookupAdapter() {
       public void lookupCanceled(LookupEvent event) {

@@ -114,9 +114,6 @@ public class LookupManagerImpl extends LookupManager {
 
     final LookupImpl lookup = createLookup(editor, items, prefix, arranger);
     lookup.show();
-    if (CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) {
-      lookup.setStartCompletionWhenNothingMatches(true);
-    }
     return lookup;
   }
 
