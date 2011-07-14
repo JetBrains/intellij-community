@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.lang.JarMemoryLoader;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +70,10 @@ public class ReorderJarsMain {
 
         final File tempJarFile = FileUtil.createTempFile("__reorder__", "__reorder__");
         final JBZipFile file = new JBZipFile(tempJarFile);
+
+        JBZipEntry sizeEntry = file.getOrCreateEntry(JarMemoryLoader.SIZE_ENTRY);
+        sizeEntry.setData(ZipShort.getBytes(orderedEntries.size()));
+
         for (JBZipEntry entry : entries) {
           final JBZipEntry zipEntry = file.getOrCreateEntry(entry.getName());
           zipEntry.setData(entry.getData());
@@ -95,8 +100,9 @@ public class ReorderJarsMain {
 
   private static Map<String, List<String>> getOrder(final File loadingFile) throws IOException {
     final Map<String, List<String>> entriesOrder = new HashMap<String, List<String>>();
-    final String[] lines = FileUtil.loadFile(loadingFile).split("\r\n");
+    final String[] lines = FileUtil.loadFile(loadingFile).split("\n");
     for (String line : lines) {
+      line = line.trim();
       final int i = line.indexOf(":");
       if (i != -1) {
         final String entry = line.substring(0, i);

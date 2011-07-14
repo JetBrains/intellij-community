@@ -16,6 +16,7 @@
 
 package com.intellij.util.lang;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.TimedComputable;
 import org.jetbrains.annotations.NonNls;
@@ -31,8 +32,11 @@ import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
   private final URL myURL;
+  private JarMemoryLoader myMemoryLoader;
   private final boolean myCanLockJar;
   private static final boolean myDebugTime = false;
+
+  private static final Logger LOG = Logger.getInstance(JarLoader.class);
 
   private final TimedComputable<ZipFile> myZipFileRef = new TimedComputable<ZipFile>(null) {
     @NotNull
@@ -56,6 +60,27 @@ class JarLoader extends Loader {
     super(new URL(JAR_PROTOCOL, "", -1, url + "!/"));
     myURL = url;
     myCanLockJar = canLockJar;
+  }
+
+  void preLoadClasses() {
+    try {
+      ZipFile zipFile = acquireZipFile();
+      if (zipFile == null) return;
+      File file = new File(zipFile.getName());
+      try {
+        long start = System.currentTimeMillis();
+        myMemoryLoader = JarMemoryLoader.load(file, getBaseURL());
+        if (myMemoryLoader != null) {
+          LOG.info("Classes from " + file + " preloaded in " + (System.currentTimeMillis() - start) + " ms");
+        }
+      }
+      finally {
+        releaseZipFile(zipFile);
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   @Nullable
@@ -110,6 +135,10 @@ class JarLoader extends Loader {
   @Nullable
   Resource getResource(String name, boolean flag) {
     final long started = myDebugTime ? System.nanoTime():0;
+    if (myMemoryLoader != null) {
+      Resource resource = myMemoryLoader.getResource(name);
+      if (resource != null) return resource;
+    }
     ZipFile file = null;
     try {
       file = acquireZipFile();

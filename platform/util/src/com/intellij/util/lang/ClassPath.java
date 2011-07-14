@@ -32,10 +32,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 class ClassPath {
   private final Stack<URL> myUrls = new Stack<URL>();
@@ -46,6 +43,7 @@ class ClassPath {
   @NonNls private static final String FILE_PROTOCOL = "file";
   private static final boolean myDebugTime = false;
   private static final boolean ourDumpOrder = "true".equals(System.getProperty("idea.dump.order"));
+  private static final boolean ourPreloadClasses = "true".equals(System.getProperty("idea.preload.classes"));
 
   private final boolean myCanLockJars;
   private final boolean myCanUseCache;
@@ -53,10 +51,12 @@ class ClassPath {
 
   private static PrintStream ourOrder;
   private static long ourOrderSize;
+  private final static Set<String> ourOrderedUrls = new HashSet<String>();
 
   private final boolean myAcceptUnescapedUrls;
 
   private static void printOrder(Loader loader, String url, Resource resource) {
+    if (!ourOrderedUrls.add(url)) return;
     try {
       ourOrderSize += resource.getContentLength();
     }
@@ -200,7 +200,11 @@ class ClassPath {
       }
     }
     else {
-      loader = new JarLoader(url, myCanLockJars);
+      JarLoader jarLoader = new JarLoader(url, myCanLockJars);
+      if (ourPreloadClasses) {
+        jarLoader.preLoadClasses();
+      }
+      loader = jarLoader;
     }
 
     if (loader != null && myCanUseCache) {
