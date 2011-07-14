@@ -267,7 +267,8 @@ public class MoveClassesOrPackagesUtil {
                                              final VirtualFile[] contentSourceRoots,
                                              final PsiDirectory initialDirectory) {
     Project project = targetPackage.getManager().getProject();
-    List<PsiDirectory> targetDirectories = new ArrayList<PsiDirectory>();
+    //ensure that there would be no duplicates: e.g. when one content root is subfolder of another root (configured via excluded roots)
+    LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
     Map<PsiDirectory, String> relativePathsToCreate = new HashMap<PsiDirectory,String>();
     buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
 
@@ -287,7 +288,7 @@ public class MoveClassesOrPackagesUtil {
 
   private static void buildDirectoryList(PackageWrapper aPackage,
                                          VirtualFile[] contentSourceRoots,
-                                         List<PsiDirectory> targetDirectories,
+                                         LinkedHashSet<PsiDirectory> targetDirectories,
                                          Map<PsiDirectory, String> relativePathsToCreate) {
 
     sourceRoots:

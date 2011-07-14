@@ -25,14 +25,22 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-parent</artifactId>
-  <version>1.8.1</version>
+  <version>1.8.2</version>
   <packaging>pom</packaging>
   <description>master POM</description>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
   <name>Apache Ant</name>
   <url>http://ant.apache.org/</url>
   <inceptionYear>2000</inceptionYear>
   <organization>
-    <name>Apache Software Foundation</name>
+    <name>The Apache Software Foundation</name>
+    <url>http://www.apache.org/</url>
   </organization>
   <distributionManagement>
     <!-- Null out inherited apache distribution repo by default -->
@@ -44,9 +52,13 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
   </distributionManagement>
   <scm>
     <connection>scm:svn:http://svn.apache.org/repos/asf/ant/core/trunk</connection>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/jant/core/trunk</developerConnection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/ant/core/trunk</developerConnection>
     <url>http://svn.apache.org/repos/asf/ant/core/trunk</url>
   </scm>
+  <ciManagement>
+    <system>hudson</system>
+    <url>https://hudson.apache.org/hudson/job/Ant_BuildFromPOMs/</url>
+  </ciManagement>
   <mailingLists>
     <mailingList>
       <name>Ant Developers List</name>
@@ -85,9 +97,9 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <module>ant-jmf</module>
     <module>ant-jsch</module>
     <module>ant-junit</module>
+    <module>ant-junit4</module>
     <module>ant-launcher</module>
     <module>ant-netrexx</module>
-    <module>ant-nodeps</module>
     <module>ant-swing</module>
     <module>ant-testutil</module>
   </modules>
