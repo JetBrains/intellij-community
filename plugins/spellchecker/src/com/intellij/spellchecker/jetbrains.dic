@@ -267,6 +267,7 @@ plugin
 plugins
 pointcut
 pointcuts
+polyadic
 popup
 popups
 posix
