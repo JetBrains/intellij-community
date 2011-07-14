@@ -16,14 +16,18 @@
 package com.intellij.unscramble;
 
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
@@ -180,7 +184,7 @@ public class ThreadDumpPanel extends JPanel {
     myThreadList.setSelectedIndex(index);
   }
 
-  private class SortThreadsAction extends AnAction {
+  private class SortThreadsAction extends DumbAwareAction {
     private final Comparator<ThreadState> BY_TYPE = new Comparator<ThreadState>() {
       public int compare(ThreadState o1, ThreadState o2) {
         final int s1 = getThreadStateCode(o1).ordinal();
@@ -235,7 +239,8 @@ public class ThreadDumpPanel extends JPanel {
       e.getPresentation().setText(COMPARATOR == BY_TYPE ? TYPE_LABEL : NAME_LABEL);
     }
   }
-  private static class CopyToClipboardAction extends AnAction {
+  private static class CopyToClipboardAction extends DumbAwareAction {
+    private static final NotificationGroup GROUP = NotificationGroup.toolWindowGroup("Analyze thread dump", ToolWindowId.RUN, false);
     private final List<ThreadState> myThreadDump;
     private final Project myProject;
 
@@ -251,13 +256,8 @@ public class ThreadDumpPanel extends JPanel {
         buf.append(state.getStackTrace()).append("\n\n");
       }
       CopyPasteManager.getInstance().setContents(new StringSelection(buf.toString()));
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (!myProject.isDisposed()) {
-            ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.RUN, MessageType.INFO, "Full thread dump was successfully copied to clipboard");
-          }
-        }
-      });
+
+      GROUP.createNotification("Full thread dump was successfully copied to clipboard", MessageType.INFO).notify(myProject);
     }
   }
 }

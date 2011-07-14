@@ -54,8 +54,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -64,6 +62,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
 import com.sun.jdi.Field;
 import com.sun.jdi.InternalException;
@@ -466,9 +465,7 @@ public class BreakpointManager implements JDOMExternalizable {
       return null;
     }
 
-    ToolWindowManager.getInstance(myProject).notifyByBalloon(
-      ToolWindowId.DEBUG, MessageType.WARNING, "Method breakpoints may dramatically slow down debugging", null, null
-    );
+    XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(myProject);
 
     addBreakpoint(breakpoint);
     return breakpoint;

@@ -92,7 +92,7 @@ import java.io.*;
 import java.util.*;
 
 public class CompileDriver {
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Compiler", NotificationDisplayType.NONE, true);
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
   // to be used in tests only for debug output

@@ -283,7 +283,7 @@ public class FileBasedIndex implements ApplicationComponent {
         rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";
       }
       if (rebuildNotification != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, true)
+        new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false)
           .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
       }
       dropUnregisteredIndices();

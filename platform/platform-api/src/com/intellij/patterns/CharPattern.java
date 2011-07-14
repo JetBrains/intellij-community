@@ -51,4 +51,12 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
     });
   }
 
+  public CharPattern letterOrDigit() {
+    return with(new PatternCondition<Character>("letterOrDigit") {
+      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+        return Character.isLetterOrDigit(character.charValue());
+      }
+    });
+  }
+
 }

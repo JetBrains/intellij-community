@@ -32,10 +32,7 @@ import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -134,13 +131,8 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
 
         final Application application = ApplicationManager.getApplication();
         if (modifiedClasses.isEmpty()) {
-          application.invokeLater(new Runnable() {
-            public void run() {
-              final String message = DebuggerBundle.message("status.hotswap.uptodate");
-              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message, null, null);
-              HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
-            }
-          }, ModalityState.NON_MODAL);
+          final String message = DebuggerBundle.message("status.hotswap.uptodate");
+          HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
           return;
         }
 

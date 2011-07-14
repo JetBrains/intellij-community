@@ -17,7 +17,9 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,8 +32,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 
@@ -106,15 +106,25 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        showPopup((T) value);
+        showPopup((T) value, row);
       }
     });
 
     return this;
   }
 
-  private void showPopup(final T value) {
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<T>(myValues, value) {
+  protected boolean isApplicable(final T value, final int row) {
+    return true;
+  }
+
+  private void showPopup(final T value, final int row) {
+    List<T> filtered = ContainerUtil.findAll(myValues, new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return isApplicable(t, row);
+      }
+    });
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<T>(filtered, value) {
       @NotNull
       public String getTextFor(T value) {
         return ComboBoxTableRenderer.this.getTextFor(value);
@@ -241,8 +251,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     private final List<T> myValues;
     private final T mySelected;
 
-    protected ListStep(final T[] values, final T selected) {
-      myValues = new ArrayList<T>(Arrays.asList(values));
+    protected ListStep(List<T> values, T selected) {
+      myValues = values;
       mySelected = selected;
     }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.messages.MessageBus;
@@ -44,10 +45,24 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
 
   private final Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
+  private final Map<String, String> myToolWindowCapable = new java.util.LinkedHashMap<String, String>();
   private final MessageBus myMessageBus;
 
   public NotificationsConfiguration(@NotNull final MessageBus bus) {
     myMessageBus = bus;
+  }
+
+  public synchronized void registerToolWindowCapability(@NotNull String groupId, @NotNull String toolWindowId) {
+    myToolWindowCapable.put(groupId, toolWindowId);
+  }
+
+  public synchronized boolean hasToolWindowCapability(@NotNull String groupId) {
+    return myToolWindowCapable.containsKey(groupId);
+  }
+
+  @Nullable
+  public synchronized String getToolWindowId(@NotNull String groupId) {
+    return myToolWindowCapable.get(groupId);
   }
 
   public static NotificationsConfiguration getNotificationsConfiguration() {
@@ -119,8 +134,13 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   }
 
   public synchronized void registerDefaultSettings(NotificationSettings settings) {
-    if (!isRegistered(settings.getGroupId())) {
-      myIdToSettingsMap.put(settings.getGroupId(), settings);
+    String groupId = settings.getGroupId();
+    if (!isRegistered(groupId)) {
+      myIdToSettingsMap.put(groupId, settings);
+    } else if (settings.getDisplayType() == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupId)) {
+      // the first time with tool window capability
+      ObjectUtils.assertNotNull(_getSettings(groupId)).setDisplayType(NotificationDisplayType.TOOL_WINDOW);
+      myToolWindowCapable.put(groupId, null);
     }
   }
 
@@ -136,6 +156,9 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     for (NotificationSettings settings : myIdToSettingsMap.values()) {
       element.addContent(settings.save());
     }
+    for (String entry: myToolWindowCapable.keySet()) {
+      element.addContent(new Element("toolWindow").setAttribute("group", entry));
+    }
 
     return element;
   }
@@ -147,6 +170,12 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
         final String id = settings.getGroupId();
         LOG.assertTrue(!myIdToSettingsMap.containsKey(id), String.format("Settings for '%s' already loaded!", id));
         myIdToSettingsMap.put(id, settings);
+      }
+    }
+    for (@NonNls Element child : (Iterable<? extends Element>)state.getChildren("toolWindow")) {
+      String group = child.getAttributeValue("group");
+      if (group != null && !myToolWindowCapable.containsKey(group)) {
+        myToolWindowCapable.put(group, null);
       }
     }
     _remove("Log Only");

@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class MessagePool {
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("IDE Fatal Errors", NotificationDisplayType.NONE, true);
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("IDE Fatal Errors");
 
 
   private static final int MAX_POOL_SIZE_FOR_FATALS = 100;

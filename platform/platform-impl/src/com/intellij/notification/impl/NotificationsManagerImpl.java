@@ -21,7 +21,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -33,9 +36,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -137,12 +142,21 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public static void showNotification(final Notification notification, @Nullable final Project project) {
-    if (EventLog.isEventLogVisible(project)) {
+    String groupId = notification.getGroupId();
+    final NotificationSettings settings = NotificationsConfiguration.getSettings(groupId);
+
+    if (EventLog.isEventLogVisible(project) && settings.isShouldLog()) {
       return;
     }
 
-    final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
-    switch (settings.getDisplayType()) {
+    NotificationDisplayType type = settings.getDisplayType();
+    String toolWindowId = NotificationsConfiguration.getNotificationsConfiguration().getToolWindowId(groupId);
+    if (type == NotificationDisplayType.TOOL_WINDOW &&
+        (toolWindowId == null || project == null || !Arrays.asList(ToolWindowManager.getInstance(project).getToolWindowIds()).contains(toolWindowId))) {
+      type = NotificationDisplayType.BALLOON;
+    }
+
+    switch (type) {
       case NONE:
         return;
       //case EXTERNAL:
@@ -151,8 +165,22 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       case STICKY_BALLOON:
       case BALLOON:
       default:
-        notifyByBalloon(notification, settings.getDisplayType(), project);
+        notifyByBalloon(notification, type, project);
         break;
+      case TOOL_WINDOW:
+        MessageType messageType = notification.getType() == NotificationType.ERROR
+                            ? MessageType.ERROR
+                            : notification.getType() == NotificationType.WARNING ? MessageType.WARNING : MessageType.INFO;
+        final NotificationListener notificationListener = notification.getListener();
+        HyperlinkListener listener = notificationListener == null ? null : new HyperlinkListener() {
+          @Override
+          public void hyperlinkUpdate(HyperlinkEvent e) {
+            notificationListener.hyperlinkUpdate(notification, e);
+          }
+        };
+        assert toolWindowId != null;
+        String msg = StringUtil.isEmpty(notification.getTitle()) ? notification.getContent() : notification.getTitle();
+        ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, messageType, msg, notification.getIcon(), listener);
     }
   }
 

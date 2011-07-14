@@ -18,13 +18,11 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RuntimeConfiguration;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -45,11 +43,10 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 
 public class TestsUIUtil {
-  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Test Runner", NotificationDisplayType.NONE, true);
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Test Runner");
   @NonNls private static final String ICONS_ROOT = "/runConfigurations/";
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.testframework.TestsUIUtil");
 
   private TestsUIUtil() {
   }

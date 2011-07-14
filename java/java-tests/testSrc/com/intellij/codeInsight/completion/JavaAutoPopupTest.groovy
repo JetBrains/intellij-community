@@ -37,7 +37,6 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
-import com.intellij.codeInsight.lookup.impl.LookupActionHandler
 
 /**
  * @author peter
@@ -554,15 +553,7 @@ public interface Test {
 
   }
 
-  @Override
-  protected void tearDown() {
-    LookupActionHandler.DEBUG = false
-    super.tearDown()
-  }
-
   public void testLeftRightMovements() {
-    LookupActionHandler.DEBUG = true
-
     myFixture.configureByText("a.java", """
       class Foo {
         void foo(String iterable) {
@@ -591,17 +582,6 @@ public interface Test {
 
     for (i in 0.."iter".size()) {
       edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
-      println myFixture.editor.caretModel.offset
-      println myFixture.editor.document.text[myFixture.editor.caretModel.offset]
-    }
-    if (lookup) {
-      println lookup.items
-      println myFixture.editor.document.text
-      println myFixture.editor.caretModel.offset
-      println myFixture.editor.settings.virtualSpace
-      println project
-      println LookupManager.getInstance(project)
-      println LookupManager.getInstance(project).getActiveLookup()
     }
     assert !lookup
   }

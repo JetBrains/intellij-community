@@ -20,18 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -100,24 +91,5 @@ public class VcsBalloonProblemNotifier implements Runnable {
 
   private void doForProject(@NotNull final Project project) {
     AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(myMessage, myMessageType).notify(project);
-
-    final ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    final String toolWindowId = (myShowOverChangesView ? ChangesViewContentManager.TOOLWINDOW_ID : ToolWindowId.VCS);
-    final boolean haveWindow = (! project.isDefault()) && (manager.getToolWindow(toolWindowId) != null);
-    if (haveWindow) {
-      manager.notifyByBalloon(toolWindowId, myMessageType, myMessage, null, null);
-    } else {
-      final JFrame frame = WindowManager.getInstance().getFrame(project.isDefault() ? null : project);
-      if (frame == null) return;
-      final JComponent component = frame.getRootPane();
-      if (component == null) return;
-      final Rectangle rect = component.getVisibleRect();
-      final Point p = new Point(rect.x + 30, rect.y + rect.height - 10);
-      final RelativePoint point = new RelativePoint(component, p);
-
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-        myMessage, myMessageType.getDefaultIcon(), myMessageType.getPopupBackground(), null).createBalloon().show(
-        point, Balloon.Position.above);
-    }
   }
 }

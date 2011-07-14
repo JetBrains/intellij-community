@@ -39,8 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -50,8 +49,6 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.ThreadDeathRequest;
 import com.sun.jdi.request.ThreadStartRequest;
-
-import javax.swing.*;
 
 /**
  * @author lex
@@ -398,13 +395,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final RequestHint.SmartStepFilter smartStepFilter = hint.getSmartStepFilter();
         if (smartStepFilter != null && !smartStepFilter.wasMethodExecuted()) {
           final String message = "Method <b>" + smartStepFilter.getTargetMethodName() + "()</b> has not been called";
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              if (!project.isDisposed()) {
-                ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message);
-              }
-            }
-          });
+          XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
         }
       }
     }

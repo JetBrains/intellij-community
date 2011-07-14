@@ -33,9 +33,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.EventDispatcher;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
@@ -840,7 +838,6 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
                 message = op + " complete";
                 type = MessageType.INFO;
               }
-              ToolWindowManager.getInstance(myProject).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, type, message);
               GitVcs.NOTIFICATION_GROUP_ID.createNotification(message, type).notify(myProject);
             }
           });
