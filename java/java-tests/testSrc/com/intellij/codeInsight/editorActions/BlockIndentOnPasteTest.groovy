@@ -38,7 +38,7 @@ class Test {
     
     def toPaste =
 '''\
-foo();
+                            foo();
                                foo();\
 '''
 
@@ -48,7 +48,7 @@ class Test {
     void test() {
         if (true) {
             foo();
-            foo();
+               foo();
         }
     }
 }\
@@ -56,6 +56,48 @@ class Test {
     doTest(before, toPaste, expected)
   }
 
+  void testJavaComplexBlockWithDecreasedIndent() {
+    def before = '''\
+class Test {
+    void test() {
+        if (true) {
+            i = 1;
+        } else {
+            i = 2;
+        }
+                              <caret>
+    }
+}\
+'''
+
+    def toPaste =
+    '''\
+        if (true) {
+            i = 1;
+        } else {
+            i = 2;
+        }\
+'''
+
+    def expected = '''\
+class Test {
+    void test() {
+        if (true) {
+            i = 1;
+        } else {
+            i = 2;
+        }
+        if (true) {
+            i = 1;
+        } else {
+            i = 2;
+        }
+    }
+}\
+'''
+    doTest(before, toPaste, expected)
+  }
+  
   void testJavaBlockIncreasedIndentOnTwoLinesPasting() {
     def before = '''\
 class Test {
@@ -70,7 +112,7 @@ class Test {
     def toPaste =
     '''\
 foo();
-  foo();\
+   foo();\
 '''
 
 
@@ -79,7 +121,7 @@ class Test {
     void test() {
         if (true) {
             foo();
-            foo();
+               foo();
         }
     }
 }\
@@ -100,7 +142,7 @@ class Test {
 
     def toPaste =
     '''\
-foo();
+ foo();
   foo();\
 '''
 
@@ -110,7 +152,7 @@ class Test {
     void test() {
      if (true) {
          foo();
-         foo();
+          foo();
      }
     }
 }\
@@ -131,7 +173,7 @@ class Test {
 
     def toPaste =
     '''\
-foo();
+              foo();
               foo();
                  foo();\
 '''
@@ -175,8 +217,8 @@ class Test {
     void test() {
         if (true) {
             foo();
-            foo();
-               foo();
+             foo();
+                foo();
         }
     }
 }\
@@ -229,20 +271,20 @@ class Test {
 
     def toPaste =
     '''\
- // this is a comment
-                 foo();
-              foo();
-                  foo();\
+// this is a comment
+ foo();
+  foo();
+foo();\
 '''
 
 
     def expected = '''\
 class Test {
     void test() {
-        if (true) { // this is a comment
-            foo();
+        if (true) {// this is a comment
          foo();
-             foo();
+          foo();
+        foo();
         }
     }
 }\
@@ -250,6 +292,88 @@ class Test {
     doTest(before, toPaste, expected)
   }
 
+  void testPasteAtZeroColumnAfterBlankLineWithWhiteSpaces() {
+    def before = '''\
+class Test {
+    void test() {
+        if (true) {
+        }
+    }
+}
+   
+<caret>\
+'''
+
+    def toPaste =
+    '''\
+class Test {
+    void test() {
+        if (true) {
+        }
+    }
+}\
+'''
+
+
+    def expected = '''\
+class Test {
+    void test() {
+        if (true) {
+        }
+    }
+}
+
+class Test {
+    void test() {
+        if (true) {
+        }
+    }
+}\
+'''
+    doTest(before, toPaste, expected)
+  }
+
+  void testPasteAtNonZeroColumnAfterBlankLineWithWhiteSpaces() {
+    def before = '''\
+class Test {
+    void test() {
+        if (true) {
+        }
+    }
+}
+   
+    <caret>\
+'''
+
+    def toPaste =
+    '''\
+class Test {
+    void test() {
+        if (true) {
+        }
+    }
+}\
+'''
+
+
+    def expected = '''\
+class Test {
+    void test() {
+        if (true) {
+        }
+    }
+}
+   
+class Test {
+    void test() {
+        if (true) {
+        }
+    }
+}\
+'''
+    doTest(before, toPaste, expected)
+  }
+  
   def testPlainTextPaste() {
     def before = '''\
   line1
