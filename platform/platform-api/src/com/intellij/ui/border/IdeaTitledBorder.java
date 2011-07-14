@@ -17,7 +17,7 @@ public class IdeaTitledBorder extends TitledBorder {
   static protected final int EDGE_SPACING = 2;
 
   // Space between the border and text
-  static protected final int TEXT_SPACING = 2;
+  static protected final int TEXT_SPACING = 5;
 
   // Horizontal inset of text that is left or right justified
   static protected final int TEXT_INSET_H = -20;
