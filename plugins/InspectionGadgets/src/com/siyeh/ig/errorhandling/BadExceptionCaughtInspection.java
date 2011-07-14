@@ -15,37 +15,53 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.ListEditForm;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jdom.Element;
+import com.siyeh.ig.ui.ExternalizableStringSet;
+import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.List;
-import java.util.Set;
 
 public class BadExceptionCaughtInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
-    public String exceptionsString =
-            "java.lang.NullPointerException" + ',' +
-            "java.lang.IllegalMonitorStateException" + ',' +
-            "java.lang.ArrayIndexOutOfBoundsException";
+    public String exceptionsString = "";
 
-    final List<String> exceptionList = new ArrayList<String>(32);
+    /** @noinspection PublicField*/
+    public final ExternalizableStringSet exceptions =
+            new ExternalizableStringSet(
+                    "java.lang.NullPointerException",
+                    "java.lang.IllegalMonitorStateException",
+                    "java.lang.ArrayIndexOutOfBoundsException"
+            );
 
     public BadExceptionCaughtInspection() {
-        parseString(exceptionsString, exceptionList);
+        if (exceptionsString.length() != 0) {
+            final List<String> strings =
+                    StringUtil.split(exceptionsString, ",");
+            for (String string : strings) {
+                exceptions.add(string);
+            }
+            exceptionsString = "";
+        }
     }
 
     @NotNull
@@ -53,62 +69,84 @@ public class BadExceptionCaughtInspection extends BaseInspection {
         return "ProhibitedExceptionCaught";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "bad.exception.caught.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "bad.exception.caught.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
-        final ListEditForm form = new ListEditForm(InspectionGadgetsBundle.message("exception.class.column.name"),
-                                                   exceptionList);
-        return form.getContentPanel();
+        final JComponent panel = new JPanel(new GridBagLayout());
+
+        final ListTable table =
+                new ListTable(new ListWrappingTableModel(exceptions,
+                        InspectionGadgetsBundle.message(
+                                "ignored.io.resource.types")));
+        final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+        final FontMetrics fontMetrics = table.getFontMetrics(table.getFont());
+        scrollPane.setPreferredSize(new Dimension(0, fontMetrics.getHeight() * 7));
+        scrollPane.setMinimumSize(new Dimension(0, fontMetrics.getHeight() * 3));
+
+        final ActionToolbar toolbar =
+                UiUtils.createAddRemoveTreeClassChooserToolbar(table,
+                        InspectionGadgetsBundle.message(
+                                "exception.class.column.name"),
+                        "java.lang.Throwable");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(toolbar.getComponent(), constraints);
+
+        constraints.gridy = 1;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, constraints);
+
+        return panel;
     }
 
-    public void readSettings(Element element) throws InvalidDataException {
-        super.readSettings(element);
-        parseString(exceptionsString, exceptionList);
-    }
-
-    public void writeSettings(Element element) throws WriteExternalException {
-        exceptionsString = formatString(exceptionList);
-        super.writeSettings(element);
-    }
-
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new BadExceptionCaughtVisitor();
     }
 
     private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
 
-        private final Set<String> exceptionSet = new HashSet<String>(exceptionList);
-
-        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
-            super.visitTryStatement(statement);
-            final PsiParameter[] catchBlockParameters =
-                    statement.getCatchBlockParameters();
-            for (PsiParameter parameter : catchBlockParameters) {
-                if(parameter == null) {
-                    continue;
-                }
-                final PsiType type = parameter.getType();
-                final String text = type.getCanonicalText();
-                if (text == null) {
-                    continue;
-                }
-                if (exceptionSet.contains(text)) {
-                    final PsiTypeElement typeElement =
-                            parameter.getTypeElement();
-                    registerError(typeElement);
-                }
+        @Override
+        public void visitCatchSection(PsiCatchSection section) {
+            super.visitCatchSection(section);
+            final PsiParameter parameter = section.getParameter();
+            if(parameter == null) {
+                return;
             }
+            final PsiType type = parameter.getType();
+            final String text = type.getCanonicalText();
+            if (text == null) {
+                return;
+            }
+            if (!exceptions.contains(text)) {
+                return;
+            }
+            final PsiTypeElement typeElement = parameter.getTypeElement();
+            if (typeElement == null) {
+                return;
+            }
+            registerError(typeElement);
         }
     }
-
 }
