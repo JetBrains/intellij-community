@@ -746,6 +746,27 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return new BalloonPopupBuilderImpl(content);
   }
 
+  @Override
+  public BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, String title) {
+    final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(content);
+    final Color bg = UIManager.getColor("Panel.background");
+    final Color borderOriginal = Color.darkGray;
+    final Color border = new Color(borderOriginal.getRed(), borderOriginal.getGreen(), borderOriginal.getBlue(), 75);
+    builder
+      .setDialogMode(true)
+      .setTitle(title)
+      .setAnimationCycle(200)
+      .setFillColor(bg)
+      .setBorderColor(border)
+      .setHideOnClickOutside(false)
+      .setHideOnKeyOutside(false)
+      .setHideOnAction(false)
+      .setCloseButtonEnabled(true)
+      .setShadow(true);
+
+    return builder;
+  }
+
   public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull final String htmlContent, @Nullable final Icon icon, final Color fillColor,
                                                         @Nullable final HyperlinkListener listener) {
 

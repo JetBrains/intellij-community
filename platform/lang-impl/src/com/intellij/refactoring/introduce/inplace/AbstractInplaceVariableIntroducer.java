@@ -127,15 +127,7 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     final JComponent component = getComponent();
     if (component == null) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(component);
-    balloonBuilder.setFadeoutTime(0)
-      .setFillColor(UIManager.getColor("Panel.background"))
-      .setAnimationCycle(100)
-      .setHideOnClickOutside(false)
-      .setHideOnKeyOutside(false)
-      .setHideOnAction(false)
-      .setCloseButtonEnabled(true);
-
+    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null);
     final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
     final Point screenPoint = target.getScreenPoint();
     myBalloon = balloonBuilder.createBalloon();

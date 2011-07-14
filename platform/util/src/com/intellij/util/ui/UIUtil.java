@@ -68,6 +68,23 @@ public class UIUtil {
   private static final String TABLE_DECORATION_KEY = "TABLE_DECORATION_KEY";
   private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
 
+  public static void applyStyle(@NotNull Style style, @NotNull Component comp) {
+    if (!(comp instanceof JComponent)) return;
+
+    JComponent c = (JComponent)comp;
+
+    if (SystemInfo.isMac) {
+      c.putClientProperty("JComponent.sizeVariant", style == Style.REGULAR ? "regular" : "small");
+    }
+    else {
+      c.setFont(getFont(style == Style.SMALL ? FontSize.SMALL : FontSize.NORMAL, c.getFont()));
+    }
+    Container p = c.getParent();
+    if (p != null) {
+      SwingUtilities.updateComponentTreeUI(p);
+    }
+  }
+
   public enum FontSize { NORMAL, SMALL }
 
   public static final char MNEMONIC = 0x1B;
@@ -2369,5 +2386,6 @@ public class UIUtil {
            && property instanceof Boolean && ((Boolean)property).booleanValue();
   }
 
+  public enum Style {REGULAR, SMALL}
 }
 

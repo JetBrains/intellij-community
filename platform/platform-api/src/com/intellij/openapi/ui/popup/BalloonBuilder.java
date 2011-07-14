@@ -81,4 +81,10 @@ public interface BalloonBuilder {
 
   @NotNull
   BalloonBuilder setTitle(@Nullable String title);
+
+  @NotNull
+  BalloonBuilder setContentInsets(Insets insets);
+
+  @NotNull
+  BalloonBuilder setShadow(boolean shadow);
 }

@@ -50,6 +50,8 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private boolean myHideOnAction = true;
   private boolean myDialogMode;
   private String myTitle;
+  private Insets myContentInsets = new Insets(2, 2, 2, 2);
+  private boolean myShadow = false;
 
   public BalloonPopupBuilderImpl(@NotNull final JComponent content) {
     myContent = content;
@@ -146,7 +148,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @NotNull
   public Balloon createBalloon() {
     return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCalllout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick, myAnimationCycle,
-                           myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle);
+                           myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow);
   }
 
   @NotNull
@@ -173,6 +175,20 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Override
   public BalloonBuilder setTitle(@Nullable String title) {
     myTitle = title;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public BalloonBuilder setContentInsets(Insets insets) {
+    myContentInsets = insets;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public BalloonBuilder setShadow(boolean shadow) {
+    myShadow = shadow;
     return this;
   }
 }

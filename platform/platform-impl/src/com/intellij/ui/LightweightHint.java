@@ -228,7 +228,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
     Dimension size = myComponent.getPreferredSize();
     Balloon.Position position = myHintHint.getPreferredPosition();
-    int shift = BalloonImpl.getPointerLength(position);
+    int shift = BalloonImpl.getPointerLength(position, false);
     switch (position) {
       case below:
         actualPoint.y += shift;
@@ -260,7 +260,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
       Point target = desiredLocation.getPointOn(pane).getPoint();
       Balloon.Position pos = hintHint.getPreferredPosition();
-      int pointer = BalloonImpl.getPointerLength(pos) + BalloonImpl.getNormalInset();
+      int pointer = BalloonImpl.getPointerLength(pos, false) + BalloonImpl.getNormalInset();
       if (pos == Balloon.Position.above || pos == Balloon.Position.below) {
         boolean heightFit = target.y - size.height - pointer > 0 || target.y + size.height + pointer < paneSize.height;
         return heightFit && size.width + pointer < paneSize.width;
