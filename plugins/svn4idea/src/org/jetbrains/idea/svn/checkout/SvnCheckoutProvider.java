@@ -43,7 +43,6 @@ import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
 
@@ -150,15 +149,10 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
     final VirtualFile[] files = vcs.getSvnFileUrlMapping().getNotFilteredRoots();
     for (VirtualFile file : files) {
-      try {
-        if (FileUtil.isAncestor(new File(file.getPath()), directory, false)) {
-          // todo: should be done like auto detection
-          plVcsManager.fireDirectoryMappingsChanged();
-          return;
-        }
-      }
-      catch (IOException e) {
-        //
+      if (FileUtil.isAncestor(new File(file.getPath()), directory, false)) {
+        // todo: should be done like auto detection
+        plVcsManager.fireDirectoryMappingsChanged();
+        return;
       }
     }
   }

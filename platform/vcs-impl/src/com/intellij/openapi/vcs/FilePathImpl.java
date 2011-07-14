@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.charset.Charset;
 
@@ -132,13 +131,7 @@ public class FilePathImpl implements FilePath {
     if (myVirtualFile != null && parent.getVirtualFile() != null) {
       return VfsUtil.isAncestor(parent.getVirtualFile(), myVirtualFile, strict);
     }
-
-    try {
-      return FileUtil.isAncestor(parent.getIOFile(), getIOFile(), strict);
-    }
-    catch (IOException e) {
-      return false;
-    }
+    return FileUtil.isAncestor(parent.getIOFile(), getIOFile(), strict);
   }
 
   public FilePath getParentPath() {

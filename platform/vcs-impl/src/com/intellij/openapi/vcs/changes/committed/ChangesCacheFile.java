@@ -759,7 +759,7 @@ public class ChangesCacheFile {
 
     private boolean processIncomingChange(final Change change,
                                           final IncomingChangeListData changeListData,
-                                          @Nullable final Collection<FilePath> incomingFiles, final IncomingChangeState state) throws IOException {
+                                          @Nullable final Collection<FilePath> incomingFiles, final IncomingChangeState state) {
       CommittedChangeList changeList = changeListData.changeList;
       ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {

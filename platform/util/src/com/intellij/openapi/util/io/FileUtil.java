@@ -123,9 +123,8 @@ public class FileUtil {
    * @param strict   if {@code false} then this method returns {@code true} if {@code ancestor}
    *                 and {@code file} are equal
    * @return {@code true} if {@code ancestor} is parent of {@code file}; {@code false} otherwise
-   * @throws IOException this exception is never thrown and left here for backward compatibilty
    */
-  public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) throws IOException {
+  public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
     File parent = strict ? getParentFile(file) : file;
     while (true) {
       if (parent == null) {
