@@ -63,7 +63,7 @@ public class SpockVariableDescriptor {
     if (myVariable == null) {
       final PsiManager manager = myNavigationElement.getManager();
 
-      PsiType type = guard.doPreventingRecursion(this, new Computable<PsiType>() {
+      PsiType type = guard.doPreventingRecursion(this, true, new Computable<PsiType>() {
         @Override
         public PsiType compute() {
           PsiType res = null;

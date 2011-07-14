@@ -165,7 +165,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
     }
 
     if (initializer != null) {
-      PsiType initializerType = myGuard.doPreventingRecursion(this, new NullableComputable<PsiType>() {
+      PsiType initializerType = myGuard.doPreventingRecursion(this, true, new NullableComputable<PsiType>() {
         @Override
         public PsiType compute() {
           return initializer.getType();

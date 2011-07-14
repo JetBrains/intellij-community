@@ -733,7 +733,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       // When there is no namespace declarations then qualified names should be just used in dtds
       // this implies that we may have "" namespace prefix ! (see last paragraph in Namespaces in Xml, Section 5)
 
-      String result = ourGuard.doPreventingRecursion("getNsByPrefix", new Computable<String>() {
+      String result = ourGuard.doPreventingRecursion("getNsByPrefix", true, new Computable<String>() {
         @Override
         public String compute() {
           final String nsFromEmptyPrefix = getNamespaceByPrefix("");
