@@ -14,10 +14,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -260,6 +257,13 @@ public class PyClassRefactoringUtil {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
+        if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
+          return;
+        }
+        final PyImportElement importElement = getImportElement(node);
+        if (importElement != null && PsiTreeUtil.isAncestor(element, importElement, false)) {
+          return;
+        }
         rememberReference(node, element);
       }
     });
@@ -272,20 +276,25 @@ public class PyClassRefactoringUtil {
     if (qualifier != null && !(resolveExpression(qualifier) instanceof PyImportedModule)) {
       return;
     }
-    PyImportElement importElement = null;
-    for (ResolveResult result : node.getReference().multiResolve(false)) {
-      final PsiElement e = result.getElement();
-      if (e instanceof PyImportElement) {
-        importElement = (PyImportElement)e;
-      }
-    }
     final PsiElement target = resolveExpression(node);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
+      final PyImportElement importElement = getImportElement(node);
       if (importElement != null) {
         node.putCopyableUserData(ENCODED_IMPORT_AS, importElement.getAsName());
       }
     }
+  }
+
+  @Nullable
+  private static PyImportElement getImportElement(PyReferenceExpression expr) {
+    for (ResolveResult result : expr.getReference().multiResolve(false)) {
+      final PsiElement e = result.getElement();
+      if (e instanceof PyImportElement) {
+        return (PyImportElement)e;
+      }
+    }
+    return null;
   }
 
   @Nullable
