@@ -197,7 +197,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
           }
         }
         for(PositionManagerFactory factory: Extensions.getExtensions(PositionManagerFactory.EP_NAME, myProject)) {
-          final PositionManager manager = factory.create(debugProcess);
+          final PositionManager manager = factory.createPositionManager(debugProcess);
           if (manager != null) {
             process.appendPositionManager(manager);
           }

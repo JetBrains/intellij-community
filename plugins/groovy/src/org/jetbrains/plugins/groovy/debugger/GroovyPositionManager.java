@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.debugger;
 
-import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
@@ -37,7 +36,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
@@ -63,14 +61,6 @@ public class GroovyPositionManager implements PositionManager {
 
   public GroovyPositionManager(DebugProcess debugProcess) {
     myDebugProcess = debugProcess;
-  }
-
-  public static void registerPositionManager(Project project) {
-    DebuggerManager.getInstance(project).registerPositionManagerFactory(new Function<DebugProcess, PositionManager>() {
-      public PositionManager fun(DebugProcess debugProcess) {
-        return new GroovyPositionManager(debugProcess);
-      }
-    });
   }
 
   public DebugProcess getDebugProcess() {

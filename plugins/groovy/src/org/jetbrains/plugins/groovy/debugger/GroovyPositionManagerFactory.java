@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.debugger;
 
-package org.jetbrains.plugins.groovy;
-
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport;
+import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.PositionManagerFactory;
+import com.intellij.debugger.engine.DebugProcess;
 
 /**
- * Main application component, that loads Groovy language support
- *
- * @author ilyas
+ * @author peter
  */
-public class GroovyLoader {
-
-  public GroovyLoader() {
-    ChangeUtil.registerCopyHandler(new GroovyChangeUtilSupport());
+public class GroovyPositionManagerFactory extends PositionManagerFactory {
+  @Override
+  public PositionManager createPositionManager(DebugProcess process) {
+    return new GroovyPositionManager(process);
   }
-
 }

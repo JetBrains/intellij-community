@@ -46,7 +46,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
-import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager
 
 /**
  * @author peter
@@ -60,7 +59,6 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
       addGroovyLibrary(myModule);
     }
 
-    GroovyPositionManager.registerPositionManager(project)
   }
 
   @Override

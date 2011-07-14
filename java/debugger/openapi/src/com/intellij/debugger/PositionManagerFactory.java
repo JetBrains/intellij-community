@@ -22,9 +22,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PositionManagerFactory {
-  ExtensionPointName<PositionManagerFactory> EP_NAME = ExtensionPointName.create("com.intellij.debugger.positionManagerFactory");
+public abstract class PositionManagerFactory {
+  public static final ExtensionPointName<PositionManagerFactory> EP_NAME = ExtensionPointName.create("com.intellij.debugger.positionManagerFactory");
 
   @Nullable
-  PositionManager create(DebugProcess process);
+  public abstract PositionManager createPositionManager(DebugProcess process);
 }
