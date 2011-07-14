@@ -102,7 +102,7 @@ public class GroovyExpectedTypesProvider {
 
     public MyCalculator(GrExpression expression) {
       myExpression = (GrExpression)PsiUtil.skipParentheses(expression, true);
-      myResult = new TypeConstraint[0];
+      myResult = TypeConstraint.EMPTY_ARRAY;
     }
 
     public void visitReturnStatement(GrReturnStatement returnStatement) {
