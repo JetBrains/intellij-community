@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,36 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneInNonCloneableClassInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "clone.method.in.non.cloneable.class.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "clone.method.in.non.cloneable.class.problem.descriptor");
+        final PsiClass aClass = (PsiClass) infos[0];
+        final String className = aClass.getName();
+        if (aClass.isInterface()) {
+            return InspectionGadgetsBundle.message(
+                    "clone.method.in.non.cloneable.interface.problem.descriptor",
+                    className);
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "clone.method.in.non.cloneable.class.problem.descriptor",
+                    className);
+        }
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos){
-        return new MakeCloneableFix();
+        final PsiClass aClass = (PsiClass) infos[0];
+        return new MakeCloneableFix(aClass.isInterface());
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CloneInNonCloneableClassVisitor();
     }
@@ -59,7 +73,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
                     CloneUtils.isCloneable(containingClass)) {
                 return;
             }
-            registerMethodError(method);
+            registerMethodError(method, containingClass);
         }
     }
 }
