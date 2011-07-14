@@ -94,8 +94,6 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
 
   @Override
   public PsiMethodStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
-    final TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
-
     String name = null;
     boolean isConstructor = true;
     boolean isVarArgs = false;
@@ -137,6 +135,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
       }
     }
 
+    final TypeInfo typeInfo = isConstructor ? TypeInfo.createConstructorType() : TypeInfo.create(tree, node, parentStub);
     final boolean isAnno = (node.getTokenType() == JavaElementType.ANNOTATION_METHOD);
     final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation);
 

@@ -132,6 +132,11 @@ public class TypeInfo {
   }
 
   @NotNull
+  public static TypeInfo createConstructorType() {
+    return NULL;
+  }
+
+  @NotNull
   public static TypeInfo create(final LighterAST tree, final LighterASTNode element, final StubElement parentStub) {
     final String text;
     int arrayCount = 0;
@@ -153,18 +158,14 @@ public class TypeInfo {
         }
       }
 
-      if (typeElement == null) {
-        if (element.getTokenType() == JavaElementType.METHOD) {
-          return NULL;  // constructor
-        }
-        else if (element.getTokenType() == JavaElementType.FIELD) {
-          final List<LighterASTNode> fields = LightTreeUtil.getChildrenOfType(tree, tree.getParent(element), JavaElementType.FIELD);
-          final int idx = fields.indexOf(element);
-          for (int i = idx - 1; i >= 0 && typeElement == null; i--) {  // int i, j
-            typeElement = LightTreeUtil.firstChildOfType(tree, fields.get(i), JavaElementType.TYPE);
-          }
+      if (typeElement == null && element.getTokenType() == JavaElementType.FIELD) {
+        final List<LighterASTNode> fields = LightTreeUtil.getChildrenOfType(tree, tree.getParent(element), JavaElementType.FIELD);
+        final int idx = fields.indexOf(element);
+        for (int i = idx - 1; i >= 0 && typeElement == null; i--) {  // int i, j
+          typeElement = LightTreeUtil.firstChildOfType(tree, fields.get(i), JavaElementType.TYPE);
         }
       }
+
       assert typeElement != null : element + " in " + parentStub;
 
       isEllipsis = (LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null);
