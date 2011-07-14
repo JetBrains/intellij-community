@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.FileResolveScopeProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,4 +47,7 @@ public interface GroovyFile extends GroovyFileBase, FileResolveScopeProvider {
 
   @Nullable
   GrPackageDefinition setPackage(GrPackageDefinition newPackage);
+
+  @Nullable
+  PsiType getInferredScriptReturnType();
 }
