@@ -47,6 +47,7 @@ public interface PositionManager {
    * @param classPosition the source position.
    * @return the list of corresponding Java classes.
    * @throws NoDataException if the location is not in the code managed by this {@code PositionManager}
+   * @see com.intellij.debugger.engine.jdi.VirtualMachineProxy#classesByName
    */
   @NotNull
   List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException;
@@ -58,6 +59,7 @@ public interface PositionManager {
    * @param position the position in the source code.
    * @return the list of corresponding bytecode locations.
    * @throws NoDataException if the location is not in the code managed by this {@code PositionManager}
+   * @see ReferenceType#locationsOfLine(int)
    */
   @NotNull
   List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException;
