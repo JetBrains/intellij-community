@@ -259,6 +259,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
     myTreeBuilder.getUi().maybeReady();
 
+    maybeRunAfterUpdate();
+  }
+
+  private void maybeRunAfterUpdate() {
     if (myRunAfterUpdate != null) {
       final Runnable runnable = new Runnable() {
         public void run() {
@@ -333,6 +337,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     synchronized (myRunAfterUpdate) {
       myRunAfterUpdate.add(runnable);
     }
+
+    maybeRunAfterUpdate();
   }
 
   public synchronized void runBeforeUpdate(final Runnable runnable) {

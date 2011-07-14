@@ -176,6 +176,11 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
           }
         }, false);
       }
+    }).doWhenRejected(new Runnable() {
+      @Override
+      public void run() {
+        result.setRejected();
+      }
     });
 
     return result;
