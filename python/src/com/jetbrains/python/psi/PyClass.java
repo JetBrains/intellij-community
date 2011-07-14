@@ -101,7 +101,7 @@ public interface PyClass extends
   boolean isNewStyleClass();
 
   /**
-   * A lazy way to list ancestor classes width first, in method-resolution order (MRO).
+   * A lazy way to list ancestor classes width first, *not* in method-resolution order.
    * @return an iterable of ancestor classes.
    */
   Iterable<PyClassRef> iterateAncestors();
