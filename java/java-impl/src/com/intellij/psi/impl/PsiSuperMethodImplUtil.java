@@ -137,7 +137,9 @@ public class PsiSuperMethodImplUtil {
     });
 
     for (PsiMethod method : aClass.getMethods()) {
-      LOG.assertTrue(method.isValid());
+      if (!method.isValid()) {
+        throw new PsiInvalidElementAccessException(method, "class.valid=" + aClass.isValid() + "; name=" + method.getName());
+      }
       if (!includePrivates && method.hasModifierProperty(PsiModifier.PRIVATE)) continue;
       final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, substitutor, isInRawContext);
       HierarchicalMethodSignatureImpl newH = new HierarchicalMethodSignatureImpl(signature);
