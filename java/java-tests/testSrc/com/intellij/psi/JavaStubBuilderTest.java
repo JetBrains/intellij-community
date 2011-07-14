@@ -26,6 +26,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -36,7 +37,6 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   @SuppressWarnings("deprecation")
   private static final StubBuilder OLD_BUILDER = new com.intellij.psi.impl.source.JavaFileStubBuilder();
   private static final StubBuilder NEW_BUILDER = new JavaLightStubBuilder();
-  private static final int SOE_TEST_DEPTH = 20000;
 
   @Override
   public void setUp() throws Exception {
@@ -330,7 +330,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     final StringBuilder sb = new StringBuilder();
     final SecureRandom random = new SecureRandom();
     sb.append("class SOE_test {\n BigInteger BIG = new BigInteger(\n");
-    for (int i = 0; i < SOE_TEST_DEPTH; i++) {
+    int i;
+    for (i = 0; i < 100000; i++) {
       sb.append("  \"").append(Math.abs(random.nextInt())).append("\" +\n");
     }
     sb.append("  \"\");\n}");
@@ -349,7 +350,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                  "    FIELD:PsiFieldStub[BIG:BigInteger=;INITIALIZER_NOT_STORED;]\n" +
                  "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n",
                  DebugUtil.stubTreeToString(tree));
-    System.out.println("SOE depth=" + SOE_TEST_DEPTH + ", time=" + t + "ms");
+    System.out.println("SOE depth=" + i + ", time=" + t + "ms");
   }
 
   public void testPerformance() throws Exception {
@@ -365,7 +366,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     }).cpuBound().assertTiming();
   }
 
-  private static void doTest(final String source, @Nullable final String tree) {
+  private static void doTest(@NonNls final String source, @NonNls @Nullable final String tree) {
     final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
     final FileASTNode fileNode = file.getNode();
     assertNotNull(fileNode);

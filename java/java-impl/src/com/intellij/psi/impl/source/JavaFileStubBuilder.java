@@ -25,6 +25,7 @@ import com.intellij.psi.stubs.DefaultStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -34,7 +35,7 @@ public class JavaFileStubBuilder extends DefaultStubBuilder {
   private static final StubBuilder LIGHT_BUILDER = new JavaLightStubBuilder();
 
   @Override
-  protected StubElement createStubForFile(final PsiFile file) {
+  protected StubElement createStubForFile(@NotNull final PsiFile file) {
     if (file instanceof PsiJavaFile) {
       final PsiJavaFile javaFile = (PsiJavaFile)file;
       return new PsiJavaFileStubImpl(javaFile, StringRef.fromString(javaFile.getPackageName()), false);
@@ -44,7 +45,7 @@ public class JavaFileStubBuilder extends DefaultStubBuilder {
   }
 
   @Override
-  protected boolean skipChildProcessingWhenBuildingStubs(final PsiElement element, final PsiElement child) {
+  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull final PsiElement element, @NotNull final PsiElement child) {
     final ASTNode node = element.getNode();
     if (node == null) return false;
     final ASTNode childNode = child.getNode();
