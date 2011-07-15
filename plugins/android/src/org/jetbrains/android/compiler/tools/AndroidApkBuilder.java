@@ -209,8 +209,10 @@ public class AndroidApkBuilder {
       }
 
       builder.writeFile(dexEntryFile, AndroidUtils.CLASSES_FILE_NAME);
+
+      final HashSet<String> added = new HashSet<String>();
       for (VirtualFile sourceRoot : sourceRoots) {
-        writeStandardSourceFolderResources(builder, sourceRoot, sourceRoot, new HashSet<VirtualFile>(), new HashSet<String>());
+        writeStandardSourceFolderResources(builder, sourceRoot, sourceRoot, new HashSet<VirtualFile>(), added);
       }
 
       Set<String> duplicates = new HashSet<String>();
