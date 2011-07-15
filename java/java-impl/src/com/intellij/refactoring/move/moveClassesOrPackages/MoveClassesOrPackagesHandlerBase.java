@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -23,8 +24,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
@@ -105,9 +108,14 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
   }
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
+    final PsiDirectory[] directories = new PsiDirectory[elements.length];
+    System.arraycopy(elements, 0, directories, 0, directories.length);
+    final String prompt = getPromptToMoveDirectoryLibrariesSafe(elements);
+    if (prompt != null) {
+      moveDirectoriesLibrariesSafe(project, targetContainer, callback, directories, prompt);
+      return;
+    }
     if (canMoveOrRearrangePackages(elements) ) {
-      final PsiDirectory[] directories = new PsiDirectory[elements.length];
-      System.arraycopy(elements, 0, directories, 0, directories.length);
       SelectMoveOrRearrangePackageDialog dialog = new SelectMoveOrRearrangePackageDialog(project, directories, targetContainer == null);
       dialog.show();
       if (!dialog.isOK()) return;
@@ -118,46 +126,7 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
       }
 
       if (dialog.isMoveDirectory()) {
-        if (targetContainer instanceof PsiDirectory) {
-          final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
-          final MoveDirectoryWithClassesProcessor processor =
-            new MoveDirectoryWithClassesProcessor(project, directories, (PsiDirectory)targetContainer,
-                                                  refactoringSettings.RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE,
-                                                  refactoringSettings.RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE, true, callback);
-          processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-            @Override
-            public void run() {
-            }
-          });
-          processor.run();
-        }
-        else {
-          final boolean containsJava = hasJavaFiles(directories[0]);
-          if (!containsJava) {
-            MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[] {directories[0]}, new PsiElement[]{targetContainer}, callback);
-            return;
-          }
-          final MoveClassesOrPackagesToNewDirectoryDialog dlg =
-            new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], new PsiElement[0], false, callback) {
-              @Override
-              protected void performRefactoring(Project project,
-                                                final PsiDirectory targetDirectory,
-                                                PsiPackage aPackage,
-                                                boolean searchInComments,
-                                                boolean searchForTextOccurences) {
-                final MoveDirectoryWithClassesProcessor processor =
-                  new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences,
-                                                        true, callback);
-                processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-                  @Override
-                  public void run() {
-                  }
-                });
-                processor.run();
-              }
-            };
-          dlg.show();
-        }
+        moveAsDirectory(project, targetContainer, callback, directories);
         return;
       }
     }
@@ -165,6 +134,81 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
       return;
     }
     MoveClassesOrPackagesImpl.doMove(project, elements, targetContainer, callback);
+  }
+
+  private static void moveDirectoriesLibrariesSafe(Project project,
+                                                   PsiElement targetContainer,
+                                                   MoveCallback callback,
+                                                   PsiDirectory[] directories,
+                                                   String prompt) {
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directories[0]);
+    LOG.assertTrue(aPackage != null);
+    final PsiDirectory[] projectDirectories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
+    if (projectDirectories.length > 1) {
+      int ret = Messages
+        .showDialog(project, prompt + " or all directories in project?", RefactoringBundle.message("warning.title"),
+                    new String[]{
+                      RefactoringBundle.message("move.current.directory"),
+                      RefactoringBundle.message("move.directories"),
+                      CommonBundle.getCancelButtonText()}, 0, Messages.getWarningIcon());
+      if (ret == 0) {
+        moveAsDirectory(project, targetContainer, callback, directories);
+      }
+      else if (ret == 1) {
+        moveAsDirectory(project, targetContainer, callback, projectDirectories);
+      }
+    }
+    else if (Messages.showDialog(project, prompt + "?", RefactoringBundle.message("warning.title"),
+                                 new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()}, 0,
+                                 Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+      moveAsDirectory(project, targetContainer, callback, directories);
+    }
+  }
+
+  private static void moveAsDirectory(Project project,
+                                         PsiElement targetContainer,
+                                         final MoveCallback callback,
+                                         final PsiDirectory[] directories) {
+    if (targetContainer instanceof PsiDirectory) {
+      final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
+      final MoveDirectoryWithClassesProcessor processor =
+        new MoveDirectoryWithClassesProcessor(project, directories, (PsiDirectory)targetContainer,
+                                              refactoringSettings.RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE,
+                                              refactoringSettings.RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE, true, callback);
+      processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
+        @Override
+        public void run() {
+        }
+      });
+      processor.run();
+    }
+    else {
+      final boolean containsJava = hasJavaFiles(directories[0]);
+      if (!containsJava) {
+        MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{directories[0]}, new PsiElement[]{targetContainer}, callback);
+        return;
+      }
+      final MoveClassesOrPackagesToNewDirectoryDialog dlg =
+        new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], new PsiElement[0], false, callback) {
+          @Override
+          protected void performRefactoring(Project project,
+                                            final PsiDirectory targetDirectory,
+                                            PsiPackage aPackage,
+                                            boolean searchInComments,
+                                            boolean searchForTextOccurences) {
+            final MoveDirectoryWithClassesProcessor processor =
+              new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences,
+                                                    true, callback);
+            processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
+              @Override
+              public void run() {
+              }
+            });
+            processor.run();
+          }
+        };
+      dlg.show();
+    }
   }
 
   public static boolean hasJavaFiles(PsiDirectory directory) {
@@ -218,6 +262,31 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  private static String getPromptToMoveDirectoryLibrariesSafe(PsiElement[] elements) {
+    if (elements.length == 0 || elements.length > 1) return null;
+    final Project project = elements[0].getProject();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (!(elements[0] instanceof PsiDirectory)) return null;
+    final PsiDirectory directory = ((PsiDirectory)elements[0]);
+    if (RefactoringUtil.isSourceRoot(directory)) {
+      return null;
+    }
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    if (aPackage == null) return null;
+    if ("".equals(aPackage.getQualifiedName())) return null;
+    final PsiDirectory[] directories = aPackage.getDirectories();
+
+    boolean inLib = false;
+    for (PsiDirectory psiDirectory : directories) {
+      inLib |= !fileIndex.isInContent(psiDirectory.getVirtualFile());
+    }
+
+    return inLib ? "Package \'" +
+                   aPackage.getName() +
+                   "\' contains directories in libraries which cannot be moved. Do you want to move current directory" : null;
   }
 
   private static boolean canMoveOrRearrangePackages(PsiElement[] elements) {

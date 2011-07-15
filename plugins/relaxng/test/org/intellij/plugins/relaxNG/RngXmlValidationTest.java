@@ -17,6 +17,7 @@
 package org.intellij.plugins.relaxNG;
 
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import org.intellij.plugins.testUtil.CopyFile;
 
 /**
@@ -84,10 +85,14 @@ public class RngXmlValidationTest extends HighlightingTestBase {
 
   protected void init() {
     super.init();
-    final ExternalResourceManager mgr = ExternalResourceManager.getInstance();
-    mgr.addResource("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"));
-    mgr.addResource("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"));
-    mgr.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("validation/relaxng.rng"));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ExternalResourceManager mgr = ExternalResourceManager.getInstance();
+        mgr.addResource("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"));
+        mgr.addResource("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"));
+        mgr.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("validation/relaxng.rng"));
+      }
+    });
   }
 
   public String getTestDataPath() {

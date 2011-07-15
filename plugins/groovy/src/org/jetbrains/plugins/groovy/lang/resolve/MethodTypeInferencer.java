@@ -21,9 +21,9 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.List;
@@ -32,9 +32,9 @@ import java.util.List;
  * @author ven
  */
 public class MethodTypeInferencer implements Computable<PsiType> {
-  private final GrCodeBlock myBlock;
+  private final GrStatementOwner myBlock;
 
-  public MethodTypeInferencer(GrCodeBlock block) {
+  public MethodTypeInferencer(GrStatementOwner block) {
     myBlock = block;
   }
 

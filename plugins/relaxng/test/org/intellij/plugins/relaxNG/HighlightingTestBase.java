@@ -24,6 +24,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.mock.MockProgressIndicator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -158,7 +159,11 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   public abstract String getTestDataPath();
 
   protected void init() {
-    ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined");
+      }
+    });
   }
 
   protected void tearDown() throws Exception {

@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.xslt;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
@@ -30,8 +31,12 @@ public class Xslt2HighlightingTest extends TestBase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(XsltStuffProvider.INSPECTION_CLASSES);
-    ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:my");
-    ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("nsx");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:my");
+        ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("nsx");
+      }
+    });
   }
 
   public void testCurrentMode() throws Throwable {

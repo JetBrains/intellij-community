@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -44,7 +45,7 @@ public class GitTableScrollChangeListener implements ChangeListener {
     myCheckSelection = checkSelection;
     mySpeedometer = new Speedometer();
     myRefreshMark = 0;
-    myTimer = new Timer(100, new ActionListener() {
+    myTimer = UIUtil.createNamedTimer("Git table scroll timer",100, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final boolean shouldPing = (System.currentTimeMillis() - myRefreshMark) > 300;

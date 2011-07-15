@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,19 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.ui.ToggleAction;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class MultipleReturnPointsPerMethodInspection
         extends MethodMetricInspection {
@@ -37,25 +42,30 @@ public class MultipleReturnPointsPerMethodInspection
     @SuppressWarnings({"PublicField"})
     public boolean ignoreEqualsMethod = false;
 
+    @Override
     @NotNull
     public String getID() {
         return "MethodWithMultipleReturnPoints";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "multiple.return.points.per.method.display.name");
     }
 
+    @Override
     protected int getDefaultLimit() {
         return 1;
     }
 
+    @Override
     protected String getConfigurationLabel() {
         return InspectionGadgetsBundle.message("return.point.limit.option");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final Integer returnPointCount = (Integer)infos[0];
@@ -64,11 +74,48 @@ public class MultipleReturnPointsPerMethodInspection
                 returnPointCount);
     }
 
+    @Override
     public JComponent createOptionsPanel() {
-        final Form form = new Form();
-        return form.getContentPanel();
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final JLabel label = new JLabel(InspectionGadgetsBundle.message(
+                "return.point.limit.option"));
+        final JFormattedTextField termLimitTextField =
+                prepareNumberEditor("m_limit");
+        final CheckBox ignoreGuardClausesCheckBox =
+                new CheckBox(InspectionGadgetsBundle.message(
+                        "ignore.guard.clauses.option"),
+                        this, "ignoreGuardClauses");
+        final CheckBox ignoreEqualsMethodCheckBox =
+                new CheckBox(InspectionGadgetsBundle.message(
+                        "ignore.for.equals.methods.option"),
+                        this, "ignoreEqualsMethod");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+
+        constraints.anchor = GridBagConstraints.BASELINE_LEADING;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        panel.add(label, constraints);
+
+        constraints.fill = GridBagConstraints.NONE;
+        constraints.gridx = 1;
+        panel.add(termLimitTextField, constraints);
+
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.gridwidth = 2;
+        constraints.weightx = 1.0;
+        panel.add(ignoreGuardClausesCheckBox, constraints);
+
+        constraints.gridy = 2;
+        constraints.weighty = 1.0;
+        panel.add(ignoreEqualsMethodCheckBox, constraints);
+
+        return panel;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new MultipleReturnPointsPerMethodVisitor();
     }
@@ -123,34 +170,6 @@ public class MultipleReturnPointsPerMethodInspection
             }
             final PsiType returnType = method.getReturnType();
             return PsiType.VOID.equals(returnType);
-        }
-    }
-
-    private class Form {
-
-        private JPanel contentPanel;
-        private JFormattedTextField valueField;
-        private JCheckBox ignoreGuardClausesCheckBox;
-        private JCheckBox ignoreForEqualsMethodsCheckBox;
-
-        private void createUIComponents() {
-            valueField = prepareNumberEditor("m_limit");
-            ignoreGuardClausesCheckBox = new JCheckBox(
-                    new ToggleAction(InspectionGadgetsBundle.message(
-                            "ignore.guard.clauses"),
-                            MultipleReturnPointsPerMethodInspection.this,
-                            "ignoreGuardClauses"));
-            ignoreGuardClausesCheckBox.setSelected(ignoreGuardClauses);
-            ignoreForEqualsMethodsCheckBox = new JCheckBox(
-                    new ToggleAction(InspectionGadgetsBundle.message(
-                            "ignore.for.equals.methods"),
-                            MultipleReturnPointsPerMethodInspection.this,
-                            "ignoreEqualsMethod"));
-            ignoreForEqualsMethodsCheckBox.setSelected(ignoreEqualsMethod);
-        }
-
-        public JComponent getContentPanel(){
-            return contentPanel;
         }
     }
 }

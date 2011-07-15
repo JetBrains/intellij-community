@@ -15,14 +15,13 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -82,5 +81,28 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private boolean isContextComponentOk() {
     return myContextComponent == null
            || (myContextComponent.isVisible() && UIUtil.getParentOfType(JLayeredPane.class, myContextComponent) != null);
+  }
+
+  public final RelativePoint getPreferredPopupPoint() {
+    Container c = myContextComponent;
+    ActionToolbar toolbar = null;
+    while ((c = c.getParent()) != null) {
+      if (c instanceof JComponent
+          && (toolbar = (ActionToolbar)((JComponent)c).getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY)) != null) {
+        break;
+      }
+    }
+    if (toolbar instanceof JComponent) {
+      for (Component comp : ((JComponent)toolbar).getComponents()) {
+        if (comp instanceof ActionButtonComponent) {
+          if (comp instanceof AnActionHolder) {
+            if (((AnActionHolder)comp).getAction() == this) {
+              return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 }

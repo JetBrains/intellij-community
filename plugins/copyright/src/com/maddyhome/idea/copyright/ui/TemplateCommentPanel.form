@@ -25,7 +25,7 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
             </clientProperties>
-            <border type="etched" title="Preview"/>
+            <border type="none"/>
             <children>
               <scrollpane id="9e821" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>

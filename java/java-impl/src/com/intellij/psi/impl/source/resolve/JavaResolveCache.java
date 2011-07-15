@@ -27,11 +27,13 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.AnyPsiChangeListener;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,27 +51,34 @@ public class JavaResolveCache {
   }
 
   private final ConcurrentMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
-  private static final Key<ResolveCache.MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
 
   private final Map<PsiVariable,Object> myVarToConstValueMap1;
   private final Map<PsiVariable,Object> myVarToConstValueMap2;
 
   private static final Object NULL = Key.create("NULL");
 
-  public JavaResolveCache(PsiManagerEx manager) {
-    ResolveCache cache = manager.getResolveCache();
+  public JavaResolveCache(MessageBus messageBus) {
+    myVarToConstValueMap1 = new ConcurrentWeakHashMap<PsiVariable, Object>();
+    myVarToConstValueMap2 = new ConcurrentWeakHashMap<PsiVariable, Object>();
 
-    myVarToConstValueMap1 = cache.getOrCreateWeakMap(VAR_TO_CONST_VALUE_MAP_KEY, true);
-    myVarToConstValueMap2 = cache.getOrCreateWeakMap(VAR_TO_CONST_VALUE_MAP_KEY, false);
-
-    final Runnable cleanuper = new Runnable() {
-      public void run() {
-        myCalculatedTypes.clear();
+    messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        clearCaches(isPhysical);
       }
-    };
 
-    cache.addRunnableToRunOnDropCaches(cleanuper);
-    manager.registerRunnableToRunOnAnyChange(cleanuper);
+      @Override
+      public void afterPsiChanged(boolean isPhysical) {
+      }
+    });
+  }
+
+  private void clearCaches(boolean isPhysical) {
+    myCalculatedTypes.clear();
+    if (isPhysical) {
+      myVarToConstValueMap1.clear();
+    }
+    myVarToConstValueMap2.clear();
   }
 
   public boolean isTypeCached(@NotNull PsiExpression expr) {
@@ -98,16 +107,17 @@ public class JavaResolveCache {
   }
 
   @Nullable
-  public Object computeConstantValueWithCaching(PsiVariable variable, ConstValueComputer computer, Set<PsiVariable> visitedVars){
+  public Object computeConstantValueWithCaching(@NotNull PsiVariable variable, @NotNull ConstValueComputer computer, Set<PsiVariable> visitedVars){
     boolean physical = variable.isPhysical();
 
-    Object cached = (physical ? myVarToConstValueMap1 : myVarToConstValueMap2).get(variable);
+    Map<PsiVariable, Object> map = physical ? myVarToConstValueMap1 : myVarToConstValueMap2;
+    Object cached = map.get(variable);
     if (cached == NULL) return null;
     if (cached != null) return cached;
 
     Object result = computer.execute(variable, visitedVars);
 
-    (physical ? myVarToConstValueMap1 : myVarToConstValueMap2).put(variable, result != null ? result : NULL);
+    map.put(variable, result != null ? result : NULL);
 
     return result;
   }

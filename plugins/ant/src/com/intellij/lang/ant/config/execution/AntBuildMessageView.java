@@ -51,6 +51,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.content.*;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   private JPanel myProgressPanel;
 
-  private final Timer myScrollerTimer = new Timer(1000, new ActionListener() {
+  private final Timer myScrollerTimer = UIUtil.createNamedTimer("Ant message view timer", 1000, new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       if (myTreeView != null && myCommandsProcessedCount < myLog.size()) {
         if (!myIsOutputPaused) {

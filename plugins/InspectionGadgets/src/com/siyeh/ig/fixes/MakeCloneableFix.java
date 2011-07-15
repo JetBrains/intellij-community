@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class MakeCloneableFix extends InspectionGadgetsFix {
 
+    private final boolean isInterface;
+
+    public MakeCloneableFix(boolean isInterface) {
+        this.isInterface = isInterface;
+    }
+
     @NotNull
     public String getName() {
-        return InspectionGadgetsBundle.message("make.cloneable.quickfix");
+        if (isInterface) {
+            return InspectionGadgetsBundle.message(
+                    "make.interface.cloneable.quickfix");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "make.class.cloneable.quickfix");
+        }
     }
 
     @Override
@@ -47,11 +59,15 @@ public class MakeCloneableFix extends InspectionGadgetsFix {
         final PsiJavaCodeReferenceElement ref =
                 elementFactory.createReferenceElementByFQClassName(
                         CommonClassNames.JAVA_LANG_CLONEABLE, scope);
-        final PsiReferenceList implementsList =
-                containingClass.getImplementsList();
-        if (implementsList == null) {
+        final PsiReferenceList extendsImplementsList;
+        if (containingClass.isInterface()) {
+            extendsImplementsList = containingClass.getExtendsList();
+        } else {
+            extendsImplementsList = containingClass.getImplementsList();
+        }
+        if (extendsImplementsList == null) {
             return;
         }
-        implementsList.add(ref);
+        extendsImplementsList.add(ref);
     }
 }

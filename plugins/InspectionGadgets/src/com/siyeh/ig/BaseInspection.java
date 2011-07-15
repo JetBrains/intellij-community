@@ -121,7 +121,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
             final JFormattedTextField valueField = new JFormattedTextField(formatter);
             final Field field = getClass().getField(fieldName);
             valueField.setValue(field.get(this));
-            valueField.setColumns(4);
+            valueField.setColumns(2);
             UIUtil.fixFormattedField(valueField);
             final Document document = valueField.getDocument();
             document.addDocumentListener(new DocumentAdapter() {
@@ -129,7 +129,9 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
                 public void textChanged(DocumentEvent evt) {
                     try {
                         valueField.commitEdit();
-                        field.set(BaseInspection.this, ((Number) valueField.getValue()).intValue());
+                        final Number number = (Number) valueField.getValue();
+                        field.set(BaseInspection.this,
+                                Integer.valueOf(number.intValue()));
                     } catch (IllegalAccessException e) {
                         LOG.error(e);
                     } catch (ParseException e) {

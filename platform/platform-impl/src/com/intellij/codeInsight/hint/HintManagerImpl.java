@@ -42,6 +42,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -314,7 +315,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     final HintInfo info = new HintInfo(hint, flags, reviveOnEditorChange);
     myHintsStack.add(info);
     if (timeout > 0) {
-      Timer timer = new Timer(timeout, new ActionListener() {
+      Timer timer = UIUtil.createNamedTimer("Hint timeout",timeout, new ActionListener() {
         public void actionPerformed(ActionEvent event) {
           hint.hide();
         }
@@ -353,7 +354,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }, flags, false);
     myHintsStack.add(info);
     if (timeout > 0) {
-      Timer timer = new Timer(timeout, new ActionListener() {
+      Timer timer = UIUtil.createNamedTimer("Popup timeout",timeout, new ActionListener() {
         public void actionPerformed(ActionEvent event) {
           popup.dispose();
         }

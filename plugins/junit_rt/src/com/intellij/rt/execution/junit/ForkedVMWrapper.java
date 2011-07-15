@@ -23,6 +23,9 @@ import java.io.*;
 */
 class ForkedVMWrapper extends DataOutputStream {
 
+  public static final char DELIMITER = '\u0002';
+  public static final byte[] ERROR = new byte[] {'\u0003'};
+  public static final byte[] OUTPUT = new byte[] {'\u0004'};
   private FileOutputStream myOutputStream;
   private boolean myError;
 
@@ -38,12 +41,12 @@ class ForkedVMWrapper extends DataOutputStream {
   }
 
   private void printPrefix() throws IOException {
-    myOutputStream.write("/K".getBytes());
+    myOutputStream.write(("/" + DELIMITER).getBytes());
     if (myError) {
-      myOutputStream.write("e".getBytes());
+      myOutputStream.write(ERROR);
     }
     else {
-      myOutputStream.write("o".getBytes());
+      myOutputStream.write(OUTPUT);
     }
   }
 
@@ -70,7 +73,7 @@ class ForkedVMWrapper extends DataOutputStream {
     try {
       boolean error = false;
       boolean afterSymbol = false;
-      boolean afterM = false;
+      boolean afterDelimiter = false;
       while (stream.available() > 0) {
         char read = (char)stream.read();
         if (read == '/') {
@@ -78,13 +81,13 @@ class ForkedVMWrapper extends DataOutputStream {
           continue;
         }
         if (afterSymbol) {
-          if (afterM) {
-            error = read == 'e';
+          if (afterDelimiter) {
+            error = read == ERROR[0];
             afterSymbol = false;
-            afterM = false;
+            afterDelimiter = false;
             continue;
           }
-          if (read != 'K') {
+          if (read != DELIMITER) {
             if (error) {
               err.write("/".getBytes());
               err.write(read);
@@ -94,11 +97,11 @@ class ForkedVMWrapper extends DataOutputStream {
               out.write(read);
             }
             afterSymbol = false;
-            afterM = false;
+            afterDelimiter = false;
             continue;
           }
           else {
-            afterM = true;
+            afterDelimiter = true;
             continue;
           }
         }

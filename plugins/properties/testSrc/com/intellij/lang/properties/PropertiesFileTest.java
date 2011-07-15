@@ -43,8 +43,13 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   }
 
   public void testAddPropertyAfterComment() throws Exception {
-    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "#xxxxx");
-    propertiesFile.addProperty(myPropertyToAdd);
+    final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "#xxxxx");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        propertiesFile.addProperty(myPropertyToAdd);
+      }
+    });
+
 
     List<Property> properties = propertiesFile.getProperties();
     Property added = properties.get(0);
@@ -57,8 +62,13 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   }
 
   public void testAddPropertyAfterProperty() throws Exception {
-    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy");
-    propertiesFile.addProperty(myPropertyToAdd);
+    final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        propertiesFile.addProperty(myPropertyToAdd);
+      }
+    });
+
 
     List<Property> properties = propertiesFile.getProperties();
     assertEquals(2, properties.size());
@@ -112,9 +122,14 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   }
 
   public void testAddToEnd() throws IncorrectOperationException {
-    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\nccc");
+    final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\nccc");
     assertEquals(1,propertiesFile.getProperties().size());
-    propertiesFile.addProperty(myPropertyToAdd);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        propertiesFile.addProperty(myPropertyToAdd);
+      }
+    });
+
     assertEquals("a=b\\nccc\nkkk=vvv", propertiesFile.getText());
   }
 
@@ -129,20 +144,35 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   }
 
   public void testAddPropertyAfter() throws IncorrectOperationException {
-    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
-    Property c = propertiesFile.findPropertyByKey("c");
-    propertiesFile.addPropertyAfter(myPropertyToAdd, c);
+    final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
+    final Property c = propertiesFile.findPropertyByKey("c");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        propertiesFile.addPropertyAfter(myPropertyToAdd, c);
+      }
+    });
+
     assertEquals("a=b\nc=d\nkkk=vvv\ne=f", propertiesFile.getText());
   }
   public void testAddPropertyAfterLast() throws IncorrectOperationException {
-    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
-    Property p = propertiesFile.findPropertyByKey("e");
-    propertiesFile.addPropertyAfter(myPropertyToAdd, p);
+    final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
+    final Property p = propertiesFile.findPropertyByKey("e");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        propertiesFile.addPropertyAfter(myPropertyToAdd, p);
+      }
+    });
+
     assertEquals("a=b\nc=d\ne=f\nkkk=vvv", propertiesFile.getText());
   }
   public void testAddPropertyAfterInBeginning() throws IncorrectOperationException {
-    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
-    propertiesFile.addPropertyAfter(myPropertyToAdd, null);
+    final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        propertiesFile.addPropertyAfter(myPropertyToAdd, null);
+      }
+    });
+
     assertEquals("kkk=vvv\na=b\nc=d\ne=f", propertiesFile.getText());
   }
   public void testUnescapedKey() throws IncorrectOperationException {

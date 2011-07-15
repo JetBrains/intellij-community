@@ -37,6 +37,9 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -358,6 +361,9 @@ public abstract class TestObject implements JavaCommandLine {
   private void appendForkInfo() throws ExecutionException {
     final String forkMode = myConfiguration.getForkMode();
     if (Comparing.strEqual(forkMode, "none")) return;
+    if (myRunnerSettings.getData() instanceof DebuggingRunnerData) {
+      throw new CantRunException("Debug is disabled in fork mode. <br> Change fork mode to &lt;none&gt; to debug");
+    }
     File tempFile = null;
     try {
       tempFile = FileUtil.createTempFile("command.line", "");

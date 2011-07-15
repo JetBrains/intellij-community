@@ -31,6 +31,7 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +53,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   protected final PopupStep<Object> myStep;
   protected WizardPopup myChild;
 
-  private final Timer myAutoSelectionTimer = new Timer(AUTO_POPUP_DELAY, this);
+  private final Timer myAutoSelectionTimer = UIUtil.createNamedTimer("Wizard autoselection",AUTO_POPUP_DELAY, this);
 
   private MnemonicsSearch myMnemonicsSearch;
   private Object myParentValue;

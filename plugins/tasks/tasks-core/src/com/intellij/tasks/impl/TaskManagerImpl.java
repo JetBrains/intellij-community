@@ -26,6 +26,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -535,7 +536,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myCacheRefreshTimer = new Timer(myConfig.updateInterval*60*1000, new ActionListener() {
+      myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh",myConfig.updateInterval*60*1000, new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           if (myConfig.updateEnabled && !myUpdating) {
             updateIssues(null);

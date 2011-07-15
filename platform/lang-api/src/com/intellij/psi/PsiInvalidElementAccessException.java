@@ -43,4 +43,8 @@ public class PsiInvalidElementAccessException extends RuntimeException {
     super(message, cause);
     myElementReference = new SoftReference<PsiElement>(element);
   }
+
+  public PsiElement getPsiElement() {
+    return myElementReference.get();
+  }
 }

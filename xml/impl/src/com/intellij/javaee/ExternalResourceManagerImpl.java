@@ -215,6 +215,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void addResource(@NonNls String url, @NonNls String version, @NonNls String location) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     addSilently(url, version, location);
     fireExternalResourceChanged();
   }
@@ -232,6 +233,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void removeResource(String url, String version) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     Map<String, String> map = getMap(myResources, version, false);
     if (map != null) {
       String location = map.remove(url);
@@ -272,6 +274,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void clearAllResources(Project project) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     clearAllResources();
     getProjectResources(project).clearAllResources();
     myModificationCount++;
@@ -279,6 +282,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void addIgnoredResource(String url) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     addIgnoredSilently(url);
     fireExternalResourceChanged();
   }
@@ -289,6 +293,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void removeIgnoredResource(String url) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (myIgnoredResources.remove(url)) {
       myModificationCount++;
       fireExternalResourceChanged();
@@ -395,7 +400,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
 
-  private final static NotNullLazyKey<ProjectResources, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ProjectResources.class);
+  private static final NotNullLazyKey<ProjectResources, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ProjectResources.class);
 
   private static ExternalResourceManagerImpl getProjectResources(Project project) {
     return INSTANCE_CACHE.getValue(project);

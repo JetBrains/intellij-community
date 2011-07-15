@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.javaee.ExternalResourceConfigurable;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,12 @@ public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
   }
 
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
-    ExternalResourceManager.getInstance().addResource(uri,"");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ExternalResourceManager.getInstance().addResource(uri, "");
+      }
+    });
+
     final Project project = file.getProject();
     final ExternalResourceConfigurable component = new ExternalResourceConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, component, new Runnable() {

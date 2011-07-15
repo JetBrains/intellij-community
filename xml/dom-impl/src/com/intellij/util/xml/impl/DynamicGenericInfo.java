@@ -71,7 +71,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     final XmlElement element = myInvocationHandler.getXmlElement();
     if (element == null) return true;
 
-    return ourGuard.doPreventingRecursion(element, new Computable<Boolean>() {
+    return ourGuard.doPreventingRecursion(element, false, new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         DomExtensionsRegistrarImpl registrar = runDomExtenders();

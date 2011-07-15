@@ -1201,6 +1201,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       setRepeats(true);
      }
 
+    @Override
+    public String toString() {
+      return "Action manager timer";
+    }
+
     public void addTimerListener(TimerListener listener, boolean transparent){
       if (transparent) {
         myTransparrentTimerListeners.add(listener);

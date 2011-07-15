@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
 
     public BadExceptionCaughtInspection() {
         if (exceptionsString.length() != 0) {
+            exceptions.clear();
             final List<String> strings =
                     StringUtil.split(exceptionsString, ",");
             for (String string : strings) {
@@ -90,7 +91,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
         final ListTable table =
                 new ListTable(new ListWrappingTableModel(exceptions,
                         InspectionGadgetsBundle.message(
-                                "ignored.io.resource.types")));
+                                "exception.class.column.name")));
         final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
         final FontMetrics fontMetrics = table.getFontMetrics(table.getFont());
         scrollPane.setPreferredSize(new Dimension(0, fontMetrics.getHeight() * 7));
@@ -99,7 +100,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
         final ActionToolbar toolbar =
                 UiUtils.createAddRemoveTreeClassChooserToolbar(table,
                         InspectionGadgetsBundle.message(
-                                "exception.class.column.name"),
+                                "choose.exception.class"),
                         "java.lang.Throwable");
 
         final GridBagConstraints constraints = new GridBagConstraints();

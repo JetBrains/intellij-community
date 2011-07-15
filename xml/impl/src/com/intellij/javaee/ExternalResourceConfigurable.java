@@ -15,6 +15,7 @@
  */
 package com.intellij.javaee;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -139,24 +140,30 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   public void apply() {
-    ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
-    manager.clearAllResources(myProject);
-    for (Object myPair : myPairs) {
-      EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)myPair;
-      String s = pair.myLocation.replace('\\', '/');
-      if (pair.myShared) {
-        manager.addResource(pair.myName, s);
-      } else {
-        manager.addResource(pair.myName, s, myProject);
+        manager.clearAllResources(myProject);
+        for (Object myPair : myPairs) {
+          EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)myPair;
+          String s = pair.myLocation.replace('\\', '/');
+          if (pair.myShared) {
+            manager.addResource(pair.myName, s);
+          }
+          else {
+            manager.addResource(pair.myName, s, myProject);
+          }
+        }
+
+        for (Object myIgnoredUrl : myIgnoredUrls) {
+          String url = (String)myIgnoredUrl;
+          manager.addIgnoredResource(url);
+        }
+        manager.setDefaultHtmlDoctype(myHtmlLanguageLevelForm.getDoctype(), myProject);
       }
-    }
+    });
 
-    for (Object myIgnoredUrl : myIgnoredUrls) {
-      String url = (String)myIgnoredUrl;
-      manager.addIgnoredResource(url);
-    }
-    manager.setDefaultHtmlDoctype(myHtmlLanguageLevelForm.getDoctype(), myProject);
     setModified(false);
   }
 

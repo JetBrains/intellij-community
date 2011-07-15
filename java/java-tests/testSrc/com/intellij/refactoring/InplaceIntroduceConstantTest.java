@@ -39,6 +39,18 @@ public class InplaceIntroduceConstantTest extends AbstractInplaceIntroduceTest {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
         inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+
+      }
+    });
+  }
+
+  public void testReplaceAllWithClassRefType() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+        type("ONE");
       }
     });
   }
@@ -52,6 +64,7 @@ public class InplaceIntroduceConstantTest extends AbstractInplaceIntroduceTest {
       }
     });
   }
+
   public void testCorrectFinalPosition() throws Exception {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {
@@ -80,7 +93,7 @@ public class InplaceIntroduceConstantTest extends AbstractInplaceIntroduceTest {
     return new MyIntroduceConstantHandler();
   }
 
-  public static class MyIntroduceConstantHandler extends IntroduceConstantHandler implements MyIntroduceHandler  {
+  public static class MyIntroduceConstantHandler extends IntroduceConstantHandler implements MyIntroduceHandler {
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
       return super.invokeImpl(project, selectedExpr, editor);

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.constant.title");
@@ -239,6 +241,14 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       }
     }
 
+    @Override
+    public void visitCallExpression(PsiCallExpression callExpression) {
+      super.visitCallExpression(callExpression);
+      final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{callExpression});
+      if (!checkedExceptions.isEmpty()) {
+        myElementReference = callExpression;
+      }
+    }
 
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
       if (!classMember.hasModifierProperty(PsiModifier.STATIC)) {

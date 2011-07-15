@@ -203,15 +203,10 @@ public class QuickMerge {
     final List<WCInfo> infoList = myVcs.getAllWcInfos();
     boolean switchedFound = false;
     for (WCInfo wcInfo : infoList) {
-      try {
-        if (FileUtil.isAncestor(new File(myWcInfo.getPath()), new File(wcInfo.getPath()), true)
-            && NestedCopyType.switched.equals(wcInfo.getType())) {
-          switchedFound = true;
-          break;
-        }
-      }
-      catch (IOException e) {
-        //
+      if (FileUtil.isAncestor(new File(myWcInfo.getPath()), new File(wcInfo.getPath()), true)
+          && NestedCopyType.switched.equals(wcInfo.getType())) {
+        switchedFound = true;
+        break;
       }
     }
     if (switchedFound) {

@@ -31,6 +31,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,13 +127,13 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       myTimer.stop();
     }
 
-    myTimer = new Timer(500, new ActionListener() {
+    myTimer = UIUtil.createNamedTimer("Restart context menu", 500, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myDisposed) return;
 
         if (myTimer != null && myTimer.isRunning()) myTimer.stop();
 
-        myTimer = new Timer(50, new ActionListener() {
+        myTimer = UIUtil.createNamedTimer("Restart context menu now",50, new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             if (myShow) {
               if (myVisible) {
@@ -210,7 +211,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       myTimer.stop();
     }
 
-    myTimer = new Timer(1500, new ActionListener() {
+    myTimer = UIUtil.createNamedTimer("Hide context menu",1500, new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         if (myDisposed) return;
 

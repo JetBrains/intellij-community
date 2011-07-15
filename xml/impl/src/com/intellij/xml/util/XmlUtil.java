@@ -671,7 +671,7 @@ public class XmlUtil {
 
       final PsiElement[] inclusion = CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, new CachedValueProvider<PsiElement[]>() {
           public Result<PsiElement[]> compute() {
-            return RecursionManager.createGuard("xinclude").doPreventingRecursion(xincludeTag, new Computable<Result<PsiElement[]>>() {
+            return RecursionManager.createGuard("xinclude").doPreventingRecursion(xincludeTag, true, new Computable<Result<PsiElement[]>>() {
               @Override
               public Result<PsiElement[]> compute() {
                 return computeInclusion(xincludeTag);

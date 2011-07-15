@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.module.Module;
@@ -301,12 +300,11 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               return "&" + value.getIndex() + "  " + value.getTitle();
             }
           });
-        final List<ActionToolbarImpl> components =
-          UIUtil.findComponentsOfType((JComponent)myEntryTable.getParent().getParent().getParent(), ActionToolbarImpl.class);
-        if (components.size() == 1) {
-          popup.show(new RelativePoint(components.get(0), new Point(0, 20)));
-        } else {
+        final RelativePoint point = getPreferredPopupPoint();
+        if (point == null) {
           popup.showInBestPositionFor(e.getDataContext());
+        } else {
+          popup.show(point);
         }
       }
     };

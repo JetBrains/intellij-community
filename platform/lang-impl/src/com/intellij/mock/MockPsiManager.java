@@ -218,7 +218,7 @@ public class MockPsiManager extends PsiManagerEx {
   @NotNull
   public ResolveCache getResolveCache() {
     if (myResolveCache == null) {
-      myResolveCache = new ResolveCache(this);
+      myResolveCache = new ResolveCache(getProject().getMessageBus());
     }
     return myResolveCache;
   }

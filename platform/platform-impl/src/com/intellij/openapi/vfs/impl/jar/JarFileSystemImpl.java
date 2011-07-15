@@ -258,12 +258,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     }
 
     if (myNoCopyJarPaths.contains(path)) return false;
-    try {
-      if (myNoCopyJarDir!=null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    if (myNoCopyJarDir!=null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
 
     return true;
   }

@@ -162,17 +162,6 @@ public class CollectHighlightsUtil {
     return root.findElementAt(offset);
   }
 
-  public static boolean shouldHighlightFile(@Nullable final PsiFile psiFile) {
-    if (psiFile == null) return true;
-
-    final ProblemHighlightFilter[] filters = ProblemHighlightFilter.EP_NAME.getExtensions();
-    for (ProblemHighlightFilter filter : filters) {
-      if (!filter.shouldHighlight(psiFile)) return false;
-    }
-
-    return true;
-  }
-
   public static boolean isOutsideSourceRootJavaFile(@Nullable PsiFile psiFile) {
     return psiFile != null && psiFile.getFileType() == StdFileTypes.JAVA && isOutsideSourceRoot(psiFile);
   }

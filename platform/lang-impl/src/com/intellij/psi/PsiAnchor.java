@@ -54,7 +54,9 @@ public abstract class PsiAnchor {
   public abstract int getEndOffset();
 
   public static PsiAnchor create(@NotNull final PsiElement element) {
-    LOG.assertTrue(element.isValid());
+    if (!element.isValid()) {
+      throw new PsiInvalidElementAccessException(element);
+    }
 
     if (element instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();

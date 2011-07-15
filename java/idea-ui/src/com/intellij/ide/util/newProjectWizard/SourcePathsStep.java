@@ -266,16 +266,10 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Trinity<Strin
       if (sourceDirectoryPath != null) {
         final File rootDir = new File(getContentRootPath());
         final File srcDir = new File(sourceDirectoryPath);
-        try {
-          if (!FileUtil.isAncestor(rootDir, srcDir, false)) {
-            Messages.showErrorDialog(myTfSourceDirectoryName,
-                                     IdeBundle.message("error.source.directory.should.be.under.module.content.root.directory"),
-                                     CommonBundle.getErrorTitle());
-            return false;
-          }
-        }
-        catch (IOException e) {
-          Messages.showErrorDialog(myTfSourceDirectoryName, e.getMessage(), CommonBundle.getErrorTitle());
+        if (!FileUtil.isAncestor(rootDir, srcDir, false)) {
+          Messages.showErrorDialog(myTfSourceDirectoryName,
+                                   IdeBundle.message("error.source.directory.should.be.under.module.content.root.directory"),
+                                   CommonBundle.getErrorTitle());
           return false;
         }
         srcDir.mkdirs();

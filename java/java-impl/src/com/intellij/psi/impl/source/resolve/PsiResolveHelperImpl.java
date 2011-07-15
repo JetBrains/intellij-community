@@ -752,7 +752,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           if (parameter != null) {
             final PsiParameter finalParameter = parameter;
             PsiType type = ourGuard
-              .doPreventingRecursion(innerMethodCall, new Computable<PsiType>() {
+              .doPreventingRecursion(innerMethodCall, true, new Computable<PsiType>() {
                 @Override
                 public PsiType compute() {
                   return result.getSubstitutor().substitute(finalParameter.getType());

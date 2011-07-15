@@ -20,6 +20,7 @@ import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -42,12 +43,12 @@ public class KeyboardGestureProcessor {
   KeyGestureState myState = myWaitForStart;
 
 
-  final Timer myHoldTimer = new Timer(1200, new ActionListener() {
+  final Timer myHoldTimer = UIUtil.createNamedTimer("Keyboard hold",1200, new ActionListener() {
     public void actionPerformed(final ActionEvent e) {
     }
   });
 
-  final Timer myDblClickTimer = new Timer(Registry.intValue("actionSystem.keyGestureDblClickTime"), new ActionListener() {
+  final Timer myDblClickTimer = UIUtil.createNamedTimer("Double click",Registry.intValue("actionSystem.keyGestureDblClickTime"), new ActionListener() {
     public void actionPerformed(final ActionEvent e) {
       myState.processDblClickTimer();
     }

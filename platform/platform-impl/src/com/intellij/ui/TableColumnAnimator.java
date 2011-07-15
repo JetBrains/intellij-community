@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -83,5 +84,11 @@ public class TableColumnAnimator extends Timer implements ActionListener {
 
   public void startAndDoWhenDone(Runnable done) {
     myDone = done;
+  }
+
+  @NonNls
+  @Override
+  public String toString() {
+    return "Table column animator";
   }
 }
