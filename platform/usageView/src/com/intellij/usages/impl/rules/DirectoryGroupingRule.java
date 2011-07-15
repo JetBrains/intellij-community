@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -54,6 +55,9 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
       UsageInFile usageInFile = (UsageInFile)usage;
       VirtualFile file = usageInFile.getFile();
       if (file != null) {
+        if (file instanceof VirtualFileWindow) {
+          file = ((VirtualFileWindow)file).getDelegate();
+        }
         VirtualFile dir = file.getParent();
         if (dir == null) return null;
         return getGroupForFile(dir);
