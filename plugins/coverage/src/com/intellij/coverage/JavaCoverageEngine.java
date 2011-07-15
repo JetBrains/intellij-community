@@ -435,8 +435,8 @@ public class JavaCoverageEngine extends CoverageEngine {
           if (jumpData.getTrueHits() + jumpData.getFalseHits() > 0) {
             final PsiExpression expression = expressions.get(idx++);
             final PsiElement parentExpression = expression.getParent();
-            boolean reverse = parentExpression instanceof PsiBinaryExpression &&
-                              ((PsiBinaryExpression)parentExpression).getOperationTokenType() == JavaTokenType.OROR || parentExpression instanceof PsiDoWhileStatement || parentExpression instanceof PsiAssertStatement;
+            boolean reverse = parentExpression instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parentExpression).getOperationTokenType() == JavaTokenType.OROR
+                              || parentExpression instanceof PsiDoWhileStatement || parentExpression instanceof PsiAssertStatement;
             buf.append(indent).append(expression.getText()).append("\n");
             buf.append(indent).append(indent).append("true hits: ").append(reverse ? jumpData.getFalseHits() : jumpData.getTrueHits()).append("\n");
             buf.append(indent).append(indent).append("false hits: ").append(reverse ? jumpData.getTrueHits() : jumpData.getFalseHits()).append("\n");
