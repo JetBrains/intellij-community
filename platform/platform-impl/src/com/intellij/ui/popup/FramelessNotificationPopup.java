@@ -64,7 +64,7 @@ public class FramelessNotificationPopup {
       }
     }
   };
-  private final Timer myFadeInTimer = new Timer(10, myFadeTracker);
+  private final Timer myFadeInTimer;
   private ActionListener myActionListener;
 
   public FramelessNotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
@@ -78,6 +78,7 @@ public class FramelessNotificationPopup {
 
     myActionListener = listener;
 
+    myFadeInTimer = UIUtil.createNamedTimer("Frameless fade in",10, myFadeTracker);
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null)
       .setForceHeavyweight(true)
       .setRequestFocus(false)

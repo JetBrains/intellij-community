@@ -156,7 +156,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
         // for each of them. Solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
         // if the task is already finished when the time comes.
-        Timer timer = new Timer(myDelayInMillis, new ActionListener() {
+        Timer timer = UIUtil.createNamedTimer("Progress window timer",myDelayInMillis, new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
             if (isRunning()) {

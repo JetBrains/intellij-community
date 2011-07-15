@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ComboBoxUI;
@@ -2387,5 +2388,14 @@ public class UIUtil {
   }
 
   public enum Style {REGULAR, SMALL}
+
+  public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay, @NotNull ActionListener listener) {
+    return new Timer(delay, listener){
+      @Override
+      public String toString() {
+        return name;
+      }
+    };
+  }
 }
 

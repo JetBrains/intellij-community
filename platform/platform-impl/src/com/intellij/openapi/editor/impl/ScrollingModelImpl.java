@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -434,7 +435,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
       myStartCommand = CommandProcessor.getInstance().getCurrentCommand();
 
-      myTimer = new Timer(SCROLL_INTERVAL, new ActionListener() {
+      myTimer = UIUtil.createNamedTimer("Animated scroller",SCROLL_INTERVAL, new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           tick();
         }

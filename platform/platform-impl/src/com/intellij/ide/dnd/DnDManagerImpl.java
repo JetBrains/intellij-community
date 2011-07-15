@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,15 +63,9 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
 
   private static final Image EMPTY_IMAGE = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
 
-  private final Timer myTooltipTimer = new Timer(ToolTipManager.sharedInstance().getInitialDelay(), new ActionListener() {
+  private final Timer myTooltipTimer = UIUtil.createNamedTimer("DndManagerImpl tooltip timer",ToolTipManager.sharedInstance().getInitialDelay(), new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       onTimer();
-    }
-
-    @NonNls
-    @Override
-    public String toString() {
-      return "DndManagerImpl tooltip timer";
     }
   });
   private Runnable myHightlighterShowRequest;

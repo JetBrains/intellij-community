@@ -32,6 +32,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
@@ -258,7 +259,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
         myIndicesTable.repaint();
       }
     };
-    myRepaintTimer = new Timer(AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT, myTimerListener);
+    myRepaintTimer = UIUtil.createNamedTimer("Maven repaint",AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT, myTimerListener);
     myRepaintTimer.start();
   }
 

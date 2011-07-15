@@ -3916,7 +3916,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
 
-      myTimer = new Timer(TIMER_PERIOD, new ActionListener() {
+      myTimer = UIUtil.createNamedTimer("Editor scroll timer",TIMER_PERIOD, new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           myCommandProcessor.executeCommand(myProject, new DocumentRunnable(myDocument, myProject) {
             public void run() {
