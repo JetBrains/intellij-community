@@ -68,7 +68,7 @@ import java.util.List;
  * @author lesya
  */
 
-public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFileProvider, CvsEntriesListener {
+public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFileProvider {
   private static final String NAME = "CVS";
   private static final VcsKey ourKey = createKey(NAME);
   private final Cvs2Configurable myConfigurable;
@@ -92,6 +92,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
   private final VcsShowConfirmationOption myAddConfirmation;
   private final VcsShowConfirmationOption myRemoveConfirmation;
+  private final CvsEntriesListener myCvsEntriesListener;
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
@@ -119,6 +120,26 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
     myRemoveConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
+    myCvsEntriesListener = new CvsEntriesListener() {
+
+      @Override
+      public void entriesChanged(VirtualFile parent) {
+        VirtualFile[] children = parent.getChildren();
+        if (children == null) return;
+        for (VirtualFile child : children) {
+          fireFileStatusChanged(child);
+        }
+
+        VcsDirtyScopeManager.getInstance(getProject()).fileDirty(parent);
+      }
+
+      @Override
+      public void entryChanged(VirtualFile file) {
+        if (myProject.isDisposed()) return; // invoke later is possible
+        fireFileStatusChanged(file);
+        VcsDirtyScopeManager.getInstance(getProject()).fileDirty(file);
+      }
+    };
   }
 
   /* ======================================= ProjectComponent */
@@ -222,28 +243,12 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
   protected void activate() {
     myStorageComponent.init(getProject(), false);
-    CvsEntriesManager.getInstance().addCvsEntriesListener(this);
+    CvsEntriesManager.getInstance().addCvsEntriesListener(myCvsEntriesListener);
   }
 
   protected void deactivate() {
     myStorageComponent.dispose();
-    CvsEntriesManager.getInstance().removeCvsEntriesListener(this);
-  }
-
-  public void entriesChanged(VirtualFile parent) {
-    VirtualFile[] children = parent.getChildren();
-    if (children == null) return;
-    for (VirtualFile child : children) {
-      fireFileStatusChanged(child);
-    }
-
-    VcsDirtyScopeManager.getInstance(getProject()).fileDirty(parent);
-  }
-
-  public void entryChanged(VirtualFile file) {
-    if (myProject.isDisposed()) return; // invoke later is possible
-    fireFileStatusChanged(file);
-    VcsDirtyScopeManager.getInstance(getProject()).fileDirty(file);
+    CvsEntriesManager.getInstance().removeCvsEntriesListener(myCvsEntriesListener);
   }
 
   private void fireFileStatusChanged(final VirtualFile file) {
