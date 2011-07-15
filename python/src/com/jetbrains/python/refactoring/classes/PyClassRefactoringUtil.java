@@ -12,11 +12,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -27,6 +27,7 @@ import java.util.*;
 public class PyClassRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(PyClassRefactoringUtil.class.getName());
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
+  private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
 
   private PyClassRefactoringUtil() {}
 
@@ -153,18 +154,33 @@ public class PyClassRefactoringUtil {
     PyPsiUtils.removeRedundantPass(statements);
   }
 
-  public static void restoreNamedReferences(PsiElement element) {
-    element.acceptChildren(new PyRecursiveElementVisitor() {
+  public static void restoreNamedReferences(@NotNull PsiElement element) {
+    restoreNamedReferences(element, null);
+  }
+
+  public static void restoreNamedReferences(@NotNull final PsiElement newElement, @Nullable final PsiElement oldElement) {
+    newElement.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
         restoreReference(node);
+      }
+
+      @Override
+      public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+        super.visitPyStringLiteralExpression(node);
+        for (PsiReference ref : node.getReferences()) {
+          if (ref instanceof DocStringTypeReference && ref.isReferenceTo(oldElement)) {
+            ref.bindToElement(newElement);
+          }
+        }
       }
     });
   }
 
   private static void restoreReference(final PyReferenceExpression node) {
     PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
+    String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
     if (target instanceof PsiDirectory) {
       target = (PsiNamedElement)PyUtil.turnDirIntoInit(target);
     }
@@ -178,8 +194,9 @@ public class PyClassRefactoringUtil {
     if (target == null) return;
     if (PyBuiltinCache.getInstance(target).hasInBuiltins(target)) return;
     if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
-    AddImportHelper.addImport(target, node.getContainingFile(), node);
+    insertImport(node, target, asName);
     node.putCopyableUserData(ENCODED_IMPORT, null);
+    node.putCopyableUserData(ENCODED_IMPORT_AS, null);
   }
 
   public static void insertImport(PsiElement anchor, Collection<PsiNamedElement> elements) {
@@ -240,20 +257,52 @@ public class PyClassRefactoringUtil {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
+        if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
+          return;
+        }
+        final PyImportElement importElement = getImportElement(node);
+        if (importElement != null && PsiTreeUtil.isAncestor(element, importElement, false)) {
+          return;
+        }
         rememberReference(node, element);
       }
     });
   }
 
   private static void rememberReference(PyReferenceExpression node, PsiElement element) {
-    // we will remember reference in deepest node
-    if (node.getQualifier() instanceof PyReferenceExpression) return;
-
-    final PsiPolyVariantReference ref = node.getReference();
-    final PsiElement target = ref.resolve();
+    // We will remember reference in deepest node (except for references to PyImportedModules, as we need references to modules, not to
+    // their packages)
+    final PyExpression qualifier = node.getQualifier();
+    if (qualifier != null && !(resolveExpression(qualifier) instanceof PyImportedModule)) {
+      return;
+    }
+    final PsiElement target = resolveExpression(node);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
+      final PyImportElement importElement = getImportElement(node);
+      if (importElement != null) {
+        node.putCopyableUserData(ENCODED_IMPORT_AS, importElement.getAsName());
+      }
     }
+  }
+
+  @Nullable
+  private static PyImportElement getImportElement(PyReferenceExpression expr) {
+    for (ResolveResult result : expr.getReference().multiResolve(false)) {
+      final PsiElement e = result.getElement();
+      if (e instanceof PyImportElement) {
+        return (PyImportElement)e;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement resolveExpression(@NotNull PyExpression expr) {
+    if (expr instanceof PyReferenceExpression) {
+      return ((PyReferenceExpression)expr).getReference().resolve();
+    }
+    return null;
   }
 
   public static void updateImportOfElement(PyImportStatementBase importStatement, PsiNamedElement element) {

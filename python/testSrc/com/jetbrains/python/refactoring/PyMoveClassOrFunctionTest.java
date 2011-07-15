@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyClass;
@@ -31,6 +32,7 @@ public class PyMoveClassOrFunctionTest extends PyLightFixtureTestCase {
   }
 
   // PY-3929
+  // PY-4095
   public void testImportAs() {
     doTest("f", "b.py");
   }
@@ -42,6 +44,23 @@ public class PyMoveClassOrFunctionTest extends PyLightFixtureTestCase {
 
   // PY-4074
   public void testNewModule() {
+    SystemProperties.setTestUserName("user1");
+    doTest("f", "b.py");
+  }
+
+  // PY-4098
+  public void testPackageImport() {
+    doTest("f", "b.py");
+  }
+
+  // PY-4130
+  // PY-4131
+  public void testDocstringTypes() {
+    doTest("C", "b.py");
+  }
+
+  // PY-4182
+  public void testInnerImports() {
     doTest("f", "b.py");
   }
 

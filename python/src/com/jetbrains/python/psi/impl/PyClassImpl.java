@@ -329,6 +329,64 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return EMPTY_ARRAY;
   }
 
+
+  public @NotNull List<PyClass> getMRO() {
+    // see http://www.python.org/download/releases/2.3/mro/ for a muddy explanation.
+    // see http://hackage.haskell.org/packages/archive/MetaObject/latest/doc/html/src/MO-Util-C3.html#linearize for code to port from.
+    return  mroLinearize(this, Collections.<PyClass>emptyList());
+  }
+
+  private static List<PyClass> mroMerge(List<List<PyClass>> sequences) {
+    List<PyClass> result = new LinkedList<PyClass>(); // need to insert to 0th position on linearize
+    while (true) {
+      // filter blank sequences
+      List<List<PyClass>> nonblank_sequences = new ArrayList<List<PyClass>>(sequences.size());
+      for (List<PyClass> item : sequences) {
+        if (item.size() > 0) nonblank_sequences.add(item);
+      }
+      if (nonblank_sequences.isEmpty()) return result;
+      // find a clean head
+      PyClass head = null; // to keep compiler happy; really head is assigned in the loop at least once.
+      for (List<PyClass> seq : nonblank_sequences) {
+        head = seq.get(0);
+        boolean head_in_tails = false;
+        for (List<PyClass> tail_seq : nonblank_sequences) {
+          if (tail_seq.indexOf(head) > 0) { // -1 is not found, 0 is head, >0 is tail.
+            head_in_tails = true;
+            break;
+          }
+        }
+        if (! head_in_tails) break;
+        else head = null; // as a signal
+      }
+      assert head != null : "Inconsistent hierarchy!"; // TODO: better diagnostics?
+      // our head is clean;
+      result.add(head);
+      // remove it from heads of other sequences
+      for (List<PyClass> seq : nonblank_sequences) {
+        if (seq.get(0) == head) seq.remove(0);
+      }
+    } // we either return inside the loop or die by assertion
+  }
+
+  private static List<PyClass> mroLinearize(PyClass cls, List<PyClass> seen) {
+    assert (seen.indexOf(cls) < 0 ) : "Circular import structure on " + PyUtil.nvl(cls);
+    PyClass[] bases = cls.getSuperClasses();
+    List<List<PyClass>> lins = new ArrayList<List<PyClass>>(bases.length * 2);
+    ArrayList<PyClass> new_seen = new ArrayList<PyClass>(seen.size() + 1);
+    new_seen.add(cls);
+    for (PyClass base : bases) {
+      List<PyClass> lin = mroLinearize(base, new_seen);
+      if (! lin.isEmpty()) lins.add(lin);
+    }
+    for (PyClass base : bases) {
+      lins.add(new SmartList<PyClass>(base));
+    }
+    List<PyClass> result = mroMerge(lins);
+    result.add(0, cls);
+    return result;
+  }
+
   @NotNull
   public PyFunction[] getMethods() {
     return getClassChildren(PyElementTypes.FUNCTION_DECLARATION, PyFunction.ARRAY_FACTORY);
