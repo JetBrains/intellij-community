@@ -117,7 +117,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                           new String[]{RefactoringBundle.message("rename.current.directory"),
                             RefactoringBundle.message("rename.directories"), CommonBundle.getCancelButtonText()}, 0,
                           Messages.getWarningIcon());
-            if (ret == -1) return;
+            if (ret == 2) return;
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage,
                        ret == 0 ? new PsiDirectory[]{psiDirectory} : projectDirectories);
           }
