@@ -213,20 +213,11 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
                                       @Nullable final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    final Balloon balloon = createBalloon(notification, false, NotificationDisplayType.BALLOON == displayType,
-                                          NotificationDisplayType.BALLOON == displayType);
-
-
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (balloon.isDisposed()) return;
-        Window window = findWindowForBalloon(project);
-        if (window instanceof IdeFrameImpl) {
-          ((IdeFrameImpl)window).getBalloonLayout().add(balloon);
-        }
-      }
-    });
+    Window window = findWindowForBalloon(project);
+    if (window instanceof IdeFrameImpl) {
+      boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType;
+      ((IdeFrameImpl)window).getBalloonLayout().add(createBalloon(notification, false, !sticky, !sticky));
+    }
   }
 
   public static Window findWindowForBalloon(Project project) {
