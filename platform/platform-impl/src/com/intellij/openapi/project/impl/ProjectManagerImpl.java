@@ -438,13 +438,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project loadAndOpenProject(final String filePath, final boolean convert) throws IOException, JDOMException, InvalidDataException {
     try {
 
-      Project project = convertAndLoadProject(filePath, convert);
+      final Project project = convertAndLoadProject(filePath, convert);
       if (project == null) {
         return null;
       }
 
       if (!openProject(project)) {
-        Disposer.dispose(project);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            Disposer.dispose(project);
+          }
+        });
+
         return null;
       }
 
@@ -497,7 +502,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     if (!ok) {
       if (project[0] != null) {
-        Disposer.dispose(project[0]);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            Disposer.dispose(project[0]);
+          }
+        });
+
         project[0] = null;
       }
       if (canceled != null) {
