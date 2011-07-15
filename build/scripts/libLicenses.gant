@@ -185,6 +185,7 @@ libraryLicense(name: "Saxon-6.5.5", version: "6.5.5", license: "Mozilla Public L
 libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-1.2.3.jar", version: "1.2.3", license: "Eclipse Public License", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
 libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-3.0.4.jar", version: "3.0.4", license: "Eclipse Public License", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
 libraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "SVN version, 1.1 branch as of 1 Oct 2007", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
+libraryLicense(name: "swingx", libraryName: "swingx-core-1.6.2.jar", version: "1.6.2", license: "LGPL 2.1", url: "http://java.net/downloads/swingx/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php")
 libraryLicense(name: "TestNG", version: "5.7 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/", licenseUrl: "http://code.google.com/p/testng/")
 libraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build 213", license: "BSD style (see LICENSE.txt in trilead.jar)", url: "http://www.trilead.com/SSH_Library/")
 libraryLicense(name: "Trove4j", version: "1.1 (with patches by JetBrains)", license: "LGPL", url: "http://trove4j.sourceforge.net/", licenseUrl: "http://trove4j.sourceforge.net/html/license.html")
