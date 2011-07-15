@@ -15,19 +15,14 @@
  */
 package com.intellij.notification;
 
-import com.intellij.ide.FrameStateManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.util.Processor;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author spleaner
@@ -46,18 +41,22 @@ public interface Notifications {
     /**
      * Registration is OPTIONAL: STICKY_BALLOON display type will be used by default.
      */
+    @SuppressWarnings("JavaDoc")
     public static void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType) {
-      invoke(null, new Processor<MessageBus>() {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
         @Override
-        public boolean process(final MessageBus bus) {
-          bus.syncPublisher(TOPIC).register(group_id, defaultDisplayType);
-          return false;
+        public void run() {
+          Application app = ApplicationManager.getApplication();
+          if (!app.isDisposed()) {
+            app.getMessageBus().syncPublisher(TOPIC).register(group_id, defaultDisplayType);
+          }
         }
       });
     }
 
     @Deprecated
-    public static void notify(@NotNull final Notification notification, final NotificationDisplayType displayType, @Nullable final Project project) {
+    public static void notify(@NotNull final Notification notification, @SuppressWarnings("UnusedParameters") final NotificationDisplayType displayType, @Nullable final Project project) {
       notify(notification, project);
     }
 
@@ -66,61 +65,21 @@ public interface Notifications {
     }
 
     public static void notify(@NotNull final Notification notification, @Nullable final Project project) {
-      invoke(project, new Processor<MessageBus>() {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
         @Override
-        public boolean process(final MessageBus messageBus) {
-          messageBus.syncPublisher(TOPIC).notify(notification);
-          return false;
+        public void run() {
+          if (project != null && !project.isDisposed()) {
+            project.getMessageBus().syncPublisher(TOPIC).notify(notification);
+          } else {
+            Application app = ApplicationManager.getApplication();
+            if (!app.isDisposed()) {
+              app.getMessageBus().syncPublisher(TOPIC).notify(notification);
+            }
+          }
         }
       });
     }
 
-    private static void invoke(final Project project, final Processor<MessageBus> fun) {
-      if (project != null && !project.isDisposed()) {
-        if (!project.isInitialized()) {
-          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-            public void run() {
-              fun.process(project.getMessageBus());
-            }
-          });
-        }
-        else {
-          final MessageBus bus = project.getMessageBus();
-          notifyLaterIfNeeded(bus, fun);
-        }
-
-        return;
-      }
-
-      FrameStateManager frameStateManager = FrameStateManager.getInstance();
-      if (frameStateManager != null) {
-        frameStateManager.getApplicationActive().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            Application app = ApplicationManager.getApplication();
-            final MessageBus bus =
-              project == null ? app.isDisposed() ? null : app.getMessageBus() : project.isDisposed() ? null : project.getMessageBus();
-            if (bus != null) {
-              notifyLaterIfNeeded(bus, fun);
-            }
-          }
-        });
-      }
-    }
-
-    private static void notifyLaterIfNeeded(final MessageBus bus,
-                                            final Processor<MessageBus> fun) {
-      if (EventQueue.isDispatchThread()) {
-        fun.process(bus);
-      }
-      else {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            fun.process(bus);
-          }
-        });
-      }
-    }
   }
 }

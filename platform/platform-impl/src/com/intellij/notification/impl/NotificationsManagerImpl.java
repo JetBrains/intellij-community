@@ -15,12 +15,14 @@
  */
 package com.intellij.notification.impl;
 
+import com.intellij.ide.FrameStateManager;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,6 +86,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     final List<T> result = new ArrayList<T>();
     for (final Notification notification : notifications) {
       if (klass.isInstance(notification)) {
+        //noinspection unchecked
         result.add((T) notification);
       }
     }
@@ -107,10 +110,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   public void clear(@Nullable Project project) {
     myModel.clear(createFilter(project, true));
-  }
-
-  public void markRead() {
-    myModel.markRead();
   }
 
   public NotificationModel getModel() {
@@ -138,10 +137,34 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       myModel.add(notification, project);
     }
 
-    showNotification(notification, project);
+    showWhenVisible(notification, project);
   }
 
-  public static void showNotification(final Notification notification, @Nullable final Project project) {
+  private static void showWhenVisible(final Notification notification, final Project project) {
+    FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        if (project != null) {
+          if (project.isDisposed()) {
+            return;
+          }
+
+          if (!project.isInitialized()) {
+            StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+              @Override
+              public void run() {
+                showWhenVisible(notification, project);
+              }
+            });
+            return;
+          }
+        }
+        showNotification(notification, project);
+      }
+    });
+  }
+
+  private static void showNotification(final Notification notification, @Nullable final Project project) {
     String groupId = notification.getGroupId();
     final NotificationSettings settings = NotificationsConfiguration.getSettings(groupId);
 
@@ -180,6 +203,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
         };
         assert toolWindowId != null;
         String msg = StringUtil.isEmpty(notification.getTitle()) ? notification.getContent() : notification.getTitle();
+        //noinspection SSBasedInspection
         ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, messageType, msg, notification.getIcon(), listener);
     }
   }
@@ -308,15 +332,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   public Collection<Notification> getByType(@Nullable final NotificationType type, @Nullable final Project project) {
     return myModel.getByType(type, createFilter(project, false));
-  }
-
-  @Nullable
-  public NotificationType getMaximumType(@Nullable final Project project) {
-    return myModel.getMaximumType(createFilter(project, false));
-  }
-
-  public boolean wasRead(@NotNull final Notification notification) {
-    return myModel.wasRead(notification);
   }
 
   private static class ProjectFilter implements PairFunction<Notification, Project, Boolean> {
