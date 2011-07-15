@@ -17,6 +17,7 @@ package com.siyeh.ipp.chartostring;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
@@ -45,9 +46,9 @@ class StringToCharPredicate implements PsiElementPredicate{
 
     private static boolean isInConcatenationContext(PsiElement element){
         final PsiElement parent = element.getParent();
-        if(parent instanceof PsiBinaryExpression){
-            final PsiBinaryExpression parentExpression =
-                    (PsiBinaryExpression) parent;
+        if(parent instanceof PsiPolyadicExpression){
+            final PsiPolyadicExpression parentExpression =
+                    (PsiPolyadicExpression) parent;
             final PsiType parentType = parentExpression.getType();
             if(parentType == null){
                 return false;
@@ -56,25 +57,21 @@ class StringToCharPredicate implements PsiElementPredicate{
             if(!"java.lang.String".equals(parentTypeText)){
                 return false;
             }
-            final PsiExpression lhs = parentExpression.getLOperand();
-            final PsiExpression rhs = parentExpression.getROperand();
-            if(rhs == null){
-                return false;
-            }
-            final PsiExpression otherOperand;
-            if(lhs.equals(element)){
-                otherOperand = rhs;
-            } else{
-                otherOperand = lhs;
-            }
+          if (parentExpression.getOperationTokenType() != JavaTokenType.PLUS) return false;
+          PsiExpression[] operands = parentExpression.getOperands();
+          int n = ArrayUtil.indexOf(operands, element);
+          if (n == -1) return false;
+          for (int i=0; i<=n+1 && i<operands.length;i++) {
+            if (i==n) continue;
+            PsiExpression otherOperand = operands[i];
             final PsiType otherOperandType = otherOperand.getType();
-            if(otherOperandType == null){
-                return false;
-            }
             final String otherOperandTypeText =
                     otherOperandType.getCanonicalText();
-            return "java.lang.String".equals(otherOperandTypeText);
-        } else if(parent instanceof PsiAssignmentExpression){
+            if ("java.lang.String".equals(otherOperandTypeText)) return true;
+          }
+          return false;
+        }
+        else if(parent instanceof PsiAssignmentExpression){
             final PsiAssignmentExpression parentExpression =
                     (PsiAssignmentExpression) parent;
           final IElementType tokenType = parentExpression.getOperationTokenType();

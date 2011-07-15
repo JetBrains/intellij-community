@@ -42,7 +42,7 @@ public class CodeInsightServicesUtil {
       for (int i = 0; i < ourTokenMap.length; i++) {
         IElementType tokenType = ourTokenMap[i];
         if (operationSign == tokenType) {
-          expression = (PsiBinaryExpression)expression.copy();
+          expression = (PsiPolyadicExpression)expression.copy();
           PsiExpression[] operands = expression.getOperands();
           for (int o = 0; o < operands.length; o++) {
             PsiExpression op = operands[o];
@@ -80,7 +80,7 @@ public class CodeInsightServicesUtil {
     }
 
     PsiPrefixExpression result = (PsiPrefixExpression)factory.createExpressionFromText("!(a)", null);
-    if (!(booleanExpression instanceof PsiBinaryExpression)) {
+    if (!(booleanExpression instanceof PsiPolyadicExpression)) {
       result.getOperand().replace(booleanExpression);
     }
     else {

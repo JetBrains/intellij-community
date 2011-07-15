@@ -224,7 +224,7 @@ public class SliceNullnessAnalyzer {
       if (method != null && AnnotationUtil.isNotNull(method)) return DfaUtil.Nullness.NOT_NULL;
       if (method != null && AnnotationUtil.isNullable(method)) return DfaUtil.Nullness.NULL;
     }
-    if (value instanceof PsiBinaryExpression && ((PsiBinaryExpression)value).getOperationTokenType() == JavaTokenType.PLUS) {
+    if (value instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)value).getOperationTokenType() == JavaTokenType.PLUS) {
       return DfaUtil.Nullness.NOT_NULL; // "xxx" + var
     }
 

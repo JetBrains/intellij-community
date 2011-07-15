@@ -122,14 +122,16 @@ public class TestDataReferenceCollector {
 
   @Nullable
   private String evaluate(PsiExpression expression, Map<String, Computable<String>> arguments) {
-    if (expression instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
       if (binaryExpression.getOperationTokenType() == JavaTokenType.PLUS) {
-        String lhs = evaluate(binaryExpression.getLOperand(), arguments);
-        String rhs = evaluate(binaryExpression.getROperand(), arguments);
-        if (lhs != null && rhs != null) {
-          return lhs + rhs;
+        String r = "";
+        for (PsiExpression op : binaryExpression.getOperands()) {
+          String lhs = evaluate(op, arguments);
+          if (lhs == null) return null;
+          r += lhs;
         }
+        return r;
       }
     }
     else if (expression instanceof PsiLiteralExpression) {
