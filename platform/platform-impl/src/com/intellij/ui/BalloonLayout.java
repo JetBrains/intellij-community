@@ -81,6 +81,10 @@ public class BalloonLayout {
     final Rectangle layoutRec = new Rectangle(new Point(myInsets.left, myInsets.top), size);
 
     List<ArrayList<Balloon>> columns = createColumns(layoutRec);
+    while (columns.size() > 1) {
+      myBalloons.remove(0);
+      columns = createColumns(layoutRec);
+    }
     List<Integer> columnWidths = computeWidths(columns);
 
     int eachCoumnX = (int)layoutRec.getMaxX(); 
