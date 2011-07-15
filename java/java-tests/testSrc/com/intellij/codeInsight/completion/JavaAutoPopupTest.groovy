@@ -862,5 +862,11 @@ class LiveComplete {
     assert !myFixture.editor.document.text.contains('aioo')
   }
 
+  public void testNoLiveTemplatesAfterDot() {
+    myFixture.configureByText "a.java", "class Foo {{ Iterable t; t.<caret> }}"
+    type 'iter'
+    assert myFixture.lookupElementStrings == ['iterator']
+  }
+
 
 }
