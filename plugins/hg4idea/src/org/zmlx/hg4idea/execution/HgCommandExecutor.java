@@ -17,7 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgExecutableValidator;
@@ -222,7 +222,7 @@ public final class HgCommandExecutor {
       .append("Original Error:\n")
       .append(e.getMessage());
 
-    VcsUtil.showErrorMessage(
+    VcsImplUtil.showErrorMessage(
       myProject,
       message.toString(),
       HgVcsMessages.message("hg4idea.error")

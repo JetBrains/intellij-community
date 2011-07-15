@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.execution.HgCommandException;
@@ -77,7 +77,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
 
   private static void handleException(Project project, Exception e) {
     LOG.info(e);
-    VcsUtil.showErrorMessage(project, e.getMessage(), "Error");
+    VcsImplUtil.showErrorMessage(project, e.getMessage(), "Error");
   }
 
 }

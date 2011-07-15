@@ -16,6 +16,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public final class HgCommandResultNotifier {
       VcsUtil.showStatusMessage(myProject, out.get(out.size() - 1));
     }
     if (HgErrorUtil.isAbort(result)) {
-      VcsUtil.showErrorMessage(
+      VcsImplUtil.showErrorMessage(
         myProject, "<html>" + StringUtils.join(err, "<br>") + "</html>", "Error"
       );
     } else if (successTitle != null && successDescription != null) {

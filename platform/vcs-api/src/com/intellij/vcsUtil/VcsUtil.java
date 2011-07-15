@@ -28,7 +28,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -310,25 +309,6 @@ public class VcsUtil {
 
   public static FilePath getFilePathForDeletedFile(String path, boolean isDirectory) {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(path), isDirectory);
-  }
-
-  /**
-   * Shows error message with specified message text and title.
-   * The parent component is the root frame.
-   *
-   * @param project Current project component
-   * @param message information message
-   * @param title   Dialog title
-   */
-  public static void showErrorMessage(final Project project, final String message, final String title)
-  {
-    Runnable task = new Runnable() {  public void run() {  Messages.showErrorDialog( project, message, title );  } };
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      task.run();
-    } else {
-      application.invokeLater(task, ModalityState.NON_MODAL, project.getDisposed());
-    }
   }
 
   /**
