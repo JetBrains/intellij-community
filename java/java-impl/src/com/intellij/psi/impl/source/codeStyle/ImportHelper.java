@@ -396,7 +396,11 @@ public class ImportHelper{
       }
     }
 
-    if (useOnDemand && curRefClass != null && "java.lang".equals(StringUtil.getPackageName(curRefClass.getQualifiedName()))) {
+    if (useOnDemand &&
+        curRefClass != null &&
+        refClass.getContainingClass() != null &&
+        mySettings.INSERT_INNER_CLASS_IMPORTS &&
+        "java.lang".equals(StringUtil.getPackageName(curRefClass.getQualifiedName()))) {
       return false;
     }
 

@@ -920,6 +920,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest '\n'
   }
 
+  public void testImportStringValue() throws Throwable {
+    myFixture.addClass("package foo; public class StringValue {}")
+    myFixture.addClass("package java.lang; class StringValue {}")
+    doTest ' '
+  }
+
   public void testPrimitiveArrayWithRBrace() throws Throwable { doTest '[' }
 
   public void testSuggestMembersOfStaticallyImportedClasses() throws Exception {
