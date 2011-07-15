@@ -226,14 +226,9 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                : item.getFinalPath();
 
       final Map<CompilerMessageCategory, List<String>> messages = AndroidApkBuilder
-        .execute(item.mySdkPath,
-                 resPackagePath,
-                 item.getClassesDexPath(),
-                 item.getSourceRoots(),
-                 externalLibPaths,
-                 item.getNativeLibsFolders(),
-                 finalPath,
-                 unsigned);
+        .execute(context.getProject(), resPackagePath, item.getClassesDexPath(), item.getSourceRoots(), externalLibPaths, item.getNativeLibsFolders(),
+                 finalPath, unsigned, item.mySdkPath
+        );
       AndroidCompileUtil.addMessages(context, messages);
     }
     catch (final IOException e) {
