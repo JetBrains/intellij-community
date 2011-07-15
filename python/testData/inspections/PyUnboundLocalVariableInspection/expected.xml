@@ -45,4 +45,9 @@
     <line>148</line>
     <description>"Local variable 'x' might be referenced before assignment"</description>
   </problem>
+  <problem>
+    <file>test.py</file>
+    <line>192</line>
+    <description>"Local variable 'a' might be referenced before assignment"</description>
+  </problem>
 </problems>
