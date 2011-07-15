@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.dnd.*;
 import com.intellij.util.Function;
+import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

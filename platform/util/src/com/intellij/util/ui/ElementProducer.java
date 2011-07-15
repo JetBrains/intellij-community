@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
-
-import javax.swing.table.TableModel;
+package com.intellij.util.ui;
 
 /**
- * @author dsl
  * @author Konstantin Bulenkov
- *
- *  @deprecated
- * @see com.intellij.util.ui.EditableModel
  */
-public interface RowEditableTableModel extends TableModel {
-  void addRow();
-  void removeRow(int index);
-  void exchangeRows(int oldIndex, int newIndex);
+public interface ElementProducer<E> {
+  E createElement();
 }

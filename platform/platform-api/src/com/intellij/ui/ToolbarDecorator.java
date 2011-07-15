@@ -19,8 +19,14 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.table.TableView;
+import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.ElementProducer;
+import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -70,12 +76,11 @@ public class ToolbarDecorator implements DataProvider {
 
   private ToolbarDecorator(JTable table) {
     myTable = table;
-    myTable.setBorder(IdeBorderFactory.createEmptyBorder(0));
     myTableModel = table.getModel();
     initPositionAndBorder();
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myTableModel instanceof EditableModel;
     if (myTableModel instanceof EditableModel) {
-      createDefaultTableActions();
+      createDefaultTableActions(null);
     }
   }
 
@@ -85,6 +90,16 @@ public class ToolbarDecorator implements DataProvider {
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = true;
     initPositionAndBorder();
     createDefaultListActions();
+  }
+
+  private <T> ToolbarDecorator(TableView<T> table, ElementProducer<T> producer) {
+    myTable = table;
+    myTableModel = table.getListTableModel();
+    initPositionAndBorder();
+    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myTableModel instanceof ListTableModel;
+    if (myTableModel instanceof ListTableModel) {
+      createDefaultTableActions(producer);
+    }
   }
 
   private void createDefaultListActions() {
@@ -114,16 +129,24 @@ public class ToolbarDecorator implements DataProvider {
   private void initPositionAndBorder() {
     myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
     myBorder = SystemInfo.isMac ? new CustomLineBorder(0,1,1,1) : new CustomLineBorder(0, 1, 0, 0);
+    if (myTable != null) {
+      myTable.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    }
   }
 
-  private void createDefaultTableActions() {
+  private void createDefaultTableActions(@Nullable final ElementProducer<?> producer) {
     final JTable table = myTable;
     final EditableModel tableModel = (EditableModel)myTableModel;
 
     myAddAction = new Runnable() {
       public void run() {
         TableUtil.stopEditing(table);
-        tableModel.addRow();
+        if (tableModel instanceof ListTableModel && producer != null) {
+          //noinspection unchecked
+          ((ListTableModel)tableModel).addRow(producer.createElement());
+        } else {
+          tableModel.addRow();
+        }
         final int index = myTableModel.getRowCount() - 1;
         table.editCellAt(index, 0);
         table.setRowSelectionInterval(index, index);
@@ -224,12 +247,16 @@ public class ToolbarDecorator implements DataProvider {
   }
 
 
-  public static ToolbarDecorator createDecorator(JTable table) {
+  public static ToolbarDecorator createDecorator(@NotNull JTable table) {
     return new ToolbarDecorator(table);
   }
 
-  public static ToolbarDecorator createDecorator(JList list) {
+  public static ToolbarDecorator createDecorator(@NotNull JList list) {
     return new ToolbarDecorator(list);
+  }
+
+  public static <T> ToolbarDecorator  createDecorator(@NotNull TableView<T> table, ElementProducer<T> producer) {
+    return new ToolbarDecorator(table, producer);
   }
 
   public ToolbarDecorator disableAddAction() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,54 +15,104 @@
  */
 package com.intellij.ui;
 
+import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
 /**
+ * @author Konstantin Bulenkov
  * @author mike
  */
+@SuppressWarnings("unchecked")
 public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
   private JBTable myTable;
-  private JButton myAddButton;
-  private JButton myEditButton;
-  private JButton myRemoveButton;
   private TableModel myModel;
   private List<T> myData;
   private AbstractTableModel myTableModel;
+  private String myLabel;
 
   public AddEditRemovePanel(TableModel<T> model, List<T> data) {
     this(model, data, null);
   }
 
-  public AddEditRemovePanel(TableModel<T> model, List<T> data, String labelText) {
+  public AddEditRemovePanel(TableModel<T> model, List<T> data, @Nullable String label) {
     myModel = model;
     myData = data;
+    myLabel = label;
 
+    initTable();
     initPanel();
-    updateButtons();
+  }
 
-    if (labelText != null) {
-      setBorder(IdeBorderFactory.createTitledBorder(labelText));
+  @Nullable
+  protected abstract T addItem();
+
+  protected abstract boolean removeItem(T o);
+
+  @Nullable
+  protected abstract T editItem(T o);
+
+  @Override
+  protected void initPanel() {
+    setLayout(new BorderLayout());
+
+    final String label = getLabelText();
+    if (label != null) {
+      setBorder(IdeBorderFactory.createTitledBorder(label));
     }
+
+    final JPanel panel = ToolbarDecorator.createDecorator(myTable)
+      .setAddAction(new Runnable() {
+        @Override
+        public void run() {
+          doAdd();
+        }
+      })
+      .setRemoveAction(new Runnable() {
+        @Override
+        public void run() {
+          doRemove();
+        }
+      })
+      .addExtraAction(new AnActionButton(CommonBundle.message("button.edit"), null, IconUtil.getEditIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          doEdit();
+        }
+
+        @Override
+        public void update(AnActionEvent e) {
+          e.getPresentation().setEnabled(myTable.getSelectedRow() != -1);
+        }
+
+        @Override
+        public Shortcut getShortcut() {
+          return KeyboardShortcut.fromString("alt E");
+        }
+      })
+      .disableUpAction()
+      .disableDownAction()
+      .createPanel();
+    add(panel, BorderLayout.CENTER);
   }
 
   protected String getLabelText(){
-    return null;
+    return myLabel;
   }
 
   @Override
@@ -71,26 +121,27 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   }
 
   protected JComponent createMainComponent(){
-    myTableModel = new AbstractTableModel() {
-      public int getRowCount(){
-        return myData != null ? myData.size() : 0;
-      }
+    initTable();
 
+    return ScrollPaneFactory.createScrollPane(myTable);
+  }
+
+  private void initTable() {
+    myTableModel = new AbstractTableModel() {
       public int getColumnCount(){
         return myModel.getColumnCount();
       }
 
-      public String getColumnName(int column){
-        return myModel.getColumnName(column);
+      public int getRowCount(){
+        return myData != null ? myData.size() : 0;
       }
 
       public Class getColumnClass(int columnIndex){
         return myModel.getColumnClass(columnIndex);
       }
 
-      @Override
-      public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return myModel.isEditable(columnIndex);
+      public String getColumnName(int column){
+        return myModel.getColumnName(column);
       }
 
       public Object getValueAt(int rowIndex, int columnIndex){
@@ -102,6 +153,11 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
         myModel.setValue(aValue, myData.get(rowIndex), columnIndex);
         fireTableRowsUpdated(rowIndex, rowIndex);
       }
+
+      @Override
+      public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return myModel.isEditable(columnIndex);
+      }
     };
 
     myTable = new Table(myTableModel);
@@ -111,42 +167,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
         if (e.getClickCount() == 2) doEdit();
       }
     });
-
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e){
-        updateButtons();
-      }
-    });
-
-    return ScrollPaneFactory.createScrollPane(myTable);
   }
 
   protected JButton[] createButtons(){
-    myAddButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e){
-          doAdd();
-        }
-      }
-    );
-
-    myEditButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e){
-          doEdit();
-        }
-      }
-    );
-
-    myRemoveButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e){
-          doRemove();
-        }
-      }
-    );
-
-    return new JButton[]{myAddButton, myEditButton, myRemoveButton};
+    return new JButton[0];
   }
 
   protected void doAdd() {
@@ -158,12 +182,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     myTableModel.fireTableRowsInserted(index, index);
     myTable.setRowSelectionInterval(index, index);
   }
-
-  @Nullable
-  protected abstract T addItem();
-  protected abstract boolean removeItem(T o);
-  @Nullable
-  protected abstract T editItem(T o);
 
   protected void doEdit() {
     int selected = myTable.getSelectedRow();
@@ -197,7 +215,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     }   
   }
 
-  public void setData(java.util.List<T> data) {
+  public void setData(List<T> data) {
     myData = data;
     myTableModel.fireTableDataChanged();
   }
@@ -208,11 +226,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
 
   public void setRenderer(int index, TableCellRenderer renderer) {
       myTable.getColumn(myModel.getColumnName(index)).setCellRenderer(renderer);
-  }
-
-  private void updateButtons() {
-    myEditButton.setEnabled(myTable.getSelectedRowCount() == 1);
-    myRemoveButton.setEnabled(myTable.getSelectedRowCount() >= 1);
   }
 
   public void setSelected(Object o) {

@@ -22,7 +22,6 @@ import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.EditableModel;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBComboBoxLabel;
@@ -30,6 +29,7 @@ import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 

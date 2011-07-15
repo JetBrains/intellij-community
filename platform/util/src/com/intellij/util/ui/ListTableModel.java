@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import javax.swing.*;
 import java.util.*;
 
-public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRemovable {
+public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRemovable, EditableModel {
   private ColumnInfo[] myColumnInfos;
   private List<Item> myItems;
   private int mySortByColumn;
@@ -139,6 +139,10 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
 
   public int indexOf(Item item) {
     return myItems.indexOf(item);
+  }
+
+  @Override
+  public void addRow() {
   }
 
   public void removeRow(int idx) {

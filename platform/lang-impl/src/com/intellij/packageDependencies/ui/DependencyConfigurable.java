@@ -28,13 +28,9 @@ import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.ui.EditableModel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;

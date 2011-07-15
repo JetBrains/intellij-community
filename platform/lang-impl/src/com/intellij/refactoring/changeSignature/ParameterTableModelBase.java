@@ -26,6 +26,7 @@ import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.ui.*;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;

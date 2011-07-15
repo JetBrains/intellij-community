@@ -29,6 +29,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 

@@ -47,8 +47,8 @@ class AddRemoveUpDownPanel extends JPanel {
       return null;
     }
 
-    TableActionButton createButton(final Listener listener) {
-      return new TableActionButton(this, listener);
+    MyActionButton createButton(final Listener listener) {
+      return new MyActionButton(this, listener);
     }
 
     public String getText() {
@@ -86,7 +86,7 @@ class AddRemoveUpDownPanel extends JPanel {
     }
   }
 
-  private Map<Buttons, TableActionButton> myButtons = new HashMap<Buttons, TableActionButton>();
+  private Map<Buttons, MyActionButton> myButtons = new HashMap<Buttons, MyActionButton>();
   private final AnActionButton[] myActions;
 
   AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contextComponent, boolean isHorizontal,
@@ -95,7 +95,7 @@ class AddRemoveUpDownPanel extends JPanel {
     AnActionButton[] actions = new AnActionButton[buttons.length];
     for (int i = 0; i < buttons.length; i++) {
       Buttons button = buttons[i];
-      final TableActionButton b = button.createButton(listener);
+      final MyActionButton b = button.createButton(listener);
       actions[i] = b;
       myButtons.put(button, b);
     }
@@ -128,7 +128,7 @@ class AddRemoveUpDownPanel extends JPanel {
   }
 
   public void setEnabled(Buttons button, boolean enabled) {
-    final TableActionButton b = myButtons.get(button);
+    final MyActionButton b = myButtons.get(button);
     if (b != null) {
       b.setEnabled(enabled);
     }
@@ -150,11 +150,11 @@ class AddRemoveUpDownPanel extends JPanel {
   //  }
   //}
 
-  static class TableActionButton extends AnActionButton {
+  static class MyActionButton extends AnActionButton {
     private final Buttons myButton;
     private final Listener myListener;
 
-    TableActionButton(Buttons button, Listener listener) {
+    MyActionButton(Buttons button, Listener listener) {
       super(button.getText(), button.getText(), button.getIcon());
       myButton = button;
       myListener = listener;
@@ -174,6 +174,19 @@ class AddRemoveUpDownPanel extends JPanel {
         case DOWN: return KeyboardShortcut.fromString("alt DOWN");
       }
       return null;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      final JComponent component = getContextComponent();
+      if (myButton != Buttons.ADD && component != null) {
+        if ((component instanceof JTable && ((JTable)component).getRowCount() == 0)
+          || (component instanceof JList && ((JList)component).getModel().getSize() == 0)) {
+          e.getPresentation().setEnabled(false);
+        } else {
+          e.getPresentation().setEnabled(true);
+        }
+      }
     }
   }
 }

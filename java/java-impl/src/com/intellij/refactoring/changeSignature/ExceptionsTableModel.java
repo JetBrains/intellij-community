@@ -18,7 +18,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.ui.EditableModel;
+import com.intellij.util.ui.EditableModel;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
