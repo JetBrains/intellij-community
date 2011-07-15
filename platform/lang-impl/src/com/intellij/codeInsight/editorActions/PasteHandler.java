@@ -383,7 +383,7 @@ public class PasteHandler extends EditorActionHandler {
     final int i = CharArrayUtil.shiftBackward(chars, startOffset - 1, " \t");
     
     // Handle situation when pasted block doesn't start new line.
-    if (chars.charAt(i) != '\n') {
+    if (i > 0 && chars.charAt(i) != '\n') {
       int firstNonWsOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
       if (firstNonWsOffset > firstLineStart) {
         CharSequence toInsert = chars.subSequence(firstLineStart, firstNonWsOffset);

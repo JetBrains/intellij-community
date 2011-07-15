@@ -159,6 +159,23 @@ class Test {
 '''
     doTest(before, toPaste, expected)
   }
+
+  void testPasteAtDocumentStartColumn() {
+    def before = '<caret>'
+
+    def toPaste =
+    '''\
+          class Test {
+          }\
+'''
+
+
+    def expected = '''\
+class Test {
+}\
+'''
+    doTest(before, toPaste, expected)
+  }
   
   void testBlockDecreasedIndentOnThreeLinesPasting() {
     def before = '''\
