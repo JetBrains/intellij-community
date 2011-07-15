@@ -818,12 +818,29 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitBinaryExpression(final PsiBinaryExpression binExpr) {
-    final PsiBinaryExpression binExpr2 = (PsiBinaryExpression)myMatchingVisitor.getElement();
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    PsiPolyadicExpression expr2 = (PsiPolyadicExpression)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(binExpr.getOperationTokenType().equals(binExpr2.getOperationTokenType()) &&
-                                myMatchingVisitor.match(binExpr.getLOperand(), binExpr2.getLOperand()) &&
-                                myMatchingVisitor.match(binExpr.getROperand(), binExpr2.getROperand()));
+    boolean result = expression.getOperationTokenType().equals(expr2.getOperationTokenType());
+    if (result) {
+      PsiExpression[] operands1 = expression.getOperands();
+      PsiExpression[] operands2 = expr2.getOperands();
+      if (operands1.length != operands2.length) {
+        result = false;
+      }
+      else {
+        for (int i = 0; i < operands1.length; i++) {
+          PsiExpression e1 = operands1[i];
+          PsiExpression e2 = operands2[i];
+          if (!myMatchingVisitor.match(e1, e2)) {
+            result = false;
+            break;
+          }
+        }
+      }
+    }
+
+    myMatchingVisitor.setResult(result);
   }
 
   @Override
