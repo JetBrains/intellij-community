@@ -251,7 +251,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
   };
 
-  private JLabel myLoadingLabel;
   private Splitter mySplitter;
 
 
@@ -379,7 +378,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         myInRefresh = false;
         myTargetSelection = null;
 
-        myLoadingLabel.setVisible(false);
         mySplitter.revalidate();
         mySplitter.repaint();
       }
@@ -687,16 +685,9 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     detailsSplitter.setFirstComponent(commentGroup);
     detailsSplitter.setSecondComponent(myAdditionalDetails);
 
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    myLoadingLabel = new JLabel("Loading...");
-    //myLoadingLabel.setVisible(false);
-    myLoadingLabel.setBackground(UIUtil.getToolTipBackground());
-    wrapper.add(myLoadingLabel, BorderLayout.NORTH);
-
     myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
-    wrapper.add(myDualView, BorderLayout.CENTER);
 
-    mySplitter.setFirstComponent(wrapper);
+    mySplitter.setFirstComponent(myDualView);
     mySplitter.setSecondComponent(detailsSplitter);
     return mySplitter;
   }
@@ -797,7 +788,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         myInRefresh = true;
         myTargetSelection = myDualView.getFlatView().getSelectedObjects();
 
-        myLoadingLabel.setVisible(true);
         mySplitter.revalidate();
         mySplitter.repaint();
 
