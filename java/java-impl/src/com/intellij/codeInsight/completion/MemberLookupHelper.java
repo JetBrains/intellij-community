@@ -62,7 +62,7 @@ public class MemberLookupHelper {
     final String params = myMergedOverloads
                           ? "(...)"
                           : myMember instanceof PsiMethod
-                            ? PsiFormatUtil.formatMethod((PsiMethod)myMember, PsiSubstitutor.EMPTY,
+                            ? PsiFormatUtil.formatMethod((PsiMethod)myMember, substitutor,
                                                          PsiFormatUtil.SHOW_PARAMETERS,
                                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
                             : "";

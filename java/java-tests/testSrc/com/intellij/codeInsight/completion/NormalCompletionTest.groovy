@@ -129,6 +129,18 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assert presentation.itemTextBold
   }
 
+  public void testMethodItemPresentationGenerics() {
+    configure()
+    def presentation = new LookupElementPresentation()
+    myItems[0].renderElement(presentation)
+    assert "add" == presentation.itemText
+    assert "(String o)" == presentation.tailText
+    assert "boolean" == presentation.typeText
+
+    assert !presentation.tailGrayed
+    assert presentation.itemTextBold
+  }
+
   public void testPreferLongerNamesOption() throws Exception {
     configureByFile("PreferLongerNamesOption.java");
 
