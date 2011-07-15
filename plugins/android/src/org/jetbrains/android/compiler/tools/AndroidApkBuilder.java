@@ -20,7 +20,9 @@ import com.android.jarutils.JavaResourceFilter;
 import com.android.jarutils.SignedJarBuilder;
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.SdkConstants;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -104,17 +106,18 @@ public class AndroidApkBuilder {
     }
   }
 
-  public static Map<CompilerMessageCategory, List<String>> execute(@NotNull String sdkPath,
+  public static Map<CompilerMessageCategory, List<String>> execute(Project project,
                                                                    @NotNull String resPackagePath,
                                                                    @NotNull String dexPath,
                                                                    @NotNull VirtualFile[] sourceRoots,
                                                                    @NotNull String[] externalJars,
                                                                    @NotNull VirtualFile[] nativeLibsFolders,
                                                                    @NotNull String finalApk,
-                                                                   boolean unsigned) throws IOException {
+                                                                   boolean unsigned,
+                                                                   @NotNull String sdkPath) throws IOException {
     if (unsigned) {
       return filterUsingKeystoreMessages(
-        finalPackage(resPackagePath, dexPath, sourceRoots, externalJars, nativeLibsFolders, finalApk, false));
+        finalPackage(project, dexPath, sourceRoots, externalJars, nativeLibsFolders, finalApk, resPackagePath, false));
     }
 
     final Map<CompilerMessageCategory, List<String>> map = new HashMap<CompilerMessageCategory, List<String>>();
@@ -123,7 +126,8 @@ public class AndroidApkBuilder {
     String unalignedApk = finalApk + UNALIGNED_SUFFIX;
 
     Map<CompilerMessageCategory, List<String>> map2 = filterUsingKeystoreMessages(
-      finalPackage(resPackagePath, dexPath, sourceRoots, externalJars, nativeLibsFolders, withAlignment ? unalignedApk : finalApk, true));
+      finalPackage(project, dexPath, sourceRoots, externalJars, nativeLibsFolders, withAlignment ? unalignedApk : finalApk, resPackagePath,
+                   true));
     map.putAll(map2);
 
     if (withAlignment && map.get(ERROR).size() == 0) {
@@ -133,12 +137,12 @@ public class AndroidApkBuilder {
     return map;
   }
 
-  private static Map<CompilerMessageCategory, List<String>> finalPackage(@NotNull String apkPath,
+  private static Map<CompilerMessageCategory, List<String>> finalPackage(Project project,
                                                                          @NotNull String dexPath,
                                                                          @NotNull VirtualFile[] sourceRoots,
                                                                          @NotNull String[] externalJars,
                                                                          @NotNull VirtualFile[] nativeLibsFolders,
-                                                                         @NotNull String outputApk,
+                                                                         @NotNull String outputApk, @NotNull String apkPath,
                                                                          boolean signed) {
     final Map<CompilerMessageCategory, List<String>> result = new HashMap<CompilerMessageCategory, List<String>>();
     result.put(ERROR, new ArrayList<String>());
@@ -212,7 +216,7 @@ public class AndroidApkBuilder {
 
       final HashSet<String> added = new HashSet<String>();
       for (VirtualFile sourceRoot : sourceRoots) {
-        writeStandardSourceFolderResources(builder, sourceRoot, sourceRoot, new HashSet<VirtualFile>(), added);
+        writeStandardSourceFolderResources(project, builder, sourceRoot, sourceRoot, new HashSet<VirtualFile>(), added);
       }
 
       Set<String> duplicates = new HashSet<String>();
@@ -331,22 +335,28 @@ public class AndroidApkBuilder {
     }
   }
 
-  private static void writeStandardSourceFolderResources(SignedJarBuilder jarBuilder,
+  private static void writeStandardSourceFolderResources(Project project,
+                                                         SignedJarBuilder jarBuilder,
                                                          @NotNull VirtualFile sourceRoot,
                                                          @NotNull VirtualFile sourceFolder,
                                                          @NotNull Set<VirtualFile> visited,
                                                          @NotNull Set<String> added) throws IOException {
     visited.add(sourceFolder);
+    final CompilerManager compilerManager = CompilerManager.getInstance(project);
+
     for (VirtualFile child : sourceFolder.getChildren()) {
       if (child.exists()) {
         if (child.isDirectory()) {
-          if (!visited.contains(child) && JavaResourceFilter.checkFolderForPackaging(child.getName())) {
-            writeStandardSourceFolderResources(jarBuilder, sourceRoot, child, visited, added);
+          if (!visited.contains(child) &&
+              JavaResourceFilter.checkFolderForPackaging(child.getName()) &&
+              !compilerManager.isExcludedFromCompilation(child)) {
+            writeStandardSourceFolderResources(project, jarBuilder, sourceRoot, child, visited, added);
           }
         }
-        else if (checkFileForPackaging(child)) {
+        else if (checkFileForPackaging(child) && !compilerManager.isExcludedFromCompilation(child)) {
           String relativePath = FileUtil.toSystemIndependentName(VfsUtil.getRelativePath(child, sourceRoot, File.separatorChar));
-          if (relativePath != null && !added.contains(relativePath)) {
+          if (relativePath != null &&
+              !added.contains(relativePath)) {
             File file = toIoFile(child);
             jarBuilder.writeFile(file, FileUtil.toSystemIndependentName(relativePath));
             added.add(relativePath);
