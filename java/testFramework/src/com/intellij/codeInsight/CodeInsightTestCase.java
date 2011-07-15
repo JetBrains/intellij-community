@@ -18,6 +18,8 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -40,6 +42,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -703,5 +706,23 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final PsiPackage aPackage = myJavaFacade.findPackage(name);
     assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
+  }
+  protected void registerResourceTemporarily(final String url, final String location) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ExternalResourceManager.getInstance().addResource(url, location);
+      }
+    });
+
+    Disposer.register(getTestRootDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            ExternalResourceManager.getInstance().removeResource(url);
+          }
+        });
+      }
+    });
   }
 }

@@ -16,6 +16,7 @@
 package org.intellij.plugins.relaxNG;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 
 /**
  * @author Eugene.Kudelevsky
@@ -32,8 +33,12 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
   protected void init() {
     super.init();
 
-    final ExternalResourceManagerEx m = ExternalResourceManagerEx.getInstanceEx();
-    m.addResource("http://www.w3.org/1999/xhtml/html5", toAbsolutePath("/highlighting/html5/html5.rnc"));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ExternalResourceManagerEx m = ExternalResourceManagerEx.getInstanceEx();
+        m.addResource("http://www.w3.org/1999/xhtml/html5", toAbsolutePath("/highlighting/html5/html5.rnc"));
+      }
+    });
   }
 
   public void testHtml5_1() throws Throwable {
