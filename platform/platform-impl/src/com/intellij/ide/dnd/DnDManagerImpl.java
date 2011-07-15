@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.dnd;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -35,11 +36,11 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
 
-public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHighlightingType {
+public class DnDManagerImpl extends DnDManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDManager");
 
-  static final @NonNls String SOURCE_KEY = "DnD Source";
-  static final @NonNls String TARGET_KEY = "DnD Target";
+  @NonNls private static final String SOURCE_KEY = "DnD Source";
+  @NonNls private static final String TARGET_KEY = "DnD Target";
 
   public static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<Pair<Image, Point>>("draggedImage");
 
@@ -65,6 +66,12 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     public void actionPerformed(ActionEvent e) {
       onTimer();
     }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "DndManagerImpl tooltip timer";
+    }
   });
   private Runnable myHightlighterShowRequest;
   private Rectangle myLastHighlightedRec;
@@ -77,6 +84,11 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
   public DnDManagerImpl(final Application app) {
     myApp = app;
     myTooltipTimer.start();
+  }
+
+  @Override
+  public void dispose() {
+    myTooltipTimer.stop();
   }
 
   public void registerSource(@NotNull final AdvancedDnDSource source) {
@@ -137,7 +149,6 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
   private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, @Nullable DataFlavor[] flavors, @Nullable Transferable transferable) {
     LOG.debug("updateCurrentEvent: " + aComponentOverDragging);
 
-    DragSourceContext currentDragContext = myCurrentDragContext;
     DnDEventImpl currentEvent = myCurrentEvent;
 
     if (myCurrentEvent == null) {
@@ -168,7 +179,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
 
     boolean samePoint = currentEvent.getPoint().equals(myLastProcessedPoint);
     boolean sameComponent = currentEvent.getCurrentOverComponent().equals(myLastProcessedOverComponent);
-    boolean sameAction = (nativeAction == myLastProcessedAction);
+    boolean sameAction = nativeAction == myLastProcessedAction;
 
     LOG.debug("updateCurrentEvent: point:" + aPoint);
     LOG.debug("updateCurrentEvent: action:" + nativeAction);
@@ -232,7 +243,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     if (sameTarget) {
       if (currentEvent.isDropPossible()) {
         if (!myLastProcessedPoint.equals(currentEvent.getPoint())) {
-          if (!Highlighters.isVisibleExcept(TEXT | ERROR_TEXT)) {
+          if (!Highlighters.isVisibleExcept(DnDEvent.DropTargetHighlightingType.TEXT | DnDEvent.DropTargetHighlightingType.ERROR_TEXT)) {
             hideCurrentHighlighter();
             restartTimer();
             queueTooltip(currentEvent, getLayeredPane(current), inPlaceRect);
@@ -395,7 +406,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       queueTooltip(aEvent, layeredPane, rectangle);
     }
     else {
-      Highlighters.hide(TEXT | ERROR_TEXT);
+      Highlighters.hide(DnDEvent.DropTargetHighlightingType.TEXT | DnDEvent.DropTargetHighlightingType.ERROR_TEXT);
     }
   }
 
@@ -403,12 +414,12 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     myHightlighterShowRequest = new Runnable() {
       public void run() {
         if (myCurrentEvent != aEvent) return;
-        Highlighters.hide(TEXT | ERROR_TEXT);
+        Highlighters.hide(DnDEvent.DropTargetHighlightingType.TEXT | DnDEvent.DropTargetHighlightingType.ERROR_TEXT);
         if (aEvent.isDropPossible()) {
-          Highlighters.show(TEXT, aLayeredPane, aRectangle, aEvent);
+          Highlighters.show(DnDEvent.DropTargetHighlightingType.TEXT, aLayeredPane, aRectangle, aEvent);
         }
         else {
-          Highlighters.show(ERROR_TEXT, aLayeredPane, aRectangle, aEvent);
+          Highlighters.show(DnDEvent.DropTargetHighlightingType.ERROR_TEXT, aLayeredPane, aRectangle, aEvent);
         }
       }
     };
@@ -602,7 +613,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
         target.cleanUpOnLeave();
       }
       resetEvents("dragDropEnd:" + dsde.getDragSourceContext().getComponent());
-      Highlighters.hide(TEXT | ERROR_TEXT);
+      Highlighters.hide(DnDEvent.DropTargetHighlightingType.TEXT | DnDEvent.DropTargetHighlightingType.ERROR_TEXT);
     }
 
     public void dragExit(DragSourceEvent dse) {
@@ -611,7 +622,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     }
   }
 
-  private class MyDropTargetListener implements DropTargetListener {
+  private class MyDropTargetListener extends DropTargetAdapter {
     public void drop(final DropTargetDropEvent dtde) {
       try {
         final Component component = dtde.getDropTargetContext().getComponent();
@@ -655,7 +666,6 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       setLastDropHandler(component);
 
       myCurrentDragContext = null;
-      currentEvent = null;
     }
 
     public void dragOver(DropTargetDragEvent dtde) {
@@ -682,9 +692,6 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       if (target instanceof DnDNativeTarget && c instanceof JComponent) {
         ((JComponent)c).putClientProperty(DnDNativeTarget.EVENT_KEY, null);
       }
-    }
-
-    public void dragEnter(DropTargetDragEvent dtde) {
     }
 
     public void dropActionChanged(DropTargetDragEvent dtde) {
