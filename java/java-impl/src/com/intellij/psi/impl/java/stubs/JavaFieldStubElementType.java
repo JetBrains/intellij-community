@@ -16,9 +16,10 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterAST;
-import com.intellij.psi.*;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsEnumConstantImpl;
@@ -40,11 +41,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-/*
+/**
  * @author max
  */
 public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, PsiField> {
@@ -71,15 +71,6 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     else {
       return new PsiFieldImpl(node);
     }
-  }
-
-  public PsiFieldStub createStub(final PsiField psi, final StubElement parentStub) {
-    final PsiExpression initializer = psi.getInitializer();
-    final TypeInfo type = TypeInfo.create(psi.getTypeNoResolve(), psi.getTypeElement());
-    final byte flags = PsiFieldStubImpl.packFlags(psi instanceof PsiEnumConstant,
-                                                  RecordUtil.isDeprecatedByDocComment(psi),
-                                                  RecordUtil.isDeprecatedByAnnotation(psi));
-    return new PsiFieldStubImpl(parentStub, psi.getName(), type, encodeInitializer(initializer), flags);
   }
 
   @Override
@@ -116,21 +107,6 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     final byte flags = PsiFieldStubImpl.packFlags(isEnumConst, isDeprecatedByComment, hasDeprecatedAnnotation);
 
     return new PsiFieldStubImpl(parentStub, name, typeInfo, initializer, flags);
-  }
-
-  @Nullable
-  private static String encodeInitializer(PsiExpression initializer) {
-    if (initializer == null) return null;
-
-    if (initializer instanceof PsiNewExpression || initializer instanceof PsiMethodCallExpression) {
-      return PsiFieldStub.INITIALIZER_NOT_STORED;
-    }
-
-    if (initializer.getTextLength() > INITIALIZER_LENGTH_LIMIT) {
-      return PsiFieldStub.INITIALIZER_TOO_LONG;
-    }
-
-    return initializer.getText();
   }
 
   private static String encodeInitializer(final LighterAST tree, final LighterASTNode initializer) {

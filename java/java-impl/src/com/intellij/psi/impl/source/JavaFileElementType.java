@@ -41,9 +41,7 @@ import java.io.IOException;
  * @author max
  */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static boolean USE_NEW_STUB_BUILDER = true;
-
-  public static final int STUB_VERSION = (USE_NEW_STUB_BUILDER ? 6 : 5) + 3;
+  public static final int STUB_VERSION = 9;
 
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);
@@ -51,7 +49,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public StubBuilder getBuilder() {
-    return USE_NEW_STUB_BUILDER ? new JavaLightStubBuilder() : new JavaFileStubBuilder();
+    return new JavaLightStubBuilder();
   }
 
   @Override

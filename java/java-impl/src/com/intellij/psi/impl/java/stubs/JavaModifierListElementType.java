@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/*
+/**
  * @author max
  */
 public class JavaModifierListElementType extends JavaStubElementType<PsiModifierListStub, PsiModifierList> {
@@ -59,10 +59,6 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
 
   public PsiModifierList createPsi(final ASTNode node) {
     return new PsiModifierListImpl(node);
-  }
-
-  public PsiModifierListStub createStub(final PsiModifierList psi, final StubElement parentStub) {
-    return new PsiModifierListStubImpl(parentStub, RecordUtil.packModifierList(psi));
   }
 
   @Override

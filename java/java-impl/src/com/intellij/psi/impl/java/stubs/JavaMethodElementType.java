@@ -19,8 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -45,7 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import java.io.IOException;
 import java.util.List;
 
-/*
+/**
  * @author max
  */
 public abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
@@ -69,27 +67,6 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     else {
       return new PsiMethodImpl(node);
     }
-  }
-
-  public PsiMethodStub createStub(final PsiMethod psi, final StubElement parentStub) {
-    final byte flags = PsiMethodStubImpl.packFlags(psi.isConstructor(),
-                                                   psi instanceof PsiAnnotationMethod,
-                                                   psi.isVarArgs(),
-                                                   RecordUtil.isDeprecatedByDocComment(psi),
-                                                   RecordUtil.isDeprecatedByAnnotation(psi));
-
-    String defValueText = null;
-    if (psi instanceof PsiAnnotationMethod) {
-      PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)psi).getDefaultValue();
-      if (defaultValue != null) {
-        defValueText = defaultValue.getText();
-      }
-    }
-
-    return new PsiMethodStubImpl(parentStub, StringRef.fromString(psi.getName()),
-                                 TypeInfo.create(psi.getReturnTypeNoResolve(), psi.getReturnTypeElement()),
-                                 flags,
-                                 StringRef.fromString(defValueText));
   }
 
   @Override

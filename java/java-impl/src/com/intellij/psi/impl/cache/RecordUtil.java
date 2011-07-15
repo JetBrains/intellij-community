@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.cache;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
@@ -23,16 +22,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -80,49 +78,6 @@ public class RecordUtil {
     return false;
   }
 
-  public static int packModifierList(final PsiModifierList psiModifierList) {
-    int packed = 0;
-
-    if (psiModifierList.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      packed |= ModifierFlags.ABSTRACT_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.FINAL)) {
-      packed |= ModifierFlags.FINAL_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.NATIVE)) {
-      packed |= ModifierFlags.NATIVE_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.STATIC)) {
-      packed |= ModifierFlags.STATIC_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-      packed |= ModifierFlags.SYNCHRONIZED_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.TRANSIENT)) {
-      packed |= ModifierFlags.TRANSIENT_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.VOLATILE)) {
-      packed |= ModifierFlags.VOLATILE_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
-      packed |= ModifierFlags.PRIVATE_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
-      packed |= ModifierFlags.PROTECTED_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-      packed |= ModifierFlags.PUBLIC_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      packed |= ModifierFlags.PACKAGE_LOCAL_MASK;
-    }
-    if (psiModifierList.hasModifierProperty(PsiModifier.STRICTFP)) {
-      packed |= ModifierFlags.STRICTFP_MASK;
-    }
-
-    return packed;
-  }
-
   public static int packModifierList(final LighterAST tree, final LighterASTNode modList, final StubElement parent) {
     int packed = 0;
 
@@ -166,7 +121,7 @@ public class RecordUtil {
     return packed;
   }
 
-  private static boolean hasModifierProperty(final LighterAST tree, final LighterASTNode modList, final IElementType type, final StubElement parent) {
+  private static boolean hasModifierProperty(final LighterAST tree, final LighterASTNode modList, @Nullable final IElementType type, final StubElement parent) {
     final LighterASTNode modListOwner = tree.getParent(modList);
     if (modListOwner != null && modListOwner.getTokenType() == parent.getStubType()) {
       final StubElement grandParent = parent.getParentStub();
@@ -226,24 +181,6 @@ public class RecordUtil {
     }
 
     return LightTreeUtil.firstChildOfType(tree, modList, type) != null;
-  }
-
-  public static boolean isDeprecatedByDocComment(final PsiElement psiElement) {
-    if (!(psiElement instanceof PsiDocCommentOwner)) return false;
-
-    final PsiDocCommentOwner owner = (PsiDocCommentOwner)psiElement;
-    if (owner instanceof PsiCompiledElement) {
-      return owner.isDeprecated();
-    }
-
-    final ASTNode node = psiElement.getNode();
-    if (node != null) {
-      final ASTNode docNode = node.findChildByType(JavaDocElementType.DOC_COMMENT);
-      if (docNode == null || docNode.getText().indexOf(DEPRECATED_TAG) < 0) return false;
-    }
-
-    final PsiDocComment docComment = owner.getDocComment();
-    return docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
   public static boolean isDeprecatedByDocComment(final LighterAST tree, final LighterASTNode comment) {

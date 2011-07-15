@@ -18,8 +18,7 @@ package com.intellij.psi.impl.cache;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
@@ -91,44 +90,6 @@ public class TypeInfo {
     this.arrayCount = typeInfo.arrayCount;
     isEllipsis = typeInfo.isEllipsis;
     myAnnotationStubs = new SmartList<PsiAnnotationStub>(typeInfo.myAnnotationStubs);
-  }
-
-  @NotNull
-  public static TypeInfo create(PsiType type, PsiTypeElement typeElement) {
-    if (type == null) return NULL;
-
-    final boolean isEllipsis = type instanceof PsiEllipsisType;
-    int arrayCount = type.getArrayDimensions();
-
-    final String text;
-    if (typeElement != null) {
-      while (typeElement.getFirstChild() instanceof PsiTypeElement) {
-        typeElement = (PsiTypeElement)typeElement.getFirstChild();
-      }
-
-      text = typeElement instanceof PsiCompiledElement
-             ? ((ClsTypeElementImpl)typeElement).getCanonicalText()
-             : typeElement.getText();
-    }
-    else {
-      type = type.getDeepComponentType();
-      text = type.getInternalCanonicalText();
-    }
-
-    PsiAnnotation[] annotations = type.getAnnotations();
-    List<PsiAnnotationStub> list;
-    if (annotations.length == 0) {
-      list = Collections.emptyList();
-    }
-    else {
-      list = new ArrayList<PsiAnnotationStub>(annotations.length);
-      for (PsiAnnotation annotation : annotations) {
-        PsiAnnotationStub stub = JavaStubElementTypes.ANNOTATION.createStub(annotation, null);
-        list.add(stub);
-      }
-    }
-
-    return new TypeInfo(StringRef.fromString(text), (byte)arrayCount, isEllipsis, list);
   }
 
   @NotNull

@@ -44,7 +44,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/*
+/**
  * @author max
  */
 public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
@@ -74,24 +74,6 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
 
     return new PsiClassImpl(node);
-  }
-
-  public PsiClassStub createStub(final PsiClass psi, final StubElement parentStub) {
-    final boolean isAnonymous = psi instanceof PsiAnonymousClass;
-    final boolean isEnumConst = psi instanceof PsiEnumConstantInitializer;
-
-    byte flags = PsiClassStubImpl.packFlags(RecordUtil.isDeprecatedByDocComment(psi),
-                                            psi.isInterface(),
-                                            psi.isEnum(),
-                                            isEnumConst,
-                                            isAnonymous,
-                                            psi.isAnnotationType(),
-                                            isAnonymous && ((PsiAnonymousClass)psi).isInQualifiedNew(),
-                                            RecordUtil.isDeprecatedByAnnotation(psi));
-
-    String baseRef = isAnonymous ? ((PsiAnonymousClass)psi).getBaseClassReference().getText() : null;
-    final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
-    return new PsiClassStubImpl(type, parentStub, psi.getQualifiedName(), psi.getName(), baseRef, flags);
   }
 
   @Override
@@ -223,7 +205,6 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
       if (JavaFullClassNameIndex.DEBUG) {
         System.out.println("Indexing " + fqn);
       }
-
       if (fqn != null) {
         sink.occurrence(JavaFullClassNameIndex.KEY, fqn.hashCode());
       }
@@ -232,8 +213,6 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   public String getId(final PsiClassStub stub) {
     final String name = stub.getName();
-    if (name != null) return name;
-
-    return super.getId(stub);
+    return name != null ? name : super.getId(stub);
   }
 }

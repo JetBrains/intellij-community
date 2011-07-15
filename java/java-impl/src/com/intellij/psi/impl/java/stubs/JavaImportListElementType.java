@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/*
+/**
  * @author max
  */
 public class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList> {
@@ -51,10 +51,6 @@ public class JavaImportListElementType extends JavaStubElementType<PsiImportList
 
   public PsiImportList createPsi(final ASTNode node) {
     return new PsiImportListImpl(node);
-  }
-
-  public PsiImportListStub createStub(final PsiImportList psi, final StubElement parentStub) {
-    return new PsiImportListStubImpl(parentStub);
   }
 
   public PsiImportListStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {

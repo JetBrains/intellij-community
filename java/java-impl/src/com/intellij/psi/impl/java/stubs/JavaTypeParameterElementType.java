@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/*
+/**
  * @author max
  */
 public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypeParameterStub, PsiTypeParameter> {
@@ -60,11 +60,6 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
 
   public PsiTypeParameter createPsi(final ASTNode node) {
     return new PsiTypeParameterImpl(node);
-  }
-
-  public PsiTypeParameterStub createStub(final PsiTypeParameter psi, final StubElement parentStub) {
-    StringRef name = StringRef.fromString(psi.getName());
-    return new PsiTypeParameterStubImpl(parentStub, name);
   }
 
   @Override

@@ -20,8 +20,6 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiImportStatementBase;
-import com.intellij.psi.PsiImportStaticStatement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportStatementStubImpl;
 import com.intellij.psi.impl.source.PsiImportStatementImpl;
 import com.intellij.psi.impl.source.PsiImportStaticStatementImpl;
@@ -39,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/*
+/**
  * @author max
  */
 public abstract class JavaImportStatementElementType extends JavaStubElementType<PsiImportStatementStub, PsiImportStatementBase> {
@@ -64,12 +62,6 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
     else {
       return new PsiImportStatementImpl(node);
     }
-  }
-
-  public PsiImportStatementStub createStub(final PsiImportStatementBase psi, final StubElement parentStub) {
-    final byte flags = PsiImportStatementStubImpl.packFlags(psi.isOnDemand(), psi instanceof PsiImportStaticStatement);
-    final PsiJavaCodeReferenceElement ref = psi.getImportReference();
-    return new PsiImportStatementStubImpl(parentStub, ref != null ? ref.getCanonicalText() : null, flags);
   }
 
   public PsiImportStatementStub createStub(final LighterAST tree,

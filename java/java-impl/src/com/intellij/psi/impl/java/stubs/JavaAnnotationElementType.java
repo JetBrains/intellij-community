@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/*
+/**
  * @author max
  */
 public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotationStub, PsiAnnotation> {
@@ -60,10 +60,6 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
   public PsiAnnotation createPsi(final ASTNode node) {
     return new PsiAnnotationImpl(node);
   }  
-
-  public PsiAnnotationStub createStub(final PsiAnnotation psi, final StubElement parentStub) {
-    return new PsiAnnotationStubImpl(parentStub, psi.getText());
-  }
 
   @Override
   public PsiAnnotationStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {

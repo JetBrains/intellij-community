@@ -34,8 +34,6 @@ import java.security.SecureRandom;
 
 
 public class JavaStubBuilderTest extends LightIdeaTestCase {
-  @SuppressWarnings("deprecation")
-  private static final StubBuilder OLD_BUILDER = new com.intellij.psi.impl.source.JavaFileStubBuilder();
   private static final StubBuilder NEW_BUILDER = new JavaLightStubBuilder();
 
   @Override
@@ -377,18 +375,11 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     t1 = Math.max((System.nanoTime() - t1)/1000, 1);
     assertFalse(fileNode.isParsed());
 
+    file.getNode().getChildren(null); // force switch to AST
+
     long t2 = System.nanoTime();
-    final StubElement originalTree = OLD_BUILDER.buildStubTree(file);
-    t2 = Math.max((System.nanoTime() - t2)/1000, 1);
-    assertTrue(fileNode.isParsed());
-
-    long t3 = System.nanoTime();
     final StubElement lighterTree2 = NEW_BUILDER.buildStubTree(file);  // build over AST
-    t3 = Math.max((System.nanoTime() - t3)/1000, 1);
-
-    long t4 = System.nanoTime();
-    OLD_BUILDER.buildStubTree(file);
-    t4 = Math.max((System.nanoTime() - t4)/1000, 1);
+    t2 = Math.max((System.nanoTime() - t2)/1000, 1);
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
@@ -399,20 +390,13 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     });
 
     final String lightStr = DebugUtil.stubTreeToString(lighterTree);
-    final String originalStr = DebugUtil.stubTreeToString(originalTree);
     final String lightStr2 = DebugUtil.stubTreeToString(lighterTree2);
     if (tree != null) {
-      System.out.println("light=" + t1 + "mks, heavy=" + t2 + "mks, gain=" + (100 * (t2 - t1) / t2) + "%");
-      System.out.println("light(2nd)=" + t3 + "mks, heavy(2nd)=" + t4 + "mks, overhead=" + (100 * (t3 - t4) / t4) + "%");
-
-      assertEquals("wrong test data", tree, originalStr);
+      System.out.println("light=" + t1 + "mks, heavy=" + t2 + "mks");
       if (!"".equals(tree)) {
         assertEquals("light tree differs", tree, lightStr);
         assertEquals("light tree (2nd) differs", tree, lightStr2);
       }
-    }
-    else {
-      assertEquals("Light stub tree differs from heavy one", originalStr, lightStr);
     }
   }
 }

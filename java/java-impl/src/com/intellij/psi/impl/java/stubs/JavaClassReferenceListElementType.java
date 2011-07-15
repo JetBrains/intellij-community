@@ -18,8 +18,6 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.compiled.ClsReferenceListImpl;
@@ -42,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.List;
 
-/*
+/**
  * @author max
  */
 public abstract class JavaClassReferenceListElementType extends JavaStubElementType<PsiClassReferenceListStub, PsiReferenceList> {
@@ -69,10 +67,6 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     }
     
     return new PsiReferenceListImpl(node);
-  }
-
-  public PsiClassReferenceListStub createStub(final PsiReferenceList psi, final StubElement parentStub) {
-    return new PsiClassReferenceListStubImpl(roleToElementType(psi.getRole()), parentStub, getTexts(psi), psi.getRole());
   }
 
   @Override
@@ -105,16 +99,6 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     else if (type == JavaStubElementTypes.THROWS_LIST) return PsiReferenceList.Role.THROWS_LIST;
 
     throw new RuntimeException("Unknown element type: " + type);
-  }
-
-  private static String[] getTexts(PsiReferenceList psi) {
-    final PsiJavaCodeReferenceElement[] refs = psi.getReferenceElements();
-    String[] texts = ArrayUtil.newStringArray(refs.length);
-    for (int i = 0; i < refs.length; i++) {
-      final PsiJavaCodeReferenceElement ref = refs[i];
-      texts[i] = ref instanceof PsiCompiledElement ? ref.getCanonicalText() : ref.getText();
-    }
-    return texts;
   }
 
   private static String[] getTexts(final LighterAST tree, final LighterASTNode node) {

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/*
+/**
  * @author max
  */
 public class JavaClassInitializerElementType extends JavaStubElementType<PsiClassInitializerStub, PsiClassInitializer> {
@@ -51,10 +51,6 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
 
   public PsiClassInitializer createPsi(final ASTNode node) {
     return new PsiClassInitializerImpl(node);
-  }
-
-  public PsiClassInitializerStub createStub(final PsiClassInitializer psi, final StubElement parentStub) {
-    return new PsiClassInitializerStubImpl(parentStub);
   }
 
   @Override

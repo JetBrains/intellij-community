@@ -25,7 +25,7 @@ import com.intellij.psi.tree.ICompositeElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/*
+/**
  * @author max
  */
 public abstract class JavaStubElementType<StubT extends StubElement, PsiT extends PsiElement>
@@ -55,6 +55,11 @@ public abstract class JavaStubElementType<StubT extends StubElement, PsiT extend
   }
 
   public abstract PsiT createPsi(ASTNode node);
+
+  @Override
+  public final StubT createStub(PsiT psi, StubElement parentStub) {
+    throw new UnsupportedOperationException("Should not be called");
+  }
 
   @Override
   public boolean isLeftBound() {
