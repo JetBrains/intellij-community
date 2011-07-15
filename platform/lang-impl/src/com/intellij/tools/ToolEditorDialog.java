@@ -207,12 +207,12 @@ public class ToolEditorDialog extends DialogWrapper {
 
   private JPanel createCommandPane() {
     JPanel pane = new JPanel(new GridBagLayout());
-    pane.setBorder(
-      BorderFactory.createCompoundBorder(
-        BorderFactory.createEtchedBorder(),
-        BorderFactory.createEmptyBorder(5, 5, 5, 5)
-      )
-    );
+    //pane.setBorder(
+    //  BorderFactory.createCompoundBorder(
+    //    BorderFactory.createEtchedBorder(),
+    //    BorderFactory.createEmptyBorder(5, 5, 5, 5)
+    //  )
+    //);
     GridBagConstraints constr;
 
     // program

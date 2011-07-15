@@ -91,7 +91,7 @@ public class CodeStyleImportsPanel extends JPanel {
     final MultiLineLabel oneImportPerDirectiveLabel = new MultiLineLabel("<% page import=\"com.company.Boo\"%>\n" +
                                                                          "<% page import=\"com.company.Far\"%>");
     final JPanel labelPanel = new JPanel(new BorderLayout());
-    //labelPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
+    labelPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(20, 10, 0, 0), IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview"))));
 
     JPanel resultPanel = new JPanel(new BorderLayout());
     resultPanel.add(btnPanel, BorderLayout.NORTH);

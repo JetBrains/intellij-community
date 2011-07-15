@@ -15,9 +15,6 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
-        </clientProperties>
       </component>
       <component id="c0234" class="javax.swing.JLabel">
         <constraints>
@@ -48,7 +45,6 @@
         </properties>
         <clientProperties>
           <JEditorPane.honorDisplayProperties class="java.lang.Boolean" value="true"/>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
         </clientProperties>
       </component>
       <component id="9edbd" class="javax.swing.JPasswordField" binding="myPasswordField">
@@ -58,9 +54,6 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
-        </clientProperties>
       </component>
       <component id="8a6dd" class="javax.swing.JButton" binding="myTestButton" default-binding="true">
         <constraints>
@@ -90,9 +83,6 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
-        </clientProperties>
       </component>
       <component id="60c52" class="com.intellij.ui.components.JBLabel">
         <constraints>
