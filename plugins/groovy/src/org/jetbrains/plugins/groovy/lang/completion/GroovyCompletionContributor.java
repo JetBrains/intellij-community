@@ -284,7 +284,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
             GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
 
             if (!PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position)) {
-              if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.isRelaxedMatching()) {
+              if (JavaCompletionContributor.mayStartClassName(result, parameters.isRelaxedMatching())) {
                 addAllClasses(parameters, result, inheritors);
               }
             }

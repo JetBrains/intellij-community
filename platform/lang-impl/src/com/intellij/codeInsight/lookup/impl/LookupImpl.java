@@ -346,7 +346,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myStartCompletionWhenNothingMatches = startCompletionWhenNothingMatches;
   }
 
-  private void ensureSelectionVisible() {
+  public void ensureSelectionVisible() {
     ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
   }
 

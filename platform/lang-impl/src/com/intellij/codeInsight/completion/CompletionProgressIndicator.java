@@ -67,6 +67,7 @@ import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -110,6 +111,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   };
   private volatile int myCount;
   private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(TObjectHashingStrategy.IDENTITY);
+  private final LinkedList<Runnable> myDelayQueue = new LinkedList<Runnable>();
+  private volatile boolean myProcessingDelayedActions;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, boolean hasModifiers) {
@@ -191,6 +194,17 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       contributor.duringCompletion(initContext);
+    }
+  }
+
+  public void delayAllowingFocusedLookup(@NotNull Runnable runnable) {
+    myDelayQueue.addLast(runnable);
+  }
+
+  public void processDelayQueue() {
+    myProcessingDelayedActions = true;
+    while (!myDelayQueue.isEmpty()) {
+      myDelayQueue.removeFirst().run();
     }
   }
 
@@ -335,7 +349,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isOutdated()) return;
 
-    if (!myLookup.isShown() && (!isAutopopupCompletion() || !myLookup.isCalculating())) {
+    boolean justShown = false;
+    if (!myLookup.isShown() && shouldShowLookup()) {
       if (hideAutopopupIfMeaningless()) {
         return;
       }
@@ -352,6 +367,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.refreshUi();
     hideAutopopupIfMeaningless();
     updateFocus();
+    if (justShown) {
+      myLookup.ensureSelectionVisible();
+    }
+  }
+
+  private boolean shouldShowLookup() {
+    if (isAutopopupCompletion() && myLookup.isCalculating()) {
+      return myProcessingDelayedActions;
+    }
+    return true;
   }
 
   final boolean isInsideIdentifier() {
