@@ -16,6 +16,7 @@
 
 package com.intellij.analysis;
 
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -333,6 +334,7 @@ public class AnalysisScope {
       //skip .class files under src directory
       return true;
     }
+    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
     if (needReadAction) {
       PsiDocumentManager.getInstance(psiManager.getProject()).commitAndRunReadAction(new Runnable(){
         public void run() {
@@ -361,6 +363,7 @@ public class AnalysisScope {
       @SuppressWarnings({"SimplifiableIfStatement"})
       public boolean processFile(final VirtualFile fileOrDir) {
         if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;
+        if (index.isInLibraryClasses(fileOrDir) || index.isInLibrarySource(fileOrDir)) return true;
         if (!fileOrDir.isDirectory()) {
           return AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
         }
