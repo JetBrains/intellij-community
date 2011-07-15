@@ -140,7 +140,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
-    myResolveCache = new ResolveCache(this);
+    myResolveCache = new ResolveCache(messageBus);
 
     if (startupManager != null) {
       startupManager.registerPreStartupActivity(
@@ -168,7 +168,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void dropResolveCaches() {
-    myResolveCache.clearCache();
     ((FileManagerImpl)myFileManager).processQueue();
     physicalChange();
     nonPhysicalChange();

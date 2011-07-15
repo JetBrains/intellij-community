@@ -15,12 +15,17 @@
  */
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -30,11 +35,24 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class TreeViewUtil {
   private static final int SUBPACKAGE_LIMIT = 2;
-  private static final Key<ResolveCache.MapPair<PsiPackage, Boolean>> SHOULD_ABBREV_PACK_KEY = Key.create("PACK_ABBREV_CACHE");
+  private static final Key<ConcurrentMap<PsiPackage,Boolean>> SHOULD_ABBREV_PACK_KEY = Key.create("PACK_ABBREV_CACHE");
 
   private static boolean shouldAbbreviateName(PsiPackage aPackage) {
-    ConcurrentMap<PsiPackage,Boolean> map =
-      ((PsiManagerEx)PsiManager.getInstance(aPackage.getProject())).getResolveCache().getOrCreateWeakMap(SHOULD_ABBREV_PACK_KEY, true);
+    final Project project = aPackage.getProject();
+    ConcurrentMap<PsiPackage, Boolean> map = project.getUserData(SHOULD_ABBREV_PACK_KEY);
+    if (map == null) {
+      final ConcurrentWeakHashMap<PsiPackage, Boolean> newMap = new ConcurrentWeakHashMap<PsiPackage, Boolean>();
+      map = ((UserDataHolderEx)project).putUserDataIfAbsent(SHOULD_ABBREV_PACK_KEY, newMap);
+      if (map == newMap) {
+        ((PsiManagerEx)PsiManager.getInstance(project)).registerRunnableToRunOnChange(new Runnable() {
+          @Override
+          public void run() {
+            newMap.clear();
+          }
+        });
+      }
+    }
+
     Boolean ret = map.get(aPackage);
     if (ret != null) return ret;
     ret = scanPackages(aPackage, 1);
