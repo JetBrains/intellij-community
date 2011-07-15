@@ -231,6 +231,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testDictKeys2() { //PY-4181
+    doTest();
+  }
+
   public void testNoParensForDecorator() {  // PY-2210
     doTest();
   }

@@ -1,8 +1,10 @@
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -93,6 +95,10 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
       if (parentElement instanceof PyStringLiteralExpression)
         return result.withPrefixMatcher(findPrefix((PyStringLiteralExpression)parentElement, offset));
     }
+    PyNumericLiteralExpression number = PsiTreeUtil.findElementOfClassAtOffset(original.getContainingFile(),
+                                                                               offset - 1, PyNumericLiteralExpression.class, false);
+    if (number != null)
+      return result.withPrefixMatcher(findPrefix(number, offset));
     return result;
   }
 
@@ -101,7 +107,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
    * @param element to find prefix of
    * @return prefix
    */
-  private static String findPrefix(final PyStringLiteralExpression element, int offset) {
+  private static String findPrefix(final PyElement element, int offset) {
     return TextRange.create(element.getTextRange().getStartOffset(), offset).substring(element.getContainingFile().getText());
   }
 
@@ -117,12 +123,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
         PyExpression[] argumentList = dictConstructor.getArgumentList().getArguments();
         for (PyExpression argument : argumentList) {
           if (argument instanceof PyKeywordArgument) {
-            LookupElementBuilder item;
-            item = LookupElementBuilder
-              .create("'" + ((PyKeywordArgument)argument).getKeyword() + "'")
-              .setTypeText("dict key")
-              .setIcon(PlatformIcons.PARAMETER_ICON);
-            result.addElement(item);
+            result.addElement(createElement("'" + ((PyKeywordArgument)argument).getKeyword() + "'"));
           }
         }
       }
@@ -145,12 +146,9 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
           if (expr.equals(((PyAssignmentStatement)parent).getLeftHandSideExpression())) {
             PyExpression key = expr.getIndexExpression();
             if (key != null) {
-              LookupElementBuilder item;
-              item = LookupElementBuilder
-                .create(key.getText())
-                .setTypeText("dict key")
-                .setIcon(PlatformIcons.PARAMETER_ICON);
-              result.addElement(item);
+              boolean addHandler = PsiTreeUtil.findElementOfClassAtRange(file, key.getTextRange().getStartOffset(),
+                                                           key.getTextRange().getEndOffset(), PyStringLiteralExpression.class) != null;
+              result.addElement(createElement(key.getText(), addHandler));
             }
           }
         }
@@ -164,25 +162,44 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
   private static void addDictLiteralKeys(PyDictLiteralExpression dict, CompletionResultSet result) {
     PyKeyValueExpression[] keyValues = dict.getElements();
     for (PyKeyValueExpression expression : keyValues) {
-      LookupElementBuilder item;
-      item = LookupElementBuilder
-        .create(expression.getKey().getText())
-        .setTypeText("dict key")
-        .setIcon(PlatformIcons.PARAMETER_ICON);
-      result.addElement(item);
+      boolean addHandler = PsiTreeUtil.findElementOfClassAtRange(dict.getContainingFile(), expression.getTextRange().getStartOffset(),
+                                                           expression.getTextRange().getEndOffset(), PyStringLiteralExpression.class) != null;
+      result.addElement(createElement(expression.getKey().getText(), addHandler));
     }
   }
-  @Override
-  public void duringCompletion(@NotNull CompletionInitializationContext context) {
-    PyStringLiteralExpression str = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),
+
+  private static LookupElementBuilder createElement(String key) {
+    return createElement(key, true);
+  }
+
+  private static LookupElementBuilder createElement(String key, boolean addHandler) {
+    LookupElementBuilder item;
+    item = LookupElementBuilder
+      .create(key)
+      .setTypeText("dict key")
+      .setIcon(PlatformIcons.PARAMETER_ICON);
+
+    if (addHandler)
+      item = item.setInsertHandler(new InsertHandler<LookupElement>() {
+      @Override
+      public void handleInsert(InsertionContext context, LookupElement item) {
+        PyStringLiteralExpression str = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),
                                                                            PyStringLiteralExpression.class, false);
-    if (str != null) {
-      boolean isDictKeys = PsiTreeUtil.getParentOfType(str, PySubscriptionExpression.class) != null;
-      if (isDictKeys) {
-        if (str.getText().startsWith("'") && str.getText().endsWith("'") ||
-            str.getText().startsWith("\"") && str.getText().endsWith("\""))
-          context.setReplacementOffset(str.getTextOffset()+str.getTextLength());
+        if (str != null) {
+          boolean isDictKeys = PsiTreeUtil.getParentOfType(str, PySubscriptionExpression.class) != null;
+          if (isDictKeys) {
+            if ((!str.getText().startsWith("'") || !str.getText().endsWith("'")) &&
+                                      (!str.getText().startsWith("\"") || !str.getText().endsWith("\""))) {
+              final Document document = context.getEditor().getDocument();
+              final int offset = context.getTailOffset();
+              document.deleteString(offset-1, offset);
+            }
+          }
+        }
+
       }
-    }
+    });
+    return item;
   }
+
 }
