@@ -95,21 +95,19 @@ public abstract class JavaCodeStyleManager {
    */
   public abstract VariableKind getVariableKind(@NotNull PsiVariable variable);
 
-  /**
-   * Suggests a name for a variable of the specified kind, depending on the code style and
-   * the intended use of the variable.
-   * @param kind         the kind of the variable.
-   * @param propertyName the base name (without code style prefixes) for the variable, or null
-   *                     if the base name is not known.
-   * @param expr         the expression which will be assigned to the variable, or null if unknown
-   * @param type         the expected type of the variable, or null if unknown
-   * @return the array of name suggested by the variable, in the order that should be displayed to the user.
-   */
+  public SuggestedNameInfo suggestVariableName(@NotNull final VariableKind kind,
+                                               @Nullable final String propertyName,
+                                               @Nullable final PsiExpression expr,
+                                               @Nullable PsiType type) {
+    return suggestVariableName(kind, propertyName, expr, type, true);
+  }
+
+
   public abstract SuggestedNameInfo suggestVariableName(@NotNull VariableKind kind,
                                                         @Nullable String propertyName,
                                                         @Nullable PsiExpression expr,
-                                                        @Nullable PsiType type);
-
+                                                        @Nullable PsiType type,
+                                                        boolean correctKeywords);
   /**
    * Generates a stripped-down name (with no code style defined prefixes or suffixes, usable as
    * a property name) from the specified name of a variable of the specified kind.

@@ -36,8 +36,7 @@ public class VariablesCompletionTest extends CompletionTestCase {
   }
 
   public void testLocals1() throws Exception {
-    configureByFile(FILE_PREFIX + "locals/" + "TestSource1.java");
-    checkResultByFile(FILE_PREFIX + "locals/" + "TestResult1.java");
+    doTest("TestSource1.java", "TestResult1.java");
   }
 
   public void testLocals2() throws Exception {
@@ -47,33 +46,36 @@ public class VariablesCompletionTest extends CompletionTestCase {
   }
 
   public void testLocals3() throws Exception {
-    configureByFile(FILE_PREFIX + "locals/" + "TestSource3.java");
-    checkResultByFile(FILE_PREFIX + "locals/" + "TestResult3.java");
+    doTest("TestSource3.java", "TestResult3.java");
   }
 
   public void testLocals4() throws Exception {
-    configureByFile(FILE_PREFIX + "locals/" + "TestSource4.java");
-    checkResultByFile(FILE_PREFIX + "locals/" + "TestResult4.java");
+    doTest("TestSource4.java", "TestResult4.java");
   }
 
   public void testLocals5() throws Exception {
-    configureByFile(FILE_PREFIX + "locals/" + "TestSource5.java");
-    checkResultByFile(FILE_PREFIX + "locals/" + "TestResult5.java");
+    doTest("TestSource5.java", "TestResult5.java");
   }
 
   public void testLocals6() throws Exception {
-    configureByFile(FILE_PREFIX + "locals/" + "TestSource6.java");
-    checkResultByFile(FILE_PREFIX + "locals/" + "TestResult6.java");
+    doTest("TestSource6.java", "TestResult6.java");
   }
 
   public void testLocals7() throws Exception {
-    configureByFile(FILE_PREFIX + "locals/" + "TestSource7.java");
-    checkResultByFile(FILE_PREFIX + "locals/" + "TestResult7.java");
+    doTest("TestSource7.java", "TestResult7.java");
+  }
+
+  public void testLocalReserved() throws Exception {
+    doTest("LocalReserved.java", "LocalReserved_after.java");
+  }
+
+  private void doTest(String before, String after) throws Exception {
+    configureByFile(FILE_PREFIX + "locals/" + before);
+    checkResultByFile(FILE_PREFIX + "locals/" + after);
   }
 
   public void testLocals8() throws Exception {
-    configureByFile(FILE_PREFIX + "locals/" + "TestSource8.java");
-    checkResultByFile(FILE_PREFIX + "locals/" + "TestResult8.java");
+    doTest("TestSource8.java", "TestResult8.java");
   }
 
   public void testFieldNameCompletion1() throws Exception {
@@ -107,8 +109,7 @@ public class VariablesCompletionTest extends CompletionTestCase {
   }
 
   public void testLocals9() throws Exception {
-    configureByFile(FILE_PREFIX + "locals/" + "TestSource9.java");
-    checkResultByFile(FILE_PREFIX + "locals/" + "TestResult9.java");
+    doTest("TestSource9.java", "TestResult9.java");
   }
 
   public void testFieldOutOfAnonymous() throws Exception {
@@ -125,8 +126,7 @@ public class VariablesCompletionTest extends CompletionTestCase {
   }
 
   public void testArrayMethodName() throws Throwable {
-    configureByFile(FILE_PREFIX + "locals/" + "ArrayMethodName.java");
-    checkResultByFile(FILE_PREFIX + "locals/" + "ArrayMethodName-result.java");
+    doTest("ArrayMethodName.java", "ArrayMethodName-result.java");
   }
 
   public void testNoKeywordsInForLoopVariableName() throws Throwable {

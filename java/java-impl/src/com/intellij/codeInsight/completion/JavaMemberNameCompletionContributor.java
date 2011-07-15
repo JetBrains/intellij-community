@@ -108,7 +108,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     }
 
     final PsiType type = var.getType();
-    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type);
+    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type, StringUtil.isEmpty(matcher.getPrefix()));
     final String[] suggestedNames = suggestedNameInfo.names;
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
     if (set.isEmpty()) {
