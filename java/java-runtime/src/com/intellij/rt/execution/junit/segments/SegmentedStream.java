@@ -21,7 +21,7 @@ package com.intellij.rt.execution.junit.segments;
 public interface SegmentedStream {
   char SPECIAL_SYMBOL = '/';
   String SPECIAL_SYMBOL_STRING = String.valueOf(SPECIAL_SYMBOL);
-  String MARKER_PREFIX = SPECIAL_SYMBOL_STRING + "M";
+  String MARKER_PREFIX = SPECIAL_SYMBOL_STRING + '\u0001';
   String LENGTH_DELIMITER = " ";
   String STARTUP_MESSAGE = "@#IJIDEA#JUnitSupport#@";
 }
