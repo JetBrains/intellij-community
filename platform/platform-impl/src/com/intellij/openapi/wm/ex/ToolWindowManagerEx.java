@@ -63,6 +63,8 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
    */
   public abstract void setLayout(@NotNull DesktopLayout layout);
 
+  public abstract void clearSideStack();
+
   public abstract void hideToolWindow(@NotNull String id, boolean hideSide);
 
   public abstract List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);

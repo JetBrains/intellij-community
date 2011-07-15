@@ -18,17 +18,18 @@ package com.siyeh.ipp.bool;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class FlipConjunctionIntention extends MutablyNamedIntention {
 
     protected String getTextForElement(PsiElement element) {
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression)element;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
+        final PsiPolyadicExpression binaryExpression =
+                (PsiPolyadicExpression)element;
+      PsiExpression op = binaryExpression.getOperands()[1];
+      final PsiJavaToken sign = binaryExpression.getTokenBeforeOperand(op);
         return IntentionPowerPackBundle.message("flip.smth.intention.name",
                 sign.getText());
     }
@@ -38,11 +39,10 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
         return new ConjunctionPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         PsiExpression exp = (PsiExpression)element;
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)exp;
-        assert binaryExpression != null;
+        final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)exp;
       final IElementType conjunctionType = binaryExpression.getOperationTokenType();
         PsiElement parent = exp.getParent();
         while (isConjunctionExpression(parent, conjunctionType)) {
@@ -56,32 +56,34 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
 
     private static String flipExpression(PsiExpression expression,
                                          IElementType conjunctionType) {
-        if (isConjunctionExpression(expression, conjunctionType)) {
-            final PsiBinaryExpression andExpression =
-                    (PsiBinaryExpression)expression;
-            final PsiExpression rhs = andExpression.getROperand();
-            final PsiExpression lhs = andExpression.getLOperand();
-            final String conjunctionSign;
-            if (conjunctionType.equals(JavaTokenType.ANDAND)) {
-                conjunctionSign = "&&";
-            } else {
-                conjunctionSign = "||";
-            }
-            return flipExpression(rhs, conjunctionType) + ' ' +
-                    conjunctionSign + ' ' +
-                    flipExpression(lhs, conjunctionType);
-        } else {
-            return expression.getText();
-        }
+      if (!isConjunctionExpression(expression, conjunctionType)) {
+          return expression.getText();
+      }
+      final PsiPolyadicExpression andExpression =
+              (PsiPolyadicExpression)expression;
+      final String conjunctionSign;
+      if (conjunctionType.equals(JavaTokenType.ANDAND)) {
+          conjunctionSign = "&&";
+      } else {
+          conjunctionSign = "||";
+      }
+      String r = null;
+      PsiExpression[] operands = andExpression.getOperands();
+      for (int i = operands.length - 1; i >= 0; i--) {
+        PsiExpression op = operands[i];
+        String flip = flipExpression(op, conjunctionType);
+        r = r == null ? flip : r + ' ' + conjunctionSign + ' ' + flip;
+      }
+      return r;
     }
 
     private static boolean isConjunctionExpression(
             PsiElement element, IElementType conjunctionType) {
-        if (!(element instanceof PsiBinaryExpression)) {
+        if (!(element instanceof PsiPolyadicExpression)) {
             return false;
         }
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression)element;
+        final PsiPolyadicExpression binaryExpression =
+                (PsiPolyadicExpression)element;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
         return tokenType.equals(conjunctionType);
     }

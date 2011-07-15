@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -49,7 +48,7 @@ public class ReplaceExpressionUtil {
     else if (i == JavaElementType.BINARY_EXPRESSION || i == JavaElementType.POLYADIC_EXPRESSION) {
       if (priority < parentPriority) return true;
       PsiElement element = SourceTreeToPsiMap.treeElementToPsi(oldParent);
-      IElementType opType = i == JavaElementType.BINARY_EXPRESSION ? ((PsiBinaryExpression)element).getOperationTokenType() : ((PsiPolyadicExpression)element).getOperationTokenType();
+      IElementType opType = ((PsiPolyadicExpression)element).getOperationTokenType();
       return ((CompositeElement)oldParent).getChildRole(oldExpr) != ChildRole.LOPERAND &&
              opType != JavaTokenType.PLUS &&
              opType != JavaTokenType.ASTERISK &&
@@ -105,7 +104,7 @@ public class ReplaceExpressionUtil {
     }
     else if (i == JavaElementType.BINARY_EXPRESSION || i == JavaElementType.POLYADIC_EXPRESSION) {
       PsiElement element = SourceTreeToPsiMap.treeElementToPsi(expr);
-      IElementType opType = i == JavaElementType.BINARY_EXPRESSION ? ((PsiBinaryExpression)element).getOperationTokenType() : ((PsiPolyadicExpression)element).getOperationTokenType();
+      IElementType opType = ((PsiPolyadicExpression)element).getOperationTokenType();
       if (opType == JavaTokenType.OROR) {
         return 2;
       }

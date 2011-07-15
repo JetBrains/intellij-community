@@ -297,28 +297,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("visitBinaryExpression " + expression);
-      }
-      final PsiExpression lOperand = expression.getLOperand();
-      lOperand.accept(this);
-      Evaluator lResult = myResult;
-      final PsiExpression rOperand = expression.getROperand();
-      if(rOperand == null) {
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())); return;
-      }
-      rOperand.accept(this);
-      Evaluator rResult = myResult;
-      IElementType opType = expression.getOperationTokenType();
-      PsiType expressionExpectedType = expression.getType();
-      if (expressionExpectedType == null) {
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
-      }
-      myResult = createBinaryEvaluator(lResult, lOperand.getType(), rResult, rOperand.getType(), opType, expressionExpectedType);
-    }
-
-    @Override
     public void visitPolyadicExpression(PsiPolyadicExpression wideExpression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitPolyadicExpression " + wideExpression);
@@ -336,12 +314,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         expression.accept(this);
         Evaluator rResult = myResult;
         IElementType opType = wideExpression.getOperationTokenType();
-        PsiType expressionExpectedType = expression.getType();
-        if (expressionExpectedType == null) {
+        PsiType rType = expression.getType();
+        if (rType == null) {
           throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
         }
-        myResult = createBinaryEvaluator(result, lType, rResult, expression.getType(), opType, expressionExpectedType);
-        lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, expressionExpectedType, opType, true);
+        PsiType typeForBinOp = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opType, true);
+        myResult = createBinaryEvaluator(result, lType, rResult, rType, opType, typeForBinOp);
+        lType = typeForBinOp;
         result = myResult;
       }
     }

@@ -47,9 +47,9 @@ class CharToStringPredicate implements PsiElementPredicate{
 
     private static boolean isInConcatenationContext(PsiElement element){
         final PsiElement parent = element.getParent();
-        if(parent instanceof PsiBinaryExpression){
-            final PsiBinaryExpression parentExpression =
-                    (PsiBinaryExpression) parent;
+        if(parent instanceof PsiPolyadicExpression){
+            final PsiPolyadicExpression parentExpression =
+                    (PsiPolyadicExpression) parent;
             final PsiType parentType = parentExpression.getType();
             if(parentType == null){
                 return false;

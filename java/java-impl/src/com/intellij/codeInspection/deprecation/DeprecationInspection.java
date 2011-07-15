@@ -136,14 +136,15 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         if (body != null) {
           final PsiStatement[] statements = body.getStatements();
           if (statements.length == 0 || !RefactoringUtil.isSuperOrThisCall(statements[0], true, true)) {
-            registerDefaultConstructorProblem(superClass, method.getNameIdentifier());
+            registerDefaultConstructorProblem(superClass, method.getNameIdentifier(), false);
           }
         }
       }
     }
 
-    private void registerDefaultConstructorProblem(PsiClass superClass, PsiElement nameIdentifier) {
-      myHolder.registerProblem(nameIdentifier, "Default constructor in " + superClass.getQualifiedName() + " is deprecated", ProblemHighlightType.LIKE_DEPRECATED);
+    private void registerDefaultConstructorProblem(PsiClass superClass, PsiElement nameIdentifier, boolean asDeprecated) {
+      myHolder.registerProblem(nameIdentifier, "Default constructor in " + superClass.getQualifiedName() + " is deprecated",
+                               asDeprecated ? ProblemHighlightType.LIKE_DEPRECATED : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
 
     @Override
@@ -152,7 +153,8 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
       if (currentConstructors.length == 0) {
         final PsiClass superClass = aClass.getSuperClass();
         if (hasDefaultDeprecatedConstructor(superClass)) {
-          registerDefaultConstructorProblem(superClass, aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier());
+          final boolean isAnonymous = aClass instanceof PsiAnonymousClass;
+          registerDefaultConstructorProblem(superClass, isAnonymous ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier(), isAnonymous);
         }
       }
     }

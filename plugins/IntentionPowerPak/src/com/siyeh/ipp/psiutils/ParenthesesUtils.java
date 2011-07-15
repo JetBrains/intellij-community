@@ -126,9 +126,9 @@ public class ParenthesesUtils{
         if(expression instanceof PsiPostfixExpression){
             return POSTFIX_PRECEDENCE;
         }
-        if(expression instanceof PsiBinaryExpression){
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)expression;
+        if(expression instanceof PsiPolyadicExpression){
+            final PsiPolyadicExpression binaryExpression =
+                    (PsiPolyadicExpression)expression;
           return getPrecedenceForBinaryOperator(binaryExpression.getOperationTokenType());
         }
         if(expression instanceof PsiInstanceOfExpression){
