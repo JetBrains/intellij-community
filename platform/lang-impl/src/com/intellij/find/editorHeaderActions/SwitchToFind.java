@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 
 /**
 * Created by IntelliJ IDEA.
@@ -16,7 +17,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 * Time: 10:57
 * To change this template use File | Settings | File Templates.
 */
-public class SwitchToFind extends EditorHeaderAction {
+public class SwitchToFind extends EditorHeaderAction implements DumbAware {
   public SwitchToFind(EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent);
     AnAction findAction = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND);

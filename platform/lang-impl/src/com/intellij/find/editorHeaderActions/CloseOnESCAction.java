@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -14,7 +15,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
-public class CloseOnESCAction extends EditorHeaderAction {
+public class CloseOnESCAction extends EditorHeaderAction  implements DumbAware {
   public CloseOnESCAction(EditorSearchComponent editorSearchComponent, JComponent textField) {
     super(editorSearchComponent);
 

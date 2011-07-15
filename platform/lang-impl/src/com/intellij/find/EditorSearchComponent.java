@@ -507,6 +507,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
         myLivePreviewController.exclude();
+        moveCursor(SearchResults.Direction.DOWN);
       }
     });
     myExcludeButton.setMnemonic('l');

@@ -46,7 +46,7 @@ public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
       getTextField().registerKeyboardAction(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent actionEvent) {
-          if (getEditorSearchComponent().getTextInField().isEmpty()) {
+          if (getTextField().getText().isEmpty()) {
             getEditorSearchComponent().showHistory(false, getTextField());
           }
         }

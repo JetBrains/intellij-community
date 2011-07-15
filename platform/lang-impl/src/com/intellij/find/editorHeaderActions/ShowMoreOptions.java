@@ -3,6 +3,7 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -16,7 +17,7 @@ import java.awt.event.KeyEvent;
 * Time: 22:24
 * To change this template use File | Settings | File Templates.
 */
-public class ShowMoreOptions extends AnAction {
+public class ShowMoreOptions extends AnAction implements DumbAware {
   private JComponent myToolbarComponent;
   public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK), null);
 
