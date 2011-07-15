@@ -166,16 +166,13 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       public void run() {
         final Runnable performRefactoring = new Runnable() {
           public void run() {
-            final boolean[] conflictsFound = new boolean[]{true};
             processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
               @Override
               public void run() {
-                conflictsFound[0] = processor.hasConflicts();
               }
             });
             processor.run();
             normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
-            InplaceIntroduceParameterPopup.super.moveOffsetAfter(!conflictsFound[0]);
             final PsiParameter parameter = getParameter();
             if (parameter != null) {
               InplaceIntroduceParameterPopup.super.saveSettings(parameter);
