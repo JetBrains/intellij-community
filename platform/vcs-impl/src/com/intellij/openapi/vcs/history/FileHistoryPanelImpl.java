@@ -111,7 +111,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
   private final FilePath myFilePath;
-  private final Runnable myRefresher;
+  private final FileHistoryRefresher myRefresher;
   private final DualView myDualView;
   private final Map<VcsRevisionNumber, Integer> myRevisionsOrder;
 
@@ -330,7 +330,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   public FileHistoryPanelImpl(AbstractVcs vcs,
                               FilePath filePath, VcsHistorySession session,
                               VcsHistoryProvider provider,
-                              ContentManager contentManager, final Runnable refresher) {
+                              ContentManager contentManager, final FileHistoryRefresher refresher) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history");
     myVcs = vcs;
     myProvider = provider;
@@ -801,7 +801,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         mySplitter.revalidate();
         mySplitter.repaint();
 
-        myRefresher.run();
+        myRefresher.run(true);
       }
     }.callMe();
   }

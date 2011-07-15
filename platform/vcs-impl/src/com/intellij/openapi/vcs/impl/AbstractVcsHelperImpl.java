@@ -38,7 +38,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -51,12 +50,11 @@ import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.FileHistoryRefresher;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -68,12 +66,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
-import com.intellij.util.ContentsUtil;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
@@ -123,147 +119,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     showFileHistory(vcsHistoryProvider, null, path, repositoryPath, vcs);
   }
 
-  private static class MyVcsAppendableHistorySessionPartner implements VcsAppendableHistorySessionPartner {
-    private FileHistoryPanelImpl myFileHistoryPanel;
-    private final VcsHistoryProvider myVcsHistoryProvider;
-    private final AnnotationProvider myAnnotationProvider;
-    private final FilePath myPath;
-    private final String myRepositoryPath;
-    private final AbstractVcs myVcs;
-    private final Runnable myRefresher;
-    private volatile VcsAbstractHistorySession mySession;
-    private final BufferedListConsumer<VcsFileRevision> myBuffer;
-
-    private MyVcsAppendableHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider,
-                                                 final FilePath path,
-                                                 final String repositoryPath,
-                                                 final AbstractVcs vcs,
-                                                 final Runnable refresher) {
-      myVcsHistoryProvider = vcsHistoryProvider;
-      myAnnotationProvider = annotationProvider;
-      myPath = path;
-      myRepositoryPath = repositoryPath;
-      myVcs = vcs;
-      myRefresher = refresher;
-      myBuffer = new BufferedListConsumer<VcsFileRevision>(5, new Consumer<List<VcsFileRevision>>() {
-        public void consume(List<VcsFileRevision> vcsFileRevisions) {
-          mySession.getRevisionList().addAll(vcsFileRevisions);
-          final VcsHistorySession copy = mySession.copyWithCachedRevision();
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(copy);
-            }
-          });
-        }
-      }, 1000);
-    }
-
-    public void acceptRevision(VcsFileRevision revision) {
-      myBuffer.consumeOne(revision);
-    }
-
-    private FileHistoryPanelImpl ensureHistoryPanelCreated() {
-      if (myFileHistoryPanel == null) {
-        ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-        final VcsHistorySession copy = mySession.copyWithCachedRevision();
-        myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
-                                                      contentManager, myRefresher);
-      }
-      return myFileHistoryPanel;
-    }
-
-    private FileHistoryPanelImpl resetHistoryPanel() {
-      final VcsHistorySession copy = mySession.copyWithCachedRevision();
-      if (myFileHistoryPanel == null) {
-        ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-        myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
-                                                      contentManager, myRefresher);
-      } else {
-        myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
-      }
-      return myFileHistoryPanel;
-    }
-
-    public void reportCreatedEmptySession(final VcsAbstractHistorySession session) {
-      if (mySession != null && session != null && mySession.getRevisionList().equals(session.getRevisionList())) return;
-      mySession = session;
-      mySession.shouldBeRefreshed();  // to init current revision!
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          String actionName = VcsBundle.message("action.name.file.history", myPath.getName());
-          ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-
-          myFileHistoryPanel = resetHistoryPanel();
-          Content content = ContentFactory.SERVICE.getInstance().createContent(myFileHistoryPanel, actionName, true);
-          ContentsUtil.addOrReplaceContent(contentManager, content, true);
-
-          ToolWindow toolWindow = ToolWindowManager.getInstance(myVcs.getProject()).getToolWindow(ToolWindowId.VCS);
-          toolWindow.activate(null);
-        }
-      });
-    }
-
-    public void reportException(VcsException exception) {
-      VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(),
-                                                           VcsBundle.message("message.title.could.not.load.file.history") + ": " +
-                                                           exception.getMessage(), MessageType.ERROR);
-    }
-
-    public void finished() {
-      myBuffer.flush();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (mySession == null) {
-            // nothing to be done, exit
-            return;
-          }
-          ensureHistoryPanelCreated().getHistoryPanelRefresh().finished();
-        }
-      });
-    }
-
-    @Override
-    public void forceRefresh() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (mySession == null) {
-            // nothing to be done, exit
-            return;
-          }
-          ensureHistoryPanelCreated().scheduleRefresh();
-        }
-      });
-    }
-  }
-
-  private static class MyRefresher implements Runnable {
-    private final MyVcsAppendableHistorySessionPartner mySessionPartner;
-    private final VcsHistoryProvider myVcsHistoryProvider;
-    private final FilePath myPath;
-    private final AbstractVcs myVcs;
-    private boolean myCanUseCache;
-
-    private MyRefresher(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider, final FilePath path,
-                                                 final String repositoryPath, final AbstractVcs vcs) {
-      myVcsHistoryProvider = vcsHistoryProvider;
-      myPath = path;
-      myVcs = vcs;
-      mySessionPartner = new MyVcsAppendableHistorySessionPartner(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs, this);
-      myCanUseCache = true;
-    }
-
-    public void run() {
-      final VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(
-        myVcs.getProject(), myVcsHistoryProvider, myVcs.getDiffProvider());
-      proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, mySessionPartner, null, myCanUseCache);
-      myCanUseCache = false;
-    }
-  }
-
   public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider, final FilePath path,
                               final String repositoryPath, final AbstractVcs vcs) {
-    final MyRefresher refresher = new MyRefresher(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs);
-    refresher.run();
+    final FileHistoryRefresher refresher = new FileHistoryRefresher(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs);
+    refresher.run(false);
   }
 
   public void showRollbackChangesDialog(List<Change> changes) {
