@@ -98,7 +98,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     finally {
       setSkipPreviewHighlighting(false);
     }
-    updatePreview();
+    updatePreview(true);
     return true;
   }
 
@@ -216,7 +216,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
         setPanelLanguage(langs[0]);
       }
       else {
-        updatePreview();
+        updatePreview(true);
       }
       tabbedPane.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -241,7 +241,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     else {
       // If settings are language-specific
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-      updatePreview();
+      updatePreview(true);
     }
   }
 

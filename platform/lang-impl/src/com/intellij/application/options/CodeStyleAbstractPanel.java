@@ -87,7 +87,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private long myEndHighlightPreviewChangesTimeMillis = -1;
   private boolean myShowsPreviewHighlighters;
   private boolean mySkipPreviewHighlighting;
-  private LanguageSelector myLanguageSelector;  
+  private LanguageSelector myLanguageSelector;
 
   protected CodeStyleAbstractPanel(CodeStyleSettings settings) {
     mySettings = settings;
@@ -100,7 +100,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       }
     });
 
-    updatePreview();
+    updatePreview(true);
   }
 
   private synchronized void setSomethingChanged(final boolean b) {
@@ -128,7 +128,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument("");
-    EditorEx editor = (EditorEx)editorFactory.createViewer(editorDocument);
+    EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument);
     fillEditorSettings(editor.getSettings());
     myLastDocumentModificationStamp = editor.getDocument().getModificationStamp();
     return editor;
@@ -145,19 +145,20 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     editorSettings.setUseSoftWraps(false);
   }
 
-  protected void updatePreview() {
-    updateEditor();
+  protected void updatePreview(boolean useDefaultSample) {
+    updateEditor(useDefaultSample);
     updatePreviewHighlighter((EditorEx)myEditor);
   }
 
-  private void updateEditor() {
+  private void updateEditor(boolean useDefaultSample) {
     if (!myShouldUpdatePreview || !myEditor.getComponent().isShowing()) {
       return;
     }
 
     if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
       myTextToReformat = myEditor.getDocument().getText();
-    } else {
+    }
+    else if (useDefaultSample || myTextToReformat == null) {
       myTextToReformat = getPreviewText();
     }
 
@@ -470,7 +471,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         try {
           myUpdateAlarm.cancelAllRequests();
           if (isSomethingChanged()) {
-            updateEditor();
+            updateEditor(false);
           }
           if (System.currentTimeMillis() <= myEndHighlightPreviewChangesTimeMillis && !myPreviewRangesToHighlight.isEmpty()) {
             blinkHighlighters();
