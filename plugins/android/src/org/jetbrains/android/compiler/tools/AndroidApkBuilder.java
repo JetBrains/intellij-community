@@ -33,6 +33,7 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -216,7 +217,9 @@ public class AndroidApkBuilder {
 
       final HashSet<String> added = new HashSet<String>();
       for (VirtualFile sourceRoot : sourceRoots) {
-        writeStandardSourceFolderResources(project, builder, sourceRoot, sourceRoot, new HashSet<VirtualFile>(), added);
+        final HashSet<VirtualFile> sourceFolderResources = new HashSet<VirtualFile>();
+        collectStandardSourceFolderResources(sourceRoot, new HashSet<VirtualFile>(), sourceFolderResources, project);
+        writeStandardSourceFolderResources(sourceFolderResources, sourceRoot, builder, added);
       }
 
       Set<String> duplicates = new HashSet<String>();
@@ -232,8 +235,8 @@ public class AndroidApkBuilder {
       MyResourceFilter filter = new MyResourceFilter(duplicates);
 
       for (String externalJar : externalJars) {
+        fis = new FileInputStream(externalJar);
         try {
-          fis = new FileInputStream(externalJar);
           builder.writeZip(fis, filter);
         }
         finally {
@@ -335,33 +338,40 @@ public class AndroidApkBuilder {
     }
   }
 
-  private static void writeStandardSourceFolderResources(Project project,
-                                                         SignedJarBuilder jarBuilder,
-                                                         @NotNull VirtualFile sourceRoot,
-                                                         @NotNull VirtualFile sourceFolder,
-                                                         @NotNull Set<VirtualFile> visited,
-                                                         @NotNull Set<String> added) throws IOException {
+  public static void collectStandardSourceFolderResources(VirtualFile sourceFolder,
+                                                          Set<VirtualFile> visited,
+                                                          Set<VirtualFile> result,
+                                                          @Nullable Project project) {
     visited.add(sourceFolder);
-    final CompilerManager compilerManager = CompilerManager.getInstance(project);
+    final CompilerManager compilerManager = project != null ? CompilerManager.getInstance(project) : null;
 
     for (VirtualFile child : sourceFolder.getChildren()) {
       if (child.exists()) {
         if (child.isDirectory()) {
           if (!visited.contains(child) &&
               JavaResourceFilter.checkFolderForPackaging(child.getName()) &&
-              !compilerManager.isExcludedFromCompilation(child)) {
-            writeStandardSourceFolderResources(project, jarBuilder, sourceRoot, child, visited, added);
+              (compilerManager == null || !compilerManager.isExcludedFromCompilation(child))) {
+            collectStandardSourceFolderResources(child, visited, result, project);
           }
         }
-        else if (checkFileForPackaging(child) && !compilerManager.isExcludedFromCompilation(child)) {
-          String relativePath = FileUtil.toSystemIndependentName(VfsUtil.getRelativePath(child, sourceRoot, File.separatorChar));
-          if (relativePath != null &&
-              !added.contains(relativePath)) {
-            File file = toIoFile(child);
-            jarBuilder.writeFile(file, FileUtil.toSystemIndependentName(relativePath));
-            added.add(relativePath);
-          }
+        else if (checkFileForPackaging(child) &&
+                 (compilerManager == null || !compilerManager.isExcludedFromCompilation(child))) {
+          result.add(child);
         }
+      }
+    }
+  }
+
+  private static void writeStandardSourceFolderResources(Collection<VirtualFile> resources,
+                                                         VirtualFile sourceRoot,
+                                                         SignedJarBuilder jarBuilder,
+                                                         Set<String> added) throws IOException {
+    for (VirtualFile child : resources) {
+      final String relativePath = FileUtil.toSystemIndependentName(VfsUtil.getRelativePath(child, sourceRoot, File.separatorChar));
+      if (!added.contains(relativePath)) {
+        File file = toIoFile(child);
+        jarBuilder.writeFile(file, FileUtil.toSystemIndependentName(relativePath));
+        added.add(relativePath);
       }
     }
   }
