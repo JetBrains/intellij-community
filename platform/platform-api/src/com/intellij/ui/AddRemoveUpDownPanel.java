@@ -89,7 +89,7 @@ class AddRemoveUpDownPanel extends JPanel {
   private Map<Buttons, TableActionButton> myButtons = new HashMap<Buttons, TableActionButton>();
   private final AnActionButton[] myActions;
 
-  AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, boolean isHorizontal,
+  AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contextComponent, boolean isHorizontal,
                               @Nullable AnActionButton[] additionalActions, Buttons... buttons) {
     super(new BorderLayout());
     AnActionButton[] actions = new AnActionButton[buttons.length];
@@ -106,7 +106,7 @@ class AddRemoveUpDownPanel extends JPanel {
     }
     myActions = actions;
     for (AnActionButton action : actions) {
-      action.setContextComponent(contentPane);
+      action.setContextComponent(contextComponent);
     }
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
                                                                                   new DefaultActionGroup(myActions),

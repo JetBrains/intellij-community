@@ -78,6 +78,10 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     myContextComponent = contextComponent;
   }
 
+  public JComponent getContextComponent() {
+    return myContextComponent;
+  }
+
   private boolean isContextComponentOk() {
     return myContextComponent == null
            || (myContextComponent.isVisible() && UIUtil.getParentOfType(JLayeredPane.class, myContextComponent) != null);

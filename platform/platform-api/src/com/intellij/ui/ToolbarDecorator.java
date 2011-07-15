@@ -15,11 +15,12 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -29,13 +30,14 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class ToolbarDecorator {
+public class ToolbarDecorator implements DataProvider {
   private JTable myTable;
   private TableModel myTableModel;
   private ListModel myListModel;
@@ -54,6 +56,17 @@ public class ToolbarDecorator {
   private AddRemoveUpDownPanel myPanel;
   private JList myList;
 
+  private static final Comparator<AnAction> ACTION_BUTTONS_SORTER = new Comparator<AnAction>() {
+    @Override
+    public int compare(AnAction a1, AnAction a2) {
+      if (a1 instanceof AnActionButton && a2 instanceof AnActionButton) {
+        final JComponent c1 = ((AnActionButton)a1).getContextComponent();
+        final JComponent c2 = ((AnActionButton)a2).getContextComponent();
+        return c1.hasFocus() ? -1 : c2.hasFocus() ? 1 : 0;
+      }
+      return 0;
+    }
+  };
 
   private ToolbarDecorator(JTable table) {
     myTable = table;
@@ -330,8 +343,18 @@ public class ToolbarDecorator {
     }
     panel.setBorder(new LineBorder(UIUtil.getBorderColor()));
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myPanel.getComponent(0));
+    DataManager.registerDataProvider(panel, this);
     return panel;
   }
+
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.ACTIONS_SORTER.is(dataId)) {
+      return ACTION_BUTTONS_SORTER;
+    }
+    return null;
+  }
+
 
   private Object getPlacement() {
     switch (myToolbarPosition) {
