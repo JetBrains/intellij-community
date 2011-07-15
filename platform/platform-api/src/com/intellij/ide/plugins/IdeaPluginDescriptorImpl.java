@@ -102,12 +102,16 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   protected static StringInterner ourInterner = new StringInterner();
 
+  public void readExternal(Document document, final URL url) throws InvalidDataException, FileNotFoundException {
+    document = JDOMXIncluder.resolve(document, url.toExternalForm());
+    JDOMUtil.internElement(document.getRootElement(), ourInterner);
+    readExternal(document.getRootElement());
+  }
+
   public void readExternal(final URL url) throws InvalidDataException, FileNotFoundException {
     try {
       Document document = JDOMUtil.loadDocument(url);
-      document = JDOMXIncluder.resolve(document, url.toExternalForm());
-      JDOMUtil.internElement(document.getRootElement(), ourInterner);
-      readExternal(document.getRootElement());
+      readExternal(document, url);
     }
     catch (FileNotFoundException e) {
       throw e;
