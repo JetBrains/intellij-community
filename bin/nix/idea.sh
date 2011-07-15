@@ -14,7 +14,7 @@
 if [ -z "$IDEA_JDK" ]; then
   IDEA_JDK=$JDK_HOME
   # if jdk still isn't defined and JAVA_HOME looks correct. "tools.jar" isn't included in Mac OS Java bundle
-  if [ -z "$IDEA_JDK" ] && ([ "$OS_TYPE" = "MAC" -a -e "$JAVA_HOME/bin/java" ] || [ -e "$JAVA_HOME/lib/tools.jar" ]); then
+  if [ -z "$IDEA_JDK" ] && ([ "$OS_TYPE" = "MAC" -a -x "$JAVA_HOME/bin/java" ] || [ -f "$JAVA_HOME/lib/tools.jar" ]); then
     IDEA_JDK=$JAVA_HOME
   fi
 
@@ -108,10 +108,10 @@ if [ -z "$IDEA_VM_OPTIONS" ]; then
   IDEA_VM_OPTIONS="$IDEA_HOME/bin/idea.vmoptions"
 fi
 
-[ -e "$IDEA_HOME/Contents/Info.plist" ] && BUNDLE_TYPE="MAC" || BUNDLE_TYPE="NOT_MAC"
+[ -f "$IDEA_HOME/Contents/Info.plist" ] && BUNDLE_TYPE="MAC" || BUNDLE_TYPE="NOT_MAC"
 
 # If vmoptions file exists - use it
-if [ -e "$IDEA_VM_OPTIONS" ]; then
+if [ -r "$IDEA_VM_OPTIONS" ]; then
   JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
 
   # don't extract vm options from Info.plist in mac bundle
