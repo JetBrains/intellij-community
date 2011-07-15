@@ -318,8 +318,7 @@ public class AndroidApkBuilder {
   public static void collectNativeLibraries(@NotNull VirtualFile file, @NotNull List<VirtualFile> result, boolean debugBuild) {
     if (!file.isDirectory()) {
       String ext = file.getExtension();
-      if (AndroidUtils.EXT_NATIVE_LIB.equalsIgnoreCase(ext) ||
-          (debugBuild && SdkConstants.FN_GDBSERVER.equals(file.getName()))) {
+      if (AndroidUtils.EXT_NATIVE_LIB.equalsIgnoreCase(ext) || debugBuild) {
         result.add(file);
       }
     }
