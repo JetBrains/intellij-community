@@ -12,11 +12,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
@@ -35,9 +33,9 @@ import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Collection;
 
 /**
  * @author oleg
@@ -187,11 +185,6 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                   }
                   myUsedElements.add(element);
                   myUnusedElements.remove(element);
-                  // In case when assignment is inside try part
-                  final PyTryPart tryPart = PsiTreeUtil.getParentOfType(element, PyTryPart.class);
-                  if (tryPart != null && !isAssignedOnEachExceptFlow(inst, tryPart, instructions, name)) {
-                    return ControlFlowUtil.Operation.NEXT;
-                  }
                   return ControlFlowUtil.Operation.CONTINUE;
                 }
                 return ControlFlowUtil.Operation.NEXT;
@@ -200,43 +193,6 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
-  }
-
-  private static boolean isAssignedOnEachExceptFlow(final Instruction inst,
-                                                    final PyTryPart tryPart,
-                                                    final Instruction[] instructions,
-                                                    final String name) {
-    final PyTryExceptStatement tryStatement = (PyTryExceptStatement)tryPart.getParent();
-    final PyExceptPart[] exceptParts = tryStatement.getExceptParts();
-    if (exceptParts.length == 0){
-      return false;
-    }
-    for (final PyExceptPart exceptPart : exceptParts) {
-      final Ref<Boolean> assignedOnThisFlow = new Ref<Boolean>(false);
-      ControlFlowUtil.process(instructions, inst.num(), new Processor<Instruction>() {
-        @Override
-        public boolean process(final Instruction instruction) {
-          if (assignedOnThisFlow.get() == Boolean.TRUE){
-            return false;
-          }
-          final PsiElement instElement = instruction.getElement();
-          if (instElement == null || !PsiTreeUtil.isAncestor(tryStatement, instElement, false)){
-            return false;
-          }
-          if (((ReadWriteInstruction)inst).getAccess().isWriteAccess() &&
-              name.equals(((ReadWriteInstruction)inst).getName()) &&
-              PsiTreeUtil.isAncestor(exceptPart, instElement, false)){
-            assignedOnThisFlow.set(true);
-            return false;
-          }
-          return true;
-        }
-      });
-      if (assignedOnThisFlow.get() != Boolean.TRUE){
-        return false;
-      }
-    }
-    return true;
   }
 
   private static boolean callsLocals(final ScopeOwner owner) {

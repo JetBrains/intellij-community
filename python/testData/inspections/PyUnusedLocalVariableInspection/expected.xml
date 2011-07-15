@@ -55,4 +55,9 @@
     <line>127</line>
   <description>Parameter 'dog' value is not used</description>
   </problem>
+  <problem>
+    <file>test.py</file>
+    <line>204</line>
+    <description>Local variable 'a' value is not used</description>
+  </problem>
 </problems>
