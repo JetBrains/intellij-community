@@ -54,7 +54,9 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   public Result beforeCharTyped(final char charTyped, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
     // TODO[oleg] remove this hack when API changes
     if (myReplacedTextRange != null) {
-      editor.getSelectionModel().setSelection(myReplacedTextRange.getStartOffset(), myReplacedTextRange.getEndOffset());
+      if (myReplacedTextRange.getEndOffset() <= editor.getDocument().getTextLength()) {
+        editor.getSelectionModel().setSelection(myReplacedTextRange.getStartOffset(), myReplacedTextRange.getEndOffset());
+      }
       myReplacedTextRange = null;
       return Result.STOP;
     }
