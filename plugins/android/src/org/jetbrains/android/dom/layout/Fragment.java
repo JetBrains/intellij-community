@@ -18,22 +18,19 @@ package org.jetbrains.android.dom.layout;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
-import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.android.dom.AndroidAttributeValue;
-import org.jetbrains.android.dom.converters.PackageClassConverter;
+import org.jetbrains.android.dom.converters.FragmentClassConverter;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public interface Fragment extends LayoutElement {
   @Attribute("name")
-  @Convert(PackageClassConverter.class)
-  @ExtendClass("android.app.Fragment")
+  @Convert(FragmentClassConverter.class)
   AndroidAttributeValue<PsiClass> getFragmentName();
 
   @Attribute("class")
-  @Convert(PackageClassConverter.class)
-  @ExtendClass("android.app.Fragment")
+  @Convert(FragmentClassConverter.class)
   GenericAttributeValue<PsiClass> getFragmentClass();
 }

@@ -47,14 +47,14 @@ import java.util.List;
 public class PackageClassConverter extends ResolvingConverter<PsiClass> implements CustomReferenceConverter<PsiClass> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.dom.converters.PackageClassConverter");
 
-  private final String myExtendClassName;
+  private final String[] myExtendClassesNames;
 
-  public PackageClassConverter(String extendClassName) {
-    myExtendClassName = extendClassName;
+  public PackageClassConverter(String... extendClassesNames) {
+    myExtendClassesNames = extendClassesNames;
   }
 
   public PackageClassConverter() {
-    myExtendClassName = null;
+    myExtendClassesNames = ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @NotNull
@@ -104,7 +104,10 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
     final Manifest manifest = domElement.getParentOfType(Manifest.class, true);
     final String basePackage = manifest == null ? null : manifest.getPackage().getValue();
     final ExtendClass extendClassAnnotation = domElement.getAnnotation(ExtendClass.class);
-    final String extendsClassName = extendClassAnnotation != null ? extendClassAnnotation.value() : myExtendClassName;
+
+    final String[] extendClassesNames = extendClassAnnotation != null
+                                        ? new String[]{extendClassAnnotation.value()}
+                                        : myExtendClassesNames;
     final boolean inModuleOnly = domElement.getAnnotation(CompleteNonModuleClass.class) == null;
 
     List<PsiReference> result = new ArrayList<PsiReference>();
@@ -122,7 +125,7 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
       if (packageName.length() > 0) {
         offset += packageName.length();
         final TextRange range = new TextRange(offset - packageName.length(), offset);
-        result.add(new MyReference(element, range, basePackage, startsWithPoint, start, true, module, extendsClassName, inModuleOnly));
+        result.add(new MyReference(element, range, basePackage, startsWithPoint, start, true, module, extendClassesNames, inModuleOnly));
       }
       offset++;
     }
@@ -135,7 +138,7 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
         offset += s.length();
 
         final TextRange range = new TextRange(offset - s.length(), offset);
-        result.add(new MyReference(element, range, basePackage, startsWithPoint, start, false, module, extendsClassName, inModuleOnly));
+        result.add(new MyReference(element, range, basePackage, startsWithPoint, start, false, module, extendClassesNames, inModuleOnly));
       }
       offset++;
     }
@@ -221,7 +224,7 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
     private final boolean myStartsWithPoint;
     private final boolean myIsPackage;
     private final Module myModule;
-    private final String myExtendsClass;
+    private final String[] myExtendsClasses;
     private final boolean myCompleteOnlyModuleClasses;
 
     public MyReference(PsiElement element,
@@ -231,7 +234,7 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
                        int start,
                        boolean isPackage,
                        Module module,
-                       String extendsClass,
+                       String[] extendsClasses,
                        boolean completeOnlyModuleClasses) {
       super(element, range, true);
       myBasePackage = basePackage;
@@ -239,7 +242,7 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
       myStart = start;
       myIsPackage = isPackage;
       myModule = module;
-      myExtendsClass = extendsClass;
+      myExtendsClasses = extendsClasses;
       myCompleteOnlyModuleClasses = completeOnlyModuleClasses;
     }
 
@@ -298,10 +301,11 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
     @NotNull
     @Override
     public Object[] getVariants() {
-      if (myExtendsClass != null) {
+      if (myExtendsClasses != null) {
         final List<PsiClass> classes = new ArrayList<PsiClass>();
-        classes.addAll(findInheritors(myModule, myExtendsClass, myCompleteOnlyModuleClasses));
-
+        for (String extendsClass : myExtendsClasses) {
+          classes.addAll(findInheritors(myModule, extendsClass, myCompleteOnlyModuleClasses));
+        }
         final List<Object> result = new ArrayList<Object>(classes.size());
 
         for (int i = 0, n = classes.size(); i < n; i++) {
