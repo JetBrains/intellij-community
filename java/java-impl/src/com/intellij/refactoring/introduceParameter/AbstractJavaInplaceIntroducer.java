@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  */
 public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntroducer<PsiVariable, PsiExpression> {
-  protected final TypeSelectorManagerImpl myTypeSelectorManager;
+  protected TypeSelectorManagerImpl myTypeSelectorManager;
 
   public AbstractJavaInplaceIntroducer(final Project project,
                                        Editor editor,
@@ -62,7 +63,11 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   @Override
   protected void restoreState(PsiVariable psiField) {
+    final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(getType());
     super.restoreState(psiField);
+    myTypeSelectorManager = myExpr != null
+                            ? new TypeSelectorManagerImpl(myProject, typePointer.getType(), myExpr, myOccurrences)
+                            : new TypeSelectorManagerImpl(myProject, typePointer.getType(), myOccurrences);
   }
 
   @Override
