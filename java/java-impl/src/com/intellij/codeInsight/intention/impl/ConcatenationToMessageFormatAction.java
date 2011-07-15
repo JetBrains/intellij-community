@@ -148,7 +148,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     while (true) {
       final PsiElement parent = binaryExpression.getParent();
       if (!(parent instanceof PsiPolyadicExpression)) return binaryExpression;
-      PsiPolyadicExpression parentBinaryExpression = (PsiBinaryExpression)parent;
+      PsiPolyadicExpression parentBinaryExpression = (PsiPolyadicExpression)parent;
       if (!stringType.equals(parentBinaryExpression.getType())) return binaryExpression;
       binaryExpression = parentBinaryExpression;
     }

@@ -65,6 +65,29 @@ public class InplaceIntroduceParameterTest extends AbstractInplaceIntroduceTest 
     doTestEscape();
   }
 
+  public void testExtractParamOverLocal() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer abstractInplaceIntroducer) {
+      }
+    });
+  }
+
+  public void testExtractConflictingParamOverLocal() throws Exception {
+    try {
+      doTest(new Pass<AbstractInplaceIntroducer>() {
+        @Override
+        public void pass(AbstractInplaceIntroducer abstractInplaceIntroducer) {
+          type("p");
+        }
+      });
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("There is already a parameter <b><code>p</code></b>. It will conflict with an introduced parameter", e.getMessage());
+      return;
+    }
+    fail("Conflict expected");
+  }
 
   private static class MyIntroduceParameterHandler extends IntroduceParameterHandler implements MyIntroduceHandler {
 

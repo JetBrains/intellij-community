@@ -31,7 +31,7 @@ public class ExcludeSillyAssignment implements ElementFilter {
 
     PsiElement each = context;
     while (each != null && !(each instanceof PsiFile)) {
-      if (each instanceof PsiExpressionList || each instanceof PsiPrefixExpression || each instanceof PsiBinaryExpression) {
+      if (each instanceof PsiExpressionList || each instanceof PsiPrefixExpression || each instanceof PsiPolyadicExpression) {
         return true;
       }
 

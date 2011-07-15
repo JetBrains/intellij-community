@@ -91,9 +91,6 @@ public abstract class AbstractInplaceIntroduceTest extends LightCodeInsightTestC
       state.gotoEnd(false);
       checkResultByFile(getBasePath() + name + "_after.java");
     }
-    catch (Throwable e) {
-      e.printStackTrace();
-    }
     finally {
       myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
       templateManager.setTemplateTesting(false);

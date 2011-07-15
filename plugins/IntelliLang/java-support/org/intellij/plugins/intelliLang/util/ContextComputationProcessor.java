@@ -76,12 +76,6 @@ public class ContextComputationProcessor {
       collectOperands(((PsiConditionalExpression)expression).getThenExpression(), result, unparsable);
       collectOperands(((PsiConditionalExpression)expression).getElseExpression(), result, unparsable);
     }
-    else if (expression instanceof PsiBinaryExpression &&
-             ((PsiBinaryExpression)expression).getOperationTokenType() == JavaTokenType.PLUS) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-      collectOperands(binaryExpression.getLOperand(), result, unparsable);
-      collectOperands(binaryExpression.getROperand(), result, unparsable);
-    }
     else if (expression instanceof PsiPolyadicExpression &&
              ((PsiPolyadicExpression)expression).getOperationTokenType() == JavaTokenType.PLUS) {
       final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;

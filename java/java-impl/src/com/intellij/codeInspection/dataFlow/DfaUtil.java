@@ -213,7 +213,7 @@ public class DfaUtil {
   public static boolean allOperandsAreLiterals(@Nullable final PsiExpression expression) {
     if (expression == null) return false;
     if (expression instanceof PsiLiteralExpression) return true;
-    if (expression instanceof PsiBinaryExpression) {
+    if (expression instanceof PsiPolyadicExpression) {
       Stack<PsiExpression> stack = new Stack<PsiExpression>();
       stack.add(expression);
       while (!stack.isEmpty()) {

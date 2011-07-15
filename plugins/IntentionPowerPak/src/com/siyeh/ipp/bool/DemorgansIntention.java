@@ -18,19 +18,19 @@ package com.siyeh.ipp.bool;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
-import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class DemorgansIntention extends MutablyNamedIntention {
 
     protected String getTextForElement(PsiElement element) {
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression)element;
+        final PsiPolyadicExpression binaryExpression =
+                (PsiPolyadicExpression)element;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.ANDAND)) {
             return IntentionPowerPackBundle.message("demorgans.intention.name1");
@@ -44,14 +44,14 @@ public class DemorgansIntention extends MutablyNamedIntention {
         return new ConjunctionPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        PsiBinaryExpression exp =
-                (PsiBinaryExpression)element;
+      PsiPolyadicExpression exp =
+                (PsiPolyadicExpression)element;
       final IElementType tokenType = exp.getOperationTokenType();
         PsiElement parent = exp.getParent();
         while (isConjunctionExpression(parent, tokenType)) {
-            exp = (PsiBinaryExpression)parent;
+            exp = (PsiPolyadicExpression)parent;
             assert exp != null;
             parent = exp.getParent();
         }
@@ -61,33 +61,20 @@ public class DemorgansIntention extends MutablyNamedIntention {
                 exp);
     }
 
-    private static String convertConjunctionExpression(PsiBinaryExpression exp,
+    private static String convertConjunctionExpression(PsiPolyadicExpression exp,
                                                        IElementType tokenType) {
-        final PsiExpression lhs = exp.getLOperand();
-        final String lhsText;
-        if (isConjunctionExpression(lhs, tokenType)) {
-            lhsText = convertConjunctionExpression((PsiBinaryExpression)lhs,
-                    tokenType);
-        } else {
-            lhsText = convertLeafExpression(lhs);
-        }
-        final PsiExpression rhs = exp.getROperand();
-        final String rhsText;
-        if (isConjunctionExpression(rhs, tokenType)) {
-            rhsText = convertConjunctionExpression((PsiBinaryExpression)rhs,
-                    tokenType);
-        } else {
-            rhsText = convertLeafExpression(rhs);
-        }
-
-        final String flippedConjunction;
-        if (tokenType.equals(JavaTokenType.ANDAND)) {
-            flippedConjunction = "||";
-        } else {
-            flippedConjunction = "&&";
-        }
-
-        return lhsText + flippedConjunction + rhsText;
+      final String flippedConjunction;
+      if (tokenType.equals(JavaTokenType.ANDAND)) {
+        flippedConjunction = "||";
+      } else {
+        flippedConjunction = "&&";
+      }
+      String result = null;
+      for (PsiExpression expression : exp.getOperands()) {
+        String lhsText = convertLeafExpression(expression);
+        result = result == null ? lhsText : result + flippedConjunction + lhsText;
+      }
+      return result;
     }
 
     private static String convertLeafExpression(PsiExpression condition) {
@@ -120,10 +107,10 @@ public class DemorgansIntention extends MutablyNamedIntention {
 
     private static boolean isConjunctionExpression(PsiElement exp,
                                                    IElementType conjunctionType) {
-        if (!(exp instanceof PsiBinaryExpression)) {
+        if (!(exp instanceof PsiPolyadicExpression)) {
             return false;
         }
-        final PsiBinaryExpression binExp = (PsiBinaryExpression)exp;
+        final PsiPolyadicExpression binExp = (PsiPolyadicExpression)exp;
       final IElementType tokenType = binExp.getOperationTokenType();
         return tokenType.equals(conjunctionType);
     }

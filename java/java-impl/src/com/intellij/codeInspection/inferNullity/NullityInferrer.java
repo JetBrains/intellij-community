@@ -261,16 +261,13 @@ public class NullityInferrer {
                                                PsiExpression elseExpression,
                                                PsiExpression rOperand,
                                                PsiExpression lOperand) {
-    if (rOperand instanceof PsiLiteralExpression && "null".equals(rOperand.getText())) {
-      if (lOperand instanceof PsiReferenceExpression) {
-        final PsiElement resolve = ((PsiReferenceExpression)lOperand).resolve();
-        if (resolve instanceof PsiVariable) {
-          if (((PsiBinaryExpression)condition).getOperationTokenType() == JavaTokenType.EQEQ) {
-            if (elseExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)elseExpression).resolve() == resolve) {
-              return true;
-            }
-          }
-        }
+    if (rOperand instanceof PsiLiteralExpression && "null".equals(rOperand.getText()) && lOperand instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)lOperand).resolve();
+      if (resolve instanceof PsiVariable &&
+          ((PsiBinaryExpression)condition).getOperationTokenType() == JavaTokenType.EQEQ &&
+          elseExpression instanceof PsiReferenceExpression &&
+          ((PsiReferenceExpression)elseExpression).resolve() == resolve) {
+        return true;
       }
     }
     return false;
@@ -546,11 +543,10 @@ public class NullityInferrer {
           opposite = lOperand;
         }
         if (opposite != null && opposite.getType() == PsiType.NULL) {
-          if (parent.getParent() instanceof PsiAssertStatement) {
-            if (((PsiBinaryExpression)parent).getOperationTokenType() == JavaTokenType.NE) {
-              registerNotNullAnnotation(parameter);
-              return true;
-            }
+          if (parent.getParent() instanceof PsiAssertStatement &&
+              ((PsiBinaryExpression)parent).getOperationTokenType() == JavaTokenType.NE) {
+            registerNotNullAnnotation(parameter);
+            return true;
           }
           registerNullableAnnotation(parameter);
           return true;
@@ -561,7 +557,8 @@ public class NullityInferrer {
         if (qualifierExpression == expr) {
           registerNotNullAnnotation(parameter);
           return true;
-        } else {
+        }
+        else {
           PsiElement exprParent = expr.getParent();
           while (exprParent instanceof PsiTypeCastExpression || exprParent instanceof PsiParenthesizedExpression) {
             if (qualifierExpression == exprParent) {
