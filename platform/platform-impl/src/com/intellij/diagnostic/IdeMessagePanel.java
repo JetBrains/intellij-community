@@ -19,7 +19,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.popup.NotificationPopup;
@@ -33,7 +33,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
-public class IdeMessagePanel extends JPanel implements MessagePoolListener, CustomStatusBarWidget {
+public class IdeMessagePanel extends JPanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
   private final IconPane myIdeFatal;
 

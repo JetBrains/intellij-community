@@ -29,10 +29,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
@@ -362,15 +359,15 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   private void updateBorder(final int ndx) {
     final JComponent self = (JComponent)myRightPanel.getComponent(ndx);
-    if (self instanceof IconPresentationWrapper) {
+    if (self instanceof IconPresentationWrapper || self instanceof IconLikeCustomStatusBarWidget) {
       final int prev = ndx - 1;
       final int next = ndx + 1;
 
       final JComponent p = prev >= 0 ? (JComponent)myRightPanel.getComponent(prev) : null;
       final JComponent n = next < myRightPanel.getComponentCount() ? (JComponent)myRightPanel.getComponent(next) : null;
 
-      final boolean prevIcon = p instanceof IconPresentationWrapper;
-      final boolean nextIcon = n instanceof IconPresentationWrapper;
+      final boolean prevIcon = p instanceof IconPresentationWrapper || p instanceof IconLikeCustomStatusBarWidget;
+      final boolean nextIcon = n instanceof IconPresentationWrapper || n instanceof IconLikeCustomStatusBarWidget;
 
       self.setBorder(prevIcon ? BorderFactory.createEmptyBorder(2, 2, 2, 2) : StatusBarWidget.WidgetBorder.INSTANCE);
       if (nextIcon) n.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
