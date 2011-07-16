@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ public class CvsConnectionUtil {
                                                                            proxySettings.getType(),
                                                                            proxySettings.getLogin(),
                                                                            proxySettings.getPassword());
-    //final EmptyPool pool = EmptyPool.getInstance();
     final ConnectionPoolI pool = SshConnectionPool.getInstance();
     final SshAuthentication authentication;
     if (sshConfiguration.USE_PPK) {
@@ -59,16 +58,6 @@ public class CvsConnectionUtil {
       authentication = new SshPasswordAuthentication(settings.USER, sshPasswordProvider, settings.getCvsRootAsString());
     }
     return pool.getConnection(settings.REPOSITORY, connectionSettings, authentication);
-  }
-
-  public static int getPort(final String port) {
-    if (port.length() == 0) return 22;
-    try {
-      return Integer.parseInt(port);
-    }
-    catch (NumberFormatException e) {
-      return 22;
-    }
   }
 
   public static IConnection createExtConnection(final CvsRootData settings,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,10 @@ public class SshConnectionPool implements ConnectionPoolI {
   public IConnection getConnection(final String repository, final ConnectionSettings connectionSettings, final SshAuthentication authentication) {
     final MyKey key;
     if (connectionSettings.isUseProxy()) {
-      key = new MyKey(connectionSettings.getHostName(), connectionSettings.getPort(), connectionSettings.getProxyHostName(),
+      key = new MyKey(repository, authentication.getLogin(), connectionSettings.getHostName(), connectionSettings.getPort(), connectionSettings.getProxyHostName(),
                 connectionSettings.getProxyPort(), connectionSettings.getProxyLogin());
     } else {
-      key = new MyKey(connectionSettings.getHostName(), connectionSettings.getPort(), null, -1, null);
+      key = new MyKey(repository, authentication.getLogin(), connectionSettings.getHostName(), connectionSettings.getPort(), null, -1, null);
     }
     synchronized (myLock) {
       SshSharedConnection connection = myPool.get(key);
@@ -84,6 +84,8 @@ public class SshConnectionPool implements ConnectionPoolI {
 
   // will serve only as a key, no other logic needed
   private static class MyKey {
+    private final String myRepository;
+    private final String myLogin;
     private final String myHost;
     private final int myPort;
     private final String myProxyHost;
@@ -91,8 +93,10 @@ public class SshConnectionPool implements ConnectionPoolI {
     // +-
     private final String myProxyLogin;
 
-    private MyKey(String host, int port, String proxyHost, int proxyPort, String proxyLogin) {
-      myHost = host;
+    private MyKey(String repository, String login, String hostName, int port, String proxyHost, int proxyPort, String proxyLogin) {
+      myRepository = repository;
+      myLogin = login;
+      myHost = hostName;
       myPort = port;
       myProxyHost = proxyHost;
       myProxyPort = proxyPort;
@@ -108,6 +112,8 @@ public class SshConnectionPool implements ConnectionPoolI {
 
       if (myPort != myKey.myPort) return false;
       if (myProxyPort != myKey.myProxyPort) return false;
+      if (!myRepository.equals(myKey.myRepository)) return false;
+      if (!myLogin.equals(myKey.myLogin)) return false;
       if (!myHost.equals(myKey.myHost)) return false;
       if (myProxyHost != null ? !myProxyHost.equals(myKey.myProxyHost) : myKey.myProxyHost != null) return false;
       if (myProxyLogin != null ? !myProxyLogin.equals(myKey.myProxyLogin) : myKey.myProxyLogin != null) return false;
@@ -117,7 +123,9 @@ public class SshConnectionPool implements ConnectionPoolI {
 
     @Override
     public int hashCode() {
-      int result = myHost.hashCode();
+      int result = myRepository.hashCode();
+      result = 31 * result + myLogin.hashCode();
+      result = 31 * result + myHost.hashCode();
       result = 31 * result + myPort;
       result = 31 * result + (myProxyHost != null ? myProxyHost.hashCode() : 0);
       result = 31 * result + myProxyPort;
