@@ -370,13 +370,13 @@ public abstract class DialogWrapper {
           // move ok action to the right
           int okNdx = ArrayUtil.indexOf(actions, getOKAction());
           if (okNdx >= 0 && okNdx != actions.length - 1) {
-            //actions = ArrayUtil.append(ArrayUtil.remove(actions, getOKAction()), getOKAction());
+            actions = ArrayUtil.append(ArrayUtil.remove(actions, getOKAction()), getOKAction());
           }
           
           // move cancel action to the left
           int cancelNdx = ArrayUtil.indexOf(actions, getCancelAction());
           if (cancelNdx > 0) {
-            //actions = ArrayUtil.join(new Action[] {getCancelAction()}, ArrayUtil.remove(actions, getCancelAction()));
+            actions = ArrayUtil.join(new Action[] {getCancelAction()}, ArrayUtil.remove(actions, getCancelAction()));
           }
 
           if (!hasFocusedAction(actions)) {
