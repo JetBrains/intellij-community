@@ -9,6 +9,8 @@ import gnu.trove.TIntObjectHashMap;
 * Time: 1:34 PM
 */
 abstract class IntToIntBtree {
+  protected static final int NULL_ID = 0;
+
   static final boolean doSanityCheck = false;
   static final boolean doDump = false;
 
@@ -47,8 +49,6 @@ abstract class IntToIntBtree {
     return address;
   }
 
-  protected static final int NULL_ID = 0;
-
   public int get(int key) {
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
     currentIndexNode.setAddress(root.address);
@@ -72,13 +72,12 @@ abstract class IntToIntBtree {
     }
   }
 
-
   public int remove(int key) {
     // TODO
     //BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
     //currentIndexNode.setAddress(root.address);
     //int index = currentIndexNode.locate(key, false);
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Remove does not work yet "+key);
   }
 
   void setRootAddress(int newRootAddress) {
@@ -93,9 +92,13 @@ abstract class IntToIntBtree {
     maxStepsSearched = _maxStepsSearched;
   }
 
+  void doFlush() {
+    pagesCache.clear();
+  }
+
   static void myAssert(boolean b) {
     if (!b) {
-      int a = 1;
+      myAssert("breakpoint place" != "do not remove");
     }
     assert b;
   }
@@ -134,53 +137,31 @@ abstract class IntToIntBtree {
     }
 
     protected final int getInt(int address) {
-      if (alternative) {
-        getBytes(address, btree.typedBuffer, 0, 4);
-        return Bits.getInt(btree.typedBuffer, 0);
-      } else {
-        return btree.storage.getInt(address);
-      }
+      getBytes(address, btree.typedBuffer, 0, 4);
+      return Bits.getInt(btree.typedBuffer, 0);
     }
 
     protected final void putInt(int offset, int value) {
-      if (alternative) {
-        Bits.putInt(btree.typedBuffer, 0, value);
-        putBytes(offset, btree.typedBuffer, 0, 4);
-      } else {
-        btree.storage.putInt(offset, value);
-      }
+      Bits.putInt(btree.typedBuffer, 0, value);
+      putBytes(offset, btree.typedBuffer, 0, 4);
     }
 
     protected final byte getByte(int address) {
-      if (alternative) {
-        getBytes(address, btree.typedBuffer, 0, 1);
-        return btree.typedBuffer[0];
-      } else {
-        return btree.storage.get(address);
-      }
+      getBytes(address, btree.typedBuffer, 0, 1);
+      return btree.typedBuffer[0];
     }
 
     protected final void putByte(int address, byte b) {
-      if (alternative) {
-        btree.typedBuffer[0] = b;
-        putBytes(address, btree.typedBuffer, 0, 1);
-      } else {
-        btree.storage.put(address, b);
-      }
+      btree.typedBuffer[0] = b;
+      putBytes(address, btree.typedBuffer, 0, 1);
     }
 
-    static final boolean alternative = true;
-
     protected final void getBytes(int address, byte[] dst, int offset, int length) {
-      if (alternative) {
-        if (this.buffer == null) load();
+      if (this.buffer == null) load();
 
-        int base = address - this.address;
-        for(int i = 0; i < length; ++i) {
-          dst[offset + i] = this.buffer[base + i];
-        }
-      } else {
-        btree.storage.get(address, dst, offset, length);
+      int base = address - this.address;
+      for(int i = 0; i < length; ++i) {
+        dst[offset + i] = this.buffer[base + i];
       }
     }
 
@@ -196,24 +177,18 @@ abstract class IntToIntBtree {
     }
 
     protected final void putBytes(int address, byte[] src, int offset, int length) {
-      if (alternative) {
-        if (buffer == null) load();
-        int base = address - this.address;
-        for(int i = 0; i < length; ++i) {
-          this.buffer[base + i] = src[offset + i];
-        }
-      } else {
-        btree.storage.put(address, src, offset, length);
+      if (buffer == null) load();
+      int base = address - this.address;
+      for(int i = 0; i < length; ++i) {
+        buffer[base + i] = src[offset + i];
       }
     }
 
     void sync() {
-      if (alternative) {
-        if (buffer != null) {
-          // TODO this is still too often, fix it
-          btree.storage.put(address, buffer, 0, buffer.length);
-          btree.pagesCache.put(address, buffer);
-        }
+      if (buffer != null) {
+        // TODO this is still too often, fix it
+        btree.storage.put(address, buffer, 0, buffer.length);
+        btree.pagesCache.put(address, buffer);
       }
     }
 
@@ -425,18 +400,19 @@ abstract class IntToIntBtree {
     }
 
     private void dump(String s) {
-      if (!doDump) return;
-      short maxIndex = getChildrenCount();
-      System.out.println(s + " @" + address);
-      for(int i = 0; i < maxIndex; ++i) {
-        System.out.print(addressAt(i) + " " + keyAt(i) + " ");
-      }
+      if (doDump) {
+        short maxIndex = getChildrenCount();
+        System.out.println(s + " @" + address);
+        for(int i = 0; i < maxIndex; ++i) {
+          System.out.print(addressAt(i) + " " + keyAt(i) + " ");
+        }
 
-      if (!isIndexLeaf()) {
-        System.out.println(addressAt(maxIndex));
-      }
-      else {
-        System.out.println();
+        if (!isIndexLeaf()) {
+          System.out.println(addressAt(maxIndex));
+        }
+        else {
+          System.out.println();
+        }
       }
     }
 

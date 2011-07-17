@@ -271,4 +271,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   protected void setupRecord(int hashCode, final int dataOffset, final byte[] buf) {
     Bits.putInt(buf, 0, dataOffset);
   }
+
+  @Override
+  protected void doFlush() throws IOException {
+    btree.doFlush();
+    super.doFlush();
+  }
 }

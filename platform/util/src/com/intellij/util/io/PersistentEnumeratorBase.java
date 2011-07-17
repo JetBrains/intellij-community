@@ -409,10 +409,14 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   private synchronized void flush() throws IOException {
     synchronized (ourLock) {
       if (myStorage.isDirty() || isDirty()) {
-        markDirty(false);
-        myStorage.force();
+        doFlush();
       }
     }
+  }
+
+  protected void doFlush() throws IOException {
+    markDirty(false);
+    myStorage.force();
   }
 
   public synchronized void force() {
