@@ -2,11 +2,15 @@ package com.jetbrains.python.testing.pytest;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.sdk.SdkUtil;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 
@@ -15,7 +19,8 @@ import java.util.List;
  */
 public class PyTestUtil {
   private static final HashSet<String> PYTHON_TEST_QUALIFIED_CLASSES = Sets.newHashSet("unittest.TestCase", "unittest.case.TestCase");
-  
+  private static final String PYTESTSEARCHER = "pycharm/finders/find_pytest.py";
+
   public static List<PyStatement> getPyTestCasesFromFile(PsiFileSystemItem file) {
     List<PyStatement> result = Lists.newArrayList();
     if (file instanceof PyFile) {
@@ -70,5 +75,22 @@ public class PyTestUtil {
       }
     }
     return false;
+  }
+
+  public static boolean isPyTestInstalled(String sdkHome) {
+    if (sdkHome == null || sdkHome.isEmpty()) return false;
+    final String formatter = new File(PythonHelpersLocator.getHelpersRoot(), PYTESTSEARCHER).getAbsolutePath();
+    ProcessOutput
+      output = SdkUtil.getProcessOutput(new File(sdkHome).getParent(),
+                                        new String[]{
+                                          sdkHome,
+                                          formatter
+                                        },
+                                        null,
+                                        2000);
+    if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
+      return false;
+    }
+    return true;
   }
 }

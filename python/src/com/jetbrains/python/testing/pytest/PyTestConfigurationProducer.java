@@ -12,6 +12,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -20,12 +21,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 
 public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
@@ -62,11 +63,8 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     configuration.setUseModuleSdk(true);
     configuration.setModule(ModuleUtil.findModuleForPsiElement(myPsiElement));
 
-    final String scriptPath = configuration.getRunnerScriptPath();
-    if (scriptPath == null || !new File(scriptPath).exists()) {
-      return null;
-    }
-
+    final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
+    if (sdk == null || !PyTestUtil.isPyTestInstalled(sdk.getHomePath())) return null;
     configuration.setTestToRun(path);
 
     PyFunction pyFunction = findTestFunction(location);

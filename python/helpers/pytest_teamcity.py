@@ -13,7 +13,7 @@ except:
 def get_name(nodeid):
     return nodeid.split("::")[-1]
 
-if PYVERSION > [1,3,4]:
+if PYVERSION > [1,4,0]:
   items = {}
   current_suite = None
   current_file = None
