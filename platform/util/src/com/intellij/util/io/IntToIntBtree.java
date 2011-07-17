@@ -101,13 +101,12 @@ abstract class IntToIntBtree {
   }
 
   static class BtreePage {
-    protected static final int PARENT_ADDRESS_OFFSET = 3;
     protected final IntToIntBtree btree;
     protected int address;
     private short myChildrenCount;
     private byte[] buffer;
 
-    // TODO link pages of the same size
+    // TODO link pages of the same height
 
     public BtreePage(IntToIntBtree btree) {
       this.btree = btree;
@@ -119,15 +118,6 @@ abstract class IntToIntBtree {
       address = _address;
       myChildrenCount = -1;
       buffer = null;
-    }
-
-    // TODO we do not need parentAddress except for debugging
-    int parentAddress() {
-      return getInt(address + PARENT_ADDRESS_OFFSET);
-    }
-
-    void setParentAddress(int parentAddress) {
-      putInt(address + PARENT_ADDRESS_OFFSET, parentAddress);
     }
 
     final short getChildrenCount() {
@@ -349,7 +339,6 @@ abstract class IntToIntBtree {
 
       BtreeIndexNodeView newIndexNode = new BtreeIndexNodeView(btree);
       newIndexNode.setAddress(btree.nextPage());
-      newIndexNode.setParentAddress(parentAddress);
 
       boolean indexLeaf = isIndexLeaf();
       newIndexNode.setIndexLeaf(indexLeaf);
@@ -360,36 +349,23 @@ abstract class IntToIntBtree {
       newIndexNode.setChildrenCount(recordCountInNewNode);
       int medianKey;
 
-      if (indexLeaf) {
-        if (btree.isLarge) {
-          final int bytesToMove = recordCountInNewNode * INTERIOR_SIZE;
-          getBytes(indexToOffset(maxIndex), btree.buffer, 0, bytesToMove);
-          newIndexNode.putBytes(newIndexNode.indexToOffset(0), btree.buffer, 0, bytesToMove);
-        } else {
-          for(int i = 0; i < recordCountInNewNode; ++i) {
-            newIndexNode.setAddressAt(i, addressAt(i + maxIndex));
-            newIndexNode.setKeyAt(i, keyAt(i + maxIndex));
-          }
-        }
-        medianKey = newIndexNode.keyAt(0);
+      if (btree.isLarge) {
+        final int bytesToMove = recordCountInNewNode * INTERIOR_SIZE;
+        getBytes(indexToOffset(maxIndex), btree.buffer, 0, bytesToMove);
+        newIndexNode.putBytes(newIndexNode.indexToOffset(0), btree.buffer, 0, bytesToMove);
       } else {
-        BtreeIndexNodeView c = new BtreeIndexNodeView(btree);
         for(int i = 0; i < recordCountInNewNode; ++i) {
-          int address = addressAt(i + maxIndex);
-          c.setAddress(-address);
-          c.setParentAddress(newIndexNode.address);
-          c.sync();
-          newIndexNode.setAddressAt(i, address);
+          newIndexNode.setAddressAt(i, addressAt(i + maxIndex));
           newIndexNode.setKeyAt(i, keyAt(i + maxIndex));
         }
+      }
 
-        int address = addressAt(recordCount);
-        c.setAddress(-address);
-        c.setParentAddress(newIndexNode.address);
-        c.sync();
-        newIndexNode.setAddressAt(recordCountInNewNode, address);
+      if (indexLeaf) {
+        medianKey = newIndexNode.keyAt(0);
+      } else {
+        newIndexNode.setAddressAt(recordCountInNewNode, addressAt(recordCount));
         --maxIndex;
-        medianKey = keyAt(maxIndex);
+        medianKey = keyAt(maxIndex);     // key count is odd (since children count is even) and middle key goes to parent
       }
 
       setChildrenCount(maxIndex);
@@ -409,7 +385,6 @@ abstract class IntToIntBtree {
         }
 
         parent.insert(medianKey, -newIndexNode.address);
-        parent.setAddress(newIndexNode.parentAddress());
 
         if (doSanityCheck) {
           parent.dump("After modifying parent");
@@ -435,8 +410,6 @@ abstract class IntToIntBtree {
         btree.root.setAddressAt(0, -address);
         btree.root.setAddressAt(1, -newIndexNode.address);
         btree.root.sync();
-        newIndexNode.setParentAddress(newRootAddress);
-        setParentAddress(newRootAddress);
 
         if (doSanityCheck) {
           btree.root.dump("New root");
@@ -473,9 +446,7 @@ abstract class IntToIntBtree {
 
       while(true) {
         if (split && isFull()) {
-          if (doSanityCheck) myAssert(parentAddress == parentAddress());
           parentAddress = splitNode(parentAddress);
-          if (doSanityCheck) myAssert(parentAddress == parentAddress());
           setAddress(parentAddress);
           --searched;
         }
@@ -505,30 +476,6 @@ abstract class IntToIntBtree {
     private void insert(int valueHC, int newValueId, int index) {
       if (doSanityCheck) myAssert(!isFull());
       insertToNotFull(valueHC, newValueId, index);
-
-      if (doSanityCheck) {
-        if (index == 0) {
-          int parentAddress = parentAddress();
-
-          if (parentAddress > 0) {
-            BtreeIndexNodeView parent = new BtreeIndexNodeView(btree);
-            parent.setAddress(parentAddress);
-            int indexInParent = -1;
-
-            for (int i = 0; i <= parent.getChildrenCount(); ++i) {
-              if (parent.addressAt(i) == -address) {
-                indexInParent = i;
-                break;
-              }
-            }
-
-            myAssert(indexInParent >= 0);
-            if (indexInParent == 0) {
-              myAssert(keyAt(getChildrenCount() - 1) < parent.keyAt(0));
-            }
-          }
-        }
-      }
     }
 
     private void insertToNotFull(int valueHC, int newValueId, int index) {
@@ -536,6 +483,7 @@ abstract class IntToIntBtree {
       if (doSanityCheck) myAssert(recordCount < getMaxChildrenCount());
       setChildrenCount((short)(recordCount + 1));
 
+      // TODO Clever books tell us to use Btree for cheaper elements shifting within page
       if (isIndexLeaf()) {
         if (btree.isLarge) {
           final int bytesToMove = (recordCount - index) * INTERIOR_SIZE;
@@ -550,11 +498,6 @@ abstract class IntToIntBtree {
         setKeyAt(index, valueHC);
         setAddressAt(index, newValueId);
       } else {
-        BtreeIndexNodeView view = new BtreeIndexNodeView(btree);
-        view.setAddress(-newValueId);
-        view.setParentAddress(address);
-        view.sync();
-
         // <address> (<key><address>) {record_count - 1}
         //
         setAddressAt(recordCount + 1, addressAt(recordCount));
