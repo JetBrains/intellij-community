@@ -190,6 +190,13 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return addParameter(new LightParameter(name, type, this, StdLanguages.JAVA));
   }
 
+  public LightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type, boolean isVarArgs) {
+    if (isVarArgs && !(type instanceof PsiEllipsisType)) {
+      type = new PsiEllipsisType(type);
+    }
+    return addParameter(new LightParameter(name, type, this, StdLanguages.JAVA, isVarArgs));
+  }
+
   public LightMethodBuilder addException(PsiClassType type) {
     ((LightReferenceListBuilder)myThrowsList).addReference(type);
     return this;

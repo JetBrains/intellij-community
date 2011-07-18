@@ -109,6 +109,11 @@ public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalcul
 
     if (typeName == null) return null;
 
+    if (typeName.endsWith("[]")) {
+      PsiClassType type = TypesUtil.createType(typeName.substring(0, typeName.length() - 2), callExpression);
+      return type.createArrayType();
+    }
+
     return JavaPsiFacade.getElementFactory(callExpression.getProject()).createTypeByFQClassName(typeName, callExpression.getResolveScope());
   }
 }
