@@ -101,7 +101,11 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   public StructureViewTreeElement[] getChildren() {
     final Collection<StructureViewTreeElement> children = new LinkedHashSet<StructureViewTreeElement>();
     for (PyElement e : getElementChildren(myElement)) {
-      children.add(new PyStructureViewElement(e, getElementVisibility(e), false, elementIsField(e)));
+      final PyStructureViewElement c = new PyStructureViewElement(e, getElementVisibility(e), false, elementIsField(e));
+      if (children.contains(c)) {
+        children.remove(c);
+      }
+      children.add(c);
     }
     if (myElement instanceof PyClass) {
       for (PyClass c : ((PyClass)myElement).iterateAncestorClasses()) {
