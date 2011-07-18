@@ -6,7 +6,7 @@
 5(6) element: PyStatementList
 6(7) WRITE ACCESS: t
 7(8) element: PyTryExceptStatement
-8(9) element: PyTryPart
+8(9,14) element: PyTryPart
 9(10,14,5,17) element: PyForStatement
 10(11) element: PyStatementList
 11(12,14) WRITE ACCESS: t
