@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.ide.fileTemplates;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.velocity.runtime.parser.ParseException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -47,6 +46,7 @@ public interface FileTemplate extends Cloneable {
   String ATTRIBUTE_METHOD_NAME = "METHOD_NAME";
   String ATTRIBUTE_PACKAGE_NAME = "PACKAGE_NAME";
   String ATTRIBUTE_NAME = "NAME";
+  String ATTRIBUTE_FILE_NAME = "FILE_NAME";
 
   @NotNull String[] getUnsetAttributes(@NotNull Properties properties) throws ParseException;
 
