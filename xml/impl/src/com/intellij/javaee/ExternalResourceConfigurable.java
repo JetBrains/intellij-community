@@ -25,8 +25,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AddEditRemovePanel;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable, OptionalConfigurable {
-
   private JPanel myPanel;
   private List<EditLocationDialog.NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
@@ -64,7 +63,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   public JComponent createComponent() {
     myPanel = new JPanel(new GridBagLayout()) {
       public Dimension getPreferredSize() {
-        return new Dimension(700, 400);
+        return new Dimension(-1, 400);
       }
     };
 
@@ -88,7 +87,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     JTable table = myExtPanel.getTable();
     TableColumn column = table.getColumn(table.getColumnName(2));
     column.setMaxWidth(50);
-    column.setCellEditor(Table.createBooleanEditor());
+    column.setCellEditor(JBTable.createBooleanEditor());
 
     table.getModel().addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
