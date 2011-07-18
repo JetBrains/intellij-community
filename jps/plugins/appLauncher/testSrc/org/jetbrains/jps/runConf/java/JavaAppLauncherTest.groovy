@@ -33,6 +33,7 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
     runAndAssertOutput("MainClassVmArgs", null, { output ->
       assertTrue(output, output.indexOf("val1" + System.getProperty("line.separator")) != -1)
       assertTrue(output, output.indexOf("val2") != -1)
+      assertTrue(output, output.indexOf("plugins/appLauncher/testData/main-class-run-conf") != -1)
     })
   }
 

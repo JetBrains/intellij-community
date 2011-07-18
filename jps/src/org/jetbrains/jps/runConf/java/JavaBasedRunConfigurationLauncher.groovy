@@ -30,7 +30,7 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
    * @return additional JVM arguments
    */
   public String getJVMArguments(RunConfiguration runConf) {
-    return runConf.allOptions["VM_PARAMETERS"]
+    return runConf.macroExpander.expandMacros(runConf.allOptions["VM_PARAMETERS"]);
   }
 
   /**
