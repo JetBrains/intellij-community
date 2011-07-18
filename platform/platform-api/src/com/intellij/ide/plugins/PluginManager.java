@@ -844,7 +844,7 @@ public class PluginManager {
              descriptor.setPath(file);
              return descriptor;
            }
-           getLogger().warn("Cannot load descriptor from " + f.getName() + "");
+//           getLogger().warn("Cannot load descriptor from " + f.getName() + "");
          }
          else if (f.isDirectory()) {
            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, fileName);
