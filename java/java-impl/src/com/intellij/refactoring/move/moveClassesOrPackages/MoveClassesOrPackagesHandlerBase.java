@@ -109,13 +109,14 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     final PsiDirectory[] directories = new PsiDirectory[elements.length];
-    System.arraycopy(elements, 0, directories, 0, directories.length);
     final String prompt = getPromptToMoveDirectoryLibrariesSafe(elements);
     if (prompt != null) {
+      System.arraycopy(elements, 0, directories, 0, directories.length);
       moveDirectoriesLibrariesSafe(project, targetContainer, callback, directories, prompt);
       return;
     }
     if (canMoveOrRearrangePackages(elements) ) {
+      System.arraycopy(elements, 0, directories, 0, directories.length);
       SelectMoveOrRearrangePackageDialog dialog = new SelectMoveOrRearrangePackageDialog(project, directories, targetContainer == null);
       dialog.show();
       if (!dialog.isOK()) return;
