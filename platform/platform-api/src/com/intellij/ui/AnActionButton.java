@@ -29,7 +29,7 @@ import java.awt.*;
 public abstract class AnActionButton extends AnAction implements ShortcutProvider {
   private boolean myEnabled = true;
   private boolean myVisible = true;
-  private Shortcut myShortcut;
+  private ShortcutSet myShortcut;
   private JComponent myContextComponent;
 
   protected AnActionButton(String text) {
@@ -66,11 +66,11 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   @Override
-  public Shortcut getShortcut() {
+  public ShortcutSet getShortcut() {
     return myShortcut;
   }
 
-  public void setShortcut(Shortcut shortcut) {
+  public void setShortcut(ShortcutSet shortcut) {
     myShortcut = shortcut;
   }
 

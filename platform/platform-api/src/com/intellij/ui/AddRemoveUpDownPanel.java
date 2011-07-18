@@ -119,9 +119,9 @@ class AddRemoveUpDownPanel extends JPanel {
   public void addNotify() {
     final JRootPane pane = getRootPane();
     for (AnActionButton button : myActions) {
-      final Shortcut shortcut = button.getShortcut();
+      final ShortcutSet shortcut = button.getShortcut();
       if (shortcut != null) {
-        button.registerCustomShortcutSet(new CustomShortcutSet(shortcut), pane);
+        button.registerCustomShortcutSet(shortcut, pane);
       }
     }
     super.addNotify(); // call after all to construct actions tooltips properly
@@ -166,12 +166,12 @@ class AddRemoveUpDownPanel extends JPanel {
     }
 
     @Override
-    public Shortcut getShortcut() {
+    public ShortcutSet getShortcut() {
       switch (myButton) {
-        case ADD: return KeyboardShortcut.fromString("alt A");
-        case REMOVE: return KeyboardShortcut.fromString("alt DELETE");
-        case UP: return KeyboardShortcut.fromString("alt UP");
-        case DOWN: return KeyboardShortcut.fromString("alt DOWN");
+        case ADD: return CustomShortcutSet.fromString("alt A", "INSERT");
+        case REMOVE: return CustomShortcutSet.fromString("alt DELETE");
+        case UP: return CustomShortcutSet.fromString("alt UP");
+        case DOWN: return CustomShortcutSet.fromString("alt DOWN");
       }
       return null;
     }

@@ -16,8 +16,8 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 
 /**
@@ -38,7 +38,7 @@ public class EnableEqual extends DirDiffAction {
   }
 
   @Override
-  public Shortcut getShortcut() {
-    return KeyboardShortcut.fromString("alt EQUALS");
+  public ShortcutSet getShortcut() {
+    return CustomShortcutSet.fromString("alt EQUALS");
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,5 +44,13 @@ public final class CustomShortcutSet implements ShortcutSet {
 
   public Shortcut[] getShortcuts(){
     return myShortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : myShortcuts.clone();
+  }
+
+  public static CustomShortcutSet fromString(String... keyboardShortcuts) {
+    final KeyboardShortcut[] shortcuts = new KeyboardShortcut[keyboardShortcuts.length];
+    for (int i = 0; i < keyboardShortcuts.length; i++) {
+      shortcuts[i] = KeyboardShortcut.fromString(keyboardShortcuts[i]);
+    }
+    return new CustomShortcutSet(shortcuts);
   }
 }

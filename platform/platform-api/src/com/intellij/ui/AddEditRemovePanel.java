@@ -17,8 +17,8 @@ package com.intellij.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
@@ -101,8 +101,8 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
         }
 
         @Override
-        public Shortcut getShortcut() {
-          return KeyboardShortcut.fromString("alt E");
+        public ShortcutSet getShortcut() {
+          return CustomShortcutSet.fromString("alt E");
         }
       })
       .disableUpAction()
