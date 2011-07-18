@@ -317,8 +317,8 @@ public class FileBasedIndex implements ApplicationComponent {
         public void run() {
           if (lastModCount == myLocalModCount) {
             flushAllIndices();
-            lastModCount = myLocalModCount;
           }
+          lastModCount = myLocalModCount;
         }
       });
 
