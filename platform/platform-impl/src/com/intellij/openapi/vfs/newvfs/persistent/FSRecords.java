@@ -19,7 +19,6 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -47,7 +46,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
 public class FSRecords implements Forceable {
@@ -305,20 +303,16 @@ public class FSRecords implements Forceable {
     }
 
     private static void setupFlushing() {
-      myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+      myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
         int lastModCount = 0;
 
         public void run() {
           if (lastModCount == ourLocalModificationCount) {
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              public void run() {
-                flushSome();
-              }
-            });
+            flushSome();
           }
           lastModCount = ourLocalModificationCount;
         }
-      }, 5000, 5000, TimeUnit.MILLISECONDS);
+      });
     }
 
     public static void force() {
