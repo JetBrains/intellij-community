@@ -2367,8 +2367,7 @@ public class UIUtil {
     if (isTableDecorationSupported()) {
       table.putClientProperty(TABLE_DECORATION_KEY, true);
       table.getColumnModel().setColumnMargin(0);
-      table.setShowVerticalLines(false);
-      table.setShowHorizontalLines(false);
+      table.setShowGrid(false);
     }
   }
 
