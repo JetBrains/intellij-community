@@ -77,7 +77,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
 
     GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
-    myWholePanel.add(myLabel, gc);
+    myWholePanel.add(getPreviewComponent(), gc);
 
     gc.gridy = 1;
     myWholePanel.add(createRightPanel(), gc);

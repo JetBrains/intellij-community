@@ -8,12 +8,12 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -31,7 +31,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
                                        PsiVariable localVariable,
                                        PsiExpression[] occurrences,
                                        TypeSelectorManagerImpl typeSelectorManager, String title) {
-    super(project, editor, expr, localVariable, occurrences, title);
+    super(project, editor, expr, localVariable, occurrences, title, StdFileTypes.JAVA);
     myTypeSelectorManager = typeSelectorManager;
   }
 

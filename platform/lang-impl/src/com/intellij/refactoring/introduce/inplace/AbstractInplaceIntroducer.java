@@ -16,7 +16,6 @@
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -24,16 +23,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
@@ -47,13 +46,15 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.ui.BalloonImpl;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.DottedBorder;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -72,7 +73,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected String myConstantName;
   public static final Key<AbstractInplaceIntroducer> ACTIVE_INTRODUCE = Key.create("ACTIVE_INTRODUCE");
 
-  protected final SimpleColoredComponent myLabel = new SimpleColoredComponent();
+  private final EditorEx myPreview;
+  private final JComponent myPreviewComponent;
+
   private DocumentAdapter myDocumentAdapter;
   protected final JPanel myWholePanel;
 
@@ -81,7 +84,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
                                    E expr,
                                    V localVariable,
                                    E[] occurrences,
-                                   String title) {
+                                   String title,
+                                   final FileType languageFileType) {
     super(null, editor, project, title, occurrences, expr);
     myLocalVariable = localVariable;
     if (localVariable != null) {
@@ -96,8 +100,30 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     myExprText = expr != null ? expr.getText() : null;
     myLocalName = localVariable != null ? localVariable.getName() : null;
 
-    myLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 0));
-    myLabel.append("#########################");
+    myPreview =
+      (EditorEx)EditorFactory.getInstance().createEditor(EditorFactory.getInstance().createDocument(""), project, languageFileType, true);
+    myPreview.setOneLineMode(true);
+    final EditorSettings settings = myPreview.getSettings();
+    settings.setAdditionalLinesCount(0);
+    settings.setAdditionalColumnsCount(1);
+    settings.setRightMarginShown(false);
+    settings.setFoldingOutlineShown(false);
+    settings.setLineNumbersShown(false);
+    settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
+    settings.setVirtualSpace(false);
+    myPreview.setHorizontalScrollbarVisible(false);
+    myPreview.setVerticalScrollbarVisible(false);
+    myPreview.setCaretEnabled(false);
+    settings.setLineCursorWidth(1);
+
+    final Color bg = myPreview.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+    myPreview.setBackgroundColor(bg);
+    myPreview.setBorder(BorderFactory.createCompoundBorder(new DottedBorder(Color.gray), new LineBorder(bg, 2)));
+
+    myPreviewComponent = new JPanel(new BorderLayout());
+    myPreviewComponent.add(myPreview.getComponent(), BorderLayout.CENTER);
+    myPreviewComponent.setBorder(new EmptyBorder(2, 2, 6, 2));
 
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.setBorder(null);
@@ -107,6 +133,23 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     if (shortcuts.length > 0) {
       setAdvertisementText("Press " + shortcuts[0] + " to show dialog");
     }
+  }
+
+  protected final void setPreviewText(final String text) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), text);
+      }
+    });
+  }
+
+  protected final JComponent getPreviewComponent() {
+    return myPreviewComponent;
+  }
+
+  protected final Editor getPreviewEditor() {
+    return myPreview;
   }
 
   protected abstract String getActionName();
@@ -191,15 +234,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   protected void updateTitle(@Nullable V variable, String value) {
     if (variable == null) return;
-    myLabel.clear();
-    myLabel.append(variable.getText().replace(variable.getName(), value), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+
+    setPreviewText(variable.getText().replace(variable.getName(), value));
     revalidate();
   }
 
   protected void updateTitle(@Nullable V variable) {
     if (variable == null) return;
-    myLabel.clear();
-    myLabel.append(variable.getText(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    setPreviewText(variable.getText());
     revalidate();
   }
 
