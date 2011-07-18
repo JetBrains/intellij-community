@@ -154,7 +154,6 @@ public class IdeaApplication {
     }
 
     public void premain(String[] args) {
-//      showSplash(args);
       initLAF();
     }
 
@@ -163,16 +162,7 @@ public class IdeaApplication {
         final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
         final SplashScreen splashScreen = getSplashScreen();
         if (splashScreen == null) {
-          final Splash splash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
-          LOG.warn("Splash!!!");
-          splash.show();
-          //SwingUtilities.invokeLater(new Runnable() {
-          //  public void run() {
-          //    splash.show();
-          //    LOG.warn("Splash!!!");
-          //  }
-          //});
-          mySplash = splash;
+          mySplash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
         }
         else {
           updateSplashScreen(appInfo, splashScreen);
