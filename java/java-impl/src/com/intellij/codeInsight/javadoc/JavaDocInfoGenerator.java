@@ -1554,8 +1554,8 @@ public class JavaDocInfoGenerator {
           }
         }
 
+        subst.append("&gt;");
         if (goodSubst) {
-          subst.append("&gt;");
           String text = subst.toString();
 
           buffer.append(text);

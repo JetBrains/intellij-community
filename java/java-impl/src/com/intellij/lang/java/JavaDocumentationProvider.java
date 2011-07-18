@@ -284,7 +284,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
           buffer.append(", ");
         }
       }
-      buffer.append("&lt; ");
+      buffer.append("&gt; ");
     }
 
     if (method.getReturnType() != null) {
