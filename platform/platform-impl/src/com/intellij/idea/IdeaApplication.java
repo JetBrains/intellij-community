@@ -16,8 +16,11 @@
 package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.Patches;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.CommandLineProcessor;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -32,6 +35,7 @@ import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
@@ -65,15 +69,32 @@ public class IdeaApplication {
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
 
     if (Main.isCommandLine(args)) {
-      new CommandLineApplication(isInternal, false, Main.isHeadless(args));
+      boolean headless = Main.isHeadless(args);
+      new CommandLineApplication(isInternal, false, headless);
+      if (!headless) patchSystem();
     }
     else {
       System.setProperty("sun.awt.noerasebackground","true");
+      patchSystem();
+      if (myArgs.length == 0) {
+        myStarter = getStarter();
+        ((IdeStarter)myStarter).showSplash(myArgs);
+      }
       ApplicationManagerEx.createApplication(isInternal, false, false, false, "idea");
     }
 
-    myStarter = getStarter();
+    if (myStarter == null) {
+      myStarter = getStarter();
+    }
     myStarter.premain(args);
+  }
+
+  private static void patchSystem() {
+    Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+    if (Patches.SUN_BUG_ID_6209673) {
+      RepaintManager.setCurrentManager(new IdeRepaintManager());
+    }
+    IconLoader.activate();
   }
 
   protected ApplicationStarter getStarter() {
@@ -133,23 +154,30 @@ public class IdeaApplication {
     }
 
     public void premain(String[] args) {
+//      showSplash(args);
+      initLAF();
+    }
+
+    private void showSplash(String[] args) {
       if (StartupUtil.shouldShowSplash(args)) {
         final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
         final SplashScreen splashScreen = getSplashScreen();
         if (splashScreen == null) {
           final Splash splash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              splash.show();
-            }
-          });
+          LOG.warn("Splash!!!");
+          splash.show();
+          //SwingUtilities.invokeLater(new Runnable() {
+          //  public void run() {
+          //    splash.show();
+          //    LOG.warn("Splash!!!");
+          //  }
+          //});
           mySplash = splash;
         }
         else {
           updateSplashScreen(appInfo, splashScreen);
         }
       }
-      initLAF();
     }
 
     private void updateSplashScreen(ApplicationInfoEx appInfo, SplashScreen splashScreen) {
