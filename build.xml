@@ -16,21 +16,13 @@
   <macrodef name="call_gant">
     <attribute name="script" />
     <sequential>
-      <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
-        <jvmarg line="-Xms64m -Xmx512m"/>
-        <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
-        <jvmarg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
-        <jvmarg line="&quot;-Didea.test.group=ALL_EXCLUDE_DEFINED&quot;"/>
+      <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
+        <jvmarg line="-Xmx512m -XX:MaxPermSize=152m"/>
 
-        <classpath>
-          <fileset dir="${project.home}/lib/ant/lib">
-            <include name="*.jar"/>
-          </fileset>
-          <fileset dir="${gant.home}/lib">
-            <include name="*.jar"/>
-          </fileset>
-        </classpath>
-
+        <arg line="&quot;-Dgant.script=@{script}&quot;"/>
+        <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
+        <arg line="&quot;-Didea.test.group=ALL_EXCLUDE_DEFINED&quot;"/>
+        <arg line="-lib ${gant.home}/lib/"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>
       </java>
