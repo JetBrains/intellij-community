@@ -34,25 +34,20 @@ public abstract class GrCallExpressionTypeCalculator {
   public static final ExtensionPointName<GrCallExpressionTypeCalculator> EP_NAME = ExtensionPointName.create("org.intellij.groovy.callExpressionTypeCalculator");
 
   @Nullable
-  public abstract PsiType calculateReturnType(@NotNull GrMethodCall callExpression);
-
-  @Nullable
-  protected static PsiMethod resolveMethodCall(@NotNull GrMethodCall callExpression) {
-    GrExpression eInvokedExpression = callExpression.getInvokedExpression();
-    if (!(eInvokedExpression instanceof GrReferenceExpression)) return null;
-    return resolveMethodCall((GrReferenceExpression)eInvokedExpression);
+  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @NotNull PsiMethod resolvedMethod) {
+    throw new UnsupportedOperationException();
   }
 
   @Nullable
-  protected static PsiMethod resolveMethodCall(@NotNull GrReferenceExpression invokedExpression) {
-    GroovyResolveResult[] resolveResults = invokedExpression.multiResolve(false);
-    if (resolveResults.length == 0) {
-      return null;
+  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @Nullable PsiElement resolve) {
+    if (resolve instanceof PsiMethod) {
+      return calculateReturnType(callExpression, (PsiMethod)resolve);
     }
+    return null;
+  }
 
-    PsiElement eMethod = resolveResults[0].getElement();
-    if (!(eMethod instanceof PsiMethod)) return null;
-
-    return (PsiMethod)eMethod;
+  @Nullable
+  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, GroovyResolveResult[] resolveResults) {
+    return calculateReturnType(callExpression, resolveResults.length == 1 ? resolveResults[0].getElement() : null);
   }
 }

@@ -80,16 +80,15 @@ public class ResolveCache {
   public void clearCache(boolean isPhysical) {
     myClearCount.incrementAndGet();
     if (isPhysical) {
-      myPolyVariantResolveMaps[0].clear();
-      myPolyVariantResolveMaps[1].clear();
-      myResolveMaps[0].clear();
-      myResolveMaps[1].clear();
+      myPolyVariantResolveMaps[2].clear();
+      myPolyVariantResolveMaps[3].clear();
+      myResolveMaps[2].clear();
+      myResolveMaps[3].clear();
     }
-
-    myPolyVariantResolveMaps[2].clear();
-    myPolyVariantResolveMaps[3].clear();
-    myResolveMaps[2].clear();
-    myResolveMaps[3].clear();
+    myPolyVariantResolveMaps[0].clear();
+    myPolyVariantResolveMaps[1].clear();
+    myResolveMaps[0].clear();
+    myResolveMaps[1].clear();
   }
 
   @Nullable

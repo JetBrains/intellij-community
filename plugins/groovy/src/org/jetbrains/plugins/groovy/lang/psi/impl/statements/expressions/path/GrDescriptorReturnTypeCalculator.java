@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -68,10 +69,7 @@ public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalcul
   }
 
   @Override
-  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression) {
-    PsiMethod method = callExpression.resolveMethod();
-    if (method == null) return null;
-
+  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @NotNull PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return null;
 
@@ -114,6 +112,6 @@ public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalcul
       return type.createArrayType();
     }
 
-    return JavaPsiFacade.getElementFactory(callExpression.getProject()).createTypeByFQClassName(typeName, callExpression.getResolveScope());
+    return TypesUtil.createType(typeName, callExpression);
   }
 }

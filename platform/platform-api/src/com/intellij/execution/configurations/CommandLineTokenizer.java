@@ -34,6 +34,10 @@ public class CommandLineTokenizer extends StringTokenizer {
         return (String) myTokens.get(myCurrentToken++);
     }
 
+    public String peekNextToken() {
+        return (String) myTokens.get(myCurrentToken);
+    }
+
     public int countTokens() {
         return myTokens.size() - myCurrentToken;
     }
