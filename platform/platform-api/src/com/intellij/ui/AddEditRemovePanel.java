@@ -24,6 +24,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -162,6 +163,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
 
     myTable = new Table(myTableModel);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    UIUtil.setTableDecorationEnabled(myTable);
     myTable.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e){
         if (e.getClickCount() == 2) doEdit();

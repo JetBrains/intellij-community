@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -105,6 +106,11 @@ public class GrMapType extends GrLiteralClassType {
   @NotNull
   public String getClassName() {
     return StringUtil.getShortName(myJavaClassName);
+  }
+
+  @Nullable
+  public PsiType getTypeByStringKey(String key) {
+    return myStringEntries.get(key);
   }
 
   public Set<String> getStringKeys() {

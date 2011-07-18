@@ -59,6 +59,10 @@ public class ToolbarDecorator implements DataProvider {
   private Runnable myRemoveAction;
   private Runnable myUpAction;
   private Runnable myDownAction;
+  private String myAddName;
+  private String myRemoveName;
+  private String myMoveUpName;
+  private String myMoveDownName;
   private AddRemoveUpDownPanel myPanel;
   private JList myList;
 
@@ -327,12 +331,33 @@ public class ToolbarDecorator implements DataProvider {
     return this;
   }
 
+  public ToolbarDecorator setAddActionName(String name) {
+    myAddName = name;
+    return this;
+  }
+
+  public ToolbarDecorator setRemoveActionName(String name) {
+    myRemoveName = name;
+    return this;
+  }
+
+  public ToolbarDecorator setMoveUpActionName(String name) {
+    myMoveUpName = name;
+    return this;
+  }
+
+  public ToolbarDecorator setMoveDownActionName(String name) {
+    myMoveDownName = name;
+    return this;
+  }
+
   public JPanel createPanel() {
     final AddRemoveUpDownPanel.Buttons[] buttons = getButtons();
     myPanel = new AddRemoveUpDownPanel(createListener(),
                              myTable == null ? myList : myTable,
                              myToolbarPosition == ActionToolbarPosition.TOP || myToolbarPosition == ActionToolbarPosition.BOTTOM,
                              myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
+                             myAddName, myRemoveName, myMoveUpName, myMoveDownName,
                              buttons);
     myPanel.setBorder(myBorder);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable == null ? myList : myTable);

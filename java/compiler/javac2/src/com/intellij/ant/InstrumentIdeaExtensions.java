@@ -21,7 +21,7 @@ package com.intellij.ant;
  */
 public class InstrumentIdeaExtensions extends Javac2 {
     /**
-     * Cusomize behavior of {@link Javac2} disabiling compilation of java classes.
+     * Customize behavior of {@link Javac2} disabling compilation of java classes.
      *
      * @return false, meaning that java classes are not compiled
      * @see com.intellij.ant.Javac2#areJavaClassesCompiled()
