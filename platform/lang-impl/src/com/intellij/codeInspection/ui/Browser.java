@@ -32,6 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -472,14 +474,18 @@ public class Browser extends JPanel {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
+            final PsiModificationTracker tracker = PsiManager.getInstance(myView.getProject()).getModificationTracker();
+            final long startCount = tracker.getModificationCount();
             CommandProcessor.getInstance().markCurrentCommandAsGlobal(myView.getProject());
             //CCE here means QuickFix was incorrectly inherited
             fix.applyFix(myView.getProject(), descriptor);
-            final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
-            if (tool != null) {
-              tool.ignoreProblem(element, descriptor, idx);
+            if (startCount != tracker.getModificationCount()) {
+              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
+              if (tool != null) {
+                tool.ignoreProblem(element, descriptor, idx);
+              }
+              myView.updateView(false);
             }
-            myView.updateView(false);
           }
         });
       }
