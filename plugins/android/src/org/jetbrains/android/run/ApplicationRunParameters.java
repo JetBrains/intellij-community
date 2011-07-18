@@ -18,7 +18,6 @@ package org.jetbrains.android.run;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
@@ -51,20 +50,7 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
   private JRadioButton myDoNothingButton;
   private JCheckBox myDeployAndInstallCheckBox;
 
-  private final ConfigurationModuleSelector myModuleSelector;
-
-  private class ActivityClassFilter implements ClassFilter {
-    public boolean isAccepted(PsiClass c) {
-      Module module = myModuleSelector.getModule();
-      if (module != null) {
-        if (AndroidUtils.isActivityLaunchable(module, c)) return true;
-      }
-      return false;
-    }
-  }
-
   ApplicationRunParameters(final Project project, final ConfigurationModuleSelector moduleSelector) {
-    myModuleSelector = moduleSelector;
     myActivityField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -81,7 +67,7 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
         PsiClass initialSelection = facade.findClass(myActivityField.getText(), module.getModuleWithDependenciesScope());
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
           .createInheritanceClassChooser("Select activity class", module.getModuleWithDependenciesScope(), activityBaseClass,
-                                         initialSelection, new ActivityClassFilter());
+                                         initialSelection, null);
         chooser.showDialog();
         PsiClass selClass = chooser.getSelected();
         if (selClass != null) {
