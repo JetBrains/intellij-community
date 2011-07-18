@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   private static final Class[] IMPLICIT_WRAP_CLASSES = new Class[]{
     PsiComment.class,
-    PyStringLiteralExpression.class,
     PyParenthesizedExpression.class,
     PyListCompExpression.class,
     PyDictCompExpression.class,
@@ -73,6 +72,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (element == null) {
       return Result.Continue;
     }
+    if (PyTokenTypes.TRIPLE_NODES.contains(element.getNode().getElementType()) ||
+      element.getNode().getElementType() == PyTokenTypes.DOCSTRING)
+      return Result.Continue;
 
     if (!PyCodeInsightSettings.getInstance().INSERT_BACKSLASH_ON_WRAP) {
       return Result.Continue;
