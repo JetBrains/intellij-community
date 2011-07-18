@@ -2,7 +2,7 @@ import sys
 
 has_pytest = False
 #there is the difference between 1.3.4 and 2.0.2 versions
-#Since version 1.4, the testing tool “py.test” is part of its own pytest distribution.
+#Since version 1.4, the testing tool "py.test" is part of its own pytest distribution.
 try:
   import pytest
   has_pytest = True
