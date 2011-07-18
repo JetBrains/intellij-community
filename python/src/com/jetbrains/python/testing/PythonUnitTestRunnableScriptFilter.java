@@ -14,7 +14,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonUnitTestRunnableScriptFilter implements RunnableScriptFilter {
   public boolean isRunnableScript(PsiFile script, @NotNull Module module, Location location) {
-    return script instanceof PyFile && PythonUnitTestUtil.getTestCaseClassesFromFile((PyFile) script).size() > 0 && !isIfNameMain(location);
+    return script instanceof PyFile && PythonUnitTestUtil.getTestCaseClassesFromFile((PyFile) script).size() > 0
+           && !isIfNameMain(location) && TestRunnerService.getInstance(script.getProject()).getProjectConfiguration().
+      equals(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
   }
 
   public static boolean isIfNameMain(Location location) {

@@ -10,6 +10,8 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.run.RunnableScriptFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyTestRunnableScriptFilter implements RunnableScriptFilter {
   public boolean isRunnableScript(PsiFile script, @NotNull Module module, Location location) {
-    return isPyTestInstalled(module) && isPyTestScript(script);
+    return isPyTestInstalled(module) && isPyTestScript(script) &&
+      TestRunnerService.getInstance(script.getProject()).getProjectConfiguration().
+        equals(PythonTestConfigurationsModel.PY_TEST_NAME);
   }
 
   private static boolean isPyTestInstalled(Module module) {
