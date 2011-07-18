@@ -28,7 +28,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
@@ -581,7 +584,6 @@ public class ExpectedTypesProvider {
       }
       PsiExpression anotherExpr = op1.equals(myExpr) ? op2 : op1;
       PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
-      PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
       IElementType i = expr.getOperationTokenType();
       if (i == JavaTokenType.MINUS ||
           i == JavaTokenType.ASTERISK ||
@@ -626,36 +628,8 @@ public class ExpectedTypesProvider {
         }
       }
       else if (i == JavaTokenType.EQEQ || i == JavaTokenType.NE) {
-        if (anotherType == null) {
-          myResult = ExpectedTypeInfo.EMPTY_ARRAY;
-        }
-        else {
-          ExpectedTypeInfoImpl info;
-          if (anotherType instanceof PsiPrimitiveType) {
-            if (PsiType.BOOLEAN.equals(anotherType)) {
-              info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, TailType.NONE);
-            }
-            else if (PsiType.NULL.equals(anotherType)) {
-              PsiType objectType = factory.createTypeByFQClassName("java.lang.Object", myExpr.getResolveScope());
-              info = createInfoImpl(objectType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, objectType, TailType.NONE);
-            }
-            else {
-              info = createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE, anotherType, TailType.NONE);
-            }
-          }
-          else {
-            info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, TailType.NONE);
-          }
-
-          if (anotherExpr instanceof PsiReferenceExpression) {
-            PsiElement refElement = ((PsiReferenceExpression)anotherExpr).resolve();
-            if (refElement instanceof PsiVariable) {
-              info.expectedName = getPropertyName((PsiVariable)refElement);
-            }
-          }
-
-          myResult = new ExpectedTypeInfo[]{info};
-        }
+        ExpectedTypeInfo info = getEqualsType(anotherExpr);
+        myResult = info == null ? ExpectedTypeInfo.EMPTY_ARRAY : new ExpectedTypeInfo[]{info};
       }
       else if (i == JavaTokenType.LTLT || i == JavaTokenType.GTGT || i == JavaTokenType.GTGTGT) {
         if (anotherType == null) {
@@ -685,6 +659,40 @@ public class ExpectedTypesProvider {
           myResult = new ExpectedTypeInfo[]{info};
         }
       }
+    }
+
+    @Nullable
+    private static ExpectedTypeInfo getEqualsType(@Nullable PsiExpression anotherExpr) {
+      PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
+      if (anotherType == null) {
+        return null;
+      }
+
+      ExpectedTypeInfoImpl info;
+      if (anotherType instanceof PsiPrimitiveType) {
+        if (PsiType.BOOLEAN.equals(anotherType)) {
+          info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, TailType.NONE);
+        }
+        else if (PsiType.NULL.equals(anotherType)) {
+          PsiType objectType = PsiType.getJavaLangObject(anotherExpr.getManager(), anotherExpr.getResolveScope());
+          info = createInfoImpl(objectType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, objectType, TailType.NONE);
+        }
+        else {
+          info = createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE, anotherType, TailType.NONE);
+        }
+      }
+      else {
+        info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, TailType.NONE);
+      }
+
+      if (anotherExpr instanceof PsiReferenceExpression) {
+        PsiElement refElement = ((PsiReferenceExpression)anotherExpr).resolve();
+        if (refElement instanceof PsiVariable) {
+          info.expectedName = getPropertyName((PsiVariable)refElement);
+        }
+      }
+
+      return info;
     }
 
     @Override public void visitPrefixExpression(PsiPrefixExpression expr) {
@@ -984,7 +992,7 @@ public class ExpectedTypesProvider {
       PsiType parameterType = getParameterType(parameter, substitutor);
 
       TailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, parameters);
-      PsiType defaultType = getDefaultType(method, substitutor, parameterType, argument);
+      PsiType defaultType = getDefaultType(method, substitutor, parameterType, argument, args);
 
       ExpectedTypeInfoImpl info = createInfoImpl(parameterType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, defaultType, tailType);
       info.setInsertExplicitTypeParams(true);
@@ -1043,7 +1051,7 @@ public class ExpectedTypesProvider {
 
     @Nullable
     private static PsiType getDefaultType(final PsiMethod method, final PsiSubstitutor substitutor, final PsiType parameterType,
-                                          final PsiExpression argumentList) {
+                                          final PsiExpression argument, PsiExpression[] args) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return parameterType;
 
@@ -1067,7 +1075,7 @@ public class ExpectedTypesProvider {
       if ("equals".equals(name)) {
         final PsiType type = checkMethod(method, CommonClassNames.JAVA_LANG_OBJECT, new NullableFunction<PsiClass, PsiType>() {
           public PsiType fun(final PsiClass psiClass) {
-            final PsiElement parent = argumentList.getParent().getParent();
+            final PsiElement parent = argument.getParent().getParent();
             if (parent instanceof PsiMethodCallExpression) {
               final PsiMethodCallExpression expression = (PsiMethodCallExpression)parent;
               final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
@@ -1083,6 +1091,12 @@ public class ExpectedTypesProvider {
           }
         });
         if (type != null) return type;
+      }
+      if (("assertEquals".equals(name) || "assertSame".equals(name)) && method.getParameterList().getParametersCount() == 2 && args.length == 2) {
+        ExpectedTypeInfo info = getEqualsType(args[0] == argument ? args[1] : args[0]);
+        if (info != null) {
+          return info.getDefaultType();
+        }
       }
       return parameterType;
     }
