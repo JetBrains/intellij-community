@@ -15,6 +15,6 @@ public class FlushingDaemon {
   private FlushingDaemon() {}
 
   public static ScheduledFuture<?> everyFiveSeconds(Runnable r) {
-    return pool.scheduleAtFixedRate(r, 5, 5, TimeUnit.SECONDS);
+    return pool.scheduleWithFixedDelay(r, 5, 5, TimeUnit.SECONDS);
   }
 }
