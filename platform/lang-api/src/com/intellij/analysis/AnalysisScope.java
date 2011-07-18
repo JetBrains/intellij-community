@@ -184,6 +184,7 @@ public class AnalysisScope {
               return;
             }
           }
+          if (!ProblemHighlightFilter.shouldHighlightFile(file)) return;
           myFilesSet.add(virtualFile);
           if (indicator != null) {
             indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
@@ -363,7 +364,6 @@ public class AnalysisScope {
       @SuppressWarnings({"SimplifiableIfStatement"})
       public boolean processFile(final VirtualFile fileOrDir) {
         if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;
-        if (index.isInLibraryClasses(fileOrDir) || index.isInLibrarySource(fileOrDir)) return true;
         if (!fileOrDir.isDirectory()) {
           return AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
         }
