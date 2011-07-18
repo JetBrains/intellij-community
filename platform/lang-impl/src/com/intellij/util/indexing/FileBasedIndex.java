@@ -17,7 +17,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
@@ -50,6 +49,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
@@ -82,7 +82,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -313,19 +312,15 @@ public class FileBasedIndex implements ApplicationComponent {
       });
       //FileUtil.createIfDoesntExist(workInProgressFile);
       saveRegisteredIndices(myIndices.keySet());
-      myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+      myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
         int lastModCount = 0;
         public void run() {
           if (lastModCount == myLocalModCount) {
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              public void run() {
-                flushAllIndices();
-              }
-            });
+            flushAllIndices();
             lastModCount = myLocalModCount;
           }
         }
-      }, 5000, 5000, TimeUnit.MILLISECONDS);
+      });
 
     }
   }
@@ -621,31 +616,24 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private volatile boolean flushRunning = false;
   private void flushAllIndices() {
-    if (flushRunning || HeavyProcessLatch.INSTANCE.isRunning()) return;
-    flushRunning = true;
+    if (HeavyProcessLatch.INSTANCE.isRunning()) return;
 
-    try {
-      IndexingStamp.flushCache();
-      for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
-        if (HeavyProcessLatch.INSTANCE.isRunning()) {
-          return;
-        }
-        try {
-          final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-          if (index != null) {
-            index.flush();
-          }
-        }
-        catch (StorageException e) {
-          LOG.info(e);
-          requestRebuild(indexId);
+    IndexingStamp.flushCache();
+    for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
+      if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        return;
+      }
+      try {
+        final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+        if (index != null) {
+          index.flush();
         }
       }
-    }
-    finally {
-       flushRunning = false;
+      catch (StorageException e) {
+        LOG.info(e);
+        requestRebuild(indexId);
+      }
     }
   }
 
