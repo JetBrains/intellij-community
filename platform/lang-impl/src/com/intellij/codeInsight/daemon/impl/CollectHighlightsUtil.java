@@ -172,6 +172,6 @@ public class CollectHighlightsUtil {
     final VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return false;
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-    return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
+    return !(projectFileIndex.isInSource(file) && !projectFileIndex.isInLibrarySource(file));
   }
 }
