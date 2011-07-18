@@ -49,11 +49,21 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private void initBtree() {
-    btree = new IntToIntBtree(PAGE_SIZE, myStorage, myRootNodeStart) {
+    btree = new IntToIntBtree(PAGE_SIZE, myRootNodeStart) {
 
       @Override
       protected int allocPage() {
         return PersistentBTreeEnumerator.this.allocPage();
+      }
+
+      @Override
+      protected void saveBytes(int address, byte[] buffer, int offset, int length) {
+        myStorage.put(address, buffer, offset, length);
+      }
+
+      @Override
+      protected void loadBytes(int address, byte[] buffer, int offset, int length) {
+        myStorage.get(address, buffer, offset, length);
       }
 
       @Override

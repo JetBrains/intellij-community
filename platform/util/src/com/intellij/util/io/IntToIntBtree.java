@@ -14,7 +14,6 @@ abstract class IntToIntBtree {
   static final boolean doSanityCheck = false;
   static final boolean doDump = false;
 
-  private final ResizeableMappedFile storage;
   final int pageSize;
   private final short maxInteriorNodes;
   final BtreeIndexNodeView root;
@@ -28,10 +27,9 @@ abstract class IntToIntBtree {
   private final TIntObjectHashMap<byte[]> pagesCache = new TIntObjectHashMap<byte[]>(100);
   private boolean isLarge = true;
 
-  public IntToIntBtree(int _pageSize, ResizeableMappedFile _storage, int rootAdress) {
+  public IntToIntBtree(int _pageSize, int rootAdress) {
     pageSize = _pageSize;
     buffer = new byte[_pageSize];
-    storage = _storage;
     root = new BtreeIndexNodeView(this);
     root.setAddress(rootAdress);
 
@@ -48,6 +46,10 @@ abstract class IntToIntBtree {
     ++pagesCount;
     return address;
   }
+
+  protected abstract void saveBytes(int address, byte[] buffer, int offset, int length);
+
+  protected abstract void loadBytes(int address, byte[] buffer, int offset, int length);
 
   public int get(int key) {
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
@@ -157,11 +159,11 @@ abstract class IntToIntBtree {
     }
 
     protected final void getBytes(int address, byte[] dst, int offset, int length) {
-      if (this.buffer == null) load();
+      if (buffer == null) load();
 
       int base = address - this.address;
       for(int i = 0; i < length; ++i) {
-        dst[offset + i] = this.buffer[base + i];
+        dst[offset + i] = buffer[base + i];
       }
     }
 
@@ -171,7 +173,7 @@ abstract class IntToIntBtree {
         buffer = bytes;
       } else {
         buffer = new byte[btree.pageSize];
-        btree.storage.get(this.address, this.buffer, 0, btree.pageSize);
+        btree.loadBytes(address, buffer, 0, btree.pageSize);
         btree.pagesCache.put(address, buffer);
       }
     }
@@ -186,9 +188,7 @@ abstract class IntToIntBtree {
 
     void sync() {
       if (buffer != null) {
-        // TODO this is still too often, fix it
-        btree.storage.put(address, buffer, 0, buffer.length);
-        btree.pagesCache.put(address, buffer);
+        btree.saveBytes(address, buffer, 0, buffer.length);
       }
     }
 
