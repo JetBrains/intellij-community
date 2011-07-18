@@ -40,7 +40,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected static final int NULL_ID = 0;
 
   private static final int DIRTY_MAGIC = 0xbabe0589;
-  private static final int VERSION = 6;
+  private static final int VERSION = 5;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
 
   private static final int META_DATA_OFFSET = 4;
