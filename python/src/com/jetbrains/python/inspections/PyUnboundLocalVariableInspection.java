@@ -106,18 +106,15 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (variable == null) {
           boolean resolves2LocalVariable = false;
           boolean resolve2Scope = true;
+          boolean isBuiltin = false;
           for (ResolveResult result : node.getReference().multiResolve(true)) {
             final PsiElement element = result.getElement();
-            if (element == null){
+            if (element == null) {
               continue;
             }
-            // Ignore builtin elements here
-            final PsiFile containingFile = element.getContainingFile();
-            if (containingFile != null) {
-              final String fileName = containingFile.getName();
-              if (PyBuiltinCache.BUILTIN_FILE.equals(fileName) || PyBuiltinCache.BUILTIN_FILE_3K.equals(fileName)){
-                continue;
-              }
+            if (PyBuiltinCache.getInstance(node).hasInBuiltins(element)) {
+              isBuiltin = true;
+              continue;
             }
             if (PyAssignmentStatementNavigator.getStatementByTarget(element) != null ||
                 PyForStatementNavigator.getPyForStatementByIterable(element) != null ||
@@ -136,11 +133,14 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
               return;
             }
             if (owner instanceof PyClass) {
-              if (ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {
+              if (ScopeUtil.getDeclarationScopeOwner(owner, name) != null || isBuiltin) {
                 return;
               }
             }
             if (owner instanceof PyFile) {
+              if (isBuiltin) {
+                return;
+              }
               registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
             }
             else {
