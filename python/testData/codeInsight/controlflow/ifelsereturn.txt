@@ -3,8 +3,8 @@
 2(3,12) READ ACCESS: markup
 3(4) element: PyStatementList. Condition: markup:true
 4(5) element: PyTryExceptStatement
-5(6) element: PyTryPart
-6(7) element: PyReturnStatement
+5(6,8) element: PyTryPart
+6(7,8) element: PyReturnStatement
 7(8,15) READ ACCESS: renderer
 8(9) element: PyExceptPart
 9(10) READ ACCESS: KeyError
