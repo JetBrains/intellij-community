@@ -129,6 +129,35 @@ class Test {
     doTest(before, toPaste, expected)
   }
 
+  void testPastingBlockEndedByLineFeed() {
+    def before = '''\
+class Test {
+    void test() {
+        if (true) {
+        <caret>}
+    }
+}\
+'''
+
+    def toPaste =
+    '''\
+int i = 1;
+'''
+
+
+    def expected = '''\
+class Test {
+    void test() {
+        if (true) {
+            int i = 1;
+        }
+    }
+}\
+'''
+    doTest(before, toPaste, expected)
+  }
+
+  
   void testPasteAtZeroColumn() {
     def before = '''\
 class Test {
