@@ -842,7 +842,7 @@ public class PluginManager {
            descriptor = loadDescriptorFromJar(f, fileName);
            if (descriptor != null) {
              descriptor.setPath(file);
-             return descriptor;
+             break;
            }
 //           getLogger().warn("Cannot load descriptor from " + f.getName() + "");
          }
