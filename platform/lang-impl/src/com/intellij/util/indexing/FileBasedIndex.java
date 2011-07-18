@@ -316,14 +316,14 @@ public class FileBasedIndex implements ApplicationComponent {
       myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
         int lastModCount = 0;
         public void run() {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            public void run() {
-              if (lastModCount == myLocalModCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
+          if (lastModCount == myLocalModCount) {
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              public void run() {
                 flushAllIndices();
               }
-              lastModCount = myLocalModCount;
-            }
-          });
+            });
+            lastModCount = myLocalModCount;
+          }
         }
       }, 5000, 5000, TimeUnit.MILLISECONDS);
 
@@ -621,22 +621,31 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
+  private volatile boolean flushRunning = false;
   private void flushAllIndices() {
-    IndexingStamp.flushCache();
-    for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
-        return;
-      }
-      try {
-        final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-        if (index != null) {
-          index.flush();
+    if (flushRunning || HeavyProcessLatch.INSTANCE.isRunning()) return;
+    flushRunning = true;
+
+    try {
+      IndexingStamp.flushCache();
+      for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
+        if (HeavyProcessLatch.INSTANCE.isRunning()) {
+          return;
+        }
+        try {
+          final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+          if (index != null) {
+            index.flush();
+          }
+        }
+        catch (StorageException e) {
+          LOG.info(e);
+          requestRebuild(indexId);
         }
       }
-      catch (StorageException e) {
-        LOG.info(e);
-        requestRebuild(indexId);
-      }
+    }
+    finally {
+       flushRunning = false;
     }
   }
 

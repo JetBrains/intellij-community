@@ -309,14 +309,14 @@ public class FSRecords implements Forceable {
         int lastModCount = 0;
 
         public void run() {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            public void run() {
-              if (lastModCount == ourLocalModificationCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
+          if (lastModCount == ourLocalModificationCount) {
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              public void run() {
                 flushSome();
               }
-              lastModCount = ourLocalModificationCount;
-            }
-          });
+            });
+          }
+          lastModCount = ourLocalModificationCount;
         }
       }, 5000, 5000, TimeUnit.MILLISECONDS);
     }
@@ -336,6 +336,8 @@ public class FSRecords implements Forceable {
     }
 
     public static void flushSome() {
+      if (!isDirty() || HeavyProcessLatch.INSTANCE.isRunning()) return;
+
       synchronized (lock) {
         if (myFlushingFuture == null) {
           return; // avoid NPE when close has already taken place
@@ -508,7 +510,6 @@ public class FSRecords implements Forceable {
   public static void deleteRecordRecursively(int id) {
     synchronized (lock) {
       try {
-        DbConnection.markDirty();
         incModCount(id);
         doDeleteRecursively(id);
       }
@@ -764,6 +765,7 @@ public class FSRecords implements Forceable {
   }
 
   private static void incModCount(int id) {
+    DbConnection.markDirty();
     ourLocalModificationCount++;
     final int count = getModCount() + 1;
     getRecords().putInt(HEADER_GLOBAL_MODCOUNT_OFFSET, count);
@@ -810,7 +812,6 @@ public class FSRecords implements Forceable {
 
     synchronized (lock) {
       try {
-        DbConnection.markDirty();
         incModCount(id);
         putRecordInt(id, PARENT_OFFSET, parent);
       }
@@ -835,7 +836,6 @@ public class FSRecords implements Forceable {
   public static void setName(int id, String name) {
     synchronized (lock) {
       try {
-        DbConnection.markDirty();
         incModCount(id);
         putRecordInt(id, NAME_OFFSET, getNames().enumerate(name));
       }
@@ -855,7 +855,6 @@ public class FSRecords implements Forceable {
     synchronized (lock) {
       try {
         if (markAsChange) {
-          DbConnection.markDirty();
           incModCount(id);
         }
         putRecordInt(id, FLAGS_OFFSET, flags);
@@ -875,7 +874,6 @@ public class FSRecords implements Forceable {
   public static void setLength(int id, long len) {
     synchronized (lock) {
       try {
-        DbConnection.markDirty();
         incModCount(id);
         getRecords().putLong(getOffset(id, LENGTH_OFFSET), len);
       }
@@ -894,7 +892,6 @@ public class FSRecords implements Forceable {
   public static void setTimestamp(int id, long value) {
     synchronized (lock) {
       try {
-        DbConnection.markDirty();
         incModCount(id);
         getRecords().putLong(getOffset(id, TIMESTAMP_OFFSET), value);
       }
@@ -1176,7 +1173,6 @@ public class FSRecords implements Forceable {
     public void writeBytes(ByteSequence bytes, int fileId) throws IOException {
       final int page;
       synchronized (lock) {
-        DbConnection.markDirty();
         incModCount(fileId);
         page = findOrCreatePage();
       }
