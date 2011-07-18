@@ -43,11 +43,10 @@ import java.util.Set;
  */
 public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCalculator {
   @Override
-  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression) {
+  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, GroovyResolveResult[] resolveResults) {
     GrExpression invoked = callExpression.getInvokedExpression();
     if (invoked instanceof GrReferenceExpression) {
       GrReferenceExpression refExpr = (GrReferenceExpression) invoked;
-      final GroovyResolveResult[] resolveResults = refExpr.multiResolve(false);
       PsiManager manager = callExpression.getManager();
       GlobalSearchScope scope = callExpression.getResolveScope();
       PsiType result = null;
