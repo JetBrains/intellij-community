@@ -186,10 +186,12 @@ public class ToolbarDecorator implements DataProvider {
     myUpAction = new Runnable() {
       public void run() {
         TableUtil.stopEditing(table);
-        int index = table.getSelectedRow();
-        if (0 < index && index < myTableModel.getRowCount()) {
-          tableModel.exchangeRows(index, index - 1);
-          table.setRowSelectionInterval(index - 1, index - 1);
+        final int[] indexes = table.getSelectedRows();
+        for (int index : indexes) {
+          if (0 < index && index < myTableModel.getRowCount()) {
+            tableModel.exchangeRows(index, index - 1);
+            table.setRowSelectionInterval(index - 1, index - 1);
+          }
         }
         table.requestFocus();
       }
@@ -198,10 +200,12 @@ public class ToolbarDecorator implements DataProvider {
     myDownAction = new Runnable() {
       public void run() {
         TableUtil.stopEditing(table);
-        int index = table.getSelectedRow();
-        if (0 <= index && index < myTableModel.getRowCount() - 1) {
-          tableModel.exchangeRows(index, index + 1);
-          table.setRowSelectionInterval(index + 1, index + 1);
+        final int[] indexes = table.getSelectedRows();
+        for (int index : indexes) {
+          if (0 <= index && index < myTableModel.getRowCount() - 1) {
+            tableModel.exchangeRows(index, index + 1);
+            table.setRowSelectionInterval(index + 1, index + 1);
+          }
         }
         table.requestFocus();
       }
@@ -231,9 +235,10 @@ public class ToolbarDecorator implements DataProvider {
                                          final AddRemoveUpDownPanel p) {
     if (table.isEnabled() && p != null) {
       final int index = table.getSelectedRow();
-      if (0 <= index && index < ((TableModel)tableModel).getRowCount()) {
-        final boolean downEnable = index < ((TableModel)tableModel).getRowCount() - 1;
-        final boolean upEnable = index > 0;
+      final int size = ((TableModel)tableModel).getRowCount();
+      if (0 <= index && index < size) {
+        final boolean downEnable = table.getSelectionModel().getMaxSelectionIndex() < size - 1;
+        final boolean upEnable = table.getSelectionModel().getMinSelectionIndex() > 0;
         p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, true);
         p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, upEnable);
         p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, downEnable);
