@@ -24,7 +24,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -52,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -289,6 +287,10 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       myEditor.putUserData(ACTIVE_INTRODUCE, null);
     }
     myEditor.getDocument().removeDocumentListener(myDocumentAdapter);
+    final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
+    if (isRestart == null || !isRestart.booleanValue()) {
+      EditorFactory.getInstance().releaseEditor(myPreview);
+    }
     super.finish();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final V variable = getVariable();
