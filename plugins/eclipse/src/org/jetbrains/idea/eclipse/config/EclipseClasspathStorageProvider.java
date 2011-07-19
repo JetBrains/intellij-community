@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.eclipse.config;
 
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.*;
@@ -83,7 +84,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
     final String output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
     final String contentRoot = getContentRoot(model);
-    if (output == null || !StringUtil.startsWith(VfsUtil.urlToPath(output), contentRoot)) {
+    if (output == null || !StringUtil.startsWith(VfsUtil.urlToPath(output), contentRoot) && PathMacroManager.getInstance(model.getModule()).collapsePath(output).equals(output)) {
       throw new ConfigurationException("Module \'" + moduleName + "\' output path is incompatible with eclipse format which supports output under content root only.\nPlease make sure that \"Inherit project compile output path\" is not selected");
     }
   }
