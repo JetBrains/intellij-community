@@ -45,7 +45,7 @@ public class JobUtil {
                                                       boolean failFastOnAcquireReadAction) throws ProcessCanceledException {
     final Job<String> job = new JobImpl<String>(Job.DEFAULT_PRIORITY, failFastOnAcquireReadAction);
 
-    final int chunkSize = Math.max(1, things.size() / JobSchedulerImpl.CORES_COUNT / 100);
+    final int chunkSize = Math.max(1, things.size() / JobSchedulerImpl.CORES_COUNT / 20);
     for (int i = 0; i < things.size(); i += chunkSize) {
       // this job chunk is i..i+chunkSize-1
       final int finalI = i;
