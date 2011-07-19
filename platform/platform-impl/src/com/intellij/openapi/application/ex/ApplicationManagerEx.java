@@ -21,8 +21,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.Splash;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -32,8 +34,13 @@ public class ApplicationManagerEx extends ApplicationManager {
     return (ApplicationEx) ourApplication;
   }
 
-  public static void createApplication(boolean internal, boolean isUnitTestMode, boolean isHeadlessMode, boolean isCommandline, @NotNull @NonNls String appName) {
-    new ApplicationImpl(internal, isUnitTestMode, isHeadlessMode, isCommandline, appName);
+  public static void createApplication(boolean internal,
+                                       boolean isUnitTestMode,
+                                       boolean isHeadlessMode,
+                                       boolean isCommandline,
+                                       @NotNull @NonNls String appName,
+                                       @Nullable Splash splash) {
+    new ApplicationImpl(internal, isUnitTestMode, isHeadlessMode, isCommandline, appName, splash);
   }
 
   public static void setApplication(Application instance) {

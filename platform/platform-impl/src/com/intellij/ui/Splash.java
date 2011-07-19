@@ -17,13 +17,14 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class Splash extends JDialog {
+public class Splash extends JDialog implements Consumer<String> {
   private final Icon myImage;
   private final JLabel myLabel;
 
@@ -51,23 +52,40 @@ public class Splash extends JDialog {
     myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
   }
 
+  @Override
+  public void consume(String message) {
+    Graphics g = getGraphics();
+    UIUtil.applyRenderingHints(g);
+    g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.PLAIN, 10));
+
+    int y = getHeight() - 21;
+    int brightness = 220;
+    g.setColor(new Color(brightness, brightness, brightness));
+    int x = 20;
+    g.fillRect(1, y, 398, 20);
+    g.setColor(Color.DARK_GRAY);
+//    g.setXORMode(Color.WHITE);
+    g.drawString(message, x, getHeight() - 8);
+  }
+
   public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor) {
-    if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
+    if (!ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
+      return false;
+    }
+    LicensingFacade provider = LicensingFacade.getInstance();
+    if (provider != null) {
       UIUtil.applyRenderingHints(g);
       g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
       g.setColor(textColor);
-      LicensingFacade provider = LicensingFacade.getInstance();
-      if (provider != null) {
-        final String licensedToMessage = provider.getLicensedToMessage();
-        final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
-        g.drawString(licensedToMessage, x + 21, y + height - 49);
-        if (licenseRestrictionsMessages.size() > 0) {
-          g.drawString(licenseRestrictionsMessages.get(0), x + 21, y + height - 33);
-        }
+      final String licensedToMessage = provider.getLicensedToMessage();
+      final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
+      int indent = 20;
+      g.drawString(licensedToMessage, x + indent, y + height - 49);
+      if (licenseRestrictionsMessages.size() > 0) {
+        g.drawString(licenseRestrictionsMessages.get(0), x + indent, y + height - 33);
       }
-      return true;
     }
-    return false;
+    return true;
   }
 
   private static final class MyIcon implements Icon {

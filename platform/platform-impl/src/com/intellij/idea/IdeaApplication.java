@@ -76,11 +76,12 @@ public class IdeaApplication {
     else {
       System.setProperty("sun.awt.noerasebackground","true");
       patchSystem();
+      Splash splash = null;
       if (myArgs.length == 0) {
         myStarter = getStarter();
-        ((IdeStarter)myStarter).showSplash(myArgs);
+        splash = ((IdeStarter)myStarter).showSplash(myArgs);
       }
-      ApplicationManagerEx.createApplication(isInternal, false, false, false, "idea");
+      ApplicationManagerEx.createApplication(isInternal, false, false, false, "idea", splash);
     }
 
     if (myStarter == null) {
@@ -157,18 +158,21 @@ public class IdeaApplication {
       initLAF();
     }
 
-    private void showSplash(String[] args) {
+    @Nullable
+    private Splash showSplash(String[] args) {
       if (StartupUtil.shouldShowSplash(args)) {
         final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
         final SplashScreen splashScreen = getSplashScreen();
         if (splashScreen == null) {
           mySplash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
           mySplash.show();
+          return mySplash;
         }
         else {
           updateSplashScreen(appInfo, splashScreen);
         }
       }
+      return null;
     }
 
     private void updateSplashScreen(ApplicationInfoEx appInfo, SplashScreen splashScreen) {

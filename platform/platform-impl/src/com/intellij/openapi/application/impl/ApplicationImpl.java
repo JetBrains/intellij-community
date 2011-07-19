@@ -51,11 +51,13 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
+import com.intellij.ui.Splash;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
@@ -98,6 +100,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private int myInEditorPaintCounter = 0;
   private long myStartTime = 0;
+  @Nullable
+  private Splash mySplash;
   private boolean myDoNotSave;
   private volatile boolean myDisposeInProgress = false;
 
@@ -160,7 +164,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return (IApplicationStore)super.getStateStore();
   }
 
-  public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, @NotNull String appName) {
+  public ApplicationImpl(boolean isInternal,
+                         boolean isUnitTestMode,
+                         boolean isHeadless,
+                         boolean isCommandLine,
+                         @NotNull String appName,
+                         Splash splash) {
     super(null);
 
     getPicoContainer().registerComponentInstance(Application.class, this);
@@ -171,6 +180,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       Disposer.setDebugMode(true);
     }
     myStartTime = System.currentTimeMillis();
+    mySplash = splash;
     myName = appName;
     ApplicationManagerEx.setApplication(this);
 
@@ -348,6 +358,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void loadApplicationComponents() {
+    PluginManager.initPlugins(mySplash);
     final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
@@ -483,6 +494,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return null;
     }
     return super.getComponentFromContainer(interfaceClass);
+  }
+
+  @Override
+  protected synchronized Object createComponent(Class componentInterface) {
+    Object component = super.createComponent(componentInterface);
+    if (component != null && mySplash != null) {
+      mySplash.consume("Component loaded: " + StringUtil.getShortName(componentInterface));
+    }
+    return component;
   }
 
   private static void loadComponentRoamingTypes() {

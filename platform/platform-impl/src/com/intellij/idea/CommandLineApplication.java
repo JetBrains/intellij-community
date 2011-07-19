@@ -55,7 +55,7 @@ public class CommandLineApplication {
   protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, @NotNull @NonNls String appName) {
     LOG.assertTrue(ourInstance == null, "Only one instance allowed.");
     ourInstance = this;
-    ApplicationManagerEx.createApplication(isInternal, isUnitTestMode, isHeadless, true, appName);
+    ApplicationManagerEx.createApplication(isInternal, isUnitTestMode, isHeadless, true, appName, null);
   }
 
   public Object getData(String dataId) {

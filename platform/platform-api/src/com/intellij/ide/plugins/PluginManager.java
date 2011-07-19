@@ -40,6 +40,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -113,19 +114,23 @@ public class PluginManager {
    */
   public static synchronized IdeaPluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
-      long start = System.currentTimeMillis();
-      try {
-        initializePlugins();
-      }
-      catch (RuntimeException e) {
-        getLogger().error(e);
-        throw e;
-      }
-      getLogger().info(ourPlugins.length + " plugins initialized in " + (System.currentTimeMillis() - start) + " ms");
-      logPlugins();
-      ClassloaderUtil.clearJarURLCache();
+      initPlugins(null);
     }
     return ourPlugins;
+  }
+
+  public static void initPlugins(@Nullable Consumer<String> progress) {
+    long start = System.currentTimeMillis();
+    try {
+      initializePlugins(progress);
+    }
+    catch (RuntimeException e) {
+      getLogger().error(e);
+      throw e;
+    }
+    getLogger().info(ourPlugins.length + " plugins initialized in " + (System.currentTimeMillis() - start) + " ms");
+    logPlugins();
+    ClassloaderUtil.clearJarURLCache();
   }
 
   private static void logPlugins() {
@@ -198,10 +203,10 @@ public class PluginManager {
     }
   }
 
-  private static void initializePlugins() {
+  private static void initializePlugins(Consumer<String> progress) {
     configureExtensions();
     
-    final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors();
+    final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress);
 
     final Class callerClass = Reflection.getCallerClass(1);
     final ClassLoader parentLoader = callerClass.getClassLoader();
@@ -523,22 +528,22 @@ public class PluginManager {
     return classLoaders.toArray(new ClassLoader[classLoaders.size()]);
   }
 
-  public static IdeaPluginDescriptorImpl[] loadDescriptors() {
+  public static IdeaPluginDescriptorImpl[] loadDescriptors(@Nullable Consumer<String> progress) {
     if (ClassloaderUtil.isLoadingOfExternalPluginsDisabled()) {
       return IdeaPluginDescriptorImpl.EMPTY_ARRAY;
     }
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
 
-    loadDescriptors(PathManager.getPluginsPath(), result);
+    loadDescriptors(PathManager.getPluginsPath(), result, progress);
     Application application = ApplicationManager.getApplication();
     if (application == null || !application.isUnitTestMode()) {
-      loadDescriptors(PathManager.getPreinstalledPluginsPath(), result);
+      loadDescriptors(PathManager.getPreinstalledPluginsPath(), result, progress);
     }
 
     loadDescriptorsFromProperty(result);
 
-    loadDescriptorsFromClassPath(result);
+    loadDescriptorsFromClassPath(result, progress);
 
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(new IdeaPluginDescriptorImpl[result.size()]);
     try {
@@ -593,7 +598,7 @@ public class PluginManager {
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-  private static void loadDescriptorsFromClassPath(final List<IdeaPluginDescriptorImpl> result) {
+  private static void loadDescriptorsFromClassPath(final List<IdeaPluginDescriptorImpl> result, @Nullable Consumer<String> progress) {
     try {
       final Collection<URL> urls = getClassLoaderUrls();
       final String platformPrefix = System.getProperty("idea.platform.prefix");
@@ -624,6 +629,9 @@ public class PluginManager {
               pluginDescriptor.setUseCoreClassLoader(true);
             }
             result.add(pluginDescriptor);
+            if (progress != null) {
+              progress.consume("Plugin loaded: " + pluginDescriptor.getName());
+            }
           }
         }
       }
@@ -789,13 +797,16 @@ public class PluginManager {
   }
 
 
-  private static void loadDescriptors(String pluginsPath, List<IdeaPluginDescriptorImpl> result) {
+  private static void loadDescriptors(String pluginsPath, List<IdeaPluginDescriptorImpl> result, @Nullable Consumer<String> progress) {
     final File pluginsHome = new File(pluginsPath);
     final File[] files = pluginsHome.listFiles();
     if (files != null) {
       for (File file : files) {
         final IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
         if (descriptor == null) continue;
+        if (progress != null) {
+          progress.consume(descriptor.getName());
+        }
         int oldIndex = result.indexOf(descriptor);
         if (oldIndex >= 0) {
           final IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
