@@ -192,7 +192,7 @@ public class VMOptions {
 
   @NotNull
   private static String doGetSettingsFilePath() {
-    String vmOptionsFile = System.getProperty("idea.vmOptionsFile");
+    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
     if (!StringUtil.isEmptyOrSpaces(vmOptionsFile)) return vmOptionsFile;
 
     final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
