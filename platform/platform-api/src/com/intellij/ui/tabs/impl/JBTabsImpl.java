@@ -1183,10 +1183,12 @@ public class JBTabsImpl extends JComponent
   public void setPaintBlocked(boolean blocked, final boolean takeSnapshot) {
     if (blocked && !myPaintBlocked) {
       if (takeSnapshot) {
-        myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-        final Graphics2D g = myImage.createGraphics();
-        super.paint(g);
-        g.dispose();
+        if (getWidth() > 0 && getHeight() > 0) {
+          myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+          final Graphics2D g = myImage.createGraphics();
+          super.paint(g);
+          g.dispose();
+        }
       }
     }
 

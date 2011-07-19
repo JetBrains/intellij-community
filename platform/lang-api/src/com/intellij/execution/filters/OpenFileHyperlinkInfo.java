@@ -23,14 +23,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
-  private final OpenFileDescriptor myDescriptor;
+  private final Project myProject;
+  private final VirtualFile myFile;
+  private final int myLine;
+  private final int myColumn;
 
   public OpenFileHyperlinkInfo(@NotNull OpenFileDescriptor descriptor) {
-    myDescriptor = descriptor;
+    this(descriptor.getProject(), descriptor.getFile(), descriptor.getLine(), descriptor.getColumn());
   }
 
   public OpenFileHyperlinkInfo(Project project, @NotNull final VirtualFile file, final int line, final int column) {
-    this (new OpenFileDescriptor(project, file, line, column));
+    myProject = project;
+    myFile = file;
+    myLine = line;
+    myColumn = column;
   }
 
   public OpenFileHyperlinkInfo(Project project, @NotNull final VirtualFile file, final int line) {
@@ -38,15 +44,15 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
   }
 
   public OpenFileDescriptor getDescriptor() {
-    return myDescriptor;
+    return new OpenFileDescriptor(myProject, myFile, myLine, myColumn);
   }
 
   public void navigate(final Project project) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final VirtualFile file = myDescriptor.getFile();
+        final VirtualFile file = myFile;
         if(file.isValid()) {
-          FileEditorManager.getInstance(project).openTextEditor(myDescriptor, true);
+          FileEditorManager.getInstance(project).openTextEditor(getDescriptor(), true);
         }
       }
     });

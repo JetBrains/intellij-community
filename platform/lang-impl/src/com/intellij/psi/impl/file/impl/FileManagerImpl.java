@@ -873,7 +873,7 @@ public class FileManagerImpl implements FileManager {
       }
 
       if (oldPsiFile != null && oldPsiFile.isPhysical()) {
-        SmartPointerManagerImpl.fastenBelts(oldPsiFile, 0);
+        SmartPointerManagerImpl.fastenBelts(oldPsiFile, 0, null);
       }
       ApplicationManager.getApplication().runWriteAction(
         new ExternalChangeAction() {

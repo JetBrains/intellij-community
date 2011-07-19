@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
@@ -40,7 +41,7 @@ public class ClsElementInfo implements SmartPointerElementInfo {
 
   // before change
   @Override
-  public void fastenBelt(int offset) {
+  public void fastenBelt(int offset, RangeMarker cachedRangeMarker) {
   }
 
   // after change
@@ -54,10 +55,6 @@ public class ClsElementInfo implements SmartPointerElementInfo {
 
   public PsiElement restoreElement() {
     return myStubIndexReference.retrieve();
-  }
-
-  @Override
-  public void dispose() {
   }
 
   @Override

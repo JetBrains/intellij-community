@@ -23,7 +23,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -172,8 +171,7 @@ public final class PlainTextView implements AntOutputView {
       int highlightStartOffset = textStartOffset + placeInfo.getLinkStartIndex();
       int highlightEndOffset = textStartOffset + placeInfo.getLinkEndIndex() + 1;
 
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, placeInfo.getFile(), placeInfo.getLine(), placeInfo.getColumn());
-      OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(descriptor);
+      OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject, placeInfo.getFile(), placeInfo.getLine(), placeInfo.getColumn());
       return new Result(highlightStartOffset, highlightEndOffset, info);
     }
   }

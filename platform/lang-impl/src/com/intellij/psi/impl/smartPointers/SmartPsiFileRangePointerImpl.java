@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiFileRange;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
  * User: cdr
  */
 public class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> implements SmartPsiFileRange {
-  public SmartPsiFileRangePointerImpl(@NotNull PsiFile containingFile, @NotNull TextRange range) {
+  public SmartPsiFileRangePointerImpl(@NotNull PsiFile containingFile, @NotNull ProperTextRange range) {
     super(containingFile, createElementInfo(containingFile, range), PsiFile.class);
   }
 
   @NotNull
-  private static SmartPointerElementInfo createElementInfo(@NotNull PsiFile containingFile, @NotNull TextRange range) {
+  private static SmartPointerElementInfo createElementInfo(@NotNull PsiFile containingFile, @NotNull ProperTextRange range) {
     return new SelfElementInfo(containingFile.getProject(), range, PsiFile.class, containingFile, containingFile.getLanguage());
   }
 

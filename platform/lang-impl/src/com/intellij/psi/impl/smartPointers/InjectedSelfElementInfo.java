@@ -38,13 +38,13 @@ class InjectedSelfElementInfo extends SelfElementInfo {
   private final Class<? extends PsiElement> anchorClass;
   private final Language anchorLanguage;
 
-  InjectedSelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor, @NotNull PsiElement context) {
-    super(project, context);
+  InjectedSelfElementInfo(@NotNull Project project, @NotNull PsiElement element, @NotNull PsiElement hostContext) {
+    super(project, hostContext);
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-    TextRange range = InjectedLanguageManager.getInstance(project).injectedToHost(anchor, anchor.getTextRange());
-    myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(context.getContainingFile(), range);
-    anchorClass = anchor.getClass();
-    anchorLanguage = anchor.getContainingFile().getLanguage();
+    TextRange range = InjectedLanguageManager.getInstance(project).injectedToHost(element, element.getTextRange());
+    myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(hostContext.getContainingFile(), range);
+    anchorClass = element.getClass();
+    anchorLanguage = element.getContainingFile().getLanguage();
   }
 
   @Override
@@ -56,8 +56,8 @@ class InjectedSelfElementInfo extends SelfElementInfo {
 
   @Override
   public PsiElement restoreElement() {
-    PsiElement host = super.restoreElement();
-    if (host == null) return null;
+    PsiElement hostContext = super.restoreElement();
+    if (hostContext == null) return null;
 
     Segment segment = myInjectedFileRangeInHostFile.getRange();
     if (segment == null) return null;
@@ -65,7 +65,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     final Ref<PsiElement> result = new Ref<PsiElement>();
 
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
-    InjectedLanguageUtil.enumerate(host, host.getContainingFile(), new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    InjectedLanguageUtil.enumerate(hostContext, hostContext.getContainingFile(), new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         @Override
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           if (result.get() != null) return;

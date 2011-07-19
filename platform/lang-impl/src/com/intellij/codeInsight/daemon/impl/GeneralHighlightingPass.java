@@ -63,6 +63,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -545,6 +546,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return new ArrayList<HighlightInfo>(myHighlights);
   }
 
+  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
   private void collectHighlights(@NotNull final List<PsiElement> elements1,
                                  @NotNull final Runnable after1,
                                  @NotNull final List<PsiElement> elements2,
@@ -606,7 +608,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                   final EditorColorsScheme colorsScheme = getColorsScheme();
                   UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, 0,
                                                                              myDocument.getTextLength(),
-                                                                             info, colorsScheme, Pass.UPDATE_ALL);
+                                                                             info, colorsScheme, Pass.UPDATE_ALL, ranges2markersCache);
                 }
               });
             }

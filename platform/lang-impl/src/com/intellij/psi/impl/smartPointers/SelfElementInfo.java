@@ -21,10 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -49,10 +46,11 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   protected final Language myLanguage;
 
   protected SelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor) {
-    this(project, anchor.getTextRange(), anchor.getClass(), anchor.getContainingFile(), anchor.getContainingFile().getLanguage());
+    this(project, ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), anchor.getContainingFile(),
+         anchor.getContainingFile().getLanguage());
   }
   public SelfElementInfo(@NotNull Project project,
-                         @NotNull TextRange anchor,
+                         @NotNull ProperTextRange anchor,
                          @NotNull Class anchorClass,
                          @NotNull PsiFile containingFile,
                          @NotNull Language language) {
@@ -104,7 +102,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   // before change
   @Override
-  public void fastenBelt(int offset) {
+  public void fastenBelt(int offset, @Nullable RangeMarker cachedRangeMarker) {
     if (!mySyncMarkerIsValid) return;
     RangeMarker marker = getMarker();
     int actualEndOffset = marker == null || !marker.isValid() ? getSyncEndOffset() : marker.getEndOffset();
@@ -117,15 +115,19 @@ public class SelfElementInfo implements SmartPointerElementInfo {
         mySyncMarkerIsValid = false;
         return;
       }
-      //PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).getSynchronizer();
-      //boolean inSynchronization = synchronizer.isInSynchronization(document);
-
-      //if (!inSynchronization) { // otherwise doc offsets are incorrect
-        int start = Math.min(getSyncStartOffset(), document.getTextLength());
-        int end = Math.min(Math.max(getSyncEndOffset(), start), document.getTextLength());
+      int start = Math.min(getSyncStartOffset(), document.getTextLength());
+      int end = Math.min(Math.max(getSyncEndOffset(), start), document.getTextLength());
+      // use supplied cached markers if available
+      if (cachedRangeMarker != null &&
+          cachedRangeMarker.isValid() &&
+          cachedRangeMarker.getStartOffset() == start &&
+          cachedRangeMarker.getEndOffset() == end) {
+        marker = cachedRangeMarker;
+      }
+      else {
         marker = document.createRangeMarker(start, end, true);
-        setMarker(marker);
-      //}
+      }
+      setMarker(marker);
     }
     else if (!marker.isValid()) {
       mySyncMarkerIsValid = false;
@@ -151,7 +153,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
         mySyncMarkerIsValid = false;
       }
     }
-    myRangeMarker = null;
+    myRangeMarker = null;  // clear hard ref to avoid leak, hold soft ref for not recreating marker later
   }
 
   // commit
@@ -196,16 +198,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return null;
   }
 
-  @Override
-  public void dispose() {
-    RangeMarker marker = getMarker();
-    if (marker != null) {
-      marker.dispose();
-      setMarker(null);
-    }
-  }
-
-  private RangeMarker getMarker() {
+  RangeMarker getMarker() {
     Reference<RangeMarker> ref = myMarkerRef;
     return ref == null ? null : ref.get();
   }

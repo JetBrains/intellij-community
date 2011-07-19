@@ -284,6 +284,7 @@ public class VariableInplaceRenamer {
               }
 
               public void templateCancelled(Template template) {
+                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
                 finish();
                 moveOffsetAfter(false);
               }

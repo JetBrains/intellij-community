@@ -19,8 +19,10 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -157,8 +159,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof InjectedFileViewProvider) {
-      PsiElement context = containingFile.getContext();
-      if (context != null) return new InjectedSelfElementInfo(project, element, context);
+      PsiElement hostContext = containingFile.getContext();
+      if (hostContext != null) return new InjectedSelfElementInfo(project, element, hostContext);
     }
 
     if (element instanceof PsiFile) {
@@ -169,6 +171,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     if (elementRange == null) {
       return new HardElementInfo(project, element);
     }
+    ProperTextRange proper = ProperTextRange.create(elementRange);
 
     LOG.assertTrue(element.isPhysical());
     LOG.assertTrue(element.isValid());
@@ -177,9 +180,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     VirtualFile virtualFile = containingFile.getVirtualFile();
     boolean isElementInMainRoot = virtualFile == null || containingFile.getManager().findFile(virtualFile) == containingFile;
     if (isMultiRoot && !isElementInMainRoot) {
-      return new MultiRootSelfElementInfo(project, elementRange, element.getClass(), containingFile, containingFile.getLanguage());
+      return new MultiRootSelfElementInfo(project, proper, element.getClass(), containingFile, containingFile.getLanguage());
     }
-    return new SelfElementInfo(project, elementRange, element.getClass(), containingFile, containingFile.getLanguage());
+    return new SelfElementInfo(project, proper, element.getClass(), containingFile, containingFile.getLanguage());
   }
 
   public void documentAndPsiInSync() {
@@ -191,8 +194,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     myElementInfo.unfastenBelt(offset);
   }
 
-  public void fastenBelt(int offset) {
-    myElementInfo.fastenBelt(offset);
+  public void fastenBelt(int offset, @Nullable RangeMarker cachedRangeMarker) {
+    myElementInfo.fastenBelt(offset, cachedRangeMarker);
   }
 
   @NotNull

@@ -783,6 +783,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     checkValid();
     LOG.assertTrue(myLookupStartMarker.isValid(), "invalid lookup start");
     LOG.assertTrue(marker.isValid(), "invalid marker");
+    marker.dispose();
     if (isVisible()) {
       updateLookupBounds();
     }
@@ -814,7 +815,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     updateScrollbarVisibility();
 
     Point p = calculatePosition(getComponent());
-    HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false,
+    HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false,
                                                      HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false));
     LOG.assertTrue(isVisible(), "!visible, disposed=" + myDisposed);
     LOG.assertTrue(myList.isShowing(), "!showing, disposed=" + myDisposed);
@@ -955,6 +956,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
                  ? myEditor.getSelectionModel().getSelectionStart()
                  : myEditor.getCaretModel().getOffset();
     int start = Math.max(offset - myMinPrefixLength - myAdditionalPrefix.length(), 0);
+    if (myLookupStartMarker != null) {
+      if (myLookupStartMarker.isValid() && myLookupStartMarker.getStartOffset() == start && myLookupStartMarker.getEndOffset() == start) {
+        return start;
+      }
+      myLookupStartMarker.dispose();
+    }
     myLookupStartMarker = myEditor.getDocument().createRangeMarker(start, start);
     myLookupStartMarker.setGreedyToLeft(true);
     return start;

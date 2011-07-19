@@ -24,7 +24,7 @@ import java.util.List;
 
 public class CompositeFilter implements Filter {
   private final List<Filter> myFilters = new ArrayList<Filter>();
-  private DumbService myDumbService;
+  private final DumbService myDumbService;
 
   public CompositeFilter(Project project) {
     myDumbService = DumbService.getInstance(project);
@@ -35,6 +35,7 @@ public class CompositeFilter implements Filter {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
       if (!dumb || DumbService.isDumbAware(filter)) {

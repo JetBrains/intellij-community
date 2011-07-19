@@ -969,8 +969,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testRangeMarkersAreWeakReferenced_NoVerify() throws Exception {
     final Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
-    int COUNT = 100;
-    for (int i = 0; i < COUNT; i++) {
+    for (int i = 0; i < 10; i++) {
       document.createRangeMarker(0, document.getTextLength());
     }
 

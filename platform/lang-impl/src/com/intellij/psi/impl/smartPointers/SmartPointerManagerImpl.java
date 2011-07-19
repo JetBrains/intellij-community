@@ -16,18 +16,22 @@
 
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -47,7 +51,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     myProject = project;
   }
 
-  public static void fastenBelts(@NotNull PsiFile file, int offset) {
+  public static void fastenBelts(@NotNull PsiFile file, int offset, @Nullable RangeMarker cachedRangeMarker) {
     synchronized (file) {
       if (areBeltsFastened(file)) return;
 
@@ -66,15 +70,16 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         WeakReference<SmartPointerEx> reference = pointers.get(i);
         SmartPointerEx pointer = reference.get();
         if (pointer != null) {
-          pointer.fastenBelt(offset);
+          pointer.fastenBelt(offset, cachedRangeMarker);
           pointers.set(index++, reference);
         }
       }
 
-      for (Document injectedDoc : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+      for (DocumentWindow injectedDoc : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
         PsiFile injectedFile = psiDocumentManager.getPsiFile(injectedDoc);
         if (injectedFile == null) continue;
-        fastenBelts(injectedFile, 0);
+        RangeMarker cachedMarker = getCachedRangeMarkerToInjectedFragment(injectedFile);
+        fastenBelts(injectedFile, 0, cachedMarker);
       }
 
       int size = pointers.size();
@@ -82,6 +87,19 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         pointers.remove(i);
       }
     }
+  }
+
+  private static RangeMarker getCachedRangeMarkerToInjectedFragment(PsiFile injectedFile) {
+    PsiElement hostContext = injectedFile.getContext();
+    RangeMarker cachedMarker = null;
+    if (hostContext != null) {
+      SmartPsiElementPointer<PsiElement> cachedPointer = getCachedPointer(hostContext);
+      SmartPointerElementInfo info = cachedPointer == null ? null : ((SmartPsiElementPointerImpl)cachedPointer).getElementInfo();
+      if (info instanceof SelfElementInfo) {
+        cachedMarker = ((SelfElementInfo)info).getMarker();
+      }
+    }
+    return cachedMarker;
   }
 
   public static void unfastenBelts(@NotNull PsiFile file, int offset) {
@@ -107,7 +125,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         }
       }
 
-      for (Document injectedDoc : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+      for (DocumentWindow injectedDoc : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
         PsiFile injectedFile = psiDocumentManager.getPsiFile(injectedDoc);
         if (injectedFile == null) continue;
         unfastenBelts(injectedFile, 0);
@@ -168,8 +186,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
       LOG.error("Invalid element:" + element);
     }
-    Reference<SmartPsiElementPointer> data = element.getUserData(CACHED_SMART_POINTER_KEY);
-    SmartPsiElementPointer cachedPointer = data == null ? null : data.get();
+    SmartPsiElementPointer<E> cachedPointer = getCachedPointer(element);
     if (cachedPointer != null) {
       return cachedPointer;
     }
@@ -180,14 +197,18 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return pointer;
   }
 
+  private static <E extends PsiElement> SmartPsiElementPointer<E> getCachedPointer(E element) {
+    Reference<SmartPsiElementPointer> data = element.getUserData(CACHED_SMART_POINTER_KEY);
+    return data == null ? null : data.get();
+  }
+
   @Override
   @NotNull
   public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
     if (!file.isValid()) {
       LOG.error("Invalid element:" + file);
     }
-
-    SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, range);
+    SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, ProperTextRange.create(range));
     initPointer(pointer, file);
 
     return pointer;
@@ -215,7 +236,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       pointers.add(new WeakReference<SmartPointerEx>(pointer));
 
       if (areBeltsFastened(containingFile)) {
-        pointer.fastenBelt(0);
+        pointer.fastenBelt(0, null);
       }
     }
   }

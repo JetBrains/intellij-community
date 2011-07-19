@@ -49,7 +49,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     protected final List<Getable<T>> intervals;
     protected int maxEnd; // max of all intervalEnd()s among all children.
     protected int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
-    private IntervalNode next; // node following this in the in-order tree traversal. used for optimised tree iteration
 
     public IntervalNode(@NotNull T key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
@@ -383,14 +382,13 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return Math.max(start, startOffset) <= Math.min(end, endOffset);
   }
 
+  // next node in inorder traversal
   private IntervalNode nextNode(@NotNull IntervalNode root,
                                 int startOffset, int endOffset,
                                 @NotNull int[] newDeltaUpToRootExclusive) {
     assert root.isValid();
     int deltaUpToRootExclusive = newDeltaUpToRootExclusive[0];
     int delta = deltaUpToRootExclusive + root.delta;
-    //int myStartOffset = root.intervalStart() + delta;
-    //int myEndOffset = root.intervalEnd() + delta;
     int myMaxEnd = maxEndOf(root, deltaUpToRootExclusive);
     assert startOffset <= myMaxEnd;
 
@@ -601,16 +599,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       if (t == null) continue;
       checkBelongsToTheTree(t, false);
       assert ids.add(((RangeMarkerImpl)t).getId()) : t;
-    }
-
-    if (assertInvalid) {
-      IntervalNode next = root.next;
-      if (next != null) {
-        assert previous(next) == root;
-        int nextStart = next.intervalStart() + next.computeDeltaUpToRoot();
-        int myStart = root.intervalStart() + deltaUpToRootExclusive + root.delta;
-        assert nextStart >= myStart;
-      }
     }
 
     keyCounter.addAndGet(root.intervals.size());
