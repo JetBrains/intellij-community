@@ -90,7 +90,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   public static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
-  private final Map<VirtualFile, List<XmlFile>> myExternalAnotations = new ConcurrentWeakHashMap<VirtualFile, List<XmlFile>>();
+  private final Map<String, List<XmlFile>> myExternalAnnotations = new ConcurrentWeakHashMap<String, List<XmlFile>>();
   private final Ref<Boolean> myHasAnyAnnotationsRoots = new Ref<Boolean>();
   private static final List<XmlFile> NULL = new ArrayList<XmlFile>();
   private final PsiManager myPsiManager;
@@ -103,7 +103,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
-        myExternalAnotations.clear();
+        myExternalAnnotations.clear();
         synchronized (myHasAnyAnnotationsRoots) {
           myHasAnyAnnotationsRoots.set(null);
         }
@@ -248,7 +248,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
               if (annotationsXml != null) {
                 final List<XmlFile> createdFiles = new ArrayList<XmlFile>();
                 createdFiles.add(annotationsXml);
-                myExternalAnotations.put(virtualFile, createdFiles);
+                myExternalAnnotations.put(getFQN(packageName, virtualFile), createdFiles);
               }
               annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value);
             }
@@ -314,7 +314,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         }
         if (annotationsXml[0] != null) {
           annotationFiles.add(annotationsXml[0]);
-          myExternalAnotations.put(virtualFile, annotationFiles);
+          myExternalAnnotations.put(getFQN(packageName, virtualFile), annotationFiles);
           annotateExternally(listOwner, annotationFQName, annotationsXml[0], fromFile, value);
         }
       }
@@ -446,7 +446,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       sdkModificator.addRoot(vFile, AnnotationOrderRootType.getInstance());
       sdkModificator.commitChanges();
     }
-    myExternalAnotations.clear();
+    myExternalAnnotations.clear();
   }
 
   private static void annotateExternally(final PsiModifierListOwner listOwner,
@@ -549,8 +549,10 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     final Project project = listOwner.getProject();
     final PsiFile containingFile = listOwner.getContainingFile();
     if (containingFile instanceof PsiJavaFile) {
+      final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
+      final String packageName = javaFile.getPackageName();
       final VirtualFile virtualFile = containingFile.getVirtualFile();
-      final List<XmlFile> files = myExternalAnotations.get(virtualFile);
+      final List<XmlFile> files = myExternalAnnotations.get(getFQN(packageName, virtualFile));
       if (files == NULL) return null;
       if (files != null) {
         for (Iterator<XmlFile> it = files.iterator(); it.hasNext();) {
@@ -558,8 +560,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         }
         return files;
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-      final String packageName = javaFile.getPackageName();
+
       if (virtualFile != null) {
         final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
         for (OrderEntry entry : entries) {
@@ -580,13 +581,13 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
               }
             }
             if (possibleAnnotationsXmls != null) {
-              myExternalAnotations.put(virtualFile, possibleAnnotationsXmls);
+              myExternalAnnotations.put(getFQN(packageName, virtualFile), possibleAnnotationsXmls);
               return possibleAnnotationsXmls;
             }
             break;
           }
         }
-        myExternalAnotations.put(virtualFile, NULL);
+        myExternalAnnotations.put(getFQN(packageName, virtualFile), NULL);
       }
     }
     /*final VirtualFile virtualFile = containingFile.getVirtualFile(); //for java files only
@@ -601,6 +602,12 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }*/
 
     return null;
+  }
+
+  @Nullable
+  private static String getFQN(String packageName, @Nullable VirtualFile virtualFile) {
+    if (virtualFile == null) return null;
+    return StringUtil.getQualifiedName(packageName, virtualFile.getNameWithoutExtension());
   }
 
   @Nullable
