@@ -22,5 +22,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ShortcutProvider {
   @Nullable
-  Shortcut getShortcut();
+  ShortcutSet getShortcut();
 }

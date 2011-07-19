@@ -29,9 +29,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -111,7 +109,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public Value getValue() {
-    // the following code makes sence only if we do not use ObjectReference.enableCollection() / disableCollection()
+    // the following code makes sense only if we do not use ObjectReference.enableCollection() / disableCollection()
     // to keep temporary objects
     if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG && myStoredEvaluationContext != null && !myStoredEvaluationContext.getSuspendContext().isResumed() &&
         myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
@@ -168,6 +166,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       myValue = value;
       myValueException = null;
+      if (myRenderer == null) {
+        myRenderer = DebuggerRendererUtil.getCustomRenderer(evaluationContext.getDebugProcess(), myValue, NodeRenderer.class);
+      }
     }
     catch (EvaluateException e) {
       myValueException = e;
@@ -340,6 +341,22 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myRenderer = renderer;
     myAutoRenderer = null;
+  }
+
+  /**
+   * Allows to apply given renderer to the value referenced by the current descriptor.
+   * 
+   * @param renderer  custom renderer to use
+   * @param process   current debug process
+   * @param remember  flag that indicates if given renderer should be used at stack frames over than the current
+   *                  one (e.g. there is a possible case that custom renderer is applied to the local variable. If given flag
+   *                  is <code>'true'</code>, the renderer is applied down at stack as well)
+   */
+  public void setRenderer(NodeRenderer renderer, @Nullable DebugProcess process, boolean remember) {
+    setRenderer(renderer);
+    if (remember) {
+      DebuggerRendererUtil.setCustomRenderer(myValue, process, renderer);
+    }
   }
 
   //returns expression that evaluates tree to this descriptor

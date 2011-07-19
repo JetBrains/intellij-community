@@ -409,10 +409,10 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     });
 
-    addButton.setShortcut(KeyboardShortcut.fromString("alt A"));
-    removeButton.setShortcut(KeyboardShortcut.fromString("alt DELETE"));
-    upButton.setShortcut(KeyboardShortcut.fromString("alt UP"));
-    downButton.setShortcut(KeyboardShortcut.fromString("alt DOWN"));
+    addButton.setShortcut(CustomShortcutSet.fromString("alt A", "INSERT"));
+    removeButton.setShortcut(CustomShortcutSet.fromString("alt DELETE"));
+    upButton.setShortcut(CustomShortcutSet.fromString("alt UP"));
+    downButton.setShortcut(CustomShortcutSet.fromString("alt DOWN"));
     myEntryTable.setBorder(new LineBorder(UIUtil.getBorderColor()));
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);

@@ -11,11 +11,17 @@ public class LightParameter extends LightVariableBuilder implements PsiParameter
   public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
   private final String myName;
   private final PsiElement myDeclarationScope;
+  private final boolean myVarArgs;
 
   public LightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language) {
+    this(name, type, declarationScope, language, false);
+  }
+
+  public LightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language, boolean isVarArgs) {
     super(declarationScope.getManager(), name, type, language);
     myName = name;
     myDeclarationScope = declarationScope;
+    myVarArgs = isVarArgs;
   }
 
   @NotNull
@@ -35,7 +41,7 @@ public class LightParameter extends LightVariableBuilder implements PsiParameter
   }
 
   public boolean isVarArgs() {
-    return false;
+    return myVarArgs;
   }
 
   @NotNull

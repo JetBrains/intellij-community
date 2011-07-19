@@ -17,13 +17,12 @@ package com.intellij.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -101,8 +100,8 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
         }
 
         @Override
-        public Shortcut getShortcut() {
-          return KeyboardShortcut.fromString("alt E");
+        public ShortcutSet getShortcut() {
+          return CustomShortcutSet.fromString("alt E");
         }
       })
       .disableUpAction()
@@ -160,8 +159,9 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
       }
     };
 
-    myTable = new Table(myTableModel);
+    myTable = new JBTable(myTableModel);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    myTable.setStriped(true);
     myTable.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e){
         if (e.getClickCount() == 2) doEdit();

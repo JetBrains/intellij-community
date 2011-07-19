@@ -74,7 +74,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     final GridBagConstraints constraints =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              new Insets(0, 0, 0, 0), 0, 0);
-    myWholePanel.add(myLabel, constraints);
+    myWholePanel.add(getPreviewComponent(), constraints);
 
     final JComponent centerPanel = myIntroduceFieldPanel.createCenterPanel();
 
@@ -120,12 +120,12 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     if (variable == null || !variable.hasInitializer()) {
       super.updateTitle(variable, value);
     } else {
-      myLabel.clear();
+
       final PsiExpression initializer = variable.getInitializer();
       assert initializer != null;
       String text = variable.getText().replace(variable.getName(), value);
       text = text.replace(initializer.getText(), PsiExpressionTrimRenderer.render(initializer));
-      myLabel.append(text, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      setPreviewText(text);
       revalidate();
     }
   }

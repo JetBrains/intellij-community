@@ -16,7 +16,6 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.Patches;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.*;
@@ -184,14 +183,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         return PluginManager.getPlugins();
       }
     };
-
-    if (!isUnitTestMode && !isHeadless) {
-      Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
-      if (Patches.SUN_BUG_ID_6209673) {
-        RepaintManager.setCurrentManager(new IdeRepaintManager());
-      }
-      IconLoader.activate();
-    }
 
     myIsInternal = isInternal;
     myTestModeFlag = isUnitTestMode;

@@ -59,6 +59,10 @@ public class ToolbarDecorator implements DataProvider {
   private Runnable myRemoveAction;
   private Runnable myUpAction;
   private Runnable myDownAction;
+  private String myAddName;
+  private String myRemoveName;
+  private String myMoveUpName;
+  private String myMoveDownName;
   private AddRemoveUpDownPanel myPanel;
   private JList myList;
 
@@ -186,10 +190,12 @@ public class ToolbarDecorator implements DataProvider {
     myUpAction = new Runnable() {
       public void run() {
         TableUtil.stopEditing(table);
-        int index = table.getSelectedRow();
-        if (0 < index && index < myTableModel.getRowCount()) {
-          tableModel.exchangeRows(index, index - 1);
-          table.setRowSelectionInterval(index - 1, index - 1);
+        final int[] indexes = table.getSelectedRows();
+        for (int index : indexes) {
+          if (0 < index && index < myTableModel.getRowCount()) {
+            tableModel.exchangeRows(index, index - 1);
+            table.setRowSelectionInterval(index - 1, index - 1);
+          }
         }
         table.requestFocus();
       }
@@ -198,10 +204,12 @@ public class ToolbarDecorator implements DataProvider {
     myDownAction = new Runnable() {
       public void run() {
         TableUtil.stopEditing(table);
-        int index = table.getSelectedRow();
-        if (0 <= index && index < myTableModel.getRowCount() - 1) {
-          tableModel.exchangeRows(index, index + 1);
-          table.setRowSelectionInterval(index + 1, index + 1);
+        final int[] indexes = table.getSelectedRows();
+        for (int index : indexes) {
+          if (0 <= index && index < myTableModel.getRowCount() - 1) {
+            tableModel.exchangeRows(index, index + 1);
+            table.setRowSelectionInterval(index + 1, index + 1);
+          }
         }
         table.requestFocus();
       }
@@ -231,9 +239,10 @@ public class ToolbarDecorator implements DataProvider {
                                          final AddRemoveUpDownPanel p) {
     if (table.isEnabled() && p != null) {
       final int index = table.getSelectedRow();
-      if (0 <= index && index < ((TableModel)tableModel).getRowCount()) {
-        final boolean downEnable = index < ((TableModel)tableModel).getRowCount() - 1;
-        final boolean upEnable = index > 0;
+      final int size = ((TableModel)tableModel).getRowCount();
+      if (0 <= index && index < size) {
+        final boolean downEnable = table.getSelectionModel().getMaxSelectionIndex() < size - 1;
+        final boolean upEnable = table.getSelectionModel().getMinSelectionIndex() > 0;
         p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, true);
         p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, upEnable);
         p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, downEnable);
@@ -322,12 +331,33 @@ public class ToolbarDecorator implements DataProvider {
     return this;
   }
 
+  public ToolbarDecorator setAddActionName(String name) {
+    myAddName = name;
+    return this;
+  }
+
+  public ToolbarDecorator setRemoveActionName(String name) {
+    myRemoveName = name;
+    return this;
+  }
+
+  public ToolbarDecorator setMoveUpActionName(String name) {
+    myMoveUpName = name;
+    return this;
+  }
+
+  public ToolbarDecorator setMoveDownActionName(String name) {
+    myMoveDownName = name;
+    return this;
+  }
+
   public JPanel createPanel() {
     final AddRemoveUpDownPanel.Buttons[] buttons = getButtons();
     myPanel = new AddRemoveUpDownPanel(createListener(),
                              myTable == null ? myList : myTable,
                              myToolbarPosition == ActionToolbarPosition.TOP || myToolbarPosition == ActionToolbarPosition.BOTTOM,
                              myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
+                             myAddName, myRemoveName, myMoveUpName, myMoveDownName,
                              buttons);
     myPanel.setBorder(myBorder);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable == null ? myList : myTable);

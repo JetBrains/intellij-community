@@ -270,6 +270,11 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals("Bar", presentation.getItemText());
   }
 
+  public void testAssertEquals() throws Throwable {
+    myFixture.addClass("package junit.framework; public class Assert { public static void assertEquals(Object a, Object b) {} }");
+    checkPreferredItems(0, "boo", "bar")
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;

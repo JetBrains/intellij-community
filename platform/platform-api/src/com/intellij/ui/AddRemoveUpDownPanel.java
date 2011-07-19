@@ -16,9 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,16 +38,16 @@ class AddRemoveUpDownPanel extends JPanel {
 
     Icon getIcon() {
       switch (this) {
-        case ADD:    return SystemInfo.isMac ? PlatformIcons.TABLE_ADD_ROW : PlatformIcons.ADD_ICON;
-        case REMOVE: return SystemInfo.isMac ? PlatformIcons.TABLE_REMOVE_ROW : PlatformIcons.DELETE_ICON;
-        case UP:     return SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_UP : PlatformIcons.MOVE_UP_ICON;
-        case DOWN:   return SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_DOWN : PlatformIcons.MOVE_DOWN_ICON;
+        case ADD:    return IconUtil.getAddRowIcon();
+        case REMOVE: return IconUtil.getRemoveRowIcon();
+        case UP:     return IconUtil.getMoveRowUpIcon();
+        case DOWN:   return IconUtil.getMoveRowDownIcon();
       }
       return null;
     }
 
-    MyActionButton createButton(final Listener listener) {
-      return new MyActionButton(this, listener);
+    MyActionButton createButton(final Listener listener, String name) {
+      return new MyActionButton(this, listener, name == null ? StringUtil.capitalize(name().toLowerCase()) : name);
     }
 
     public String getText() {
@@ -90,12 +89,21 @@ class AddRemoveUpDownPanel extends JPanel {
   private final AnActionButton[] myActions;
 
   AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contextComponent, boolean isHorizontal,
-                              @Nullable AnActionButton[] additionalActions, Buttons... buttons) {
+                       @Nullable AnActionButton[] additionalActions,
+                       String addName, String removeName, String moveUpName,String moveDownName,
+                       Buttons... buttons) {
     super(new BorderLayout());
     AnActionButton[] actions = new AnActionButton[buttons.length];
     for (int i = 0; i < buttons.length; i++) {
       Buttons button = buttons[i];
-      final MyActionButton b = button.createButton(listener);
+      String name = null;
+      switch (button) {
+        case ADD:    name = addName;      break;
+        case REMOVE: name = removeName;   break;
+        case UP:     name = moveUpName;   break;
+        case DOWN:   name = moveDownName; break;
+      }
+      final MyActionButton b = button.createButton(listener, name);
       actions[i] = b;
       myButtons.put(button, b);
     }
@@ -119,9 +127,9 @@ class AddRemoveUpDownPanel extends JPanel {
   public void addNotify() {
     final JRootPane pane = getRootPane();
     for (AnActionButton button : myActions) {
-      final Shortcut shortcut = button.getShortcut();
+      final ShortcutSet shortcut = button.getShortcut();
       if (shortcut != null) {
-        button.registerCustomShortcutSet(new CustomShortcutSet(shortcut), pane);
+        button.registerCustomShortcutSet(shortcut, pane);
       }
     }
     super.addNotify(); // call after all to construct actions tooltips properly
@@ -134,28 +142,12 @@ class AddRemoveUpDownPanel extends JPanel {
     }
   }
 
-  public AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contentPane, @Nullable AnActionButton[] additionalActions) {
-    this(listener, contentPane, false, additionalActions, Buttons.ADD, Buttons.REMOVE, Buttons.UP, Buttons.DOWN);
-  }
-
-  //public static void hideButtons(JPanel panelWithButtons, Buttons... buttons) {
-  //  final AddRemoveUpDownPanel panel = UIUtil.findComponentOfType(panelWithButtons, AddRemoveUpDownPanel.class);
-  //  assert panel != null : "Seems this panel isn't a result of EditableRowTable.wrapToTableWithButtons() wrapper";
-  //  for (Buttons button : buttons) {
-  //    final TableActionButton actionButton = panel.myButtons.get(button);
-  //    if (actionButton != null) {
-  //      actionButton.setVisible(false);
-  //      actionButton.setEnabled(false);
-  //    }
-  //  }
-  //}
-
   static class MyActionButton extends AnActionButton {
     private final Buttons myButton;
     private final Listener myListener;
 
-    MyActionButton(Buttons button, Listener listener) {
-      super(button.getText(), button.getText(), button.getIcon());
+    MyActionButton(Buttons button, Listener listener, String name) {
+      super(name, name, button.getIcon());
       myButton = button;
       myListener = listener;
     }
@@ -166,12 +158,12 @@ class AddRemoveUpDownPanel extends JPanel {
     }
 
     @Override
-    public Shortcut getShortcut() {
+    public ShortcutSet getShortcut() {
       switch (myButton) {
-        case ADD: return KeyboardShortcut.fromString("alt A");
-        case REMOVE: return KeyboardShortcut.fromString("alt DELETE");
-        case UP: return KeyboardShortcut.fromString("alt UP");
-        case DOWN: return KeyboardShortcut.fromString("alt DOWN");
+        case ADD: return CustomShortcutSet.fromString("alt A", "INSERT");
+        case REMOVE: return CustomShortcutSet.fromString("alt DELETE");
+        case UP: return CustomShortcutSet.fromString("alt UP");
+        case DOWN: return CustomShortcutSet.fromString("alt DOWN");
       }
       return null;
     }

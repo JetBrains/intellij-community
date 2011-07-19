@@ -37,8 +37,18 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   private static final Function<GrMethodCall, PsiType> METHOD_CALL_TYPES_CALCULATOR = new Function<GrMethodCall, PsiType>() {
     @Nullable
     public PsiType fun(GrMethodCall callExpression) {
+      GroovyResolveResult[] resolveResults;
+
+      GrExpression invokedExpression = callExpression.getInvokedExpression();
+      if (invokedExpression instanceof GrReferenceExpression) {
+        resolveResults = ((GrReferenceExpression)invokedExpression).multiResolve(false);
+      }
+      else {
+        resolveResults = GroovyResolveResult.EMPTY_ARRAY;
+      }
+
       for (GrCallExpressionTypeCalculator typeCalculator : GrCallExpressionTypeCalculator.EP_NAME.getExtensions()) {
-        PsiType res = typeCalculator.calculateReturnType(callExpression);
+        PsiType res = typeCalculator.calculateReturnType(callExpression, resolveResults);
         if (res != null) {
           return res;
         }

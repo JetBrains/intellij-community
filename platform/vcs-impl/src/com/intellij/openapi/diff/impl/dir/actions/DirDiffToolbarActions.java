@@ -51,7 +51,10 @@ public class DirDiffToolbarActions extends ActionGroup {
 
     for (AnAction action : actions) {
       if (action instanceof ShortcutProvider) {
-        action.registerCustomShortcutSet(new CustomShortcutSet(((ShortcutProvider)action).getShortcut()), panel);
+        final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
+        if (shortcut != null) {
+          action.registerCustomShortcutSet(shortcut, panel);
+        }
       }
       if (action instanceof DirDiffModelHolder) {
         ((DirDiffModelHolder)action).setModel(model);

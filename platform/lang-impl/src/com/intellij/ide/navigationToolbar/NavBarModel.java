@@ -96,6 +96,8 @@ public class NavBarModel {
   protected void updateModel(DataContext dataContext) {
     if (LaterInvocator.isInModalContext() || (updated && !isFixedComponent)) return;
 
+    if (PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
+
     PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
       psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);

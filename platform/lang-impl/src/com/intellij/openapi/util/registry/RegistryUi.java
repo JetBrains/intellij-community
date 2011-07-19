@@ -32,7 +32,6 @@ import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -83,6 +82,7 @@ public class RegistryUi implements Disposable {
     c2.setCellRenderer(r);
     c2.setHeaderValue("Value");
     c2.setCellEditor(new MyEditor());
+    myTable.setStriped(true);
 
     myDescriptionLabel = new JTextArea(3, 50);
     myDescriptionLabel.setEditable(false);

@@ -131,7 +131,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     if (element == myRootPsiElement) {
       return myRootElement;
     }
-    return element instanceof Inject ? ((Inject)element).getParent() :((PsiElement)element).getParent();
+    return element instanceof Inject ? ((Inject)element).getParent() :((PsiElement)element).getContext();
   }
 
   public void commit() {

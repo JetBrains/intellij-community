@@ -16,7 +16,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -158,7 +158,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         chooser.get().show();
       }
     };
-    myPropExceptionsButton.setShortcut(KeyboardShortcut.fromString("alt X"));
+    myPropExceptionsButton.setShortcut(CustomShortcutSet.fromString("alt X"));
 
     final JPanel panel = ToolbarDecorator.createDecorator(table).addExtraAction(myPropExceptionsButton).createPanel();
     panel.setBorder(IdeBorderFactory.createEmptyBorder(0));

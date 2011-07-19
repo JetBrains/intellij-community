@@ -36,6 +36,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -44,8 +45,10 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.lang.JarMemoryLoader;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
+import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +61,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author mike
@@ -85,6 +90,8 @@ public class PluginManager {
   private static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
   @NonNls private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
   private static final List<String> ourAvailableModules = new ArrayList<String>();
+  private static final boolean ourOptimize = "true".equals(System.getProperty("idea.optimize"));
+
 
   public static long startupStart;
 
@@ -107,7 +114,13 @@ public class PluginManager {
   public static synchronized IdeaPluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
       long start = System.currentTimeMillis();
-      initializePlugins();
+      try {
+        initializePlugins();
+      }
+      catch (RuntimeException e) {
+        getLogger().error(e);
+        throw e;
+      }
       getLogger().info(ourPlugins.length + " plugins initialized in " + (System.currentTimeMillis() - start) + " ms");
       logPlugins();
       ClassloaderUtil.clearJarURLCache();
@@ -814,17 +827,24 @@ public class PluginManager {
        if (files == null || files.length == 0) {
          return null;
        }
+       Arrays.sort(files, new Comparator<File>() {
+         @Override
+         public int compare(File o1, File o2) {
+           if (o2.getName().startsWith((file.getName()))) return Integer.MAX_VALUE;
+           if (o1.getName().startsWith((file.getName()))) return -Integer.MAX_VALUE;
+           if (o2.getName().startsWith("resources")) return -Integer.MAX_VALUE;
+           if (o1.getName().startsWith("resources")) return Integer.MAX_VALUE;
+           return 0;
+         }
+       });
        for (final File f : files) {
          if (ClassloaderUtil.isJarOrZip(f)) {
-           IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromJar(f, fileName);
-           if (descriptor1 != null) {
-             if (descriptor != null) {
-               getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
-               return null;
-             }
-             descriptor = descriptor1;
+           descriptor = loadDescriptorFromJar(f, fileName);
+           if (descriptor != null) {
              descriptor.setPath(file);
+             break;
            }
+//           getLogger().warn("Cannot load descriptor from " + f.getName() + "");
          }
          else if (f.isDirectory()) {
            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f, fileName);
@@ -883,13 +903,30 @@ public class PluginManager {
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(File file, @NonNls String fileName) {
     try {
-
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
-
       URI fileURL = file.toURI();
       URL jarURL = new URL(
         "jar:" + StringUtil.replace(fileURL.toASCIIString(), "!", "%21") + "!/META-INF/" + fileName
       );
+
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
+      FileInputStream in = new FileInputStream(file);
+      ZipInputStream zipStream = new ZipInputStream(in);
+      try {
+        ZipEntry entry = zipStream.getNextEntry();
+        if (entry.getName().equals(JarMemoryLoader.SIZE_ENTRY)) {
+          entry = zipStream.getNextEntry();
+          if (entry.getName().equals("META-INF/" + fileName)) {
+            byte[] content = FileUtil.loadBytes(zipStream, (int)entry.getSize());
+            Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(content));
+            descriptor.readExternal(document, jarURL);
+            return descriptor;
+          }
+        }
+      }
+      finally {
+        zipStream.close();
+        in.close();
+      }
 
       descriptor.readExternal(jarURL);
       return descriptor;
@@ -902,6 +939,9 @@ public class PluginManager {
       return null;
     }
     catch (Exception e) {
+      getLogger().info("Cannot load " + file, e);
+    }
+    catch (Throwable e) {
       getLogger().info("Cannot load " + file, e);
     }
 

@@ -65,6 +65,31 @@ public class ReorderJarsTest extends TestCase {
     assertTrue(Arrays.equals(data, bytes));
   }
 
+  public void testName() throws Exception {
+
+  }
+
+  public void testPluginXml() throws Exception {
+    String path = PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/platform/util/testData/reorderJars";
+
+    ReorderJarsMain.main(new String[] { path + "/zkmOrder.txt", path, myTempDirectory.getPath() } );
+    File[] files = myTempDirectory.listFiles();
+    File file = files[0];
+    assertEquals("zkm.jar", file.getName());
+
+    JBZipFile zipFile = new JBZipFile(file);
+    try {
+      List<JBZipEntry> entries = zipFile.getEntries();
+      System.out.println(entries);
+      assertEquals(JarMemoryLoader.SIZE_ENTRY, entries.get(0).getName());
+      assertEquals("META-INF/plugin.xml", entries.get(1).getName());
+    }
+    finally {
+      zipFile.close();
+    }
+
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

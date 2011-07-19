@@ -81,7 +81,7 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
   }
 
   @Override
-  public Shortcut getShortcut() {
-    return KeyboardShortcut.fromString("alt C");
+  public ShortcutSet getShortcut() {
+    return CustomShortcutSet.fromString("alt C");
   }
 }

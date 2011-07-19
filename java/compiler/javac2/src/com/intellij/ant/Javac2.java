@@ -43,7 +43,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * Check if Java classes should be actually compiled by the task. This method is overriden by
+     * Check if Java classes should be actually compiled by the task. This method is overridden by
      * {@link com.intellij.ant.InstrumentIdeaExtensions} task in order to suppress actual compilation
      * of the java sources.
      *
@@ -61,12 +61,12 @@ public class Javac2 extends Javac {
      */
     private void unsupportedOptionMessage(final String optionName) {
         if (!areJavaClassesCompiled()) {
-            log("The option " + optionName + " is not supported by instrumentIdeaExtenstions task", Project.MSG_ERR);
+            log("The option " + optionName + " is not supported by InstrumentIdeaExtensions task", Project.MSG_ERR);
         }
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param v the option value
      */
@@ -76,7 +76,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param list the option value
      */
@@ -86,7 +86,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param memoryInitialSize the option value
      */
@@ -96,7 +96,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param memoryMaximumSize the option value
      */
@@ -106,7 +106,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param encoding the option value
      */
@@ -116,7 +116,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param optimize the option value
      */
@@ -126,7 +126,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param depend the option value
      */
@@ -136,7 +136,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param f the option value
      */
@@ -146,7 +146,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param forkExec the option value
      */
@@ -156,7 +156,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden setter method that warns about unsupported option.
+     * The overridden setter method that warns about unsupported option.
      *
      * @param compiler the option value
      */
@@ -197,7 +197,7 @@ public class Javac2 extends Javac {
     }
 
     /**
-     * The overriden compile method that does not actually compiles java sources but only instruments
+     * The overridden compile method that does not actually compiles java sources but only instruments
      * class files.
      */
     protected void compile() {

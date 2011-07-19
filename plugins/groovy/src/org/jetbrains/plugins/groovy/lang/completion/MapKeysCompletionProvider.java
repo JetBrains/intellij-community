@@ -1,15 +1,18 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.patterns.PlatformPatterns;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyMapContentProvider;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -33,7 +36,11 @@ class MapKeysCompletionProvider extends CompletionProvider<CompletionParameters>
     GrReferenceExpression expression = (GrReferenceExpression)element.getParent();
 
     GrExpression qualifierExpression = expression.getQualifierExpression();
-    if (qualifierExpression == null || !GroovyPsiManager.isInheritorCached(qualifierExpression.getType(), CommonClassNames.JAVA_UTIL_MAP)) {
+    if (qualifierExpression == null) return;
+
+    PsiType mapType = qualifierExpression.getType();
+
+    if (!GroovyPsiManager.isInheritorCached(mapType, CommonClassNames.JAVA_UTIL_MAP)) {
       return;
     }
 
@@ -48,6 +55,14 @@ class MapKeysCompletionProvider extends CompletionProvider<CompletionParameters>
 
     for (GroovyMapContentProvider provider : GroovyMapContentProvider.EP_NAME.getExtensions()) {
       provider.addKeyVariants(qualifierExpression, resolve, result);
+    }
+
+    if (mapType instanceof GrMapType) {
+      for (String key : ((GrMapType)mapType).getStringKeys()) {
+        LookupElement lookup = LookupElementBuilder.create(key);
+        lookup = PrioritizedLookupElement.withPriority(lookup, 1);
+        result.addElement(lookup);
+      }
     }
   }
 }

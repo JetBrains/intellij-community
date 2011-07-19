@@ -17,7 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -377,7 +377,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
     myParametersTable.setSurrendersFocusOnKeystroke(true);
-    myPropagateParamChangesButton.setShortcut(KeyboardShortcut.fromString("alt G"));
+    myPropagateParamChangesButton.setShortcut(CustomShortcutSet.fromString("alt G"));
 
     final JPanel buttonsPanel = ToolbarDecorator.createDecorator(myParametersTable)
       .addExtraAction(myPropagateParamChangesButton)

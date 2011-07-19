@@ -19,14 +19,24 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
@@ -34,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.TextAttribute;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -68,7 +80,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     myMethodToSearchFor = methodToSearchFor;
     myMustBeFinal = mustBeFinal;
 
-    myWholePanel.add(myLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+    myWholePanel.add(getPreviewComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                                              new Insets(0,5,0,5), 0,0));
     myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
                                               myOccurrences) {
@@ -200,29 +212,56 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   }
 
   @Override
-  protected void updateTitle(@Nullable PsiVariable variable, String value) {
+  protected void updateTitle(@Nullable final PsiVariable variable, final String value) {
     final PsiElement declarationScope = variable != null ? ((PsiParameter)variable).getDeclarationScope() : null;
     if (declarationScope instanceof PsiMethod) {
       final PsiMethod psiMethod = (PsiMethod)declarationScope;
-      myLabel.clear();
-      myLabel.append(psiMethod.getName() + " (", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      final StringBuilder buf = new StringBuilder();
+      buf.append(psiMethod.getName()).append(" (");
       boolean frst = true;
+      final List<TextRange> ranges2Remove = new ArrayList<TextRange>();
+      TextRange addedRange = null;
       for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
         if (frst) {
           frst = false;
-        } else {
-          myLabel.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
-        final SimpleTextAttributes attr = variable == parameter ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES :
-                                            myPanel.isParamToRemove(parameter) ?
-                                              new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, UIUtil.getInactiveTextColor()) :
-                                              SimpleTextAttributes.GRAYED_ATTRIBUTES;
-        myLabel.append(parameter.getType().getPresentableText() + " ", attr);
-        myLabel.append(variable == parameter ? value : parameter.getName(), attr);
+        else {
+          buf.append(", ");
+        }
+        int startOffset = buf.length();
+        buf.append(parameter.getType().getPresentableText()).append(" ").append(variable == parameter ? value : parameter.getName());
+        int endOffset = buf.length();
+        if (variable == parameter) {
+          addedRange = new TextRange(startOffset, endOffset);
+        }
+        else if (myPanel.isParamToRemove(parameter)) {
+          ranges2Remove.add(new TextRange(startOffset, endOffset));
+        }
       }
-      myLabel.append(")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+
+      buf.append(")");
+      setPreviewText(buf.toString());
+      final MarkupModel markupModel = getPreviewEditor().getDocument().getMarkupModel(myProject);
+      for (TextRange textRange : ranges2Remove) {
+        markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), 0, getTestAttributesForRemoval(), HighlighterTargetArea.EXACT_RANGE);
+      }
+      markupModel.addRangeHighlighter(addedRange.getStartOffset(), addedRange.getEndOffset(), 0, getTextAttributesForAdd(), HighlighterTargetArea.EXACT_RANGE);
       revalidate();
     }
+  }
+
+  private static TextAttributes getTextAttributesForAdd() {
+    final TextAttributes textAttributes = new TextAttributes();
+    textAttributes.setEffectType(EffectType.ROUNDED_BOX);
+    textAttributes.setEffectColor(Color.RED);
+    return textAttributes;
+  }
+
+  private static TextAttributes getTestAttributesForRemoval() {
+    final TextAttributes textAttributes = new TextAttributes();
+    textAttributes.setEffectType(EffectType.STRIKEOUT);
+    textAttributes.setEffectColor(Color.BLACK);
+    return textAttributes;
   }
 
   @Override

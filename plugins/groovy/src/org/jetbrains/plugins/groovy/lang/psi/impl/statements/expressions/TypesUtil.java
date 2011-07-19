@@ -568,4 +568,16 @@ public class TypesUtil {
     assert false: "Unknown primitive type";
     return null;
   }
+
+  @NotNull
+  public static PsiClassType createListType(@NotNull PsiClass elements) {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(elements.getProject());
+    GlobalSearchScope resolveScope = elements.getResolveScope();
+    PsiClass listClass = facade.findClass(CommonClassNames.JAVA_UTIL_LIST, resolveScope);
+    if (listClass == null) {
+      return facade.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_LIST, resolveScope);
+    }
+    return facade.getElementFactory().createType(listClass, facade.getElementFactory().createType(elements));
+  }
+
 }

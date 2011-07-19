@@ -379,7 +379,51 @@ public class PasteHandler extends EditorActionHandler {
     CharSequence chars = document.getCharsSequence();
     final int firstLine = document.getLineNumber(startOffset);
     final int firstLineStart = document.getLineStartOffset(firstLine);
-    final int lastLine = document.getLineNumber(endOffset);
+    
+    // There is a possible case that we paste block that ends with new line that is empty or contains only white space symbols.
+    // We want to preserve indent for the original document line where paste was performed.
+    // Example:
+    //   Original:
+    //       if (test) {
+    //   <caret>    }
+    //
+    //   Pasting: 'int i = 1;\n'
+    //   Expected:
+    //       if (test) {
+    //           int i = 1;
+    //       }
+    boolean saveLastLineIndent = false;
+    for (int i = endOffset - 1; i >= startOffset; i--) {
+      final char c = chars.charAt(i);
+      if (c == '\n') {
+        saveLastLineIndent = true;
+        break;
+      }
+      if (c != ' ' && c != '\t') {
+        break;
+      }
+    }
+    
+    final int lastLine;
+    if (saveLastLineIndent) {
+      lastLine = document.getLineNumber(endOffset) - 1;
+      // Remove white space symbols at the pasted text if any.
+      int start = document.getLineStartOffset(lastLine + 1);
+      if (start < endOffset) {
+        int i = CharArrayUtil.shiftForward(chars, start, " \t");
+        if (i > start) {
+          i = Math.min(i, endOffset);
+          document.deleteString(start, i);
+        }
+      }
+      
+      // Insert white space from the start line of the pasted block.
+      document.insertString(start, chars.subSequence(firstLineStart, startOffset));
+    }
+    else {
+      lastLine = document.getLineNumber(endOffset);
+    } 
+    
     final int i = CharArrayUtil.shiftBackward(chars, startOffset - 1, " \t");
     
     // Handle situation when pasted block doesn't start new line.
