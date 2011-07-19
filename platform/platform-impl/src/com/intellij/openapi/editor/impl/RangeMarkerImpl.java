@@ -21,11 +21,10 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.DistributedCounter;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx, MutableInterval {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
@@ -34,8 +33,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   protected RangeMarkerTree.RMNode myNode;
 
   private final long myId;
-  //private static long counter;
-  private static final AtomicLong counter = new AtomicLong();
+  private static final DistributedCounter counter = new DistributedCounter();
 
   protected RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register) {
     this(document, start, end, register, false, false);
@@ -52,7 +50,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
 
     myDocument = document;
-    myId = counter.getAndIncrement();
+    myId = counter.next();
     if (register) {
       registerInTree(start, end, greedyToLeft, greedyToRight, 0);
     }
