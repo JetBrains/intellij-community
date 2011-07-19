@@ -163,6 +163,7 @@ public class IdeaApplication {
         final SplashScreen splashScreen = getSplashScreen();
         if (splashScreen == null) {
           mySplash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
+          mySplash.show();
         }
         else {
           updateSplashScreen(appInfo, splashScreen);
