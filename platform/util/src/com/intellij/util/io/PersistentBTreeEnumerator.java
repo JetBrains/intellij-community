@@ -42,7 +42,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private IntToIntBtree btree;
 
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, dataDescriptor, initialSize);
+    super(file, new MappedFileEnumeratorStorage(file, initialSize), dataDescriptor, initialSize);
 
     storeVars(false);
     if (btree == null) initBtree();
@@ -115,15 +115,18 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public void close() throws IOException {
-    synchronized (ourLock) {
-      storeVars(true);
-      super.close();
-    }
+  protected void doClose() throws IOException {
+    storeVars(true);
+    super.doClose();
   }
 
   private int allocPage(int pageStart) {
-    myStorage.putInt(pageStart + PAGE_SIZE - 4, 0);
+    if (myStorage instanceof MappedFileEnumeratorStorage) {
+      myStorage.putInt(pageStart + PAGE_SIZE - 4, 0);
+    } else {
+      byte[] buff = new byte[PAGE_SIZE];
+      myStorage.put(pageStart, buff, 0, PAGE_SIZE);
+    }
     myLogicalFileLength += PAGE_SIZE;
     return pageStart;
   }

@@ -48,7 +48,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   protected static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
 
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, dataDescriptor, initialSize);
+    super(file, new MappedFileEnumeratorStorage(file, initialSize), dataDescriptor, initialSize);
   }
 
   protected  void setupEmptyFile() throws IOException {

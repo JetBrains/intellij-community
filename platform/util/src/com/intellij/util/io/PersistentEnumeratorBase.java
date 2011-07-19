@@ -46,7 +46,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   private static final int META_DATA_OFFSET = 4;
   protected static final int DATA_START = META_DATA_OFFSET + 4;
 
-  protected final ResizeableMappedFile myStorage;
+  protected final EnumeratorStorage myStorage;
   private final ResizeableMappedFile myKeyStorage;
 
   private boolean myClosed = false;
@@ -118,7 +118,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  public PersistentEnumeratorBase(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
+  public PersistentEnumeratorBase(File file, EnumeratorStorage storage, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
     if (!file.exists()) {
@@ -128,7 +128,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       }
     }
 
-    myStorage = new ResizeableMappedFile(myFile, initialSize, ourLock);
+    myStorage = storage;
 
     synchronized (ourLock) {
       if (myStorage.length() == 0) {
@@ -230,6 +230,19 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   public interface DataFilter {
     boolean accept(int id);
+  }
+
+  interface EnumeratorStorage extends Closeable, Forceable {
+    void putInt(int index, int value);
+    int getInt(int index);
+
+    long length();
+
+    void put(int pos, byte[] buf, int offset, int length);
+    void get(int pos, byte[] buf, int offset, int length);
+
+    void putLong(int pos, long value);
+    long getLong(int pos);
   }
 
   protected void putMetaData(int data) throws IOException {
@@ -385,16 +398,20 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     synchronized (ourLock) {
       if (!myClosed) {
         myClosed = true;
-        try {
-          if (myKeyStorage != null) {
-            myKeyStorage.close();
-          }
-          flush();
-        }
-        finally {
-          myStorage.close();
-        }
+        doClose();
       }
+    }
+  }
+
+  protected void doClose() throws IOException {
+    try {
+      if (myKeyStorage != null) {
+        myKeyStorage.close();
+      }
+      flush();
+    }
+    finally {
+      myStorage.close();
     }
   }
 
@@ -476,6 +493,124 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
     public ShareableKey getStableCopy() {
       return new CacheKey(key, owner);
+    }
+  }
+
+  protected static class RandomAccessFileEnumeratorStorage implements EnumeratorStorage {
+    private final RandomAccessDataFile storage;
+
+    public RandomAccessFileEnumeratorStorage(File file, PagePool pool) throws IOException {
+      FileUtil.createIfDoesntExist(file);
+      storage = new RandomAccessDataFile(file, pool);
+    }
+
+    @Override
+    public void putInt(int index, int value) {
+      storage.putInt(index, value);
+    }
+
+    @Override
+    public int getInt(int index) {
+      return storage.getInt(index);
+    }
+
+    @Override
+    public void putLong(int pos, long value) {
+      storage.putLong(pos, value);
+    }
+
+    @Override
+    public long getLong(int pos) {
+      return storage.getLong(pos);
+    }
+
+    @Override
+    public long length() {
+      return storage.length();
+    }
+
+    @Override
+    public void put(int pos, byte[] buf, int offset, int length) {
+      storage.put(pos, buf, offset, length);
+    }
+
+    @Override
+    public void get(int pos, byte[] buf, int offset, int length) {
+      storage.get(pos, buf, offset, length);
+    }
+
+    @Override
+    public void close() throws IOException {
+      storage.close();
+    }
+
+    @Override
+    public boolean isDirty() {
+      return storage.isDirty();
+    }
+
+    @Override
+    public void force() {
+      storage.force();
+    }
+  }
+
+  protected static class MappedFileEnumeratorStorage implements EnumeratorStorage {
+    private final ResizeableMappedFile storage;
+
+    public MappedFileEnumeratorStorage(File file, int initialSize) throws IOException {
+      FileUtil.createIfDoesntExist(file);
+      storage = new ResizeableMappedFile(file, initialSize, ourLock);
+    }
+
+    @Override
+    public void putInt(int index, int value) {
+      storage.putInt(index, value);
+    }
+
+    @Override
+    public int getInt(int index) {
+      return storage.getInt(index);
+    }
+
+    @Override
+    public long length() {
+      return storage.length();
+    }
+
+    @Override
+    public void put(int pos, byte[] buf, int offset, int length) {
+      storage.put(pos, buf, offset, length);
+    }
+
+    @Override
+    public void get(int pos, byte[] buf, int offset, int length) {
+      storage.get(pos, buf, offset, length);
+    }
+
+    @Override
+    public void putLong(int pos, long value) {
+      storage.putLong(pos, value);
+    }
+
+    @Override
+    public long getLong(int pos) {
+      return storage.getLong(pos);
+    }
+
+    @Override
+    public void close() throws IOException {
+      storage.close();
+    }
+
+    @Override
+    public boolean isDirty() {
+      return storage.isDirty();
+    }
+
+    @Override
+    public void force() {
+      storage.force();
     }
   }
 }
