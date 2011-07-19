@@ -49,6 +49,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected BaseRunConfigurationAction(final String text, final String description, final Icon icon) {
     super(text, description, icon);
     setPopup(true);
+    setEnabledInModalContext(true);
   }
 
   @NotNull

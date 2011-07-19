@@ -79,6 +79,7 @@ public class PlatformDataKeys {
   public static final DataKey<PasteProvider> PASTE_PROVIDER = DataKey.create("pasteProvider");
   public static final DataKey<DeleteProvider> DELETE_ELEMENT_PROVIDER = DataKey.create("deleteElementProvider");
   public static final DataKey<Object> SELECTED_ITEM = DataKey.create("selectedItem");
+  public static final DataKey<Object[]> SELECTED_ITEMS = DataKey.create("selectedItems");
   public static final DataKey<Rectangle> DOMINANT_HINT_AREA_RECTANGLE = DataKey.create("dominant.hint.rectangle");
   public static final DataKey<ContentManager> CONTENT_MANAGER = DataKey.create("contentManager");
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");

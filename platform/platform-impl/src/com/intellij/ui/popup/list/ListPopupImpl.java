@@ -429,6 +429,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
        if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
       }
+      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)){
+         return myList.getSelectedValues();
+      }
       return null;
     }
   }
