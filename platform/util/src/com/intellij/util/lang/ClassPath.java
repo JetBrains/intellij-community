@@ -43,7 +43,7 @@ class ClassPath {
   @NonNls private static final String FILE_PROTOCOL = "file";
   private static final boolean myDebugTime = false;
   private static final boolean ourDumpOrder = "true".equals(System.getProperty("idea.dump.order"));
-  private static final boolean ourPreloadClasses = "true".equals(System.getProperty("idea.preload.classes"));
+//  private static final boolean ourPreloadClasses = "true".equals(System.getProperty("idea.preload.classes"));
 
   private final boolean myCanLockJars;
   private final boolean myCanUseCache;
@@ -205,9 +205,7 @@ class ClassPath {
     }
     else {
       JarLoader jarLoader = new JarLoader(url, myCanLockJars);
-      if (ourPreloadClasses) {
-        jarLoader.preLoadClasses();
-      }
+      jarLoader.preLoadClasses();
       loader = jarLoader;
     }
 

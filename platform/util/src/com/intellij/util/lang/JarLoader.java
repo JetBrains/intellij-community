@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.*;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -32,7 +33,7 @@ import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
   private final URL myURL;
-  private JarMemoryLoader myMemoryLoader;
+  private SoftReference<JarMemoryLoader> myMemoryLoader;
   private final boolean myCanLockJar;
   private static final boolean myDebugTime = false;
 
@@ -68,8 +69,7 @@ class JarLoader extends Loader {
       if (zipFile == null) return;
       File file = new File(zipFile.getName());
       try {
-        long start = System.currentTimeMillis();
-        myMemoryLoader = JarMemoryLoader.load(file, getBaseURL());
+        myMemoryLoader = new SoftReference<JarMemoryLoader>(JarMemoryLoader.load(file, getBaseURL()));
       }
       finally {
         releaseZipFile(zipFile);
@@ -133,8 +133,11 @@ class JarLoader extends Loader {
   Resource getResource(String name, boolean flag) {
     final long started = myDebugTime ? System.nanoTime():0;
     if (myMemoryLoader != null) {
-      Resource resource = myMemoryLoader.getResource(name);
-      if (resource != null) return resource;
+      JarMemoryLoader loader = myMemoryLoader.get();
+      if (loader != null) {
+        Resource resource = loader.getResource(name);
+        if (resource != null) return resource;
+      }
     }
     ZipFile file = null;
     try {
