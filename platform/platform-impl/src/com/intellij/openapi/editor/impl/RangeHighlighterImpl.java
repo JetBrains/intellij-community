@@ -196,6 +196,6 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public String toString() {
-    return "RangeHighlighter: ("+getStartOffset()+","+getEndOffset()+"); layer="+getLayer();
+    return "RangeHighlighter: ("+getStartOffset()+","+getEndOffset()+"); layer="+getLayer()+"; tooltip: "+getData().getErrorStripeTooltip();
   }
 }

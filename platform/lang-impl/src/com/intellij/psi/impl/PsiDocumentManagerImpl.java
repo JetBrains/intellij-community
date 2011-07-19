@@ -309,7 +309,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
-  boolean finishCommit(@NotNull final Document document, final List<Processor<Document>> finishRunnables, boolean synchronously) {
+  boolean finishCommit(@NotNull final Document document,
+                       final List<Processor<Document>> finishRunnables,
+                       boolean synchronously,
+                       @NotNull String reason,
+                       @Nullable DocumentEvent event) {
     if (myProject.isDisposed()) return false;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
@@ -343,8 +347,25 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (success) {
       runAfterCommitActions(document);
+      if (LOG.isDebugEnabled()) {
+        checkAllElementsValid(document, reason, event);
+      }
     }
     return success;
+  }
+
+  private void checkAllElementsValid(@NotNull Document document, @NotNull final String reason, @Nullable final DocumentEvent event) {
+    final PsiFile psiFile = getCachedPsiFile(document);
+    if (psiFile != null) {
+      psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (!element.isValid()) {
+            LOG.error("Commit to '"+psiFile.getVirtualFile()+"' lead to invalid element: "+element+ "; Reason: '"+reason+"'; Doc change event: "+event);
+          }
+        }
+      });
+    }
   }
 
   private void doCommit(@NotNull final Document document, final PsiFile excludeFile) {
@@ -538,7 +559,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       if (file == null) continue;
 
       if (file.isPhysical() && mySmartPointerManager != null) { // mock tests
-        SmartPointerManagerImpl.fastenBelts(file, event.getOffset());
+        SmartPointerManagerImpl.fastenBelts(file, event.getOffset(), null);
       }
 
       final TextBlock textBlock = getTextBlock(file);
@@ -591,7 +612,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (commitNecessary) {
       myUncommittedDocuments.add(document);
 
-      myDocumentCommitThread.queueCommit("Document changed", document, myProject);
+      myDocumentCommitThread.queueCommit("Document changed", document, myProject, event);
     }
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and

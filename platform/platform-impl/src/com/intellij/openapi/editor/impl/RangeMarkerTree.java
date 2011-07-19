@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -25,13 +28,17 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * User: cdr
  */
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerTree");
+  private static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode() || ApplicationManagerEx.getApplicationEx().isInternal();
+
   private final PrioritizedDocumentListener myListener;
-  final Document myDocument;
+  private final Document myDocument;
   private final EqualStartIntervalComparator<IntervalNode> myEqualStartIntervalComparator = new EqualStartIntervalComparator<IntervalNode>() {
     @Override
     public int compare(IntervalNode i1, IntervalNode i2) {
@@ -81,6 +88,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     myDocument.removeDocumentListener(myListener);
   }
 
+  private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
   @Override
   public RangeMarkerTree<T>.RMNode addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     RangeMarkerImpl marker = (RangeMarkerImpl)interval;
@@ -88,7 +96,23 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     RangeMarkerTree<T>.RMNode node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
 
     checkBelongsToTheTree(interval, true);
-
+    if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT) {
+      System.gc();System.gc();System.gc();
+      final StringBuilder msg = new StringBuilder();
+      final AtomicInteger alive = new AtomicInteger();
+      node.processAliveKeys(new Processor<T>() {
+        @Override
+        public boolean process(T t) {
+          msg.append(t).append("\n");
+          alive.incrementAndGet();
+          return true;
+        }
+      });
+      if (alive.get() > DUPLICATE_LIMIT) {
+        msg.insert(0, "Too many range markers (" + alive +") registered at ("+start+","+end+") in "+this+":\n");
+        LOG.error(msg);
+      }
+    }
     return node;
   }
 

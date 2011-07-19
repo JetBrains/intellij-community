@@ -292,7 +292,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     // process all roots in viewProvider to find marked for reformat before elements and create appropriate ragge markers
     handleReformatMarkers(key, postprocessTasks);
 
-    // then we create ranges by changed nodes. One per node. There ranges can instersect. Ranges are sorted by end offset.
+    // then we create ranges by changed nodes. One per node. There ranges can intersect. Ranges are sorted by end offset.
     if (astNodes != null) createActionsMap(astNodes, key, postprocessTasks);
 
     if ("true".equals(System.getProperty("check.psi.is.valid")) && ApplicationManager.getApplication().isUnitTestMode()) {
@@ -358,8 +358,8 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
         iterator.remove();
       }
       else if (accumulatedTask.getStartOffset() > currentTask.getEndOffset() ||
-               (accumulatedTask.getStartOffset() == currentTask.getEndOffset() &&
-                !canStickActionsTogether(accumulatedTask, currentTask))) {
+               accumulatedTask.getStartOffset() == currentTask.getEndOffset() &&
+                !canStickActionsTogether(accumulatedTask, currentTask)) {
         // action can be pushed
         if (accumulatedTask instanceof ReindentTask) {
           indentActions.add((ReindentTask) accumulatedTask);
@@ -391,7 +391,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
         if (!(accumulatedTask instanceof ReindentTask)) {
           iterator.remove();
           
-          boolean withLeadingWhitespace = (accumulatedTask instanceof ReformatWithHeadingWhitespaceTask);
+          boolean withLeadingWhitespace = accumulatedTask instanceof ReformatWithHeadingWhitespaceTask;
           if (accumulatedTask instanceof ReformatTask &&
               currentTask instanceof ReformatWithHeadingWhitespaceTask &&
               accumulatedTask.getStartOffset() == currentTask.getStartOffset()) {
@@ -402,8 +402,20 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
               accumulatedTask.getStartOffset() < currentTask.getStartOffset()) {
             withLeadingWhitespace = false;
           }
-          RangeMarker rangeMarker = document.createRangeMarker(Math.min(accumulatedTask.getStartOffset(), currentTask.getStartOffset()),
-                                                               Math.max(accumulatedTask.getEndOffset(), currentTask.getEndOffset()));
+          int newStart = Math.min(accumulatedTask.getStartOffset(), currentTask.getStartOffset());
+          int newEnd = Math.max(accumulatedTask.getEndOffset(), currentTask.getEndOffset());
+          RangeMarker rangeMarker;
+
+          if (accumulatedTask.getStartOffset() == newStart && accumulatedTask.getEndOffset() == newEnd) {
+            rangeMarker = accumulatedTask.getRange();
+          }
+          else if (currentTask.getStartOffset() == newStart && currentTask.getEndOffset() == newEnd) {
+            rangeMarker = currentTask.getRange();
+          }
+          else {
+            rangeMarker = document.createRangeMarker(newStart, newEnd);
+          }
+
           if (withLeadingWhitespace) {
             accumulatedTask = new ReformatWithHeadingWhitespaceTask(rangeMarker);
           }

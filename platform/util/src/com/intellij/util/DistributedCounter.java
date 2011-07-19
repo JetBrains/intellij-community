@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Low-contention counter.
- * Repeated calls to {@link #next()} return increasing numbers unique across all calling threads.
+ * Repeated calls to {@link #next()} return numbers which are unique across all calling threads, and which are increasing over calls within one thread.
  */
 public class DistributedCounter {
   private static final int CHUNK_SIZE = 1000;

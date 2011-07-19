@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,14 +30,13 @@ interface SmartPointerElementInfo {
   Document getDocumentToSynchronize();
 
   void documentAndPsiInSync();
-  void fastenBelt(int offset);
+  void fastenBelt(int offset, RangeMarker cachedRangeMarker);
 
   void unfastenBelt(int offset);
 
   @Nullable
   PsiElement restoreElement();
 
-  void dispose();
   int elementHashCode(); // must be immutable
   boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other);
 

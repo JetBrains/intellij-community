@@ -34,6 +34,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -375,6 +376,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                              severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
   }
 
+  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
   private final TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator>> myTransferToEDTQueue
     = new TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator>>("Apply inspection results", new Processor<Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator>>() {
     private final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
@@ -402,7 +404,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       for (HighlightInfo info : infos) {
         final EditorColorsScheme colorsScheme = getColorsScheme();
         UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
-                                                                   info, colorsScheme, getId());
+                                                                   info, colorsScheme, getId(), ranges2markersCache);
       }
 
       return true;

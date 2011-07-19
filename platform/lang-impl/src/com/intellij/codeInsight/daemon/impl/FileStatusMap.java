@@ -28,12 +28,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -74,7 +76,7 @@ public class FileStatusMap implements Disposable {
         if (!errorFound) return;
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         assert file != null : document;
-        status = new FileStatus(file,document);
+        status = new FileStatus(file.getProject());
         myDocumentToStatusMap.put(document, status);
       }
       status.errorFound = errorFound;
@@ -90,27 +92,23 @@ public class FileStatusMap implements Disposable {
 
   private static class FileStatus {
     public boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
-    private boolean wolfPassFinfished;
+    private boolean wolfPassFinished;
+    // if contains the special value "WHOLE_FILE_MARKER" than the corresponding range is (0, document length)
     private final TIntObjectHashMap<RangeMarker> dirtyScopes = new TIntObjectHashMap<RangeMarker>();
     private boolean errorFound;
 
-    private FileStatus(@NotNull PsiFile file, @NotNull Document document) {
-      markWholeFile(file, document, file.getProject());
+    private FileStatus(@NotNull Project project) {
+      markWholeFile(project);
     }
 
-    private void markWholeFile(PsiFile file, Document document, Project project) {
-      dirtyScopes.put(Pass.UPDATE_ALL, createWholeFileMarker(file, document));
-      dirtyScopes.put(Pass.EXTERNAL_TOOLS, createWholeFileMarker(file, document));
-      dirtyScopes.put(Pass.LOCAL_INSPECTIONS, createWholeFileMarker(file, document));
+    private void markWholeFile(@NotNull Project project) {
+      dirtyScopes.put(Pass.UPDATE_ALL, WHOLE_FILE_MARKER);
+      dirtyScopes.put(Pass.EXTERNAL_TOOLS, WHOLE_FILE_MARKER);
+      dirtyScopes.put(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_MARKER);
       TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
-        dirtyScopes.put(factory.getPassId(), createWholeFileMarker(file, document));
+        dirtyScopes.put(factory.getPassId(), WHOLE_FILE_MARKER);
       }
-    }
-
-    private static RangeMarker createWholeFileMarker(PsiFile file, Document document) {
-      int length = file == null ? -1 : Math.min(file.getTextLength(), document.getTextLength());
-      return length == -1 ? null : document.createRangeMarker(0, length);
     }
 
     public boolean allDirtyScopesAreNull() {
@@ -134,14 +132,14 @@ public class FileStatusMap implements Disposable {
 
     @Override
     public String toString() {
-      final StringBuilder s = new StringBuilder();
-      s.append("defensivelyMarked = " + defensivelyMarked);
-      s.append("; wolfPassFinfished = " + wolfPassFinfished);
-      s.append("; errorFound = " + errorFound);
+      @NonNls final StringBuilder s = new StringBuilder();
+      s.append("defensivelyMarked = ").append(defensivelyMarked);
+      s.append("; wolfPassFinfished = ").append(wolfPassFinished);
+      s.append("; errorFound = ").append(errorFound);
       s.append("; dirtyScopes: (");
       dirtyScopes.forEachEntry(new TIntObjectProcedure<RangeMarker>() {
         public boolean execute(int passId, RangeMarker rangeMarker) {
-          s.append(" pass: " + passId + " -> " + rangeMarker + ";");
+          s.append(" pass: " + passId + " -> " + (rangeMarker ==  WHOLE_FILE_MARKER ? "Whole file" : rangeMarker)+ ";");
           return true;
         }
       });
@@ -171,17 +169,17 @@ public class FileStatusMap implements Disposable {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
-        status = new FileStatus(file,document);
+        status = new FileStatus(file.getProject());
         myDocumentToStatusMap.put(document, status);
       }
       status.defensivelyMarked=false;
       if (passId == Pass.WOLF) {
-        status.wolfPassFinfished = true;
+        status.wolfPassFinished = true;
       }
       else if (status.dirtyScopes.containsKey(passId)) {
         RangeMarker marker = status.dirtyScopes.get(passId);
         if (marker != null) {
-          marker.dispose();
+          if (marker != WHOLE_FILE_MARKER) marker.dispose();
           status.dirtyScopes.put(passId, null);
         }
       }
@@ -203,13 +201,12 @@ public class FileStatusMap implements Disposable {
         return file == null ? null : file.getTextRange();
       }
       if (status.defensivelyMarked) {
-        //PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        status.markWholeFile(file, document, myProject);
+        status.markWholeFile(myProject);
         status.defensivelyMarked = false;
       }
       LOG.assertTrue(status.dirtyScopes.containsKey(passId), "Unknown pass " + passId);
       RangeMarker marker = status.dirtyScopes.get(passId);
-      return marker == null ? null : marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
+      return marker == null ? null : marker != WHOLE_FILE_MARKER && marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
     }
   }
   
@@ -221,15 +218,15 @@ public class FileStatusMap implements Disposable {
         return;
       }
       if (passId == Pass.WOLF) {
-        status.wolfPassFinfished = false;
+        status.wolfPassFinished = false;
       }
       else {
         LOG.assertTrue(status.dirtyScopes.containsKey(passId));
         RangeMarker marker = status.dirtyScopes.get(passId);
-        if (marker != null) {
+        if (marker != null && marker != WHOLE_FILE_MARKER) {
           marker.dispose();
         }
-        marker = document.createRangeMarker(0, document.getTextLength());
+        marker = WHOLE_FILE_MARKER;
         status.dirtyScopes.put(passId, marker);
       }
     }
@@ -269,8 +266,10 @@ public class FileStatusMap implements Disposable {
   private static RangeMarker combineScopes(RangeMarker old, TextRange scope, int textLength, @NotNull Document document) {
     if (scope == null) return old;
     if (old == null) {
+      if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_MARKER;
       return document.createRangeMarker(scope);
     }
+    if (old == WHOLE_FILE_MARKER) return old;
     TextRange oldRange = TextRange.create(old);
     TextRange union = scope.union(oldRange);
     if (old.isValid() && union.equals(oldRange)) {
@@ -280,6 +279,7 @@ public class FileStatusMap implements Disposable {
       union = union.intersection(new TextRange(0, textLength));
     }
     old.dispose();
+    assert union != null;
     return document.createRangeMarker(union);
   }
 
@@ -289,7 +289,7 @@ public class FileStatusMap implements Disposable {
       if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
 
       FileStatus status = myDocumentToStatusMap.get(document);
-      return status != null && !status.defensivelyMarked && status.wolfPassFinfished && status.allDirtyScopesAreNull();
+      return status != null && !status.defensivelyMarked && status.wolfPassFinished && status.allDirtyScopesAreNull();
     }
   }
 
@@ -297,7 +297,7 @@ public class FileStatusMap implements Disposable {
   public void assertAllDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
-      assert status != null && !status.defensivelyMarked && status.wolfPassFinfished && status.allDirtyScopesAreNull() : status;
+      assert status != null && !status.defensivelyMarked && status.wolfPassFinished && status.allDirtyScopesAreNull() : status;
     }
   }
 
@@ -305,4 +305,63 @@ public class FileStatusMap implements Disposable {
   public void allowDirt(boolean allow) {
     myAllowDirt = allow;
   }
+
+  private static final RangeMarker WHOLE_FILE_MARKER = new RangeMarker(){
+    @NotNull
+    @Override
+    public Document getDocument() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getStartOffset() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getEndOffset() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isValid() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setGreedyToLeft(boolean greedy) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setGreedyToRight(boolean greedy) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isGreedyToRight() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isGreedyToLeft() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void dispose() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T getUserData(@NotNull Key<T> key) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+      throw new UnsupportedOperationException();
+    }
+  };
+
 }

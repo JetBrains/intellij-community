@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.Nullable;
 
 public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
-  void fastenBelt(int offset);
+  void fastenBelt(int offset, @Nullable RangeMarker cachedRangeMarker);
   void documentAndPsiInSync();
 
   void unfastenBelt(int offset);

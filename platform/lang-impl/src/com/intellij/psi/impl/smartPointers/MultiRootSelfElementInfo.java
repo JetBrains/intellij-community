@@ -17,7 +17,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MultiRootSelfElementInfo extends SelfElementInfo {
   public MultiRootSelfElementInfo(@NotNull Project project,
-                                  @NotNull TextRange anchor,
+                                  @NotNull ProperTextRange anchor,
                                   @NotNull Class anchorClass,
                                   @NotNull PsiFile containingFile,
                                   @NotNull Language language) {

@@ -159,7 +159,8 @@ public class UpdateHighlightersUtil {
                                                   int endOffset,
                                                   @NotNull final HighlightInfo info,
                                                   @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                                  final int group) {
+                                                  final int group,
+                                                  @NotNull Map<TextRange, RangeMarker> ranges2markersCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (info.isFileLevelAnnotation || info.getGutterIconRenderer() != null) return;
 
@@ -177,7 +178,7 @@ public class UpdateHighlightersUtil {
 
     if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
 
-    createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, null,
+    createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, ranges2markersCache,
                                 SeverityRegistrar.getInstance(project));
 
     clearWhiteSpaceOptimizationFlag(document);
@@ -388,7 +389,7 @@ public class UpdateHighlightersUtil {
                                                   @NotNull final PsiFile psiFile,
                                                   @NotNull MarkupModelEx markup,
                                                   @Nullable HighlightersRecycler infosToRemove,
-                                                  @Nullable final Map<TextRange, RangeMarker> ranges2markersCache,
+                                                  @NotNull final Map<TextRange, RangeMarker> ranges2markersCache,
                                                   SeverityRegistrar severityRegistrar) {
     final int infoStartOffset = info.startOffset;
     int infoEndOffset = info.endOffset;
@@ -424,7 +425,7 @@ public class UpdateHighlightersUtil {
         GutterIconRenderer renderer = info.getGutterIconRenderer();
         finalHighlighter.setGutterIconRenderer(renderer);
 
-        if (ranges2markersCache != null) ranges2markersCache.put(new TextRange(infoStartOffset, finalInfoEndOffset), info.highlighter);
+        ranges2markersCache.put(new TextRange(infoStartOffset, finalInfoEndOffset), info.highlighter);
         if (info.quickFixActionRanges != null) {
           List<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>> list =
             new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(info.quickFixActionRanges.size());
@@ -435,7 +436,13 @@ public class UpdateHighlightersUtil {
           }
           info.quickFixActionMarkers = new CopyOnWriteArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(list);
         }
-        info.fixMarker = getOrCreate(document, ranges2markersCache, new TextRange(info.fixStartOffset, info.fixEndOffset));
+        TextRange fixRange = new TextRange(info.fixStartOffset, info.fixEndOffset);
+        if (fixRange.equalsToRange(infoStartOffset, finalInfoEndOffset)) {
+          info.fixMarker = null; // null means it the same as highlighter'
+        }
+        else {
+          info.fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
+        }
       }
     };
 
@@ -469,13 +476,11 @@ public class UpdateHighlightersUtil {
     return layer;
   }
 
-  private static RangeMarker getOrCreate(@NotNull Document document, @Nullable Map<TextRange, RangeMarker> ranges2markersCache, @NotNull TextRange textRange) {
-    RangeMarker marker = ranges2markersCache == null ? null : ranges2markersCache.get(textRange);
+  private static RangeMarker getOrCreate(@NotNull Document document, @NotNull Map<TextRange, RangeMarker> ranges2markersCache, @NotNull TextRange textRange) {
+    RangeMarker marker = ranges2markersCache.get(textRange);
     if (marker == null) {
       marker = document.createRangeMarker(textRange);
-      if (ranges2markersCache != null) {
-        ranges2markersCache.put(textRange, marker);
-      }
+      ranges2markersCache.put(textRange, marker);
     }
     return marker;
   }

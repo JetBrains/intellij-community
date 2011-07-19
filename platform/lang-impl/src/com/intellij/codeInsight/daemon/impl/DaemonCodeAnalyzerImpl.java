@@ -35,6 +35,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -557,10 +558,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     int endOffset = highlighter.getEndOffset();
     if (startOffset > offset || offset > endOffset) {
       if (!includeFixRange) return false;
-      if (info.fixMarker == null || !info.fixMarker.isValid()) return false;
-      startOffset = info.fixMarker.getStartOffset();
-      endOffset = info.fixMarker.getEndOffset();
-      if (startOffset > offset || offset > endOffset) return false;
+      RangeMarker fixMarker = info.fixMarker;
+      if (fixMarker != null) {  // null means its range is the same as highlighter
+        if (!fixMarker.isValid()) return false;
+        startOffset = fixMarker.getStartOffset();
+        endOffset = fixMarker.getEndOffset();
+        if (startOffset > offset || offset > endOffset) return false;
+      }
     }
     return true;
   }

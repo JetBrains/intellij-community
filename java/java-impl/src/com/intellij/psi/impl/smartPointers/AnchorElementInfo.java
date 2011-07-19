@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -35,14 +37,15 @@ class AnchorElementInfo extends SelfElementInfo {
   private IStubElementType myStubElementType;
 
   AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
-    super(containingFile.getProject(), anchor.getTextRange(), anchor.getClass(), containingFile, containingFile.getLanguage());
+    super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), containingFile,
+          containingFile.getLanguage());
   }
   // will restore by stub index until file tree get loaded
   AnchorElementInfo(@NotNull PsiElement anchor,
                     @NotNull PsiFileWithStubSupport containingFile,
                     int stubId,
                     @NotNull IStubElementType stubElementType) {
-    super(containingFile.getProject(), new TextRange(0,0), anchor.getClass(), containingFile, containingFile.getLanguage());
+    super(containingFile.getProject(), new ProperTextRange(0,0), anchor.getClass(), containingFile, containingFile.getLanguage());
     this.stubId = stubId;
     myStubElementType = stubElementType;
     IElementType contentElementType = ((PsiFileImpl)containingFile).getContentElementType();
@@ -83,7 +86,7 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public void fastenBelt(int offset) {
+  public void fastenBelt(int offset, RangeMarker cachedRangeMarker) {
     if (stubId != -1) {
       PsiElement element = restoreElement();
       if (element != null) {
@@ -94,6 +97,6 @@ class AnchorElementInfo extends SelfElementInfo {
         setRange((anchor == null ? element : anchor).getTextRange());
       }
     }
-    super.fastenBelt(offset);
+    super.fastenBelt(offset, cachedRangeMarker);
   }
 }
