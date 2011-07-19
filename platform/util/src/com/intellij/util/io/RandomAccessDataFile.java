@@ -25,7 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.io.*;
 import java.nio.ByteBuffer;
 
-public class RandomAccessDataFile implements Forceable {
+public class RandomAccessDataFile implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.RandomAccessDataFile");
 
   private final static OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
@@ -182,6 +182,10 @@ public class RandomAccessDataFile implements Forceable {
     ourCache.closeChannel(myFile);
     
     myIsDisposed = true;
+  }
+
+  public void close() {
+    dispose();
   }
 
   public void force() {
