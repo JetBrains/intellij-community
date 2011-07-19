@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -250,8 +251,15 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     if (isLocalScope(element)) {
       return false;
     }
-
-    if (resolve() == element) {
+    PsiElement resolveResult = resolve();
+    if (resolveResult instanceof PyImportedModule) {
+      resolveResult = resolveResult.getNavigationElement();
+    }
+    if (element instanceof PsiDirectory && resolveResult instanceof PyFile &&
+        PyNames.INIT_DOT_PY.equals(((PyFile)resolveResult).getName()) && ((PyFile)resolveResult).getContainingDirectory() == element) {
+      return true;
+    }
+    if (resolveResult == element) {
       return true;
     }
     final String referencedName = myElement.getReferencedName();

@@ -278,6 +278,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     ASTNode nameElement = myElement.getNameElement();
+    if (newElementName.endsWith(PyNames.DOT_PY)) {
+      newElementName = newElementName.substring(0, newElementName.length() - PyNames.DOT_PY.length());
+    }
     if (nameElement != null && PyNames.isIdentifier(newElementName)) {
       final ASTNode newNameElement = PyElementGenerator.getInstance(myElement.getProject()).createNameIdentifier(newElementName);
       myElement.getNode().replaceChild(nameElement, newNameElement);
@@ -315,7 +318,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       // may be import via alias, so don't check if names match, do simple resolve check instead
-      final PsiElement resolveResult = resolve();
+      PsiElement resolveResult = resolve();
+      if (resolveResult instanceof PyImportedModule) {
+        resolveResult = resolveResult.getNavigationElement();
+      }
       if (element instanceof PsiDirectory && resolveResult instanceof PyFile &&
           PyNames.INIT_DOT_PY.equals(((PyFile)resolveResult).getName()) && ((PyFile)resolveResult).getContainingDirectory() == element) {
         return true;
