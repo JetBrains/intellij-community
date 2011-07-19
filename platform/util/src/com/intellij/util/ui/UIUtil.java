@@ -259,7 +259,7 @@ public class UIUtil {
 
     if (size == FontSize.SMALL) {
       if (base == null) base = defFont;
-      return base.deriveFont(defFont.getSize() * 0.8f);
+      return base.deriveFont(defFont.getSize() * (SystemInfo.isMac ? 0.85f: 0.8f));
     }
     else {
       if (base != null) {
