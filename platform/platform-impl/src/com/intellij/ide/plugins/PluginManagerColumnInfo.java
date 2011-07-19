@@ -68,7 +68,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     }
     else if (columnIdx == COLUMN_DOWNLOADS) {
       //  Base class IdeaPluginDescriptor does not declare this field.
-      return (base instanceof PluginNode) ? ((PluginNode)base).getDownloads() : ((IdeaPluginDescriptorImpl)base).getDownloads();
+      return base.getDownloads();
     }
     if (columnIdx == COLUMN_DATE) {
       //  Base class IdeaPluginDescriptor does not declare this field.
