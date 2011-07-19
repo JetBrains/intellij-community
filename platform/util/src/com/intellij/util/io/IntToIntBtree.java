@@ -27,7 +27,7 @@ abstract class IntToIntBtree {
   private final TIntObjectHashMap<byte[]> pagesCache = new TIntObjectHashMap<byte[]>(100);
   private boolean isLarge = true;
 
-  public IntToIntBtree(int _pageSize, int rootAdress) {
+  public IntToIntBtree(int _pageSize, int rootAdress, boolean initial) {
     pageSize = _pageSize;
     buffer = new byte[_pageSize];
     root = new BtreeIndexNodeView(this);
@@ -37,19 +37,24 @@ abstract class IntToIntBtree {
     assert i < Short.MAX_VALUE && i % 2 == 0;
     maxInteriorNodes = (short)i;
     pagesCount = 1;
+
+    if (initial) {
+      root.setIndexLeaf(true);
+      root.sync();
+    }
   }
 
-  protected abstract int allocPage();
+  protected abstract int allocEmptyPage();
 
   private int nextPage() {
-    int address = allocPage();
+    int address = allocEmptyPage();
     ++pagesCount;
     return address;
   }
 
-  protected abstract void saveBytes(int address, byte[] buffer, int offset, int length);
+  protected abstract void savePage(int address, byte[] pageBuffer);
 
-  protected abstract void loadBytes(int address, byte[] buffer, int offset, int length);
+  protected abstract void loadPageContent(int address, byte[] pageBuffer);
 
   public int get(int key) {
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
@@ -173,7 +178,7 @@ abstract class IntToIntBtree {
         buffer = bytes;
       } else {
         buffer = new byte[btree.pageSize];
-        btree.loadBytes(address, buffer, 0, btree.pageSize);
+        btree.loadPageContent(address, buffer);
         btree.pagesCache.put(address, buffer);
       }
     }
@@ -188,7 +193,7 @@ abstract class IntToIntBtree {
 
     void sync() {
       if (buffer != null) {
-        btree.saveBytes(address, buffer, 0, buffer.length);
+        btree.savePage(address, buffer);
       }
     }
 

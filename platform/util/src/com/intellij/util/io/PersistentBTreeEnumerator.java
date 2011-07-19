@@ -45,25 +45,27 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     super(file, new MappedFileEnumeratorStorage(file, initialSize), dataDescriptor, initialSize);
 
     storeVars(false);
-    if (btree == null) initBtree();
+    if (btree == null) initBtree(false);
   }
 
-  private void initBtree() {
-    btree = new IntToIntBtree(PAGE_SIZE, myRootNodeStart) {
+  private void initBtree(boolean initial) {
+    btree = new IntToIntBtree(PAGE_SIZE, myRootNodeStart, initial) {
 
       @Override
-      protected int allocPage() {
+      protected int allocEmptyPage() {
         return PersistentBTreeEnumerator.this.allocPage();
       }
 
       @Override
-      protected void saveBytes(int address, byte[] buffer, int offset, int length) {
-        myStorage.put(address, buffer, offset, length);
+      protected void savePage(int address, byte[] pageBuffer) {
+        if (doSanityCheck) myAssert(pageBuffer.length == PAGE_SIZE);
+        myStorage.put(address, pageBuffer, 0, pageBuffer.length);
       }
 
       @Override
-      protected void loadBytes(int address, byte[] buffer, int offset, int length) {
-        myStorage.get(address, buffer, offset, length);
+      protected void loadPageContent(int address, byte[] pageBuffer) {
+        if (doSanityCheck) myAssert(pageBuffer.length == PAGE_SIZE);
+        myStorage.get(address, pageBuffer, 0, pageBuffer.length);
       }
 
       @Override
@@ -103,14 +105,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myLogicalFileLength = PAGE_SIZE;
     myRootNodeStart = (DATA_START / PAGE_SIZE + 1) * PAGE_SIZE;
 
-    allocPage(myRootNodeStart);
+    allocEmptyPage(myRootNodeStart);
     myFirstPageStart = myDataPageStart = -1;
     myDuplicatedValuesPageStart = -1;
 
     storeVars(true);
 
-    initBtree();
-    btree.root.setIndexLeaf(true);
+    initBtree(true);
     btree.root.sync();
   }
 
@@ -120,7 +121,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     super.doClose();
   }
 
-  private int allocPage(int pageStart) {
+  private int allocEmptyPage(int pageStart) {
     if (myStorage instanceof MappedFileEnumeratorStorage) {
       myStorage.putInt(pageStart + PAGE_SIZE - 4, 0);
     } else {
@@ -132,7 +133,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private int allocPage() {
-    return allocPage(myLogicalFileLength);
+    return allocEmptyPage(myLogicalFileLength);
   }
 
   @Override
