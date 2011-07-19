@@ -68,7 +68,7 @@ public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer
   public VariableInplaceIntroducer(final Project project,
                                    final TypeExpression expression,
                                    final Editor editor,
-                                   final @NotNull PsiVariable elementToRename,
+                                   @NotNull final PsiVariable elementToRename,
                                    final boolean cantChangeFinalModifier,
                                    final boolean hasTypeSuggestion,
                                    final RangeMarker exprMarker,
@@ -113,7 +113,7 @@ public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer
     try {
       if (success) {
         final Document document = myEditor.getDocument();
-        final @Nullable PsiVariable psiVariable = getVariable();
+        @Nullable final PsiVariable psiVariable = getVariable();
         if (psiVariable == null) {
           return;
         }
@@ -145,9 +145,11 @@ public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer
             }
           });
         }
-      } else {
-        if (getExprMarker() != null) {
-          myEditor.getCaretModel().moveToOffset(getExprMarker().getStartOffset());
+      }
+      else {
+        RangeMarker exprMarker = getExprMarker();
+        if (exprMarker != null && exprMarker.isValid()) {
+          myEditor.getCaretModel().moveToOffset(exprMarker.getStartOffset());
           myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         }
         if (myExpressionText != null) {
