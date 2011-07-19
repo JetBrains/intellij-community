@@ -30,21 +30,21 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   @NotNull
   public Lexer getHighlightingLexer() {
     LayeredLexer ret = new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
-    ret.registerSelfStoppingLayer(
+    ret.registerLayer(
       new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_STRING),
-      new IElementType[]{PyTokenTypes.SINGLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY
+      PyTokenTypes.SINGLE_QUOTED_STRING
     );
-    ret.registerSelfStoppingLayer(
+    ret.registerLayer(
       new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
-      new IElementType[]{PyTokenTypes.SINGLE_QUOTED_UNICODE}, IElementType.EMPTY_ARRAY
+      PyTokenTypes.SINGLE_QUOTED_UNICODE
     );
-    ret.registerSelfStoppingLayer(
+    ret.registerLayer(
       new PyStringLiteralLexer(PyTokenTypes.TRIPLE_QUOTED_STRING),
-      new IElementType[]{PyTokenTypes.TRIPLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY
+      PyTokenTypes.TRIPLE_QUOTED_STRING
     );
-    ret.registerSelfStoppingLayer(
+    ret.registerLayer(
       new PyStringLiteralLexer(PyTokenTypes.TRIPLE_QUOTED_UNICODE),
-      new IElementType[]{PyTokenTypes.TRIPLE_QUOTED_UNICODE}, IElementType.EMPTY_ARRAY
+      PyTokenTypes.TRIPLE_QUOTED_UNICODE
     );
 
     return ret;
