@@ -40,7 +40,9 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.docking.*;
+import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.DockableContent;
+import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
@@ -317,7 +319,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   }
 
   public void setPaintBlocked(boolean blocked) {
-    ((JBTabsImpl)myTabs).setPaintBlocked(blocked, true);
+    ((JBTabsImpl)myTabs).setPaintBlocked(blocked, false);
   }
 
   private class MyQueryable implements Queryable {
