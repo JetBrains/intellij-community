@@ -27,6 +27,7 @@ import java.util.List;
 public class Splash extends JDialog implements Consumer<String> {
   private final Icon myImage;
   private final JLabel myLabel;
+  private final Color myTextColor;
 
   public Splash(String imageName, final Color textColor) {
     setUndecorated(true);
@@ -35,7 +36,8 @@ public class Splash extends JDialog implements Consumer<String> {
     setFocusableWindowState(false);
 
     Icon originalImage = IconLoader.getIcon(imageName);
-    myImage = new MyIcon(originalImage, textColor);
+    myTextColor = textColor;
+    myImage = new MyIcon(originalImage, myTextColor);
     myLabel = new JLabel(myImage);
     Container contentPane = getContentPane();
     contentPane.setLayout(new BorderLayout());
