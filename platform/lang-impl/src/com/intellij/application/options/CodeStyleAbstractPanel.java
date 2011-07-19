@@ -103,6 +103,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     updatePreview(true);
   }
 
+  protected void setShouldUpdatePreview(boolean shouldUpdatePreview) {
+    myShouldUpdatePreview = shouldUpdatePreview;
+  }
+
   private synchronized void setSomethingChanged(final boolean b) {
     mySomethingChanged = b;
   }
@@ -591,6 +595,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   
   public LanguageSelector getLanguageSelector() {
     return myLanguageSelector;
+  }
+
+  protected String getTabTitle() {
+    return "Other";
   }
   
 }

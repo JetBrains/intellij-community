@@ -205,7 +205,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     if (getSettingsType() != LanguageCodeStyleSettingsProvider.SettingsType.LANGUAGE_SPECIFIC) {
       tabbedPane = new JTabbedPane();
       tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-      Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+      Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithSharedPreview();
       if (langs.length == 0) return;
       for (Language lang : langs) {
         tabbedPane.addTab(getTabName(lang), createDummy());
