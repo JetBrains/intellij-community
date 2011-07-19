@@ -39,6 +39,7 @@ import java.util.Comparator;
 import java.util.EventObject;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
+  private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
   private StatusText myEmptyText;
   private ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 
@@ -50,6 +51,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private boolean myRowHeightIsComputing;
 
   private Integer myMinRowHeight;
+  private boolean myStriped;
+
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -306,6 +309,18 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     super.removeNotify();
   }
 
+  public boolean isStriped() {
+    return myStriped;
+  }
+
+  public void setStriped(boolean striped) {
+    myStriped = striped;
+    if (striped) {
+      setShowGrid(false);
+      getColumnModel().setColumnMargin(0);
+    }
+  }
+
   public boolean editCellAt(final int row, final int column, final EventObject e) {
     if (cellEditor != null && !cellEditor.stopCellEditing()) {
       return false;
@@ -352,6 +367,15 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return false;
   }
 
+
+  private static boolean isTableDecorationSupported() {
+    return UIUtil.isUnderAlloyLookAndFeel()
+      || UIUtil.isUnderNativeMacLookAndFeel()
+      || UIUtil.isUnderQuaquaLookAndFeel()
+      || UIUtil.isUnderMetalLookAndFeel()
+      || UIUtil.isUnderWindowsLookAndFeel();
+  }
+
   @Override
   public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
     final Component result = super.prepareRenderer(renderer, row, column);
@@ -360,6 +384,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     // Fix GTK background
     if (UIUtil.isUnderGTKLookAndFeel()) {
       UIUtil.changeBackGround(this, UIUtil.getTreeTextBackground());
+    }
+
+    if (!isCellSelected(row, column) && isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
+      final Color bg =  row % 2 == 1 ? getBackground() : DECORATED_ROW_BG_COLOR;
+      final JComponent c = (JComponent)result;
+      c.setOpaque(true);
+      c.setBackground(bg);
+      result.setBackground(bg);
     }
 
     if (!selected) return result;
