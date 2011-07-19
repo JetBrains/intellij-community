@@ -19,7 +19,6 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
@@ -38,8 +37,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -49,7 +46,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.EditorTextFieldWithBrowseButton;
+import com.intellij.ui.InsertPathAction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.TextFieldCompletionProvider;
 import gnu.trove.TIntArrayList;
@@ -65,7 +64,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
@@ -375,9 +373,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     final TIntArrayList enabledFields = ourEnabledFields.get(newType);
     for (int i = 0; i < myTestLocations.length; i++)
       getTestLocation(i).setEnabled(enabledFields.contains(i));
-    if (newType == JUnitConfigurationModel.PATTERN) {
+    /*if (newType == JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(false);
-    } else if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE) {
+    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE) {
       myModule.setEnabled(true);
     }
     else {
