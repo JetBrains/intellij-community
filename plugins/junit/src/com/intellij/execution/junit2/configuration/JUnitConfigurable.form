@@ -91,16 +91,13 @@
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/ExecutionBundle" title-key="junit.configuration.test.border"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
-</clientProperties>
             <children>
-              <component id="b109" class="com.intellij.openapi.ui.LabeledComponent" binding="myMethod">
+              <component id="b109" class="com.intellij.openapi.ui.LabeledComponent" binding="myMethod" custom-create="true">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
+                  <enabled value="true"/>
                   <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.method.label"/>
                 </properties>
               </component>
@@ -117,12 +114,11 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="e6070" class="com.intellij.openapi.ui.LabeledComponent" binding="myPackage">
+                  <component id="e6070" class="com.intellij.openapi.ui.LabeledComponent" binding="myPackage" custom-create="true">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
                       <enabled value="true"/>
                       <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.package.label"/>
                       <visible value="true"/>
@@ -192,12 +188,11 @@
                   <text value="Directory"/>
                 </properties>
               </component>
-              <component id="89ba4" class="com.intellij.openapi.ui.LabeledComponent" binding="myClass">
+              <component id="89ba4" class="com.intellij.openapi.ui.LabeledComponent" binding="myClass" custom-create="true">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
                   <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.class.label"/>
                 </properties>
               </component>

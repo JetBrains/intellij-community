@@ -24,12 +24,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.TextAccessor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
 
-public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextField> {
+public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextField> implements TextAccessor {
   public TextFieldWithBrowseButton(){
     this((ActionListener)null);
   }

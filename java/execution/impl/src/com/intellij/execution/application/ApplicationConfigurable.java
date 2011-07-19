@@ -26,6 +26,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,16 +35,18 @@ import java.awt.event.ActionListener;
 
 public class ApplicationConfigurable extends SettingsEditor<ApplicationConfiguration> {
   private CommonJavaParametersPanel myCommonProgramParameters;
-  private LabeledComponent<TextFieldWithBrowseButton.NoPathCompletion> myMainClass;
+  private LabeledComponent<EditorTextFieldWithBrowseButton> myMainClass;
   private LabeledComponent<JComboBox> myModule;
   private JPanel myWholePanel;
 
   private final ConfigurationModuleSelector myModuleSelector;
   private AlternativeJREPanel myAlternativeJREPanel;
   private JCheckBox myShowSwingInspectorCheckbox;
-  private final JreVersionDetector myVersionDetector = new JreVersionDetector();
+  private final JreVersionDetector myVersionDetector;
+  private final Project myProject;
 
   public ApplicationConfigurable(final Project project) {
+    myProject = project;
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
     myModule.getComponent().addActionListener(new ActionListener() {
@@ -52,6 +55,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
       }
     });
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
+    myVersionDetector = new JreVersionDetector();
   }
 
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
@@ -87,7 +91,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     }
   }
 
-  public TextFieldWithBrowseButton getMainClassField() {
+  public EditorTextFieldWithBrowseButton getMainClassField() {
     return myMainClass.getComponent();
   }
 
@@ -101,5 +105,10 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   }
 
   public void disposeEditor() {
+  }
+
+  private void createUIComponents() {
+    myMainClass = new LabeledComponent<EditorTextFieldWithBrowseButton>();
+    myMainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true));
   }
 }

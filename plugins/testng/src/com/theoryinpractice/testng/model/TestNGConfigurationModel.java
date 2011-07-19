@@ -17,16 +17,26 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Hani Suleiman Date: Jul 21, 2005 Time: 1:20:14 PM
@@ -37,17 +47,21 @@ public class TestNGConfigurationModel
 
     private TestNGConfigurationEditor editor;
     private TestType type;
-    private final Document typeDocuments[] = new Document[5];
+    private final Object[] typeDocuments = new Object[5];
     private final Document propertiesFileDocument = new PlainDocument();
     private final Document outputDirectoryDocument = new PlainDocument();
     private final Project project;
 
     public TestNGConfigurationModel(Project project) {
         type = TestType.INVALID;
-        for (int i = 0; i < typeDocuments.length; i++)
+        for (int i = 3; i < typeDocuments.length; i++)
             typeDocuments[i] = new PlainDocument();
 
         this.project = project;
+    }
+
+    public void setDocument(int type, com.intellij.openapi.editor.Document doc) {
+      typeDocuments[type] = doc;
     }
 
     public void setType(TestType type) {
@@ -66,7 +80,7 @@ public class TestNGConfigurationModel
         this.editor = editor;
     }
 
-    public Document getDocument(int index) {
+    public Object getDocument(int index) {
         return typeDocuments[index];
     }
 
@@ -142,14 +156,17 @@ public class TestNGConfigurationModel
         return getText(type, typeDocuments);
     }
 
-    private String getText(TestType testType, Document documents[]) {
-        Document document = documents[testType.getValue()];
+    private String getText(TestType testType, Object[] documents) {
+        Object document = documents[testType.getValue()];
+      if (document instanceof PlainDocument) {
         try {
-            return document.getText(0, document.getLength());
+            return ((PlainDocument)document).getText(0, ((PlainDocument)document).getLength());
         }
         catch (BadLocationException e) {
             throw new RuntimeException(e);
         }
+      }
+      return ((com.intellij.openapi.editor.Document)document).getText();
     }
 
     public void reset(TestNGConfiguration config) {
@@ -169,18 +186,27 @@ public class TestNGConfigurationModel
         setTypeValue(type, value, typeDocuments);
     }
 
-    private void setTypeValue(TestType type, String value, Document documents[]) {
-        Document document = documents[type.getValue()];
+    private void setTypeValue(TestType type, String value, Object[] documents) {
+        Object document = documents[type.getValue()];
         setDocumentText(document, value);
     }
 
-    private void setDocumentText(Document document, String value) {
+    private void setDocumentText(final Object document, final String value) {
+      if (document instanceof PlainDocument) {
         try {
-            document.remove(0, document.getLength());
-            document.insertString(0, value, null);
+          ((PlainDocument)document).remove(0, ((PlainDocument)document).getLength());
+          ((PlainDocument)document).insertString(0, value, null);
         } catch (BadLocationException e) {
             throw new RuntimeException(e);
         }
+      }  else {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            ((com.intellij.openapi.editor.Document)document).replaceString(0, ((com.intellij.openapi.editor.Document)document).getTextLength(), value);
+          }
+        });
+      }
+
     }
 
     private void setType(String s) {

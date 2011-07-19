@@ -22,9 +22,12 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
@@ -36,15 +39,20 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.TextFieldCompletionProvider;
 import com.theoryinpractice.testng.configuration.browser.*;
 import com.theoryinpractice.testng.model.*;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +60,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
+import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -65,7 +74,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
   private JPanel panel;
 
-  private LabeledComponent<TextFieldWithBrowseButton> classField;
+  private LabeledComponent<EditorTextFieldWithBrowseButton> classField;
   private LabeledComponent<JComboBox> moduleClasspath;
   private AlternativeJREPanel alternateJDK;
   private final ConfigurationModuleSelector moduleSelector;
@@ -75,9 +84,9 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JRadioButton methodTest;
   private JRadioButton groupTest;
   private final TestNGConfigurationModel model;
-  private LabeledComponent<TextFieldWithBrowseButton> methodField;
-  private LabeledComponent<TextFieldWithBrowseButton> packageField;
-  private LabeledComponent<TextFieldWithBrowseButton> groupField;
+  private LabeledComponent<EditorTextFieldWithBrowseButton> methodField;
+  private LabeledComponent<EditorTextFieldWithBrowseButton> packageField;
+  private LabeledComponent<TextFieldWithBrowseButton.NoPathCompletion> groupField;
   private LabeledComponent<TextFieldWithBrowseButton> suiteField;
   private JRadioButton packagesInProject;
   private JRadioButton packagesInModule;
@@ -144,9 +153,14 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
     LabeledComponent[] components = new LabeledComponent[] {packageField, classField, methodField, groupField, suiteField};
     for (int i = 0; i < components.length; i++) {
-      TextFieldWithBrowseButton field = (TextFieldWithBrowseButton) components[i].getComponent();
-      Document document = model.getDocument(i);
-      field.getTextField().setDocument(document);
+      ComponentWithBrowseButton field = (ComponentWithBrowseButton)components[i].getComponent();
+      Object document = model.getDocument(i);
+      if (field instanceof TextFieldWithBrowseButton) {
+        ((TextFieldWithBrowseButton)field).getTextField().setDocument((PlainDocument)document);
+      } else {
+        final com.intellij.openapi.editor.Document componentDocument = ((EditorTextFieldWithBrowseButton)field).getChildComponent().getDocument();
+        model.setDocument(i, componentDocument);
+      }
       browseListeners[i].setField(field);
     }
     model.setType(TestType.CLASS);
@@ -298,13 +312,32 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     classTest.setSelected(false);
     classTest.setEnabled(true);
 
-    classField.setComponent(new TextFieldWithBrowseButton());
-    methodField.setComponent(new TextFieldWithBrowseButton());
-    groupField.setComponent(new TextFieldWithBrowseButton());
+    classField.setComponent(new EditorTextFieldWithBrowseButton(project, true));
+
+    final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true);
+    new TextFieldCompletionProvider() {
+      @Override
+      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
+        final String className = getClassName();
+        if (className.trim().length() == 0) {
+          return;
+        }
+        final PsiClass testClass = getModuleSelector().findClass(className);
+        if (testClass == null) return;
+        for (PsiMethod psiMethod : testClass.getAllMethods()) {
+          if (TestNGUtil.hasTest(psiMethod)) {
+            result.addElement(LookupElementBuilder.create(psiMethod.getName()));
+          }
+        }
+      }
+    }.apply(methodEditorTextField.getChildComponent());
+    methodField.setComponent(methodEditorTextField);
+
+    groupField.setComponent(new TextFieldWithBrowseButton.NoPathCompletion());
     suiteField.setComponent(new TextFieldWithBrowseButton());
     packageField.setVisible(true);
     packageField.setEnabled(true);
-    packageField.setComponent(new TextFieldWithBrowseButton());
+    packageField.setComponent(new EditorTextFieldWithBrowseButton(project, false));
 
 
     TextFieldWithBrowseButton outputDirectoryButton = new TextFieldWithBrowseButton();

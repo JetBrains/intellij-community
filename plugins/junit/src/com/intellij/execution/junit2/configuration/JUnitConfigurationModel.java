@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -26,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -42,19 +43,20 @@ public class JUnitConfigurationModel {
   public static final int DIR = 4;
 
   private static final List<String> ourTestObjects;
+
   static {
-    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE, JUnitConfiguration.TEST_CLASS, JUnitConfiguration.TEST_METHOD, JUnitConfiguration.TEST_PATTERN,
+    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE, JUnitConfiguration.TEST_CLASS, JUnitConfiguration.TEST_METHOD,
+                                   JUnitConfiguration.TEST_PATTERN,
                                    JUnitConfiguration.TEST_DIRECTORY);
   }
 
 
   private JUnitConfigurable myListener;
   private int myType = -1;
-  private final Document[] myJUnitDocuments = new Document[5];
+  private final Object[] myJUnitDocuments = new Object[5];
   private final Project myProject;
 
   public JUnitConfigurationModel(final Project project) {
-    for (int i = 0; i < myJUnitDocuments.length; i++) myJUnitDocuments[i] = new PlainDocument();
     myProject = project;
   }
 
@@ -70,10 +72,16 @@ public class JUnitConfigurationModel {
     myListener.onTypeChanged(newType);
   }
 
-  public void setListener(final JUnitConfigurable listener) { myListener = listener; }
+  public void setListener(final JUnitConfigurable listener) {
+    myListener = listener;
+  }
 
-  public Document getJUnitDocument(final int i) {
+  public Object getJUnitDocument(final int i) {
     return myJUnitDocuments[i];
+  }
+
+  public void setJUnitDocument(final int i, Object doc) {
+     myJUnitDocuments[i] = doc;
   }
 
   public void apply(final Module module, final JUnitConfiguration configuration) {
@@ -88,7 +96,9 @@ public class JUnitConfigurationModel {
     final String testObject = getTestObject();
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
-    if (testObject != JUnitConfiguration.TEST_PACKAGE && testObject != JUnitConfiguration.TEST_PATTERN && testObject != JUnitConfiguration.TEST_DIRECTORY) {
+    if (testObject != JUnitConfiguration.TEST_PACKAGE &&
+        testObject != JUnitConfiguration.TEST_PATTERN &&
+        testObject != JUnitConfiguration.TEST_DIRECTORY) {
       try {
         data.METHOD_NAME = getJUnitTextValue(METHOD);
         final PsiClass testClass = JUnitUtil.findPsiClass(className, module, myProject);
@@ -136,14 +146,17 @@ public class JUnitConfigurationModel {
     return getDocumentText(index, myJUnitDocuments);
   }
 
-  private static String getDocumentText(final int index, final Document[] documents) {
-    final Document document = documents[index];
-    try {
-      return document.getText(0, document.getLength());
+  private static String getDocumentText(final int index, final Object[] documents) {
+    final Object document = documents[index];
+    if (document instanceof PlainDocument) {
+      try {
+        return ((PlainDocument)document).getText(0, ((PlainDocument)document).getLength());
+      }
+      catch (BadLocationException e) {
+        throw new RuntimeException(e);
+      }
     }
-    catch (BadLocationException e) {
-      throw new RuntimeException(e);
-    }
+    return ((Document)document).getText();
   }
 
   public void reset(final JUnitConfiguration configuration) {
@@ -160,14 +173,23 @@ public class JUnitConfigurationModel {
     setDocumentText(index, text, myJUnitDocuments);
   }
 
-  private static void setDocumentText(final int index, final String text, final Document[] documents) {
-    final Document document = documents[index];
-    try {
-      document.remove(0, document.getLength());
-      document.insertString(0, text, null);
+  private static void setDocumentText(final int index, final String text, final Object[] documents) {
+    final Object document = documents[index];
+    if (document instanceof PlainDocument) {
+      try {
+        ((PlainDocument)document).remove(0, ((PlainDocument)document).getLength());
+        ((PlainDocument)document).insertString(0, text, null);
+      }
+      catch (BadLocationException e) {
+        throw new RuntimeException(e);
+      }
     }
-    catch (BadLocationException e) {
-      throw new RuntimeException(e);
+    else {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ((Document)document).replaceString(0, ((Document)document).getTextLength(), text);
+        }
+      });
     }
   }
 

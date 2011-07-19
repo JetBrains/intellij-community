@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
@@ -50,7 +51,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private JPanel myHTMLOptions;
   private LabeledComponent<TextFieldWithBrowseButton> myPolicyFile;
   private LabeledComponent<RawCommandLineEditor> myVMParameters;
-  private TextFieldWithBrowseButton myClassName;
+  private EditorTextFieldWithBrowseButton myClassName;
   private TextFieldWithBrowseButton myHtmlFile;
   private JTextField myWidth;
   private JTextField myHeight;
@@ -63,7 +64,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private JLabel myWidthLabel;
   private JLabel myHeightLabel;
   private AlternativeJREPanel myAlternativeJREPanel;
-  private final ButtonGroup myAppletRadioButtonGroup = new ButtonGroup();
+  private final ButtonGroup myAppletRadioButtonGroup;
 
   private final Project myProject;
   private final ConfigurationModuleSelector myModuleSelector;
@@ -88,7 +89,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
       }
     }
   };
-  private final ListTableModel<AppletConfiguration.AppletParameter> myParameters = new ListTableModel<AppletConfiguration.AppletParameter>(PARAMETER_COLUMNS);
+  private final ListTableModel<AppletConfiguration.AppletParameter> myParameters;
   private final TableView myTable;
   @NonNls
   protected static final String HTTP_PREFIX = "http:/";
@@ -105,17 +106,20 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   public AppletConfigurable(final Project project) {
-    myClassNameLabel.setLabelFor(myClassName.getTextField());
+    myProject = project;
+    myClassNameLabel.setLabelFor(myClassName.getChildComponent());
     myHtmlFileLabel.setLabelFor(myHtmlFile.getTextField());
     myWidthLabel.setLabelFor(myWidth);
     myHeightLabel.setLabelFor(myHeight);
 
-    myProject = project;
+
     myModuleSelector = new ConfigurationModuleSelector(project, getModuleComponent());
     myTablePlace.setLayout(new BorderLayout());
+    myParameters = new ListTableModel<AppletConfiguration.AppletParameter>(PARAMETER_COLUMNS);
     myTable = new TableView(myParameters);
     myTable.getEmptyText().setText(ExecutionBundle.message("no.parameters"));
     myTablePlace.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
+    myAppletRadioButtonGroup = new ButtonGroup();
     myAppletRadioButtonGroup.add(myMainClass);
     myAppletRadioButtonGroup.add(myURL);
     getVMParametersComponent().setDialogCaption(myVMParameters.getRawText());
@@ -192,7 +196,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myWidth;
   }
 
-  private TextFieldWithBrowseButton getClassNameComponent() {
+  private EditorTextFieldWithBrowseButton getClassNameComponent() {
     return myClassName;
   }
 
@@ -275,6 +279,10 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     configuration.HTML_USED = myURL.isSelected();
     configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
     configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
+  }
+
+  private void createUIComponents() {
+     myClassName = new EditorTextFieldWithBrowseButton(myProject, true);
   }
 
   private static abstract class MyColumnInfo extends ColumnInfo<AppletConfiguration.AppletParameter, String> {

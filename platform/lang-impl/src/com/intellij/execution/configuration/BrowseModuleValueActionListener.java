@@ -17,21 +17,24 @@
 package com.intellij.execution.configuration;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.TextAccessor;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public abstract class BrowseModuleValueActionListener implements ActionListener {
-  private TextFieldWithBrowseButton myField;
+public abstract class BrowseModuleValueActionListener<T extends JComponent> implements ActionListener {
+  private ComponentWithBrowseButton<T> myField;
   private final Project myProject;
 
   protected BrowseModuleValueActionListener(final Project project) {
     myProject = project;
   }
 
-  public void setField(final TextFieldWithBrowseButton field) {
+  public void setField(final ComponentWithBrowseButton<T> field) {
     myField = field;
     myField.addActionListener(this);
     myField.setButtonEnabled(!myProject.isDefault());
@@ -39,14 +42,14 @@ public abstract class BrowseModuleValueActionListener implements ActionListener 
 
   public void actionPerformed(final ActionEvent e) {
     final String text = showDialog();
-    if (text != null) myField.getTextField().setText(text);
+    if (text != null) ((TextAccessor)myField).setText(text);
   }
 
   public String getText() {
-    return myField.getText();
+    return ((TextAccessor)myField).getText();
   }
 
-  public TextFieldWithBrowseButton getField() { return myField; }
+  public JComponent getField() { return myField; }
 
   @Nullable
   protected abstract String showDialog();
