@@ -22,6 +22,9 @@
       <implementation-class>com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl</implementation-class>
     </component>
     <component>
+      <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.ide.impl.convert.ProjectFileVersion</interface-class>
       <implementation-class>com.intellij.ide.impl.convert.ProjectFileVersionImpl</implementation-class>
     </component>

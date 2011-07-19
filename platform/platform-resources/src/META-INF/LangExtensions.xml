@@ -200,6 +200,10 @@
   <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
                  serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
 
+  <applicationService serviceInterface="com.intellij.framework.detection.impl.FrameworkDetectorRegistry"
+                      serviceImplementation="com.intellij.framework.detection.impl.FrameworkDetectorRegistryImpl"/>
+  <fileBasedIndex implementation="com.intellij.framework.detection.impl.FrameworkDetectionIndex"/>
+
   <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController"
                   serviceImplementation="com.intellij.codeInsight.AutoPopupController"/>
 

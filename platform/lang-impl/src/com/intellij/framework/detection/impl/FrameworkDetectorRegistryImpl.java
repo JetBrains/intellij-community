@@ -1,0 +1,156 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.framework.detection.impl;
+
+import com.intellij.framework.detection.FrameworkDetector;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ * @author nik
+ */
+public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectorRegistryImpl");
+  private static final int REGISTRY_VERSION = 0;
+  private TObjectIntHashMap<String> myDetectorIds;
+  private TIntObjectHashMap<FrameworkDetector> myDetectorById;
+  private int myDetectorsVersion;
+
+  public FrameworkDetectorRegistryImpl() {
+    loadDetectors();
+    saveDetectors();
+  }
+
+  private void loadDetectors() {
+    Map<String, FrameworkDetector> newDetectors = new HashMap<String, FrameworkDetector>();
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+      newDetectors.put(detector.getDetectorId(), detector);
+    }
+
+    myDetectorIds = new TObjectIntHashMap<String>();
+    final File file = getDetectorsRegistryFile();
+    int maxId = REGISTRY_VERSION;
+    if (file.exists()) {
+      LOG.debug("loading framework detectors registry from " + file.getAbsolutePath());
+      List<String> unknownIds = new ArrayList<String>();
+      boolean versionChanged = false;
+      try {
+        DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+        try {
+          input.readInt();
+          myDetectorsVersion = input.readInt();
+          int size = input.readInt();
+          while (size-- > REGISTRY_VERSION) {
+            final String stringId = input.readUTF();
+            int intId = input.readInt();
+            maxId = Math.max(maxId, intId);
+            final int version = input.readInt();
+            final FrameworkDetector detector = newDetectors.remove(stringId);
+            if (detector != null) {
+              if (version != detector.getDetectorVersion()) {
+                LOG.info("Version of framework detector '" + stringId + "' changed: " + version + " -> " + detector.getDetectorVersion());
+                versionChanged = true;
+              }
+              myDetectorIds.put(stringId, intId);
+            }
+            else {
+              unknownIds.add(stringId);
+            }
+          }
+        }
+        finally {
+          input.close();
+        }
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+      if (!unknownIds.isEmpty()) {
+        LOG.debug("Unknown framework detectors: " + unknownIds);
+      }
+      if (versionChanged || !newDetectors.isEmpty()) {
+        if (!newDetectors.isEmpty()) {
+          LOG.info("New framework detectors: " + newDetectors.keySet());
+        }
+        myDetectorsVersion++;
+        LOG.info("Framework detection index version changed to " + myDetectorsVersion);
+      }
+    }
+    int id = maxId+1;
+    for (String newDetector : newDetectors.keySet()) {
+      myDetectorIds.put(newDetector, id++);
+    }
+    myDetectorById = new TIntObjectHashMap<FrameworkDetector>();
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+      myDetectorById.put(myDetectorIds.get(detector.getDetectorId()), detector);
+    }
+  }
+
+  private void saveDetectors() {
+    final File file = getDetectorsRegistryFile();
+    FileUtil.createIfDoesntExist(file);
+    try {
+      DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+      try {
+        output.writeInt(REGISTRY_VERSION);
+        output.writeInt(myDetectorsVersion);
+        final FrameworkDetector[] detectors = FrameworkDetector.EP_NAME.getExtensions();
+        output.writeInt(detectors.length);
+        for (FrameworkDetector detector : detectors) {
+          output.writeUTF(detector.getDetectorId());
+          output.writeInt(myDetectorIds.get(detector.getDetectorId()));
+          output.writeInt(detector.getDetectorVersion());
+        }
+      }
+      finally {
+        output.close();
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+  }
+
+  private static File getDetectorsRegistryFile() {
+    return new File(getDetectionDirPath() + File.separator + "detectors-registry.dat");
+  }
+
+  public static String getDetectionDirPath() {
+    return PathManager.getSystemPath() + File.separator + "frameworks" + File.separator + "detection";
+  }
+
+  @Override
+  public int getDetectorsVersion() {
+    return myDetectorsVersion;
+  }
+
+  @Override
+  public int getDetectorId(@NotNull FrameworkDetector detector) {
+    return myDetectorIds.get(detector.getDetectorId());
+  }
+
+  @Override
+  public FrameworkDetector getDetectorById(int id) {
+    return myDetectorById.get(id);
+  }
+}
