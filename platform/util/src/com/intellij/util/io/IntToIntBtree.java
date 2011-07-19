@@ -315,6 +315,71 @@ abstract class IntToIntBtree {
         dump("before split:"+isIndexLeaf());
       }
 
+      BtreeIndexNodeView parent = null;
+
+      if (parentAddress != 0) {
+        parent = new BtreeIndexNodeView(btree);
+        parent.setAddress(parentAddress);
+        int indexInParent = isIndexLeaf() ? parent.search(keyAt(0)) : -1;
+        BtreeIndexNodeView sibling = new BtreeIndexNodeView(btree);
+
+        if (indexInParent > 0) {
+          if (doSanityCheck) {
+            myAssert(parent.keyAt(indexInParent) == keyAt(0));
+            myAssert(parent.addressAt(indexInParent + 1) == -address);
+          }
+
+          int siblingAddress = parent.addressAt(indexInParent);
+          sibling.setAddress(-siblingAddress);
+
+          if (!sibling.isFull() && sibling.getChildrenCount() + 1 != sibling.getMaxChildrenCount()) {
+            if (doSanityCheck) {
+              sibling.dump("Offloading to left sibling");
+              parent.dump("parent before");
+            }
+
+            sibling.insert(keyAt(0), addressAt(0), sibling.getChildrenCount());
+            if (doSanityCheck) {
+              sibling.dump("Left sibling after");
+            }
+
+            parent.setKeyAt(indexInParent, keyAt(1));
+
+            int indexOflastChildToMove = getChildrenCount() - 1;
+            if (btree.isLarge) {
+              final int bytesToMove = indexOflastChildToMove * INTERIOR_SIZE;
+              getBytes(indexToOffset(1), btree.buffer, 0, bytesToMove);
+              putBytes(indexToOffset(0), btree.buffer, 0, bytesToMove);
+            } else {
+              for(int i = 0; i < indexOflastChildToMove; ++i) {
+                setAddressAt(i, addressAt(i + 1));
+                setKeyAt(i, keyAt(i + 1));
+              }
+            }
+
+            setChildrenCount((short)indexOflastChildToMove);
+          } else if (indexInParent + 1 < parent.getChildrenCount()) {
+            insertToRightSibling(parent, indexInParent + 1, sibling);
+          }
+          // TODO: move members in non leaf level + handle cases below
+        } /*else if (indexInParent == -1) {
+          insertToRightSibling(parent, 0, sibling);
+        } else {
+          int a = 1;
+        }*/
+
+        if (!isFull()) {
+          sync();
+          parent.sync();
+
+          if (doSanityCheck) {
+            dump("old node after split:");
+            parent.dump("Parent node after split");
+          }
+          return parentAddress;
+        }
+      }
+
       short maxIndex = (short)(getMaxChildrenCount() / 2);
 
       BtreeIndexNodeView newIndexNode = new BtreeIndexNodeView(btree);
@@ -350,10 +415,7 @@ abstract class IntToIntBtree {
 
       setChildrenCount(maxIndex);
 
-      if (parentAddress != 0) {
-        BtreeIndexNodeView parent = new BtreeIndexNodeView(btree);
-        parent.setAddress(parentAddress);
-
+      if (parent != null) {
         if (doSanityCheck) {
           int medianKeyInParent = parent.search(medianKey);
           int ourKey = keyAt(0);
@@ -402,6 +464,27 @@ abstract class IntToIntBtree {
       newIndexNode.sync();
 
       return parentAddress;
+    }
+
+    private void insertToRightSibling(BtreeIndexNodeView parent, int indexInParent, BtreeIndexNodeView sibling) {
+      int siblingAddress;
+      siblingAddress = parent.addressAt(indexInParent + 1);
+      sibling.setAddress(-siblingAddress);
+
+      if (!sibling.isFull() && sibling.getChildrenCount() + 1 != sibling.getMaxChildrenCount()) {
+        if (doSanityCheck) {
+          sibling.dump("Offloading to right sibling");
+          parent.dump("parent before");
+        }
+
+        int lastChildIndex = getChildrenCount() - 1;
+        sibling.insert(keyAt(lastChildIndex), addressAt(lastChildIndex), 0);
+        if (doSanityCheck) {
+          sibling.dump("Right sibling after");
+        }
+        parent.setKeyAt(indexInParent, keyAt(lastChildIndex));
+        setChildrenCount((short)lastChildIndex);
+      }
     }
 
     private void dump(String s) {
