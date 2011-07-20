@@ -163,7 +163,6 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     }
     myEditorMouseMotionListeners.clear();
 
-    getDocument().dispose();
     myDisposed = true;
   }
 

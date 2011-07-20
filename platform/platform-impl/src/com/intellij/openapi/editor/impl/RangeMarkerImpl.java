@@ -76,6 +76,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public void dispose() {
     if(isValid()) {
       unregisterInTree();
+      reportInvalidation(this, "Explicit Dispose");
     }
   }
 
@@ -97,12 +98,16 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       node.processAliveKeys(new Processor<RangeMarkerEx>() {
         @Override
         public boolean process(RangeMarkerEx markerEx) {
-          if (markerEx.isTrackInvalidation()) {
-            LOG.error("Range marker invalidated: "+markerEx +"; say thanks to the "+e);
-          }
+          reportInvalidation(markerEx, e);
           return true;
         }
       });
+    }
+  }
+
+  private static void reportInvalidation(RangeMarkerEx markerEx, Object e) {
+    if (markerEx.isTrackInvalidation()) {
+      LOG.error("Range marker invalidated: "+markerEx +"; say thanks to the "+e);
     }
   }
 
