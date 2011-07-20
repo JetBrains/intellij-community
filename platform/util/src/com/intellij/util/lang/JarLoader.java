@@ -75,6 +75,9 @@ class JarLoader extends Loader {
         releaseZipFile(zipFile);
       }
     }
+    catch (FileNotFoundException e) {
+      // it happens :) eg tools.jar under MacOS
+    }
     catch (Exception e) {
       LOG.error(e);
     }
