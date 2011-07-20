@@ -71,7 +71,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected String myConstantName;
   public static final Key<AbstractInplaceIntroducer> ACTIVE_INTRODUCE = Key.create("ACTIVE_INTRODUCE");
 
-  private final EditorEx myPreview;
+  private EditorEx myPreview;
   private final JComponent myPreviewComponent;
 
   private DocumentAdapter myDocumentAdapter;
@@ -287,9 +287,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       myEditor.putUserData(ACTIVE_INTRODUCE, null);
     }
     myEditor.getDocument().removeDocumentListener(myDocumentAdapter);
-    final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
-    if (isRestart == null || !isRestart.booleanValue()) {
-      EditorFactory.getInstance().releaseEditor(myPreview);
+    if (myBalloon == null) {
+      releaseResources();
     }
     super.finish();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -298,6 +297,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       return;
     }
     restoreState(variable);
+  }
+
+  @Override
+  protected void releaseResources() {
+    if (myPreview == null) return;
+
+    EditorFactory.getInstance().releaseEditor(myPreview);
+    myPreview = null;
   }
 
   @Override

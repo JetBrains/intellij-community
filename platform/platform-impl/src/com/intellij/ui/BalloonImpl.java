@@ -439,7 +439,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       each.beforeShown(new LightweightWindowEvent(this));
     }
 
-    runAnimation(true, myLayeredPane);
+    runAnimation(true, myLayeredPane, null);
 
     myLayeredPane.revalidate();
     myLayeredPane.repaint();
@@ -552,7 +552,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   }
 
 
-  private void runAnimation(boolean forward, final JLayeredPane layeredPane) {
+  private void runAnimation(boolean forward, final JLayeredPane layeredPane, @Nullable final Runnable onDone) {
     if (myAnimator != null) {
       Disposer.dispose(myAnimator);
     }
@@ -586,6 +586,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       public void dispose() {
         super.dispose();
         myAnimator = null;
+        if (onDone != null) {
+          onDone.run();
+        }
       }
     };
 
@@ -639,37 +642,54 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
 
   public void hide() {
-    Disposer.dispose(this);
+    if (myDisposed) return;
 
-
-    for (JBPopupListener each : myListeners) {
-      each.onClosed(new LightweightWindowEvent(this));
-    }
-
-    myFadedOut = true;
+    hideAndDispose();
   }
 
   public void addListener(JBPopupListener listener) {
     myListeners.add(listener);
   }
 
-  public void dispose() {
+  private void hideAndDispose() {
     if (myDisposed) return;
 
-    Disposer.dispose(this);
-
     myDisposed = true;
+
+
+    final Runnable disposeRunnable = new Runnable() {
+      public void run() {
+        myFadedOut = true;
+
+        for (JBPopupListener each : myListeners) {
+          each.onClosed(new LightweightWindowEvent(BalloonImpl.this));
+        }
+
+        Disposer.dispose(BalloonImpl.this);
+        onDisposed();
+      }
+    };
 
     Toolkit.getDefaultToolkit().removeAWTEventListener(myAwtActivityListener);
     if (myLayeredPane != null) {
       myLayeredPane.removeComponentListener(myComponentListener);
-      runAnimation(false, myLayeredPane);
+      runAnimation(false, myLayeredPane, new Runnable() {
+        @Override
+        public void run() {
+          disposeRunnable.run();
+        }
+      });
+    } else {
+      disposeRunnable.run();
     }
 
-
     myVisible = false;
+  }
 
-    onDisposed();
+  public void dispose() {
+    if (myDisposed) return;
+
+    hideAndDispose();
   }
 
   protected void onDisposed() {

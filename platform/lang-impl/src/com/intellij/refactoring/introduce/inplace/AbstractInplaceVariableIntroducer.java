@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -30,6 +31,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -123,6 +125,10 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     return result;
   }
 
+  protected void releaseResources() {
+
+  }
+
   private void showBalloon() {
     final JComponent component = getComponent();
     if (component == null) return;
@@ -131,6 +137,15 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
     final Point screenPoint = target.getScreenPoint();
     myBalloon = balloonBuilder.createBalloon();
+    Disposer.register(myBalloon, new Disposable() {
+      @Override
+      public void dispose() {
+        final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
+        if (isRestart == null || !isRestart.booleanValue()) {
+          releaseResources();
+        }
+      }
+    });
     int y = screenPoint.y;
     if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
       y -= myEditor.getLineHeight();
