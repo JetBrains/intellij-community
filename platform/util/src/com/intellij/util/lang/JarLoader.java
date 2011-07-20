@@ -76,7 +76,7 @@ class JarLoader extends Loader {
         LOG.error(e);
       }
     }
-    catch (IOException e) {
+    catch (Exception e) {
       // it happens :) eg tools.jar under MacOS
     }
     finally {
