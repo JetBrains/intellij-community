@@ -191,6 +191,20 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
       previewPanel.setLayout(new BorderLayout());
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
     }
+
+    @Override
+    protected void customizeSettings() {
+      LanguageCodeStyleSettingsProvider provider =
+        LanguageCodeStyleSettingsProvider.forLanguage(MultiTabCodeStyleAbstractPanel.this.getDefaultLanguage());
+      if (provider != null) {
+        provider.customizeSettings(this, LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS);
+      }
+    }
+
+    @Override
+    protected boolean shouldHideOptions() {
+      return true;
+    }
   }
 
   private class MyBlankLinesPanel extends CodeStyleBlankLinesPanel {
@@ -210,6 +224,7 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
       previewPanel.setLayout(new BorderLayout());
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
     }
+
   }
 
   private class MyWrappingAndBracesPanel extends WrappingAndBracesPanel {

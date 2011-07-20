@@ -179,7 +179,9 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
         groupNode = new DefaultMutableTreeNode(newGroupName);
         rootNode.add(groupNode);
       }
-      groupNode.add(new MyToggleTreeNode(key, key.title));
+      if (isOptionVisible(key)) {
+        groupNode.add(new MyToggleTreeNode(key, key.title));
+      }
     }
 
     DefaultTreeModel model = new DefaultTreeModel(rootNode);
@@ -583,5 +585,19 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       }
     }
     return result;
+  }
+
+  protected boolean shouldHideOptions() {
+    return false;
+  }
+
+
+  private boolean isOptionVisible(BooleanOptionKey key) {
+    if (!shouldHideOptions()) return true;
+    if (myShowAllStandardOptions || myAllowedOptions.contains(key.getOptionName())) return true;
+    for (CustomBooleanOptionInfo customOption : myCustomOptions.get(key.groupName)) {
+      if (customOption.fieldName.equals(key.getOptionName())) return true;
+    }
+    return false;
   }
 }
