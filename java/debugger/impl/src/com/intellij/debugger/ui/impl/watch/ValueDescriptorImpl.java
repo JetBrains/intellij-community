@@ -166,7 +166,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       myValue = value;
       myValueException = null;
-      if (myRenderer == null) {
+      if (myRenderer == null && myValue != null) {
         myRenderer = DebuggerRendererUtil.getCustomRenderer(evaluationContext.getDebugProcess(), myValue, NodeRenderer.class);
       }
     }
