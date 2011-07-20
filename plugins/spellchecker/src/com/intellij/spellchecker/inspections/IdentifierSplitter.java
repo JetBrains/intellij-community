@@ -43,7 +43,7 @@ public class IdentifierSplitter extends BaseSplitter {
   @Nullable
   public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
 
-    if (text == null || range.getLength() < 1) {
+    if (text == null || range.getLength() < 1 || range.getStartOffset() < 0) {
       return null;
     }
 
