@@ -166,9 +166,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       myValue = value;
       myValueException = null;
-      if (myRenderer == null && myValue != null) {
-        myRenderer = DebuggerRendererUtil.getCustomRenderer(evaluationContext.getDebugProcess(), myValue, NodeRenderer.class);
-      }
     }
     catch (EvaluateException e) {
       myValueException = e;
@@ -341,22 +338,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myRenderer = renderer;
     myAutoRenderer = null;
-  }
-
-  /**
-   * Allows to apply given renderer to the value referenced by the current descriptor.
-   * 
-   * @param renderer  custom renderer to use
-   * @param process   current debug process
-   * @param remember  flag that indicates if given renderer should be used at stack frames over than the current
-   *                  one (e.g. there is a possible case that custom renderer is applied to the local variable. If given flag
-   *                  is <code>'true'</code>, the renderer is applied down at stack as well)
-   */
-  public void setRenderer(NodeRenderer renderer, @Nullable DebugProcess process, boolean remember) {
-    setRenderer(renderer);
-    if (remember) {
-      DebuggerRendererUtil.setCustomRenderer(myValue, process, renderer);
-    }
   }
 
   //returns expression that evaluates tree to this descriptor

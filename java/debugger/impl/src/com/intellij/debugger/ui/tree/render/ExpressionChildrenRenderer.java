@@ -34,11 +34,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.BooleanValue;
-import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,10 +47,10 @@ import java.util.List;
  * Date: Sep 17, 2003
  * Time: 2:04:00 PM
  */
-public class ExpressionChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer, DelegatingChildrenRenderer {
-  
+public class ExpressionChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer {
   public static final @NonNls String UNIQUE_ID = "ExpressionChildrenRenderer";
   private static final Key<Value> EXPRESSION_VALUE = new Key<Value>("EXPRESSION_VALUE");
+  private static final Key<NodeRenderer> LAST_CHILDREN_RENDERER = new Key<NodeRenderer>("LAST_CHILDREN_RENDERER");
 
   private final CachedEvaluator myChildrenExpandable = new CachedEvaluator() {
     protected String getClassName() {
@@ -77,12 +76,17 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
     final NodeManager nodeManager = builder.getNodeManager();
 
     try {
+      final ValueDescriptor parentDescriptor = builder.getParentDescriptor();
       final Value childrenValue = evaluateChildren(
-        evaluationContext.createEvaluationContext(value), builder.getParentDescriptor()
+        evaluationContext.createEvaluationContext(value), parentDescriptor
       );
 
-      final ChildrenRenderer delegateRenderer = doGetDelegate(evaluationContext, builder.getParentDescriptor(), value);
-      delegateRenderer.buildChildren(childrenValue, builder, evaluationContext);
+      NodeRenderer renderer = getLastChildrenRenderer(parentDescriptor);
+      if (renderer == null || childrenValue == null || !renderer.isApplicable(childrenValue.type())) {
+        renderer = DebugProcessImpl.getDefaultRenderer(childrenValue != null ? childrenValue.type() : null);
+        parentDescriptor.putUserData(LAST_CHILDREN_RENDERER, renderer);
+      }
+      renderer.buildChildren(childrenValue, builder, evaluationContext);
     }
     catch (final EvaluateException e) {
       List<DebuggerTreeNode> errorChildren = new ArrayList<DebuggerTreeNode>();
@@ -91,41 +95,13 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
     }
   }
 
-  @Override
-  public ChildrenRenderer getDelegate(@NotNull EvaluationContext evaluationContext, @NotNull NodeDescriptor descriptor, 
-                                      @NotNull Value value)
-  {
-    try {
-      return doGetDelegate(evaluationContext, descriptor, value);
-    }
-    catch (EvaluateException e) {
-      return null;
-    }
-  }
-  
-  private ChildrenRenderer doGetDelegate(@NotNull EvaluationContext evaluationContext, @NotNull NodeDescriptor descriptor,
-                                         @NotNull Value value) throws EvaluateException
-  {
-    final Value childrenValue = evaluateChildren(evaluationContext.createEvaluationContext(value), descriptor);
-    if (childrenValue == null) {
-      return ((DebugProcessImpl)evaluationContext.getDebugProcess()).getDefaultRenderer((Type)null);
-    }
-    ChildrenRenderer result = DebuggerRendererUtil.getCustomRenderer(evaluationContext.getDebugProcess(), value,
-                                                                     ChildrenRenderer.class);
-    if (result != null) {
-      return result;
-    }
-
-    return ((DebugProcessImpl)evaluationContext.getDebugProcess()).getDefaultRenderer(childrenValue.type());
+  @Nullable
+  public static NodeRenderer getLastChildrenRenderer(ValueDescriptor descriptor) {
+    return descriptor.getUserData(LAST_CHILDREN_RENDERER);
   }
 
-  @Override
-  public boolean setDelegate(@NotNull EvaluationContext evaluationContext,
-                          @NotNull NodeDescriptor descriptor,
-                          @NotNull Value value,
-                          @NotNull ChildrenRenderer renderer)
-  {
-    return DebuggerRendererUtil.setCustomRenderer(value, evaluationContext.getDebugProcess(), renderer);
+  public static void setPreferableChildrenRenderer(ValueDescriptor descriptor, NodeRenderer renderer) {
+    descriptor.putUserData(LAST_CHILDREN_RENDERER, renderer);
   }
 
   private Value evaluateChildren(EvaluationContext context, NodeDescriptor descriptor) throws EvaluateException {

@@ -238,11 +238,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return renderer;
   }
 
-  public final NodeRenderer getDefaultRenderer(Value value) {
+  public static NodeRenderer getDefaultRenderer(Value value) {
     return getDefaultRenderer(value != null ? value.type() : null);
   }
 
-  public final NodeRenderer getDefaultRenderer(Type type) {
+  public static NodeRenderer getDefaultRenderer(Type type) {
     final NodeRendererSettings settings = NodeRendererSettings.getInstance();
 
     final PrimitiveRenderer primitiveRenderer = settings.getPrimitiveRenderer();
