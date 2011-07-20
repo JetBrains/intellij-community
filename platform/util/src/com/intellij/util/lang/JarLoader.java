@@ -64,22 +64,28 @@ class JarLoader extends Loader {
   }
 
   void preLoadClasses() {
+    ZipFile zipFile = null;
     try {
-      ZipFile zipFile = acquireZipFile();
+      zipFile = acquireZipFile();
       if (zipFile == null) return;
-      File file = new File(zipFile.getName());
       try {
+        File file = new File(zipFile.getName());
         myMemoryLoader = new SoftReference<JarMemoryLoader>(JarMemoryLoader.load(file, getBaseURL()));
       }
-      finally {
-        releaseZipFile(zipFile);
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
-    catch (FileNotFoundException e) {
+    catch (IOException e) {
       // it happens :) eg tools.jar under MacOS
     }
-    catch (Exception e) {
-      LOG.error(e);
+    finally {
+      try {
+        releaseZipFile(zipFile);
+      }
+      catch (IOException ignore) {
+
+      }
     }
   }
 
