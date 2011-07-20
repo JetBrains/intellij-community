@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -48,8 +48,9 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     PsiCodeFragment codeFragment = (PsiCodeFragment)value;
 
     final EditorTextField editorTextField;
+    Document document = null;
     if (codeFragment != null) {
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(codeFragment);
+      document = PsiDocumentManager.getInstance(myProject).getDocument(codeFragment);
       editorTextField = new EditorTextField(document, myProject, myFileType) {
         protected boolean shouldHaveBorder() {
           return false;
@@ -69,12 +70,14 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     }
 
     editorTextField.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    ListSelectionModel selModel = table.getSelectionModel();
-    final Color color = (selModel.getMaxSelectionIndex() - selModel.getMinSelectionIndex()) == 0
-                        ? table.getSelectionBackground() : table.getForeground();
-    final Color cellBg = UIUtil.getTableCellBackground(table, row);
-    editorTextField.setBorder(BorderFactory.createLineBorder(hasFocus ? color : cellBg));
-    editorTextField.setBackground(cellBg);
+    editorTextField.setBorder((hasFocus || isSelected) ? BorderFactory.createLineBorder(table.getSelectionBackground()) : IdeBorderFactory.createEmptyBorder(1));
+    if (isSelected && document != null) {
+      final Color bg = table.getSelectionBackground();
+      final Color fg = table.getSelectionForeground();
+      editorTextField.setBackground(bg);
+      editorTextField.setForeground(fg);
+      editorTextField.setAsRendererWithSelection(bg, fg);
+    }
     return editorTextField;
   }
 }

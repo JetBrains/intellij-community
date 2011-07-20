@@ -160,7 +160,7 @@ class AddRemoveUpDownPanel extends JPanel {
     @Override
     public ShortcutSet getShortcut() {
       switch (myButton) {
-        case ADD: return CustomShortcutSet.fromString("alt A", "INSERT");
+        case ADD: return CommonShortcuts.getNew();
         case REMOVE: return CustomShortcutSet.fromString("alt DELETE");
         case UP: return CustomShortcutSet.fromString("alt UP");
         case DOWN: return CustomShortcutSet.fromString("alt DOWN");

@@ -48,7 +48,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +121,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     myExceptionsModel.setTypeInfos(myMethod.getMethod());
 
     final JBTable table = new JBTable(myExceptionsModel);
-    UIUtil.setTableDecorationEnabled(table);
+    table.setStriped(true);
+    table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
     cellEditor.addDocumentListener(new DocumentAdapter() {

@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -58,11 +57,7 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
         myEditorTextField.addDocumentListener(listener);
       }
       myEditorTextField.setDocument(myDocument);
-      if (UIUtil.isTableDecorationEnabled(table)) {
-        final Color cellBg = UIUtil.getTableCellBackground(table, row);
-        myEditorTextField.setBackground(cellBg);
-        myEditorTextField.setBorder(new LineBorder(cellBg));
-      }
+      myEditorTextField.setBorder(new LineBorder(table.getSelectionBackground()));
     }
 
     return myEditorTextField;

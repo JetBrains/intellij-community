@@ -16,8 +16,6 @@
 
 package com.intellij.ui;
 
-import com.intellij.util.ui.UIUtil;
-
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -34,13 +32,6 @@ public abstract class ColoredTableCellRenderer extends SimpleColoredRenderer imp
     acquireState(table, isSelected, hasFocus, row, col);
     getCellState().updateRenderer(this);
     customizeCellRenderer(table, value, isSelected, hasFocus, row, col);
-
-    if (UIUtil.isTableDecorationEnabled(table)) {
-      if (getBackground().getRGB() != table.getSelectionBackground().getRGB()) {
-        setBackground(UIUtil.getTableCellBackground(table, row));
-        setOpaque(true);
-      }
-    }
     return this;
   }
 

@@ -20,7 +20,10 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -32,14 +35,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class ClassIndependentOfModuleInspection extends BaseGlobalInspection {
+public class ClassOnlyUsedInOneModuleInspection extends BaseGlobalInspection {
 
     @Nls
     @NotNull
     @Override
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "class.independent.of.module.display.name");
+                "class.only.used.in.one.module.display.name");
     }
 
     @Nullable
@@ -57,35 +60,53 @@ public class ClassIndependentOfModuleInspection extends BaseGlobalInspection {
         if (!(owner instanceof RefPackage)) {
             return null;
         }
-
         final Set<RefClass> dependencies =
                 DependencyUtils.calculateDependenciesForClass(refClass);
+        RefModule otherModule = null;
         for (RefClass dependency : dependencies) {
-            if (inSameModule(refClass, dependency)) {
+            final RefModule module = dependency.getModule();
+            if (refClass.getModule() == module) {
                 return null;
+            }
+            if (otherModule != module) {
+                if (otherModule == null) {
+                    otherModule = module;
+                } else {
+                    return null;
+                }
             }
         }
         final Set<RefClass> dependents =
                 DependencyUtils.calculateDependentsForClass(refClass);
         for (RefClass dependent : dependents) {
-            if (inSameModule(refClass, dependent)) {
+            final RefModule module = dependent.getModule();
+            if (refClass.getModule() == module) {
                 return null;
             }
+            if (otherModule != module) {
+                if (otherModule == null) {
+                    otherModule = module;
+                } else {
+                    return null;
+                }
+            }
+        }
+        if (otherModule == null) {
+            return null;
         }
         final PsiClass aClass = refClass.getElement();
         final PsiIdentifier identifier = aClass.getNameIdentifier();
         if (identifier == null) {
             return null;
         }
+        final String moduleName = otherModule.getName();
         return new CommonProblemDescriptor[]{
                 manager.createProblemDescriptor(identifier,
                         InspectionGadgetsBundle.message(
-                                "class.independent.of.module.problem.descriptor"),
+                                "class.only.used.in.one.module.problem.descriptor",
+                        moduleName),
                         true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
         };
     }
 
-    private static boolean inSameModule(RefClass class1, RefClass class2) {
-        return class1.getModule() == class2.getModule();
-    }
 }

@@ -27,12 +27,16 @@ import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -134,6 +138,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
           }
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      textField.setBorder(new LineBorder(table.getSelectionBackground()));
       return textField;
     }
 
@@ -191,6 +196,24 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     @Override
     public TableCellEditor doCreateEditor(ParameterTableModelItemBase<ParameterInfoImpl> o) {
       return new VariableCompletionTableCellEditor(myProject);
+    }
+
+    @Override
+    public TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<ParameterInfoImpl> item) {
+      return new ColoredTableCellRenderer() {
+        public void customizeCellRenderer(JTable table, Object value,
+                                          boolean isSelected, boolean hasFocus, int row, int column) {
+          if (value == null) return;
+          if (isSelected || hasFocus) {
+            acquireState(table, true, false, row, column);
+            getCellState().updateRenderer(this);
+            setPaintFocusBorder(false);
+          }
+          append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
+        }
+      };
+
+
     }
   }
 }
