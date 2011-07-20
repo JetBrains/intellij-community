@@ -30,7 +30,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -97,7 +96,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
   protected JComponent createCenterPanel() {
     myTable = new JBTable(myTableModel);
-    UIUtil.setTableDecorationEnabled(myTable);
+    myTable.setStriped(true);
     TableColumn nameColumn = myTable.getColumnModel().getColumn(NAME_COLUMN);
     TableColumn valueColumn = myTable.getColumnModel().getColumn(VALUE_COLUMN);
     Project project = myClass.getProject();
@@ -262,7 +261,11 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   private class MyCellRenderer extends ColoredTableCellRenderer {
 
     public void customizeCellRenderer(JTable table, Object value,
-                                      boolean isSelected, boolean hasFocus, int row, int column) {
+                                      boolean isSelected, boolean hasFocus, int row, int col) {
+      if (value == null) return;
+      setPaintFocusBorder(false);
+      acquireState(table, isSelected, false, row, col);
+      getCellState().updateRenderer(this);
       append((String)value);
     }
   }

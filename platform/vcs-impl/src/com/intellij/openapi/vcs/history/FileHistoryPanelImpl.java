@@ -192,8 +192,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         c.setBackground(table.getSelectionBackground());
         c.setForeground(table.getSelectionForeground());
       } else {
-        c.setBackground(UIUtil.getTableCellBackground(table, row));
-        c.setForeground(UIUtil.getTableForeground());
+        c.setBackground(table.getBackground());
+        c.setForeground(table.getForeground());
       }
 
       return c;
