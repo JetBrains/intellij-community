@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
+import java.awt.*;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +44,8 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   private boolean myHasUnmarked = false;
   private boolean myHasMarked = false;
   private boolean myEquals;
+  protected Color myColor = null;
+  protected final static Color NOT_CHANGED = new Color(0, 0, 0);
 
   public void setEquals(final boolean equals) {
     myEquals = equals;
@@ -91,8 +93,13 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return null;
   }
 
-  public FileStatus getStatus(){
-    return FileStatus.NOT_CHANGED;
+  @Nullable
+  public Color getColor() {
+    return myColor;
+  }
+
+  public void updateColor() {
+    myColor = null;
   }
 
   public int getContainingFiles(){

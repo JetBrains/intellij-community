@@ -18,7 +18,6 @@ package com.intellij.ide.scopeView.nodes;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiElement;
@@ -28,6 +27,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * User: anna
@@ -64,9 +64,15 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     return element != null && element.isValid() ? element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS) : null;
   }
 
-  public FileStatus getStatus() {
-    if (myFile == null) return FileStatus.NOT_CHANGED;
-    return FileStatusManager.getInstance(myFile.getProject()).getStatus(myFile.getVirtualFile());
+  @Nullable
+  public Color getColor() {
+    if (myColor == null && myFile != null) {
+      myColor = FileStatusManager.getInstance(myFile.getProject()).getStatus(myFile.getVirtualFile()).getColor();
+      if (myColor == null) {
+        myColor = NOT_CHANGED;
+      }
+    }
+    return myColor == NOT_CHANGED ? null : myColor;
   }
 
   public int getWeight() {

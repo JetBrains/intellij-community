@@ -18,7 +18,6 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -26,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IconUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 import java.util.Set;
 
@@ -84,8 +84,14 @@ public class FileNode extends PackageDependenciesNode {
     return myFile;
   }
 
-  public FileStatus getStatus() {
-    return FileStatusManager.getInstance(myFile.getProject()).getStatus(myFile.getVirtualFile());
+  public Color getColor() {
+    if (myColor == null) {
+      myColor = FileStatusManager.getInstance(myFile.getProject()).getStatus(myFile.getVirtualFile()).getColor();
+      if (myColor == null) {
+        myColor = NOT_CHANGED;
+      }
+    }
+    return myColor == NOT_CHANGED ? null : myColor;
   }
 
   public boolean equals(Object o) {

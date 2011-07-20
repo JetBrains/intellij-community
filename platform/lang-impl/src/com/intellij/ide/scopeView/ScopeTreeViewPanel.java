@@ -54,6 +54,8 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.FileStatusListener;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -113,6 +115,32 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final DependencyValidationManager myDependencyValidationManager;
   private final WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
+  private final FileStatusListener myFileStatusListener = new FileStatusListener() {
+    @Override
+    public void fileStatusesChanged() {
+      final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myTree);
+      for (TreePath treePath : treePaths) {
+        final Object component = treePath.getLastPathComponent();
+        if (component instanceof PackageDependenciesNode) {
+          ((PackageDependenciesNode)component).updateColor();
+        }
+      }
+    }
+
+    @Override
+    public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+      final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
+      if (file != null) {
+        final PackageDependenciesNode node = myBuilder.getFileParentNode(file);
+        final PackageDependenciesNode[] nodes = FileTreeModelBuilder.findNodeForPsiElement(node, file);
+        if (nodes != null) {
+          for (PackageDependenciesNode dependenciesNode : nodes) {
+            dependenciesNode.updateColor();
+          }
+        }
+      }
+    }
+  };
 
   private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, isTreeShowing(), myTree);
   private ScopeTreeViewPanel.MyChangesListListener myChangesListListener = new MyChangesListListener();
@@ -141,6 +169,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
     WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangesListListener);
+    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, myProject);
   }
 
   public void dispose() {
@@ -399,7 +428,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
               EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES).clone();
         }
         final PsiElement psiElement = node.getPsiElement();
-        textAttributes.setForegroundColor(CopyPasteManager.getInstance().isCutElement(psiElement) ? CopyPasteManager.CUT_COLOR : node.getStatus().getColor());
+        textAttributes.setForegroundColor(CopyPasteManager.getInstance().isCutElement(psiElement) ? CopyPasteManager.CUT_COLOR : node.getColor());
         append(node.toString(), SimpleTextAttributes.fromTextAttributes(textAttributes));
 
         String oldToString = toString();
