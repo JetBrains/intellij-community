@@ -1,6 +1,6 @@
 package com.intellij.util.io.zip;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.lang.JarMemoryLoader;
 import junit.framework.TestCase;
@@ -21,7 +21,7 @@ public class ReorderJarsTest extends TestCase {
 
   public void testReordering() throws IOException {
 
-    String path = PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/platform/util/testData/reorderJars";
+    String path = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/ide/plugins/reorderJars";
     JBZipFile zipFile = null;
     try {
       zipFile = new JBZipFile(path + "/annotations.jar");
@@ -70,7 +70,7 @@ public class ReorderJarsTest extends TestCase {
   }
 
   public void testPluginXml() throws Exception {
-    String path = PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/platform/util/testData/reorderJars";
+    String path = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/ide/plugins/reorderJars";
 
     ReorderJarsMain.main(new String[] { path + "/zkmOrder.txt", path, myTempDirectory.getPath() } );
     File[] files = myTempDirectory.listFiles();
