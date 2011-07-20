@@ -25,6 +25,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -38,6 +39,7 @@ import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.conversion.ConversionException;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
@@ -72,7 +74,8 @@ public class EclipseClasspathTest extends IdeaTestCase {
     checkModule(path, setUpModule(path, project));
   }
 
-  static Module setUpModule(final String path, final Project project) throws IOException, JDOMException, ConversionException {
+  static Module setUpModule(final String path, final Project project)
+    throws IOException, JDOMException, ConversionException, ConfigurationException {
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
@@ -92,12 +95,12 @@ public class EclipseClasspathTest extends IdeaTestCase {
     classpathReader
       .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null,
                      classpathElement);
+    new EclipseClasspathStorageProvider().assertCompatible(rootModel);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         rootModel.commit();
       }
     });
-
     return module;
   }
 
