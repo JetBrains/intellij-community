@@ -601,7 +601,7 @@ public class MavenProject {
   public Set<String> getSupportedPackagings() {
     Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.TYPE_POM,
                                                             MavenConstants.TYPE_JAR,
-                                                            "ejb", "ejb-client", "war", "ear"));
+                                                            "ejb", "ejb-client", "war", "ear", "bundle"));
     for (MavenImporter each : getSuitableImporters()) {
       each.getSupportedPackagings(result);
     }
