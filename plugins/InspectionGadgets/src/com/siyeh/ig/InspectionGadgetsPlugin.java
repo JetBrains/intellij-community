@@ -67,6 +67,7 @@ import com.siyeh.ig.memory.SystemGCInspection;
 import com.siyeh.ig.memory.ZeroLengthArrayInitializationInspection;
 import com.siyeh.ig.methodmetrics.*;
 import com.siyeh.ig.migration.*;
+import com.siyeh.ig.modularization.ClassIndependentOfModuleInspection;
 import com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection;
 import com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection;
 import com.siyeh.ig.naming.*;
@@ -853,6 +854,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerModularizationInspections() {
+        m_inspectionClasses.add(ClassIndependentOfModuleInspection.class);
         m_inspectionClasses.add(ModuleWithTooManyClassesInspection.class);
         m_inspectionClasses.add(ModuleWithTooFewClassesInspection.class);
     }

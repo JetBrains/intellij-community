@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,42 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.packaging;
+package com.siyeh.ig.modularization;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefPackage;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
+public class ClassIndependentOfModuleInspection extends BaseGlobalInspection {
 
+    @Nls
     @NotNull
     @Override
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "class.unconnected.to.package.display.name");
+                "class.independent.of.module.display.name");
     }
 
-    @Override
     @Nullable
+    @Override
     public CommonProblemDescriptor[] checkElement(
             RefEntity refEntity,
-            AnalysisScope analysisScope,
+            AnalysisScope scope,
             InspectionManager manager,
-            GlobalInspectionContext globalInspectionContext) {
+            GlobalInspectionContext globalContext) {
         if (!(refEntity instanceof RefClass)) {
             return null;
         }
@@ -61,16 +61,16 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
         final Set<RefClass> dependencies =
                 DependencyUtils.calculateDependenciesForClass(refClass);
         for (RefClass dependency : dependencies) {
-             if(inSamePackage(refClass, dependency)) {
-                 return null;
-             }
+            if(inSameModule(refClass, dependency)) {
+                return null;
+            }
         }
         final Set<RefClass> dependents =
                 DependencyUtils.calculateDependentsForClass(refClass);
         for (RefClass dependent : dependents) {
-             if(inSamePackage(refClass, dependent)) {
-                 return null;
-             }
+            if(inSameModule(refClass, dependent)) {
+                return null;
+            }
         }
         final PsiClass aClass = refClass.getElement();
         final PsiIdentifier identifier = aClass.getNameIdentifier();
@@ -80,12 +80,12 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
         return new CommonProblemDescriptor[]{
                 manager.createProblemDescriptor(identifier,
                         InspectionGadgetsBundle.message(
-                                "class.unconnected.to.package.problem.descriptor"),
+                                "class.independent.of.module.problem.descriptor"),
                         true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
         };
     }
 
-    private static boolean inSamePackage(RefClass class1, RefClass class2) {
-        return class1.getOwner() == class2.getOwner();
+    private static boolean inSameModule(RefClass class1, RefClass class2) {
+        return class1.getModule() == class2.getModule();
     }
 }
