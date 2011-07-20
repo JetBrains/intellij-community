@@ -220,9 +220,9 @@ public class InjectedLanguageUtil {
         registrar = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
         if (registrar != null) {
           ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
-            CachedValuesManager.getManager(psiManager.getProject()).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
-          Document hostDocument = hostPsiFile.getViewProvider().getDocument();
-          CachedValueProvider.Result<MultiHostRegistrarImpl> result = CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
+            CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
+
+          CachedValueProvider.Result<MultiHostRegistrarImpl> result = CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, calcDependencies(registrar));
           ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
           current.putUserData(INJECTED_PSI_KEY, cachedValue);
         }
@@ -257,6 +257,18 @@ public class InjectedLanguageUtil {
       }
     }
     return registrar;
+  }
+
+  private static Object[] calcDependencies(@NotNull MultiHostRegistrarImpl registrar) {
+    List<Pair<Place, PsiFile>> result = registrar.getResult();
+    Object[] deps = new Object[result.size()];
+    for (int i = 0; i < result.size(); i++) {
+      Pair<Place, PsiFile> pair = result.get(i);
+      PsiFile injectedFile = pair.second;
+      Document injDocument = injectedFile.getViewProvider().getDocument();
+      deps[i] = injDocument;
+    }
+    return deps;
   }
 
   @Nullable

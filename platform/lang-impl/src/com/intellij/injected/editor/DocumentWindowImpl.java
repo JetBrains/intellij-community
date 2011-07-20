@@ -374,7 +374,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public long getModificationStamp() {
-    return myDelegate.getModificationStamp();
+    return isValid() ? myDelegate.getModificationStamp() : -1;
   }
 
   public void fireReadOnlyModificationAttempt() {
