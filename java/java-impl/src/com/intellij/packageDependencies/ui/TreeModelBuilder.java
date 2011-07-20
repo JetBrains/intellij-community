@@ -170,19 +170,22 @@ public class TreeModelBuilder {
         countFiles(project);
         final PsiManager psiManager = PsiManager.getInstance(project);
         myFileIndex.iterateContent(new ContentIterator() {
+          PackageDependenciesNode lastParent = null;
           public boolean processFile(VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
               final PsiFile psiFile = psiManager.findFile(fileOrDir);
               if (psiFile != null) {
-                buildFileNode(psiFile);
+                lastParent = buildFileNode(psiFile, lastParent);
               }
+            } else {
+              lastParent = null;
             }
             return true;
           }
         });
 
         for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
-          processFilesRecursively(root, psiManager);
+          processFilesRecursively(root, null, psiManager);
         }
       }
     };
@@ -198,19 +201,22 @@ public class TreeModelBuilder {
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
-  private void processFilesRecursively(VirtualFile file, PsiManager psiManager) {
+  @Nullable
+  private PackageDependenciesNode processFilesRecursively(VirtualFile file, @Nullable PackageDependenciesNode parent, PsiManager psiManager) {
     if (file.isDirectory()) {
       VirtualFile[] children = file.getChildren();
+      PackageDependenciesNode dirNode = null;
       for (VirtualFile aChildren : children) {
-        processFilesRecursively(aChildren, psiManager);
+        dirNode = processFilesRecursively(aChildren, dirNode, psiManager);
       }
     }
     else {
       final PsiFile psiFile = psiManager.findFile(file);
       if (psiFile != null) { // skip inners & anonymous
-        buildFileNode(psiFile);
+        return buildFileNode(psiFile, parent);
       }
     }
+    return null;
   }
 
   private void countFilesRecursively(VirtualFile file) {
@@ -244,7 +250,7 @@ public class TreeModelBuilder {
       public void run() {
         for (final PsiFile file : files) {
           if (file != null) {
-            buildFileNode(file);
+            buildFileNode(file, null);
           }
         }
       }
@@ -261,7 +267,8 @@ public class TreeModelBuilder {
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
-  private void buildFileNode(PsiFile file) {
+  @Nullable
+  private PackageDependenciesNode buildFileNode(PsiFile file, @Nullable PackageDependenciesNode parent) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setIndeterminate(false);
@@ -273,12 +280,12 @@ public class TreeModelBuilder {
       indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
     }
 
-    if (file == null || !file.isValid()) return;
+    if (file == null || !file.isValid()) return null;
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
     if (isMarked) myMarkedFileCount++;
     if (isMarked || myAddUnmarkedFiles) {
-      PackageDependenciesNode dirNode = getFileParentNode(file);
-      if (dirNode == null) return;
+      PackageDependenciesNode dirNode = parent != null ? parent : getFileParentNode(file);
+      if (dirNode == null) return null;
 
       if (myShowFiles) {
         FileNode fileNode = new FileNode(file, isMarked);
@@ -287,7 +294,9 @@ public class TreeModelBuilder {
       else {
         dirNode.addFile(file, isMarked);
       }
+      return dirNode;
     }
+    return null;
   }
 
   public @Nullable PackageDependenciesNode getFileParentNode(PsiFile file) {
