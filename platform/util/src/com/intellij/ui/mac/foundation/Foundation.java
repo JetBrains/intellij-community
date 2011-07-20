@@ -43,6 +43,9 @@ public class Foundation {
     myFoundationLibrary = (FoundationLibrary)Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
   }
 
+  static Callback ourRunnableCallback;
+
+
   public static void init() { /* fake method to init foundation */ }
 
   private Foundation() {
@@ -137,5 +140,73 @@ public class Foundation {
 
   public static void cfRetain(ID id) {
     myFoundationLibrary.CFRetain(id);
+  }
+
+  private static Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
+  private static long ourCurrentRunnableCount = 0;
+  private static final Object RUNNABLE_LOCK = new Object();
+
+  static class RunnableInfo {
+    RunnableInfo(Runnable runnable, boolean useAutoreleasePool) {
+      myRunnable = runnable;
+      myUseAutoreleasePool = useAutoreleasePool;
+    }
+    Runnable myRunnable;
+    boolean myUseAutoreleasePool;
+  }
+
+  public static void executeOnMainThread(final Runnable runnable, final boolean withAutoreleasePool, final boolean waitUntilDone) {
+    initRunnableSupport();
+
+    synchronized (RUNNABLE_LOCK) {
+      ourCurrentRunnableCount++;
+      ourMainThreadRunnables.put(String.valueOf(ourCurrentRunnableCount), new RunnableInfo(runnable, withAutoreleasePool));
+    }
+
+    final ID ideaRunnable = getClass("IdeaRunnable");
+    final ID runnableObject = invoke(ideaRunnable, "alloc");
+    invoke(runnableObject, "performSelectorOnMainThread:withObject:waitUntilDone:", createSelector("run:"),
+           cfString(String.valueOf(ourCurrentRunnableCount)), Boolean.valueOf(waitUntilDone));
+    invoke(runnableObject, "release");
+  }
+
+  private static void initRunnableSupport() {
+    if (ourRunnableCallback == null) {
+      final ID runnableClass = registerObjcClass(getClass("NSObject"), "IdeaRunnable");
+      registerObjcClassPair(runnableClass);
+
+      final Callback callback = new Callback() {
+        public void callback(ID self, String selector, ID keyObject) {
+          final String key = toStringViaUTF8(keyObject);
+
+
+          RunnableInfo info;
+          synchronized (RUNNABLE_LOCK) {
+            info = ourMainThreadRunnables.remove(key);
+          }
+
+          if (info == null) return;
+
+
+          ID pool = null;
+          try {
+            if (info.myUseAutoreleasePool) {
+              pool = invoke("NSAutoreleasePool", "new");
+            }
+
+            info.myRunnable.run();
+          }
+          finally {
+            if (pool != null) {
+              invoke(pool, "release");
+            }
+          }
+        }
+      };
+      if (!addMethod(runnableClass, createSelector("run:"), callback, "v*")) {
+        throw new RuntimeException("Unable to add method to objective-c runnableClass class!");
+      }
+      ourRunnableCallback = callback;
+    }
   }
 }
