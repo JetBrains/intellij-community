@@ -15,10 +15,7 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel;
-import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.application.options.codeStyle.CodeStyleSpacesPanel;
-import com.intellij.application.options.codeStyle.WrappingAndBracesPanel;
+import com.intellij.application.options.codeStyle.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
@@ -194,11 +191,7 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
 
     @Override
     protected void customizeSettings() {
-      LanguageCodeStyleSettingsProvider provider =
-        LanguageCodeStyleSettingsProvider.forLanguage(MultiTabCodeStyleAbstractPanel.this.getDefaultLanguage());
-      if (provider != null) {
-        provider.customizeSettings(this, LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS);
-      }
+      customizePanel(this);
     }
 
     @Override
@@ -212,6 +205,11 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
     public MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
       setPanelLanguage(MultiTabCodeStyleAbstractPanel.this.getDefaultLanguage());
+    }
+
+    @Override
+    protected void customizeSettings() {
+      customizePanel(this);
     }
 
     @Override
@@ -235,6 +233,11 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
     }
 
     @Override
+    protected void customizeSettings() {
+      customizePanel(this);
+    }
+
+    @Override
     protected String getTabTitle() {
       return "Wrapping and Braces";
     }
@@ -243,6 +246,13 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
     protected void installPreviewPanel(JPanel previewPanel) {
       previewPanel.setLayout(new BorderLayout());
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
+    }
+  }
+
+  private void customizePanel(MultilanguageCodeStyleAbstractPanel panel) {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
+    if (provider != null) {
+      provider.customizeSettings(panel, panel.getSettingsType());
     }
   }
 }

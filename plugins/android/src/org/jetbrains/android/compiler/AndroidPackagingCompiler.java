@@ -359,7 +359,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(myManifestFile, myResPackagePath, myClassesDexPath, myFinalPath, myGenerateUnsigendApk, myReleaseBuild,
+      return new MyValidityState(myResPackagePath, myClassesDexPath, myFinalPath, myGenerateUnsigendApk, myReleaseBuild,
                                  mySourceRoots, myExternalLibraries, myNativeLibsFolders);
     }
   }
@@ -382,8 +382,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       myApkPath = is.readUTF();
     }
 
-    MyValidityState(VirtualFile manifestFile,
-                    String resPackagePath,
+    MyValidityState(String resPackagePath,
                     String classesDexPath,
                     String apkPath,
                     boolean generateUnsignedApk,
@@ -391,15 +390,20 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                     VirtualFile[] sourceRoots,
                     VirtualFile[] externalLibs,
                     VirtualFile[] nativeLibFolders) {
-      //myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
       myResourceTimestamps.put(FileUtil.toSystemIndependentName(resPackagePath), new File(resPackagePath).lastModified());
       myResourceTimestamps.put(FileUtil.toSystemIndependentName(classesDexPath), new File(classesDexPath).lastModified());
       myApkPath = apkPath;
       myGenerateUnsignedApk = generateUnsignedApk;
       myReleaseBuild = releaseBuild;
+
+      final HashSet<VirtualFile> resourcesFromSourceRoot = new HashSet<VirtualFile>();
       for (VirtualFile sourceRoot : sourceRoots) {
-        myResourceTimestamps.put(sourceRoot.getPath(), sourceRoot.getTimeStamp());
+        AndroidApkBuilder.collectStandardSourceFolderResources(sourceRoot, new HashSet<VirtualFile>(), resourcesFromSourceRoot, null);
       }
+      for (VirtualFile resource : resourcesFromSourceRoot) {
+        myResourceTimestamps.put(resource.getPath(), resource.getTimeStamp());
+      }
+
       for (VirtualFile externalLib : externalLibs) {
         myResourceTimestamps.put(externalLib.getPath(), externalLib.getTimeStamp());
       }

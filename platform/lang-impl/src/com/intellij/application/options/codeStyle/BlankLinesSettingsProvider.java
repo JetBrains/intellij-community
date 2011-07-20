@@ -19,12 +19,14 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class BlankLinesSettingsProvider extends CodeStyleSettingsProvider {
+
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
     return new CodeStyleBlankLinesConfigurable(settings, originalSettings);
@@ -33,5 +35,10 @@ public class BlankLinesSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public String getConfigurableDisplayName() {
     return ApplicationBundle.message("title.blank.lines");
+  }
+
+  @Override
+  public boolean hasSettingsPage() {
+    return LanguageCodeStyleSettingsProvider.getLanguagesWithSharedPreview().length != 0;
   }
 }

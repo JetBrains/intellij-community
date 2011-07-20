@@ -26,7 +26,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
   }
 
   @Override
-  protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
+  public LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
     return LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
   }
 

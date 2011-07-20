@@ -69,6 +69,7 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
 
 
   public void setIndeterminate(final boolean indeterminate) {
+    if (isIndeterminate() == indeterminate) return;
     super.setIndeterminate(indeterminate);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
