@@ -61,14 +61,14 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
         final Set<RefClass> dependencies =
                 DependencyUtils.calculateDependenciesForClass(refClass);
         for (RefClass dependency : dependencies) {
-             if(inSamePackage(refClass, dependency)) {
+             if (inSamePackage(refClass, dependency)) {
                  return null;
              }
         }
         final Set<RefClass> dependents =
                 DependencyUtils.calculateDependentsForClass(refClass);
         for (RefClass dependent : dependents) {
-             if(inSamePackage(refClass, dependent)) {
+             if (inSamePackage(refClass, dependent)) {
                  return null;
              }
         }
