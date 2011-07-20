@@ -20,11 +20,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.HashMap;
-import com.sun.awt.AWTUtilities;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -1216,7 +1216,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
         myPickerFrame.setAlwaysOnTop(true);
         
         // it seems like it's the lowest value for opacity for mouse events to be processed correctly
-        AWTUtilities.setWindowOpacity(myPickerFrame, 0.05f); 
+        WindowManager.getInstance().setAlphaModeRatio(myPickerFrame, 0.95f);
 
         JRootPane rootPane = ((JDialog)myPickerFrame).getRootPane();
         rootPane.putClientProperty("Window.shadow", Boolean.FALSE);
@@ -1355,7 +1355,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       try {
         Robot robot = new Robot();
         robot.createScreenCapture(new Rectangle(0, 0, 1, 1));
-        return AWTUtilities.isTranslucencySupported(AWTUtilities.Translucency.TRANSLUCENT);
+        return WindowManager.getInstance().isAlphaModeSupported();
       }
       catch (AWTException e) {
         return false;

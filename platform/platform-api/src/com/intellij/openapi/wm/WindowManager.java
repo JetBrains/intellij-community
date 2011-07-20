@@ -23,6 +23,39 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class WindowManager {
+  /**
+   * @return <code>true</code> is and only if current OS supports alpha mode for windows and
+   * all native libraries were successfully loaded.
+   */
+  public abstract boolean isAlphaModeSupported();
+
+  /**
+   * Sets alpha (transparency) ratio for the specified <code>window</code>.
+   * If alpha mode isn't supported by underlying windowing system then the method does nothing.
+   * The method also does nothing if alpha mode isn't enabled for the specified <code>window</code>.
+   * @param window <code>window</code> which transparency should be changed.
+   * @param ratio ratio of transparency. <code>0</code> means absolutely non transparent window.
+   * <code>1</code> means absolutely transparent window.
+   * @exception IllegalArgumentException if <code>window</code> is not
+   * desplayable or not showing.
+   * @exception IllegalArgumentException if <code>ration</code> isn't
+   * in <code>[0..1]</code> range.
+   */
+  public abstract void setAlphaModeRatio(Window window,float ratio);
+
+  /**
+   * @return <code>true</code> if specified <code>window</code> is currently is alpha mode.
+   */
+  public abstract boolean isAlphaModeEnabled(Window window);
+
+  /**
+   * Sets whether the alpha (transparent) mode is enabled for specified <code>window</code>.
+   * If alpha mode isn't supported by underlying windowing system then the method does nothing.
+   * @param window window which mode to be set.
+   * @param state determines the new alpha mode.
+   */
+  public abstract void setAlphaModeEnabled(Window window,boolean state);
+
   public static WindowManager getInstance(){
     return ApplicationManager.getApplication().getComponent(WindowManager.class);
   }

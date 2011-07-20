@@ -95,44 +95,11 @@ public abstract class WindowManagerEx extends WindowManager {
    */
   public abstract Rectangle getScreenBounds(@NotNull final Project project);
 
-  /**
-   * @return <code>true</code> is and only if current OS supports alpha mode for windows and
-   * all native libraries were successfully loaded.
-   */
-  public abstract boolean isAlphaModeSupported();
-
-  /**
-   * Sets alpha (transparency) ratio for the specified <code>window</code>.
-   * If alpha mode isn't supported by underlying windowing system then the method does nothing.
-   * The method also does nothing if alpha mode isn't enabled for the specified <code>window</code>.
-   * @param window <code>window</code> which transparency should be changed.
-   * @param ratio ratio of transparency. <code>0</code> means absolutely non transparent window.
-   * <code>1</code> means absolutely transparent window.
-   * @exception java.lang.IllegalArgumentException if <code>window</code> is not
-   * desplayable or not showing.
-   * @exception java.lang.IllegalArgumentException if <code>ration</code> isn't
-   * in <code>[0..1]</code> range.
-   */
-  public abstract void setAlphaModeRatio(Window window,float ratio);
-
   public abstract void setWindowMask(Window window, Shape mask);
 
   public abstract void setWindowShadow(Window window, WindowShadowMode mode);
 
   public abstract void resetWindow(final Window window);
-
-  /**
-   * @return <code>true</code> if specified <code>window</code> is currently is alpha mode.
-   */
-  public abstract boolean isAlphaModeEnabled(Window window);
-
-  /**
-   * Sets whether the alpha (transparent) mode is enabled for specified <code>window</code>.
-   * If alpha mode isn't supported by underlying windowing system then the method does nothing.
-   * @param window window which mode to be set.
-   * @param state determines the new alpha mode.
-   */
-  public abstract void setAlphaModeEnabled(Window window,boolean state);
 
   /**
    * Either dispose the dialog immediately if project's frame has focus or just hide and dispose when frame gets focus or closes.
