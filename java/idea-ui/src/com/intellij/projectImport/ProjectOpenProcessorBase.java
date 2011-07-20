@@ -27,6 +27,7 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -130,7 +131,12 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       if (!doQuickImport(virtualFile, wizardContext)) return null;
 
       if (wizardContext.getProjectName() == null) {
-        wizardContext.setProjectName(IdeBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION);
+        if (wizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT) {
+          wizardContext.setProjectName(IdeBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION);
+        }
+        else {
+          wizardContext.setProjectName(IdeBundle.message("project.import.default.name.dotIdea", getName()));
+        }
       }
       wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
 
@@ -141,16 +147,34 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       }
       wizardContext.setProjectJdk(jdk);
 
-      final String projectPath = wizardContext.getProjectFileDirectory() + File.separator + wizardContext.getProjectName() +
-                                 ProjectFileType.DOT_DEFAULT_EXTENSION;
+      final String dotIdeaFilePath = wizardContext.getProjectFileDirectory() + File.separator + ".idea";
+      final String projectFilePath = wizardContext.getProjectFileDirectory() + File.separator + wizardContext.getProjectName() +
+                                     ProjectFileType.DOT_DEFAULT_EXTENSION;
+
       boolean shouldOpenExisting = false;
 
-      File projectFile = new File(projectPath);
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()
-          && projectFile.exists()) {
+      File dotIdeaFile = new File(dotIdeaFilePath);
+      File projectFile = new File(projectFilePath);
+
+      String pathToOpen;
+      if (wizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT) {
+        pathToOpen = projectFilePath;
+      } else {
+        pathToOpen = dotIdeaFile.getParent();
+      }
+
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment() && (projectFile.exists() || dotIdeaFile.exists())) {
+        String existingName;
+        if (dotIdeaFile.exists()) {
+          existingName = "an existing project";
+          pathToOpen = dotIdeaFile.getParent();
+        } else {
+          existingName = "'" + projectFile.getName() + "'";
+          pathToOpen = projectFilePath;
+        }
         int result = Messages.showDialog(projectToClose,
                                          IdeBundle.message("project.import.open.existing",
-                                                           projectFile.getName(),
+                                                           existingName,
                                                            projectFile.getParent(),
                                                            virtualFile.getName()),
                                          IdeBundle.message("title.open.project"),
@@ -167,7 +191,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       final Project projectToOpen;
       if (shouldOpenExisting) {
         try {
-          projectToOpen = ProjectManagerEx.getInstanceEx().loadProject(projectPath);
+          projectToOpen = ProjectManagerEx.getInstanceEx().loadProject(pathToOpen);
         }
         catch (IOException e) {
           return null;
@@ -180,8 +204,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
         }
       }
       else {
-        projectToOpen = ProjectManagerEx.getInstanceEx()
-          .newProject(FileUtil.getNameWithoutExtension(projectFile), projectPath, true, false);
+        projectToOpen = ProjectManagerEx.getInstanceEx().newProject(wizardContext.getProjectName(), pathToOpen, true, false);
 
         if (projectToOpen == null || !getBuilder().validate(projectToClose, projectToOpen)) {
           return null;
@@ -195,9 +218,9 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
             Sdk jdk = wizardContext.getProjectJdk();
             if (jdk != null) NewProjectUtil.applyJdkToProject(projectToOpen, jdk);
 
-            final String projectFilePath = wizardContext.getProjectFileDirectory();
+            final String projectDirPath = wizardContext.getProjectFileDirectory();
             CompilerProjectExtension.getInstance(projectToOpen).setCompilerOutputUrl(getUrl(
-              StringUtil.endsWithChar(projectFilePath, '/') ? projectFilePath + "classes" : projectFilePath + "/classes"));
+              StringUtil.endsWithChar(projectDirPath, '/') ? projectDirPath + "classes" : projectDirPath + "/classes"));
           }
         });
 
@@ -207,7 +230,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       if (!forceOpenInNewFrame) {
         NewProjectUtil.closePreviousProject(projectToClose);
       }
-      ProjectUtil.updateLastProjectLocation(projectPath);
+      ProjectUtil.updateLastProjectLocation(pathToOpen);
       ProjectManagerEx.getInstanceEx().openProject(projectToOpen);
 
       return projectToOpen;

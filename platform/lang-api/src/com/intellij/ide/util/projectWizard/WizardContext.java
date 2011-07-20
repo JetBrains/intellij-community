@@ -42,7 +42,7 @@ public class WizardContext {
   private Sdk myProjectJdk;
   private ProjectBuilder myProjectBuilder;
   private final List<Listener> myListeners = new ArrayList<Listener>();
-  private StorageScheme myProjectStorageFormat = StorageScheme.DEFAULT;
+  private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
 
   private ModuleWizardStep myProjectSdkStep;
 
