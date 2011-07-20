@@ -278,6 +278,7 @@ public class TreeModelBuilder {
     if (isMarked) myMarkedFileCount++;
     if (isMarked || myAddUnmarkedFiles) {
       PackageDependenciesNode dirNode = getFileParentNode(file);
+      if (dirNode == null) return;
 
       if (myShowFiles) {
         FileNode fileNode = new FileNode(file, isMarked);
@@ -289,7 +290,7 @@ public class TreeModelBuilder {
     }
   }
 
-  public @NotNull PackageDependenciesNode getFileParentNode(PsiFile file) {
+  public @Nullable PackageDependenciesNode getFileParentNode(PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
     final VirtualFile containingDirectory = vFile.getParent();
@@ -311,7 +312,7 @@ public class TreeModelBuilder {
           return getModuleDirNode(aPackage, myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
         }
       }
-      return getModuleNode(myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
+      return myFileIndex.isInLibrarySource(vFile) ? null : getModuleNode(myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
 
   }
 
@@ -360,7 +361,7 @@ public class TreeModelBuilder {
       return getModuleDirNode(aPackage, null, ScopeType.LIB);
     }
 
-    Pair<OrderEntry, PsiPackage> descriptor = new Pair<OrderEntry, PsiPackage>(myShowModules ? libraryOrJdk : null, aPackage);
+    Pair<OrderEntry, PsiPackage> descriptor = new Pair<OrderEntry, PsiPackage>(myShowIndividualLibs ? libraryOrJdk : null, aPackage);
     PackageNode node = getMap(myLibraryPackageNodes, ScopeType.LIB).get(descriptor);
     if (node != null) return node;
 
