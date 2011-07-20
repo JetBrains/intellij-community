@@ -246,18 +246,15 @@ def testFilesInFolderUsingPattern(folder, pattern = ".*"):
   result = []
   prog = re.compile(pattern)
 
-  if PYTHON_VERSION_MAJOR == 3:
-    for root, dirs, files in os.walk(folder, walkModules, modules):
-      for name in files:
-        path = os.path.join(root, name)
-        if prog.match(name):
-          if name.endswith(".py"):
-            modules.append(loadSource(path))
-          elif not name.endswith(".pyc") and not name.endswith("$py.class")\
-                                  and os.path.isfile(path):
-            testfile(path)
-  else:
-    os.path.walk(folder, walkModulesUsingPattern, modules)
+  for root, dirs, files in os.walk(folder, walkModules, modules):
+    for name in files:
+      path = os.path.join(root, name)
+      if prog.match(name):
+        if name.endswith(".py"):
+          modules.append(loadSource(path))
+        elif not name.endswith(".pyc") and not name.endswith("$py.class")\
+                                and os.path.isfile(path):
+          testfile(path)
 
   for module in modules:
     if prog.match(module.__name__):
