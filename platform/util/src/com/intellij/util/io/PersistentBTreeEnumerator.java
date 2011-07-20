@@ -36,7 +36,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private int myDuplicatedValuesPageStart;
   private int myDuplicatedValuesPageOffset;
   private static final int COLLISION_OFFSET = 4;
-  private int values;
+  private int valuesCount;
   private int collisions;
 
   private IntToIntBtree btree;
@@ -57,13 +57,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       }
 
       @Override
-      protected void savePage(int address, byte[] pageBuffer) {
+      protected void doSavePage(int address, byte[] pageBuffer) {
         if (doSanityCheck) myAssert(pageBuffer.length == PAGE_SIZE);
         myStorage.put(address, pageBuffer, 0, pageBuffer.length);
       }
 
       @Override
-      protected void loadPageContent(int address, byte[] pageBuffer) {
+      protected void doLoadPage(int address, byte[] pageBuffer) {
         if (doSanityCheck) myAssert(pageBuffer.length == PAGE_SIZE);
         myStorage.get(address, pageBuffer, 0, pageBuffer.length);
       }
@@ -74,8 +74,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         myRootNodeStart = newRootAddress;
       }
     };
-
-    btree.setRootAddress(myRootNodeStart);
   }
 
   private void storeVars(boolean toDisk) {
@@ -86,9 +84,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myFirstPageStart = store(DATA_START + 16, myFirstPageStart, toDisk);
     myDuplicatedValuesPageStart = store(DATA_START + 20, myDuplicatedValuesPageStart, toDisk);
     myDuplicatedValuesPageOffset = store(DATA_START + 24, myDuplicatedValuesPageOffset, toDisk);
-    values = store(DATA_START + 28, values, toDisk);
+    valuesCount = store(DATA_START + 28, valuesCount, toDisk);
     collisions = store(DATA_START + 32, collisions, toDisk);
-    if (btree != null) btree.setMaxStepsSearched(store(DATA_START + 36, btree.getMaxStepsSearched(), toDisk));
+    if (btree != null) {
+      btree.setMaxStepsSearched(store(DATA_START + 36, btree.getMaxStepsSearched(), toDisk));
+      btree.setPagesCount(store(DATA_START + 40, btree.getPageCount(), toDisk));
+    }
   }
 
   private int store(int offset, int value, boolean toDisk) {
@@ -110,9 +111,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myDuplicatedValuesPageStart = -1;
 
     storeVars(true);
-
     initBtree(true);
-    btree.root.sync();
   }
 
   @Override
@@ -208,7 +207,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
       if (!saveNewValue) return NULL_ID;
       int newValueId = writeData(value, valueHC);  // TODO: we can store at Btree leaf index
-      ++values;
+      ++valuesCount;
+
+      if (valuesCount % 10000 == 0 && IOStatistics.DEBUG) {
+        IOStatistics.dump("Index " + myFile + ", values " + valuesCount + ", storage size:" + myStorage.length() + ", pagecount:" + btree.getPageCount() + ", height:" + btree.getMaxStepsSearched());
+      }
 
       if (collisionAddress != NULL_ID) {
         if (indexNodeValueAddress > 0) {
