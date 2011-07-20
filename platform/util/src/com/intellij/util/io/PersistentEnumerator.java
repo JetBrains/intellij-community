@@ -46,6 +46,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int KEY_HASHCODE_OFFSET = COLLISION_OFFSET + 4;
   private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;
   protected static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
+  private int valuesCount; // TODO: values should be persistent
 
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     super(file, new MappedFileEnumeratorStorage(file, initialSize), dataDescriptor, initialSize);
@@ -133,6 +134,12 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
         }
 
         final int newId = writeData(value, valueHC);
+        ++valuesCount;
+
+        if (valuesCount % 10000 == 0 && IOStatistics.DEBUG) {
+          IOStatistics.dump("Index " + myFile + ", values " + valuesCount + ", storage size:" + myStorage.length());
+        }
+
         if (splitVector) {
           depth--;
           do {
