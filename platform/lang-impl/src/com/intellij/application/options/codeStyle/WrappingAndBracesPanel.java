@@ -26,7 +26,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   @Override
-  protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
+  public LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
     return LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
   }
 

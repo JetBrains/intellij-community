@@ -110,7 +110,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     return myLanguage;
   }
 
-  protected abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();
+  public abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();
 
   protected void onLanguageChange(Language language) {
   }

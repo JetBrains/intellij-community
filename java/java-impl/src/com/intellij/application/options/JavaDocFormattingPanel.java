@@ -63,7 +63,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   }
 
   @Override
-  protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
+  public LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
     return LanguageCodeStyleSettingsProvider.SettingsType.LANGUAGE_SPECIFIC;
   }
 
