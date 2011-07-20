@@ -23,6 +23,7 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -47,7 +48,8 @@ public abstract class FrameworkDetector {
   @NotNull
   public abstract ElementPattern<FileContent> createSuitableFilePattern();
 
-  public abstract void detect(@NotNull Collection<VirtualFile> newFiles);
+  public abstract List<? extends DetectedFrameworkDescription> detect(@NotNull Collection<VirtualFile> newFiles,
+                                                                      @NotNull FrameworkDetectionContext context);
 
   @NotNull
   public final String getDetectorId() {

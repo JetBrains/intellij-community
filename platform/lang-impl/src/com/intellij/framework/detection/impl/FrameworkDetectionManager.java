@@ -15,9 +15,20 @@
  */
 package com.intellij.framework.detection.impl;
 
+import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FrameworkDetector;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.MultiMap;
@@ -26,12 +37,15 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import javax.swing.event.HyperlinkEvent;
+import java.util.*;
 
 /**
  * @author nik
  */
 public class FrameworkDetectionManager extends AbstractProjectComponent implements FrameworkDetectionIndexListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectionManager");
+  private static final NotificationGroup FRAMEWORK_DETECTION_NOTIFICATION = NotificationGroup.balloonGroup("Framework Detection");
   private final Update myDetectionUpdate = new Update("detection") {
     @Override
     public void run() {
@@ -56,6 +70,18 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
     myDetectionQueue = new MergingUpdateQueue("FrameworkDetectionQueue", 300, true, null, myProject);
     myDetectedFrameworksData = new DetectedFrameworksData(myProject);
     FrameworkDetectionIndex.getInstance().addListener(this, myProject);
+    myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+        myDetectionQueue.suspend();
+      }
+
+      @Override
+      public void exitDumbMode() {
+        myDetectionQueue.resume();
+      }
+    });
+
   }
 
   @Override
@@ -72,23 +98,52 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   }
 
   private void runDetection() {
-    MultiMap<Integer, VirtualFile> filesToProcess;
+    Set<Integer> detectorsToProcess;
     synchronized (myLock) {
-      filesToProcess = new MultiMap<Integer, VirtualFile>();
-      filesToProcess.putAllValues(myFilesToProcess);
+      detectorsToProcess = myDetectedFrameworksData.updateNewFiles(myFilesToProcess);
       myFilesToProcess.clear();
     }
 
     final FileBasedIndex index = FileBasedIndex.getInstance();
-    for (Integer key : filesToProcess.keySet()) {
+    Map<Integer, List<? extends DetectedFrameworkDescription>> newDescriptions = new HashMap<Integer, List<? extends DetectedFrameworkDescription>>();
+    for (Integer key : detectorsToProcess) {
       Collection<VirtualFile> files = index.getContainingFiles(FrameworkDetectionIndex.NAME, key, GlobalSearchScope.allScope(myProject));
-      final Collection<VirtualFile> changed = filesToProcess.get(key);
-      changed.retainAll(files);
-      myDetectedFrameworksData.retainNewFiles(key, changed);
+      final Collection<VirtualFile> newFiles = myDetectedFrameworksData.retainNewFiles(key, files);
       FrameworkDetector detector = FrameworkDetectorRegistry.getInstance().getDetectorById(key);
       if (detector != null) {
-        detector.detect(files);
+        final List<? extends DetectedFrameworkDescription> frameworks = detector.detect(newFiles, new FrameworkDetectionContextImpl(myProject));
+        final List<? extends DetectedFrameworkDescription> updated = myDetectedFrameworksData.updateFrameworksList(key, frameworks);
+        if (!updated.isEmpty()) {
+          newDescriptions.put(key, updated);
+        }
       }
+    }
+
+    for (final Integer detectorId : newDescriptions.keySet()) {
+      for (final DetectedFrameworkDescription description : newDescriptions.get(detectorId)) {
+        final String text = ProjectBundle.message("framework.detected.info.text", description.getDescription());
+        FRAMEWORK_DETECTION_NOTIFICATION.createNotification("Frameworks detected", text, NotificationType.INFORMATION, new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              setupFramework(description, detectorId, notification);
+            }
+          }
+        }).notify(myProject);
+      }
+    }
+  }
+
+  private void setupFramework(DetectedFrameworkDescription description, Integer detectorId, Notification notification) {
+    notification.expire();
+    AccessToken token = WriteAction.start();
+    try {
+      description.configureFramework(new PlatformModifiableModelsProvider());
+      final Collection<? extends VirtualFile> files = description.getRelatedFiles();
+      myDetectedFrameworksData.putExistentFrameworkFiles(detectorId, files);
+    }
+    finally {
+      token.finish();
     }
   }
 }

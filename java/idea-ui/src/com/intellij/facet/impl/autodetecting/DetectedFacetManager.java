@@ -144,7 +144,7 @@ public class DetectedFacetManager implements Disposable {
       newFacets.add(newFacet);
     }
     myPendingNewFacets.clear();
-    fireNotification(newFacets);
+    //fireNotification(newFacets);
   }
 
   private void fireNotification(final List<DetectedFacetInfo<Module>> newFacets) {
