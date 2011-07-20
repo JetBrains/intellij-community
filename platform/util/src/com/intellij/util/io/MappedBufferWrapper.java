@@ -49,10 +49,18 @@ public abstract class MappedBufferWrapper {
   private static final int MAX_FORCE_ATTEMPTS = 10;
 
   public final void unmap() {
+    long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
     if (!unmapMappedByteBuffer142b19(this)) {
       LOG.error("Unmapping failed for: " + myFile);
     }
     myBuffer = null;
+
+    if (IOStatistics.DEBUG) {
+      long finished = System.currentTimeMillis();
+      if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
+        IOStatistics.dump("Unmapped " + myFile + "," + myPosition + "," + myLength + " for " + (finished - started));
+      }
+    }
   }
 
   public MappedByteBuffer getIfCached() {

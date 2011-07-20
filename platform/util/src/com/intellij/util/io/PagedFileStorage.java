@@ -38,7 +38,7 @@ public class PagedFileStorage implements Forceable {
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagedFileStorage");
   private static final int MEGABYTE = 1024 * 1024;
-  private final static int BUFFER_SIZE;
+  final static int DEFAULT_BUFFER_SIZE;
 
   private final static int UPPER_LIMIT;
   public static final int LOWER_LIMIT_IN_MEGABYTES = 100;
@@ -52,7 +52,7 @@ public class PagedFileStorage implements Forceable {
 
     String pagedStoragePageSizeProperty = System.getProperty("idea.paged.storage.page.size");
     int defaultPagedStoragePageSizeInMegabytes = 10;
-    BUFFER_SIZE = (pagedStoragePageSizeProperty == null ? defaultPagedStoragePageSizeInMegabytes:Math.max(1,Integer.valueOf(pagedStoragePageSizeProperty)))* MEGABYTE;
+    DEFAULT_BUFFER_SIZE = (pagedStoragePageSizeProperty == null ? defaultPagedStoragePageSizeInMegabytes:Math.max(1,Integer.valueOf(pagedStoragePageSizeProperty)))* MEGABYTE;
   }
 
   private final StorageLock myLock;
@@ -82,12 +82,12 @@ public class PagedFileStorage implements Forceable {
           throw new IllegalStateException("Must hold StorageLock lock to access PagedFileStorage");
         }
 
-        int off = key.page * BUFFER_SIZE;
+        int off = key.page * key.owner.myPageSize;
         if (off > key.owner.length()) {
           throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + key.owner.length());
         }
         ReadWriteMappedBufferWrapper wrapper =
-          new ReadWriteMappedBufferWrapper(key.owner.myFile, off, Math.min((int)(key.owner.length() - off), BUFFER_SIZE));
+          new ReadWriteMappedBufferWrapper(key.owner.myFile, off, Math.min((int)(key.owner.length() - off), key.owner.myPageSize));
         IOException oome = null;
         while (true) {
           try {
@@ -104,9 +104,9 @@ public class PagedFileStorage implements Forceable {
             if (e.getCause() instanceof OutOfMemoryError) {
               oome = e;
               if (mySizeLimit > LOWER_LIMIT) {
-                mySizeLimit -= BUFFER_SIZE;
+                mySizeLimit -= key.owner.myPageSize;
               }
-              long newSize = getSize() - BUFFER_SIZE;
+              long newSize = getSize() - key.owner.myPageSize;
               if (newSize >= 0) {
                 ensureSize(newSize);
                 continue; // next try
@@ -161,11 +161,17 @@ public class PagedFileStorage implements Forceable {
   private boolean isDirty = false;
   private final File myFile;
   protected long mySize = -1;
+  protected final int myPageSize;
   @NonNls private static final String RW = "rw";
 
-  public PagedFileStorage(File file, StorageLock lock) throws IOException {
+  public PagedFileStorage(File file, StorageLock lock, int pageSize) throws IOException {
     myFile = file;
     myLock = lock;
+    myPageSize = Math.max(pageSize, Page.PAGE_SIZE);
+  }
+
+  public PagedFileStorage(File file, StorageLock lock) throws IOException {
+    this(file, lock, DEFAULT_BUFFER_SIZE);
   }
 
   public File getFile() {
@@ -204,16 +210,16 @@ public class PagedFileStorage implements Forceable {
   }
 
   public byte get(int index) {
-    int page = index / BUFFER_SIZE;
-    int offset = index % BUFFER_SIZE;
+    int page = index / myPageSize;
+    int offset = index % myPageSize;
 
     return getBuffer(page).get(offset);
   }
 
   public void put(int index, byte value) {
     isDirty = true;
-    int page = index / BUFFER_SIZE;
-    int offset = index % BUFFER_SIZE;
+    int page = index / myPageSize;
+    int offset = index % myPageSize;
 
     getBuffer(page).put(offset, value);
   }
@@ -224,10 +230,10 @@ public class PagedFileStorage implements Forceable {
     int l = length;
 
     while (l > 0) {
-      int page = i / BUFFER_SIZE;
-      int page_offset = i % BUFFER_SIZE;
+      int page = i / myPageSize;
+      int page_offset = i % myPageSize;
 
-      int page_len = Math.min(l, BUFFER_SIZE - page_offset);
+      int page_len = Math.min(l, myPageSize - page_offset);
       final ByteBuffer buffer = getBuffer(page);
       try {
         buffer.position(page_offset);
@@ -254,10 +260,10 @@ public class PagedFileStorage implements Forceable {
     int l = length;
 
     while (l > 0) {
-      int page = i / BUFFER_SIZE;
-      int page_offset = i % BUFFER_SIZE;
+      int page = i / myPageSize;
+      int page_offset = i % myPageSize;
 
-      int page_len = Math.min(l, BUFFER_SIZE - page_offset);
+      int page_len = Math.min(l, myPageSize - page_offset);
       final ByteBuffer buffer = getBuffer(page);
       try {
         buffer.position(page_offset);
@@ -294,13 +300,23 @@ public class PagedFileStorage implements Forceable {
     int oldSize = (int)myFile.length();
     if (oldSize == newSize) return;
 
+    final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
     unmapAll();
+    final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
+
     resizeFile(newSize);
 
     // it is not guaranteed that new partition will consist of null
     // after resize, so we should fill it manually
     int delta = newSize - oldSize;
     if (delta > 0) fillWithZeros(oldSize, delta);
+
+    if (IOStatistics.DEBUG) {
+      long finished = System.currentTimeMillis();
+      if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
+        IOStatistics.dump("Resized "+myFile + " from " + oldSize + " to " + newSize + " for " + (finished - started) + ", unmap all:" + (finished - unmapAllFinished));
+      }
+    }
   }
 
   private void resizeFile(int newSize) throws IOException {
@@ -345,12 +361,19 @@ public class PagedFileStorage implements Forceable {
   }
 
   public void force() {
+    long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
     for (Map.Entry<PageKey,MappedBufferWrapper> entry : myLock.myBuffersCache.entrySet()) {
       if (entry.getKey().owner == this) {
         entry.getValue().flush();
       }
     }
     isDirty = false;
+    if (IOStatistics.DEBUG) {
+      long finished = System.currentTimeMillis();
+      if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
+        IOStatistics.dump("Flushed "+myFile + " for " + (finished - started));
+      }
+    }
   }
 
   public boolean isDirty() {
@@ -390,9 +413,19 @@ public class PagedFileStorage implements Forceable {
       if (wrapper != null) {
         return wrapper;
       }
+
+      long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
       wrapper = createValue(key);
       mySize += wrapper.myLength;
+
+      if (IOStatistics.DEBUG) {
+        long finished = System.currentTimeMillis();
+        if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
+          IOStatistics.dump("Mapping " + wrapper.myLength + " from " + wrapper.myPosition + " file:"+wrapper.myFile);
+        }
+      }
       myMap.put(key, wrapper);
+
       ensureSize(mySizeLimit);
       return wrapper;
     }
