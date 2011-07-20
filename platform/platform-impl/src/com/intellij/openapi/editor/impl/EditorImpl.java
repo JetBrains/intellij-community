@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -271,6 +271,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myStickySelection;
   private int myStickySelectionStart;
   private boolean myScrollToCaret = true;
+
+  private boolean myPaintSelection;
   
   private final EditorSizeAdjustmentStrategy mySizeAdjustmentStrategy = new EditorSizeAdjustmentStrategy();
 
@@ -1855,7 +1857,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LogicalPosition endLogicalPosition = visualToLogicalPosition(endVisualPosition);
     int end = logicalPositionToOffset(endLogicalPosition);
     getSoftWrapModel().registerSoftWrapsIfNecessary();
-    IterationState iterationState = new IterationState(this, start, end, paintSelection());
+    IterationState iterationState = new IterationState(this, start, end, isPaintSelection());
 
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
@@ -2300,7 +2302,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    IterationState iterationState = new IterationState(this, start, end, paintSelection());
+    IterationState iterationState = new IterationState(this, start, end, isPaintSelection());
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
     if (lIterator.atEnd()) {
@@ -2413,9 +2415,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       flushCachedChars(g);
     }
   }
-  
-  private boolean paintSelection() {
-    return !isOneLineMode() || IJSwingUtilities.hasFocus(getContentComponent());
+
+  public boolean isPaintSelection() {
+    return myPaintSelection || !isOneLineMode() || IJSwingUtilities.hasFocus(getContentComponent());
+  }
+
+  public void setPaintSelection(boolean paintSelection) {
+    myPaintSelection = paintSelection;
   }
 
   private class CachedFontContent {

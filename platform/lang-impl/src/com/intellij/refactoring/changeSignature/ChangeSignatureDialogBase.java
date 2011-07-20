@@ -44,7 +44,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -372,7 +371,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         return editor;
       }
     };
-    UIUtil.setTableDecorationEnabled(myParametersTable);
+
     myParametersTable.setCellSelectionEnabled(true);
     myParametersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
@@ -385,6 +384,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
     myPropagateParamChangesButton.setEnabled(false);
     myPropagateParamChangesButton.setVisible(false);
+    myParametersTable.setStriped(true);
 
     myParametersTableModel.addTableModelListener(
       new TableModelListener() {

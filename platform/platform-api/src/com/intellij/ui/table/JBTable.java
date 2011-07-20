@@ -316,8 +316,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setStriped(boolean striped) {
     myStriped = striped;
     if (striped) {
-      setShowGrid(false);
       getColumnModel().setColumnMargin(0);
+      setShowGrid(false);
     }
   }
 
@@ -373,6 +373,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       || UIUtil.isUnderNativeMacLookAndFeel()
       || UIUtil.isUnderQuaquaLookAndFeel()
       || UIUtil.isUnderMetalLookAndFeel()
+      || UIUtil.isUnderNimbusLookAndFeel()
       || UIUtil.isUnderWindowsLookAndFeel();
   }
 

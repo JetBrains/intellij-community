@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -77,6 +78,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private boolean myEnsureWillComputePreferredSize;
   private Dimension myPassivePreferredSize;
   private CharSequence myHintText;
+  private boolean myPaintSelection;
+  private boolean myIsRendererWithSelection = false;
+  private Color myRendererBg;
+  private Color myRendererFg;
 
   public EditorTextField() {
     this("");
@@ -505,6 +510,13 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     initOneLineMode(editor);
 
+    if (myIsRendererWithSelection) {
+      ((EditorImpl)editor).setPaintSelection(true);
+      editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, myRendererBg);
+      editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, myRendererFg);
+      editor.getSelectionModel().setSelection(0, myDocument.getTextLength());
+    }
+
     return editor;
   }
 
@@ -702,6 +714,16 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   public void ensureWillComputePreferredSize() {
     myEnsureWillComputePreferredSize = true;
+  }
+
+  public void setPaintSelection(boolean b) {
+    myPaintSelection = b;
+  }
+
+  public void setAsRendererWithSelection(Color backgroundColor, Color foregroundColor) {
+    myIsRendererWithSelection = true;
+    myRendererBg = backgroundColor;
+    myRendererFg = foregroundColor;
   }
 
   private static class DelegatingToRootTraversalPolicy extends FocusTraversalPolicy {

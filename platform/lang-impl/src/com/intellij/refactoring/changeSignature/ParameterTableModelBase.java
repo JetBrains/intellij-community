@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
@@ -26,13 +25,10 @@ import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.ui.*;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -40,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ParameterTableModelBase<P extends ParameterInfo> extends ListTableModel<ParameterTableModelItemBase<P>>
-  implements EditableModel {
+  implements RowEditableTableModel {
 
   protected final PsiElement myTypeContext;
   protected final PsiElement myDefaultValueContext;
@@ -98,7 +94,6 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     public final TableCellRenderer getRenderer(ParameterTableModelItemBase<P> item) {
       if (myRenderer == null) {
         final TableCellRenderer original = doCreateRenderer(item);
-        final DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
         myRenderer = new TableCellRenderer() {
 
           public Component getTableCellRendererComponent(JTable table,
@@ -107,21 +102,11 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
                                                          boolean hasFocus,
                                                          int row,
                                                          int column) {
-
-            if (!table.isCellEditable(row, table.convertColumnIndexToModel(column))) {
-              final Component c = defaultRenderer.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
-              c.setBackground(UIUtil.getTableCellBackground(table, row));
-              if (hasFocus && c instanceof JComponent) {
-                final ListSelectionModel selModel = table.getSelectionModel();
-                final Color color = (selModel.getMaxSelectionIndex() - selModel.getMinSelectionIndex()) == 0
-                                    ? table.getSelectionBackground() : table.getForeground();
-                ((JComponent)c).setBorder(BorderFactory.createLineBorder(color));
-              }
-              //Color bg = table.getBackground().darker();
-              //component.setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230));
-              return c;
-            }
             Component component = original.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (!table.isCellEditable(row, table.convertColumnIndexToModel(column))) {
+              Color bg = table.getBackground().darker();
+              component.setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230));
+            }
 
             if (component instanceof EditorTextField) {
               ((EditorTextField)component).setCenterByHeight(false);
@@ -199,22 +184,8 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
       return new ColoredTableCellRenderer() {
         public void customizeCellRenderer(JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
-          final Color cellBg = UIUtil.getTableCellBackground(table, row);
-          setBackground(cellBg);
-          setForeground(table.getForeground());
-          final ListSelectionModel selModel = table.getSelectionModel();
-          final Color color = (selModel.getMaxSelectionIndex() - selModel.getMinSelectionIndex()) == 0
-                              ? table.getSelectionBackground() : table.getForeground();
-          setBorder(BorderFactory.createLineBorder(hasFocus ? color : cellBg));
-
           if (value == null) return;
           append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
-        }
-
-        @Override
-        protected void applyAdditionalHints(Graphics g) {
-          super.applyAdditionalHints(g);
-          UISettings.setupAntialiasing(g);
         }
       };
     }
