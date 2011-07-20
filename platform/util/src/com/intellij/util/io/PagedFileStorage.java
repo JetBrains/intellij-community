@@ -421,7 +421,7 @@ public class PagedFileStorage implements Forceable {
       if (IOStatistics.DEBUG) {
         long finished = System.currentTimeMillis();
         if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
-          IOStatistics.dump("Mapping " + wrapper.myLength + " from " + wrapper.myPosition + " file:"+wrapper.myFile);
+          IOStatistics.dump("Mapping " + wrapper.myLength + " from " + wrapper.myPosition + " file:"+wrapper.myFile + " for "+(finished - started));
         }
       }
       myMap.put(key, wrapper);
