@@ -205,7 +205,7 @@ class ClassPath {
     }
     else {
       JarLoader jarLoader = new JarLoader(url, myCanLockJars);
-      jarLoader.preLoadClasses();
+//      jarLoader.preLoadClasses();
       loader = jarLoader;
     }
 
