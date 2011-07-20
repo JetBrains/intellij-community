@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,5 +48,10 @@ public class WrappingAndBracesSettingsProvider extends CodeStyleSettingsProvider
   @Override
   public String getConfigurableDisplayName() {
     return ApplicationBundle.message("wrapping.and.braces");
+  }
+
+  @Override
+  public boolean hasSettingsPage() {
+    return LanguageCodeStyleSettingsProvider.getLanguagesWithSharedPreview().length != 0;
   }
 }
