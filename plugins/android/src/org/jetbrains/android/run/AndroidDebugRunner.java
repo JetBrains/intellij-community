@@ -117,6 +117,7 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
     }
     tryToCloseOldSessions(executor, project);
     runningState.getProcessHandler().putUserData(ANDROID_PROCESS_HANDLER, runDescriptor);
+    runningState.setRestarter(runDescriptor.getRestarter());
     return runDescriptor;
   }
 
