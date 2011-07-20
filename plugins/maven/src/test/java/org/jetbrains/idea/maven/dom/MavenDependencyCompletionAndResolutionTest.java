@@ -637,7 +637,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "jar", "test-jar", "pom", "ear", "ejb", "ejb-client", "war");
+    assertCompletionVariants(myProjectPom, "jar", "test-jar", "pom", "ear", "ejb", "ejb-client", "war", "bundle");
   }
 
   public void testDoNotHighlightUnknownType() throws Throwable {
