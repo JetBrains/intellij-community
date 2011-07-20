@@ -100,7 +100,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
       result.add(threadState);
       threadState.setJavaThreadState(threadStatusToJavaThreadState(threadStatus));
 
-      buffer.append(threadName);
+      buffer.append("\"").append(threadName).append("\"");
       ReferenceType referenceType = threadReference.referenceType();
       if (referenceType != null) {
         //noinspection HardCodedStringLiteral
@@ -118,17 +118,27 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
         if (priority != null) {
           Value value = threadReference.getValue(priority);
           if (value instanceof IntegerValue) {
-            buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.priority", ((IntegerValue)value).intValue()));
+            buffer.append(" ").append(DebuggerBundle.message("threads.export.attribute.label.priority", ((IntegerValue)value).intValue()));
+          }
+        }
+
+        Field tid = referenceType.fieldByName("tid");
+        if (tid != null) {
+          Value value = threadReference.getValue(tid);
+          if (value instanceof LongValue) {
+            buffer.append(" ").append(DebuggerBundle.message("threads.export.attribute.label.tid", Long.toHexString(((LongValue)value).longValue())));
+            buffer.append(" nid=NA");
           }
         }
       }
-
-      ThreadGroupReference groupReference = threadReference.threadGroup();
-      if (groupReference != null) {
-        buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.group", groupReference.name()));
+      //ThreadGroupReference groupReference = threadReference.threadGroup();
+      //if (groupReference != null) {
+      //  buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.group", groupReference.name()));
+      //}
+      final String state = threadState.getState();
+      if (state != null) {
+        buffer.append(" ").append(state);
       }
-      buffer.append(", ").append(
-        DebuggerBundle.message("threads.export.attribute.label.status", threadState.getState()));
 
       buffer.append("\n  java.lang.Thread.State: ").append(threadState.getJavaThreadState());
       
