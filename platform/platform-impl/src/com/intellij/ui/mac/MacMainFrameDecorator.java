@@ -20,6 +20,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.Function;
@@ -149,6 +150,16 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  public static boolean isFullScreenMode(@NotNull Frame frame) {
+    if (!SystemInfo.isMacOSLion) return false;
+
+    final ID window = findWindowForTitle(frame.getTitle());
+    if (window == null) return false;
+
+    final ID mask = invoke(window, "styleMask");
+    return (mask.intValue() & (1 << 14)) == (1 << 14);
   }
 
   @Nullable

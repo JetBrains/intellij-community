@@ -48,6 +48,11 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   }
 
   @Override
+  public boolean isFullScreen(@NotNull Frame frame) {
+    return false;
+  }
+
+  @Override
   public StatusBar getStatusBar(@NotNull Component c) {
     return null;
   }
