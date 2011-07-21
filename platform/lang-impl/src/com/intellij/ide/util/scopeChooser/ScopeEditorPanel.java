@@ -52,8 +52,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class ScopeEditorPanel {
 
@@ -343,13 +341,7 @@ public class ScopeEditorPanel {
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
-        final PackageDependenciesNode node = (PackageDependenciesNode)event.getPath().getLastPathComponent();
-        if (node.isSorted()) return;
-        final List children = TreeUtil.childrenToArray(node);
-        Collections.sort(children, new DependencyNodeComparator());
-        node.removeAllChildren();
-        TreeUtil.addChildrenTo(node, children);
-        node.setSorted(true);
+        ((PackageDependenciesNode)event.getPath().getLastPathComponent()).sortChildren();
       }
 
       @Override
@@ -370,6 +362,7 @@ public class ScopeEditorPanel {
             try {
               myTreeExpansionMonitor.freeze();
               final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
+              ((PackageDependenciesNode)model.getRoot()).sortChildren();
               if (myErrorMessage == null) {
                 myMatchingCountLabel
                   .setText(IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount()));

@@ -28,15 +28,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
   private static final EmptyIcon EMPTY_ICON = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
@@ -218,5 +218,14 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public void setSorted(boolean sorted) {
     mySorted = sorted;
+  }
+
+  public void sortChildren() {
+    if (isSorted()) return;
+    final List children = TreeUtil.childrenToArray(this);
+    Collections.sort(children, new DependencyNodeComparator());
+    removeAllChildren();
+    TreeUtil.addChildrenTo(this, children);
+    setSorted(true);
   }
 }

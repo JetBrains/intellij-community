@@ -273,6 +273,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       }
     }, settings);
     myTree.setModel(myBuilder.build(myProject, showProgress, projectView.isSortByType(ScopeViewPane.ID)));
+    ((PackageDependenciesNode)myTree.getModel().getRoot()).sortChildren();
     ((DefaultTreeModel)myTree.getModel()).reload();
     myTreeExpansionMonitor.restore();
     FileTreeModelBuilder.clearCaches(myProject);
