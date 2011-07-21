@@ -29,7 +29,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +47,10 @@ public class TreeModelBuilder {
   private static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
   public static final String SCANNING_PACKAGES_MESSAGE = AnalysisScopeBundle.message("package.dependencies.build.progress.text");
   private final ProjectFileIndex myFileIndex;
-  private final PsiManager myPsiManager;
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.TreeModelBuilder");
   private final boolean myShowModuleGroups;
+  protected final JavaPsiFacade myJavaPsiFacade;
 
   private static enum ScopeType {
     TEST, SOURCE, LIB
@@ -96,7 +98,6 @@ public class TreeModelBuilder {
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
     myRoot = new RootNode(project);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myPsiManager = PsiManager.getInstance(project);
 
     createMaps(ScopeType.LIB);
     createMaps(ScopeType.SOURCE);
@@ -110,6 +111,7 @@ public class TreeModelBuilder {
       myRoot.add(myTestRoot);
       myRoot.add(myLibsRoot);
     }
+    myJavaPsiFacade = JavaPsiFacade.getInstance(myProject);
   }
 
   private void createMaps(ScopeType scopeType) {
@@ -161,15 +163,14 @@ public class TreeModelBuilder {
     project.putUserData(FILE_COUNT, null);
   }
 
-  public TreeModel build(final Project project, boolean showProgress) {
-    return build(project, showProgress, false);
+  public TreeModel build(final Project project) {
+    return build(project, false);
   }
 
-  public TreeModel build(final Project project, final boolean showProgress, final boolean sortByType) {
+  public TreeModel build(final Project project, final boolean sortByType) {
     Runnable buildingRunnable = new Runnable() {
       public void run() {
         countFiles(project);
-        final PsiManager psiManager = PsiManager.getInstance(project);
         myFileIndex.iterateContent(new ContentIterator() {
           PackageDependenciesNode lastParent = null;
           public boolean processFile(VirtualFile fileOrDir) {
@@ -183,29 +184,24 @@ public class TreeModelBuilder {
         });
 
         for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
-          processFilesRecursively(root, null, psiManager);
+          processFilesRecursively(root, null);
         }
       }
     };
 
-    if (showProgress) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), true, project);
-    }
-    else {
-      buildingRunnable.run();
-    }
+    buildingRunnable.run();
 
     TreeUtil.sort(myRoot, new DependencyNodeComparator(sortByType));
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
   @Nullable
-  private PackageDependenciesNode processFilesRecursively(VirtualFile file, @Nullable PackageDependenciesNode parent, PsiManager psiManager) {
+  private PackageDependenciesNode processFilesRecursively(VirtualFile file, @Nullable PackageDependenciesNode parent) {
     if (file.isDirectory()) {
       VirtualFile[] children = file.getChildren();
       PackageDependenciesNode dirNode = null;
       for (VirtualFile aChildren : children) {
-        dirNode = processFilesRecursively(aChildren, dirNode, psiManager);
+        dirNode = processFilesRecursively(aChildren, dirNode);
       }
     }
     else {
@@ -267,7 +263,6 @@ public class TreeModelBuilder {
       ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, false, ((double)myScannedFileCount++) / myTotalFileCount);
     }
 
-    if (file == null || !file.isValid()) return null;
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
     if (isMarked) myMarkedFileCount++;
     if (isMarked || myAddUnmarkedFiles) {
@@ -293,7 +288,7 @@ public class TreeModelBuilder {
     PsiPackage aPackage = null;
     final String packageName = myFileIndex.getPackageNameByDirectory(containingDirectory);
     if (packageName != null) {
-      aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
+      aPackage = myJavaPsiFacade.findPackage(packageName);
     }
     if (aPackage != null) {
         if (myFileIndex.isInLibrarySource(vFile) || myFileIndex.isInLibraryClasses(vFile)) {
@@ -305,21 +300,6 @@ public class TreeModelBuilder {
       }
       return myFileIndex.isInLibrarySource(vFile) ? null : getModuleNode(myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
 
-  }
-
-  @Nullable
-  private PsiPackage getFilePackage(PsiJavaFile file) {
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile != null && myFileIndex.isInLibrarySource(vFile)) {
-      final VirtualFile directory = vFile.getParent();
-      if (directory != null) {
-        final String packageName = myFileIndex.getPackageNameByDirectory(directory);
-        if (packageName != null) {
-          return JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
-        }
-      }
-    }
-    return JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(file.getPackageName());
   }
 
   private ScopeType getFileScopeType(VirtualFile file) {
