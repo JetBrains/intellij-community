@@ -443,7 +443,9 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (!typeaheadFlushing && typeAheadDispatchToFocusManager(e)) return;
+    if (!typeaheadFlushing && typeAheadDispatchToFocusManager(e)) {
+      return;
+    }
 
     if (e instanceof WindowEvent) {
       ActivityTracker.getInstance().inc();

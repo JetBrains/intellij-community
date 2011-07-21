@@ -430,20 +430,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
       }
 
-      boolean keyWasPressed = false;
-
       for (KeyEvent each : events) {
         if (!isFocusTransferReady()) break;
-
-        if (!keyWasPressed) {
-          if (each.getID() == KeyEvent.KEY_PRESSED) {
-            keyWasPressed = true;
-          }
-          else {
-            myToDispatchOnDone.remove(each);
-            continue;
-          }
-        }
 
         Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (owner == null) {
