@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -44,7 +43,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class TreeModelBuilder {
-  private static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
   public static final String SCANNING_PACKAGES_MESSAGE = AnalysisScopeBundle.message("package.dependencies.build.progress.text");
   private final ProjectFileIndex myFileIndex;
   private final Project myProject;
@@ -137,7 +135,7 @@ public class TreeModelBuilder {
   }
 
   private void countFiles(Project project) {
-    final Integer fileCount = project.getUserData(FILE_COUNT);
+    final Integer fileCount = project.getUserData(FileTreeModelBuilder.FILE_COUNT);
     if (fileCount == null) {
       myFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
@@ -152,14 +150,14 @@ public class TreeModelBuilder {
         countFilesRecursively(root);
       }
 
-      project.putUserData(FILE_COUNT, myTotalFileCount);
+      project.putUserData(FileTreeModelBuilder.FILE_COUNT, myTotalFileCount);
     } else {
       myTotalFileCount = fileCount.intValue();
     }
   }
 
   public static void clearCaches(Project project) {
-    project.putUserData(FILE_COUNT, null);
+    project.putUserData(FileTreeModelBuilder.FILE_COUNT, null);
   }
 
   public TreeModel build(final Project project) {

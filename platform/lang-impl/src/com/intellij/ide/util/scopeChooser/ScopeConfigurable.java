@@ -55,15 +55,12 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     final PackageSet packageSet = scope.getValue();
     myPackageSet = packageSet != null ? packageSet.getText() : null;
     mySharedCheckbox = new JCheckBox(IdeBundle.message("share.scope.checkbox.title"), shareScope);
-    myPanel = new ScopeEditorPanel(project){
-      public NamedScopesHolder getHolder() {
-        return ScopeConfigurable.this.getHolder();
-      }
-    };
+    myPanel = new ScopeEditorPanel(project, getHolder());
     myIcon = getHolder(myShareScope).getIcon();
     mySharedCheckbox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         myIcon = getHolder().getIcon();
+        myPanel.setHolder(getHolder());
       }
     });
   }

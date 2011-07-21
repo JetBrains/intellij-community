@@ -17,6 +17,7 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +37,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   @NonNls private static final String PATTERN_ATT = "pattern";
 
   protected final Project myProject;
+  private VirtualFile myProjectBaseDir;
 
   public NamedScopesHolder(final Project project) {
     myProject = project;
@@ -48,6 +50,14 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
     void scopesChanged();
   }
+
+  public VirtualFile getProjectBaseDir() {
+    if (myProjectBaseDir == null) {
+      myProjectBaseDir = myProject.getBaseDir();
+    }
+    return myProjectBaseDir;
+  }
+
   private List<ScopeListener> myScopeListeners;
   public synchronized void addScopeListener(ScopeListener scopeListener) {
     if (myScopeListeners == null) {

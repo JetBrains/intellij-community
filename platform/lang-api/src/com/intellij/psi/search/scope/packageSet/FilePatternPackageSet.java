@@ -44,7 +44,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.search.scope.packageSet.FilePatternPackageSet");
 
   public FilePatternPackageSet(@NonNls String modulePattern,
-                           @NonNls String filePattern) {
+                               @NonNls String filePattern) {
     myPathPattern = filePattern;
     myModulePatternText = modulePattern;
     if (modulePattern == null || modulePattern.length() == 0) {
@@ -68,16 +68,16 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
     Project project = holder.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return file != null && fileIndex.isInContent(file) && fileMatcher(file, fileIndex) && matchesModule(myModuleGroupPattern,
-                                                                                                           myModulePattern, file, fileIndex);
+    return file != null && fileIndex.isInContent(file) && fileMatcher(file, fileIndex, holder.getProjectBaseDir()) &&
+           matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
   }
 
-  private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex){
+  private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
     if (myModulePattern != null) {
       final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
       return myFilePattern.matcher(VfsUtil.getRelativePath(virtualFile, contentRoot, '/')).matches();
     } else {
-      return myFilePattern.matcher(getRelativePath(virtualFile, fileIndex, true)).matches();
+      return myFilePattern.matcher(getRelativePath(virtualFile, fileIndex, true, projectBaseDir)).matches();
     }
   }
 
@@ -187,13 +187,15 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     return Comparing.strEqual(myPathPattern, oldQName);
   }
 
-  public static String getRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index, final boolean useFQName) {
+  public static String getRelativePath(final VirtualFile virtualFile,
+                                       final ProjectFileIndex index,
+                                       final boolean useFQName,
+                                       VirtualFile projectBaseDir) {
     final Module module = index.getModuleForFile(virtualFile);
     if (module != null) {
-      final VirtualFile projectParent = module.getProject().getBaseDir();
-      if (projectParent != null) {
-        if (VfsUtil.isAncestor(projectParent, virtualFile, false)){
-          final String projectRelativePath = VfsUtil.getRelativePath(virtualFile, projectParent, '/');
+      if (projectBaseDir != null) {
+        if (VfsUtil.isAncestor(projectBaseDir, virtualFile, false)){
+          final String projectRelativePath = VfsUtil.getRelativePath(virtualFile, projectBaseDir, '/');
           return useFQName ? projectRelativePath : projectRelativePath.substring(projectRelativePath.indexOf('/') + 1);
         }
       }

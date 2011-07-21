@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class FileTreeModelBuilder {
-  private static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
+  public static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
   public static final String SCANNING_PACKAGES_MESSAGE = AnalysisScopeBundle.message("package.dependencies.build.progress.text");
   private final ProjectFileIndex myFileIndex;
   private final Project myProject;
@@ -146,7 +146,6 @@ public class FileTreeModelBuilder {
       buildingRunnable.run();
     }
 
-    TreeUtil.sort(myRoot, new DependencyNodeComparator(sortByType));
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 

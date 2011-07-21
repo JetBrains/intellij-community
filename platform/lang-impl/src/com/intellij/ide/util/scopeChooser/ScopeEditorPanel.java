@@ -79,11 +79,7 @@ public class ScopeEditorPanel {
   private boolean myTextChanged = false;
   private JPanel myMatchingCountPanel;
   private PanelProgressIndicator myCurrentProgress;
-  private final NamedScopesHolder myHolder;
-
-  public ScopeEditorPanel(Project project) {
-    this(project, null);
-  }
+  private NamedScopesHolder myHolder;
 
   public ScopeEditorPanel(Project project, final NamedScopesHolder holder) {
     myProject = project;
@@ -101,7 +97,8 @@ public class ScopeEditorPanel {
 
     myTreeMarker = new Marker() {
       public boolean isMarked(VirtualFile file) {
-        return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, getHolder()) : myCurrentScope.contains(PackageSetBase.getPsiFile(file, getHolder()), getHolder()));
+        return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, myHolder)
+                                                                                   : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myHolder), myHolder));
       }
     };
 
@@ -330,6 +327,10 @@ public class ScopeEditorPanel {
     rebuild(updateText, null, true);
   }
 
+  public void setHolder(NamedScopesHolder holder) {
+    myHolder = holder;
+  }
+
   private static void initTree(Tree tree) {
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
@@ -450,10 +451,6 @@ public class ScopeEditorPanel {
 
   public void clearCaches() {
     FileTreeModelBuilder.clearCaches(myProject);
-  }
-
-  public NamedScopesHolder getHolder() {
-    return myHolder;
   }
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
