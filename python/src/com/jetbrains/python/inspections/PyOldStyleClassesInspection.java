@@ -2,9 +2,8 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.actions.AugmentedAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +46,15 @@ public class PyOldStyleClassesInspection extends PyInspection {
             registerProblem(attr, "Old-style class contains __getattribute__ definition");
           }
         }
+      }
+    }
+
+    @Override
+    public void visitPyCallExpression(final PyCallExpression node) {
+      PyClass klass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+      if (klass != null && !klass.isNewStyleClass()) {
+        if (PyUtil.isSuperCall(node))
+          registerProblem(node.getCallee(), "Old-style class contains call for super method");
       }
     }
   }

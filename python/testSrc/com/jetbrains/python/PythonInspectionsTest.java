@@ -295,6 +295,11 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doHighlightingTest(PyOldStyleClassesInspection.class);
   }
 
+  public void testPyOldStyleClassesInspection30() {
+    setLanguageLevel(LanguageLevel.PYTHON30);
+    doHighlightingTest(PyOldStyleClassesInspection.class);
+  }
+
   public void testPyTupleAssignmentBalanceInspection3() {
     doHighlightingTest(PyTupleAssignmentBalanceInspection.class);
   }
