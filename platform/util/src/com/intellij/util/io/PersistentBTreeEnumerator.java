@@ -44,8 +44,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     super(file, new MappedFileEnumeratorStorage(file, initialSize, 1024 * 1024, 10f, false), dataDescriptor, initialSize);
 
-    storeVars(false);
-    if (btree == null) initBtree(false);
+    if (btree == null) {
+      synchronized (ourLock) {
+        storeVars(false);
+        initBtree(false);
+        storeBTreeVars(false);
+      }
+    }
   }
 
   private void initBtree(boolean initial) {
@@ -86,6 +91,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myDuplicatedValuesPageOffset = store(DATA_START + 24, myDuplicatedValuesPageOffset, toDisk);
     valuesCount = store(DATA_START + 28, valuesCount, toDisk);
     collisions = store(DATA_START + 32, collisions, toDisk);
+    storeBTreeVars(toDisk);
+  }
+
+  private void storeBTreeVars(boolean toDisk) {
     if (btree != null) {
       btree.setMaxStepsSearched(store(DATA_START + 36, btree.getMaxStepsSearched(), toDisk));
       btree.setPagesCount(store(DATA_START + 40, btree.getPageCount(), toDisk));
@@ -110,8 +119,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myFirstPageStart = myDataPageStart = -1;
     myDuplicatedValuesPageStart = -1;
 
-    storeVars(true);
     initBtree(true);
+    storeVars(true);
   }
 
   @Override
