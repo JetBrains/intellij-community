@@ -595,10 +595,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    private void initOrderEntries(Module module) {
-      MultiMap<VirtualFile, OrderEntry> depEntries = new MultiMap<VirtualFile, OrderEntry>();
-      MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<VirtualFile, OrderEntry>();
-      MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<VirtualFile, OrderEntry>();
+    private void initOrderEntries(Module module,
+                                  MultiMap<VirtualFile, OrderEntry> depEntries,
+                                  MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+                                  MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
 
       for (OrderEntry orderEntry : getOrderEntries(module)) {
         if (orderEntry instanceof ModuleOrderEntry) {
@@ -635,7 +635,11 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
           }
         }
       }
+    }
 
+    private void fillMapWithOrderEntries(MultiMap<VirtualFile, OrderEntry> depEntries,
+                                         MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+                                         MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
       for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : depEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
         final Collection<OrderEntry> entries = mapEntry.getValue();
@@ -750,15 +754,16 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       progress.checkCanceled();
       progress.setText2("");
 
+      MultiMap<VirtualFile, OrderEntry> depEntries = new MultiMap<VirtualFile, OrderEntry>();
+      MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<VirtualFile, OrderEntry>();
+      MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<VirtualFile, OrderEntry>();
       for (Module module : modules) {
-        OrderEntry[] orderEntries = getOrderEntries(module);
-        for (OrderEntry orderEntry : orderEntries) {
-//          orderEntry.getFiles()
-        }
+        initOrderEntries(module,
+                         depEntries,
+                         libClassRootEntries,
+                         libSourceRootEntries);
       }
-      for (Module module : modules) {
-        initOrderEntries(module);
-      }
+      fillMapWithOrderEntries(depEntries, libClassRootEntries, libSourceRootEntries);
 
       progress.popState();
     }
