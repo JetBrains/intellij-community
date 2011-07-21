@@ -32,15 +32,20 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private ShortcutSet myShortcut;
   private JComponent myContextComponent;
 
-  protected AnActionButton(String text) {
+  public AnActionButton(String text) {
     super(text);
   }
 
-  protected AnActionButton(String text, String description, @Nullable Icon icon) {
+  public AnActionButton(String text, String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  protected AnActionButton() {
+  @SuppressWarnings("NullableProblems")
+  public AnActionButton(String text, Icon icon) {
+    this(text, null, icon);
+  }
+
+  public AnActionButton() {
   }
 
   public boolean isEnabled() {
