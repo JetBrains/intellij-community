@@ -65,8 +65,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
             int next = CharMatcher.anyOf(" \t*").negate().indexIn(docString, ws);
             if (next != -1 && !docString.substring(pos, next).contains(":")) {
               int endPos = identifierMatcher.indexIn(docString, pos);
-              PyType type = PyTypeParser.getTypeByName(element, docString.substring(pos, endPos));
-              result.add(new DocStringTypeReference(element, new TextRange(pos, endPos), type));
+              result.addAll(parseTypeReferences(element, docString.substring(pos, endPos), pos));
               pos = next;
             }
           }
@@ -80,11 +79,10 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         if (tagName.equals(":type") || tagName.equals("@type") || isRType) {
           pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, endPos+1);
           endPos = CharMatcher.anyOf("\n\r").indexIn(docString, pos+1);
-          if (endPos == -1)
-            endPos  = pos;
-          Map<TextRange, PyType> map =  PyTypeParser.parseDocstring(element, docString.substring(pos, endPos), pos);
-          for (Map.Entry<TextRange, PyType> pair : map.entrySet())
-            result.add(new DocStringTypeReference(element, pair.getKey(), pair.getValue()));
+          if (endPos == -1) {
+            endPos = pos;
+          }
+          result.addAll(parseTypeReferences(element, docString.substring(pos, endPos), pos));
         }
         pos = endPos;
       }
@@ -94,7 +92,21 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  private boolean isReturnType(String tagName) {
+  private static List<PsiReference> parseTypeReferences(PsiElement anchor, String s, int offset) {
+    final List<PsiReference> result = new ArrayList<PsiReference>();
+    final PyTypeParser.ParseResult parseResult = PyTypeParser.parse(anchor, s);
+    final Map<TextRange, PyType> types = parseResult.getTypes();
+    final Map<PyType, TextRange> fullRanges = parseResult.getFullRanges();
+    for (Map.Entry<TextRange, PyType> pair : types.entrySet()) {
+      final PyType t = pair.getValue();
+      final TextRange range = pair.getKey().shiftRight(offset);
+      final TextRange fullRange = fullRanges.containsKey(t) ? fullRanges.get(t).shiftRight(offset) : range;
+      result.add(new DocStringTypeReference(anchor, range, fullRange, t));
+    }
+    return result;
+  }
+
+  private static boolean isReturnType(String tagName) {
     return tagName.equals(":rtype") || tagName.equals("@rtype") || tagName.equals("@returntype");
   }
 

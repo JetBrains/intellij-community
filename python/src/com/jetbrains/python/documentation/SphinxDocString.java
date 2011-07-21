@@ -83,7 +83,7 @@ public class SphinxDocString extends StructuredDocString {
     if (tagEnd < 0) return index;
     String tagName = line.substring(1, tagEnd);
     String tagValue = line.substring(tagEnd).trim();
-    tagValue = DocstringUtil.unifyDocstring(tagValue);
+    tagValue = DocStringUtil.trimDocString(tagValue);
     int pos = tagValue.indexOf(':');
     if (pos < 0) return index;
     String value = tagValue.substring(pos+1).trim();

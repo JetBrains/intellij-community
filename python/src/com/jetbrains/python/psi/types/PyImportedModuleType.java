@@ -62,4 +62,8 @@ public class PyImportedModuleType implements PyType {
   public boolean isBuiltin(TypeEvalContext context) {
     return false;  // no module can be imported from builtins
   }
+
+  public PyImportedModule getImportedModule() {
+    return myImportedModule;
+  }
 }

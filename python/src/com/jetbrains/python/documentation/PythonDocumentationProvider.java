@@ -22,10 +22,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.jetbrains.python.psi.types.PyCollectionType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeReference;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import org.apache.commons.httpclient.HttpClient;
@@ -122,9 +119,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                          returnType != null ? getTypeName(returnType, context) : UNKNOWN);
   }
 
-  public static String getTypeName(@NotNull PyType type, @NotNull TypeEvalContext context) {
+  public static String getTypeName(@NotNull PyType type, @NotNull final TypeEvalContext context) {
     if (type instanceof PyTypeReference) {
-      final PyType resolved = ((PyTypeReference)type).resolve(null, context);
+    final PyType resolved = ((PyTypeReference)type).resolve(null, context);
       if (resolved != null) {
         return getTypeName(resolved, context);
       }
@@ -134,8 +131,17 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (type instanceof PyCollectionType) {
       final PyType elementType = ((PyCollectionType)type).getElementType(context);
       if (elementType != null) {
-        return String.format("%s of %s", name, elementType.getName());
+        return String.format("%s of %s", name, getTypeName(elementType, context));
       }
+    }
+    if (type instanceof PyUnionType) {
+      return String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
+                                                          new Function<PyType, String>() {
+                                                            @Override
+                                                            public String fun(PyType t) {
+                                                              return getTypeName(t, context);
+                                                            }
+                                                          }, ", "));
     }
     return name;
   }

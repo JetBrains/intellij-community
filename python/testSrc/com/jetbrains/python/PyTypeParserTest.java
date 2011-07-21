@@ -49,4 +49,11 @@ public class PyTypeParserTest extends PyLightFixtureTestCase {
     assertClassType(members.get(0), "MyObject");
     assertClassType(members.get(1), "str");
   }
+
+  public void testTypeSubparts() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final String s = "list of (MyObject, collections.Iterable of MyObject, int) or None";
+    PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), s);
+    assertEquals(7, result.getTypes().values().size());
+  }
 }
