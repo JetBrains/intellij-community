@@ -563,6 +563,11 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       storage = new ResizeableMappedFile(file, initialSize, ourLock);
     }
 
+    public MappedFileEnumeratorStorage(File file, int initialSize, int pageSize, float growFactor, boolean zeroPagesWhenExpand) throws IOException {
+      FileUtil.createIfDoesntExist(file);
+      storage = new ResizeableMappedFile(file, initialSize, ourLock, pageSize, growFactor, zeroPagesWhenExpand);
+    }
+
     @Override
     public void putInt(int index, int value) {
       storage.putInt(index, value);

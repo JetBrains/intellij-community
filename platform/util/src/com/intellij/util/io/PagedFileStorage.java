@@ -56,6 +56,7 @@ public class PagedFileStorage implements Forceable {
   }
 
   private final StorageLock myLock;
+  private boolean myZeroWhenExpand;
 
   public static class StorageLock {
     private final boolean checkThreadAccess;
@@ -164,14 +165,15 @@ public class PagedFileStorage implements Forceable {
   protected final int myPageSize;
   @NonNls private static final String RW = "rw";
 
-  public PagedFileStorage(File file, StorageLock lock, int pageSize) throws IOException {
+  public PagedFileStorage(File file, StorageLock lock, int pageSize, boolean zeroWhenExpand) throws IOException {
     myFile = file;
     myLock = lock;
     myPageSize = Math.max(pageSize, Page.PAGE_SIZE);
+    myZeroWhenExpand = zeroWhenExpand;
   }
 
   public PagedFileStorage(File file, StorageLock lock) throws IOException {
-    this(file, lock, DEFAULT_BUFFER_SIZE);
+    this(file, lock, DEFAULT_BUFFER_SIZE, true);
   }
 
   public File getFile() {
@@ -309,7 +311,7 @@ public class PagedFileStorage implements Forceable {
     // it is not guaranteed that new partition will consist of null
     // after resize, so we should fill it manually
     int delta = newSize - oldSize;
-    if (delta > 0) fillWithZeros(oldSize, delta);
+    if (delta > 0 && myZeroWhenExpand) fillWithZeros(oldSize, delta);
 
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
