@@ -92,6 +92,9 @@ public class DirectoryInfo {
       this.orderEntries = null;
     }
     else if (this.orderEntries == null) {
+      if (orderEntries instanceof ArrayList) {
+        ((ArrayList)orderEntries).trimToSize();
+      }
       this.orderEntries = (List<OrderEntry>)orderEntries;
     }
     else if (parentInfo != null && oldParentEntries == this.orderEntries) {
