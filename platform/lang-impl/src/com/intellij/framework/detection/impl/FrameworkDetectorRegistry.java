@@ -17,8 +17,11 @@ package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author nik
@@ -34,4 +37,7 @@ public abstract class FrameworkDetectorRegistry {
 
   @Nullable
   public abstract FrameworkDetector getDetectorById(int id);
+
+  @NotNull
+  public abstract Collection<Integer> getDetectorsId(@NotNull FileType fileType);
 }

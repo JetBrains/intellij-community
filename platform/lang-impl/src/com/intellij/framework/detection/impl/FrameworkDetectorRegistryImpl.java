@@ -18,7 +18,9 @@ package com.intellij.framework.detection.impl;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,7 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
   private static final int REGISTRY_VERSION = 0;
   private TObjectIntHashMap<String> myDetectorIds;
   private TIntObjectHashMap<FrameworkDetector> myDetectorById;
+  private MultiMap<FileType, Integer> myDetectorsByFileType;
   private int myDetectorsVersion;
 
   public FrameworkDetectorRegistryImpl() {
@@ -96,13 +99,16 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
         LOG.info("Framework detection index version changed to " + myDetectorsVersion);
       }
     }
-    int id = maxId+1;
+    int nextId = maxId+1;
     for (String newDetector : newDetectors.keySet()) {
-      myDetectorIds.put(newDetector, id++);
+      myDetectorIds.put(newDetector, nextId++);
     }
     myDetectorById = new TIntObjectHashMap<FrameworkDetector>();
+    myDetectorsByFileType = new MultiMap<FileType, Integer>();
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-      myDetectorById.put(myDetectorIds.get(detector.getDetectorId()), detector);
+      final int id = myDetectorIds.get(detector.getDetectorId());
+      myDetectorsByFileType.putValue(detector.getFileType(), id);
+      myDetectorById.put(id, detector);
     }
   }
 
@@ -152,5 +158,11 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
   @Override
   public FrameworkDetector getDetectorById(int id) {
     return myDetectorById.get(id);
+  }
+
+  @NotNull
+  @Override
+  public Collection<Integer> getDetectorsId(@NotNull FileType fileType) {
+    return myDetectorsByFileType.get(fileType);
   }
 }
