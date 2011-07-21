@@ -241,7 +241,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (aClass instanceof PsiAnonymousClass && ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(myChild1.getElementType())) {
       ASTNode prev = myChild1.getTreePrev();
-      if (prev.getElementType() == JavaTokenType.WHITE_SPACE && !StringUtil.containsLineBreak(prev.getChars())) {
+      if (prev.getElementType() == TokenType.WHITE_SPACE && !StringUtil.containsLineBreak(prev.getChars())) {
         prev = prev.getTreePrev();
       }
       if (prev.getElementType() == JavaTokenType.LBRACE) {
@@ -252,7 +252,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         processClassBody();
       }
     }
-    else processClassBody();
+    else if (aClass instanceof PsiAnonymousClass && myRole2 == ChildRole.ARGUMENT_LIST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+    }
+    else {
+      processClassBody();
+    }
   }
 
   private static boolean isTheOnlyClassMember(final ASTNode node) {
@@ -1435,7 +1440,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     // There is a possible case that annotation key-value pair is used in 'shorten' form (with implicit name 'values'). It's also
     // possible that target value is surrounded by curly braces. We want to define child role accordingly then.
-    else if (myRole1 == ChildRole.LPARENTH && mySettings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE && myRole2 == ChildRole.ANNOTATION_VALUE) {
+    else if (myRole1 == ChildRole.LPARENTH && mySettings.SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE
+             && myRole2 == ChildRole.ANNOTATION_VALUE)
+    {
       createSpaceInCode(true);
     }
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {

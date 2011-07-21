@@ -15,6 +15,7 @@
  */
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
@@ -25,7 +26,8 @@ public class GeneralGroupNode extends PackageDependenciesNode {
   private final Icon myOpenIcon;
   private final Icon myClosedIcon;
 
-  public GeneralGroupNode(String name, Icon openIcon, Icon closedIcon) {
+  public GeneralGroupNode(String name, Icon openIcon, Icon closedIcon, Project project) {
+    super(project);
     myName = name;
     myOpenIcon = openIcon;
     myClosedIcon = closedIcon;

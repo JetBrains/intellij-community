@@ -29,7 +29,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +45,12 @@ import java.util.Set;
 
 public class TreeModelBuilder {
   private static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
+  public static final String SCANNING_PACKAGES_MESSAGE = AnalysisScopeBundle.message("package.dependencies.build.progress.text");
   private final ProjectFileIndex myFileIndex;
-  private final PsiManager myPsiManager;
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.TreeModelBuilder");
   private final boolean myShowModuleGroups;
+  protected final JavaPsiFacade myJavaPsiFacade;
 
   private static enum ScopeType {
     TEST, SOURCE, LIB
@@ -93,22 +96,22 @@ public class TreeModelBuilder {
     myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS && multiModuleProject;
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
-    myRoot = new RootNode();
+    myRoot = new RootNode(project);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myPsiManager = PsiManager.getInstance(project);
 
     createMaps(ScopeType.LIB);
     createMaps(ScopeType.SOURCE);
     createMaps(ScopeType.TEST);
 
     if (myGroupByScopeType) {
-      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, PlatformIcons.PACKAGE_OPEN_ICON, PlatformIcons.PACKAGE_ICON);
-      myTestRoot = new GeneralGroupNode(TEST_NAME, TEST_ICON, TEST_ICON);
-      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, LIB_ICON_OPEN, LIB_ICON_CLOSED);
+      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, PlatformIcons.PACKAGE_OPEN_ICON, PlatformIcons.PACKAGE_ICON, null);
+      myTestRoot = new GeneralGroupNode(TEST_NAME, TEST_ICON, TEST_ICON, null);
+      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, LIB_ICON_OPEN, LIB_ICON_CLOSED, null);
       myRoot.add(mySourceRoot);
       myRoot.add(myTestRoot);
       myRoot.add(myLibsRoot);
     }
+    myJavaPsiFacade = JavaPsiFacade.getInstance(myProject);
   }
 
   private void createMaps(ScopeType scopeType) {
@@ -160,57 +163,51 @@ public class TreeModelBuilder {
     project.putUserData(FILE_COUNT, null);
   }
 
-  public TreeModel build(final Project project, boolean showProgress) {
-    return build(project, showProgress, false);
+  public TreeModel build(final Project project) {
+    return build(project, false);
   }
 
-  public TreeModel build(final Project project, final boolean showProgress, final boolean sortByType) {
+  public TreeModel build(final Project project, final boolean sortByType) {
     Runnable buildingRunnable = new Runnable() {
       public void run() {
         countFiles(project);
-        final PsiManager psiManager = PsiManager.getInstance(project);
         myFileIndex.iterateContent(new ContentIterator() {
+          PackageDependenciesNode lastParent = null;
           public boolean processFile(VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
-              final PsiFile psiFile = psiManager.findFile(fileOrDir);
-              if (psiFile != null) {
-                buildFileNode(psiFile);
-              }
+              lastParent = buildFileNode(fileOrDir, lastParent);
+            } else {
+              lastParent = null;
             }
             return true;
           }
         });
 
         for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
-          processFilesRecursively(root, psiManager);
+          processFilesRecursively(root, null);
         }
       }
     };
 
-    if (showProgress) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), true, project);
-    }
-    else {
-      buildingRunnable.run();
-    }
+    buildingRunnable.run();
 
     TreeUtil.sort(myRoot, new DependencyNodeComparator(sortByType));
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
-  private void processFilesRecursively(VirtualFile file, PsiManager psiManager) {
+  @Nullable
+  private PackageDependenciesNode processFilesRecursively(VirtualFile file, @Nullable PackageDependenciesNode parent) {
     if (file.isDirectory()) {
       VirtualFile[] children = file.getChildren();
+      PackageDependenciesNode dirNode = null;
       for (VirtualFile aChildren : children) {
-        processFilesRecursively(aChildren, psiManager);
+        dirNode = processFilesRecursively(aChildren, dirNode);
       }
     }
     else {
-      final PsiFile psiFile = psiManager.findFile(file);
-      if (psiFile != null) { // skip inners & anonymous
-        buildFileNode(psiFile);
-      }
+      return buildFileNode(file, parent);
     }
+    return null;
   }
 
   private void countFilesRecursively(VirtualFile file) {
@@ -227,11 +224,9 @@ public class TreeModelBuilder {
 
   private void counting(final VirtualFile file) {
     myTotalFileCount++;
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
-      indicator.setIndeterminate(true);
-      indicator.setText2(file.getPresentableUrl());
+      ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, true, 0);
     }
   }
 
@@ -244,7 +239,7 @@ public class TreeModelBuilder {
       public void run() {
         for (final PsiFile file : files) {
           if (file != null) {
-            buildFileNode(file);
+            buildFileNode(file.getVirtualFile(), null);
           }
         }
       }
@@ -261,52 +256,43 @@ public class TreeModelBuilder {
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
-  private void buildFileNode(PsiFile file) {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+  @Nullable
+  private PackageDependenciesNode buildFileNode(final VirtualFile file, @Nullable PackageDependenciesNode parent) {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setIndeterminate(false);
-      indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        indicator.setText2(virtualFile.getPresentableUrl());
-      }
-      indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
+      ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, false, ((double)myScannedFileCount++) / myTotalFileCount);
     }
 
-    if (file == null || !file.isValid()) return;
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
     if (isMarked) myMarkedFileCount++;
     if (isMarked || myAddUnmarkedFiles) {
-      PackageDependenciesNode dirNode = getFileParentNode(file);
-      if (dirNode == null) return;
+      PackageDependenciesNode dirNode = parent != null ? parent : getFileParentNode(file);
+      if (dirNode == null) return null;
 
       if (myShowFiles) {
-        FileNode fileNode = new FileNode(file, isMarked);
+        FileNode fileNode = new FileNode(file, myProject, isMarked);
         dirNode.add(fileNode);
       }
       else {
         dirNode.addFile(file, isMarked);
       }
+      return dirNode;
     }
+    return null;
   }
 
-  public @Nullable PackageDependenciesNode getFileParentNode(PsiFile file) {
-    VirtualFile vFile = file.getVirtualFile();
+  public @Nullable PackageDependenciesNode getFileParentNode(VirtualFile vFile) {
     LOG.assertTrue(vFile != null);
     final VirtualFile containingDirectory = vFile.getParent();
     LOG.assertTrue(containingDirectory != null);
-      PsiPackage aPackage = null;
-      if (file instanceof PsiJavaFile){
-        aPackage = getFilePackage((PsiJavaFile)file);
-      } else {
-        final String packageName = myFileIndex.getPackageNameByDirectory(containingDirectory);
-        if (packageName != null) {
-          aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
-        }
-      }
-      if (aPackage != null) {
+    PsiPackage aPackage = null;
+    final String packageName = myFileIndex.getPackageNameByDirectory(containingDirectory);
+    if (packageName != null) {
+      aPackage = myJavaPsiFacade.findPackage(packageName);
+    }
+    if (aPackage != null) {
         if (myFileIndex.isInLibrarySource(vFile) || myFileIndex.isInLibraryClasses(vFile)) {
-          return getLibraryDirNode(aPackage, getLibraryForFile(file));
+          return getLibraryDirNode(aPackage, getLibraryForFile(vFile));
         }
         else {
           return getModuleDirNode(aPackage, myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
@@ -316,21 +302,6 @@ public class TreeModelBuilder {
 
   }
 
-  @Nullable
-  private PsiPackage getFilePackage(PsiJavaFile file) {
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile != null && myFileIndex.isInLibrarySource(vFile)) {
-      final VirtualFile directory = vFile.getParent();
-      if (directory != null) {
-        final String packageName = myFileIndex.getPackageNameByDirectory(directory);
-        if (packageName != null) {
-          return JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
-        }
-      }
-    }
-    return JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(file.getPackageName());
-  }
-
   private ScopeType getFileScopeType(VirtualFile file) {
     if (myFileIndex.isLibraryClassFile(file) || myFileIndex.isInLibrarySource(file)) return ScopeType.LIB;
     if (myFileIndex.isInTestSourceContent(file)) return ScopeType.TEST;
@@ -338,8 +309,7 @@ public class TreeModelBuilder {
   }
 
   @Nullable
-  private OrderEntry getLibraryForFile(PsiFile file) {
-    final VirtualFile virtualFile = file.getVirtualFile();
+  private OrderEntry getLibraryForFile(VirtualFile virtualFile) {
     if (virtualFile == null) return null;
     List<OrderEntry> orders = myFileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry order : orders) {
@@ -429,7 +399,7 @@ public class TreeModelBuilder {
   private PackageDependenciesNode getParentModuleGroup(String [] groupPath, ScopeType scopeType){
     ModuleGroupNode groupNode = getMap(myModuleGroupNodes, scopeType).get(groupPath[groupPath.length - 1]);
     if (groupNode == null) {
-      groupNode = new ModuleGroupNode(new ModuleGroup(groupPath));
+      groupNode = new ModuleGroupNode(new ModuleGroup(groupPath), myProject);
       getMap(myModuleGroupNodes, scopeType).put(groupPath[groupPath.length - 1], groupNode);
       getRootNode(scopeType).add(groupNode);
     }
@@ -450,7 +420,8 @@ public class TreeModelBuilder {
     if (!myShowIndividualLibs) {
       if (myGroupByScopeType) return getRootNode(ScopeType.LIB);
       if (myAllLibsNode == null) {
-        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"), LIB_ICON_OPEN, LIB_ICON_CLOSED);
+        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"), LIB_ICON_OPEN, LIB_ICON_CLOSED,
+                                             null);
         getRootNode(ScopeType.LIB).add(myAllLibsNode);
       }
       return myAllLibsNode;
@@ -458,7 +429,7 @@ public class TreeModelBuilder {
 
     LibraryNode node = getMap(myLibraryNodes, ScopeType.LIB).get(libraryOrJdk);
     if (node != null) return node;
-    node = new LibraryNode(libraryOrJdk);
+    node = new LibraryNode(libraryOrJdk, null);
     getMap(myLibraryNodes, ScopeType.LIB).put(libraryOrJdk, node);
 
     getRootNode(ScopeType.LIB).add(node);

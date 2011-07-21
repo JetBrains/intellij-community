@@ -18,23 +18,15 @@ package com.intellij.packageDependencies;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.NonProjectFilesScope;
-import com.intellij.psi.search.scope.ProjectFilesScope;
-import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -77,10 +69,10 @@ public class ChangeListsScopesProvider implements CustomScopesProvider {
   }
 
   private static NamedScope createScope(final List<VirtualFile> files, String changeListName) {
-    return new NamedScope(changeListName, new PackageSet() {
+    return new NamedScope(changeListName, new PackageSetBase() {
       @Override
-      public boolean contains(PsiFile file, NamedScopesHolder holder) {
-        return files.contains(file.getVirtualFile());
+      public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+        return files.contains(file);
       }
 
       @Override

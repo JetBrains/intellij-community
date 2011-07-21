@@ -67,7 +67,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
     if(manager == null) return;
 
     if (!file.isPhysical()) {
-      manager.nonPhysicalChange();
+      manager.afterChange(false);
       return;
     }
     final ASTNode[] changedElements = changeSet.getChangedElements();

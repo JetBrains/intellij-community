@@ -32,6 +32,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
+import com.intellij.psi.formatter.java.FormattingAstUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.PsiBasedFormatterModelWithShiftIndentInside;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -53,7 +54,13 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
     return new PsiBasedFormatterModelWithShiftIndentInside (element.getContainingFile(), block, model);
   }
 
-  public TextRange getRangeAffectingIndent(final PsiFile file, final int offset, final ASTNode elementAtOffset) {
+  @Override
+  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+    return doGetRangeAffectingIndent(elementAtOffset);
+  }
+
+  @Nullable
+  public static TextRange doGetRangeAffectingIndent(final ASTNode elementAtOffset) {
     ASTNode current = elementAtOffset;
     current = findNearestExpressionParent(current);
     if (current == null) {
@@ -73,13 +80,39 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
         }
       }
       else {
-        return elementAtOffset.getTextRange();
+        // Look at IDEA-65777 for example of situation when it's necessary to expand element range in case of invalid syntax.
+        return combineWithErrorElementIfPossible(elementAtOffset);
       }
-
     }
     else {
       return current.getTextRange();
     }
+  }
+  
+  /**
+   * Checks if previous non-white space leaf of the given node is error element and combines formatting range relevant for it
+   * with the range of the given node.
+   * 
+   * @param node  target node
+   * @return      given node range if there is no error-element before it; combined range otherwise
+   */
+  @Nullable
+  private static TextRange combineWithErrorElementIfPossible(@NotNull ASTNode node) {
+    if (node.getElementType() == TokenType.ERROR_ELEMENT) {
+      return node.getTextRange();
+    }
+    final ASTNode prevLeaf = FormattingAstUtil.getPrevLeaf(node, TokenType.WHITE_SPACE);
+    if (prevLeaf == null || prevLeaf.getElementType() != TokenType.ERROR_ELEMENT) {
+      return node.getTextRange();
+    }
+
+    final TextRange range = doGetRangeAffectingIndent(prevLeaf);
+    if (range == null) {
+      return node.getTextRange();
+    }
+    else {
+      return new TextRange(range.getStartOffset(), node.getTextRange().getEndOffset());
+    } 
   }
 
   @Nullable

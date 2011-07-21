@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
@@ -267,7 +268,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     mySettings.UI_SHOW_FILES = false;
     myLeftTreeExpansionMonitor.freeze();
     myLeftTree.setModel(TreeModelBuilder.createTreeModel(myProject, false, psiFiles, new Marker() {
-      public boolean isMarked(PsiFile file) {
+      public boolean isMarked(VirtualFile file) {
         return false;
       }
     }, mySettings));
@@ -285,7 +286,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   }
 
   private void updateRightTreeModel() {
-    PackageDependenciesNode root = new RootNode();
+    PackageDependenciesNode root = new RootNode(myProject);
     final PackageNode packageNode = getSelectedPackage(myLeftTree);
     if (packageNode != null) {
       boolean group = mySettings.UI_GROUP_BY_SCOPE_TYPE;
@@ -302,14 +303,14 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
           final PackageDependenciesNode pack = (PackageDependenciesNode)TreeModelBuilder
             .createTreeModel(myProject, false, dependentFilesInPackage, new Marker() {
-              public boolean isMarked(PsiFile file) {
+              public boolean isMarked(VirtualFile file) {
                 return false;
               }
             }, mySettings).getRoot();
           nodes[i] = hideEmptyMiddlePackages((PackageDependenciesNode)pack.getChildAt(0), new StringBuffer());
         }
 
-        PackageDependenciesNode cycleNode = new CycleNode();
+        PackageDependenciesNode cycleNode = new CycleNode(myProject);
         for (PackageDependenciesNode node : nodes) {
           node.setEquals(true);
           cycleNode.insert(node, 0);

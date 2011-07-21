@@ -222,7 +222,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     if (qName == null) return false;
     //if (!myPseudoImports.containsKey(className)){
     myPseudoImports.put(className, qName);
-    myManager.nonPhysicalChange(); // to clear resolve caches!
+    myManager.beforeChange(false); // to clear resolve caches!
     if (isPhysical()) {
       final Project project = myManager.getProject();
       final Document document = PsiDocumentManager.getInstance(project).getDocument(this);

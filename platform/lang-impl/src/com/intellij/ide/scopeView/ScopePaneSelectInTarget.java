@@ -21,14 +21,11 @@ import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.ArrayUtil;
 
 /**
@@ -74,7 +71,13 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     final NamedScope scope = NamedScopesHolder.getScope(myProject, subId);
     if (scope == null) return false;
     PackageSet packageSet = scope.getValue();
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(context.getVirtualFile());
-    return psiFile != null && packageSet != null && packageSet.contains(psiFile, NamedScopesHolder.getHolder(myProject, subId, DependencyValidationManager.getInstance(myProject)));
+    final VirtualFile virtualFile = context.getVirtualFile();
+    if (packageSet != null) {
+      final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, subId, DependencyValidationManager.getInstance(myProject));
+      if (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(virtualFile, holder) : packageSet.contains(PackageSetBase.getPsiFile(virtualFile, holder), holder)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

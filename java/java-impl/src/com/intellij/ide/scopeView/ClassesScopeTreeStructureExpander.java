@@ -134,7 +134,7 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
             if (fileNodes == null) {
               fileNodes = new HashSet<FileNode>();
             }
-            fileNodes.add(new FileNode(containingFile, true));
+            fileNodes.add(new FileNode(containingFile.getVirtualFile(), myProject, true));
           }
           node.remove(classNode);
         }

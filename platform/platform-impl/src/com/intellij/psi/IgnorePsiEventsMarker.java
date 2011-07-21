@@ -13,20 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi;
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 20, 2002
- * Time: 6:21:42 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
-package com.intellij.codeInsight.editorActions;
-
-import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiFile;
-
-public interface JoinRawLinesHandlerDelegate extends JoinLinesHandlerDelegate {
-  int tryJoinRawLines(Document document, PsiFile file, int start, int end);
+public interface IgnorePsiEventsMarker {
 }

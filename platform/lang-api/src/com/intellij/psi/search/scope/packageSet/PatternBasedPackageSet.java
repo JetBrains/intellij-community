@@ -19,9 +19,9 @@ package com.intellij.psi.search.scope.packageSet;
  * User: anna
  * Date: Jul 26, 2010
  */
-public interface PatternBasedPackageSet extends PackageSet{
-  String getPattern();
-  String getModulePattern();
+public abstract class PatternBasedPackageSet extends PackageSetBase {
+  public abstract String getPattern();
+  public abstract String getModulePattern();
 
-  boolean isOn(String oldQName);
+  public abstract boolean isOn(String oldQName);
 }

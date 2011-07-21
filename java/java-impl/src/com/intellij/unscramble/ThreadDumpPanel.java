@@ -252,6 +252,7 @@ public class ThreadDumpPanel extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       final StringBuilder buf = new StringBuilder();
+      buf.append("Full thread dump").append("\n\n");
       for (ThreadState state : myThreadDump) {
         buf.append(state.getStackTrace()).append("\n\n");
       }

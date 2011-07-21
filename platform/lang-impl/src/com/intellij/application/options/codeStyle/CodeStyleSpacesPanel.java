@@ -67,6 +67,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_BEFORE_FINALLY_LBRACE", ApplicationBundle.message("checkbox.spaces.finally.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initBooleanField("SPACE_BEFORE_SYNCHRONIZED_LBRACE", ApplicationBundle.message("checkbox.spaces.synchronized.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initBooleanField("SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE", ApplicationBundle.message("checkbox.spaces.array.initializer.left.brace"), SPACES_BEFORE_LEFT_BRACE);
+    initBooleanField("SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE", ApplicationBundle.message("checkbox.spaces.annotation.array.initializer.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initCustomOptions(SPACES_BEFORE_LEFT_BRACE);
 
     initBooleanField("SPACE_BEFORE_ELSE_KEYWORD", ApplicationBundle.message("checkbox.spaces.else.keyword"), SPACES_BEFORE_KEYWORD);

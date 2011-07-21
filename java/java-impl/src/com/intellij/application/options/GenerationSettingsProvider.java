@@ -34,4 +34,9 @@ public class GenerationSettingsProvider extends CodeStyleSettingsProvider {
   public String getConfigurableDisplayName() {
     return ApplicationBundle.message("title.code.generation");
   }
+
+  @Override
+  public int getPriority() {
+    return CODE_PRIORITY;
+  }
 }

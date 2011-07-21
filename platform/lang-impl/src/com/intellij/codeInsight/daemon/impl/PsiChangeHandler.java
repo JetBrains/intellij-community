@@ -38,6 +38,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -100,7 +101,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
       for (Pair<PsiElement, Boolean> changedElement : toUpdate) {
         PsiElement element = changedElement.getFirst();
         Boolean whiteSpaceOptimizationAllowed = changedElement.getSecond();
-        updateByChange(element, whiteSpaceOptimizationAllowed);
+        updateByChange(element, document, whiteSpaceOptimizationAllowed);
       }
       changedElements.remove(document);
     }
@@ -123,6 +124,9 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   }
 
   public void childrenChanged(PsiTreeChangeEvent event) {
+    if (((PsiTreeChangeEventImpl)event).isGenericChildrenChange()) {
+      return;
+    }
     queueElement(event.getParent(), true, event);
   }
 
@@ -167,7 +171,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     }
   }
 
-  private void updateByChange(PsiElement child, final boolean whitespaceOptimizationAllowed) {
+  private void updateByChange(@NotNull PsiElement child, @NotNull Document document, final boolean whitespaceOptimizationAllowed) {
     final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     Application application = ApplicationManager.getApplication();
     if (editor != null && !application.isUnitTestMode()) {
@@ -179,7 +183,6 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
         }
       }, ModalityState.stateForComponent(editor.getComponent()));
     }
-
     PsiFile file;
     try {
       file = child.getContainingFile();
@@ -192,9 +195,6 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
       myFileStatusMap.markAllFilesDirty();
       return;
     }
-
-    Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
-    if (document == null) return;
 
     int fileLength = file.getTextLength();
     if (!file.getViewProvider().isPhysical()) {

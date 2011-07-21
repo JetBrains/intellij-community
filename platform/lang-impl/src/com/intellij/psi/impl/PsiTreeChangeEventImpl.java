@@ -110,4 +110,10 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
   public int getOldLength() {
     return myOldLength;
   }
+
+  // this is a generic event which is send after all events for concrete PSI changes in a file (e.g. childAdded(), childReplaced() etc).
+  // this event means "something changed in the file", not the "this PSI element changed in the file"
+  public boolean isGenericChildrenChange() {
+    return getParent() == getFile() && getOffset() == 0;
+  }
 }

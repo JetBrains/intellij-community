@@ -24,6 +24,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
@@ -32,6 +33,7 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
   private final MyProgressPanel myProgressPanel;
   private boolean myPaintInQueue;
   private final Consumer<JComponent> myComponentUpdater;
+  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public PanelProgressIndicator(Consumer<JComponent> componentUpdater) {
     myProgressPanel = new MyProgressPanel();
@@ -56,14 +58,12 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
   public void setText(String text) {
     if (!text.equals(getText())) {
       super.setText(text);
-      update();
     }
   }
 
   public void setFraction(double fraction) {
     if (fraction != getFraction()) {
       super.setFraction(fraction);
-      update();
     }
   }
 
@@ -71,25 +71,26 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
   public void setIndeterminate(final boolean indeterminate) {
     if (isIndeterminate() == indeterminate) return;
     super.setIndeterminate(indeterminate);
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myProgressPanel.myFractionProgress.setIndeterminate(indeterminate);
-      }
-    });
   }
 
-  private void update() {
+  public void update(final String scanningPackagesMessage, final boolean indeterminate, final double ffraction) {
     if (myPaintInQueue) return;
     myPaintInQueue = true;
-    SwingUtilities.invokeLater(new Runnable() {
+    myAlarm.addRequest(new Runnable() {
       public void run() {
-        myPaintInQueue = false;
-        myProgressPanel.myTextLabel.setText(getText());
-        int fraction = (int)(getFraction() * 99 + 0.5);
-        myProgressPanel.myFractionLabel.setText(fraction + "%");
-        myProgressPanel.myFractionProgress.setValue(fraction);
+        myAlarm.cancelAllRequests();
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            myPaintInQueue = false;
+            myProgressPanel.myTextLabel.setText(scanningPackagesMessage);
+            int fraction = (int)(ffraction * 99 + 0.5);
+            myProgressPanel.myFractionLabel.setText(fraction + "%");
+            myProgressPanel.myFractionProgress.setValue(fraction);
+            myProgressPanel.myFractionProgress.setIndeterminate(indeterminate);
+          }
+        });
       }
-    });
+    }, 10);
   }
 
   public void setBordersVisible(final boolean visible) {

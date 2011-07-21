@@ -24,14 +24,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.AnyPsiChangeListener;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -94,6 +97,16 @@ public class JavaResolveCache {
         type = TypeConversionUtil.NULL_TYPE;
       }
       type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
+      DebugUtil.trackInvalidation(expr, new Processor<PsiElement>() {
+        @Override
+        public boolean process(PsiElement element) {
+          PsiType cached = myCalculatedTypes.get(element);
+          if (cached != null) {
+            LOG.error(element + " is invalid and yet it is still cached: " + cached);
+          }
+          return true;
+        }
+      });
     }
     if (!type.isValid()) {
       if (expr.isValid()) {

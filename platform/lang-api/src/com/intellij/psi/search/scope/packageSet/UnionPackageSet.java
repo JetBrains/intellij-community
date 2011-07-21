@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class UnionPackageSet implements PackageSet {
+public class UnionPackageSet extends PackageSetBase {
   private final PackageSet myFirstSet;
   private final PackageSet mySecondSet;
 
@@ -27,8 +27,10 @@ public class UnionPackageSet implements PackageSet {
     mySecondSet = set2;
   }
 
-  public boolean contains(PsiFile file, NamedScopesHolder holder) {
-    return myFirstSet.contains(file, holder) || mySecondSet.contains(file, holder);
+  @Override
+  public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+    return (myFirstSet instanceof PackageSetBase ? ((PackageSetBase)myFirstSet).contains(file, holder) : myFirstSet.contains(getPsiFile(file, holder), holder)) ||
+           (mySecondSet instanceof PackageSetBase ? ((PackageSetBase)mySecondSet).contains(file, holder) : mySecondSet.contains(getPsiFile(file, holder), holder));
   }
 
   public PackageSet createCopy() {

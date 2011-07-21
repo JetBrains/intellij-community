@@ -35,6 +35,7 @@ public class PackageNode extends PackageDependenciesNode {
 
 
   public PackageNode(PsiPackage aPackage, boolean showFQName) {
+    super(aPackage.getProject());
     myPackage = aPackage;
     myPackageName = showFQName ? aPackage.getQualifiedName() : aPackage.getName();
     if (myPackageName == null || myPackageName.length() == 0) {

@@ -30,6 +30,7 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
   private final Module myModule;
 
   public ModuleNode(Module module) {
+    super(module.getProject());
     myModule = module;    
   }
 

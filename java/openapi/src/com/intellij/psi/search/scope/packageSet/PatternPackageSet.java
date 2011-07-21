@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +29,7 @@ import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class PatternPackageSet implements PatternBasedPackageSet {
+public class PatternPackageSet extends PatternBasedPackageSet {
   @NonNls public static final String SCOPE_TEST = "test";
   @NonNls public static final String SCOPE_SOURCE = "src";
   @NonNls public static final String SCOPE_LIBRARY = "lib";
@@ -72,44 +71,38 @@ public class PatternPackageSet implements PatternBasedPackageSet {
     myPattern = aspectPattern != null ? Pattern.compile(FilePatternPackageSet.convertToRegexp(aspectPattern, '.')) : null;
   }
 
-  public boolean contains(PsiFile file, NamedScopesHolder holder) {
-    Project project = file.getProject();
+  public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+    Project project = holder.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return matchesScope(file, fileIndex) && (myPattern == null || myPattern.matcher(getPackageName(file, fileIndex)).matches());
+    return matchesScope(file, holder.getProject(), fileIndex) && (myPattern == null || myPattern.matcher(getPackageName(file, fileIndex)).matches());
   }
 
-  private boolean matchesScope(PsiFile file, ProjectFileIndex fileIndex) {
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) return false;
-    boolean isSource = fileIndex.isInSourceContent(vFile);
+  private boolean matchesScope(VirtualFile file, Project project, ProjectFileIndex fileIndex) {
+    if (file == null) return false;
+    boolean isSource = fileIndex.isInSourceContent(file);
     if (myScope == SCOPE_ANY) {
-      return fileIndex.isInContent(vFile) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, vFile, fileIndex);
+      return fileIndex.isInContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_SOURCE) {
-      return isSource && !fileIndex.isInTestSourceContent(vFile) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, vFile, fileIndex);
+      return isSource && !fileIndex.isInTestSourceContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern,
+                                                                                                       file, fileIndex);
     }
     if (myScope == SCOPE_LIBRARY) {
-      return (fileIndex.isInLibraryClasses(vFile) || fileIndex.isInLibrarySource(vFile)) && matchesLibrary(myModulePattern, vFile, fileIndex);
+      return (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file)) && matchesLibrary(myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_TEST) {
-      return isSource && fileIndex.isInTestSourceContent(vFile) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, vFile, fileIndex);
+      return isSource && fileIndex.isInTestSourceContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern,
+                                                                                                      file, fileIndex);
     }
     if (myScope == SCOPE_PROBLEM) {
-      return isSource && WolfTheProblemSolver.getInstance(file.getProject()).isProblemFile(vFile) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, vFile, fileIndex);
+      return isSource && WolfTheProblemSolver.getInstance(project).isProblemFile(file) &&
+             FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
     }
     throw new RuntimeException("Unknown scope: " + myScope);
   }
 
-  private static String getPackageName(PsiFile file, ProjectFileIndex fileIndex) {
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (fileIndex.isInLibrarySource(virtualFile)) {
-      return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(virtualFile.getParent()), virtualFile.getNameWithoutExtension());
-    }
-
-    if (file instanceof PsiJavaFile) return StringUtil.getQualifiedName(((PsiJavaFile)file).getPackageName(), virtualFile.getNameWithoutExtension());
-    PsiDirectory dir = file.getContainingDirectory();
-    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
-    return aPackage == null ? file.getName() : StringUtil.getQualifiedName(aPackage.getQualifiedName(), virtualFile.getNameWithoutExtension());
+  private static String getPackageName(VirtualFile file, ProjectFileIndex fileIndex) {
+    return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(file.getParent()), file.getNameWithoutExtension());
   }
 
   public PackageSet createCopy() {

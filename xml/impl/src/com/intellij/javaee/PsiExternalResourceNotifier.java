@@ -53,7 +53,7 @@ public class PsiExternalResourceNotifier extends AbstractProjectComponent {
 
   private class MyExternalResourceListener implements ExternalResourceListener {
     public void externalResourceChanged() {
-      myPsiManager.physicalChange();
+      myPsiManager.beforeChange(true);
       myDaemonCodeAnalyzer.restart();
     }
   }

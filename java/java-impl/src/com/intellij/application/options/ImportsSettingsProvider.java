@@ -34,4 +34,9 @@ public class ImportsSettingsProvider extends CodeStyleSettingsProvider {
   public String getConfigurableDisplayName() {
     return ApplicationBundle.message("title.imports");
   }
+
+  @Override
+  public int getPriority() {
+    return CODE_PRIORITY;
+  }
 }

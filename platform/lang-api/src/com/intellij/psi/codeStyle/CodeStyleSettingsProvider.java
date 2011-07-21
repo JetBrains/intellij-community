@@ -26,6 +26,12 @@ import org.jetbrains.annotations.Nullable;
 public abstract class CodeStyleSettingsProvider {
   public static final ExtensionPointName<CodeStyleSettingsProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeStyleSettingsProvider");
 
+  public final static int GENERAL_PRIORITY          = 0;
+  public final static int COMMON_SETTINGS_PRIORITY  = 1;
+  public final static int CODE_PRIORITY             = 2;
+  public final static int LANGUAGE_PRIORITY         = 3;
+  public final static int OTHER_PRIORITY            = 4;
+
   @Nullable
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
     return null;
@@ -47,5 +53,9 @@ public abstract class CodeStyleSettingsProvider {
 
   public boolean hasSettingsPage() {
     return true;
+  }
+
+  public int getPriority() {
+    return LANGUAGE_PRIORITY;
   }
 }

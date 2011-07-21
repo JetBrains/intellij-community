@@ -51,7 +51,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -360,9 +359,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private void loadApplicationComponents() {
     PluginManager.initPlugins(mySplash);
     final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    int pluginCount = 0;
+    for (IdeaPluginDescriptor plugin : plugins) {
+      if (!PluginManager.shouldSkipPlugin(plugin)) pluginCount++;
+    }
+    int i = 0;
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
+      if (mySplash != null) {
+        mySplash.showProgress("Initializing " + plugin.getName() + "...", 0.5f + 0.5f * ((float)++i / pluginCount));
+      }
       loadComponentsConfiguration(plugin.getAppComponents(), plugin, false);
+    }
+    if (mySplash != null) {
+      mySplash.showProgress("Loading project...", 1.0f);
     }
   }
 
@@ -494,15 +504,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return null;
     }
     return super.getComponentFromContainer(interfaceClass);
-  }
-
-  @Override
-  protected synchronized Object createComponent(Class componentInterface) {
-    Object component = super.createComponent(componentInterface);
-    if (component != null && mySplash != null) {
-      mySplash.consume("Component loaded: " + StringUtil.getShortName(componentInterface));
-    }
-    return component;
   }
 
   private static void loadComponentRoamingTypes() {

@@ -67,6 +67,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -131,7 +132,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
       final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (file != null) {
-        final PackageDependenciesNode node = myBuilder.getFileParentNode(file);
+        final PackageDependenciesNode node = myBuilder.getFileParentNode(virtualFile);
         final PackageDependenciesNode[] nodes = FileTreeModelBuilder.findNodeForPsiElement(node, file);
         if (nodes != null) {
           for (PackageDependenciesNode dependenciesNode : nodes) {
@@ -267,8 +268,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     settings.UI_FLATTEN_PACKAGES = projectView.isFlattenPackages(ScopeViewPane.ID);
     settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = projectView.isHideEmptyMiddlePackages(ScopeViewPane.ID);
     myBuilder = new FileTreeModelBuilder(myProject, new Marker() {
-      public boolean isMarked(PsiFile file) {
-        return packageSet != null && packageSet.contains(file, holder);
+      public boolean isMarked(VirtualFile file) {
+        return packageSet != null && (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, holder) : packageSet.contains(PackageSetBase.getPsiFile(file, holder), holder));
       }
     }, settings);
     myTree.setModel(myBuilder.build(myProject, showProgress, projectView.isSortByType(ScopeViewPane.ID)));
@@ -516,7 +517,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         queueUpdate(new Runnable() {
           public void run() {
             if (file.isValid()) {
-              collapseExpand(myBuilder.getFileParentNode(file));
+              collapseExpand(myBuilder.getFileParentNode(file.getVirtualFile()));
             }
           }
         }, false);
@@ -579,7 +580,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final PackageSet packageSet = scope.getValue();
       if (packageSet == null) return; //invalid scope selected
       if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
-        reload(myBuilder.getFileParentNode(file));
+        reload(myBuilder.getFileParentNode(file.getVirtualFile()));
       }
       else {
         reload(myBuilder.removeNode(file, file.getParent()));

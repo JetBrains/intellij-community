@@ -55,4 +55,9 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
   public int hashCode() {
     return hc;
   }
+
+  @Override
+  public String toString() {
+    return getOwnerModule().getName() + " -> " + getPresentableName();
+  }
 }

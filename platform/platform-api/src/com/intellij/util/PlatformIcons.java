@@ -112,11 +112,6 @@ public interface PlatformIcons {
 
   Icon UP_DOWN_ARROWS = IconLoader.getIcon("/ide/upDown.png");
 
-  Icon ADD_BIG = IconLoader.getIcon("/actions/addBig.png");
-  Icon REMOVE_BIG = IconLoader.getIcon("/actions/removeBig.png");
-  Icon UP_BIG = IconLoader.getIcon("/actions/upBig.png");
-  Icon DOWN_BIG = IconLoader.getIcon("/actions/downBig.png");
-
   Icon TABLE_ADD_ROW = IconLoader.getIcon("/tables/add.png");
   Icon TABLE_REMOVE_ROW = IconLoader.getIcon("/tables/remove.png");
   Icon TABLE_MOVE_ROW_UP = IconLoader.getIcon("/tables/moveUp.png");

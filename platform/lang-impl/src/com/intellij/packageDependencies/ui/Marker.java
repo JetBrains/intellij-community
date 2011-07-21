@@ -20,8 +20,8 @@
  */
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public interface Marker {
-  boolean isMarked(PsiFile file);
+  boolean isMarked(VirtualFile file);
 }

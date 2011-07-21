@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,10 +65,15 @@ public class SuppressFix extends SuppressIntentionAction {
 
   @Nullable
   protected PsiDocCommentOwner getContainer(final PsiElement context) {
-    if (context == null ||
-        !context.getManager().isInProject(context) ||
-        !(context.getContainingFile().getLanguage() instanceof JavaLanguage) ||
-        context instanceof PsiFile) {
+    if (context == null || !context.getManager().isInProject(context)) {
+      return null;
+    }
+    final PsiFile containingFile = context.getContainingFile();
+    if (containingFile == null) {
+      // for PsiDirectory
+      return null;
+    }
+    if (!(containingFile.getLanguage() instanceof JavaLanguage) || context instanceof PsiFile) {
       return null;
     }
     PsiElement container = context;

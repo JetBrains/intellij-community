@@ -502,14 +502,6 @@ public class UIUtil {
     return UIManager.getColor("Table.gridColor");
   }
 
-  public static Color getTableCellBackground(JTable table, int row) {
-    final Color bg = table.getBackground();
-    if (isTableDecorationEnabled(table) && getTableBackground().getRGB() == bg.getRGB()) {
-      return row % 2 == 1 ? bg : DECORATED_ROW_BG_COLOR;
-    }
-    return bg;
-  }
-
   public static Color getListBackground() {
     // Fixes most of the GTK+ L&F glitches
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
@@ -2361,29 +2353,6 @@ public class UIUtil {
     if (c == null || !c.isShowing()) return true;
 
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane;
-  }
-
-  public static void setTableDecorationEnabled(@NotNull JTable table) {
-    if (isTableDecorationSupported()) {
-      table.putClientProperty(TABLE_DECORATION_KEY, true);
-      table.getColumnModel().setColumnMargin(0);
-      table.setShowGrid(false);
-    }
-  }
-
-  private static boolean isTableDecorationSupported() {
-    return isUnderAlloyLookAndFeel()
-      || isUnderNativeMacLookAndFeel()
-      || isUnderQuaquaLookAndFeel()
-      || isUnderMetalLookAndFeel()
-      || isUnderWindowsLookAndFeel()
-      ;
-  }
-
-  public static boolean isTableDecorationEnabled(JTable table) {
-    final Object property = table.getClientProperty(TABLE_DECORATION_KEY);
-    return isTableDecorationSupported()
-           && property instanceof Boolean && ((Boolean)property).booleanValue();
   }
 
   public enum Style {REGULAR, SMALL}

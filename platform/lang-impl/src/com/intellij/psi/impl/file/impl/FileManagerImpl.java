@@ -615,28 +615,27 @@ public class FileManagerImpl implements FileManager {
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
 
-    if (!(file instanceof PsiBinaryFile)) {
-      FileDocumentManager fileDocumentManager = myFileDocumentManager;
-      Document document = fileDocumentManager.getCachedDocument(vFile);
-      if (document != null && !ignoreDocument){
-        fileDocumentManager.reloadFromDisk(document);
+    if (file instanceof PsiBinaryFile) return;
+    FileDocumentManager fileDocumentManager = myFileDocumentManager;
+    Document document = fileDocumentManager.getCachedDocument(vFile);
+    if (document != null && !ignoreDocument){
+      fileDocumentManager.reloadFromDisk(document);
+    }
+    else{
+      PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
+      event.setParent(file);
+      event.setFile(file);
+      if (file instanceof PsiFileImpl && ((PsiFileImpl)file).isContentsLoaded()) {
+        event.setOffset(0);
+        event.setOldLength(file.getTextLength());
       }
-      else{
-        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-        event.setParent(file);
-        event.setFile(file);
-        if (file instanceof PsiFileImpl && ((PsiFileImpl)file).isContentsLoaded()) {
-          event.setOffset(0);
-          event.setOldLength(file.getTextLength());
-        }
-        myManager.beforeChildrenChange(event);
+      myManager.beforeChildrenChange(event);
 
-        if (file instanceof PsiFileEx) {
-          ((PsiFileEx)file).onContentReload();
-        }
-
-        myManager.childrenChanged(event);
+      if (file instanceof PsiFileEx) {
+        ((PsiFileEx)file).onContentReload();
       }
+
+      myManager.childrenChanged(event);
     }
   }
 

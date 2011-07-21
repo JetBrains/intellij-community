@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.BaseTableView;
+import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.SelectionProvider;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
@@ -34,7 +35,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -185,23 +185,9 @@ public class DualView extends JPanel {
     myCurrentView = view;
     if (myCurrentView != null) {
       myCurrentView.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-      UIUtil.setTableDecorationEnabled(myCurrentView);
-      final TableCellRenderer renderer = myCurrentView.getDefaultRenderer(Object.class);
-      myCurrentView.setDefaultRenderer(Object.class, new TableCellRenderer() {
-        @Override
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
-          final Component c = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          if (c instanceof JComponent && !isSelected && !hasFocus) {
-            c.setBackground(UIUtil.getTableCellBackground(table, row));
-          }
-          return c;
-        }
-      });
+      if (myCurrentView instanceof JBTable) {
+        ((JBTable)myCurrentView).setStriped(true);
+      }
     }
   }
 

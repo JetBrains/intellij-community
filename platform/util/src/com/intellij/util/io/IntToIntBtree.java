@@ -24,7 +24,7 @@ abstract class IntToIntBtree {
   private final byte[] buffer;
   private final byte[] typedBuffer = new byte[8];
   // TODO limit it
-  private final TIntObjectHashMap<byte[]> pagesCache = new TIntObjectHashMap<byte[]>(100);
+  //private final TIntObjectHashMap<byte[]> pagesCache = new TIntObjectHashMap<byte[]>(100);
   private boolean isLarge = true;
 
   public IntToIntBtree(int _pageSize, int rootAdress, boolean initial) {
@@ -37,6 +37,7 @@ abstract class IntToIntBtree {
     assert i < Short.MAX_VALUE && i % 2 == 0;
     maxInteriorNodes = (short)i;
     pagesCount = 1;
+    ((BtreePage)root).load();
 
     if (initial) {
       root.setIndexLeaf(true);
@@ -52,9 +53,19 @@ abstract class IntToIntBtree {
     return address;
   }
 
-  protected abstract void savePage(int address, byte[] pageBuffer);
+  protected void savePage(int address, byte[] pageBuffer) {
+    doSavePage(address, pageBuffer);
+  }
 
-  protected abstract void loadPageContent(int address, byte[] pageBuffer);
+  protected abstract void doSavePage(int address, byte[] pageBuffer);
+
+  protected byte[] loadPage(int address) {
+    byte[] bytes = new byte[pageSize];
+    doLoadPage(address, bytes);
+    return bytes;
+  }
+
+  protected abstract void doLoadPage(int address, byte[] pageBuffer);
 
   public int get(int key) {
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
@@ -99,8 +110,16 @@ abstract class IntToIntBtree {
     maxStepsSearched = _maxStepsSearched;
   }
 
+  public int getPageCount() {
+    return pagesCount;
+  }
+
+  public void setPagesCount(int pagesCount) {
+    this.pagesCount = pagesCount;
+  }
+
   void doFlush() {
-    pagesCache.clear();
+    //pagesCache.clear();
   }
 
   static void myAssert(boolean b) {
@@ -173,13 +192,10 @@ abstract class IntToIntBtree {
     }
 
     private void load() {
-      byte[] bytes = btree.pagesCache.get(address);
-      if (bytes != null) {
-        buffer = bytes;
+      if (address == btree.root.address && btree.root != this) {
+        buffer = ((BtreePage)btree.root).buffer;
       } else {
-        buffer = new byte[btree.pageSize];
-        btree.loadPageContent(address, buffer);
-        btree.pagesCache.put(address, buffer);
+        buffer = btree.loadPage(address);
       }
     }
 
@@ -447,6 +463,7 @@ abstract class IntToIntBtree {
         }
         btree.setRootAddress(newRootAddress);
         parentAddress = newRootAddress;
+        ((BtreePage)btree.root).load();
         btree.root.setChildrenCount((short)1);
         btree.root.setKeyAt(0, medianKey);
         btree.root.setAddressAt(0, -address);

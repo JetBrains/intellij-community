@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.openapi.ui.StripeTable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,16 +35,17 @@ import java.util.List;
 
 /**
  * @author spleaner
+ * @author Konstantin Bulenkov
  */
-public abstract class FileColorSettingsTable extends StripeTable {
+public abstract class FileColorSettingsTable extends JBTable {
   private static final int NAME_COLUMN = 0;
   private static final int COLOR_COLUMN = 1;
 
   private final List<FileColorConfiguration> myOriginal;
 
   public FileColorSettingsTable(@NotNull final FileColorManager manager, @NotNull final List<FileColorConfiguration> configurations) {
-    super(new ModelAdapter(copy(configurations)));
-
+    super(new ModelAdapter(manager, copy(configurations)));
+    setStriped(true);
     myOriginal = configurations;
 
     setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
@@ -151,10 +153,12 @@ public abstract class FileColorSettingsTable extends StripeTable {
     getModel().add(configuration);
   }
 
-  private static class ModelAdapter extends AbstractTableModel {
+  private static class ModelAdapter extends AbstractTableModel implements EditableModel {
+    private final FileColorManager myManager;
     private List<FileColorConfiguration> myConfigurations;
 
-    private ModelAdapter(final List<FileColorConfiguration> configurations) {
+    private ModelAdapter(FileColorManager manager, final List<FileColorConfiguration> configurations) {
+      myManager = manager;
       myConfigurations = configurations;
     }
 
@@ -218,6 +222,26 @@ public abstract class FileColorSettingsTable extends StripeTable {
       }
 
       return -1;
+    }
+
+    @Override
+    public void addRow() {
+      final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog((FileColorManagerImpl)myManager, null);
+      dialog.show();
+
+      if (dialog.getExitCode() == 0) {
+        myConfigurations.add(dialog.getConfiguration());
+      }
+    }
+
+    @Override
+    public void removeRow(int index) {
+      myConfigurations.remove(index);
+    }
+
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      myConfigurations.add(newIndex, myConfigurations.remove(oldIndex));
     }
   }
 

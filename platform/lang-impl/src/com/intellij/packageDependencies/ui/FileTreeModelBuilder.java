@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +47,8 @@ import java.util.Set;
 
 public class FileTreeModelBuilder {
   private static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
+  public static final String SCANNING_PACKAGES_MESSAGE = AnalysisScopeBundle.message("package.dependencies.build.progress.text");
   private final ProjectFileIndex myFileIndex;
-  private final PsiManager myPsiManager;
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.TreeModelBuilder");
 
@@ -62,7 +61,7 @@ public class FileTreeModelBuilder {
   private final Marker myMarker;
   private final boolean myAddUnmarkedFiles;
   private final PackageDependenciesNode myRoot;
-  private final Map<PsiDirectory,DirectoryNode> myModuleDirNodes = new HashMap<PsiDirectory, DirectoryNode>();
+  private final Map<VirtualFile,DirectoryNode> myModuleDirNodes = new HashMap<VirtualFile, DirectoryNode>();
   private final Map<Module, ModuleNode> myModuleNodes = new HashMap<Module, ModuleNode>();
   private final Map<String, ModuleGroupNode> myModuleGroupNodes = new HashMap<String, ModuleGroupNode>();
   private int myScannedFileCount = 0;
@@ -79,9 +78,8 @@ public class FileTreeModelBuilder {
     myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS && multiModuleProject;
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
-    myRoot = new RootNode();
+    myRoot = new RootNode(myProject);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myPsiManager = PsiManager.getInstance(project);
   }
 
 
@@ -123,17 +121,16 @@ public class FileTreeModelBuilder {
   }
 
   public TreeModel build(final Project project, final boolean showProgress, final boolean sortByType) {
-    Runnable buildingRunnable = new Runnable() {
+    final Runnable buildingRunnable = new Runnable() {
       public void run() {
         countFiles(project);
-        final PsiManager psiManager = PsiManager.getInstance(project);
         myFileIndex.iterateContent(new ContentIterator() {
+          PackageDependenciesNode lastParent = null;
           public boolean processFile(VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
-              final PsiFile psiFile = psiManager.findFile(fileOrDir);
-              if (psiFile != null) {
-                buildFileNode(psiFile);
-              }
+              lastParent = buildFileNode(fileOrDir, lastParent);
+            } else {
+              lastParent = null;
             }
             return true;
           }
@@ -142,7 +139,8 @@ public class FileTreeModelBuilder {
     };
 
     if (showProgress) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), true, project);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle
+        .message("package.dependencies.build.process.title"), true, project);
     }
     else {
       buildingRunnable.run();
@@ -156,9 +154,18 @@ public class FileTreeModelBuilder {
     myTotalFileCount++;
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
-      indicator.setIndeterminate(true);
+      update(file, indicator, true, 0);
+    }
+  }
+
+  private static void update(VirtualFile file, ProgressIndicator indicator, boolean indeterminate, double fraction) {
+    if (indicator instanceof PanelProgressIndicator) {
+      ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, indeterminate, fraction);
+    } else {
+      indicator.setText(SCANNING_PACKAGES_MESSAGE);
+      indicator.setIndeterminate(indeterminate);
       indicator.setText2(file.getPresentableUrl());
+      indicator.setFraction(fraction);
     }
   }
 
@@ -171,14 +178,15 @@ public class FileTreeModelBuilder {
       public void run() {
         for (final PsiFile file : files) {
           if (file != null) {
-            buildFileNode(file);
+            buildFileNode(file.getVirtualFile(), null);
           }
         }
       }
     };
 
     if (showProgress) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), false, myProject);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle
+        .message("package.dependencies.build.process.title"), false, myProject);
     }
     else {
       buildingRunnable.run();
@@ -188,55 +196,51 @@ public class FileTreeModelBuilder {
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
-  private void buildFileNode(PsiFile file) {
+  private PackageDependenciesNode buildFileNode(VirtualFile file, PackageDependenciesNode lastParent) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (file == null || !file.isValid()) return null;
     if (indicator != null) {
-      indicator.setIndeterminate(false);
-      indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        indicator.setText2(virtualFile.getPresentableUrl());
-      }
-      indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
+      update(file, indicator, false, ((double)myScannedFileCount++) / myTotalFileCount);
     }
 
-    if (file == null || !file.isValid()) return;
+
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
     if (isMarked) myMarkedFileCount++;
     if (isMarked || myAddUnmarkedFiles) {
-      PackageDependenciesNode dirNode = getFileParentNode(file);
+      PackageDependenciesNode dirNode = !myCompactEmptyMiddlePackages && lastParent != null ? lastParent : getFileParentNode(file);
 
       if (myShowFiles) {
-        FileNode fileNode = new FileNode(file, isMarked);
+        FileNode fileNode = new FileNode(file, myProject, isMarked);
         dirNode.add(fileNode);
       }
       else {
         dirNode.addFile(file, isMarked);
       }
+      return dirNode;
     }
+    return null;
   }
 
-  public @NotNull PackageDependenciesNode getFileParentNode(PsiFile file) {
-    VirtualFile vFile = file.getVirtualFile();
-    LOG.assertTrue(vFile != null);
-    final VirtualFile containingDirectory = vFile.getParent();
-    LOG.assertTrue(containingDirectory != null, "physical: " + file.isPhysical() + ", " + file.getViewProvider().isPhysical() + ", " + file.getClass().getName());
-    return getModuleDirNode(file.getContainingDirectory(), myFileIndex.getModuleForFile(vFile), null);
+  public @NotNull PackageDependenciesNode getFileParentNode(VirtualFile file) {
+    LOG.assertTrue(file != null);
+    final VirtualFile containingDirectory = file.getParent();
+    return getModuleDirNode(containingDirectory, myFileIndex.getModuleForFile(file), null);
   }
 
   @Nullable
   public DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
-    Module module = myFileIndex.getModuleForFile(parent.getVirtualFile());
+    final VirtualFile parentVirtualFile = parent.getVirtualFile();
+    Module module = myFileIndex.getModuleForFile(parentVirtualFile);
     if (element instanceof PsiDirectory && myFlattenPackages) {
       final PackageDependenciesNode moduleNode = getModuleNode(module);
       final PsiDirectory psiDirectory = (PsiDirectory)element;
       final VirtualFile virtualFile = psiDirectory.getVirtualFile();
       final PackageDependenciesNode dirNode =
-        getModuleDirNode(psiDirectory, myFileIndex.getModuleForFile(virtualFile), null);
+        getModuleDirNode(virtualFile, myFileIndex.getModuleForFile(virtualFile), null);
       dirNode.removeFromParent();
       return moduleNode;
     }
-    DefaultMutableTreeNode dirNode = getModuleDirNode(parent, module, null);
+    DefaultMutableTreeNode dirNode = getModuleDirNode(parentVirtualFile, module, null);
     if (dirNode == null) return null;
     final PackageDependenciesNode[] classOrDirNodes = findNodeForPsiElement((PackageDependenciesNode)dirNode, element);
     if (classOrDirNodes != null){
@@ -253,7 +257,7 @@ public class FileTreeModelBuilder {
       node.removeFromParent();
       if (node instanceof DirectoryNode) {
         while (node != null) {  //clear all compacted links
-          myModuleDirNodes.put((PsiDirectory)((DirectoryNode)node).getPsiElement(), null);
+          myModuleDirNodes.put(((DirectoryNode)node).getDirectory(), null);
           node = ((DirectoryNode)node).getCompactedDirNode();
         }
       } else if (node instanceof ModuleNode) {
@@ -279,12 +283,12 @@ public class FileTreeModelBuilder {
 
   @Nullable
   public PackageDependenciesNode addFileNode(final PsiFile file){
-    boolean isMarked = myMarker != null && myMarker.isMarked(file);
+    boolean isMarked = myMarker != null && myMarker.isMarked(file.getVirtualFile());
     if (!isMarked) return null;
 
     final VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
-    PsiDirectory dirToReload = file.getContainingDirectory();
+    VirtualFile dirToReload = vFile.getParent();
     PackageDependenciesNode rootToReload = myModuleDirNodes.get(dirToReload);
     if (rootToReload == null && myFlattenPackages) {
       final Module module = myFileIndex.getModuleForFile(vFile);
@@ -295,19 +299,19 @@ public class FileTreeModelBuilder {
       }
     } else {
       while (rootToReload == null && dirToReload != null){
-        dirToReload = dirToReload.getParentDirectory();
+        dirToReload = dirToReload.getParent();
         rootToReload = myModuleDirNodes.get(dirToReload);
       }
     }
 
-    PackageDependenciesNode dirNode = getFileParentNode(file);
-    dirNode.add(new FileNode(file, isMarked));
+    PackageDependenciesNode dirNode = getFileParentNode(vFile);
+    dirNode.add(new FileNode(vFile, myProject, isMarked));
     return rootToReload;
   }
 
   @Nullable
   public PackageDependenciesNode findNode(PsiFile file, final PsiElement psiElement) {
-    PackageDependenciesNode parent = getFileParentNode(file);
+    PackageDependenciesNode parent = getFileParentNode(file.getVirtualFile());
     PackageDependenciesNode[] nodes = findNodeForPsiElement(parent, file);
     if (nodes == null || nodes.length == 0) {
       return null;
@@ -347,12 +351,12 @@ public class FileTreeModelBuilder {
     return result.isEmpty() ? null : result.toArray(new PackageDependenciesNode[result.size()]);
   }
 
-  private PackageDependenciesNode getModuleDirNode(PsiDirectory psiDirectory, Module module, DirectoryNode childNode) {
-    if (psiDirectory == null) {
+  private PackageDependenciesNode getModuleDirNode(VirtualFile virtualFile, Module module, DirectoryNode childNode) {
+    if (virtualFile == null) {
       return getModuleNode(module);
     }
 
-    PackageDependenciesNode directoryNode = myModuleDirNodes.get(psiDirectory);
+    PackageDependenciesNode directoryNode = myModuleDirNodes.get(virtualFile);
     if (directoryNode != null) {
       if (myCompactEmptyMiddlePackages) {
         DirectoryNode nestedNode = ((DirectoryNode)directoryNode).getCompactedDirNode();
@@ -382,26 +386,23 @@ public class FileTreeModelBuilder {
       return directoryNode;
     }
 
-    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
-
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(virtualFile);
     final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
 
-    directoryNode = new DirectoryNode(psiDirectory, myCompactEmptyMiddlePackages, myFlattenPackages);
-    myModuleDirNodes.put(psiDirectory, (DirectoryNode)directoryNode);
+    directoryNode = new DirectoryNode(virtualFile, myProject, myCompactEmptyMiddlePackages, myFlattenPackages);
+    myModuleDirNodes.put(virtualFile, (DirectoryNode)directoryNode);
 
-    final PsiDirectory directory = psiDirectory.getParentDirectory();
+    final VirtualFile directory = virtualFile.getParent();
     if (!myFlattenPackages && directory != null) {
       if (myCompactEmptyMiddlePackages && sourceRoot != virtualFile && contentRoot != virtualFile) {//compact
         ((DirectoryNode)directoryNode).setCompactedDirNode(childNode);
       }
-      final VirtualFile parentDir = directory.getVirtualFile();
-      if (fileIndex.getModuleForFile(parentDir) == module) {
+      if (fileIndex.getModuleForFile(directory) == module) {
         DirectoryNode parentDirectoryNode = myModuleDirNodes.get(directory);
         if (parentDirectoryNode != null
             || !myCompactEmptyMiddlePackages
-            || parentDir == sourceRoot || parentDir == contentRoot) {
+            || directory == sourceRoot || directory == contentRoot) {
           getModuleDirNode(directory, module, (DirectoryNode)directoryNode).add(directoryNode);
         }
         else {
@@ -416,11 +417,11 @@ public class FileTreeModelBuilder {
       if (contentRoot == virtualFile) {
         getModuleNode(module).add(directoryNode);
       } else {
-        final PsiDirectory root;
+        final VirtualFile root;
         if (sourceRoot != virtualFile && sourceRoot != null) {
-          root = myPsiManager.findDirectory(sourceRoot);
+          root = sourceRoot;
         } else if (contentRoot != null) {
-          root = myPsiManager.findDirectory(contentRoot);
+          root = contentRoot;
         } else {
           root = null;
         }
@@ -461,7 +462,7 @@ public class FileTreeModelBuilder {
   private PackageDependenciesNode getParentModuleGroup(String[] groupPath){
     ModuleGroupNode groupNode = myModuleGroupNodes.get(groupPath[groupPath.length - 1]);
     if (groupNode == null) {
-      groupNode = new ModuleGroupNode(new ModuleGroup(groupPath));
+      groupNode = new ModuleGroupNode(new ModuleGroup(groupPath), myProject);
       myModuleGroupNodes.put(groupPath[groupPath.length - 1], groupNode);
       myRoot.add(groupNode);
     }

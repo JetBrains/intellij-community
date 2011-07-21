@@ -34,10 +34,6 @@ public abstract class PsiManagerEx extends PsiManager {
 
   public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
 
-  public abstract void nonPhysicalChange();
-
-  public abstract void physicalChange();
-
   @NotNull
   public abstract ResolveCache getResolveCache();
 
@@ -69,4 +65,8 @@ public abstract class PsiManagerEx extends PsiManager {
 
   @NotNull
   public abstract List<? extends LanguageInjector> getLanguageInjectors();
+
+  public abstract void beforeChange(boolean isPhysical);
+
+  public abstract void afterChange(boolean isPhysical);
 }

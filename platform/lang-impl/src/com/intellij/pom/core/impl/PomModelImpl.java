@@ -30,12 +30,11 @@ import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -130,7 +129,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final PomModelAspect aspect = transaction.getTransactionAspect();
       startTransaction(transaction);
       try{
-
         myBlockedAspects.push(new Pair<PomModelAspect, PomTransaction>(aspect, transaction));
 
         final PomModelEvent event;
@@ -214,15 +212,17 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
-    Document document = null;
     final PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
-    if (containingFileByTree != null) {
-      document = manager.getCachedDocument(containingFileByTree);
-    }
+    Document document = containingFileByTree != null ? manager.getCachedDocument(containingFileByTree) : null;
     if (document != null) {
-      synchronizer.commitTransaction(document);
+      final int oldLength = containingFileByTree.getTextLength();
+      boolean success = synchronizer.commitTransaction(document);
+      if (success) {
+        BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), (PsiFileImpl)containingFileByTree, oldLength);
+      }
     }
-    if(progressIndicator != null) progressIndicator.finishNonCancelableSection();
+
+    if (progressIndicator != null) progressIndicator.finishNonCancelableSection();
   }
 
   private void startTransaction(final PomTransaction transaction) {
@@ -231,14 +231,11 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
-    BlockSupportImpl.sendBeforeChildrenChangeEvent(transaction.getChangeScope());
+    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), transaction.getChangeScope());
     LOG.assertTrue(changeScope != null);
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
 
-    Document document = null;
-    if(containingFileByTree != null) {
-      document = manager.getCachedDocument(containingFileByTree);
-    }
+    Document document = containingFileByTree == null ? null : manager.getCachedDocument(containingFileByTree);
     if(document != null) {
       synchronizer.startTransaction(myProject, document, transaction.getChangeScope());
     }
@@ -246,7 +243,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Nullable
   private static PsiFile getContainingFileByTree(@NotNull final PsiElement changeScope) {
-    // there could be pseudo phisical trees (JSPX/JSP/etc.) which must not translate
+    // there could be pseudo physical trees (JSPX/JSP/etc.) which must not translate
     // any changes to document and not to fire any PSI events
     final PsiFile psiFile;
     final ASTNode node = changeScope.getNode();
@@ -269,6 +266,4 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if(myListenersArray != null) return myListenersArray;
     return myListenersArray = myListeners.toArray(new PomModelListener[myListeners.size()]);
   }
-  // Project component
-
 }

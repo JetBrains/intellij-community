@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,12 @@ package com.intellij.ui.tabs;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.StripeTable;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.AnActionButton;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ToolbarDecorator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,6 +36,7 @@ import java.util.List;
 
 /**
  * @author spleaner
+ * @author Konstantin Bulenkov
  */
 public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   private FileColorManagerImpl myManager;
@@ -41,13 +45,15 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   private final FileColorSettingsTable myLocalTable;
   private final FileColorSettingsTable mySharedTable;
 
+  private static final Icon SHARE = IconLoader.getIcon("/actions/share.png");
+  private static final Icon UNSHARE = IconLoader.getIcon("/actions/unshare.png");
+
+
   public FileColorsConfigurablePanel(@NotNull final FileColorManagerImpl manager) {
     setLayout(new BorderLayout());
-
     myManager = manager;
 
     final JPanel topPanel = new JPanel();
-    //topPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
 
     myEnabledCheckBox = new JCheckBox("Enable File Colors");
@@ -66,32 +72,36 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     mainPanel.setPreferredSize(new Dimension(300, 500));
     mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-    final List<FileColorConfiguration> local = manager.getLocalConfigurations();
-    myLocalTable = new FileColorSettingsTable(manager, local) {
+    final List<FileColorConfiguration> localConfigurations = manager.getLocalConfigurations();
+    myLocalTable = new FileColorSettingsTable(manager, localConfigurations) {
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
         final List<FileColorConfiguration> copied = new ArrayList<FileColorConfiguration>();
-        for (final FileColorConfiguration configuration : configurations) {
-          try {
+        try {
+          for (final FileColorConfiguration configuration : configurations) {
             copied.add(configuration.clone());
           }
-          catch (CloneNotSupportedException e) {
-            assert false : "Should not happen!";
-          }
+        } catch (CloneNotSupportedException e) {//
         }
         manager.getModel().setConfigurations(copied, false);
       }
     };
 
+    final JPanel panel = ToolbarDecorator.createDecorator(myLocalTable)
+      .addExtraAction(new AnActionButton("Share", SHARE) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          share();
+        }
+
+        @Override
+        public boolean isEnabled() {
+          return super.isEnabled() && myLocalTable.getSelectedRow() != -1;
+        }
+      })
+      .createPanel();
     final JPanel localPanel = new JPanel(new BorderLayout());
     localPanel.setBorder(IdeBorderFactory.createTitledBorder("Local colors:"));
-    //localPanel.add(new JLabel("Local colors:"), BorderLayout.NORTH);
-    localPanel.add(StripeTable.createScrollPane(myLocalTable), BorderLayout.CENTER);
-    localPanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
-    localPanel.add(buildButtons(manager, myLocalTable, "Share", new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        share();
-      }
-    }), BorderLayout.EAST);
+    localPanel.add(panel, BorderLayout.CENTER);
     mainPanel.add(localPanel);
 
     mySharedTable = new FileColorSettingsTable(manager, manager.getSharedConfigurations()) {
@@ -111,15 +121,22 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
 
     final JPanel sharedPanel = new JPanel(new BorderLayout());
     sharedPanel.setBorder(IdeBorderFactory.createTitledBorder("Shared colors:"));
-    //sharedPanel.add(new JLabel("Shared colors:"), BorderLayout.NORTH);
-    sharedPanel.add(StripeTable.createScrollPane(mySharedTable), BorderLayout.CENTER);
-    sharedPanel.add(buildButtons(manager, mySharedTable, "Unshare", new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        unshare();
-      }
-    }), BorderLayout.EAST);
-    mainPanel.add(sharedPanel);
+    final JPanel shared = ToolbarDecorator.createDecorator(mySharedTable)
+      .addExtraAction(new AnActionButton("Unshare", UNSHARE) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          unshare();
+        }
 
+        @Override
+        public boolean isEnabled() {
+          return super.isEnabled() && mySharedTable.getSelectedRow() != -1;
+        }
+      })
+      .createPanel();
+
+    sharedPanel.add(shared, BorderLayout.CENTER);
+    mainPanel.add(sharedPanel);
     add(mainPanel, BorderLayout.CENTER);
 
     final JPanel infoPanel = new JPanel(new BorderLayout());
@@ -137,24 +154,6 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
 
     myLocalTable.getEmptyText().setText("No local colors");
     mySharedTable.getEmptyText().setText("No shared colors");
-  }
-
-
-  private static JButton createAddButton(final FileColorSettingsTable table, final FileColorManagerImpl manager) {
-    final JButton addButton = new JButton("Add...");
-    addButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, addButton.getMaximumSize().height));
-    addButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog(manager, null);
-        dialog.show();
-
-        if (dialog.getExitCode() == 0) {
-          table.addConfiguration(dialog.getConfiguration());
-        }
-      }
-    });
-
-    return addButton;
   }
 
   private void unshare() {
@@ -181,50 +180,6 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
         }
       }
     }
-  }
-
-  private static Component buildButtons(final FileColorManagerImpl manager,
-                                        final FileColorSettingsTable table,
-                                        final String shareButtonText,
-                                        final ActionListener shareButtonListener) {
-    final JPanel result = new JPanel();
-    result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
-
-    result.add(createAddButton(table, manager));
-
-    final JButton removeButton = new JButton("Remove");
-    result.add(removeButton);
-    removeButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, removeButton.getMaximumSize().height));
-    removeButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        table.performRemove();
-      }
-    });
-
-    final JButton shareButton = new JButton(shareButtonText);
-    result.add(shareButton);
-    shareButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, shareButton.getMaximumSize().height));
-    shareButton.addActionListener(shareButtonListener);
-
-    final JButton upButton = new JButton("Move up");
-    result.add(upButton);
-    upButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, upButton.getMaximumSize().height));
-    upButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        table.moveUp();
-      }
-    });
-
-    final JButton downButton = new JButton("Move down");
-    result.add(downButton);
-    downButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, downButton.getMaximumSize().height));
-    downButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        table.moveDown();
-      }
-    });
-
-    return result;
   }
 
   public void dispose() {

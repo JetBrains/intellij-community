@@ -38,6 +38,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
   private PsiFile myFile = null;
 
   public BasePsiNode(final T element) {
+    super(element.getProject());
     if (element.isValid()) {
       myPsiElementPointer = SmartPointerManager.getInstance(element.getProject()).createLazyPointer(element);
       myFile = element.getContainingFile();

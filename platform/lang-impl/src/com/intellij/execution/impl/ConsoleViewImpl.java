@@ -382,21 +382,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
       myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
-          if (e.getNewLength() == 0 && e.getOffset() == 0) {
-            // string has been removed from the beginning, move tokens down
+          if (e.getNewLength() == 0) {
+            // string has been removed, adjust token ranges
             synchronized (LOCK) {
+              ConsoleUtil.updateTokensOnTextRemoval(myTokens, e.getOffset(), e.getOffset() + e.getOldLength());
               int toRemoveLen = e.getOldLength();
-              int tIndex = findTokenInfoIndexByOffset(toRemoveLen);
-              ArrayList<TokenInfo> newTokens = new ArrayList<TokenInfo>(myTokens.subList(tIndex, myTokens.size()));
-              for (TokenInfo token : newTokens) {
-                token.startOffset -= toRemoveLen;
-                token.endOffset -= toRemoveLen;
-              }
-              if (!newTokens.isEmpty()) {
-                newTokens.get(0).startOffset = 0;
-              }
               myContentSize -= Math.min(myContentSize, toRemoveLen);
-              myTokens = newTokens;
             }
           }
         }
@@ -565,6 +556,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             document.insertString(document.getTextLength(), strings[i]);
             int lastLine = document.getLineCount() - 1;
             if (lastLine >= 0) {
+              ConsoleUtil.updateTokensOnTextRemoval(myTokens, document.getTextLength(), document.getTextLength() + 1);
               document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
             }
           }
@@ -940,7 +932,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     private HighlighterClient myEditor;
 
     public HighlighterIterator createIterator(final int startOffset) {
-      final int startIndex = findTokenInfoIndexByOffset(startOffset);
+      final int startIndex = ConsoleUtil.findTokenInfoIndexByOffset(myTokens, startOffset);
 
       return new HighlighterIterator() {
         private int myIndex = startIndex;
@@ -996,26 +988,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     public void setColorScheme(EditorColorsScheme scheme) {
     }
-  }
-
-  private int findTokenInfoIndexByOffset(final int offset) {
-    int low = 0;
-    int high = myTokens.size() - 1;
-
-    while (low <= high) {
-      final int mid = (low + high) / 2;
-      final TokenInfo midVal = myTokens.get(mid);
-      if (offset < midVal.startOffset) {
-        high = mid - 1;
-      }
-      else if (offset >= midVal.endOffset) {
-        low = mid + 1;
-      }
-      else {
-        return mid;
-      }
-    }
-    return myTokens.size();
   }
 
   private static class MyTypedHandler extends TypedActionHandlerBase {

@@ -18,6 +18,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformIcons;
@@ -32,8 +33,9 @@ import java.util.Set;
 public class ModuleGroupNode extends PackageDependenciesNode {
   private final ModuleGroup myModuleGroup;
 
-  public ModuleGroupNode(ModuleGroup moduleGroup) {
-    myModuleGroup = moduleGroup;    
+  public ModuleGroupNode(ModuleGroup moduleGroup, Project project) {
+    super(project);
+    myModuleGroup = moduleGroup;
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {

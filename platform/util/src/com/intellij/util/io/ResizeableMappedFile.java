@@ -31,8 +31,8 @@ public class ResizeableMappedFile implements Forceable {
   private final PagedFileStorage myStorage;
   private final float myGrowFactor;
 
-  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize, float growFactor) throws IOException {
-    myStorage = new PagedFileStorage(file, lock, pageSize);
+  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize, float growFactor, boolean zeroWhenExpand) throws IOException {
+    myStorage = new PagedFileStorage(file, lock, pageSize, zeroWhenExpand);
     if (!file.exists() || file.length() == 0) {
       writeLength(0);
     }
@@ -49,7 +49,7 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock) throws IOException {
-    this(file, initialSize, lock, PagedFileStorage.DEFAULT_BUFFER_SIZE, 13f);
+    this(file, initialSize, lock, PagedFileStorage.DEFAULT_BUFFER_SIZE, 13f, true);
   }
 
   public long length() {

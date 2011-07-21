@@ -30,12 +30,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Pattern;
 
-public class FilePatternPackageSet implements PatternBasedPackageSet {
+public class FilePatternPackageSet extends PatternBasedPackageSet {
   public static final @NonNls String SCOPE_FILE = "file";
   private Pattern myModulePattern;
   private Pattern myModuleGroupPattern;
@@ -66,12 +65,11 @@ public class FilePatternPackageSet implements PatternBasedPackageSet {
     myFilePattern = filePattern != null ? Pattern.compile(convertToRegexp(filePattern, '/')) : null;
   }
 
-  public boolean contains(PsiFile file, NamedScopesHolder holder) {
-    Project project = file.getProject();
+  public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+    Project project = holder.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    VirtualFile vFile = file.getVirtualFile();
-    return vFile != null && fileIndex.isInContent(vFile) && fileMatcher(vFile, fileIndex) && matchesModule(myModuleGroupPattern,
-                                                                                                           myModulePattern, vFile, fileIndex);
+    return file != null && fileIndex.isInContent(file) && fileMatcher(file, fileIndex) && matchesModule(myModuleGroupPattern,
+                                                                                                           myModulePattern, file, fileIndex);
   }
 
   private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex){
@@ -88,12 +86,16 @@ public class FilePatternPackageSet implements PatternBasedPackageSet {
                                       final VirtualFile file,
                                       final ProjectFileIndex fileIndex) {
     final Module module = fileIndex.getModuleForFile(file);
-    LOG.assertTrue(module != null, "url: " + file.getUrl());
+    if (module == null) {
+      LOG.error("url: " + file.getUrl());
+    }
     if (modulePattern != null && modulePattern.matcher(module.getName()).matches()) return true;
-    final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
-    if (groupPath != null) {
-      for (String node : groupPath) {
-        if (moduleGroupPattern != null && moduleGroupPattern.matcher(node).matches()) return true;
+    if (moduleGroupPattern != null) {
+      final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
+      if (groupPath != null) {
+        for (String node : groupPath) {
+          if (moduleGroupPattern.matcher(node).matches()) return true;
+        }
       }
     }
     return modulePattern == null && moduleGroupPattern == null;

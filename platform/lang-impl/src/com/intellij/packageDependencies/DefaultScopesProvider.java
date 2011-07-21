@@ -18,8 +18,8 @@ package com.intellij.packageDependencies;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.TestsScope;
@@ -51,9 +51,9 @@ public class DefaultScopesProvider implements CustomScopesProvider {
     final NamedScope nonProjectScope = new NonProjectFilesScope();
     final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text) {
-      public boolean contains(PsiFile file, NamedScopesHolder holder) {
-        return file.getProject() == myProject
-               && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
+      public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+        return holder.getProject() == myProject
+               && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file);
       }
     });
     myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), projectTestScope, nonProjectScope);
@@ -68,7 +68,7 @@ public class DefaultScopesProvider implements CustomScopesProvider {
   private static class AllScopeHolder {
     private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
-      public boolean contains(final PsiFile file, final NamedScopesHolder scopesHolder) {
+      public boolean contains(final VirtualFile file, final NamedScopesHolder scopesHolder) {
         return true;
       }
     });

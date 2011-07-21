@@ -209,13 +209,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public abstract void acceptTree(TreeElementVisitor visitor);
 
   protected void onInvalidated() {
-    if (DebugUtil.shouldTrackInvalidation()) {
-      final Boolean trackInvalidation = getUserData(DebugUtil.TRACK_INVALIDATION_KEY);
-      if (trackInvalidation != null && trackInvalidation) {
-        //noinspection HardCodedStringLiteral,ThrowableInstanceNeverThrown,CallToPrintStackTrace
-        new Throwable("Element invalidated:" + this).printStackTrace();
-      }
-    }
+    DebugUtil.onInvalidated(this);
   }
 
   public void rawInsertBeforeMe(@NotNull TreeElement firstNew) {

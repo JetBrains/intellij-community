@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
@@ -36,41 +37,42 @@ import java.util.Set;
 public class DirectoryNode extends PackageDependenciesNode {
 
   private final String myDirName;
-  private final PsiDirectory myDirectory;
+  private PsiDirectory myDirectory;
 
   private DirectoryNode myCompactedDirNode;
   private DirectoryNode myWrapper;
 
   private boolean myCompactPackages = true;
   private String myFQName = null;
+  private VirtualFile myVDirectory;
   //private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.DirectoryNode");
 
-  public DirectoryNode(PsiDirectory aDirectory, boolean compactPackages, boolean showFQName) {
-    myDirectory = aDirectory;
-    VirtualFile directory = myDirectory.getVirtualFile();
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();
+  public DirectoryNode(VirtualFile aDirectory, Project project, boolean compactPackages, boolean showFQName) {
+    super(project);
+    myVDirectory = aDirectory;
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     String dirName = aDirectory.getName();
     if (showFQName) {
-      final VirtualFile contentRoot = index.getContentRootForFile(directory);
+      final VirtualFile contentRoot = index.getContentRootForFile(myVDirectory);
       if (contentRoot != null) {
-        if (directory == contentRoot) {
+        if (myVDirectory == contentRoot) {
           myFQName = dirName;
         }
         else {
-          final VirtualFile sourceRoot = index.getSourceRootForFile(directory);
-          if (directory == sourceRoot) {
+          final VirtualFile sourceRoot = index.getSourceRootForFile(myVDirectory);
+          if (myVDirectory == sourceRoot) {
             myFQName = dirName;
           }
           else if (sourceRoot != null) {
-            myFQName = VfsUtil.getRelativePath(directory, sourceRoot, '/');
+            myFQName = VfsUtil.getRelativePath(myVDirectory, sourceRoot, '/');
           }
           else {
-            myFQName = VfsUtil.getRelativePath(directory, contentRoot, '/');
+            myFQName = VfsUtil.getRelativePath(myVDirectory, contentRoot, '/');
           }
         }
       }
       else {
-        myFQName = FilePatternPackageSet.getLibRelativePath(directory, index);
+        myFQName = FilePatternPackageSet.getLibRelativePath(myVDirectory, index);
       }
       dirName = myFQName;
     }
@@ -98,18 +100,17 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public String getDirName() {
-    if (myDirectory == null || !myDirectory.isValid()) return "";
+    if (myVDirectory == null || !myVDirectory.isValid()) return "";
     if (myCompactPackages && myCompactedDirNode != null) {
-      return myDirectory.getName() + "/" + myCompactedDirNode.getDirName();
+      return myVDirectory.getName() + "/" + myCompactedDirNode.getDirName();
     }
     return myDirName;
   }
 
   public String getFQName() {
     final StringBuffer buf = new StringBuffer();
-    final Project project = myDirectory.getProject();
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    VirtualFile directory = myDirectory.getVirtualFile();
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    VirtualFile directory = myVDirectory;
     VirtualFile contentRoot = index.getContentRootForFile(directory);
     if (directory == contentRoot) {
       return "";
@@ -125,6 +126,14 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public PsiElement getPsiElement() {
+    return getPsiDirectory();
+  }
+
+  @Nullable
+  private PsiDirectory getPsiDirectory() {
+    if (myDirectory == null) {
+      myDirectory = PsiManager.getInstance(myProject).findDirectory(myVDirectory);
+    }
     return myDirectory;
   }
 
@@ -135,7 +144,7 @@ public class DirectoryNode extends PackageDependenciesNode {
       assert dirNode != null;
     }
 
-    return dirNode.myDirectory;
+    return dirNode.getPsiDirectory();
   }
 
   public int getWeight() {
@@ -193,7 +202,7 @@ public class DirectoryNode extends PackageDependenciesNode {
 
 
   public boolean isValid() {
-    return myDirectory != null && myDirectory.isValid();
+    return myVDirectory != null && myVDirectory.isValid();
   }
 
   public boolean canNavigate() {
@@ -202,8 +211,8 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public String getComment() {
-    if (myDirectory != null && myDirectory.isValid()) {
-      return ProjectViewDirectoryHelper.getInstance(myDirectory.getProject()).getLocationString(myDirectory);
+    if (myVDirectory != null && myVDirectory.isValid()) {
+      return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(getPsiDirectory());
     }
     return super.getComment();
   }
@@ -212,10 +221,14 @@ public class DirectoryNode extends PackageDependenciesNode {
   public boolean canSelectInLeftTree(final Map<PsiFile, Set<PsiFile>> deps) {
     Set<PsiFile> files = deps.keySet();
     for (PsiFile file : files) {
-      if (file.getContainingDirectory() == myDirectory) {
+      if (file.getContainingDirectory() == getPsiDirectory()) {
         return true;
       }
     }
     return false;
+  }
+
+  public VirtualFile getDirectory() {
+    return myVDirectory;
   }
 }

@@ -15,16 +15,16 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.StartupProgress;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class Splash extends JDialog implements Consumer<String> {
+public class Splash extends JDialog implements StartupProgress {
   private final Icon myImage;
   private final JLabel myLabel;
   private final Color myTextColor;
@@ -55,7 +55,7 @@ public class Splash extends JDialog implements Consumer<String> {
   }
 
   @Override
-  public void consume(String message) {
+  public void showProgress(String message, float progress) {
     Graphics g = getGraphics();
     UIUtil.applyRenderingHints(g);
     g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.PLAIN, 10));
@@ -64,7 +64,13 @@ public class Splash extends JDialog implements Consumer<String> {
     int brightness = 220;
     g.setColor(new Color(brightness, brightness, brightness));
     int x = 20;
-    g.fillRect(1, y, 398, 20);
+    int progressWidth = (int)(398 * progress);
+    g.fillRect(1, y, progressWidth, 20);
+
+    brightness = 240;
+    g.setColor(new Color(brightness, brightness, brightness));
+    g.fillRect(1 + progressWidth, y, 398 - progressWidth, 20);
+
     g.setColor(Color.DARK_GRAY);
 //    g.setXORMode(Color.WHITE);
     g.drawString(message, x, getHeight() - 8);
