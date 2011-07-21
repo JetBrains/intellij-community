@@ -1,4 +1,5 @@
-/*
+/* 
+ *
  * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +23,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -60,6 +62,50 @@ public class FormattingAstUtil {
       result = result.getTreePrev();
     }
     return result;
+  }
+
+  @Nullable
+  public static ASTNode getPrevLeaf(@NotNull final ASTNode node, @NotNull IElementType ... typesToIgnore) {
+    ASTNode prev = getPrev(node, typesToIgnore);
+    if (prev == null) {
+      return null;
+    }
+
+    ASTNode result = prev;
+    ASTNode lastChild = prev.getLastChildNode();
+    while (lastChild != null) {
+      result = lastChild;
+      lastChild = lastChild.getLastChildNode();
+    }
+
+    for (IElementType type : typesToIgnore) {
+      if (result.getElementType() == type) {
+        return getPrevLeaf(result, typesToIgnore);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  public static ASTNode getPrev(@NotNull ASTNode node, @NotNull IElementType... typesToIgnore) {
+    ASTNode prev = node.getTreePrev();
+    ASTNode parent = node.getTreeParent();
+    while (prev == null && parent != null) {
+      prev = parent.getTreePrev();
+      parent = parent.getTreeParent();
+    }
+
+    if (prev == null) {
+      return null;
+    }
+
+    for (IElementType type : typesToIgnore) {
+      if (prev.getElementType() == type) {
+        return getPrev(prev, typesToIgnore);
+      }
+    }
+    
+    return prev;
   }
 
   /**

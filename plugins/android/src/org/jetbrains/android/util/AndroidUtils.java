@@ -694,18 +694,29 @@ public class AndroidUtils {
     return true;
   }
 
+  public static boolean canDdmsBeCorrupted(@NotNull AndroidDebugBridge bridge) {
+    return isDdmsCorrupted(bridge) || allDevicesAreEmpty(bridge);
+  }
+
+  private static boolean allDevicesAreEmpty(@NotNull AndroidDebugBridge bridge) {
+    for (IDevice device : bridge.getDevices()) {
+      if (device.getClients().length > 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static boolean isDdmsCorrupted(@NotNull AndroidDebugBridge bridge) {
     IDevice[] devices = bridge.getDevices();
     if (devices.length > 0) {
-      Client[] clients = devices[0].getClients();
+      for (IDevice device : devices) {
+        Client[] clients = device.getClients();
 
-      if (clients.length == 0) {
-        return true;
-      }
-
-      if (clients.length > 0) {
-        ClientData clientData = clients[0].getClientData();
-        return clientData == null || clientData.getVmIdentifier() == null;
+        if (clients.length > 0) {
+          ClientData clientData = clients[0].getClientData();
+          return clientData == null || clientData.getVmIdentifier() == null;
+        }
       }
     }
     return false;

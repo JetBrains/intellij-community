@@ -320,7 +320,8 @@ public class SdkConfigurationUtil {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              createSdk(project, existingSdks, callback, sdkType);
+              final Collection<SdkType> sdkTypes = suggestedSdkHomes.values();
+              createSdk(project, existingSdks, callback, sdkTypes.toArray(new SdkType[sdkTypes.size()]));
             }
           }, ModalityState.current());
         }
