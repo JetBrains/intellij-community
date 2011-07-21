@@ -4,8 +4,13 @@ import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.BuildListener;
 import org.objectweb.asm.ClassReader;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,19 +82,19 @@ public class AntListener implements BuildListener {
         }
 
         public String toString() {
-            final StringBuffer buffer = new StringBuffer();
+          final StringBuilder builder = new StringBuilder();
 
-            buffer.append("    Root: " + fullName + ", package " + packageName + "\n");
-            buffer.append("    Subclasses:");
+            builder.append("    Root: ").append(fullName).append(", package ").append(packageName).append("\n");
+            builder.append("    Subclasses:");
 
             if (subClasses != null)
                 for (String s : subClasses) {
-                    buffer.append(" " + s);
+                  builder.append(" ").append(s);
                 }
 
-            buffer.append(".\n");
+            builder.append(".\n");
 
-            return buffer.toString();
+            return builder.toString();
         }
 
         public void associate(final Callbacks.SourceFileNameLookup sourceFileNameLookup) {
