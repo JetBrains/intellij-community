@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -107,6 +108,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     if (!Comparing.equal(myPassword, password)) {
       try {
         PasswordSafe.getInstance().storePassword(ProjectManager.getInstance().getDefaultProject(), GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
+      }
+      catch (MasterPasswordUnavailableException e){
+        // Ignore
       }
       catch (Exception e) {
         Messages.showErrorDialog("Error happened while storing password for github", "Error");
