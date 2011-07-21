@@ -1,4 +1,4 @@
-/*
+*
  * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,28 @@ public class FormattingAstUtil {
     ASTNode result = node.getTreePrev();
     while (result != null && (result.getElementType() == TokenType.WHITE_SPACE || result.getTextLength() == 0)) {
       result = result.getTreePrev();
+    }
+    return result;
+  }
+
+  @Nullable
+  public static ASTNode getPrevLeaf(@NotNull final ASTNode node, @NotNull IElementType ... typesToIgnore) {
+    ASTNode prev = getPrev(node, typesToIgnore);
+    if (prev == null) {
+      return null;
+    }
+
+    ASTNode result = prev;
+    ASTNode lastChild = prev.getLastChildNode();
+    while (lastChild != null) {
+      result = lastChild;
+      lastChild = lastChild.getLastChildNode();
+    }
+
+    for (IElementType type : typesToIgnore) {
+      if (result.getElementType() == type) {
+        return getPrevLeaf(result, typesToIgnore);
+      }
     }
     return result;
   }
