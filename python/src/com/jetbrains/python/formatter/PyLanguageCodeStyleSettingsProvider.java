@@ -67,6 +67,11 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     }
   }
 
+  @Override
+  public boolean usesSharedPreview() {
+    return false;
+  }
+
   private static String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
                                                    "    dict = {1:'a', 2:'b', 3:'c'}\n" +
                                                    "    x = dict[1]\n" +
