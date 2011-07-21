@@ -100,13 +100,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
 
-  private BusyObject.Impl.Simple myBusyObject = new BusyObject.Impl.Simple();
+  private final BusyObject.Impl.Simple myBusyObject = new BusyObject.Impl.Simple();
 
   /**
    * Removes invalid myEditor and updates "modified" status.
    */
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
-  private DockManager myDockManager;
+  private final DockManager myDockManager;
   private DockableEditorContainerFactory myContentFactory;
 
   public FileEditorManagerImpl(final Project project, DockManager dockManager) {
