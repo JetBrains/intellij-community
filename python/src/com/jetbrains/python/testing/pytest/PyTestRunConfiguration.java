@@ -18,9 +18,11 @@ import org.jetbrains.annotations.NotNull;
 public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
   private String myTestToRun = "";
   private String myKeywords = "";
+  private String myParams = "";
 
   private static final String TEST_TO_RUN_FIELD = "testToRun";
   private static final String KEYWORDS_FIELD = "keywords";
+  private static final String PARAMS_FIELD = "params";
 
   public PyTestRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
     super(name, module, factory);
@@ -54,11 +56,20 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
     myKeywords = keywords;
   }
 
+  public void setParams(String params) {
+    myParams = params;
+  }
+
+  public String getParams() {
+    return myParams;
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myTestToRun = JDOMExternalizerUtil.readField(element, TEST_TO_RUN_FIELD);
     myKeywords = JDOMExternalizerUtil.readField(element, KEYWORDS_FIELD);
+    myParams = JDOMExternalizerUtil.readField(element, PARAMS_FIELD);
   }
 
   @Override
@@ -66,6 +77,7 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, TEST_TO_RUN_FIELD, myTestToRun);
     JDOMExternalizerUtil.writeField(element, KEYWORDS_FIELD, myKeywords);
+    JDOMExternalizerUtil.writeField(element, PARAMS_FIELD, myParams);
   }
 
   @Override

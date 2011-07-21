@@ -43,6 +43,10 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
     specs.add(myConfiguration.getTestToRun());
+    String params = myConfiguration.getParams();
+    if (!StringUtil.isEmptyOrSpaces(params))
+      specs.add(params);
+
     String keywords = myConfiguration.getKeywords();
     if (!StringUtil.isEmptyOrSpaces(keywords)) {
       specs.add("-k");
@@ -50,7 +54,8 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     }
     return specs;
   }
-    @NotNull
+
+  @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
     final ConsoleView consoleView = super.createAndAttachConsole(project, processHandler, executor);

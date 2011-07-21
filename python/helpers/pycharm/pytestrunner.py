@@ -23,7 +23,7 @@ if has_pytest:
       config = hook.pytest_cmdline_parse(
               pluginmanager=_pluginmanager, args=args)
       exitstatus = hook.pytest_cmdline_main(config=config)
-    except UsageError:
+    except pytest.UsageError:
       e = sys.exc_info()[1]
       sys.stderr.write("ERROR: %s\n" %(e.args[0],))
       exitstatus = 3
