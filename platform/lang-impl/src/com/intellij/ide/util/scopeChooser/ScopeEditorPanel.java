@@ -44,15 +44,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
-import javax.swing.event.DocumentEvent;
+import javax.swing.event.*;
+import javax.swing.tree.ExpandVetoException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class ScopeEditorPanel {
 
@@ -338,6 +339,22 @@ public class ScopeEditorPanel {
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
     new TreeSpeedSearch(tree);
+    tree.addTreeWillExpandListener(new TreeWillExpandListener() {
+      @Override
+      public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+        final PackageDependenciesNode node = (PackageDependenciesNode)event.getPath().getLastPathComponent();
+        if (node.isSorted()) return;
+        final List children = TreeUtil.childrenToArray(node);
+        Collections.sort(children, new DependencyNodeComparator());
+        node.removeAllChildren();
+        TreeUtil.addChildrenTo(node, children);
+        node.setSorted(true);
+      }
+
+      @Override
+      public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+      }
+    });
   }
 
   private void updateTreeModel(final boolean requestFocus) throws ProcessCanceledException {

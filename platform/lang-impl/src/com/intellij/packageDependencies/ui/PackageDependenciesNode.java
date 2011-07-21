@@ -48,6 +48,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   protected Color myColor = null;
   protected final static Color NOT_CHANGED = new Color(0, 0, 0);
   protected Project myProject;
+  private boolean mySorted;
 
   public PackageDependenciesNode(Project project) {
     myProject = project;
@@ -209,5 +210,13 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public boolean canSelectInLeftTree(Map<PsiFile, Set<PsiFile>> deps){
     return false;
+  }
+
+  public boolean isSorted() {
+    return mySorted;
+  }
+
+  public void setSorted(boolean sorted) {
+    mySorted = sorted;
   }
 }

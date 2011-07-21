@@ -127,14 +127,13 @@ public class TreeModelBuilder {
   }
 
   public static synchronized TreeModel createTreeModel(Project project, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
-    return new TreeModelBuilder(project, true, marker, settings).build(project, false);
+    return new TreeModelBuilder(project, true, marker, settings).build(project);
   }
 
   public static synchronized TreeModel createTreeModel(Project project,
-                                                       boolean showProgress,
                                                        boolean showIndividualLibs,
                                                        Marker marker) {
-    return new TreeModelBuilder(project, showIndividualLibs, marker, new DependenciesPanel.DependencyPanelSettings()).build(project, showProgress);
+    return new TreeModelBuilder(project, showIndividualLibs, marker, new DependenciesPanel.DependencyPanelSettings()).build(project);
   }
 
   private void countFiles(Project project) {
@@ -143,7 +142,7 @@ public class TreeModelBuilder {
       myFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {
-            counting(fileOrDir);
+            counting();
           }
           return true;
         }
@@ -164,10 +163,6 @@ public class TreeModelBuilder {
   }
 
   public TreeModel build(final Project project) {
-    return build(project, false);
-  }
-
-  public TreeModel build(final Project project, final boolean sortByType) {
     Runnable buildingRunnable = new Runnable() {
       public void run() {
         countFiles(project);
@@ -191,7 +186,6 @@ public class TreeModelBuilder {
 
     buildingRunnable.run();
 
-    TreeUtil.sort(myRoot, new DependencyNodeComparator(sortByType));
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
@@ -218,11 +212,11 @@ public class TreeModelBuilder {
       }
     }
     else {
-      counting(file);
+      counting();
     }
   }
 
-  private void counting(final VirtualFile file) {
+  private void counting() {
     myTotalFileCount++;
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {

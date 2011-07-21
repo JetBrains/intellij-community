@@ -117,7 +117,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
   }
 
   public TreeModel createTreeModel(final Project project, final Marker marker) {
-    return TreeModelBuilder.createTreeModel(project, false, false, marker);
+    return TreeModelBuilder.createTreeModel(project, false, marker);
   }
 
   public TreeModel createTreeModel(final Project project, final Set<PsiFile> deps, final Marker marker,
