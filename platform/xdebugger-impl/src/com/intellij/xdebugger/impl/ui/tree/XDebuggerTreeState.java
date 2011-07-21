@@ -63,7 +63,7 @@ public class XDebuggerTreeState {
         for (XDebuggerTreeNode child : children) {
           final TreePath path = child.getPath();
           final Rectangle bounds = tree.getPathBounds(path);
-          if (tree.getVisibleRect().contains(bounds)) {
+          if (bounds != null && tree.getVisibleRect().contains(bounds)) {
             myLastVisibleNodeRect = bounds;
           }
           NodeInfo childInfo = createNode(child, tree.isPathSelected(path));
