@@ -75,8 +75,10 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   protected void customizeSettings() {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
-      resetDefaultNames();
-      provider.customizeSettings(this, getSettingsType());
+      if (provider.usesSharedPreview()) {
+        resetDefaultNames();
+        provider.customizeSettings(this, getSettingsType());
+      }
     }
   }
 
