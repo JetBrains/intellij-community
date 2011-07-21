@@ -86,12 +86,16 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
                                       final VirtualFile file,
                                       final ProjectFileIndex fileIndex) {
     final Module module = fileIndex.getModuleForFile(file);
-    LOG.assertTrue(module != null, "url: " + file.getUrl());
+    if (module == null) {
+      LOG.error("url: " + file.getUrl());
+    }
     if (modulePattern != null && modulePattern.matcher(module.getName()).matches()) return true;
-    final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
-    if (groupPath != null) {
-      for (String node : groupPath) {
-        if (moduleGroupPattern != null && moduleGroupPattern.matcher(node).matches()) return true;
+    if (moduleGroupPattern != null) {
+      final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
+      if (groupPath != null) {
+        for (String node : groupPath) {
+          if (moduleGroupPattern.matcher(node).matches()) return true;
+        }
       }
     }
     return modulePattern == null && moduleGroupPattern == null;
