@@ -43,6 +43,7 @@ import java.util.Set;
 
 public class TreeModelBuilder {
   private static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
+  public static final String SCANNING_PACKAGES_MESSAGE = AnalysisScopeBundle.message("package.dependencies.build.progress.text");
   private final ProjectFileIndex myFileIndex;
   private final PsiManager myPsiManager;
   private final Project myProject;
@@ -227,11 +228,9 @@ public class TreeModelBuilder {
 
   private void counting(final VirtualFile file) {
     myTotalFileCount++;
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
-      indicator.setIndeterminate(true);
-      indicator.setText2(file.getPresentableUrl());
+      ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, true, 0);
     }
   }
 
@@ -262,13 +261,10 @@ public class TreeModelBuilder {
   }
 
   @Nullable
-  private PackageDependenciesNode buildFileNode(VirtualFile file, @Nullable PackageDependenciesNode parent) {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+  private PackageDependenciesNode buildFileNode(final VirtualFile file, @Nullable PackageDependenciesNode parent) {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setIndeterminate(false);
-      indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
-      indicator.setText2(file.getPresentableUrl());
-      indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
+      ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, false, ((double)myScannedFileCount++) / myTotalFileCount);
     }
 
     if (file == null || !file.isValid()) return null;
