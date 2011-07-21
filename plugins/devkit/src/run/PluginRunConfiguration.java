@@ -121,6 +121,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         if (SystemInfo.isMac) {
           vm.defineProperty("idea.smooth.progress", "false");
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
+          vm.defineProperty("apple.awt.graphics.UseQuartz", "true");
         }
 
         params.setWorkingDirectory(ideaJdk.getHomePath() + File.separator + "bin" + File.separator);
@@ -136,7 +137,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         params.getClassPath().addFirst(libPath + File.separator + "bootstrap.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea_rt.jar");
-        params.getClassPath().addFirst(((JavaSdkType)ideaJdk.getSdkType()).getToolsPath(ideaJdk));
+        //if (!SystemInfo.isMac) {
+          params.getClassPath().addFirst(((JavaSdkType)ideaJdk.getSdkType()).getToolsPath(ideaJdk));
+        //}
 
         params.setMainClass("com.intellij.idea.Main");
 
