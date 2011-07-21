@@ -287,7 +287,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     checkNotNull(secondaryElements, handler, "getSecondaryElements()");
     UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(primaryElements, secondaryElements);
     if (singleFile) {
-      findUsagesOptions = (FindUsagesOptions)findUsagesOptions.clone();
+      findUsagesOptions = findUsagesOptions.clone();
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
       findUsagesInEditor(descriptor, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions, editor);
     }
@@ -312,10 +312,9 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public boolean isUsed(@NotNull PsiElement element, @NotNull SearchScope scope) {
-    FindUsagesHandler handler = getFindUsagesHandler(element, false);
+    FindUsagesHandler handler = getFindUsagesHandler(element, true);
     if (handler == null) return false;
-    UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
-      new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
+    UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(element);
     FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions().clone();
     findUsagesOptions.searchScope = scope;
     UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
