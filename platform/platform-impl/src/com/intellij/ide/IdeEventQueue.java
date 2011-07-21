@@ -422,7 +422,6 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
-
     myEventCount++;
 
 
@@ -449,6 +448,14 @@ public class IdeEventQueue extends EventQueue {
 
     if (e instanceof WindowEvent) {
       ActivityTracker.getInstance().inc();
+    }
+
+    if (e instanceof MouseWheelEvent) {
+      final MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
+      if (selectedPath != null && selectedPath.length > 0) {
+        ((MouseWheelEvent)e).consume();
+        return;
+      }
     }
 
 
