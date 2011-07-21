@@ -85,14 +85,14 @@ public class DirectoryInfo {
   }
 
   @SuppressWarnings({"unchecked"})
-  public void addOrderEntries(List<OrderEntry> orderEntries,
+  public void addOrderEntries(Collection<OrderEntry> orderEntries,
                               @Nullable final DirectoryInfo parentInfo,
                               @Nullable final List<OrderEntry> oldParentEntries) {
     if (orderEntries.isEmpty()) {
       this.orderEntries = null;
     }
     else if (this.orderEntries == null) {
-      this.orderEntries = orderEntries;
+      this.orderEntries = (List<OrderEntry>)orderEntries;
     }
     else if (parentInfo != null && oldParentEntries == this.orderEntries) {
       this.orderEntries = parentInfo.orderEntries;

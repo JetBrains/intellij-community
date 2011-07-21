@@ -41,7 +41,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -596,9 +596,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     private void initOrderEntries(Module module) {
-      Map<VirtualFile, List<OrderEntry>> depEntries = new HashMap<VirtualFile, List<OrderEntry>>();
-      Map<VirtualFile, List<OrderEntry>> libClassRootEntries = new HashMap<VirtualFile, List<OrderEntry>>();
-      Map<VirtualFile, List<OrderEntry>> libSourceRootEntries = new HashMap<VirtualFile, List<OrderEntry>>();
+      MultiMap<VirtualFile, OrderEntry> depEntries = new MultiMap<VirtualFile, OrderEntry>();
+      MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<VirtualFile, OrderEntry>();
+      MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<VirtualFile, OrderEntry>();
 
       for (OrderEntry orderEntry : getOrderEntries(module)) {
         if (orderEntry instanceof ModuleOrderEntry) {
@@ -607,12 +607,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
             VirtualFile[] importedClassRoots =
               OrderEnumerator.orderEntries(depModule).exportedOnly().recursively().classes().usingCache().getRoots();
             for (VirtualFile importedClassRoot : importedClassRoots) {
-              addEntryToMap(importedClassRoot, orderEntry, depEntries);
+              depEntries.putValue(importedClassRoot, orderEntry);
             }
           }
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            addEntryToMap(sourceRoot, orderEntry, depEntries);
+            depEntries.putValue(sourceRoot, orderEntry);
           }
         }
         else if (orderEntry instanceof ModuleSourceOrderEntry) {
@@ -627,30 +627,30 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
           VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
           for (VirtualFile classRoot : classRoots) {
-            addEntryToMap(classRoot, orderEntry, libClassRootEntries);
+            libClassRootEntries.putValue(classRoot, orderEntry);
           }
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            addEntryToMap(sourceRoot, orderEntry, libSourceRootEntries);
+            libSourceRootEntries.putValue(sourceRoot, orderEntry);
           }
         }
       }
 
-      for (Map.Entry<VirtualFile, List<OrderEntry>> mapEntry : depEntries.entrySet()) {
+      for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : depEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
-        final List<OrderEntry> entries = mapEntry.getValue();
+        final Collection<OrderEntry> entries = mapEntry.getValue();
         fillMapWithOrderEntries(vRoot, entries, null, null, null, null, null);
       }
 
-      for (Map.Entry<VirtualFile, List<OrderEntry>> mapEntry : libClassRootEntries.entrySet()) {
+      for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libClassRootEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
-        final List<OrderEntry> entries = mapEntry.getValue();
+        final Collection<OrderEntry> entries = mapEntry.getValue();
         fillMapWithOrderEntries(vRoot, entries, null, vRoot, null, null, null);
       }
 
-      for (Map.Entry<VirtualFile, List<OrderEntry>> mapEntry : libSourceRootEntries.entrySet()) {
+      for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libSourceRootEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
-        final List<OrderEntry> entries = mapEntry.getValue();
+        final Collection<OrderEntry> entries = mapEntry.getValue();
         fillMapWithOrderEntries(vRoot, entries, null, null, vRoot, null, null);
       }
     }
@@ -684,17 +684,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    private void addEntryToMap(final VirtualFile vRoot, final OrderEntry entry, final Map<VirtualFile, List<OrderEntry>> map) {
-      List<OrderEntry> list = map.get(vRoot);
-      if (list == null) {
-        list = new ArrayList<OrderEntry>();
-        map.put(vRoot, list);
-      }
-      list.add(entry);
-    }
-
     private void fillMapWithOrderEntries(VirtualFile dir,
-                                         List<OrderEntry> orderEntries,
+                                         Collection<OrderEntry> orderEntries,
                                          Module module,
                                          VirtualFile libraryClassRoot,
                                          VirtualFile librarySourceRoot,
@@ -759,6 +750,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       progress.checkCanceled();
       progress.setText2("");
 
+      for (Module module : modules) {
+        OrderEntry[] orderEntries = getOrderEntries(module);
+        for (OrderEntry orderEntry : orderEntries) {
+//          orderEntry.getFiles()
+        }
+      }
       for (Module module : modules) {
         initOrderEntries(module);
       }
